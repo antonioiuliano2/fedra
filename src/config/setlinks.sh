@@ -1,31 +1,31 @@
-export PROJECT_INC=/home/valeri/tmp/fedra/include
-export PROJECT_SRC=/home/valeri/tmp/fedra/src
+#!/bin/bash
 
-ln -si $PROJECT_SRC/libEmath/TIndexCell.h  $PROJECT_INC/TIndexCell.h
+export PROJECT_INC=/home/valeri/public/fedra/include
+export PROJECT_SRC=/home/valeri/public/fedra/src
 
-ln -si $PROJECT_SRC/libEdb/EdbAffine.h     $PROJECT_INC/EdbAffine.h
-ln -si $PROJECT_SRC/libEdb/EdbBasic.h      $PROJECT_INC/EdbBasic.h
-ln -si $PROJECT_SRC/libEdb/EdbCluster.h    $PROJECT_INC/EdbCluster.h
-ln -si $PROJECT_SRC/libEdb/EdbFiducial.h   $PROJECT_INC/EdbFiducial.h
-ln -si $PROJECT_SRC/libEdb/EdbFrame.h      $PROJECT_INC/EdbFrame.h
-ln -si $PROJECT_SRC/libEdb/EdbImage.h      $PROJECT_INC/EdbImage.h
-ln -si $PROJECT_SRC/libEdb/EdbLinkDef.h    $PROJECT_INC/EdbLinkDef.h
-ln -si $PROJECT_SRC/libEdb/EdbMain.h       $PROJECT_INC/EdbMain.h
-ln -si $PROJECT_SRC/libEdb/EdbOnline.h     $PROJECT_INC/EdbOnline.h
-ln -si $PROJECT_SRC/libEdb/EdbPrediction.h $PROJECT_INC/EdbPrediction.h
-ln -si $PROJECT_SRC/libEdb/EdbRun.h        $PROJECT_INC/EdbRun.h
-ln -si $PROJECT_SRC/libEdb/EdbRunHeader.h  $PROJECT_INC/EdbRunHeader.h
-ln -si $PROJECT_SRC/libEdb/EdbSegment.h    $PROJECT_INC/EdbSegment.h
-ln -si $PROJECT_SRC/libEdb/EdbStage.h      $PROJECT_INC/EdbStage.h
-ln -si $PROJECT_SRC/libEdb/EdbView.h       $PROJECT_INC/EdbView.h
-ln -si $PROJECT_SRC/libEdb/EdbVirtual.h    $PROJECT_INC/EdbVirtual.h
+listEdr=`ls $PROJECT_SRC/libEdr/*.h`
+listEdd=`ls $PROJECT_SRC/libEdd/*.h`
+listEdb=`ls $PROJECT_SRC/libEdb/*.h`
+listEmath=`ls $PROJECT_SRC/libEmath/*.h`
+listTest=`ls $PROJECT_SRC/libTest/*.h`
+listVt=`ls $PROJECT_SRC/libVt++/vt++/include/*.hh`
 
-ln -si $PROJECT_SRC/libEdr/EdbPattern.h    $PROJECT_INC/EdbPattern.h
-ln -si $PROJECT_SRC/libEdr/EdbPVRec.h      $PROJECT_INC/EdbPVRec.h
-ln -si $PROJECT_SRC/libEdr/EdbPVGen.h      $PROJECT_INC/EdbPVGen.h
-ln -si $PROJECT_SRC/libEdr/EdbGA.h         $PROJECT_INC/EdbGA.h
-ln -si $PROJECT_SRC/libEdr/EdbIP.h         $PROJECT_INC/EdbIP.h
-ln -si $PROJECT_SRC/libEdr/EdbDataSet.h    $PROJECT_INC/EdbDataSet.h
-# ln -si $PROJECT_SRC/libEdr/EdrLinkDef.h    $PROJECT_INC/EdrLinkDef.h 
+for hname in ${listEdr} ; do
+ ln -fs $PROJECT_SRC/libEdr/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listEdd} ; do
+ ln -fs $PROJECT_SRC/libEdd/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listEdb} ; do
+ ln -fs $PROJECT_SRC/libEdb/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listEmath} ; do
+ ln -fs $PROJECT_SRC/libEmath/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listTest} ; do
+ ln -fs $PROJECT_SRC/libTest/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listVt} ; do
+ ln -fs $PROJECT_SRC/libVt++/vt++/include/${hname##*/} $PROJECT_INC/${hname##*/}
+done
 
-ln -si $PROJECT_SRC/libTest/Test.h         $PROJECT_INC/Test.h 

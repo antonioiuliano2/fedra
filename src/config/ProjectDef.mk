@@ -1,4 +1,4 @@
-PROJECT_ROOT=/home/valeri/tmp/fedra
+PROJECT_ROOT=/home/valeri/public/fedra
 
 BIN_DIR = $(PROJECT_ROOT)/bin
 LIB_DIR = $(PROJECT_ROOT)/lib
