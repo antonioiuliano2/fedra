@@ -1,3 +1,8 @@
+//----------------------------------------------
+// usage: root RecDispEX.C
+// dsv(54)  - display vertex 54
+//----------------------------------------------
+
 
 using namespace VERTEX;
 
@@ -6,12 +11,12 @@ EdbDisplay   *ds=0;
 EdbPVRec     *gAli=0;
 EdbPVRec     *ali=0;
 
-int maxgaps[6] = {0,2,2,6,2,6}; // all combinations
-float AngleAcceptance = 0.4;
-float ProbMinV  = 0.001;      // min vertex probability 
-float ProbMinP  = 0.001;     // minimal propagate probability
-float ProbMinT  = 0.001;     // minimal track probability to be used for vtx
-int   nsegMin = 5;
+int maxgaps[6] = {0,3,3,6,3,6}; // all combinations
+float AngleAcceptance = 1.0;   // maximal difference between tracks slopes
+float ProbMinV  = 0.01;      // min vertex probability 
+float ProbMinP  = 0.01;     // minimal propagate probability
+float ProbMinT  = 0.01;     // minimal track probability to be used for vtx
+int   nsegMin = 3;           // minimal track segments number to be used for vtx
 bool  usemom = false;
 
 TH1F *hp[23] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -27,54 +32,63 @@ void init( char *file="ali.root" )
 {
   TFile *f = new TFile(file);
   gAli = (EdbPVRec*)(f->FindKey("ali")->ReadObj());
-
+  // hists booking
   BookHistsV();
-
+  // link microtracks
   gAli->Link();
-  printf("link ok\n");
 
   gAli->FillTracksCell(); 
+  // make track candidates
   gAli->MakeTracks();
   if (!gAli->eTracks) return;
 
   int ntr = gAli->eTracks->GetEntries();
+  // set track momentum error - 20% for 4 GeV/c
   for(int i=0; i<ntr; i++) 
-    ((EdbTrackP*)(gAli->eTracks->At(i)))->SetErrorP(0.1);
-
+    ((EdbTrackP*)(gAli->eTracks->At(i)))->SetErrorP(0.2*0.2*4.*4.);
+  // tracks fit assuming momentum 4 GeV/c and pion mass
   gAli->FitTracks(4.);
-  printf("\n%d tracks are in the list\n",gAli->eTracks->GetEntriesFast());
 
   gAli->FillCell(50,50,0.015,0.015);
+
+  // merge consistient tracks
   gAli->PropagateTracks(29,2,ProbMinP);
 
   if (!(gAli->eTracks)) return;
   ntr = gAli->eTracks->GetEntries();
+  // fill hist with number of tracks
   if (hp[10]) hp[10]->Fill(ntr);
   EdbTrackP *tr = 0;
   float ang = 0.;
   float tx  = 0.;
   float ty  = 0.;
+  // tracks loop
   for(int i=0; i<ntr; i++) 
   {
     tr = (EdbTrackP*)(gAli->eTracks->At(i));
-    if (tr->Flag() != -10)
+    if (tr->Flag() != -10) // skip "broken" tracks
     {
+        // fill hist with number of segments
 	if (hp[11]) hp[11]->Fill(tr->N());
+        // fill hist with difference between measured and reconstructed coordinate
 	if (hp[12]) hp[12]->Fill(tr->GetSegment(0)->X()-tr->GetSegmentF(0)->X());
+        // fill hist with track probability
 	if (hp[17]) hp[17]->Fill(tr->Prob());
 	tx = tr->TX();
 	ty = tr->TY();
 	ang = TMath::ACos(1./(1.+tx*tx+ty*ty))*1000.;
+        // fill hist with track Teta angle
 	if (hp[20]) hp[20]->Fill(ang);
+        // fill hist with track momentum
 	if (hp[21]) hp[21]->Fill(tr->P());
     }
   }
-
+  // find 2-track vertexes
   int nvtx = gAli->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
   printf("%d 2-track vertexes was found\n",nvtx);
 
-
   if(nvtx != 0) {
+    // merge 2-tracks vertexes into N-tracks
     int nadd = gAli->ProbVertexN(ProbMinV);
     printf("%d vertexes with number of tracks >2 was found\n",nadd);
   }
@@ -88,19 +102,20 @@ void init( char *file="ali.root" )
   for(int i=0; i<nv; i++) 
   {
     v = (EdbVertex*)(gAli->eVTX->At(i));
-    if (v->Flag() != -10)
+    if (v->Flag() != -10) // skip "used" vertexes
     {
 	    nvg++;
 	    vt = v->V();
 	    if (vt) FillHistsV(*vt);
-	    v->Print();
+	    if (v->N() > 2) v->Print();
     }
   }
-
+  // fill hist with number of vertexes (exclude "used" ones)
   if (hp[9]) hp[9]->Fill(nvg);
 
   if (nv)
   {
+    // set corresponding flag value for "linked" vertexes
     int nlv = gAli->LinkedVertexes();
     printf("%d linked vertexes found\n", nlv);
     if (nlv)
@@ -108,24 +123,25 @@ void init( char *file="ali.root" )
       for(int i=0; i<nv; i++) 
       {
 	v = (EdbVertex*)(gAli->eVTX->At(i));
-	if (v->Flag() > 2)
+	if (v->Flag() > 2) // select "linked" vertexes only
 	{
 	    vc = v->GetConnectedVertex(0);
 	    if (vc->ID() > v->ID())
 	    {
-		v->Print();
-		vc->Print();
+//		v->Print();
+//		vc->Print();
 	    }
 	}
       }
     }
   }
-  int nn = gAli->VertexNeighboor(1000.);
+  // fill vertexes neighborhood lists with tracks and segments
+  int nn = gAli->VertexNeighboor(1000., 2);
   printf("%d neighbooring tracks found\n", nn);
-
-  TFile fo("alirec.root","RECREATE");
-  gAli->Write("alirec");
-  fo.Close();
+  // store results
+  //TFile fo("alirec.root","RECREATE");
+  //gAli->Write("alirec");
+  //fo.Close();
 }
 
 //---------------------------------------------------------
@@ -161,14 +177,14 @@ void ds(int iseg=0, float binx=20, float bint=10, int ntr=1)
 
     gStyle->SetPalette(1);
     if(!ds) 
-      ds=new EdbDisplay("display-t",-15000.,15000.,-15000.,15000.,-4000.,40000.);
+      ds=new EdbDisplay("display-tracks",-15000.,15000.,-15000.,15000.,-4000.,40000.);
 
     ds->SetArrSegP( arr );
     ds->SetArrTr( arrtr );
     ds->Draw();
 }
 //---------------------------------------------------------
-void dsv( int numv = -1, float binx=6, float bint=10 )
+void dsv( int numv = -1, int ntrMin=2, float binx=6, float bint=10 )
 {
   if(!gAli->eVTX) return;
   if(!gAli) init();
@@ -179,7 +195,6 @@ void dsv( int numv = -1, float binx=6, float bint=10 )
   TObjArray *arr   = new TObjArray();  // segments
   TObjArray *arrtr = new TObjArray();  // tracks
 
-  int ntrMin=2;
   int nvtx = gAli->eVTX->GetEntries();
   EdbVertex *v = 0;
   int iv0,iv1;
@@ -201,12 +216,11 @@ void dsv( int numv = -1, float binx=6, float bint=10 )
     arrV->Add(v);
 
     int ntr = v->N();
-//    printf("ntr=%d\n",ntr);
+    printf("Vertex %d, multiplicity %d\n", iv, ntr);
     for(int i=0; i<ntr; i++) {
       EdbTrackP *track = v->GetTrack(i);
-      //track->Print();
-      printf("Vertex %d, Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
-      iv, track->ID(), track->Z(), track->N(), v->Zpos(i));
+      printf("     Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
+      track->ID(), track->Z(), track->N(), v->Zpos(i));
       arrtr->Add(track);
       gAli->ExtractDataVolumeSeg( *track,*arr,binx,bint );
     }
@@ -215,12 +229,13 @@ void dsv( int numv = -1, float binx=6, float bint=10 )
 
   gStyle->SetPalette(1);
   if(!ds)
-    ds=new EdbDisplay("display-t",-15000.,15000.,-15000.,15000.,-4000.,40000.);
+    ds=new EdbDisplay("display-vertexes",-15000.,15000.,-15000.,15000.,-4000.,40000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( arrtr );
   ds->SetArrV( arrV );
   ds->SetDrawVertex(1);
+  ds->SetDrawTrack(4);
   ds->Draw();
 }
 ///-----------------------------------------------------------------------
@@ -264,8 +279,6 @@ void BookHistsV()
     if (hp[i]) hlist.Add(hp[i]);
 }
 
-double smass = 0.139;
-
 ///-----------------------------------------------------------------------
 void FillHistsV(Vertex &v)
 {
@@ -281,210 +294,89 @@ void FillHistsV(Vertex &v)
 ///-----------------------------------------------------------------------
 void DrawHistsV()
 {
+
   int n = hld1.GetEntries();
-  if (!n) return;
-  TCanvas *cv1 = new TCanvas("Vertex_reconstruction_1","MC Vertex reconstruction", 760, 760);
-  if (n < 2)
+  if (n)
   {
-  }
-  else if (n < 3)
-  {
-    cv1->Divide(1,2);    
-  }
-  else if (n < 4)
-  {
-    cv1->Divide(1,3);    
-  }
-  else if (n < 5)
-  {
-    cv1->Divide(2,2);    
-  }
-  else if (n < 6)
-  {
-    cv1->Divide(2,3);    
-  }
-  else if (n < 7)
-  {
-    cv1->Divide(2,3);    
-  }
-  else if (n < 8)
-  {
-    cv1->Divide(2,4);    
-  }
-  else if (n < 9)
-  {
-    cv1->Divide(2,4);    
-  }
-  else if (n < 10)
-  {
-    cv1->Divide(3,3);    
-  }
-  else if (n < 11)
-  {
-    cv1->Divide(2,5);    
-  }
-  else
-  {
-    cv1->Divide(3,5);    
-  }
-  for(int i=0; i<n; i++) {
-    cv1->cd(i+1);
-    if (hld1.At(i)) hld1.At(i)->Draw();
+    TCanvas *cv1 = new TCanvas("Vertex_reconstruction_1","MC Vertex reconstruction", 760, 760);
+    DrawHlist(cv1, hld1);
   }
 
-  int n = hld2.GetEntries();
-  if (!n) return;
-  TCanvas *cv2 = new TCanvas("Vertex_reconstruction_2","Vertex reconstruction (tracks hists)", 600, 760);
-  if (n < 2)
+  n = hld2.GetEntries();
+  if (n)
   {
-  }
-  else if (n < 3)
-  {
-    cv2->Divide(1,2);    
-  }
-  else if (n < 4)
-  {
-    cv2->Divide(1,3);    
-  }
-  else if (n < 5)
-  {
-    cv2->Divide(2,2);    
-  }
-  else if (n < 6)
-  {
-    cv2->Divide(2,3);    
-  }
-  else if (n < 7)
-  {
-    cv2->Divide(2,3);    
-  }
-  else if (n < 8)
-  {
-    cv2->Divide(2,4);    
-  }
-  else if (n < 9)
-  {
-    cv2->Divide(2,4);    
-  }
-  else if (n < 10)
-  {
-    cv2->Divide(3,3);    
-  }
-  else if (n < 11)
-  {
-    cv2->Divide(2,5);    
-  }
-  else
-  {
-    cv2->Divide(3,5);    
-  }
-  for(int i=0; i<n; i++) {
-    cv2->cd(i+1);
-    if (hld2.At(i)) hld2.At(i)->Draw();
+    TCanvas *cv2 = new TCanvas("Vertex_reconstruction_2","Vertex reconstruction (tracks hists)", 600, 760);
+    DrawHlist(cv2, hld2);
   }
 
   n = hld3.GetEntries();
-  if (!n) return;
-  TCanvas *cv3 = new TCanvas("Vertex_reconstruction_3","Vertex reconstruction (eff hists)", 600, 760);
-  if (n < 2)
+  if (n)
   {
-  }
-  else if (n < 3)
-  {
-    cv3->Divide(1,2);    
-  }
-  else if (n < 4)
-  {
-    cv3->Divide(1,3);    
-  }
-  else if (n < 5)
-  {
-    cv3->Divide(2,2);    
-  }
-  else if (n < 6)
-  {
-    cv3->Divide(2,3);    
-  }
-  else if (n < 7)
-  {
-    cv3->Divide(2,3);    
-  }
-  else if (n < 8)
-  {
-    cv3->Divide(2,4);    
-  }
-  else if (n < 9)
-  {
-    cv3->Divide(2,4);    
-  }
-  else if (n < 10)
-  {
-    cv3->Divide(3,3);    
-  }
-  else if (n < 11)
-  {
-    cv3->Divide(2,5);    
-  }
-  else
-  {
-    cv3->Divide(3,5);    
-  }
-  for(int i=0; i<n; i++) {
-    cv3->cd(i+1);
-    if (hld3.At(i)) hld3.At(i)->Draw();
+    TCanvas *cv3 = new TCanvas("Vertex_reconstruction_3","Vertex reconstruction (eff hists)", 600, 760);
+    DrawHlist(cv3, hld3);
   }
 
   n = hld4.GetEntries();
-  if (!n) return;
-  TCanvas *cv4 = new TCanvas("Vertex_reconstruction_4","Vertex reconstruction (ntracks)", 600, 760);
+  if (n)
+  {
+    TCanvas *cv4 = new TCanvas("Vertex_reconstruction_4","Vertex reconstruction (ntracks)", 600, 760);
+    DrawHlist(cv4, hld4);
+  }
+}
+///------------------------------------------------------------
+void DrawHlist(TCanvas *c, TObjArray h)
+{
+  int n = h.GetEntries();
   if (n < 2)
   {
   }
   else if (n < 3)
   {
-    cv4->Divide(1,2);    
+    c->Divide(1,2);    
   }
   else if (n < 4)
   {
-    cv4->Divide(1,3);    
+    c->Divide(1,3);    
   }
   else if (n < 5)
   {
-    cv4->Divide(2,2);    
+    c->Divide(2,2);    
   }
   else if (n < 6)
   {
-    cv4->Divide(2,3);    
+    c->Divide(2,3);    
   }
   else if (n < 7)
   {
-    cv4->Divide(2,3);    
+    c->Divide(2,3);    
   }
   else if (n < 8)
   {
-    cv4->Divide(2,4);    
+    c->Divide(2,4);    
   }
   else if (n < 9)
   {
-    cv4->Divide(2,4);    
+    c->Divide(2,4);    
   }
   else if (n < 10)
   {
-    cv4->Divide(3,3);    
+    c->Divide(3,3);    
   }
   else if (n < 11)
   {
-    cv4->Divide(2,5);    
+    c->Divide(2,5);    
   }
   else
   {
-    cv4->Divide(3,5);    
+    c->Divide(3,5);    
   }
   for(int i=0; i<n; i++) {
-    cv4->cd(i+1);
-    if (hld4.At(i)) hld4.At(i)->Draw();
+    c->cd(i+1);
+    if (h.At(i)) h.At(i)->Draw();
   }
 }
+///------------------------------------------------------------
+void d() { DrawHistsV();}
 ///------------------------------------------------------------
 void ClearHistsV()
 {
@@ -540,7 +432,7 @@ void analyze( char *file="alirec.root" )
 	    nvg++;
 	    vt = v->V();
 	    if (vt) FillHistsV(*vt);
-	    v->Print();
+	    if (v->N() > 2) v->Print();
     }
   }
   
@@ -561,8 +453,8 @@ void analyze( char *file="alirec.root" )
 	    vc = v->GetConnectedVertex(0);
 	    if (vc->ID() > v->ID())
 	    {
-		v->Print();
-		vc->Print();
+//		v->Print();
+//		vc->Print();
 		nlv++;
 	    }
 	}

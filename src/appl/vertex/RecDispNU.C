@@ -1,23 +1,26 @@
 #include "My_Track.h"
 #include "My_Header.h"
 
-bool  use_mc_momentum = false;
-bool  use_mc_mass = false;
-bool  only_primary_vertex = true;
-int   primary_vertex_ntracks_min = 2;
-int   rec_primary_vertex_ntracks_min = 2;
-bool  scanning = false;
-bool  write_mc_data = false;
-int   nutype = 2; // 0 - NC, 1 - CC, 2 - NC & CC
-bool  smear = true, setz = true;
-float back1_tetamax =  0.35; 
-float back2_tetamax =  0.25; 
-float back2_plim[2] = {0.5, 5.5};
+bool  use_mc_momentum = false;   // using or not MC track momentum
+bool  use_mc_mass = false;       // using or not MC track particle mass
+bool  only_primary_vertex = true;         // use primary vertex only
+int   primary_vertex_ntracks_min = 2;     // select only primary vertex with
+					  // multiplicity great that this value
+int   rec_primary_vertex_ntracks_min = 2; // accept reconstructed  primary vertex
+					  // with multiplicity great than this value
+bool  scanning = false;  // scanning mode - reconstruct and draw event by event
+                         // with button panel control
+bool  write_mc_data = false; // write MC data for using with RecDispMC.C script
+bool  smear = true; // smear segments with measurement errors
+bool  setz = true; // set Z for segments
+float back1_tetamax =  0.35; // angle acceptance for uncorrelated background
+float back2_tetamax =  0.25; // angle acceptance for cosmictracks
+float back2_plim[2] = {0.5, 5.5}; // momentum range for cosmic
 float fiducial_border = 20000.;
 float fiducial_border_z = 20000.;
 float dpp = 0.20;   // average dp/P 
-float seg_s[4]={.5, .5, 0.0015, 0.0015}; //sx,sy,stx,sty,sP
-float ProbGap = 0.10; //probability to have pattern hole
+float seg_s[4]={1.2, 1.2, 0.0015, 0.0015}; // sx,sy,stx,sty
+float ProbGap = 0.10; // probability to have pattern hole
 float RightRatioMin = 0.5;
 
 int maxgaps[6] = {0,3,3,6,3,6}; // all combinations
@@ -41,13 +44,13 @@ int maxgaps[6] = {0,3,3,6,3,6}; // all combinations
 //	    zvmax = zvmin + (maxgap[5]*zBin)
 //	    zvmin < z-vertex < zvmax
 
-float AngleAcceptance = 0.8;
+float AngleAcceptance = 1.5; // maximal difference between tracks slopes
 
-float ProbMinV  = 0.005;      // min vertex probability 
-float ProbMinVN = 0.005;      // min vertex probability 
-float ProbMinP  = 0.005;     // minimal propagate probability
-float ProbMinT  = 0.005;     // minimal track probability to be used for vtx
-int   nsegMin = 2;
+float ProbMinV  = 0.01;      // min vertex probability 
+float ProbMinVN = 0.01;      // min vertex probability 
+float ProbMinP  = 0.01;     // minimal propagate probability
+float ProbMinT  = 0.01;     // minimal track probability to be used for vtx
+int   nsegMin = 2;          // minimal number segments for track to be used for vtx
 bool  usemom=false;
 
 //////////////////////////////////////////////////////////////////////////
@@ -95,12 +98,13 @@ EdbPatternsVolume *vol=0;
 EdbScanCond  *scan = 0;
 int evnum = 0;
 float z0shift = 295.;
-
+int nutypes = 2;
 //---------------------------------------------------------
 void scan()
 {
+    // start scanning mode
     scanning = true;
-    nutype = 0;
+    nutypes = 0;
     evnum = 0;
     bar = new TControlBar("vertical", "Event Scanning");
     bar->AddButton("Continue","scan1()", "Click Here For Analyze next event");
@@ -114,53 +118,61 @@ void scan()
 //---------------------------------------------------------
 void scan1()
 {
+    // analyze one event in scanning mode
     evnum++;
     if (evnum > 100)
     {
 	 if (nutype == 0)
 	 {
 	    evnum = 1;
-	    nutype = 1;
+	    nutypes = 1;
 	 }
 	 else
 	 {
 	    printf("No more events!");
 	    evnum = 0;
-	    nutype = 2;
+	    nutypes = 2;
 	    scanning = false;
 	    return;
 	 }
     }
-    run(evnum,evnum);
+    run(evnum,evnum, nutypes);
 }
 //---------------------------------------------------------
 void scanend()
 {
+    // stop scanning routine
     scanning = false;
-    nutype = 2;
     evnum = 0;
 }
 //---------------------------------------------------------
-void run(int ib = 1, int ie = 100)
+void run(int ib = 1, int ie = 100, int nutype = 2)
 {
+    // steering routine for event analysis
+    // take events with numbers from 'ib' to 'ie'
+    // nutype = 0 - NC events, 1 - CC events, 2 - NC & CC events
+
     char line[80], nusmtype[7], nutyp[3];
     FILE *frunlist = 0; 
     int i, j, k, l, Event, evold;
     int Event, Track, nV, Trackold, Vertexold;
     float Vt, Vx, Vy, Vz, VPx, VPy, VPz, Tx, Ty, P;
 
+    // initialize Geant Codes arrays
     if (Geant[11] != 3) GCodesInit();
-
-    gSystem->Exec("mv -f fedra.lst fedra.lst.old &> /dev/null");
-    gSystem->Exec("mv -f vertex.lst vertex.lst.old &> /dev/null");
+    // save old runs.lst file
     gSystem->Exec("mv -f runs.lst runs.lst.old &> /dev/null");
+    // find last event number for previos script execution
     for (evold = 1; evold <= 100; evold++)
     {
 	sprintf(line,"ls par/01_%03d.par &>/dev/null", evold);
 	if (!(gSystem->Exec(line))) break;
     }
+    // book hists
     BookHistsV();
+    // open file for write event data
     if (write_mc_data) fmcdata = fopen("vertexes_and_tracks.data","w");
+    // loop on NC and CC collections
     for (int nut = 0; nut < 2; nut++)
     {
       if (nut == 0 && nutype == 1) continue;
@@ -168,12 +180,15 @@ void run(int ib = 1, int ie = 100)
       if (nut == 0) { strcpy(nusmtype, "NC"); strcpy(nutyp, "nc"); }
       if (nut == 1) { strcpy(nusmtype, "CC"); strcpy(nutyp, "cc"); }
       if (smear == 1) strcat(nusmtype,"_NOS");
+      // loop on events in selected (NC or CC) collection
       for (i = ib; i <= ie; i++)
       {
+        // set symbolic link for requested data directory
 	sprintf(line,"rm -f data &>/dev/null");
 	gSystem->Exec(line);
 	sprintf(line,"ln -s /mnt/nusrv3/opera/NUMU%s/numu%s.%03d data\n", nusmtype, nutyp, i);
 	gSystem->Exec(line);
+	// create runs.lst file
 	frunlist = fopen("runs.lst","w");
 	for (j = 58; j>0; j--)
 	{
@@ -188,7 +203,7 @@ void run(int ib = 1, int ie = 100)
 	}
 	evold = i;
 	fclose(frunlist);
-	
+	// clear some counters ( <=500 tracks, <=500 vertexes)
 	for (j = 0; j<500; j++) Pt[j] = -100.;
 	for (j = 0; j<500; j++) VTx[j] = -1000000.;
 	Ntr = 0;
@@ -200,7 +215,7 @@ void run(int ib = 1, int ie = 100)
 	for (j = 0; j<500; j++) Numgent[j] = -1;
 	for (j = 0; j<500; j++) Numgenv[j] = -1;
 	for (j = 0; j<500; j++) TMass[j] = -1;
-
+	// open ROOT file with microtrack information
 	sprintf(filename, "/mnt/nusrv3/opera/NUMU%s/numu%s.%03d/numu%s.%03d.root", nusmtype, nutyp, i, nutyp, i);
 	INfile = &filename[0];
 	fmicro = new TFile(INfile);
@@ -212,15 +227,13 @@ void run(int ib = 1, int ie = 100)
 	MaxTrack = 0;
 	MaxVertex = 0;
 	k = 0;
+	// loop on file entries (microtracks) and fill arrays with
+	// tracks parameters
 	while(k<nentries_micro){
-//	    l = (micro->fChain)->LoadTree(k);
-//	    if (l < 0) break;
 	    micro->GetEntry(k);
 	    k++;
 	    Event = micro->Event;
 	    Track = micro->Track;
-// DEBUG
-//	    if (Track != 1) continue;
 	    nV = micro->nV;
 	    if (nV != 1 && only_primary_vertex) continue;
 	    Vt = micro->Vt;
@@ -234,15 +247,8 @@ void run(int ib = 1, int ie = 100)
 	    Tx = VPx/VPz;
 	    Ty = VPy/VPz;
 	    P = micro->P;
-// DEBUG
-//	    if (Track == 1)
-//	    {
-//		printf("Lay = %d PdgId = %d X = %f Y = %f Z = %f TX = %f TY = %f\n",
-//		micro->Layer, micro->PdgId, micro->X, micro->Y, micro->Z,
-//		micro->Tx, micro->Ty);
-//	    }
 	    if (Track >= 500) continue;
-	    if (Pt[Track] == -100.)
+	    if (Pt[Track] == -100.)  // first occurence for track
 	    {
 		Ntr++;
 		Pt[Track] = P;
@@ -250,8 +256,6 @@ void run(int ib = 1, int ie = 100)
 		TXt[Track] = Tx;
 		TYt[Track] = Ty;
 		NVt[Track] = nV;
-// DEBUG
-//		printf("PdgId = %i\n", PdgId[Track]);
 		TMass[Track] = MassGeant(PdgId[Track]);
 		if (VPz <= 0.) DIRt[Track] = -1.;
 		else	       DIRt[Track] = +1.;
@@ -260,7 +264,7 @@ void run(int ib = 1, int ie = 100)
 		if (Track > MaxTrack) MaxTrack = Track; 
 	    }
 	    if (nV >= 500) continue;
-	    if (VTx[nV] == -1000000.)
+	    if (VTx[nV] == -1000000.)  // first occurence for vertex
 	    {
 		Nvt++;
 		VTx[nV] = Vx;
@@ -272,30 +276,9 @@ void run(int ib = 1, int ie = 100)
 	}
 	for (j = 0; j < MaxTrack; j++)
 	{
-	    Nst[j] /= 2;
-// DEBUG
-//	    if (Pt[j] != -100. && 0)
-//	    {
-//		printf(" T = %d nV = %d Nseg = %d tx = %f ty = %f P = %f\n",
-//		j, NVt[j], Nst[j], TXt[j], TYt[j], Pt[j]);
-//	    }
+	    Nst[j] /= 2; // number of basetracks (microtracs/2)
 	}
-// DEBUG
-//	for (j = 0; j < MaxVertex && 0; j++)
-//	{
-//	    if (VTx[j] != -1000000.)
-//	    {
-//		printf(" nV = %d Ntr = %d Vx = %f Vy = %f Vz = %f\n",
-//		j, Nvtr[j], VTx[j], VTy[j], VTz[j]);
-//		for (int k = 0; k< Nvtr[j]; k++)
-//		{
-//		    printf(" %3d", Numvtr[j][k]);
-//		}
-//		printf("\n");
-//	    }
-//	}
-//	continue;
-	init_rec();
+	init_rec();	 // reconstruct one event
 	delete micro;
 	micro = 0;
 	fmicro = 0;
@@ -304,12 +287,14 @@ void run(int ib = 1, int ie = 100)
     
     if (write_mc_data) fclose(fmcdata);
     
+    // rename .par files to event number 1
     for (j = 58; j>0; j--)
     {
 	sprintf(line,"mv -f par/%02d_%03d.par par/%02d_%03d.par &>/dev/null\n", j, i-1, j, 1);
 	gSystem->Exec(line);
     }
     if (scanning) return;
+    // save hists
     rf = new TFile("RecDispNU.root","RECREATE","MC Vertex reconstruction");
     hlist.Write();
     rf->Close();
@@ -321,7 +306,6 @@ void run(int ib = 1, int ie = 100)
 //---------------------------------------------------------
 void RecDispNU()
 {
-  //init(data_set);
   init_rec();
 }
 
@@ -334,6 +318,7 @@ void init_rec(char *data_set="data_set.def")
 
   if (Geant[11] != 3) GCodesInit();
 
+  // delete previous objects
   if (dset)
   {
     if (gAli->eVTX) gAli->eVTX->Delete();
@@ -353,7 +338,6 @@ void init_rec(char *data_set="data_set.def")
     gener = 0;
   }
 
-//  stdout = freopen("fedra.lst", "w+", stdout);
   dset=new EdbDataProc(data_set);
   dset->InitVolume(0);
   gAli = dset->PVR();
@@ -371,7 +355,7 @@ void init_rec(char *data_set="data_set.def")
   nvggood = 0;
 
   SmearSegments();
-
+  // loop on event vertexes
   for (int iv = 0; iv <= MaxVertex; iv++)
   {
 	    if (VTx[iv] != -1000000.)
@@ -384,7 +368,9 @@ void init_rec(char *data_set="data_set.def")
 		    Track = Numvtr[iv][it];
 		    if (Pt[Track] != -100.)
 		    {
+			// check if less than 2 segment
 			if (Nst[Track] < 2) continue;
+			// count tracks
 			ntgood++;
 			trg = new EdbTrackP(); 
 			Numgent[Track] = numt;
@@ -396,7 +382,9 @@ void init_rec(char *data_set="data_set.def")
 			else
 			    trg->SetM(TMass[Track]);
 			gener->AddTrack(trg);
+			// count tracks at current vertex
 			ntgoodv++;
+			// check if vertex with one track only
 			if (Nvtr[iv] < 2) break;
 			if (DIRt[Track] < 0.)
 			    vert->AddTrack(trg, 0);
@@ -405,7 +393,7 @@ void init_rec(char *data_set="data_set.def")
 		    }
 		}
 		if (hp[24]) hp[24]->Fill((float)ntgoodv);
-		if (ntgoodv < 2)
+		if (ntgoodv < 2) // delete vertex with low multiplicity
 		{
 		    if(trg) trg->SetFlag(0);
 		    delete vert;
@@ -413,7 +401,7 @@ void init_rec(char *data_set="data_set.def")
 		}
 		else
 		{
-		    if (write_mc_data)
+		    if (write_mc_data)  // if data storing requested
 		    {
 		      fprintf(fmcdata, "%d %d %f %f %f\n", iv, ntgoodv,
 			      VTx[iv], VTy[iv], VTz[iv]);
@@ -431,13 +419,16 @@ void init_rec(char *data_set="data_set.def")
 			}
 		      }
 		    }
+		    // check if primary vertex has too low multiplicity
 		    if (iv == 1 && (ntgoodv < primary_vertex_ntracks_min)) break;
+		    // accept vertex
 		    gener->AddVertex(vert);
-		    Numgenv[nv] = iv;
-		    nv++;
+		    // store MC vertex number
+		    Numgenv[nvggood] = iv;
 		    nvggood++;
   	    	    if (iv == 1)
 		    {
+			    // generated primary vertex multiplicity
 			    ntrgood_gen1 = ntgoodv;
 		    }
 		}
@@ -450,18 +441,17 @@ void init_rec(char *data_set="data_set.def")
     return;
   }
 
+  // fill hists with generated parameters
   FillHistsGen();
-
+  // link microtracks
   gAli->Link();
-  printf("link ok\n");
-
-//  stdout = freopen("vertex.lst", "w+", stdout);
 
   printf("Monte-Carlo Ntr = %d Nvt = %d MaxTrackNumber = %d MaxVertexNumber = %d\n", ntgood, nv, MaxTrack, MaxVertex);
   if (hp[25]) hp[25]->Fill((float)ntgood);
-  if (hp[26]) hp[26]->Fill((float)nv);
+  if (hp[26]) hp[26]->Fill((float)nvggood);
 
   gAli->FillTracksCell();
+  // make track candidates
   gAli->MakeTracks();
 
   int nvg = (gener->eVTX)->GetEntries();
@@ -485,12 +475,9 @@ void init_rec(char *data_set="data_set.def")
   int nsegmatch = 0, itrg = 0;
   float p = 0.;
   EdbTrackP *tr = 0;
+  // loop on tracks for momentum and momentum error setting
   for (int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(gAli->eTracks->At(itr));
-    if (tr->Flag()<0)
-    {
-	continue;
-    }
     trg = 0;
     if (ntrg)
     {
@@ -519,22 +506,14 @@ void init_rec(char *data_set="data_set.def")
 	    tr->SetP(p);
 	    if (use_mc_mass) tr->SetM(trg->M());
 	    else	     tr->SetM(0.);
-	    if (trg->Flag() == 0)        // background track
-	    {
-	    }
-	    else if (trg->Flag() <= nvg) // track at vertex
-	    {
-	    }
-	}
-	else
-	{
 	}
     }
   }
-
+  // fit tracks, use predefined track momentum and mass
   gAli->FitTracks(0., 0.);
 
   gAli->FillCell(50,50,0.015,0.015);
+  // merge tracks
   gAli->PropagateTracks(55,2,ProbMinP);
 
   ntr = gAli->eTracks->GetEntries();
@@ -548,28 +527,29 @@ void init_rec(char *data_set="data_set.def")
   int nreject_nseg1 = 0, nreject_prob1 = 0;
   double right_ratio = 0.;
   float dx = 0.;
-
+  // loop on tracks for finding corresponding generated track,
+  // count statistic and hists filling
   for(int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(gAli->eTracks->At(itr));
     trg = 0;
     numveg = 0;
     right_ratio = 0.;
-    if (ntrg)
+    if (ntrg) // number of generated tracks
     {
 	itrg = tr->GetSegmentsAid(nsegmatch);
-	if (itrg >= 0 && itrg <= MaxTrack)
+	if (itrg >= 0 && itrg <= MaxTrack) // valid generated track MC index
 	{
 	    itrg = Numgent[itrg];
-	    if (itrg >= 0 && itrg < ntrg)
+	    if (itrg >= 0 && itrg < ntrg)  // valid generated track PVGen index
 	    {
 	      trg = (EdbTrackP*)(gener->eTracks->At(itrg));
-	      right_ratio = (double)nsegmatch/tr->N();
+	      right_ratio = (double)nsegmatch/tr->N(); // "right" segments %%
 	      if (right_ratio >= RightRatioMin)
 	      {
 	        numveg = trg->Flag() - 1;
 		if (numveg >= 0 && numveg < 500)
 		{
-	    	    numveg = Numgenv[numveg];
+	    	    numveg = Numgenv[numveg];  // number of generated vertex
 		}
 		else
 		{
@@ -594,6 +574,7 @@ void init_rec(char *data_set="data_set.def")
 
     if (tr->Flag()<0)
     {
+	// count "broken" tracks
 	negflag++;
 	if (numveg == 1) negflag1++;
 	continue;
@@ -601,6 +582,7 @@ void init_rec(char *data_set="data_set.def")
     if (hp[11]) hp[11]->Fill(tr->N());
     if (tr->N()<nsegMin)
     {
+	// count short tracks
 	nreject_nseg++;
 	if (numveg == 1) nreject_nseg1++;
 	continue;
@@ -608,12 +590,13 @@ void init_rec(char *data_set="data_set.def")
 
     dx = (tr->GetSegmentFirst())->X()-(tr->GetSegmentFFirst())->X();
 
-    if (trg != 0 && dx != 0.)
+    if (trg != 0 && dx != 0.)  // reject 'one-segment' tracks (due to high MS)
     {
 	hp[17]->Fill(tr->Prob());
     }
     if (tr->Prob()<ProbMinT)
     {
+	// count low probability tracks
 	nreject_prob++;
 	if (numveg == 1) nreject_prob1++;
 	continue;
@@ -632,6 +615,7 @@ void init_rec(char *data_set="data_set.def")
 	      }
 	      else if (trg->Flag() <= nvg) // track at vertex
 	      {
+	        // count matched tracks
 		ntrgood++;
 		if (right_ratio >= RightRatioMin)
 		{
@@ -644,29 +628,9 @@ void init_rec(char *data_set="data_set.def")
 
     if (hp[12])
     {
-	if (dx != 0. && tr->N() > 2) 
-	    hp[12]->Fill(dx);
-/*	else
-	{
-	    Track = (tr->GetSegmentFirst())->ID();
-	    float ptx = tr->TX();
-	    float pty = tr->TY();
-	    float dPb = 1290.*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-	    float teta0sq = EdbPhysics::ThetaMS2( tr->P(), tr->M(), dPb, 5810. );
-	    printf("ID = %d Nseg = %f P = %f Z = %f PdgId = %d TMS2 = %f\n",
-	    tr->ID(), tr->N(), tr->P(), tr->Z(), PdgId[Track], teta0sq); 
-	    tr->GetSegmentFirst()->COV()->Print();
-	    tr->GetSegmentFFirst()->COV()->Print();
-	} */
+	if (dx != 0. && tr->N() > 2) hp[12]->Fill(dx);
     }
 
-    if (trg != 0)
-    {
-//	DE_MC = trg->DE();
-//	DE_FIT = tr->DE();
-//	hp[19]->Fill(DE_FIT-DE_MC);
-//	hp[23]->Fill((tr->P_MS() - trg->P())/trg->P()*100.);
-    }
   }
 
   printf("  %6d tracks found after propagation\n", ntr-negflag);
@@ -681,9 +645,9 @@ void init_rec(char *data_set="data_set.def")
 
 
   bool usemom = false;
-
+  // find 2-track vertexes
   int nvtx = gAli->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
-
+  // clear some statistic counters
   int nvagood[100];
   int nvagoodm[100];
   for (int i=0; i<100; i++) nvagood[i] = 0;
@@ -701,27 +665,29 @@ void init_rec(char *data_set="data_set.def")
 
   int nadd = 0;
   int np = 0;
-  
+  // find N-tracks vertexes
   nadd = gAli->ProbVertexN(ProbMinVN);
 
   nvtx = gAli->eVTX->GetEntries();
-
+  // loop on found vertexes
   for (int i=0; i<nvtx; i++)
     {
   	edbv = (EdbVertex *)((gAli->eVTX)->At(i));
-	if (edbv && (edbv->Flag() != -10))
+	if (edbv && (edbv->Flag() != -10)) // reject "used" 2-tracks vertexes
 	{
 	    v = edbv->V();
 	    if (v)
 	    {
 		if (v->valid())
 		{
-		    if ((np = v->ntracks()) >= 2)
+		    if ((np = v->ntracks()) >= 2) // np is vertex multiplicity
 		    {
+			    // count valid vertexes
 			    nvgood++;
 			    nvagood[np]++;
 			    tr = edbv->GetTrack(0);
-			    int ivg0 = -1;
+			    // find 'ivg0' - index of corresponding PVGen vertex
+			    int ivg0 = -1000000;
 			    if(tr) ivg0 = tr->GetSegmentsAid(nsegmatch);
 			    if (ivg0 >= 0 && ivg0 <= MaxTrack)
 			    {
@@ -735,6 +701,8 @@ void init_rec(char *data_set="data_set.def")
 			    {
 			      ivg0 = -1000000;
 			    }
+			    // check if all vertex tracks belong to the same
+			    // generated vertex
 			    ivg = -2000000;
 			    for (int j=1; j<edbv->N() && ivg0>0; j++)
 			    {
@@ -756,13 +724,15 @@ void init_rec(char *data_set="data_set.def")
 			    if (ivg != ivg0) continue;
 			    if (ivg <= 0) continue;
 			    if (ivg >  nvg) continue;
+			    // check if vertex has valid multiplicity
 			    if (np < rec_primary_vertex_ntracks_min) continue;
+			    // count 'right' vertexes
 			    nvagoodm[np]++;
 			    nvgoodm++;
   			    edbvg = (EdbVertex *)((gener->eVTX)->At(ivg-1));
-			    vxo = edbv->X();	
-			    vyo = edbv->Y();	
-			    vzo = edbv->Z();
+			    vxo = edbv->VX();	
+			    vyo = edbv->VY();	
+			    vzo = edbv->VZ();
 			    vxg = edbvg->X();
 			    vyg = edbvg->Y();
 			    vzg = edbvg->Z();
@@ -772,16 +742,16 @@ void init_rec(char *data_set="data_set.def")
 	    }
 	}
     }
-//  if (hp[9]) hp[9]->Fill(nvgoodm[Nvtr[1]]);
   if (hp[9]) hp[9]->Fill(nvgood);
   if (nvggood)
   {
     if (hp[23]) hp[23]->Fill((float)nvgoodm/nvggood);
     if (hp[8]) hp[8]->Fill((float)nvgood/nvggood);
   }
+ 
   if (1) return;
-
-  if (nv)
+  // set special flag values for 'linked' vertexes (i.e. with common track)
+  if (nvtx)
   {
     int nlv = gAli->LinkedVertexes();
     printf("%d linked vertexes found\n", nlv);
@@ -795,14 +765,15 @@ void init_rec(char *data_set="data_set.def")
 	    vc = v->GetConnectedVertex(0);
 	    if (vc->ID() > v->ID())
 	    {
-		v->Print();
-		vc->Print();
+//		v->Print();
+//		vc->Print();
 	    }
 	}
       }
     }
   }
-  int nn = gAli->VertexNeighboor(1000.);
+  // fill vertexes neighborhood
+  int nn = gAli->VertexNeighboor(1000.,2);
   printf("%d neighbooring tracks found\n", nn);
   delete vol;
   vol = 0;
@@ -819,7 +790,6 @@ void init(char *data_set="data_set.def")
 //---------------------------------------------------------
 void dsall()
 {
-//  if(!gAli) init();
 
   TObjArray *arr   = new TObjArray();  
 
@@ -828,17 +798,13 @@ void dsall()
   gStyle->SetPalette(1);
   if(!ds) 
     ds=new EdbDisplay("display-segments",-60000.,60000.,-60000., 62000., 0.,100000.);
-  //ds=new EdbDisplay("display-segments",26000.,30000.,-56000.,-52000.,40000.,100000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( gAli->eTracks );
   ds->SetDrawTracks(3);
   ds->Draw();
-//  delete ds;
-//  ds = 0;
   delete arr;
   arr = 0;
-
 }
 
 //---------------------------------------------------------
@@ -846,7 +812,6 @@ void dsv( int numv = -1, int numt = -1, float binx=6, float bint=10 )
 {
   if(!gAli->eVTX) return;
   if(!gAli->eTracks) return;
-  if(!gAli) init();
 
   EdbSegP *seg=0;     // direction
 
@@ -874,13 +839,11 @@ void dsv( int numv = -1, int numt = -1, float binx=6, float bint=10 )
   int ntr = gAli->eTracks->GetEntries();
   for(int i=0; i<ntr; i++) {
       EdbTrackP *track = (EdbTrackP *)(gAli->eTracks->At(i));
-      //track->Print();
       if (track->Flag() < 0) continue;
       printf("Track ID %d, Z = %f, Nseg = %d\n",
       track->ID(), track->Z(), track->N());
       if (numt < 0 || numt == i)
         arrtr->Add(track);
-//      gAli->ExtractDataVolumeSeg( *track,*arr,binx,bint );
   }
 
   for(int iv=iv0; iv<iv1; iv++)  {   
@@ -895,7 +858,6 @@ void dsv( int numv = -1, int numt = -1, float binx=6, float bint=10 )
 
   if(ds) delete ds;
   ds=new EdbDisplay("display-vertexes",-60000.,60000.,-60000., 62000., 0.,100000.);
-//  ds=new EdbDisplay("display-vertexes",26000.,30000.,-56000.,-52000.,40000.,100000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( arrtr );
@@ -935,14 +897,12 @@ void dsvg( int numv = -1, float binx=6, float bint=10 )
 
     arrV->Add(v);
 
-    gAli->ExtractDataVolumeSegAll( *arr );
     int ntr = v->N();
-//    printf("ntr=%d\n",ntr);
+    printf("Vertex %d, multiplicity %d\n", iv, ntr);
     for(int i=0; i<ntr; i++) {
       EdbTrackP *track = v->GetTrack(i);
-      //track->Print();
-      printf("Vertex %d, Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
-      iv, track->ID(), track->Z(), track->N(), v->Zpos(i));
+      printf("        Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
+      track->ID(), track->Z(), track->N(), v->Zpos(i));
       arrtr->Add(track);
     }
 
@@ -952,12 +912,12 @@ void dsvg( int numv = -1, float binx=6, float bint=10 )
 
   if(ds) delete ds;
   ds=new EdbDisplay("display-generated",-60000.,60000.,-60000., 62000., 0.,100000.);
-//  ds=new EdbDisplay("display-generated",26000.,30000.,-56000.,-52000.,40000.,100000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( arrtr );
   ds->SetArrV( arrV );
   ds->SetDrawVertex(1);
+  ds->SetDrawTrack(4);
   ds->Draw();
 }
 //---------------------------------------------------------
@@ -994,12 +954,11 @@ void dsvg2( int numv = -1, float binx=6, float bint=10 )
 
     gAli->ExtractDataVolumeSegAll( *arr );
     int ntr = v->N();
-//    printf("ntr=%d\n",ntr);
+    printf("Vertex %d, multiplicity %d\n", iv, ntr);
     for(int i=0; i<ntr; i++) {
       EdbTrackP *track = v->GetTrack(i);
-      //track->Print();
-      printf("Vertex %d, Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
-      iv, track->ID(), track->Z(), track->N(), v->Zpos(i));
+      printf("        Track ID %d, Z = %f, Nseg = %d, Zpos = %d\n",
+      track->ID(), track->Z(), track->N(), v->Zpos(i));
       arrtr->Add(track);
     }
 
@@ -1009,7 +968,6 @@ void dsvg2( int numv = -1, float binx=6, float bint=10 )
 
   if(ds2) delete ds2;
   ds2=new EdbDisplay("display-generated-2",-60000.,60000.,-60000., 62000., 0.,100000.);
-//  ds=new EdbDisplay("display-generated-2",26000.,30000.,-56000.,-52000.,40000.,100000.);
   
   ds2->SetArrSegP( arr );
   ds2->SetArrTr( arrtr );
@@ -1109,9 +1067,9 @@ double smass = 0.1395700;
 ///-----------------------------------------------------------------------
 void FillHistsV(Vertex &v)
 {
-  hp[0]->Fill(v.vx() + ((double)vxo - (double)vxg));
-  hp[1]->Fill(v.vy() + ((double)vyo - (double)vyg));
-  hp[2]->Fill(v.vz() + ((double)vzo - (double)vzg));
+  hp[0]->Fill((double)vxo - (double)vxg);
+  hp[1]->Fill((double)vyo - (double)vyg);
+  hp[2]->Fill((double)vzo - (double)vzg);
   hp[3]->Fill(v.vxerr());
   hp[4]->Fill(v.vyerr());
   hp[5]->Fill(v.vzerr());
@@ -1246,7 +1204,6 @@ void ClearHistsV()
   }
 }
 //______________________________________________________________________________
-
 #define MAXCODES 10000
 int Geant[2*MAXCODES];
 //______________________________________________________________________________
@@ -1439,14 +1396,11 @@ void SmearSegments()
         sumz += z;
         hpp[0]->Fill(i, z);
 	if (i && sumzold != -1.) hp[31]->Fill(sumzold - z);
-//	if (i && sumzold != -1.) hp[31]->Fill(z - sumzold);
         seg->SetZ( (n - i - 1)*1290. );
-//        seg->SetZ( i*1290. );
       }
     }
     if (pat->N()) sumzold = sumz/pat->N();
     else sumzold = -1.;
-//    if ((i == (n-1)) && setz && (sumzold != -1.)) z0shift = sumzold;
   }
 }
 
