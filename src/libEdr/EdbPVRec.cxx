@@ -45,7 +45,7 @@ void EdbScanCond::SetDefault()
 }
 
 //______________________________________________________________________________
-void EdbScanCond::Print()
+void EdbScanCond::Print() const
 {
   printf( "******************************************************\n");
   printf( "Scanning Conditions Parametres: %s\n", GetName() );
@@ -55,6 +55,8 @@ void EdbScanCond::Print()
   printf( "Acceptance bins:   \t%f \t%f \t%f \t%f\n",BinX(),BinY(),BinTX(),BinTY());
   printf( "Puls ramp at 0   angle: \t%f \t%f \n", ePuls0[0],  ePuls0[1]  );
   printf( "Puls ramp at 0.4 angle: \t%f \t%f \n", ePuls04[0], ePuls04[1] );
+  printf( "Chi2Max: \t %f\n",Chi2Max());
+  printf( "Chi2PMax:\t %f\n",Chi2PMax());
   printf( "******************************************************\n");
 }
 
@@ -312,7 +314,7 @@ int EdbPatCouple::FillCHI2P()
     chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2Aprob( *(Pat2()->GetSegment(scp->ID2())) );
     scp->SetCHI2P(chi2);
   }
-  printf("Chi2P filled:  %d \n",Ncouples());
+  //printf("Chi2P filled:  %d \n",Ncouples());
   return Ncouples();
 }
 
@@ -327,7 +329,7 @@ int EdbPatCouple::FillCHI2()
     chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2A( *(Pat2()->GetSegment(scp->ID2())) );
     scp->SetCHI2(chi2);
   }
-  printf("Chi2 filled:  %d \n",Ncouples());
+  //printf("Chi2 filled:  %d \n",Ncouples());
   return Ncouples();
 }
 
@@ -507,16 +509,15 @@ int EdbPatCouple::LinkFast()
 
   SetZlink( (Pat2()->Z()+Pat1()->Z())/2. );
 
-  printf("Couple: link (fast) patterns: %d (%d)  and  %d (%d) at Z = %f\n",
+  printf("Couple: link patterns: %d (%d)  and  %d (%d) at Z = %f\n",
 	 Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
-  printf("Cells filled... \n");
 
   Long_t vdiff[4]={1,1,1,1};
 
   npat = DiffPat( Pat1(), Pat2(), vdiff );
-  printf("diffpat: %d \n",npat);
+  //printf("diffpat: %d \n",npat);
 
   FillCHI2P();
   FillCHI2();
@@ -858,7 +859,7 @@ int EdbPVRec::Link()
     pc->SortByCHI2();
     npat += pc->Ncouples();
   }
-  printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
+  //printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
   return npat;
 }
 

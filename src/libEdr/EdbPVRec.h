@@ -37,6 +37,9 @@ class EdbScanCond : public TNamed {
   Float_t eBinX,eBinY;        // bins [normalized to Sigma()]
   Float_t eBinTX,eBinTY;      //
 
+  Float_t eChi2Max;           //
+  Float_t eChi2PMax;          //
+
  public:
   EdbScanCond();
   virtual ~EdbScanCond(){}
@@ -58,6 +61,11 @@ class EdbScanCond : public TNamed {
   float BinTX() const {return eBinTX;}
   float BinTY() const {return eBinTY;}
 
+  void  SetChi2Max(float chi2)  {eChi2Max=chi2;}
+  void  SetChi2PMax(float chi2) {eChi2PMax=chi2;}
+  float Chi2Max()    const {return eChi2Max;}
+  float Chi2PMax()   const {return eChi2PMax;}
+
   float StepX(float dz)   const;
   float StepY(float dz)   const;
   float StepTX(float tx)  const { return BinTX()*SigmaTX(tx); }
@@ -75,7 +83,7 @@ class EdbScanCond : public TNamed {
   float ProbSeg( float tx, float ty, float puls) const;
   float ProbSeg( float t, float puls) const; 
 
-  void Print();
+  void Print() const;
 
   ClassDef(EdbScanCond,1)  // Scanning Conditions Parameters
 };
@@ -214,7 +222,7 @@ class EdbPatCouple : public TObject {
   void         PrintCouples();
   
   int    Align();
-  int    AlignAff(EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4]);
+  //int    AlignAff(EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4]);
   int    FindOffset0(float xmax, float ymax);
   int    FindOffset01(float xmax, float ymax);
   int    FindOffset1(float xmax, float ymax);
