@@ -3118,64 +3118,47 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
   EdbSegP *segmax=0;
 
   EdbPattern *pat  = 0;
-  int nseg =0, nsegTot=0;
-
-  int ntr = eTracks->GetEntriesFast();
-
-  int ngap =0;
-
-  //printf("pstart, pend, step: %d %d %d \t ntr =%d\n",pstart,pend,step,ntr);
+  int   nseg =0, nsegTot=0;
+  int   ntr = eTracks->GetEntriesFast();
+  int   ngap =0, trind=0;
+  float probmax=0, prob=0;
 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
-    if(!pat)                   continue;
+    if(!pat)                     goto GAP;
     ss.PropagateTo(pat->Z());
     
     arr.Clear();
     nseg = pat->FindCompliments(ss,arr,binx,bint);
+    if(!nseg)                   goto GAP;
 
-    float probmax=0, prob=0;
+    probmax=prob=0;
     segmax=0;
-    if(nseg==1)   {                           // TODO add segment owner logic
-      probmax=1.;
-      segmax = (EdbSegP*)(arr.At(0));
-    } else if(nseg>1) {
-      for(int is=0; is<nseg; is++ ) {
-	seg = (EdbSegP*)(arr.At(is));
-	prob = EdbVertexRec::ProbeSeg( &tr, seg, X0 );
-	if( prob>probmax ) { probmax=prob; segmax=seg; }
-      }
+    for(int is=0; is<nseg; is++ ) {
+      seg = (EdbSegP*)(arr.At(is));
+      prob = EdbVertexRec::ProbeSeg( &tr, seg, X0 );
+      if( prob>probmax ) { probmax=prob; segmax=seg; }
     }
-    if(!segmax) {ngap++; continue;}
+    if(!segmax)                  goto GAP;
+    if(probmax<probMin)          goto GAP;
 
-    int trind= segmax->Track();
-
+    trind= segmax->Track();
     if( trind >= 0 && trind<ntr ) {
       EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
-      if( ttt->N() > tr.N() ) {
-	ngap++; continue;
-	//tr.SetFlag(-10);
-	//tr.SetSegmentsTrack(-1);
-	//return 0;
-      } else {
-	ttt->SetFlag(-10);
-	//ttt->SetSegmentsTrack(-1);
-      }
+      if( ttt->N() > tr.N() )     goto GAP;
+      else 	ttt->SetFlag(-10);
     }
 
-    if(probmax>probMin) {
-      if( EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) {
+    if( !EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) goto GAP;
 
-	segmax->SetTrack(tr.ID());
-	tr.MakeSelector(ss,followZ);
-	nsegTot++;
-	ngap =0;
-	int fl = tr.Flag()+1;
-	tr.SetFlag(fl);
-      }
-    }
+    segmax->SetTrack(tr.ID());
+    tr.MakeSelector(ss,followZ);
+    nsegTot++;
+    ngap =0;
+    tr.SetFlag(tr.Flag()+1);
 
-    if(ngap>ngapMax) break;
+  GAP:
+    if(++ngap>ngapMax) break;
   }
 
   tr.SetNpl();
