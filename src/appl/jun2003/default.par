@@ -24,17 +24,17 @@ AFFTXTY 0 	1 0 0 1 	0 0
 #     "Prototype_OPERA_microtrack"
 SIGMAGR  1       .5  .5   3.            # sigmaX sigmaY sigmaZ for one grain
 SIGMA0   1       .5  .5  .010  .010 	# sigmaX sigmaY  sigmaTX sigmaTY
-DEGRAD   1       6.			# angular degradation: sig(tx) = sig(0)*(1+deg*tx)
-BINS     1       5   5   3  3		# bin*sigma = acceptance
+DEGRAD   1       5.			# angular degradation: sig(tx) = sig(0)*(1+deg*tx)
+BINS     1       5   5   4  4		# bin*sigma = acceptance
 RAMP0    1       8   12			# puls(Signal 1%) puls(Signal 80%) at  0 rad angle
-RAMP04   1       7   11			# puls(Signal 1%) puls(Signal 80%) at .4 rad angle
-CHI2MAX  1	 5.5			# chi2 simple
-CHI2PMAX 1	 5.5			# chi2 with puls weighting (ramp used)
+RAMP04   1       6   9			# puls(Signal 1%) puls(Signal 80%) at .4 rad angle
+CHI2MAX  1	 3.5			# chi2 simple
+CHI2PMAX 1	 3.5			# chi2 with puls weighting (ramp used)
 
 #     "Prototype_OPERA_basetrack_300micron"
 SIGMA0   0       9.  10.  .006  .006
-DEGRAD   0       5.
-BINS     0       3   3   3  3
+DEGRAD   0       4.
+BINS     0       5   5   3  3
 RAMP0    0       15  15
 RAMP04   0       15  15
 CHI2MAX  0	 3.5
