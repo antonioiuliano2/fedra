@@ -47,16 +47,16 @@ double EdbPhysics::ThetaMS2( float pr, float mass, float dx, float X0 )
 
   double p = pr;
   if (p < 0.001) p = 0.001;
-  double k = 0.0136*0.0136;    // [GeV]
+  double k = 0.0136*0.0136;    // [GeV]*[GeV]
   double p2 = p*p;
   double p4 = p2*p2;
   double e2 = mass*mass+p2;
   double dxx = TMath::Abs(dx/X0);
   double fact = 1.+0.038*TMath::Log(dxx);
   if (fact < 0.01) fact = 0.01;
-  double teta = k*e2*dxx/p4*fact*fact;
-  if (teta <= 1.) return teta;
-  else		  return 1.;
+  double teta2 = k*e2*dxx/p4*fact*fact;
+  if (teta2 <= 1.) return teta2;
+  else		   return 1.;
 }
 
 //________________________________________________________________________
