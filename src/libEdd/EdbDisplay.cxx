@@ -45,7 +45,7 @@
 #include "TSlider.h"
 #include "TRint.h"
 #include "TStyle.h"
-
+#include <cmath>
 
 ClassImp(EdbDisplay);
 

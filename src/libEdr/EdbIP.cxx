@@ -218,13 +218,14 @@ int  EdbIP::Peak8( TH2F *h, float thr )
   printf("hist: %d %d\n",nc,nr);
   int npeaks=0;
 
-  for(int ic=2; ic<nc-3; ic++) {
-    for(int ir=2; ir<nr-3; ir++) {
+  int ic,ir,in;           // declare here to fix marazmatic eror messages of VC++
+  for(ic=2; ic<nc-3; ic++) {
+    for(ir=2; ir<nr-3; ir++) {
 
       pix = (float)(h->GetBinContent(ic,ir)); 
       if( pix < thr)   goto NEXTPIX;
 
-      for(int in=0; in<8; in++) {
+      for(in=0; in<8; in++) {
 	pp = (float)(h->GetBinContent( ic+xn[in], ir+yn[in] ));
       	if( pix <= pp ) goto NEXTPIX;
       }
