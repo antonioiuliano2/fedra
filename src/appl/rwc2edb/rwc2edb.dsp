@@ -86,6 +86,10 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\libDataConversion.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\rwc2edb.cpp
 # End Source File
 # End Group
@@ -94,15 +98,19 @@ SOURCE=.\rwc2edb.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=C:\libEdb\EdbCluster.h
+SOURCE=C:\fedra\src\libEdb\EdbCluster.h
 # End Source File
 # Begin Source File
 
-SOURCE=C:\libEdb\EdbFiducial.h
+SOURCE=C:\fedra\src\libEdb\EdbFiducial.h
 # End Source File
 # Begin Source File
 
-SOURCE=C:\libEdb\EdbRun.h
+SOURCE=C:\fedra\src\libEdb\EdbFrame.h
+# End Source File
+# Begin Source File
+
+SOURCE=C:\fedra\src\libEdb\EdbRun.h
 # End Source File
 # Begin Source File
 
@@ -110,11 +118,15 @@ SOURCE=C:\libEdb\EdbRunHeader.h
 # End Source File
 # Begin Source File
 
-SOURCE=C:\libEdb\EdbSegment.h
+SOURCE=C:\fedra\src\libEdb\EdbSegment.h
 # End Source File
 # Begin Source File
 
-SOURCE=C:\libEdb\EdbView.h
+SOURCE=C:\fedra\src\libEdb\EdbView.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\libDataConversion.h
 # End Source File
 # Begin Source File
 
@@ -139,7 +151,7 @@ SOURCE=C:\root\lib\libWin32.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\libEdb_FREEZED\libEdb.lib
+SOURCE=C:\fedra\src\libEdb\libEdb.lib
 # End Source File
 # Begin Source File
 
