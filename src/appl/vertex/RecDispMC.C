@@ -375,7 +375,7 @@ void gv(int n=1, int nve=100, int nback1=0, int nback2=0)
     fprintf(f,"Right 2-Track vertexes finding efficiency %6.1f\n",
 	     v2goodm_eff*100.);
   }
-  if (nprong == 3 && ngv)
+  if (nprong >= 3 && ngv)
   {
     float v3good_eff = (float)nv3good_tot/ngv;
     printf("3-Track vertexes finding efficiency %6.1f\n",
@@ -388,7 +388,7 @@ void gv(int n=1, int nve=100, int nback1=0, int nback2=0)
     fprintf(f,"Right 3-Track vertexes finding efficiency %6.1f\n",
 	     v3goodm_eff*100.);
   }
-  if (nprong == 4 && ngv)
+  if (nprong >= 4 && ngv)
   {
     float v4good_eff = (float)nv4good_tot/ngv;
     printf("4-Track vertexes finding efficiency %6.1f\n",
@@ -401,7 +401,7 @@ void gv(int n=1, int nve=100, int nback1=0, int nback2=0)
     fprintf(f,"Right 4-Track vertexes finding efficiency %6.1f\n",
 	     v4goodm_eff*100.);
   }
-  if (nprong == 5 && ngv)
+  if (nprong >= 5 && ngv)
   {
     float v5good_eff = (float)nv5good_tot/ngv;
     printf("5-Track vertexes finding efficiency %6.1f\n",
@@ -939,9 +939,10 @@ void rec_all()
 
   int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
 
-  int nvgood = 0;
-  int nvgoodm = 0;
+  int nvgood[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int nvgoodm[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   int ivg = 0;
+  int np = 0;
   for (int i=0; i<nvtx; i++)
     {
   	edbv = (EdbVertex *)((ali->eVTX)->At(i));
@@ -952,9 +953,9 @@ void rec_all()
 	    {
 		if (v->valid())
 		{
-		    if (v->ntracks() == 2)
+		    if ((np = v->ntracks()) == 2)
 		    {
-			nvgood++;
+			nvgood[np]++;
 			if ( local_coordinates )
 			{
 			    int ivg0 = (edbv->GetTrack(0)->GetSegmentsFlag(nsegmatch));
@@ -971,26 +972,24 @@ void rec_all()
 				if (ivg != ivg0) break;
 			    }
 			    if (ivg != ivg0) continue;
-			    nvgoodm++;
+			    nvgoodm[np]++;
 			}	
 		    }
 		}
 	    }
 	}
     }
-  printf("%d 2-track vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
-  fprintf(f,"%d 2-track vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+  printf("%d 2-track vertexes found (%d matched to MC)\n", nvgood[2], nvgoodm[2]);
+  fprintf(f,"%d 2-track vertexes found (%d matched to MC)\n", nvgood[2], nvgoodm[2]);
 
-  nv2good_tot += nvgood;
-  nv2goodm_tot += nvgoodm;
+  nv2good_tot += nvgood[2];
+  nv2goodm_tot += nvgoodm[2];
 
   int nadd = 0;
   int nprong = nuse + 1 - neutral_primary;
   
   if (nprong > 2) nadd = ali->ProbVertexN(ProbMinVN);
 
-  nvgood = 0;
-  nvgoodm = 0;
   ivg = 0;
   for (int i=0; i<nvtx; i++)
     {
@@ -1002,9 +1001,9 @@ void rec_all()
 	    {
 		if (v->valid())
 		{
-		    if (v->ntracks() == nprong)
+		    if ((np = v->ntracks()) > 2)
 		    {
-			nvgood++;
+			nvgood[np]++;
 			if ( local_coordinates )
 			{
 			    tr = edbv->GetTrack(0);
@@ -1025,7 +1024,7 @@ void rec_all()
 				if (ivg != ivg0) break;
 			    }
 			    if (ivg != ivg0) continue;
-			    nvgoodm++;
+			    nvgoodm[np]++;
   			    edbvg = (EdbVertex *)((gener->eVTX)->At(ivg-1));
 			    vxo = edbv->X();	
 			    vyo = edbv->Y();	
@@ -1040,20 +1039,20 @@ void rec_all()
 	    }
 	}
     }
-  if (hp[9]) hp[9]->Fill(nvgood);
-  if (nprong == 3)
+  if (hp[9]) hp[9]->Fill(nvgood[nprong]);
+  if (nprong >= 3)
   {
-    printf("%d 3-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
-    fprintf(f,"%d 3-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
-    nv3good_tot += nvgood;
-    nv3goodm_tot += nvgoodm;
+    printf("%d 3-tracks vertexes found (%d matched to MC)\n", nvgood[3], nvgoodm[3]);
+    fprintf(f,"%d 3-tracks vertexes found (%d matched to MC)\n", nvgood[3], nvgoodm[3]);
+    nv3good_tot += nvgood[3];
+    nv3goodm_tot += nvgoodm[3];
   }
-  if (nprong == 4)
+  if (nprong >= 4)
   {
-    printf("%d 4-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
-    fprintf(f,"%d 4-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
-    nv4good_tot += nvgood;
-    nv4goodm_tot += nvgoodm;
+    printf("%d 4-tracks vertexes found (%d matched to MC)\n", nvgood[4], nvgoodm[4]);
+    fprintf(f,"%d 4-tracks vertexes found (%d matched to MC)\n", nvgood[4], nvgoodm[4]);
+    nv4good_tot += nvgood[4];
+    nv4goodm_tot += nvgoodm[4];
   }
   if (nvtx)
   {
@@ -1080,7 +1079,7 @@ void rec_all()
       }
     }
     int nn = ali->VertexNeighboor(2000.);
-    printf("%d neighbooring tracks found\n", nn);
+    printf("%d neighbooring tracks and segments found\n", nn);
   }
 }
 

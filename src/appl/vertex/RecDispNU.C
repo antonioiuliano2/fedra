@@ -63,17 +63,17 @@ void init_rec(char *data_set="data_set.def")
   gAli->FillCell(50,50,0.015,0.015);
   gAli->PropagateTracks(55,2,ProbMinP);
 
-  int ntr = gAli->eTracks->GetEntries();
-  EdbTrackP *tr = 0;
-  for(int i=0; i<ntr; i++) 
-  {
-    tr = (EdbTrackP *)(gAli->eTracks->At(i));
-    tr->SetErrorP(0.1);
+//  int ntr = gAli->eTracks->GetEntries();
+//  EdbTrackP *tr = 0;
+//  for(int i=0; i<ntr; i++) 
+//  {
+//    tr = (EdbTrackP *)(gAli->eTracks->At(i));
+//    tr->SetErrorP(0.1);
 //    if (tr->ID() == 10 ||tr->ID() == 16 || tr->ID() == 21 )
 //    {
 //	tr->SetFlag(-10);
 //    }
-  }
+//  }
   
   int nvtx = gAli->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
   printf("%d 2-track vertexes was found\n",nvtx);
