@@ -66,7 +66,14 @@ EdbView::~EdbView()
 void EdbView::Clear()
 {
   if(eClusters) { eClusters->Clear(); }
-  if(eSegments) { eSegments->Clear(); }
+  if(eSegments) { 
+    TObjArray *e=0;
+    for(int i=0; i<Nsegments(); i++) {
+      e=((EdbSegment*)eSegments->At(i))->GetElements();
+      if( e ) e->Clear();
+    }
+    eSegments->Clear(); 
+  }
   if(eTracks)   { eTracks->Clear();   }
   if(eFrames)   { eFrames->Clear();   }
 }
@@ -225,6 +232,80 @@ TPolyMarker3D *EdbView::DrawClustersSegments(Option_t *opt) const
       marks->SetNextPoint( cluster->GetX(), cluster->GetY(), cluster->GetZ() );
   }
   return marks;
+}
+
+//______________________________________________________________________________
+int EdbView::AttachClustersToSegments()
+{
+  int nca=-1;
+  nca = AttachClustersToSegmentsFast();
+  if(nca<0)  {
+    nca = AttachClustersToSegmentsSlow();
+    printf("AttachClustersToSegments: segments do not sorted - use slow algorithm!\n");
+  }
+  return nca;
+}
+
+//______________________________________________________________________________
+int EdbView::AttachClustersToSegmentsFast()
+{
+  // assume that cl->GetSegment() == segment entry :
+
+  EdbCluster *cl=0;
+  int ncl = eClusters->GetLast()+1;
+  EdbSegment *seg=0;
+  int nseg = eSegments->GetLast()+1;
+
+  // TODO: why elements not cleared???
+
+//    for(int is=0; is<nseg; is++){
+//      seg = (EdbSegment*)(eSegments->UncheckedAt(is));
+//      if(seg->GetNelements()>0) seg->GetElements()->Clear();
+//    }
+
+  int iseg;
+  int nca=0;
+  for(int i=0; i<ncl; i++){
+    cl = (EdbCluster*)(eClusters->UncheckedAt(i));
+    iseg=cl->GetSegment();
+    if( iseg < 0 )      continue;
+    if( iseg > nseg-1 ) return -1;
+    seg = (EdbSegment*)(eSegments->At(iseg));
+    seg->AddElement(cl);
+    nca++;
+    if(seg->GetNelements()>seg->GetPuls()) {
+      printf("AttachClustersToSegmentsFast: ncl(%d) > puls(%d)    %d\n", 
+	     seg->GetNelements(),seg->GetPuls(), seg->GetID());
+      printf("i,iseg = %d %d\n",i,iseg);
+    }
+
+  }
+  return nca;
+}
+
+//______________________________________________________________________________
+int EdbView::AttachClustersToSegmentsSlow()
+{
+  // if segments do not ordered :
+
+  EdbCluster *cl=0;
+  int ncl = eClusters->GetLast()+1;
+
+  EdbSegment *seg=0;
+  int nseg = eSegments->GetLast()+1;
+  int id,nca=0;
+  for(int is=0; is<nseg; is++){
+    seg = (EdbSegment*)(eSegments->UncheckedAt(is));
+    if(seg->GetNelements()>0) seg->GetElements()->Clear();
+    id = seg->GetID();
+    for(int i=0; i<ncl; i++){
+      cl = (EdbCluster*)(eClusters->UncheckedAt(i));
+      if( cl->GetSegment() != id ) continue;
+      seg->AddElement(cl);
+      nca++;
+    }
+  }
+  return nca;
 }
 
 //______________________________________________________________________________

@@ -154,6 +154,10 @@ public:
   void          *GetTracksAddr()    { return &eTracks;   }
   void          *GetFramesAddr()    { return &eFrames;   }
 
+  int          AttachClustersToSegments();
+  int          AttachClustersToSegmentsFast();
+  int          AttachClustersToSegmentsSlow();
+
   TObjArray     *GetSegmentsClusters() const;
 
   void     SetAreaID( int id )  { GetHeader()->SetAreaID(id); }
