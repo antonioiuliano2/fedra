@@ -132,6 +132,7 @@ public:
   void         SetComment(const char *com) { eComment=com; }
   void         SetCPU(Double_t cpu)        { eCPU = cpu; }
 
+  Int_t        GetFlag(int i)       const { if(i>=0&&i<10) return eFlag[i]; return -999; }
   EdbArea     *GetArea()            const { return eArea;      }
   EdbStage    *GetStage()           const { return eStage;     }
   EdbPlate    *GetPlate()           const { return ePlate;     }
