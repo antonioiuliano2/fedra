@@ -59,6 +59,7 @@ void EdbDisplay::Set0()
   eArrSegP = 0;
   eArrTr   = 0;
   eDrawTracks=1;
+  eDrawVertex=0;
   eColors  = 0;
   eDZs     = 0;
 }
@@ -128,13 +129,31 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
   v = new EdbVertexG();
   v->SetVertex( vv );
 
-  v->SetPoint(0, 
-	      vv->V()->vx() + vv->X(), 
-	      vv->V()->vy() + vv->Y(), 
-	      vv->V()->vz() + vv->Z() );
+  float xv,yv,zv;
+  xv = vv->V()->vx() + vv->X();
+  yv=  vv->V()->vy() + vv->Y();
+  zv=  vv->V()->vz() + vv->Z();
+  v->SetPoint(0, xv,yv,zv);
   v->SetMarkerStyle(21);
   v->SetMarkerColor(kWhite);
   v->Draw();
+
+
+  if(eDrawVertex>0) {
+    TPolyLine3D *line=0;
+    const EdbSegP *seg=0;
+    for(int i=0; i<vv->N(); i++ ) {
+      if( vv->Zpos(i)==0 )       seg = vv->GetTrack(i)->TrackZmax();
+      else                       seg = vv->GetTrack(i)->TrackZmin();
+      if(!seg) continue;
+      line = new TPolyLine3D(2);
+      line->SetPoint(0, xv,yv,zv );
+      line->SetPoint(1, seg->X(), seg->Y(), seg->Z() );
+      line->SetLineColor(kRed);
+      line->SetLineWidth(1);
+      line->Draw();
+    }
+  }
 
 }
 

@@ -84,6 +84,7 @@ class EdbDisplay: public EdbDisplayBase {
   Int_t      eDrawTracks;  // tracks drawing option
 
   TObjArray *eArrV;        // array of vertexes to be drawn
+  Int_t      eDrawVertex;  // vertex drawing option
 
   TArrayI* eColors;
   TArrayF* eDZs;
@@ -114,6 +115,7 @@ class EdbDisplay: public EdbDisplayBase {
 
   void SetArrV(TObjArray *arrv) {eArrV=arrv;}
   void VertexDraw(EdbVertex *v);
+  void SetDrawVertex(int opt) {eDrawVertex=opt;}
 
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };
