@@ -9,7 +9,8 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  int doCCD=0, doLink=0, doAlign=0, doTrack=0, doFine=0, doAngles=0, doRaw=0, noUpdate=0;
+  int doCCD=0, doLink=0, doAlign=0, doTrack=0, 
+    doFine=0, doAngles=0, doRaw=0, noUpdate=0, doMerge=0;
 
   if (argc < 3)
     {
@@ -20,6 +21,7 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -a    - plate to plate alignment\n";
       cout<< "\t\t  -f    - fine alignment based on passed-throw tracks\n";
       cout<< "\t\t  -t[n] - tracking \n";
+      cout<< "\t\t  -m[n] - tracks merging (n - the maximal permitted gap in planes)\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
       cout<<endl;
@@ -35,7 +37,11 @@ int main(int argc, char* argv[])
     if(!strncmp(key,"-t",2)) {
       if(strlen(key)>2)
 	sscanf(key+2,"%d",&doTrack);
-      if(doTrack<1) doTrack=1;
+      if(doTrack==0) doTrack=1;
+    }
+    if(!strncmp(key,"-m",2)) {
+      if(strlen(key)>2)
+	sscanf(key+2,"%d",&doMerge);
     }
     if(!strcmp(key,"-ccd"))  doCCD=1;
     if(!strcmp(key,"-ang"))  doAngles=1;
@@ -55,7 +61,7 @@ int main(int argc, char* argv[])
   if(doTrack&&doAlign)   { proc.AlignLinkTracks(doTrack); doTrack=0; doAlign=0; }
   if(doAlign)            { proc.Align();                  doAlign=0; }
   if(doAngles)           { proc.CorrectAngles();          doAngles=0; }
-  if(doTrack)            { proc.LinkTracks(doTrack);      doTrack=0; }
+  if(doTrack)            { proc.LinkTracks(doTrack, doMerge); doTrack=0; doMerge=0; }
   if(doFine)             { proc.FineAlignment();          doFine=0; }
   if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0; }
 
