@@ -1,0 +1,61 @@
+---------------------------------------------------------------------
+Automatic instalaltion procedure for linux (thanks to Markus)
+
+type 
+"./install.sh" or 
+". ./install.sh" (depending on the shell) 
+from your fedra directory.
+This script do: 
+
+- setting of variables in config-files is done automatically.
+- compilation of libraries and "recset" is done on demand.
+- creation of  "setup_new.sh" is included, depending on default SHELL from 
+  the user, placed at top directory.
+
+at this point all libraries/binaries should be created and ready for use
+
+type "source ./setup_new.sh" to update PATH and LD_LIBRARY_PATH
+
+
+---------------------------------------------------------------------
+Automatic installation procedure for Win32 (grazie to Gabriele)
+
+Unpack src.tgz and win32.tgz into fedra directory as following:
+
+...\fedra\src\...
+...\fedra\win32\...
+
+from the command line session where root and VC++6.0 envirenment are
+setted correctly do:
+
+cd fedra\win32
+makeall
+
+The script makeall will create ALL libraries, rwc2edb and recset 
+executables, and set the necessary envirenment variables.
+
+After that RESTART the command line session to have the newly 
+setted variables available.
+
+At this point rwc2edb, recset and all necessary libraries will be in 
+PATH and available for use.
+
+IMPORTANT NOTES: 
+- we use now on windows the new version of root: root_v3.10.01.win32gdk - 
+  the recommended version from the root site. 
+- This root is compiled with VC++7.0, but it doesn't mean that it is 
+  necessary to install this(havy) version of compiler on your PC. 
+  VC++6.0 is ok for the Fedra compilation.
+- VC++6.0 MUST be updated with a fresh service pack for Visual Studio, 
+  because overwise even standard root examples will not be compiled (the 
+  naked old Visual Studio 6.0 has some features missing). Take it from:
+  http://msdn.microsoft.com/vstudio/downloads/updates/sp/
+
+So the tested configurations up to now: 
+   OS                 root                   compiler
+WNT/W2000/WXP       3.05 / 3.10.01gdk        VC++6.0+SP5
+
+The recommended configuration is:
+
+W2000/WXP   root3.10.01gdk   VC++6.0+SP5
+
