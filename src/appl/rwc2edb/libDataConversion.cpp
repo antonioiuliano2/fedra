@@ -189,7 +189,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 			{
 				rwdTrack = &(rwdView->pTracks[s][t]);
 				tr_clusters = rwdTrack->Grains;
-				dz = rwdTrack->pGrains[0].Z - rwdTrack->pGrains[tr_clusters].Z;
+				dz = rwdTrack->pGrains[0].Z - rwdTrack->pGrains[tr_clusters-1].Z;
 				edbSegment->Set(rwdTrack->Intercept.X,
 									 rwdTrack->Intercept.Y,
 									 rwdTrack->Intercept.Z,
