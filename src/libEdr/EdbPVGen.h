@@ -56,7 +56,8 @@ class EdbPVGen : public TObject {
 		float lim[4], float sigma[4], 
 		EdbTrackP &tr, int eloss_flag = 0, float PGap = 0. );
 
-  void GenerateUncorrelatedSegments(int nb, float lim[4], float TetaMax, int flag );
+  void GenerateUncorrelatedSegments(int nb, float lim[4], float sig[4],
+				    float TetaMax, int flag );
 
   void GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
 				float sig[4], float TetaMax,

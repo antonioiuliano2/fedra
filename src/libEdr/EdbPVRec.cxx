@@ -2190,6 +2190,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
   // TODO: move gener logic out from EdbPVRec
 
   float X0 =  GetScanCond()->RadX0();
+  int nsegmatch = 0;
 
   EdbTrackP *tr = 0, *trg = 0;
   int ntr = eTracks->GetEntries();
@@ -2217,7 +2218,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
     if(p>0)    tr->SetP(p);
     else if(p<0 && gener)
     {
-	if ((itrg = tr->GetSegmentsFlag()) >= 0)
+	if ((itrg = tr->GetSegmentsFlag(nsegmatch)) >= 0)
 	{
 	    trg = (EdbTrackP*)(gener->At(itrg));
 	    if (trg)
@@ -2229,7 +2230,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
     if(mass>0) tr->SetM(mass);
     else if(mass<0 && gener)
     {
-	if ((itrg = tr->GetSegmentsFlag()) >= 0)
+	if ((itrg = tr->GetSegmentsFlag(nsegmatch)) >= 0)
 	{
 	    trg = (EdbTrackP*)(gener->At(itrg));
 	    if (trg)
@@ -2593,7 +2594,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
 
 	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
-	nseg = PropagateTrack(*tr, true);
+	nseg = PropagateTrack(*tr, true, probMin);
   	nsegTot += nseg;
 	//printf("\t %d after true ",tr->N());
 

@@ -297,12 +297,12 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
       {
 	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell());
 	teta0 = TMath::Sqrt(teta0);
-	r1 = gRandom->Gaus();
-	r2 = gRandom->Gaus();
+	do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+	do  { r2 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
 	dx = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
 	dtx = r2*teta0;
-	r1 = gRandom->Gaus();
-	r2 = gRandom->Gaus();
+	do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+	do  { r2 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
 	dy = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
 	dty = r2*teta0;
       }
@@ -322,10 +322,14 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     if ( y < lim[1] ) break; 
     if ( x > lim[2] ) break; 
     if ( y > lim[3] ) break;
-    dxs = sx*gRandom->Gaus();
-    dys = sy*gRandom->Gaus();
-    dtxs = stx*gRandom->Gaus();
-    dtys = sty*gRandom->Gaus();
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+    dxs = sx*r1;
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+    dys = sy*r1;
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+    dtxs = stx*r1;
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
+    dtys = sty*r1;
     Phi = -TMath::ATan2(ty,tx);          // azimuthal angle of the track
     CPhi = TMath::Cos(Phi);
     SPhi = TMath::Sin(Phi);
@@ -333,13 +337,13 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     ys = y + dxs*SPhi + dys*CPhi;        // along the track projection to XY plane 
     txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
     tys = ty + dtys*SPhi + dtys*CPhi;
-    seg->Set(tr.ID(), xs, ys, txs, tys,25,0);
+    seg->Set(tr.ID(), xs, ys, txs, tys, 25., tr.ID());
     seg->SetP(p);
     seg->SetZ(z);
     seg->SetDZ(300.);
     seg->SetPID(k);
-    seg->SetFlag(tr.ID());
     seg->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
+//    seg->SetErrors(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
 
     tr.AddSegment(     pat->AddSegment(*seg) );
   }
@@ -348,11 +352,13 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   tr.SetSegmentsTrack();
 }
 //______________________________________________________________________________
-void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float TetaMax, int flag )
+void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float sigma[4],
+					    float TetaMax, int flag )
 {
   // generation of uncorrelated segments background
 
   float x, y, z, tx, ty, costmin = TMath::Cos(TetaMax);
+  Float_t sx=sigma[0], sy=sigma[1], stx=sigma[2], sty=sigma[3];
   float cost, phi, ex, ey, ez, sint;
   EdbSegP *s=0;
   EdbPattern *pat = 0;
@@ -379,6 +385,8 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float TetaMax,
 	s->Set(0, x, y, tx, ty, 1, flag);
 	s->SetZ(z);
 	s->SetP(4.);
+	s->SetPID(np);
+	s->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
 
         pat->AddSegment( *s );
     }
@@ -402,7 +410,8 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
   int np  = pv->Npatterns();
   zlim[1] = (pv->GetPattern(np-1))->Z();
 
-  int id = eTracks->GetEntries();
+  int id = 0;
+  if (eTracks) id = eTracks->GetEntries();
 
   for(int i=0; i<nb; i++) {
 
@@ -429,7 +438,8 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
 	// generation of background track segments
 
 	TrackMC( zlim, lim, sig, *trb, eloss_flag, ProbGap );
-	delete trb;
+//	delete trb;
+	AddTrack(trb);
   }
 
 }
@@ -479,11 +489,10 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float z
 	tr = new EdbTrackP();
 	tx = pi->Px()/pi->Pz();
 	ty = pi->Py()/pi->Pz();
-	tr->Set(numt++, x, y, (float)tx, (float)ty,1,0);
+	tr->Set(numt++, x, y, (float)tx, (float)ty, 1, iv+1);
 	tr->SetZ(z);
 	tr->SetP(pi->P());
 	tr->SetM(pi->M());
-	tr->SetFlag(iv+1);
 	if (pi->Pz() < 0.)
 	    vedb->AddTrack(tr, 0);
 	else
@@ -503,11 +512,10 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float z
 	pp = TMath::Sqrt(p2);
 	mp = TMath::Sqrt(es*es - p2); 
 	tr = new EdbTrackP();
-	tr->Set(numt++, x, y, 0., 0.,1,0);
+	tr->Set(numt++, x, y, 0., 0., 1, iv+1);
 	tr->SetZ(0);
 	tr->SetP(pp);
 	tr->SetM(mp);
-	tr->SetFlag(-(iv+1));
 	vedb->AddTrack(tr, 0);
 	AddTrack(tr);
 

@@ -647,7 +647,7 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
 }
 
 //______________________________________________________________________________
-int EdbTrackP::GetSegmentsFlag() const
+int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 {
   int nseg = N();
   if (nseg < 2) return -1;
@@ -674,6 +674,7 @@ int EdbTrackP::GetSegmentsFlag() const
 	    flagmax = GetSegment(i)->Flag();
 	}
   }
+  nsegf = cmax;
   return flagmax;
 }
 //______________________________________________________________________________
@@ -1023,8 +1024,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
     par[i] = new VtVector(4);
     (*par[i]) = (*cov[i])*((*covpredinv[i])*(*parpred[i]) + dmeasinv*(*meas[i]));   // new parameters for seg
 
-    chi2 += ((*par[i])-(*parpred[i]))*((*covpredinv[i])*((*par[i])-(*parpred[i]))) + 
-	    ((*par[i])-(*meas[i]))*(dmeasinv*((*par[i])-(*meas[i])));
+//    chi2 += ((*par[i])-(*parpred[i]))*((*covpredinv[i])*((*par[i])-(*parpred[i]))) + 
+//	    ((*par[i])-(*meas[i]))*(dmeasinv*((*par[i])-(*meas[i])));
 
 //    VtSymMatrix dresid(4);
 //    dresid = (*dmeas[i]) - (*cov[i]);
@@ -1082,7 +1083,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 	dresid = (*dmeas[i]) - (*covs[i]);
 	dresid = dresid.dsinv();
 	chi2p = ((*pars[i])-(*meas[i]))*(dresid*((*pars[i])-(*meas[i])));
-	chi2 += chi2p;
+//	chi2 += chi2p;
 
 	segf.Set(ID(),(float)(*pars[i])(0),(float)(*pars[i])(1),
 		 (float)(*pars[i])(2),(float)(*pars[i])(3),1.,Flag());
@@ -1100,7 +1101,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 	DE += EdbPhysics::DeAveragePbFast(P(),M(),dPb);
   }
   SetChi2((float)chi2);
-  SetProb((float)TMath::Prob(chi2,nseg*4));
+  SetProb((float)TMath::Prob(chi2,4));
   SetW( (float)nseg );
   SetDE( (float)DE );
 
