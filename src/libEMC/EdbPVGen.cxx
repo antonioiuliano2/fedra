@@ -228,6 +228,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   // Output:  fill associated volume with segments
   //          tr - add generated segments to the tr
 
+  Float_t eTPb = 1000./1300.;
   Float_t x0  =tr.X();
   Float_t y0  =tr.Y();
   Float_t z0  =tr.Z();
@@ -237,7 +238,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   Float_t m   =tr.M();
   Float_t sx=sigma[0], sy=sigma[1], stx=sigma[2], sty=sigma[3];
   Float_t x,y,z,tx,ty, xs, ys, txs, tys;
-  Float_t dz, dzm, cost, r1, r2, teta0, zold;
+  Float_t dz, dzm, cost, r1, r2, teta0, zold, dzPb;
   Float_t dx = 0., dy = 0., dtx = 0., dty = 0.;
   Float_t dxs = 0., dys = 0., dtxs = 0., dtys = 0.;
   Double_t Phi,CPhi,SPhi;
@@ -272,9 +273,10 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     cost = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
     if (cost <= 0.001) break;
     dzm = dz*cost;
+    dzPb = eTPb*dzm;
     if (eloss_flag == 1)
     {
-	de = EdbPhysics::DeAveragePb(p, m, dzm);
+	de = EdbPhysics::DeAveragePb(p, m, dzPb);
 	e  = e - de;
 	if (e < m) e = m;
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
@@ -285,7 +287,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     }
     else if (eloss_flag == 2)
     {
-	de = EdbPhysics::DeLandauPb(p, m, dzm);
+	de = EdbPhysics::DeLandauPb(p, m, dzPb);
 	e  = e - de;
 	if (e < m) e = m;
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
