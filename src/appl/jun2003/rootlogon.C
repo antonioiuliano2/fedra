@@ -3,7 +3,7 @@
 
   if (!TClassTable::GetDict("CMatrix")) { 
     if(gSystem->Load("libvt")==0)
-      printf("libvt   \tloaded \n");
+      printf("libvt     \tloaded \n");
     else 
       printf("libvt do NOT loaded!\n");
   }
@@ -13,6 +13,13 @@
       printf("libEmath \tloaded \n");
     else 
       printf("libEmath do NOT loaded!\n");
+  }
+
+  if (!TClassTable::GetDict("EdbPhysics")) { 
+    if(gSystem->Load("libEphys")==0)
+      printf("libEphys \tloaded \n");
+    else 
+      printf("libEphys do NOT loaded!\n");
   }
 
   if (!TClassTable::GetDict("EdbView")) { 
@@ -34,13 +41,6 @@
       printf("libEdd   \tloaded \n");
     else 
       printf("libEdd do NOT loaded!\n");
-  }
-
-  if (!TClassTable::GetDict("EdbVertex")) { 
-    if(gSystem->Load("libEdv")==0)
-      printf("libEdv   \tloaded \n");
-    else 
-      printf("libEdv do NOT loaded!\n");
   }
 
 }
