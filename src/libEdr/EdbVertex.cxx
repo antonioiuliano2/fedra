@@ -434,14 +434,16 @@ float EdbVertexRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 //______________________________________________________________________________
 void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
 			     float lim[4], float sigma[4], 
-			     EdbTrackP &tr)
+			     EdbTrackP &tr, int eloss_flag)
 {
   // Segments generation for single MC track with taking into account MS and 
   //  XY errors correllation
 
-  // Input parameters: gen  - the volume to be filled by segments (tracks)
-  //                   lim  - XY limits
-  //                   tr   - segments generated according to track parameters
+  // Input parameters: pv    - the volume to be filled by segments (tracks)
+  //                   zlim  - Z limits
+  //                   lim   - XY limits
+  //		       sigma - measuring sigma (x,y,tx,ty)
+  //                   tr    - segments generated according to track parameters
   //
   // Output:  pv - fill with segments
   //          tr - add generated segments to the tr
@@ -467,12 +469,13 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
   if ( y0 < lim[1] ) return; 
   if ( x0 > lim[2] ) return; 
   if ( y0 > lim[3] ) return;
+  Float_t p = p0, pa = p0, pn, de;
+  Float_t e = TMath::Sqrt((double)p*(double)p+(double)m*(double)m);
   x = x0;
   y = y0;
   tx = tx0;
   ty = ty0;
   zold = z0;
-
   for (int k=0; k<pv.Npatterns(); k++ ) {
 
     pat = pv.GetPattern(k);
@@ -486,9 +489,28 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
     cost = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
     if (cost <= 0.001) break;
     dzm = dz*cost;
+    if (eloss_flag == 1)
+    {
+	de = EdbPhysics::DeAveragePb(p, m, dzm);
+	e  = e - de;
+	if (e < m) e = m;
+	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+	pa = 0.5*(p+pn);
+	p  = pn;
+    }
+    else if (eloss_flag == 2)
+    {
+	de = EdbPhysics::DeLandauPb(p, m, dzm);
+	e  = e - de;
+	if (e < m) e = m;
+	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+	pa = 0.5*(p+pn);
+	p  = pn;
+    }
+    if (p < 0.001) break;
     if (k)
       {
-	teta0 = EdbPhysics::ThetaMS2( p0, m, dzm, EdbPhysics::kX0_Cell);
+	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell);
 	teta0 = TMath::Sqrt(teta0);
 	r1 = gRandom->Gaus();
 	r2 = gRandom->Gaus();
@@ -527,7 +549,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
     txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
     tys = ty + dtys*SPhi + dtys*CPhi;
     seg->Set(k, xs, ys, txs, tys,25,0);
-    seg->SetP(p0);
+    seg->SetP(p);
     seg->SetZ(z);
     seg->SetDZ(300.);
     seg->SetPID(k);
