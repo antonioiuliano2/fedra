@@ -276,6 +276,7 @@ void EdbRun::Save()
 //______________________________________________________________________________
 void EdbRun::Close()
 {
+  eFile = eTree->GetCurrentFile();
   const char *status = eFile->GetOption();
 
   GetFile()->cd();
@@ -290,7 +291,7 @@ void EdbRun::Close()
       if(ePredictions)   ePredictions->Write("Predictions");
       if(eMarks)         eMarks->Write("Marks");
     }
-    eTree->BuildIndex("eAreaID","eViewID");
+    //eTree->BuildIndex("eAreaID","eViewID");
     eTree->Write();
   }
   eFile->Purge();
