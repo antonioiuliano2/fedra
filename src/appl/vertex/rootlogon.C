@@ -43,4 +43,11 @@
       printf("libEdd do NOT loaded!\n");
   }
 
+  if (!TClassTable::GetDict("EdbPVGen")) { 
+    if(gSystem->Load("libEMC")==0) 
+      printf("libEMC   \tloaded \n");
+    else 
+      printf("libEMC do NOT loaded!\n");
+  }
+
 }

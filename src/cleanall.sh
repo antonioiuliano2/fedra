@@ -10,6 +10,9 @@ make clean
 cd ../libEdd
 make clean
 
+cd ../libEMC
+make clean
+
 cd ../libVt++
 make clean
 

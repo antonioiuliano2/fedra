@@ -18,6 +18,11 @@ make clean
 make depend
 make
 
+cd ../libEMC
+make clean
+make depend
+make
+
 cd ../libVt++
 make clean
 make
