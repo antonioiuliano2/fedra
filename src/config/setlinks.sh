@@ -24,6 +24,7 @@ ln -si $PROJECT_SRC/libEdr/EdbPattern.h    $PROJECT_INC/EdbPattern.h
 ln -si $PROJECT_SRC/libEdr/EdbPVRec.h      $PROJECT_INC/EdbPVRec.h
 ln -si $PROJECT_SRC/libEdr/EdbPVGen.h      $PROJECT_INC/EdbPVGen.h
 ln -si $PROJECT_SRC/libEdr/EdbGA.h         $PROJECT_INC/EdbGA.h
+ln -si $PROJECT_SRC/libEdr/EdbIP.h         $PROJECT_INC/EdbIP.h
 ln -si $PROJECT_SRC/libEdr/EdbDataSet.h    $PROJECT_INC/EdbDataSet.h
 # ln -si $PROJECT_SRC/libEdr/EdrLinkDef.h    $PROJECT_INC/EdrLinkDef.h 
 
