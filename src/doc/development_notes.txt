@@ -1,0 +1,81 @@
+Date: Tue, 9 Dec 2003 13:41:58 +0100
+From: Gabriele Sirri
+
+I send to you 5 files modifed in order to compile fedra with
+both Visual Studio 6 (command: makeall) and  Visual Studio 7 (command:
+makeall -vc7).
+
+I have included also a little help in makefile.cmd and make.cmd
+(makefile -?, make -?)
+
+I have re-written the scripts in order to avoid illegal usage of the goto
+instruction (used only in structured forms).
+
+reg.exe is a system command in WinXP and Win2003Server. It doesn't work with
+later version (a dedicated version exists in the Windows2000 Resource
+ToolKit) so I skip the check on SySalDataIO when %WinDir%\System32\reg.exe
+doesn't exist
+
+
+Date: Thu, 4 Dec 2003 15:40:20 +0100 (MET)
+Bug fixed by Luillo in EdbSeg3D::Transform
+
+
+VT: 2/12/2003
+
+Index search in raw&linked data
+
+EdbSegP::eVid[0] - view entry in views tree (as before)
+EdbSegP::eVid[1] - segment entry in view (as before)
+
+EdbSegP::eAid[0] - areaID (== fragment)
+EdbSegP::eAid[1] - viewID in the area
+
+For the fast finding of the segment by AreaId, ViewID and SegID could be
+used the function:
+
+int EdbDataPiece::GetLinkedSegEntr(int side,int aid, int vid, int sid,
+TArrayI &entr);
+  where side is 1 or 2
+  entr is the output array of entries for this segment in the couples tree
+
+  the return value is number of entries found for this segment
+
+script tb.C illustrate the usage of this function
+
+other (different approach) example is traceback.C
+
+
+Date: Thu, 27 Nov 2003 13:35:49 +0100
+From: Igor Kreslo 
+
+ja unificiroval display s OpROOTovskim.
+P.S.
+Vajno: v skriptr testd.C vmesto ds->Refresh() teper' ds->Draw()
+
+
+VT: 20/11/2003
+
+link&align algorithm wich works in a case of deltaZ=0. For the moment it is a kind
+of hack - I plan to polish all stuff concerning chi2 calculation in a nearest
+future.
+
+VT: 7/07/2003
+
+In new version of convertor (based on the new SysalDataIO) the eAreaID is 
+started from 1 instead of 0. 
+
+Schema evolution problems: eElements branch was commented out by 
+the //! in EdbSegment.h. Seems not back-compatible - the data should 
+be reconverted. The old data is readable anyway with no loading 
+libraries, but if new version of libraries are loaded them give segfault 
+(Views->Draw("eAreaID*121"))
+
+
+VT: 30/05/2003
+ Framework for Emulsions Data Reconstruction and Analysis
+ First tarball
+ Main modules are:
+ libEdb      - emulsion data storage
+ libEdr      - reconstruction
+ libEmath    - general algorithms
