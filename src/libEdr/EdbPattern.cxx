@@ -901,12 +901,12 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 			       (double)(seg0->TX()), 
 			       (double)(seg0->TY()) );
   meas[istart] = new VtVector(*par[istart]);
-  pred[istart] = new VtSqMatrix(4);
-  (*pred[istart]).clear();
-  (*pred[istart])(0,0) = 1.;
-  (*pred[istart])(1,1) = 1.;
-  (*pred[istart])(2,2) = 1.;
-  (*pred[istart])(3,3) = 1.;
+  pred[iend] = new VtSqMatrix(4);
+//  (*pred[istart]).clear();
+//  (*pred[istart])(0,0) = 1.;
+//  (*pred[istart])(1,1) = 1.;
+//  (*pred[istart])(2,2) = 1.;
+//  (*pred[istart])(3,3) = 1.;
   cov[istart] = new VtSymMatrix(4);             // covariance matrix for seg0
   for(int k=0; k<4; k++) 
     for(int l=0; l<4; l++) (*cov[istart])(k,l) = (seg0->COV())(k,l);
@@ -938,21 +938,21 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
     dms(0,2) = dms(2,0);
     dms(1,3) = dms(2,0);
 
-    pred[i] = new VtSqMatrix(4);        //propagation matrix for track parameters (x,y,tx,ty)
-    pred[i]->clear();
+    pred[i-step] = new VtSqMatrix(4);        //propagation matrix for track parameters (x,y,tx,ty)
+    pred[i-step]->clear();
 
-    (*pred[i])(0,0) = 1.;
-    (*pred[i])(1,1) = 1.;
-    (*pred[i])(2,2) = 1.;
-    (*pred[i])(3,3) = 1.;
-    (*pred[i])(0,2) = dz;
-    (*pred[i])(1,3) = dz;
+    (*pred[i-step])(0,0) = 1.;
+    (*pred[i-step])(1,1) = 1.;
+    (*pred[i-step])(2,2) = 1.;
+    (*pred[i-step])(3,3) = 1.;
+    (*pred[i-step])(0,2) = dz;
+    (*pred[i-step])(1,3) = dz;
 
     parpred[i] = new VtVector(4);            // prediction from seg0 to seg
-    *parpred[i] = (*pred[i])*(*par[i-step]);
+    *parpred[i] = (*pred[i-step])*(*par[i-step]);
 
     covpred[i] = new VtSymMatrix(4);         // covariation matrix for prediction
-    *covpred[i] = (*pred[i])*((*cov[i-step])*((*pred[i]).T()))+dms;
+    *covpred[i] = (*pred[i-step])*((*cov[i-step])*((*pred[i-step]).T()))+dms;
 
     dmeas[i] = new VtSymMatrix(4);           // original covariation  matrix for seg
     for(int k=0; k<4; k++) 
