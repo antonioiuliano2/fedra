@@ -16,6 +16,7 @@
 
 class EdbAffine2D;
 class TIndexCell;
+class EdbVertex;
 
 //______________________________________________________________________________
 class EdbScanCond : public TNamed {
@@ -300,6 +301,7 @@ class EdbPVRec : public EdbPatternsVolume {
   TIndexCell  *eTracksCell;
  public:
   TObjArray   *eTracks;
+  TObjArray   *eVTX;          
 
  public:
   EdbPVRec();
@@ -365,6 +367,11 @@ class EdbPVRec : public EdbPatternsVolume {
   void AddTrack(EdbTrackP *track) {
     if(!eTracks) eTracks = new TObjArray();
     eTracks->Add(track);
+  }
+
+  void AddVertex(EdbVertex *vtx) {
+    if(!eVTX) eVTX = new TObjArray();
+    eVTX->Add((TObject*)vtx);
   }
 
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 

@@ -800,8 +800,12 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   //                      probability to reject the good event
 
 
-  SF()->Clear();
-  SF()->Expand(N());
+  if(!N()) return 0;
+  if(!eSF) eSF = new TObjArray(N());
+  else {
+    SF()->Clear();
+    SF()->Expand(N());
+  }
 
   float dPb;
   double teta0sq;

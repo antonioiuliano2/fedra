@@ -303,7 +303,7 @@ class EdbTrackP : public EdbSegP {
 
   void Print() 
     { 
-      printf("EdbTrackP with %d segments (%d fitted)\n", N(), SF()->GetEntries() );
+      printf("EdbTrackP with %d segments \n", N() );
       printf("particle mass = %f\n", M() );
       ((EdbSegP*)this)->Print(); 
       //if(eS) eS->Print(); 

@@ -930,6 +930,7 @@ EdbPVRec::EdbPVRec()
 {
   ePatCouples = new TObjArray();
   eTracks = 0;
+  eVTX    = 0;
   eScanCond = 0;
   eChi2Max=999.;
   eVdiff[0]=eVdiff[1]=eVdiff[2]=eVdiff[3]=0;
@@ -941,6 +942,7 @@ EdbPVRec::~EdbPVRec()
 {
   if(ePatCouples)     delete ePatCouples;
   if(eTracks)         delete eTracks;
+  if(eVTX)            delete eVTX;
   if(eTracksCell)     delete eTracksCell;
 }
 
