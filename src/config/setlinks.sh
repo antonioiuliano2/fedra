@@ -8,7 +8,6 @@ listEdd=`ls $PROJECT_SRC/libEdd/*.h`
 listEdb=`ls $PROJECT_SRC/libEdb/*.h`
 listEmath=`ls $PROJECT_SRC/libEmath/*.h`
 listTest=`ls $PROJECT_SRC/libTest/*.h`
-listVt=`ls $PROJECT_SRC/libVt++/vt++/include/*.hh`
 
 for hname in ${listEdr} ; do
  ln -fs $PROJECT_SRC/libEdr/${hname##*/} $PROJECT_INC/${hname##*/}
@@ -25,7 +24,7 @@ done
 for hname in ${listTest} ; do
  ln -fs $PROJECT_SRC/libTest/${hname##*/} $PROJECT_INC/${hname##*/}
 done
-for hname in ${listVt} ; do
- ln -fs $PROJECT_SRC/libVt++/vt++/include/${hname##*/} $PROJECT_INC/${hname##*/}
-done
+ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
+ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
+
 

@@ -81,9 +81,9 @@ ldflags    +=
 OBJS       = $(addprefix $(objdir)/,$(addsuffix .o, $(basename $(wildcard $(sources)))))
 MAINOBJ    = $(addprefix $(objdir)/,$(addsuffix .o, $(basename $(mainsrc))))
 ifndef HEADRS
-HEADRS     = $(wildcard $(ROOT)/include/$(project)/$(headers))
+HEADRS     = $(wildcard $(ROOT)/$(project)/include/$(headers))
 endif
-ALL_INCS   = $(ROOT)/include $(PWD)/include
+ALL_INCS   = ${FEDRA_ROOT}/include
 ALL_INCS  += $(ROOTSYS)/include
 CINT_INCS  = $(ALL_INCS)
 CERN_LIBS  = mathlib kernlib g2c
@@ -96,4 +96,3 @@ ifdef USE_NAMESPACE
 FLAGS     += -DNAMESPACE
 linkdef    = cintdict/LinkDef_ns.hh
 endif
-
