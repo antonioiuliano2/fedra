@@ -242,7 +242,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   Float_t dx = 0., dy = 0., dtx = 0., dty = 0.;
   Float_t dxs = 0., dys = 0., dtxs = 0., dtys = 0.;
   Double_t Phi,CPhi,SPhi;
-
+  Float_t X0 = eScanCond->RadX0();
   EdbPattern *pat = 0;
 
   if ( x0 < lim[0] ) return; 
@@ -298,7 +298,8 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     if (p < 0.001) break;
     if (k)
       {
-	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell());
+//	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell());
+	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, X0);
 	teta0 = TMath::Sqrt(teta0);
 	do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
 	do  { r2 = gRandom->Gaus();} while (TMath::Abs(r1) > 12.5);
