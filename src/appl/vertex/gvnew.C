@@ -13,11 +13,11 @@ EdbPVRec    *ali=0;
 EdbPVGen    *gener = 0;
 EdbScanCond *scanCond=0;
 
-int   nve=10, nback1=100, nback2=100;
 float back1_tetamax =  0.35; 
 float back2_tetamax =  0.25; 
 float back2_plim[2] = {0.5, 5.5};
 float fiducial_border = 10000.;
+float fiducial_border_z = 10000.;
 float vxyz[3] = {0., 0., 0.};   // simulated vertex position
 
 int local_coordinates = 1;
@@ -25,31 +25,36 @@ int ideal_tracks = 0;
 int neutral_primary = 1;
 int rec_type = 2;
 int vert_type = 1;
-int npi = 3;
+int npi = 4;
+int nuse = 4;
 int nsegMin = 4;
 float pMin = .1;
 int eloss_flag = 1; // =0 - no energy losses, 1-average energy losses, 2-Landau energy losses
 
-float momentumK=30.; // momentum of K-meson
+float momentumK=20.; // momentum of K-meson
 
-float dpp = 0.15;   // average dp/P 
+float dpp = 0.015;   // average dp/P 
 float seg_s[4]={.5, .5, 0.0015, 0.0015}; //sx,sy,stx,sty,sP
 float seg_zero[4]={.0,.0,.0,.0}; //no measurement errors
 float ProbGap = 0.10;
+float RightRatioMin = 0.5;
 
-int maxgaps[6] = {1,2,1,1,1,1};
+//int maxgaps[6] = {1,2,1,1,1,1};
+int maxgaps[6] = {2,3,2,2,2,2};
 float AngleAcceptance = 0.4;
 
-float ProbMinV = 0.00;
-float ProbMinP = 0.05;
-float ProbMinT = 0.00;
+float ProbMinV  = 0.01;
+float ProbMinV3 = 0.01;
+float ProbMinV4 = 0.01;
+float ProbMinP  = 0.01;
+float ProbMinT  = 0.01;
 
 const unsigned long int PrintN = 100;
 
 
 TObjArray *genVtx;  //vertex array
 
-TH1F *hp[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+TH1F *hp[22] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 EdbVertex *vedb;
 
@@ -57,7 +62,8 @@ int ntall = 0;
 int numt = 0;
 int numev = 0;
 
-double mK=.4937;  // mass of K-meson
+//double mK=.4937;  // mass of K-meson
+double mK=2.;
 double mPi=.139;  // mass of K-meson
 
 EdbTrackP *trp = 0;
@@ -84,6 +90,27 @@ brick.X0     =   5810.;
 float vxo = 0., vyo = 0., vzo = 0.;
 float vxg = 0., vyg = 0., vzg = 0.;
 double DE_MC, DE_FIT;
+int charges[21] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+FILE *f=0;
+TFile *rf=0;
+TObjArray hlist, hld1, hld2, hld3;
+
+int  nvg_tot = 0;
+int  ntrg_tot = 0;
+int  ntr_tot = 0;
+int  ntrgood_tot = 0;
+int  ntrgoodb_tot = 0;
+int  ntrgood_r_tot = 0;
+int  ntrgoodb_r_tot = 0;
+int  nv2good_tot = 0;
+int  nv2goodm_tot = 0;
+int  nv3good_tot = 0;
+int  nv3goodm_tot = 0;
+int  nv4good_tot = 0;
+int  nv4goodm_tot = 0;
+int  nv5good_tot = 0;
+int  nv5goodm_tot = 0;
 
 //-------------------------------------------------------------------
 TGenPhaseSpace *K3Pi(float p=3.)
@@ -92,13 +119,22 @@ TGenPhaseSpace *K3Pi(float p=3.)
 
   double e=TMath::Sqrt(p*p+mK*mK);
   TLorentzVector K(0,0,p,e);
-  Double_t masses[3] = { mPi, mPi, mPi } ;
+  Double_t masses[20];
+  for (int i=0; i<20; i++)
+  {
+    masses[i] = 0;
+    if (i < npi) masses[i] = mPi;
+    charges[i] = 0;
+    if (i < nuse) charges[i] = 1;
+  }
+  charges[npi] = 1;
+  if (neutral_primary) charges[npi] = 0;
   TGenPhaseSpace *psp = new TGenPhaseSpace();
   psp->SetDecay(K, npi, masses);
   return psp;
 }
 
-TGenPhaseSpace *pDecay= K3Pi(momentumK);
+TGenPhaseSpace *pDecay = 0;
 
 ///------------------------------------------------------------
 void Set_Prototype_OPERA_basetrack( EdbScanCond *cond )
@@ -116,7 +152,7 @@ void Set_Prototype_OPERA_basetrack( EdbScanCond *cond )
 }
 
 ///------------------------------------------------------------
-void gv(int n=1)
+void gv(int n=1, int nve=100, int nback1=0, int nback2=0)
 {
   // main steering routine for K->3Pi vertex generation&reconstruction test
 
@@ -124,12 +160,99 @@ void gv(int n=1)
   {
     printf("Wrong combination of conditions - fixed vertex position\n");
     printf("with multiple vertexes in volume\n");
+    return;
+  }
+  if ( npi < 2 || npi > 20 || nuse > npi)
+  {
+    printf("Wrong combination of kinematic conditions:\n");
+    printf(" %d secondary pions, tracking for %d pions \n", npi, nuse);
+    return;
   }
   timespec_t t0, t;
   double dt;
-  ntall = nve*(npi+1-neutral_primary)+nback2;
-  BookHistsV();
+  char outfile[128];
 
+  sprintf(outfile,"%db_%dK%dpi_%dub_%dtb", n, nve, nuse, nback1, nback2);
+  f = fopen(strcat(outfile,".out"),"w");
+  fprintf(f,"Monte-Carlo for %d brick(s) with %d K-%dpi decays, kaon momentum %.1f GeV/c\n",
+	     n, nve, nuse, momentumK);
+  if (nback1)
+    fprintf(f,"%d uncorrelated segments per pattern, acceptance %.2f rad\n",
+	        nback1, back1_tetamax);
+  else
+    fprintf(f,"No uncorrelated segments background\n");
+  if (nback1)
+    fprintf(f,"%d background tracks per volume, acceptance %.2f rad, momentum %.2f-%.2f GeV/c\n",
+	        nback2, back2_tetamax, back2_plim[0], back2_plim[1]);
+  else
+    fprintf(f,"No stright tracks  background\n");
+  fprintf(f,"%d plates (thickness %4.1f mm) per brick, working area %.1fx%.1f mm2\n",
+	     brick.plates, brick.dz/1000., (brick.lim[2]-brick.lim[0])/1000.,
+	     (brick.lim[3]-brick.lim[1])/1000.);
+  fprintf(f,"Basetrack measurement errors:\n  %6.1f microns (X) , %6.1f microns (Y)\n",
+	     seg_s[0], seg_s[1]);
+  fprintf(f,"  %6.4f mrad    (TX), %6.4f mrad    (TY)\n",
+	     seg_s[2], seg_s[3]);
+  fprintf(f,"Track momentum relative error %d%%\n",
+	     (int)(dpp*100.));
+  if (eloss_flag == 0)
+    fprintf(f,"No energy losses simulation during particle tracking.\n");
+  else if (eloss_flag == 1)
+    fprintf(f,"Take into account average energy losses.\n");
+  else if (eloss_flag == 2)
+    fprintf(f,"Simulate energy losses according Landau distribution.\n");
+  fprintf(f,"Track segment registration un-efficiency %d%%\n",
+	     (int)(ProbGap*100.));
+  fprintf(f,"Minimal Chi2 probability for segment attachment %6.4f\n",
+	     ProbMinP);
+  fprintf(f,"Minimal number of track segments for vertexing %d\n",
+	     nsegMin);
+  fprintf(f,"Minimal Chi2 track  probability for vertexing %6.4f\n",
+	     ProbMinT);
+  fprintf(f,"Minimal Chi2 vertex probability for vertex registration %6.4f\n",
+	     ProbMinV);
+  fprintf(f,"-----------------------------------------------------------\n");
+  ntall = nve*(nuse+1-neutral_primary)+nback2;
+
+  nvg_tot = 0;
+  ntrg_tot = 0;
+  ntr_tot = 0;
+  ntrgood_tot = 0;
+  ntrgoodb_tot = 0;
+  ntrgood_r_tot = 0;
+  ntrgoodb_r_tot = 0;
+  nv2good_tot = 0;
+  nv2goodm_tot = 0;
+  nv3good_tot = 0;
+  nv3goodm_tot = 0;
+  nv4good_tot = 0;
+  nv4goodm_tot = 0;
+  nv5good_tot = 0;
+  nv5goodm_tot = 0;
+
+  hlist.Clear();
+  hld1.Clear();
+  hld2.Clear();
+  hld3.Clear();
+  BookHistsV(nve);
+
+  if (ali)
+  {
+    delete ali;
+    ali = 0;
+  }
+  if (gener)
+  {
+    delete gener;
+    gener = 0;
+  }
+  if (pDecay)
+  {
+    delete pDecay;
+    pDecay = 0;
+  }
+
+  pDecay   = K3Pi(momentumK);
   ali      = new EdbPVRec();
   EdbPatternsVolume *vol=(EdbPatternsVolume*)ali;
   makeVolumeOPERAn(brick,vol);
@@ -151,15 +274,16 @@ void gv(int n=1)
   gener->eVTX = new TObjArray(1000);
   gener->SetScanCond(scanCond);
 
-  TTimeStamp  ts=TTimeStamp();
+  TTimeStamp  ts; // = new TTimeStamp();
   t0=ts.GetTimeSpec();
   numev = 0;
   for(int i=1; i<=n; i++) {
+    if (n>1) fprintf(f,"Brick %d\n",i);
     g1(nve,nback1,nback2);
     numev++;
     if (!((numev*nve)%PrintN))
     {
-	ts=TTimeStamp();
+	TTimeStamp ts;
 	t=ts.GetTimeSpec();
 	dt=(t.tv_sec-t0.tv_sec)*1000000000.+(t.tv_nsec-t0.tv_nsec);
 	if (nve>0&&nback2<=0)
@@ -172,13 +296,115 @@ void gv(int n=1)
 	    printf("%d background tracks generated in %.4f sec (%.1f msec per event)\n",
 	    numev*nback2, dt/1000000000.,dt/(double)(numev*nback2)/1000000.);
     }
+    fprintf(f,"-----------------------------------------------------------\n");
   }
 
-  DrawHistsV();
-  delete ali;
-  ali = 0;
-  delete gener;
-  gener = 0;
+//  DrawHistsV();
+  int nprong = nuse + 1 - neutral_primary;
+  int ngv    = nve*n;
+  int ntrgv  = nprong*ngv;
+  int ntrgb  = nback2*n;
+  float tr_eff = (float)ntr_tot/(ntrgv+ntrgb);
+  printf("Track finding efficiency %6.1f\n",
+	     tr_eff*100.);
+  fprintf(f,"Track finding efficiency %6.1f\n",
+	     tr_eff*100.);
+  if (ntrgv)
+  {
+    float trgood_eff = (float)ntrgood_tot/ntrgv;
+    printf("Vertex Track finding efficiency %6.1f\n",
+	     trgood_eff*100.);
+    fprintf(f,"Vertex Track finding efficiency %6.1f\n",
+	     trgood_eff*100.);
+  }
+  if (ntrgb)
+  {
+    float trgoodb_eff = (float)ntrgoodb_tot/ntrgb;
+    printf("Background Track finding efficiency %6.1f\n",
+	     trgoodb_eff*100.);
+    fprintf(f,"Background Track finding efficiency %6.1f\n",
+	     trgoodb_eff*100.);
+  }
+  if (ntrgv)
+  {
+    float trgood_r_eff = (float)ntrgood_r_tot/ntrgv;
+    printf("Vertex Track finding efficiency %6.1f (right segs >= %.1f%%)\n",
+	     trgood_r_eff*100., RightRatioMin*100.);
+    fprintf(f,"Vertex Track finding efficiency %6.1f (right segs >= %.1f%%)\n",
+	     trgood_r_eff*100., RightRatioMin*100.);
+  }
+  if (ntrgb)
+  {
+    float trgoodb_r_eff = (float)ntrgoodb_r_tot/ntrgb;
+    printf("Background Track finding efficiency %6.1f (right segs >= %.1f%%)\n",
+	     trgoodb_r_eff*100., RightRatioMin*100.);
+    fprintf(f,"Background Track finding efficiency %6.1f (right segs >= %.1f%%)\n",
+	     trgoodb_r_eff*100., RightRatioMin*100.);
+  }
+  int n2gv = ngv;
+  if (nprong == 3) n2gv = 3*ngv;
+  if (nprong == 4) n2gv = 6*ngv;
+  if (nprong == 5) n2gv = 10*ngv;
+  if (n2gv)
+  {
+    float v2good_eff = (float)nv2good_tot/n2gv;
+    printf("2-Track vertexes finding efficiency %6.1f\n",
+	     v2good_eff*100.);
+    fprintf(f,"2-Track vertexes finding efficiency %6.1f\n",
+	     v2good_eff*100.);
+    float v2goodm_eff = (float)nv2goodm_tot/n2gv;
+    printf("Right 2-Track vertexes finding efficiency %6.1f\n",
+	     v2goodm_eff*100.);
+    fprintf(f,"Right 2-Track vertexes finding efficiency %6.1f\n",
+	     v2goodm_eff*100.);
+  }
+  if (nprong == 3 && ngv)
+  {
+    float v3good_eff = (float)nv3good_tot/ngv;
+    printf("3-Track vertexes finding efficiency %6.1f\n",
+	     v3good_eff*100.);
+    fprintf(f,"3-Track vertexes finding efficiency %6.1f\n",
+	     v3good_eff*100.);
+    float v3goodm_eff = (float)nv3goodm_tot/ngv;
+    printf("Right 3-Track vertexes finding efficiency %6.1f\n",
+	     v3goodm_eff*100.);
+    fprintf(f,"Right 3-Track vertexes finding efficiency %6.1f\n",
+	     v3goodm_eff*100.);
+  }
+  if (nprong == 4 && ngv)
+  {
+    float v4good_eff = (float)nv4good_tot/ngv;
+    printf("4-Track vertexes finding efficiency %6.1f\n",
+	     v4good_eff*100.);
+    fprintf(f,"4-Track vertexes finding efficiency %6.1f\n",
+	     v4good_eff*100.);
+    float v4goodm_eff = (float)nv4goodm_tot/ngv;
+    printf("Right 4-Track vertexes finding efficiency %6.1f\n",
+	     v4goodm_eff*100.);
+    fprintf(f,"Right 4-Track vertexes finding efficiency %6.1f\n",
+	     v4goodm_eff*100.);
+  }
+  if (nprong == 5 && ngv)
+  {
+    float v5good_eff = (float)nv5good_tot/ngv;
+    printf("5-Track vertexes finding efficiency %6.1f\n",
+	     v5good_eff*100.);
+    fprintf(f,"5-Track vertexes finding efficiency %6.1f\n",
+	     v5good_eff*100.);
+    float v5goodm_eff = (float)nv5goodm_tot/ngv;
+    printf("Right 5-Track vertexes finding efficiency %6.1f\n",
+	     v4goodm_eff*100.);
+    fprintf(f,"Right 5-Track vertexes finding efficiency %6.1f\n",
+	     v5goodm_eff*100.);
+  }
+  fclose(f);
+  f = 0;
+  sprintf(outfile,"%db_%dK%dpi_%dub_%dtb", n, nve, nuse, nback1, nback2);
+  rf = new TFile(strcat(outfile,".root"),"RECREATE","MC Vertex reconstruction");
+  hlist.Write();
+  rf->Close();
+  delete rf;
+  rf = 0;
 }
 
 
@@ -188,18 +414,36 @@ void g1(int nv=1, int nb1=0, int nb2=0)
   //generation of 1 pattern volume
   float vlim[4], vzlim[2];
   
+  if (gener)
+  {
+    if (gener->eVTX) gener->eVTX->Delete();
+    if (gener->eTracks) gener->eTracks->Delete();
+    gener->eVTX = new TObjArray(1000);
+  }
+  if (ali)
+  {
+    if (ali->eVTX) ali->eVTX->Delete();
+    if (ali->eTracks) ali->eTracks->Delete();
+    ali->ResetCouples();
+    int npat=ali->Npatterns();
+    TClonesArray *segs = 0;
+    for(int i=0; i<npat; i++ )
+	if ( segs = (ali->GetPattern(i))->GetSegments()) segs->Delete();
+    ali->eVTX = new TObjArray(1000);
+  }
+
   vlim[0] = brick.lim[0] + fiducial_border;
   vlim[1] = brick.lim[1] + fiducial_border;
   vlim[2] = brick.lim[2] - fiducial_border;
   vlim[3] = brick.lim[3] - fiducial_border;
-  vzlim[0] = fiducial_border;
-  vzlim[1] = brick.plates*brick.dz - fiducial_border;
+  vzlim[0] = fiducial_border_z;
+  vzlim[1] = brick.plates*brick.dz - fiducial_border_z;
 
   if (nv) 
-	gener->GeneratePhaseSpaceEvents( nv, pDecay,           vzlim,
+	gener->GeneratePhaseSpaceEvents( nv, pDecay,       vzlim,
 				         vlim,             seg_s,
 				         ProbGap,          eloss_flag,
-				         !neutral_primary);
+				         charges);
   if (rec_type >= 2 && nb1) 
 	gener->GenerateUncorrelatedSegments(nb1, brick.lim, seg_s,
 					    back1_tetamax, -30 );
@@ -207,6 +451,8 @@ void g1(int nv=1, int nb1=0, int nb2=0)
 	gener->GenerateBackgroundTracks(nb2, brick.lim, back2_plim,
 				        seg_s,     back2_tetamax,
 				        ProbGap,   eloss_flag );
+  FillHistsGen();
+
 
   if (rec_type == 0)
   {
@@ -221,12 +467,6 @@ void g1(int nv=1, int nb1=0, int nb2=0)
 	rec_all();
   }
 
-  if (gener->eVTX) gener->eVTX->Clear();
-  if (gener->eTracks) gener->eTracks->Clear();
-  gener->Clear();
-  if (ali->eTracks) ali->eTracks->Clear();
-  if (ali->eVTX) ali->eVTX->Clear();
-  ali->Clear();
 
 }
 
@@ -308,7 +548,7 @@ void rec_v(int nv)
 
 	DE_FIT = tr->DE();
     
-	hp[13]->Fill(DE_FIT-DE_MC);
+	hp[19]->Fill(DE_FIT-DE_MC);
     }
 
     v = vedb->V();
@@ -355,6 +595,8 @@ void rec_vfind()
   if (hp[10]) hp[10]->Fill(ntr);
   printf(" %6d generated vertexes\n", nvg);
   printf(" %6d generated tracks\n", ntr);
+  fprintf(f," %6d generated vertexes\n", nvg);
+  fprintf(f," %6d generated tracks\n", ntr);
 
   int ntr_nmin = 0;
   int ntr_pmin = 0;
@@ -418,21 +660,31 @@ void rec_vfind()
     ali->AddTrack(tr);
     ntrgood++;
     
-    hp[13]->Fill(DE_FIT-DE_MC);
+    hp[19]->Fill(DE_FIT-DE_MC);
   }
 
   printf(" %6d tracks found after track selection\n", ntrgood);
   printf("        ( %4d tracks with nseg < %d )\n", ntr_nmin, nsegMin);
   printf("        ( %4d tracks with p    < %6.3f GeV/c)\n", ntr_pmin, pMin);
   printf("        ( %4d tracks with prob < %6.3f )\n", ntr_prob, ProbMinT);
+  fprintf(f," %6d tracks found after track selection\n", ntrgood);
+  fprintf(f,"        ( %4d tracks with nseg < %d )\n", ntr_nmin, nsegMin);
+  fprintf(f,"        ( %4d tracks with p    < %6.3f GeV/c)\n", ntr_pmin, pMin);
+  fprintf(f,"        ( %4d tracks with prob < %6.3f )\n", ntr_prob, ProbMinT);
 
-  int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin);
+  bool usemom = false;
+  if ( neutral_primary && (nuse == npi) ) usemom = true; 
+  int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
 
   printf(" %d vertexes found\n", nvtx);
 
-  int nadd = ali->ProbVertex3(ProbMinV);
+  int nadd = 0;
+  int nprong = nuse + 1 - neutral_primary;
+  
+  if ( nprong > 2 ) nadd = ali->ProbVertex3(ProbMinV3);
 
   int nvgood = 0;
+  int nvgoodm = 0;
   int ivg = 0;
   for (int i=0; i<nvtx; i++)
     {
@@ -444,7 +696,7 @@ void rec_vfind()
 	    {
 		if (v->valid())
 		{
-		    if (v->ntracks() == 3)
+		    if (v->ntracks() == nprong)
 		    {
 			nvgood++;
 			if ( local_coordinates )
@@ -457,6 +709,7 @@ void rec_vfind()
 				if (ivg != ivg0) break;
 			    }
 			    if (ivg != ivg0) continue;
+			    nvgoodm++;
   			    edbvg = (EdbVertex *)((gener->eVTX)->At(ivg-1));
 			    vxo = edbv->X();	
 			    vyo = edbv->Y();	
@@ -473,7 +726,8 @@ void rec_vfind()
     }
   
   if (hp[9]) hp[9]->Fill(nvgood);
-  printf(" %d real vertexes found\n", nvgood);
+  printf(" %d(%d) real vertexes found (%d matched to MC)\n", nvgood, nadd, nvgoodm);
+  fprintf(f," %d(%d) real vertexes found (%d matched to MC)\n", nvgood, nadd, nvgoodm);
 
 }
 
@@ -492,16 +746,19 @@ void rec_all()
   EdbSegP *s = 0;
   float p;
 
-  int itrg = 0;
-  int ntrgood = 0;
-  int nsegmatch = 0;
 
   int nvg = 0;
   if (gener->eVTX) nvg = gener->eVTX->GetEntries();
   int ntrg = 0;
   if (gener->eTracks) ntrg = gener->eTracks->GetEntries();
-  printf(" %6d generated vertexes\n", nvg);
-  printf(" %6d generated tracks\n", ntrg);
+
+  printf("%6d generated vertexes\n", nvg);
+  printf("%6d generated tracks\n", ntrg);
+  fprintf(f,"%6d generated vertexes\n", nvg);
+  fprintf(f,"%6d generated tracks\n", ntrg);
+
+  nvg_tot += nvg;
+  ntrg_tot += ntrg;
 
   ali->Link();
   printf("link ok\n");
@@ -509,16 +766,15 @@ void rec_all()
 
   ali->MakeTracks();
 
+  int itrg = 0;
+  int nsegmatch = 0;
   int ntr = 0;
   if (ali->eTracks) ntr = ali->eTracks->GetEntries();
-  int negflag = 0;
-  int notmatched = 0;
 
   for (int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(ali->eTracks->At(itr));
     if (tr->Flag()<0)
     {
-	negflag++;
 	continue;
     }
     trg = 0;
@@ -541,14 +797,11 @@ void rec_all()
 	}
 	else
 	{
-	    notmatched++;
 	}
     }
   }
 
-  printf(" %6d tracks found after track making\n", ntr);
-//  printf("        ( %4d tracks with negative flag)\n", negflag);
-//  printf("        ( %4d tracks not matched with generated ones)\n", notmatched);
+  fprintf(f," %6d tracks found after track making\n", ntr);
 
   ali->FitTracks(-1., -1., gener->eTracks);
   ali->FillCell(50,50,0.015,0.015);
@@ -557,11 +810,15 @@ void rec_all()
   ntr = 0;
   if (ali->eTracks) ntr = ali->eTracks->GetEntries();
 
-  negflag = 0;
-  notmatched = 0;
+  int ntrgood = 0;
+  int ntrgood_r = 0;
+  int negflag = 0;
+  int notmatched = 0;
   int nreject_prob = 0;
   int nreject_nseg = 0;
   int ntrgoodb = 0;
+  int ntrgoodb_r = 0;
+  double right_ratio = 0.;
 
   for(int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(ali->eTracks->At(itr));
@@ -590,12 +847,23 @@ void rec_all()
 	    if (trg->Flag() == 0)        // background track
 	    {
 		ntrgoodb++;
-		hp[16]->Fill((double)nsegmatch/tr->N());
+		right_ratio = (double)nsegmatch/tr->N();
+		if (right_ratio >= RightRatioMin)
+		{
+		    ntrgoodb_r++;
+		}
+		hp[16]->Fill(right_ratio);
+
 	    }
 	    else if (trg->Flag() <= nvg) // track at vertex
 	    {
 		ntrgood++;
-		hp[15]->Fill((double)nsegmatch/tr->N());
+		right_ratio = (double)nsegmatch/tr->N();
+		if (right_ratio >= RightRatioMin)
+		{
+		    ntrgood_r++;
+		}
+		hp[15]->Fill(right_ratio);
 	    }
 	}
 	else
@@ -619,28 +887,43 @@ void rec_all()
     {
 	DE_MC = trg->DE();
 	DE_FIT = tr->DE();
-	hp[13]->Fill(DE_FIT-DE_MC);
+	hp[19]->Fill(DE_FIT-DE_MC);
 	hp[17]->Fill(tr->Prob());
     }
   }
 
-  printf(" %6d tracks found after propagation\n", ntr);
-  printf(" %6d matched tracks found (at vertexes)\n", ntrgood);
-  printf(" %6d matched tracks found (background )\n", ntrgoodb);
-  printf("        ( %4d tracks with negative flag)\n", negflag);
-  printf("        ( %4d tracks not matched with generated ones)\n", notmatched);
-  printf("        ( %4d tracks with nseg < %d )\n", nreject_nseg, nsegMin);
-  printf("        ( %4d tracks with prob < %6.3f )\n", nreject_prob, ProbMinT);
+  printf("  %6d tracks found after propagation\n", ntr-negflag);
+  printf("  %6d matched tracks found (at vertexes), %6d with right segs >= %.0f%%\n", ntrgood, ntrgood_r, RightRatioMin*100.);
+  printf("  %6d matched tracks found (background ), %6d with right segs >= %.0f%%\n", ntrgoodb, ntrgoodb_r, RightRatioMin*100.);
+//  printf("        ( %4d tracks with negative flag)\n", negflag);
+  printf("         ( %4d tracks not matched with generated ones)\n", notmatched);
+  printf("         ( %4d tracks with nseg < %d )\n", nreject_nseg, nsegMin);
+  printf("         ( %4d tracks with prob < %6.3f )\n", nreject_prob, ProbMinT);
+  fprintf(f,"  %6d tracks found after propagation\n", ntr-negflag);
+  fprintf(f,"  %6d matched tracks found (at vertexes), %6d with right segs >= %.0f%%\n", ntrgood, ntrgood_r, RightRatioMin*100.);
+  fprintf(f,"  %6d matched tracks found (background ), %6d with right segs >= %.0f%%\n", ntrgoodb, ntrgoodb_r, RightRatioMin*100.);
+//  fprintf(f,"        ( %4d tracks with negative flag)\n", negflag);
+  fprintf(f,"         ( %4d tracks not matched with generated ones)\n", notmatched);
+  fprintf(f,"         ( %4d tracks with nseg < %d )\n", nreject_nseg, nsegMin);
+  fprintf(f,"         ( %4d tracks with prob < %6.3f )\n", nreject_prob, ProbMinT);
+
+  ntr_tot += ntr-negflag;
+  ntrgood_tot += ntrgood;
+  ntrgoodb_tot += ntrgoodb;
+  ntrgood_r_tot += ntrgood_r;
+  ntrgoodb_r_tot += ntrgoodb_r;
+
+
 
   if (hp[10]) hp[10]->Fill(ntr-negflag);
 
-  int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin);
+  bool usemom = false;
+  if ( neutral_primary && (nuse == npi) ) usemom = true; 
 
-  printf(" %d vertexes found\n", nvtx);
-
-  int nadd = ali->ProbVertex3(ProbMinV);
+  int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
 
   int nvgood = 0;
+  int nvgoodm = 0;
   int ivg = 0;
   for (int i=0; i<nvtx; i++)
     {
@@ -652,7 +935,7 @@ void rec_all()
 	    {
 		if (v->valid())
 		{
-		    if (v->ntracks() == 3)
+		    if (v->ntracks() == 2)
 		    {
 			nvgood++;
 			if ( local_coordinates )
@@ -661,7 +944,6 @@ void rec_all()
 			    if (ivg0 >= 0)
 			        ivg0 = ((EdbTrackP*)(gener->eTracks->At(ivg0)))->Flag();
 			    ivg = ivg0 + 1;
-//			    printf("Vertex %4d, ivg = %d\n", i, ivg0);
 			    for (int j=1; j<edbv->N() && ivg0>0; j++)
 			    {
 				int ivg = (edbv->GetTrack(j)->GetSegmentsFlag(nsegmatch));
@@ -670,9 +952,64 @@ void rec_all()
 				else
 				    break;
 				if (ivg != ivg0) break;
-//				printf("             ivg = %d\n", ivg);
 			    }
 			    if (ivg != ivg0) continue;
+			    nvgoodm++;
+			}	
+		    }
+		}
+	    }
+	}
+    }
+  printf("%d 2-track vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+  fprintf(f,"%d 2-track vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+
+  nv2good_tot += nvgood;
+  nv2goodm_tot += nvgoodm;
+
+  int nadd = 0;
+  int nprong = nuse + 1 - neutral_primary;
+  
+  if ( nprong == 3 ) nadd = ali->ProbVertex3(ProbMinV3);
+  if ( nprong == 4 ) nadd = ali->ProbVertex4(ProbMinV4);
+
+  nvgood = 0;
+  nvgoodm = 0;
+  ivg = 0;
+  for (int i=0; i<nvtx; i++)
+    {
+  	edbv = (EdbVertex *)((ali->eVTX)->At(i));
+	if (edbv)
+	{
+	    v = edbv->V();
+	    if (v)
+	    {
+		if (v->valid())
+		{
+		    if (v->ntracks() == nprong)
+		    {
+			nvgood++;
+			if ( local_coordinates )
+			{
+			    tr = edbv->GetTrack(0);
+			    int ivg0 = -1;
+			    if(tr) ivg0 = tr->GetSegmentsFlag(nsegmatch);
+			    if (ivg0 >= 0)
+			        ivg0 = ((EdbTrackP*)(gener->eTracks->At(ivg0)))->Flag();
+			    ivg = ivg0 + 1;
+			    for (int j=1; j<edbv->N() && ivg0>0; j++)
+			    {
+				tr = edbv->GetTrack(j);
+				int ivg = -1;
+				if(tr) ivg = tr->GetSegmentsFlag(nsegmatch);
+				if (ivg >= 0)
+			    	    ivg = ((EdbTrackP*)(gener->eTracks->At(ivg)))->Flag();
+				else
+				    break;
+				if (ivg != ivg0) break;
+			    }
+			    if (ivg != ivg0) continue;
+			    nvgoodm++;
   			    edbvg = (EdbVertex *)((gener->eVTX)->At(ivg-1));
 			    vxo = edbv->X();	
 			    vyo = edbv->Y();	
@@ -687,21 +1024,32 @@ void rec_all()
 	    }
 	}
     }
-  
   if (hp[9]) hp[9]->Fill(nvgood);
-  printf(" %d real vertexes found\n", nvgood);
-
+  if (nprong == 3)
+  {
+    printf("%d 3-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+    fprintf(f,"%d 3-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+    nv3good_tot += nvgood;
+    nv3goodm_tot += nvgoodm;
+  }
+  if (nprong == 4)
+  {
+    printf("%d 4-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+    fprintf(f,"%d 4-tracks vertexes found (%d matched to MC)\n", nvgood, nvgoodm);
+    nv4good_tot += nvgood;
+    nv4goodm_tot += nvgoodm;
+  }
 }
 
 ///-----------------------------------------------------------------------
-void BookHistsV()
+void BookHistsV(int nve)
 {
   if (!hp[0]) hp[0] = new TH1F("Hist_Vt_Dx","Vertex X error",100,-5.,5.);
   if (!hp[1]) hp[1] = new TH1F("Hist_Vt_Dy","Vertex Y error",100,-5.,5.);
-  if (!hp[2]) hp[2] = new TH1F("Hist_Vt_Dz","Vertex Z error",50,-500.,500.);
+  if (!hp[2]) hp[2] = new TH1F("Hist_Vt_Dz","Vertex Z error",50,-250.,250.);
   if (!hp[3]) hp[3] = new TH1F("Hist_Vt_Sx","Vertex X sigma",100,0.,10.);
   if (!hp[4]) hp[4] = new TH1F("Hist_Vt_Sy","Vertex Y sigma",100,0.,10.);
-  if (!hp[5]) hp[5] = new TH1F("Hist_Vt_Sz","Vertex Z sigma",100,0.,1000.);
+  if (!hp[5]) hp[5] = new TH1F("Hist_Vt_Sz","Vertex Z sigma",100,0.,500.);
   if (!hp[6]) hp[6] = new TH1F("Hist_Vt_Chi2","Vertex Chi-square/D.F.",25,0.,5.);
   if (!hp[7]) hp[7] = new TH1F("Hist_Vt_Prob","Vertex Chi-square Probability",26,0.,1.04);
   if (!hp[8]) hp[8] = new TH1F("Hist_Vt_Mass","Vertex Mass error",50,-1.000,+1.000);
@@ -711,14 +1059,44 @@ void BookHistsV()
   sprintf(title,"Number of reconstructed tracks (%d generated)",ntall);
   if (!hp[10]) hp[10] = new TH1F("Hist_Vt_Ntrack",title,ntall*2,0.,(float)(ntall*2));
   if (!hp[11]) hp[11] = new TH1F("Hist_Vt_Nsegs","Number of track segments",brick.plates+1,0.,(float)(brick.plates+1));
-  if (!hp[12]) hp[12] = new TH1F("Hist_Vt_Dtrack","Track DeltaX",100,-5.,+5.);
-  if (!hp[13]) hp[13] = new TH1F("Hist_Vt_DE","DE(MC)-DE",100,-0.5,+0.5);
+  if (!hp[12]) hp[12] = new TH1F("Hist_Vt_Dtrack","Track DeltaX, microns",100,-5.,+5.);
+  if (!hp[13]) hp[13] = new TH1F("Hist_Vt_NsegsG","Number of generated track segments",brick.plates+1,0.,(float)(brick.plates+1));
+  if (!hp[19]) hp[19] = new TH1F("Hist_Vt_DE","DE(MC)-DE",100,-0.25,+0.25);
   if (!hp[14]) hp[14] = new TH1F("Hist_Vt_Dist","RMS track-vertex distance",100, 0.,50.);
   if (!hp[15]) hp[15] = new TH1F("Hist_Vt_Match","Right segments fraction (tracks at vertexes)",110, 0.,1.1);
   if (!hp[16]) hp[16] = new TH1F("Hist_Vt_Matchb","Right segments fraction (backgound tracks) ",110, 0.,1.1);
   if (!hp[17]) hp[17] = new TH1F("Hist_Vt_Trprob","Track probability",110, 0.,1.1);
+  if (!hp[18]) hp[18] = new TH1F("Hist_Vt_AngleV","RMS track-track angle, mrad", 100, 0.,1000.);
+  if (!hp[20]) hp[20] = new TH1F("Hist_Vt_Angle","Track angle, mrad", 100, 0.,1000.);
+  if (!hp[21]) hp[21] = new TH1F("Hist_Vt_Momen","Track momentum, GeV/c", 100, 0.,20.);
 
-//  if (!hp[8]) hp[8] = new TH1F("Hist_Vt_Ntra","Vertex Ntracks",20,0.,20.);
+  hld1.Add(hp[0]);
+  hld1.Add(hp[1]);
+  hld1.Add(hp[2]);
+  hld1.Add(hp[3]);
+  hld1.Add(hp[4]);
+  hld1.Add(hp[5]);
+  hld1.Add(hp[6]);
+  hld1.Add(hp[7]);
+  hld1.Add(hp[8]);
+
+  hld2.Add(hp[11]);
+  hld2.Add(hp[15]);
+  hld2.Add(hp[12]);
+  hld2.Add(hp[13]);
+  hld2.Add(hp[16]);
+  hld2.Add(hp[19]);
+  hld2.Add(hp[17]);
+  hld2.Add(hp[20]);
+  hld2.Add(hp[21]);
+
+  hld3.Add(hp[9]);
+  hld3.Add(hp[10]);
+  hld3.Add(hp[14]);
+  hld3.Add(hp[18]);
+
+  for (int i=0; i<22; i++)
+    if (hp[i]) hlist.Add(hp[i]);
 }
 
 double smass = 0.139;
@@ -734,25 +1112,207 @@ void FillHistsV(Vertex &v)
   hp[5]->Fill(v.vzerr());
   hp[6]->Fill(v.ndf() > 0 ? v.chi2()/v.ndf() : 0);
   hp[7]->Fill(v.prob());
-  double rmass = v.mass(smass);
-  hp[8]->Fill(rmass-mK);
+  if ( (nuse == npi) && neutral_primary )
+  {
+    double rmass = v.mass(smass);
+    hp[8]->Fill(rmass-mK);
+  }
   hp[14]->Fill(v.rmsDistAngle());
-//  hp[8]->Fill(v.ntracks());
+  hp[18]->Fill(v.angle()*1000.);
 }
+///-----------------------------------------------------------------------
+void FillHistsGen()
+{
+  // tracks and vertex reconstruction (KF fitting only without track finding)
+
+  double xg, yg, zg, txg, tyg, pg, ang;
+  EdbTrackP *tr;
+  EdbVertex *vedbg = 0;
+
+  int nv = 0;
+  if(gener->eVTX) nv = gener->eVTX->GetEntries();
+  for(int i=0; i<nv; i++) {
+    vedbg = (EdbVertex *)(gener->eVTX->At(i));
+    int nt = vedbg->N();
+    for(int ip=0; ip<nt; ip++) {
+	tr = vedbg->GetTrack(ip);
+        xg = tr->X();
+	yg = tr->Y();
+        zg = tr->Z();
+        txg = tr->TX();
+	tyg = tr->TY();
+        pg  = tr->P();
+	ang = TMath::ACos(1./(1.+txg*txg+tyg*tyg))*1000.;
+	if (hp[20]) hp[20]->Fill(ang);
+	if (hp[21]) hp[21]->Fill(pg);
+    }
+  }
+  int nt = 0;
+  if (gener->eTracks) nt = gener->eTracks->GetEntries();
+  for(int i=0; i<nt; i++) {
+	tr = (EdbTrackP *)(gener->eTracks->At(i));
+        xg = tr->X();
+	yg = tr->Y();
+        zg = tr->Z();
+        txg = tr->TX();
+	tyg = tr->TY();
+        pg  = tr->P();
+	ang = TMath::ACos(1./(1.+txg*txg+tyg*tyg))*180./TMath::Pi();
+	if (hp[13]) hp[13]->Fill(tr->N());
+  }
+}
+
 ///-----------------------------------------------------------------------
 void DrawHistsV()
 {
-  TCanvas *cv = new TCanvas();
-  cv->Divide(3,3);
-  for(int i=0; (i<9)&&hp[i]; i++) {
-    cv->cd(i+1);
-    if (hp[i]) hp[i]->Draw();
+  TCanvas *cv1 = new TCanvas("Vertex_reconstruction_1","MC Vertex reconstruction", 760, 760);
+  int n = hld1.GetEntries();
+  if (n < 2)
+  {
   }
-  TCanvas *cv1 = new TCanvas();
-  cv1->Divide(3,3);
-  for(int i=9; hp[i]; i++) {
-    cv1->cd(i+1-9);
-    if (hp[i]) hp[i]->Draw();
+  else if (n < 3)
+  {
+    cv1->Divide(1,2);    
+  }
+  else if (n < 4)
+  {
+    cv1->Divide(1,3);    
+  }
+  else if (n < 5)
+  {
+    cv1->Divide(2,2);    
+  }
+  else if (n < 6)
+  {
+    cv1->Divide(2,3);    
+  }
+  else if (n < 7)
+  {
+    cv1->Divide(2,3);    
+  }
+  else if (n < 8)
+  {
+    cv1->Divide(2,4);    
+  }
+  else if (n < 9)
+  {
+    cv1->Divide(2,4);    
+  }
+  else if (n < 10)
+  {
+    cv1->Divide(3,3);    
+  }
+  else if (n < 11)
+  {
+    cv1->Divide(2,5);    
+  }
+  else
+  {
+    cv1->Divide(3,5);    
+  }
+  for(int i=0; i<n; i++) {
+    cv1->cd(i+1);
+    if (hld1.At(i)) hld1.At(i)->Draw();
+  }
+
+  TCanvas *cv2 = new TCanvas("Vertex_reconstruction_2","Vertex reconstruction (tracks hists)", 600, 760);
+  int n = hld2.GetEntries();
+  if (n < 2)
+  {
+  }
+  else if (n < 3)
+  {
+    cv2->Divide(1,2);    
+  }
+  else if (n < 4)
+  {
+    cv2->Divide(1,3);    
+  }
+  else if (n < 5)
+  {
+    cv2->Divide(2,2);    
+  }
+  else if (n < 6)
+  {
+    cv2->Divide(2,3);    
+  }
+  else if (n < 7)
+  {
+    cv2->Divide(2,3);    
+  }
+  else if (n < 8)
+  {
+    cv2->Divide(2,4);    
+  }
+  else if (n < 9)
+  {
+    cv2->Divide(2,4);    
+  }
+  else if (n < 10)
+  {
+    cv2->Divide(3,3);    
+  }
+  else if (n < 11)
+  {
+    cv2->Divide(2,5);    
+  }
+  else
+  {
+    cv2->Divide(3,5);    
+  }
+  for(int i=0; i<n; i++) {
+    cv2->cd(i+1);
+    if (hld2.At(i)) hld2.At(i)->Draw();
+  }
+
+  TCanvas *cv3 = new TCanvas("Vertex_reconstruction_3","Vertex reconstruction (eff hists)", 600, 760);
+  n = hld3.GetEntries();
+  if (n < 2)
+  {
+  }
+  else if (n < 3)
+  {
+    cv3->Divide(1,2);    
+  }
+  else if (n < 4)
+  {
+    cv3->Divide(1,3);    
+  }
+  else if (n < 5)
+  {
+    cv3->Divide(2,2);    
+  }
+  else if (n < 6)
+  {
+    cv3->Divide(2,3);    
+  }
+  else if (n < 7)
+  {
+    cv3->Divide(2,3);    
+  }
+  else if (n < 8)
+  {
+    cv3->Divide(2,4);    
+  }
+  else if (n < 9)
+  {
+    cv3->Divide(2,4);    
+  }
+  else if (n < 10)
+  {
+    cv3->Divide(3,3);    
+  }
+  else if (n < 11)
+  {
+    cv3->Divide(2,5);    
+  }
+  else
+  {
+    cv3->Divide(3,5);    
+  }
+  for(int i=0; i<n; i++) {
+    cv3->cd(i+1);
+    if (hld3.At(i)) hld3.At(i)->Draw();
   }
 }
 ///------------------------------------------------------------
@@ -771,6 +1331,7 @@ void disp_v()
   // display of 1 event
 
   if(!ali) return;
+
   ali->FillCell(50,50,0.015,0.015);
 
   TObjArray *arr   = new TObjArray();
@@ -907,3 +1468,5 @@ TPolyMarker3D *seg_mark(EdbSegP *seg)
 
   return line;
 }
+///------------------------------------------------------------
+void d() { DrawHistsV();}
