@@ -1,4 +1,4 @@
-PROJECT_ROOT=/home/petukhov/public/fedra
+PROJECT_ROOT=${FEDRA_ROOT}
 
 BIN_DIR = $(PROJECT_ROOT)/bin
 LIB_DIR = $(PROJECT_ROOT)/lib
