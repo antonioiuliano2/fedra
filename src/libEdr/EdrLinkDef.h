@@ -16,8 +16,6 @@
 #pragma link C++ class EdbPVRec;
 #pragma link C++ class EdbAlignment;
 
-#pragma link C++ class EdbPVGen;
-
 #pragma link C++ class EdbGA;
 #pragma link C++ class EdbFIRF;
 #pragma link C++ class EdbClustP;

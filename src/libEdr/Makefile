@@ -7,7 +7,7 @@ PROJECT_LIBS += -lvt -lEmath -lEdb -lEphys
 
 LIB_TGT       = $(LIB_DIR)/libEdr.so
 
-headers       = EdbPattern.h EdbPVGen.h EdbPVRec.h EdbGA.h EdbDataSet.h EdbIP.h EdbVertex.h
+headers       = EdbPattern.h EdbPVRec.h EdbGA.h EdbDataSet.h EdbIP.h EdbVertex.h
 
 classes	      = $(headers:.h=.$(SrcSuf))
 EdrCint	      = $(headers) EdrLinkDef.h
@@ -136,76 +136,6 @@ EdbIP.o: /var/local/root/include/TDatime.h /var/local/root/include/Htypes.h
 EdbIP.o: /var/local/root/include/TUUID.h
 EdbIP.o: /var/local/root/include/TInetAddress.h
 EdbIP.o: /var/local/root/include/TCache.h EdbIP.h
-EdbPVGen.o: /var/local/root/include/TRandom.h
-EdbPVGen.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
-EdbPVGen.o: /var/local/root/include/TMath.h
-EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
-EdbPVGen.o: EdbPVGen.h /var/local/root/include/TGenPhaseSpace.h
-EdbPVGen.o: /var/local/root/include/TLorentzVector.h
-EdbPVGen.o: /var/local/root/include/TVector3.h
-EdbPVGen.o: /var/local/root/include/TError.h
-EdbPVGen.o: /var/local/root/include/TVector2.h
-EdbPVGen.o: /var/local/root/include/TObject.h
-EdbPVGen.o: /var/local/root/include/Rtypes.h
-EdbPVGen.o: /var/local/root/include/RConfig.h
-EdbPVGen.o: /var/local/root/include/RVersion.h
-EdbPVGen.o: /var/local/root/include/DllImport.h
-EdbPVGen.o: /var/local/root/include/Rtypeinfo.h
-EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
-EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
-EdbPVGen.o: /usr/include/stdio.h /usr/include/features.h
-EdbPVGen.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
-EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
-EdbPVGen.o: /usr/include/bits/types.h /usr/include/libio.h
-EdbPVGen.o: /usr/include/_G_config.h /usr/include/wchar.h
-EdbPVGen.o: /usr/include/bits/wchar.h /usr/include/gconv.h
-EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
-EdbPVGen.o: /usr/include/bits/stdio_lim.h
-EdbPVGen.o: /var/local/root/include/TGenericClassInfo.h
-EdbPVGen.o: /var/local/root/include/Varargs.h
-EdbPVGen.o: /var/local/root/include/TStorage.h
-EdbPVGen.o: /var/local/root/include/Riosfwd.h
-EdbPVGen.o: /var/local/root/include/TBuffer.h /var/local/root/include/Bytes.h
-EdbPVGen.o: /usr/include/string.h /var/local/root/include/TMatrix.h
-EdbPVGen.o: /var/local/root/include/TVector.h
-EdbPVGen.o: /var/local/root/include/TString.h
-EdbPVGen.o: /var/local/root/include/TRefCnt.h
-EdbPVGen.o: /var/local/root/include/TMatrixUtils.h
-EdbPVGen.o: /var/local/root/include/TRotation.h EdbPVRec.h
-EdbPVGen.o: /var/local/root/include/THashList.h EdbPattern.h
-EdbPVGen.o: /var/local/root/include/TTree.h
-EdbPVGen.o: /var/local/root/include/TClonesArray.h
-EdbPVGen.o: /var/local/root/include/TAttLine.h
-EdbPVGen.o: /var/local/root/include/Gtypes.h
-EdbPVGen.o: /var/local/root/include/TAttFill.h
-EdbPVGen.o: /var/local/root/include/TAttMarker.h
-EdbPVGen.o: /var/local/root/include/TBranch.h
-EdbPVGen.o: /var/local/root/include/TStringLong.h
-EdbPVGen.o: /var/local/root/include/TArrayD.h
-EdbPVGen.o: /var/local/root/include/TArray.h
-EdbPVGen.o: /var/local/root/include/TArrayI.h
-EdbPVGen.o: /var/local/root/include/TVirtualTreePlayer.h
-EdbPVGen.o: /var/local/root/include/TClass.h
-EdbPVGen.o: /var/local/root/include/TDictionary.h
-EdbPVGen.o: /var/local/root/include/Property.h
-EdbPVGen.o: /var/local/root/include/TObjArray.h
-EdbPVGen.o: /var/local/root/include/TSeqCollection.h
-EdbPVGen.o: /var/local/root/include/TCollection.h
-EdbPVGen.o: /var/local/root/include/TIterator.h
-EdbPVGen.o: /var/local/root/include/TSortedList.h
-EdbPVGen.o: /var/local/root/include/TArrayL.h
-EdbPVGen.o: /var/local/root/include/TMatrixD.h
-EdbPVGen.o: /var/local/root/include/TVectorD.h
-EdbPVGen.o: /var/local/root/include/TMatrixDUtils.h EdbVertex.h
-EdbPVGen.o: /var/local/root/include/TGraphErrors.h
-EdbPVGen.o: /var/local/root/include/TGraph.h /var/local/root/include/TH1.h
-EdbPVGen.o: /var/local/root/include/TVirtualHistPainter.h
-EdbPVGen.o: /var/local/root/include/TAxis.h
-EdbPVGen.o: /var/local/root/include/TAttAxis.h
-EdbPVGen.o: /var/local/root/include/TArrayC.h
-EdbPVGen.o: /var/local/root/include/TArrayS.h
-EdbPVGen.o: /var/local/root/include/TArrayF.h
-EdbPVGen.o: /var/local/root/include/Foption.h
 EdbPVRec.o: /var/local/root/include/TFile.h
 EdbPVRec.o: /var/local/root/include/TDirectory.h
 EdbPVRec.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
