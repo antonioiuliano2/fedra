@@ -11,7 +11,7 @@ void w( int rid=2, int nviews=2 )
 {
   // test of writing into run file 
   // Parameters:  rid    - run identifier
-  //              nviews - number of views to write
+  //              nviews - number of views to be written
   //
 
   EdbRun *run = new EdbRun(rid,"RECREATE");
@@ -180,8 +180,6 @@ void r(int rid=2)
 
   EdbRun *run = new EdbRun(rid);
   
-  float width = run->GetCamera()->GetWidth();
-
   int  nviews = run->GetEntries();
 
   EdbView    *view    =0;
