@@ -223,9 +223,10 @@ void EdbPatCouple::PrintCouples()
 }
 
 //______________________________________________________________________________
-void EdbPatCouple::CalculateAffXYZ( float z )
+void EdbPatCouple::CalculateAffXYZ( float z, int flag )
 {
   // calculate affine transformation for SELECTED couples at given z
+  // if flag==0 (default) - permit patterns deformation
 
   if(!eAff) eAff = new EdbAffine2D();
   else eAff->Reset();
@@ -252,7 +253,7 @@ void EdbPatCouple::CalculateAffXYZ( float z )
     x2[i] = s2->X() + dz2*s2->TX();
     y2[i] = s2->Y() + dz2*s2->TY();
   }
-  eAff->Calculate( ncp,x1,y1,x2,y2 );
+  eAff->Calculate( ncp,x1,y1,x2,y2, flag);
 
   delete[] x1;
   delete[] y1;
@@ -261,11 +262,11 @@ void EdbPatCouple::CalculateAffXYZ( float z )
 }
 
 //______________________________________________________________________________
-void EdbPatCouple::CalculateAffXY()
+void EdbPatCouple::CalculateAffXY(int flag)
 {
   // calculate affine transformation for SELECTED couples at Z in the center
   float z = (Pat2()->Z()-Pat1()->Z())/2.;
-  CalculateAffXYZ(z);
+  CalculateAffXYZ(z,flag);
   Pat1()->Transform(GetAff());
   GetAff()->Reset();
 }
@@ -719,7 +720,7 @@ int EdbPatCouple::SortByCHI2P()
 }
 
 ///______________________________________________________________________________
-int EdbPatCouple::Align()
+int EdbPatCouple::Align(int alignFlag)
 
 {
   int npat =0;
@@ -741,7 +742,7 @@ int EdbPatCouple::Align()
     FillCell_XYaXaY(Cond(), Zlink(), 1 );   Pat1()->Cell()->DropCouples(4);
     npat = DiffPat(Pat1(),Pat2(),vdiff);
 
-    CalculateAffXYZ(Zlink());
+    CalculateAffXYZ(Zlink(), alignFlag);
 
     Pat1()->Transform(GetAff());
     if( Pat1()->DiffAff(GetAff()) < Cond()->SigmaX(0)/20. ) break;  // stop iterations
@@ -754,8 +755,9 @@ int EdbPatCouple::Align()
   SortByCHI2P();
   CutCHI2P(1.5);
   SelectIsolated();
-  CalculateAffXYZ(Zlink());
+  CalculateAffXYZ(Zlink(),alignFlag);
   Pat1()->Transform(GetAff());
+  Pat1()->SetNAff(npat);
   EdbAffine2D affA;
   affA.Set( GetAff()->A11(), GetAff()->A12(), GetAff()->A21(), GetAff()->A22(),0,0 );
 
@@ -1010,6 +1012,40 @@ EdbPVRec::~EdbPVRec()
 }
 
 ///______________________________________________________________________________
+int EdbPVRec::MakePatternsFromTracks()
+{
+  //TODO - remove it?
+  // starting from the tracks array regenerate patterns to make the 
+  // volume consistent. Assuming all pattern parameters setted correctly and pid's 
+  // are in agreement with 
+  /*
+  if(!eTracks)  return 0;
+  int ntr = eTracks->GetEntries();
+  if(ntr<=0)    return 0;
+  int npat = Npatterns();
+  if(npat<=0)   return 0;
+
+  DropCell();
+  for(int i=0; i<npat; i++)
+    if(GetPattern(i)->GetSegments()) 
+      GetPattern(i)->GetSegments()->Clear();
+
+  EdbTrackP *tr; 
+  EdbSegP  *seg;
+  int nseg;
+  for(int i=0; i<ntr; i++) {
+    tr = GetTrack(i);
+    nseg = tr.N();
+    for(int j=0; j<nseg; j++) {
+      seg = tr->GetSegment(j);
+    }
+  }
+
+  */
+  return 0;
+}
+
+///______________________________________________________________________________
 EdbPatCouple *EdbPVRec::AddCouple(int id1, int id2)
 {
   EdbPatCouple *c = new EdbPatCouple();
@@ -1171,6 +1207,7 @@ int EdbPVRec::Link()
   return npat;
 }
 
+/*
 //______________________________________________________________________________
 int EdbPVRec::LinkTracks()
 {
@@ -1195,8 +1232,9 @@ int EdbPVRec::LinkTracks()
   return 1;
 }
 
+
 //______________________________________________________________________________
-int EdbPVRec::AlignA()
+int EdbPVRec::AlignA(int alignFlag)
 {
   // align patterns in volume
   int npat=Npatterns();
@@ -1211,7 +1249,7 @@ int EdbPVRec::AlignA()
   }
 
   int ncp = Ncouples();
-  for(i=0; i<ncp; i++ )   GetCouple(i)->CalculateAffXY();
+  for(i=0; i<ncp; i++ )   GetCouple(i)->CalculateAffXY(alignFlag);
 
   EdbAffine2D a;
   npat = Npatterns();
@@ -1225,9 +1263,10 @@ int EdbPVRec::AlignA()
 
   return npat;
 }
+*/
 
 //______________________________________________________________________________
-int EdbPVRec::Align()
+int EdbPVRec::Align(int alignFlag)
 {
   // align patterns in volume
   int npat=Npatterns();
@@ -1248,7 +1287,7 @@ int EdbPVRec::Align()
   int ncp = Ncouples();
   for(i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
-    pc->Align();
+    pc->Align(alignFlag);
   }
 
 
@@ -2289,71 +2328,62 @@ int EdbPVRec::MakeTracks(int nsegments)
 }
 
 //______________________________________________________________________________
-int EdbPVRec::MakeTracksTree()
+int EdbPVRec::FineCorrF(int ipat, EdbAffine2D &aff,  EdbAffine2D &afft )
 {
   if(!eTracks) return 0;
 
-  char *file="linked_tracks.root";
-  printf("write tracks into %s ... \n",file);
-  TFile fil(file,"RECREATE");
-  TTree *tracks= new TTree("tracks","tracks");
+  float probMax=.01; // TODO
 
-  EdbTrackP    *track = new EdbTrackP(8);
-  EdbSegP      *tr = (EdbSegP*)track;
-  TClonesArray *segments  = new TClonesArray("EdbSegP");
-  TClonesArray *segmentsf = new TClonesArray("EdbSegP");
+  int   ntr = eTracks->GetEntriesFast();
+  TArrayF x(ntr) , y(ntr), x1(ntr), y1(ntr);
+  TArrayF tx(ntr),ty(ntr),tx1(ntr),ty1(ntr);
 
-  int   nseg,trid,npl,n0;
-  float xv=X();
-  float yv=Y();
-  float w=0.;
+  int itr=0;
+  int nseg=0;
+  EdbTrackP *track=0;
+  EdbSegP   *s=0, *sf=0;
 
-  tracks->Branch("trid",&trid,"trid/I");
-  tracks->Branch("nseg",&nseg,"nseg/I");
-  tracks->Branch("npl",&npl,"npl/I");
-  tracks->Branch("n0",&n0,"n0/I");
-  tracks->Branch("xv",&xv,"xv/F");
-  tracks->Branch("yv",&yv,"yv/F");
-  tracks->Branch("w",&w,"w/F");
-  tracks->Branch("t.","EdbSegP",&tr,32000,99);
-  tracks->Branch("s", &segments);
-  tracks->Branch("sf",&segmentsf);
+  for(int i=0; i<ntr; i++) {
 
-  int ntr = eTracks->GetEntriesFast();
-  for(int itr=0; itr<ntr; itr++) {
-    track = (EdbTrackP*)(eTracks->At(itr));
+    track = (EdbTrackP*)eTracks->At(i);
 
-    trid = track->ID();
+    printf("track->CHI2() = %f %f   prob = %f\n",
+	   track->CHI2(),track->CHI2F(),track->Prob() );
+    if(track->Prob()<probMax) continue;
+
+    sf=0;
     nseg = track->N();
-    npl  = track->Npl();
-    n0   = track->N0();
-
-    tr = (EdbSegP*)track;
-
-    segments->Clear("C");
-    segmentsf->Clear("C");
-    nseg = track->N();
-    w    = track->Wgrains();
-    EdbSegP *s=0,*sf=0;
-    for(int is=0; is<nseg; is++) {
-      s = track->GetSegment(is);
-      if(s) new((*segments)[is])  EdbSegP( *s );
-      sf = track->GetSegmentF(is);
-      if(sf) new((*segmentsf)[is])  EdbSegP( *sf );
+    for(int j=0; j<nseg; j++) {
+      s = track->GetSegment(j);
+      if( s->PID()==ipat ) {
+	sf = track->GetSegmentF(j);
+	break;
+      }
     }
 
-    tracks->Fill();
-    track->Clear();
+    if(!sf)  continue;
+
+    x1[itr]  = s->X();
+    y1[itr]  = s->Y();
+    tx1[itr] = s->TX();
+    ty1[itr] = s->TY();
+    x[itr]   = sf->X();
+    y[itr]   = sf->Y();
+    tx[itr]  = sf->TX();
+    ty[itr]  = sf->TY();
+    itr++;
   }
 
-  tracks->Write();
-  fil.Close();
-  printf("%d tracks are written \n",ntr);
-  return ntr; 
+  aff.CalculateTurn( itr, x1.GetArray(),y1.GetArray(),x.GetArray(),y.GetArray() );
+  GetPattern(ipat)->Transform(&aff);
+
+  afft.CalculateTurn( itr,tx1.GetArray(),ty1.GetArray(),tx.GetArray(),ty.GetArray() );
+  GetPattern(ipat)->TransformA(&afft);
+  return itr;
 }
 
 //______________________________________________________________________________
-int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff)
+int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff, int flag)
 {
   if(!eTracks) return 0;
   int   ntr = eTracks->GetEntriesFast();
@@ -2374,7 +2404,7 @@ int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff)
     y[itr]  = track->Y() + track->TY()*(seg->Z() - track->Z());
     itr++;
   }
-  aff.Calculate( itr,x1,y1,x,y );
+  aff.Calculate( itr,x1,y1,x,y,flag );
   GetPattern(ipat)->Transform(&aff);
   delete[] x;
   delete[] y;
@@ -2552,7 +2582,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
 
   int ntr = eTracks->GetEntries();
   printf("propagate %d tracks, selecting in range [%d : %d] plates...\n"
-	 ,ntr,nplmin,nplmax);
+	 ,ntr,nplmin,nplmax );
 
   TIndexCell cn;  //"npl:prob:entry"
   Long_t v[3];
@@ -2719,6 +2749,27 @@ int EdbPVRec::ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr,
     //ss.PropagateTo(pat->Z());
 
     nseg += pat->FindCompliments(ss,arr,binx,bint);
+  }
+  printf("%d segments are selected\n",nseg);
+  return nseg;
+}
+
+///______________________________________________________________________________
+int EdbPVRec::ExtractDataVolumeSegAll( TObjArray &arr )
+{
+  int npat = Npatterns();
+
+  EdbPattern *pat  = 0;
+  int nseg =0;
+
+  for(int i=0; i<npat; i++) {
+    pat = GetPattern(i);
+    if(!pat)                   continue;
+
+    for(int j=0; j<pat->N(); j++) {
+      arr.Add(pat->GetSegment(j));
+      nseg++;
+    }
   }
   printf("%d segments are selected\n",nseg);
   return nseg;

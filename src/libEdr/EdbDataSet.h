@@ -277,15 +277,16 @@ class EdbDataProc : public TObject {
 
   int  InitVolume(int datatype=0);
   int  InitVolume(EdbPVRec *ali, int datatype=0);
+  int  InitVolumeTracks(EdbPVRec *ali);
   int  InitVolumeRaw(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
   int  CheckCCD();
   int  Link();
   int  Link(EdbDataPiece &piece);
-  void Align();
+  void Align(int alignFlag);
   void LinkTracks(int alg=0, float p=-1.);
   void LinkRawTracks(int alg=0);
-  void AlignLinkTracks(int alg=0);
+  void AlignLinkTracks(int alg=0, int alignFlag=0);
   void SetNoUpdate(int nu) { eNoUpdate=nu; }
   int  NoUpdate() const    { return eNoUpdate; }
 
@@ -293,9 +294,17 @@ class EdbDataProc : public TObject {
   int    CheckShrinkage( EdbPVRec *ali, int couple, float &shr1, float &shr2 );
   void   CorrectAngles();
 
-  void   FineAlignment();
+  void   FineAlignment(int doFine);
+  void   FineAlignmentTracks();
+
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
+
+  int   MakeTracksTree(EdbPVRec *ali=0);
+  int   ReadTracksTree( EdbPVRec &ali,
+			char *fname="linked_tracks.root",
+			int   nsegMin=3,
+			float probMin=0.01 );
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };

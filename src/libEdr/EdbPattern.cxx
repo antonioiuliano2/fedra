@@ -1330,7 +1330,7 @@ float  EdbTrackP::P_MS( float X0, bool draw)
   return p;
 }
 //______________________________________________________________________________
-EdbPattern::EdbPattern()
+EdbPattern::EdbPattern() : EdbSegmentsBox()
 {
   eCell     = new TIndexCell();
   Set0();
@@ -1339,8 +1339,8 @@ EdbPattern::EdbPattern()
 //______________________________________________________________________________
 EdbPattern::EdbPattern(float x0, float y0, float z0, int n) : EdbSegmentsBox(x0,y0,z0,n) 
 {
-  eCell     = new TIndexCell();
   Set0();
+  eCell     = new TIndexCell();
 }
  
 //______________________________________________________________________________
@@ -1352,7 +1352,12 @@ EdbPattern::~EdbPattern()
 //______________________________________________________________________________
 void EdbPattern::Set0()
 {
-  eID = 0;
+  eID   = 0;
+  ePID  = 0;
+  eFlag = 0;
+  eNAff = 0;
+  eStepX=eStepY=eStepTX=eStepTY=0;
+  for(int i=0; i<4; i++) eSigma[i]=0;
 }
 
 //______________________________________________________________________________
@@ -1540,8 +1545,6 @@ EdbPatternsVolume::EdbPatternsVolume()
 {
   ePatterns   = new TObjArray();
   eTracksCell = 0;
-  eTracks     = new TObjArray();
-  eSV  = 0;
   Set0();
 }
 
@@ -1550,8 +1553,6 @@ EdbPatternsVolume::EdbPatternsVolume(EdbPatternsVolume &pvol)
 {
   ePatterns   = new TObjArray();
   eTracksCell = 0;
-  eTracks     = new TObjArray();
-  eSV  = 0;
   Set0();
 
   pvol.PassProperties(*this);
@@ -1646,7 +1647,7 @@ void EdbPatternsVolume::PrintAff() const
   int npat = Npatterns();
   for(int i=0; i<npat; i++ ) {
     GetPattern(i)->GetKeep(a);
-    printf(" %d ",i); a.Print();
+    printf(" %d  (%d) ",i,GetPattern(i)->NAff() ); a.Print();
   }
 }
 

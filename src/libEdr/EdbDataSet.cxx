@@ -790,7 +790,6 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 
   int nseg = 0;
   int nentr = (int)(tree->GetEntries());
-  printf("nentr = %d\n",nentr);
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
     if( !TakeCPSegment(*cp,*s) )      continue;
@@ -816,7 +815,6 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
   }
 
   printf("%d (of %d) segments are readed\n", nseg,nentr );
-  printf("nseg= %d\n",pat->N());
 
   return nseg;
 }
@@ -1949,11 +1947,74 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
 ///______________________________________________________________________________
 int EdbDataProc::InitVolume(int datatype)
 {
-  // datatype: 0  - couples basetrack data
-  //           10 - couples full data
+  // datatype: 0   - couples basetrack data
+  //           10  - couples full data
+  //           100 - tracks only
 
   if(!ePVR) ePVR = new EdbPVRec();
+  if(datatype==100) return InitVolumeTracks(ePVR);
   return InitVolume(ePVR, datatype);
+}
+
+///______________________________________________________________________________
+int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali)
+{
+  EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
+  ali->SetScanCond( cond );
+  
+  EdbDataPiece *piece;
+  int npieces = eDataSet->N();
+  printf("npieces = %d\n",npieces);
+  if(!npieces) return 0;
+
+  EdbAffine2D *a=0;
+  EdbPattern  *pat=0;
+  for(int i=0; i<npieces; i++ ) {
+    piece = eDataSet->GetPiece(i);
+    pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
+    a = piece->GetLayer(0)->GetAffineXY();
+    pat->SetKeep( a->A11(),a->A12(),a->A21(),a->A22(), a->B1(),a->B2() );
+    pat->SetPID(i);
+    ali->AddPattern( pat );
+  }
+  ali->SetPatternsID();
+
+  int ntr = ReadTracksTree( *ali );
+  printf("ntr=%d\n",ntr);
+
+  ali->SetSegmentsErrors();
+  ali->SetCouplesAll();
+  ali->SetChi2Max(cond->Chi2PMax());
+  ali->SetOffsetsMax(cond->OffX(),cond->OffY());
+  return npieces;
+}
+
+///______________________________________________________________________________
+void EdbDataProc::FineAlignmentTracks()
+{
+  InitVolume(100);
+  EdbPVRec *ali = PVR();
+
+  EdbAffine2D aff,afft;
+
+  int fctr=0,fctr0=10000, fcMin=50;
+
+  for( int i=0; i<ali->Npatterns(); i++ ) {
+    fctr = ali->FineCorrF(i,aff,afft);
+    if(fctr<fctr0) fctr0=fctr;
+    printf("fctr = %d\n",fctr);
+  }
+
+  if(fctr0>fcMin) {
+    for( int i=0; i<ali->Npatterns(); i++) {
+      ali->GetPattern(i)->GetKeep(aff);
+      if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
+
+      //if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffTPar(0,afft);
+    }
+  }
+
+  
 }
 
 ///______________________________________________________________________________
@@ -2027,12 +2088,12 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::Align()
+void EdbDataProc::Align(int doAlign)
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
 
-  ali->Align();
+  ali->Align(doAlign);
   ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
@@ -2080,7 +2141,7 @@ void EdbDataProc::LinkTracks( int alg, float p )
     ali->PropagateTracks(ali->Npatterns()-1,2);
   }
 
-  ali->MakeTracksTree();
+  MakeTracksTree(ali);
 }
 
 ///______________________________________________________________________________
@@ -2103,11 +2164,11 @@ void EdbDataProc::LinkRawTracks( int alg )
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
-  ali->MakeTracksTree();
+  MakeTracksTree(ali);
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::FineAlignment()
+void EdbDataProc::FineAlignment(int doFine)
 {
   EdbPVRec    ali;
   InitVolume(&ali);
@@ -2124,13 +2185,13 @@ void EdbDataProc::FineAlignment()
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
   for( i=0; i<ali.Npatterns(); i++ ) {
-    fctr = ali.FineCorrXY(i,aff);
+    fctr = ali.FineCorrXY(i,aff,doFine);
   }
 
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
   for( i=0; i<ali.Npatterns(); i++ ) {
-    fctr = ali.FineCorrXY(i,aff);
+    fctr = ali.FineCorrXY(i,aff,doFine);
   }
 
   if(fctr>fcMin) {
@@ -2186,12 +2247,12 @@ void EdbDataProc::FineAlignment()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::AlignLinkTracks(int alg)
+void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
 
-  ali->Align();
+  ali->Align(doAlign);
   ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
@@ -2214,5 +2275,147 @@ void EdbDataProc::AlignLinkTracks(int alg)
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
-  ali->MakeTracksTree();
+  MakeTracksTree(ali);
+}
+
+//______________________________________________________________________________
+int EdbDataProc::MakeTracksTree(EdbPVRec *ali)
+{
+  if(!ali) return 0;
+  TObjArray *trarr = ali->eTracks;
+  if(!trarr) return 0;
+
+  char *file="linked_tracks.root";
+  printf("write tracks into %s ... \n",file);
+  TFile fil(file,"RECREATE");
+  TTree *tracks= new TTree("tracks","tracks");
+
+  EdbTrackP    *track = new EdbTrackP(8);
+  EdbSegP      *tr = (EdbSegP*)track;
+  TClonesArray *segments  = new TClonesArray("EdbSegP");
+  TClonesArray *segmentsf = new TClonesArray("EdbSegP");
+
+  int   nseg,trid,npl,n0;
+  float xv=ali->X();
+  float yv=ali->Y();
+  float w=0.;
+
+  tracks->Branch("trid",&trid,"trid/I");
+  tracks->Branch("nseg",&nseg,"nseg/I");
+  tracks->Branch("npl",&npl,"npl/I");
+  tracks->Branch("n0",&n0,"n0/I");
+  tracks->Branch("xv",&xv,"xv/F");
+  tracks->Branch("yv",&yv,"yv/F");
+  tracks->Branch("w",&w,"w/F");
+  tracks->Branch("t.","EdbSegP",&tr,32000,99);
+  tracks->Branch("s", &segments);
+  tracks->Branch("sf",&segmentsf);
+
+  int ntr = trarr->GetEntriesFast();
+  for(int itr=0; itr<ntr; itr++) {
+    track = (EdbTrackP*)(trarr->At(itr));
+
+    trid = track->ID();
+    nseg = track->N();
+    npl  = track->Npl();
+    n0   = track->N0();
+
+    tr = (EdbSegP*)track;
+
+    segments->Clear("C");
+    segmentsf->Clear("C");
+    nseg = track->N();
+    w    = track->Wgrains();
+    EdbSegP *s=0,*sf=0;
+    for(int is=0; is<nseg; is++) {
+      s = track->GetSegment(is);
+      if(s) new((*segments)[is])  EdbSegP( *s );
+      sf = track->GetSegmentF(is);
+      if(sf) new((*segmentsf)[is])  EdbSegP( *sf );
+    }
+
+    tracks->Fill();
+    track->Clear();
+  }
+
+  tracks->Write();
+  fil.Close();
+  printf("%d tracks are written \n",ntr);
+  return ntr; 
+}
+
+//---------------------------------------------------------------------------
+int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
+				 char     *fname,
+				 int      nsegMin,
+				 float    probMin  )
+{
+  //TODO: FILL PATTERNS
+
+  //TObjArray *trarr = ali.eTracks;
+  //if(!trarr) trarr = new TObjArray();
+
+  TFile f(fname);
+  TTree *tracks = (TTree*)f.Get("tracks");
+  Int_t   trid=0;
+  Int_t   nseg=0;
+  Int_t   npl=0;
+  Int_t   n0=0;
+  Float_t xv=0.;
+  Float_t yv=0.;
+
+  TClonesArray *seg  = new TClonesArray("EdbSegP", 60);
+  TClonesArray *segf = new TClonesArray("EdbSegP", 60);
+  EdbSegP *trk=0;
+  EdbSegP *s1=0;
+
+  tracks->SetBranchAddress("trid", &trid);
+  tracks->SetBranchAddress("nseg", &nseg);
+  tracks->SetBranchAddress("npl", &npl);
+  tracks->SetBranchAddress("n0", &n0);
+  tracks->SetBranchAddress("xv", &xv);
+  tracks->SetBranchAddress("yv", &yv);
+  tracks->SetBranchAddress("sf", &segf);
+  tracks->SetBranchAddress("s",  &seg);
+  tracks->SetBranchAddress("t.", &trk);
+
+  int nentr = (int)(tracks->GetEntries());
+  printf("Read tracks from  %s  (%d entries)\n",fname,nentr);
+
+  EdbPattern *pat=0;
+  int ntr=0;
+  for (int j=0; j<nentr; j++){
+    tracks->GetEntry(j);
+
+    if(trk->Flag() < 0)       continue;
+    if(nseg        < nsegMin) continue;
+    if(trk->Prob() < probMin) continue;
+
+    //if((float(nseg)/float(npl)<=0.6)) continue;
+
+    EdbTrackP *tr1 = new EdbTrackP();
+
+    tr1->SetP(trk->P());
+    tr1->SetErrorP(trk->SP());
+    tr1->SetM(0.129);                  //TODO!
+    tr1->SetFlag(trk->Flag());
+    tr1->SetProb(trk->Prob());
+    for(int i=0; i<nseg; i++) {
+      s1 = (EdbSegP*)(seg->At(i));
+      //tr1->AddSegment( new EdbSegP(*s1) );
+      pat = ali.GetPattern( s1->PID() );
+      if(!pat) { printf("no pattern with pid %d\n",s1->PID()); break;}
+      pat->AddSegment(*s1 );
+      tr1->AddSegment( pat->GetSegmentLast() );
+    }
+    tr1->SetID(j);
+    tr1->SetSegmentsTrack(j);
+    tr1->SetCounters();
+    tr1->FitTrackKFS(true);
+    ali.AddTrack(tr1);
+    ntr++;
+  }
+
+  printf("%d tracks are readed from the tree\n",ntr);
+  return ntr;
 }

@@ -199,6 +199,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Int_t  GetN()    const 
     {if(eSegments) return eSegments->GetEntriesFast(); else return 0;}
   EdbSegP      *GetSegment(int i) const { return (EdbSegP*)eSegments->At(i); }
+  EdbSegP      *GetSegmentLast()  const { return (EdbSegP*)eSegments->Last(); }
   TClonesArray *GetSegments()     const { return eSegments; }
   void          *GetSegmentsAddr()  { return &eSegments; }
 
@@ -351,6 +352,8 @@ class EdbPattern : public EdbSegmentsBox {
 
   Int_t   eFlag;            // pattern flag
 
+  Int_t   eNAff;            // number of segments selected for affine calculation
+
  public:
   EdbPattern();
   EdbPattern(float x0, float y0, float z0, int n=0 );
@@ -367,6 +370,9 @@ class EdbPattern : public EdbSegmentsBox {
   void Reset();
 
   void SetSegmentsPID();
+
+  void  SetNAff(int n) {eNAff=n;}
+  Int_t NAff() const   {return eNAff;}
 
   float StepX() const {return eStepX;}
   float StepY() const {return eStepY;}
@@ -397,10 +403,6 @@ class EdbPatternsVolume : public TObject {
 
   TIndexCell *eTracksCell;    //! "vidt:vids" - connected segments cell
   TIndexCell *ePatternsCell;  //! "pid:id1:chi2:id2" - all found couples
-
-  TObjArray *eTracks;         //! array of tracks
-
-  EdbPatternsVolume   *eSV;  // volume for selected stuff
 
  public:
   EdbPatternsVolume();

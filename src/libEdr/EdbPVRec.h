@@ -54,7 +54,7 @@ class EdbScanCond : public TNamed {
   Float_t eOffX, eOffY;       // maximal offsets in x and y - the accuracy of pattern 
                               // itself in respect to the upper level RS
 
-  Float_t eRadX0;             // the radiation length for the ECC media [microns]
+  Float_t eRadX0;             // radiation length for ECC media [microns]
 
  public:
   EdbScanCond();
@@ -267,15 +267,14 @@ class EdbPatCouple : public TObject {
   int          SortByCHI2P();
   void         PrintCouples();
   
-  int    Align();
+  int    Align(int alignFlag);
   //int    AlignAff(EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4]);
   int    FindOffset0(float xmax, float ymax);
   int    FindOffset01(float xmax, float ymax);
   int    FindOffset1(float xmax, float ymax);
   int    FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4]);
-  void   CalculateAffXY();
-  void   CalculateAffXYZ(float z);
-
+  void   CalculateAffXY(int alignFlag);
+  void   CalculateAffXYZ(float z, int alignFlag);
 
   void FillCell_XYaXaY( EdbScanCond *cond, float zlink, int id=0 );
   void FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz, 
@@ -359,13 +358,12 @@ class EdbPVRec : public EdbPatternsVolume {
   int   MergeTracks1(int maxgap);
   int   MakeTracks(int nsegments=2);
   void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0);
-  int   MakeTracksTree();
 
   int    LinkSlow();
   int    Link();
-  int    Align();
-  int    AlignA();
-  int    LinkTracks();
+  int    Align(int alignFlag);
+  //  int    AlignA();
+  //  int    LinkTracks();
   void   FillTracksCellFast();
   void   AddCouplesToTracks(EdbPatCouple *pc, TIndex2 &itracks );
   void   AddCouplesToTracksM(EdbPatCouple *pc, TIndex2 &itracks );
@@ -379,10 +377,12 @@ class EdbPVRec : public EdbPatternsVolume {
   int    SelectLongTracks(int nsegments);
 
   int    MakeSummaryTracks();
-  int    FineCorrXY(int ipat, EdbAffine2D &aff);
+  int    FineCorrXY(int ipat, EdbAffine2D &aff, int flag);
   int    FineCorrTXTY(int ipat, EdbAffine2D &aff);
   int    FineCorrZ(int ipat, float &dz);
   int    FineCorrShr(int ipat, float &shr);
+
+  int    FineCorrF(int ipat, EdbAffine2D &aff,  EdbAffine2D &afft );
 
   void SetOffsetsMax(float ox, float oy);
   void SetSegmentsErrors();
@@ -401,9 +401,12 @@ class EdbPVRec : public EdbPatternsVolume {
 
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
+  int ExtractDataVolumeSegAll( TObjArray &arr );
 
   int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05 );
   int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05 );
+
+  int MakePatternsFromTracks();
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };
