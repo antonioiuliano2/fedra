@@ -162,8 +162,8 @@ int main(int argc, char *argv[])
 				edbViewHeader->SetCoordZ(rwdView->RelevantZs.TopExt,rwdView->RelevantZs.TopInt,
 								rwdView->RelevantZs.BottomInt,rwdView->RelevantZs.BottomExt);
 
-				if(s==1)	edbViewHeader->SetNframes(FindConfig(pCat,"Vertigo Scan","VLayers"),0);
-				else     edbViewHeader->SetNframes(0,FindConfig(pCat,"Vertigo Scan","VLayers"));
+				if(s==1)	edbViewHeader->SetNframes(0,FindConfig(pCat,"Vertigo Scan","VLayers"));
+				else     edbViewHeader->SetNframes(FindConfig(pCat,"Vertigo Scan","VLayers"),0);
 				edbViewHeader->SetNsegments(rwdView->TCount[s]);
 				edbViewHeader->SetViewID(v);
 //				edbViewHeader->SetZlevels(rwdView->Layers[s].Count,rwdView->Layers[s].pZs);
