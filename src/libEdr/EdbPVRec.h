@@ -53,11 +53,16 @@ class EdbScanCond : public TNamed {
   Float_t eOffX, eOffY;       // maximal offsets in x and y - the accuracy of pattern 
                               // itself in respect to the upper level RS
 
+  Float_t eRadX0;             // the radiation length for the ECC media [microns]
+
  public:
   EdbScanCond();
   virtual ~EdbScanCond(){}
 
   void SetDefault();
+
+  void SetRadX0( float x0 ) {eRadX0=x0;}
+  float RadX0() const {return eRadX0;}
 
   void SetSigmaGR(  float sx, float sy, float sz ) 
     { eSigmaXgr=sx;  eSigmaYgr=sy;  eSigmaZgr=sz; }

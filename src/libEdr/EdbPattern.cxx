@@ -667,7 +667,7 @@ void EdbTrackP::FitTrack()
   z  /= nseg;
   tx /= nseg;
   ty /= nseg;
-  Set(ID(),x,y,tx,ty,w);
+  Set(ID(),x,y,tx,ty,w,Flag());
   SetZ(z);
 }
 
@@ -822,7 +822,7 @@ int  EdbTrackP::FitTrackKF( bool zmax)
 
 
 //______________________________________________________________________________
-int  EdbTrackP::FitTrackKFS( bool zmax)
+int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
   // if (zmax==false) track parameters are calculated at segment with min Z
@@ -839,7 +839,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 
   if(!N()) return 0;
   if(NF()) {
-    eSF->Clear();
+    eSF->Delete();
   }
 
   //printf("%d segments to fit\n",N());
@@ -926,7 +926,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
     ptx = (*par[i-step])(2);                        //?
     pty = (*par[i-step])(3);                        //?
     dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-    teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
+    //teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
+    teta0sq = EdbPhysics::ThetaMS2( P(), M(), dPb, X0 );
 
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
@@ -986,7 +987,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   }
 
   Set(ID(),(float)(*par[iend])(0),(float)(*par[iend])(1),
-	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.);
+	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.,Flag());
   SetZ(GetSegment(iend)->Z());
   SetPID(GetSegment(iend)->PID());
   SetCOV( (*cov[iend]).array(), 4 );
@@ -1005,7 +1006,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 
   EdbSegP segf;
   segf.Set(ID(),(float)(*pars[iend])(0),(float)(*pars[iend])(1),
-	   (float)(*pars[iend])(2),(float)(*pars[iend])(3),1.);
+	   (float)(*pars[iend])(2),(float)(*pars[iend])(3),1.,Flag());
   segf.SetZ(GetSegment(iend)->Z());
   segf.SetCOV( (*covs[iend]).array(), 4 );
   segf.SetChi2((float)chi2);
@@ -1031,7 +1032,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 	chi2 += chi2p;
 
 	segf.Set(ID(),(float)(*pars[i])(0),(float)(*pars[i])(1),
-		 (float)(*pars[i])(2),(float)(*pars[i])(3),1.);
+		 (float)(*pars[i])(2),(float)(*pars[i])(3),1.,Flag());
 	segf.SetZ(GetSegment(i)->Z());
 	segf.SetCOV( (*covs[i]).array(), 4 );
 	segf.SetChi2((float)chi2p);

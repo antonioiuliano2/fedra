@@ -427,6 +427,11 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	GetMakeCond(id)->SetSigmaGR(x1,x2,x3);
 	SetCutGR(x4);
       }
+    else if ( !strcmp(key,"RADX0")  )
+      {
+	sscanf(buf+strlen(key),"%d %f",&id,&x1);
+	GetMakeCond(id)->SetRadX0(x1);
+      }
     else if ( !strcmp(key,"XCUT")  )
       {
 	sscanf(buf+strlen(key),"%d %f %f %f %f %f %f %f %f %f %f",&id,
@@ -669,7 +674,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   EdbAffine2D *aff = layer->GetAffineTXTY();
   float txx = aff->A11()*tx+aff->A12()*ty+aff->B1();
   float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
-  segP.Set( seg->GetID(),x,y,txx,tyy);
+  segP.Set( seg->GetID(),x,y,txx,tyy,puls,0);
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
@@ -1648,7 +1653,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 		(s1->Y()+s2->Y())/2.,
 		(s1->X()-s2->X())/(s1->Z()-s2->Z()),
 		(s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
-		s1->W()+s2->W()
+		s1->W()+s2->W(),0
 		);
 	s->SetZ( (s2->Z()+s1->Z())/2 );
       } else {

@@ -63,7 +63,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    Copy(const EdbSegP &s);
   void    Clear() { eCOV->Clear(); }
 
-  void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
+  void    Set(int id, float x, float y, float tx, float ty, float w, int flag)
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
   
   void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 );
@@ -302,7 +302,7 @@ class EdbTrackP : public EdbSegP {
   void Copy(const EdbTrackP &tr);
   void FitTrack();
   //int FitTrackKF( bool zmax=false );
-  int FitTrackKFS( bool zmax=false );
+  int FitTrackKFS( bool zmax=false, float X0=5810. );
 
   int MakeSelector( EdbSegP &ss, bool followZ=true );
 

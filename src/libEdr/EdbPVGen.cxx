@@ -44,7 +44,7 @@ void EdbPVGen::GenerateBeam( int n, float xx[4], float sxx[4], float lim[4], flo
       x = x0 + tx*(z-z0);
       y = y0 + ty*(z-z0);
 
-      seg->Set(j, x, y, tx, ty);
+      seg->Set(j, x, y, tx, ty,1,0);
       seg->SetZ(z);
       seg->SetFlag(flag);
       pat->AddSegment( *seg );
@@ -75,7 +75,7 @@ void EdbPVGen::GenerateBackground( int n, float xmin[4], float xmax[4], int flag
       tx = xmin[2] + (xmax[2]-xmin[2]) * gRandom->Rndm();
       ty = xmin[3] + (xmax[3]-xmin[3]) * gRandom->Rndm();
 
-      seg->Set(j, x, y, tx, ty);
+      seg->Set(j, x, y, tx, ty,1,0);
       seg->SetZ(z);
       seg->SetFlag(flag);
       pat->AddSegment( *seg );

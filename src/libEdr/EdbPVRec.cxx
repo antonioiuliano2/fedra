@@ -14,6 +14,7 @@
 #include "TArrayF.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
+#include "EdbPhys.h"
 #include "EdbVertex.h"
 #include "TBenchmark.h"
 
@@ -55,6 +56,8 @@ void EdbScanCond::SetDefault()
   eChi2PMax = 3.5;
   eOffX=0;
   eOffY=0;
+
+  eRadX0 = EdbPhysics::kX0_Cell;
 }
 
 //______________________________________________________________________________
@@ -370,6 +373,26 @@ int EdbPatCouple::FillCHI2P()
   }
   return Ncouples();
 }
+
+//______________________________________________________________________________
+/* TODO
+bool EdbPatCouple::IsCompatible( EdbSegP *s1, EdbSegP *s2, EdbScanCond *cond ) const
+{
+  // return true if segments are compatible with acceptance defined in cond 
+
+  float dtx=s2->TX()-s1->TX();
+  float stx = cond->SigmaTX( TMath::Max( TMath::Abs(s2->TX()),TMath::Abs(s1->TX())) );
+  if( dtx > BinTX()*stx )    return false;
+  float dty=TY()-s.TY();
+  if( dty*dty > STY()*nsigt*nsigt )    return false;
+  float dz=s.Z()-Z();
+  float dx=X()+TX()*dz-s.X();
+  if( dx*dx > SX()*nsigx*nsigx )       return false;
+  float dy=Y()+TY()*dz-s.Y();
+  if( dy*dy > SY()*nsigx*nsigx )       return false;
+  return true;
+}
+*/
 
 ///______________________________________________________________________________
 int EdbPatCouple::FillCHI2()
@@ -845,6 +868,8 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
   Long_t val[5]={0,0,0,0,0};
   int    vind[5]={-1,-1,-1,-1,-1};
   
+  //EdbSegP *s1,*s2;
+
   int ncel1, nc10, nc11, nc12, nc13, nc23; 
 
   ncel1 = cel1->GetEntries();
@@ -890,6 +915,10 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 
 		      v[0] = c1[3]->At(ie1)->Value();
 		      v[1] = c2[3]->At(ie2)->Value();
+
+//  		      s1 = Pat1()->GetSegment(v[0]);
+//  		      s2 = Pat2()->GetSegment(v[1]);
+//  		      if(IsCompatible(s1,s2,eCond)        //TODO
 
 		      AddSegCouple((int)v[0],(int)v[1]);
 
@@ -1054,12 +1083,12 @@ void EdbPVRec::SetSegmentErrors( EdbSegP &seg )
 {
   // segment errors are depends on the scanning conditions and segment
   // parameters (angles). 
-  // Puls height is represents segments probablility (not accuracy) and should 
+  // Puls height is represents segments probability (not accuracy) and should 
   // be taken into account separately
 
-  float sx = GetScanCond()->SigmaX( seg.TX() );
-  float sy = GetScanCond()->SigmaY( seg.TY() );
-  float sz = GetScanCond()->SigmaZ( seg.TX(), seg.TY() );
+  float sx  = GetScanCond()->SigmaX( seg.TX() );
+  float sy  = GetScanCond()->SigmaY( seg.TY() );
+  float sz  = GetScanCond()->SigmaZ( seg.TX(), seg.TY() );
   float stx = GetScanCond()->SigmaTX( seg.TX() );
   float sty = GetScanCond()->SigmaTY( seg.TY() );
 
@@ -1528,6 +1557,7 @@ int EdbPVRec::MergeTracks(int maxgap)
 int EdbPVRec::MergeTracks1(int maxgap)
 {
   int imerged=0;
+  float X0 = GetScanCond()->RadX0();
 
   EdbTrackP *tr =0;
 
@@ -1608,7 +1638,7 @@ int EdbPVRec::MergeTracks1(int maxgap)
 	  printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(s1,s2, 5810., tre->M()) );
 
 	  tre->AddTrack(*trs);
-	  tre->FitTrackKFS(true);
+	  tre->FitTrackKFS(true,X0);
 	  tre->SetFlag(-10);
 	  tre->SetN0( tre->N0() + trs->N0() + igap-1 );
 	  tre->SetNpl( tre->Npl() + trs->Npl() + igap-1 );
@@ -1680,11 +1710,10 @@ void EdbPVRec::FitTracks(float p, float mass)
 {
   // measurement errors: TODO
 
-  float sx2=0.4, sy2=0.4, sz2=0., stx2=0.0018, sty2=0.0015, sp2=0.1;
-  sx2*=sx2;  sy2*=sy2;  sz2*=sz2;  stx2*=stx2;  sty2*=sty2;  sp2*=sp2;
+  float X0 = GetScanCond()->RadX0();
 
   EdbTrackP *tr =0;
-  EdbSegP   *seg=0;
+  //EdbSegP   *seg=0;
 
   int ntr = eTracks->GetEntriesFast();
   int nseg;
@@ -1692,18 +1721,19 @@ void EdbPVRec::FitTracks(float p, float mass)
     tr = (EdbTrackP*)(eTracks->At(itr));
 
     nseg = tr->N();
-    for(int iseg=0; iseg<nseg; iseg++) {
-      seg = tr->GetSegment(iseg);
+
+    //for(int iseg=0; iseg<nseg; iseg++) {
+    //  seg = tr->GetSegment(iseg);
       //sx2 = GetScanCond()->SigmaX( seg->TX() );   sx2*=sx2;
       //sy2 = GetScanCond()->SigmaY( seg->TY() );   sy2*=sy2;
       //stx2 = GetScanCond()->SigmaTX( seg->TX() ); stx2*=stx2;
       //sty2 = GetScanCond()->SigmaTY( seg->TY() ); stx2*=stx2;
       //seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
-    }
+    //}
 
     tr->SetP(p);
     tr->SetM(mass);
-    tr->FitTrackKFS(true);
+    tr->FitTrackKFS(true,X0);
   }
 
 }
@@ -2047,18 +2077,18 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
 
 	if(tr->Flag()==-10) continue; 
 
-	printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
+	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
 	nseg = PropagateTrack(*tr, true);
   	nsegTot += nseg;
-	printf("\t %d after true ",tr->N());
+	//printf("\t %d after true ",tr->N());
 
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
   	nseg = PropagateTrack(*tr, false);
   	nsegTot += nseg;
-	printf("\t %d after false \n",tr->N());
+	//printf("\t %d after false \n",tr->N());
 
       }
     }
@@ -2070,7 +2100,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
 int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 {
   float binx=10, bint=10;
-  float X0=5810.;
+  float X0 = GetScanCond()->RadX0();
   float probMin = 0.05;
 
   EdbSegP ss; // the "selector" segment
@@ -2089,6 +2119,9 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
   int nseg =0, nsegTot=0;
 
   int ntr = eTracks->GetEntriesFast();
+
+  int ngap =0;
+  int ngapMax=3; //TODO - as parameter
 
   //printf("pstart, pend, step: %d %d %d \t ntr =%d\n",pstart,pend,step,ntr);
 
@@ -2112,19 +2145,20 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 	if( prob>probmax ) { probmax=prob; segmax=seg; }
       }
     }
-    if(!segmax) continue;
+    if(!segmax) {ngap++; continue;}
 
     int trind= segmax->Track();
 
     if( trind >= 0 && trind<ntr ) {
       EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
       if( ttt->N() > tr.N() ) {
-	tr.SetFlag(-10);
-	tr.SetSegmentsTrack(-1);
-	return 0;
+	ngap++; continue;
+	//tr.SetFlag(-10);
+	//tr.SetSegmentsTrack(-1);
+	//return 0;
       } else {
 	ttt->SetFlag(-10);
-	ttt->SetSegmentsTrack(-1);
+	//ttt->SetSegmentsTrack(-1);
       }
     }
 
@@ -2133,13 +2167,18 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 	segmax->SetTrack(tr.ID());
 	tr.SetNpl();
 
-	tr.FitTrackKFS(followZ);           // TODO remove refit?
+	tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
 	tr.SetSegmentsTrack();
 
 	tr.MakeSelector(ss,followZ);
 	nsegTot++;
+	ngap =0;
+	int fl = tr.Flag()+1;
+	tr.SetFlag(fl);
       }
     }
+
+    if(ngap>ngapMax) return nsegTot;
   }
 
   return nsegTot;

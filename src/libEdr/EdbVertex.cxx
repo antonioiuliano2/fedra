@@ -345,7 +345,7 @@ bool EdbVertexRec::AttachSeg( EdbTrackP& tr, EdbSegP *s,
 
   if (prob >= ProbMin)
   {
-    tr.Set(tr.ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr.P());
+    tr.Set(tr.ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr.W(),tr.Flag());
     tr.SetCOV( cov.array(), 4 );
     tr.SetChi2((float)chi2);
     tr.SetProb(prob);
@@ -421,7 +421,7 @@ float EdbVertexRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 
   prob = (float)TMath::Prob(chi2,4);
 
-  tr->Set(tr->ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr->P());
+  tr->Set(tr->ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr->W(),tr->Flag());
   tr->SetCOV( cov.array(), 4 );
   tr->SetChi2((float)chi2);
   tr->SetProb(prob);
@@ -523,7 +523,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
     ys = y + dxs*SPhi + dys*CPhi;        // along the track projection to XY plane 
     txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
     tys = ty + dtys*SPhi + dtys*CPhi;
-    seg->Set(k, xs, ys, txs, tys);
+    seg->Set(k, xs, ys, txs, tys,1,0);
     seg->SetP(p0);
     seg->SetZ(z);
     seg->SetPID(k);
