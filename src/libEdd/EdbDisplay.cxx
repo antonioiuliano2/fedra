@@ -58,6 +58,7 @@ void EdbDisplay::Set0()
   ePVR     = 0;
   eArrSegP = 0;
   eArrTr   = 0;
+  eArrV    = 0;
   eDrawTracks=1;
   eDrawVertex=0;
   eColors  = 0;
@@ -81,7 +82,7 @@ void EdbDisplay::Refresh()
     int ntr = eArrTr->GetEntries();
     for(int j=0;j<ntr;j++) {
       tr = (EdbTrackP*)(eArrTr->At(j));
-      TrackDraw(tr);
+      if(tr) TrackDraw(tr);
     }
   }
 
@@ -160,14 +161,21 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 //________________________________________________________________________
 void EdbDisplay::TrackDraw(EdbTrackP *tr)
 {
+  // eDrawTracks: 1 - draw fitted track dotted line only
+  //              2 - draw also white marker at zmin
+  //              3 - draw also red marker at zmax
+  //              4 - draw also raw segments
+  //
+  //              8 - draw only straight white track line
+
   TPolyLine3D *line=0;
   const EdbSegP *seg=0;
 
-  if(eDrawTracks>0 && eDrawTracks<6) {
-    line = new TPolyLine3D(tr->N());
+  if(eDrawTracks>0 && eDrawTracks<6 && tr->NF()>0 ) {
+    line = new TPolyLine3D(tr->NF());
     for(int is=0; is<tr->NF(); is++) {
       seg = tr->GetSegmentF(is);
-      if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+      line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
     }
     line->SetLineColor(kWhite);
     line->SetLineWidth(1);
@@ -180,9 +188,11 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     pms->SetTrack( tr );
     pms->SetMarkerStyle(24);
     seg = tr->TrackZmin();
-    pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
-    pms->SetMarkerColor(kWhite);
-    pms->Draw();
+    if(seg) {
+      pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+      pms->SetMarkerColor(kWhite);
+      pms->Draw();
+    }
   }
 
   if(eDrawTracks>2 && eDrawTracks<5) {
@@ -190,23 +200,25 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     pme->SetTrack( tr );
     pme->SetMarkerStyle(24);
     seg = tr->TrackZmax();
-    pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
-    pme->SetMarkerColor(kRed);
-    pme->Draw();
+    if(seg) {
+      pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+      pme->SetMarkerColor(kRed);
+      pme->Draw();
+    }
   }
 
-  if(eDrawTracks>3 && eDrawTracks<8) {
+  if(eDrawTracks>3 && eDrawTracks<8 && tr->N()>0 ) {
     for(int is=0; is<tr->N(); is++) {
       seg = tr->GetSegment(is);
       SegLine(seg)->Draw();
     }
   }
 
-  if(eDrawTracks>7) {
-    line = new TPolyLine3D(tr->N());
+  if(eDrawTracks>7 && tr->NF()>0 ) {
+    line = new TPolyLine3D(tr->NF());
     for(int is=0; is<tr->NF(); is++) {
       seg = tr->GetSegmentF(is);
-      if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+      line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
     }
     line->SetLineColor(kWhite);
     line->SetLineWidth(1);
