@@ -29,6 +29,27 @@ void EdbVertexG::InspectVertex()
 }
 
 //_____________________________________________________________________________
+void EdbVertexG::SetAsWorking()
+{
+  if (eD && eV)
+  {
+    if (eD->eWorking)
+    {
+	delete eD->eWorking;
+	eD->eWorking = 0;
+    }
+    if (eD->eVertex)
+    {
+	(eD->eVertex)->ResetTracks();
+    }
+    eD->eVertex = eV;
+    double prob = eV->V()->prob();
+    eD->DrawProb(prob);
+    eD->ClearNewProb();
+  }
+}
+
+//_____________________________________________________________________________
 void EdbTrackG::DumpTrack()
 {
   if (eTr) eTr->Print();
@@ -40,6 +61,105 @@ void EdbTrackG::InspectTrack()
   if (eTr) eTr->Inspect();
 }
 
+//_____________________________________________________________________________
+void EdbTrackG::RemoveTrack()
+{
+  if (eTr && eD)
+  {
+    if (!(eD->eVertex)) return;
+    int ntr = eD->eVertex->N();
+    if (ntr < 3) return;
+    EdbVTA *vta = 0;
+    int n = 0;
+    if (eD->eWorking == 0)
+    {
+	eD->eWorking = new EdbVertex();
+	int i = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if (eD->eVertex->GetTrack(i) == eTr) continue;
+	    if ((vta = (eD->eWorking)->AddTrack((eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i), 0.0)))
+	    {
+		(eD->eVertex)->GetTrack(i)->AddVTA(vta);
+		(eD->eWorking)->AddVTA(vta);
+		n++;
+	    }
+	}
+    }
+    if (n < 2)
+    {
+	delete eD->eWorking;
+	eD->eWorking = 0;
+	return;
+    }
+    bool usemom = (eD->eVertex)->V()->back()->kalman.use_momentum();
+    if ((eD->eWorking)->MakeV(usemom))
+    {
+	double prob = (eD->eWorking)->V()->prob();
+	eD->DrawNewProb(prob);
+	//print old and new prob
+	//accept result?
+    }
+    else
+    {
+	delete eD->eWorking;
+	eD->eWorking = 0;
+    }
+  }
+}
+
+//_____________________________________________________________________________
+void EdbTrackG::AddTrack()
+{
+  int zpos = 1;
+  float ProbMinV = 0.00;
+  EdbVTA *vta = 0;
+  // ask for zpos and ProbMinV
+  if (eTr && eD)
+  {
+    if (!(eD->eVertex)) return;
+    if (GetMarkerColor() == kRed) zpos = 0;
+    if (eTr->VertexS() && (zpos == 1)) return; 
+    if (eTr->VertexE() && (zpos == 0)) return; 
+    if (eD->eWorking == 0)
+    {
+	eD->eWorking = new EdbVertex();
+	int ntr = eD->eVertex->N();
+	int i = 0, n = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if ((vta = (eD->eWorking)->AddTrack((eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i), 0.0)))
+	    {
+		(eD->eVertex)->GetTrack(i)->AddVTA(vta);
+		(eD->eWorking)->AddVTA(vta);
+		n++;
+	    }
+	}
+	if (n < 2)
+	{
+	    delete eD->eWorking;
+	    eD->eWorking = 0;
+	    return;
+	}
+	bool usemom = (eD->eVertex)->V()->back()->kalman.use_momentum();
+	if (!((eD->eWorking)->MakeV(usemom)))
+	{
+	    delete eD->eWorking;
+	    eD->eWorking = 0;
+	    return;
+	}
+    }
+    if ((vta = (eD->eWorking)->AddTrack(eTr, zpos, ProbMinV)))
+    {
+	eTr->AddVTA(vta);
+	eD->eWorking->AddVTA(vta);
+	double prob = (eD->eWorking)->V()->prob();
+	eD->DrawNewProb(prob);
+	//print old and new prob
+	//accept result?
+    }
+  }
+}
 
 //_____________________________________________________________________________
 void EdbSegG::DumpSegment()
@@ -64,6 +184,8 @@ void EdbDisplay::Set0()
   eDrawVertex=0;
   eColors  = 0;
   eDZs     = 0;
+  eVertex  = 0;
+  eWorking = 0;
 }
 
 //________________________________________________________________________
@@ -78,15 +200,6 @@ void EdbDisplay::Refresh()
     }
   }
 
-  EdbTrackP *tr=0;
-  if( eArrTr ) {
-    int ntr = eArrTr->GetEntries();
-    for(int j=0;j<ntr;j++) {
-      tr = (EdbTrackP*)(eArrTr->At(j));
-      if(tr) TrackDraw(tr);
-    }
-  }
-
   EdbVertex *v=0;
   if( eArrV ) {
     int nv = eArrV->GetEntries();
@@ -96,12 +209,23 @@ void EdbDisplay::Refresh()
     }
   }
 
+  EdbTrackP *tr=0;
+  if( eArrTr ) {
+    int ntr = eArrTr->GetEntries();
+    for(int j=0;j<ntr;j++) {
+      tr = (EdbTrackP*)(eArrTr->At(j));
+      if(tr) TrackDraw(tr);
+    }
+  }
+
 }
 
 //________________________________________________________________________
 void EdbDisplay::VertexDraw(EdbVertex *vv)
 {
   float xv,yv,zv;
+  if (!vv) return;
+  if (vv->Flag() == -10) return;
   EdbVertexG *v = new EdbVertexG();
   v->SetVertex( vv );
 
@@ -112,21 +236,20 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 	       xv, 
 	       yv, 
 	       zv );
-  v->SetMarkerStyle(21);
-  v->SetMarkerColor(kBlue);
+  v->SetMarkerStyle(20);
+  v->SetMarkerColor(kWhite);
   v->Draw();
-
 
   if (vv->V())
   {
-    v = new EdbVertexG();
+    v = new EdbVertexG(this);
     v->SetVertex( vv );
 
-    xv = vv->V()->vx() + xv;
-    yv=  vv->V()->vy() + yv;
-    zv=  vv->V()->vz() + zv;
+    xv = vv->VX();
+    yv=  vv->VY();
+    zv=  vv->VZ();
     v->SetPoint(0, xv,yv,zv);
-    v->SetMarkerStyle(21);
+    v->SetMarkerStyle(29);
     v->SetMarkerColor(kWhite);
     v->Draw();
   }
@@ -145,8 +268,8 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       }
       else
       {
-        if( vv->Zpos(i)==0 )       seg = vv->GetTrack(i)->GetSegmentFirst();
-        else                       seg = vv->GetTrack(i)->GetSegmentLast();
+        if( vv->Zpos(i)==0 )       seg = vv->GetTrack(i)->GetSegmentLast();
+        else                       seg = vv->GetTrack(i)->GetSegmentFirst();
       }
       if(!seg) continue;
       line = new TPolyLine3D(2);
@@ -170,6 +293,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   //
   //              8 - draw only solid white track line
 
+  if (!tr) return;
   TPolyLine3D *line=0;
   const EdbSegP *seg=0;
 
@@ -189,12 +313,15 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     }
     line->SetLineColor(kWhite);
     line->SetLineWidth(1);
-    line->SetLineStyle(3);
+    if (tr->Flag() != -10)
+	line->SetLineStyle(3);
+    else
+	line->SetLineStyle(4);
     line->Draw();
   }
 
   if(eDrawTracks>1 && eDrawTracks<5) {
-    EdbTrackG *pms = new EdbTrackG(1);
+    EdbTrackG *pms = new EdbTrackG(1, this);
     pms->SetTrack( tr );
     pms->SetMarkerStyle(24);
 
@@ -208,7 +335,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   }
 
   if(eDrawTracks>2 && eDrawTracks<5) {
-    EdbTrackG *pme = new EdbTrackG(1);
+    EdbTrackG *pme = new EdbTrackG(1, this);
     pme->SetTrack( tr );
     pme->SetMarkerStyle(24);
 
@@ -252,7 +379,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
 {
   if (!seg) return 0;
-  EdbSegG *line = new EdbSegG(2);
+  EdbSegG *line = new EdbSegG(2, this);
   line->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
   line->SetPoint(1,
                  seg->X() + seg->TX()*seg->DZ(),

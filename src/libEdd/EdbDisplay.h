@@ -12,67 +12,7 @@
 #include "EdbPVRec.h"
 #include "EdbVertex.h"
 
-//_________________________________________________________________________
-class EdbVertexG : public TPolyMarker3D {
- private:
-
-  EdbVertex *eV;
-
- public:
-  EdbVertexG():TPolyMarker3D(1) {eV=0;}
-  virtual ~EdbVertexG(){}
-
-  void SetVertex(EdbVertex *v) {eV=v;}
-
-  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
-  //virtual void          InspectParticle(); // *MENU*
-  virtual void          DumpVertex();    // *MENU*
-  virtual void          InspectVertex(); // *MENU*
-
- ClassDef(EdbVertexG,1)  //EdbTrack graphics
-};
-
-//_________________________________________________________________________
-class EdbTrackG : public TPolyMarker3D {
- private:
-
-  EdbTrackP *eTr;
-
- public:
-  EdbTrackG() {eTr=0;}
-  EdbTrackG(Int_t nhits):TPolyMarker3D(nhits) {eTr=0;}
-  virtual ~EdbTrackG(){}
-
-  void SetTrack(EdbTrackP *tr) {eTr=tr;}
-
-  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
-  //virtual void          InspectParticle(); // *MENU*
-  virtual void          DumpTrack();    // *MENU*
-  virtual void          InspectTrack(); // *MENU*
-
- ClassDef(EdbTrackG,1)  //EdbTrack graphics
-};
-
-//_________________________________________________________________________
-class EdbSegG : public TPolyLine3D {
- private:
-
-  const EdbSegP *eSeg;
-
- public:
-  EdbSegG() {eSeg=0;}
-  EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0;}
-  virtual ~EdbSegG(){}
-
-  void SetSeg(const EdbSegP *s) {eSeg=s;}
-
-  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
-  //virtual void          InspectParticle(); // *MENU*
-  virtual void          DumpSegment(); // *MENU*
-  virtual void          InspectSegment(); // *MENU*
-
- ClassDef(EdbSegG,1) //
-};
+class EdbSegG;
 
 //_________________________________________________________________________
 class EdbDisplay: public EdbDisplayBase {
@@ -91,14 +31,19 @@ class EdbDisplay: public EdbDisplayBase {
 
  public:
 
-  EdbDisplay() : EdbDisplayBase(){ Set0(); };
+  EdbVertex *eWorking;     // working vertex
+  EdbVertex *eVertex;      // current selected vertex
+
+ public:
+
+  EdbDisplay() : EdbDisplayBase() { Set0(); };
+  ~EdbDisplay() { if (eWorking) delete eWorking; };
 
   EdbDisplay(const char *title, 
 	     Float_t x0, Float_t x1, 
 	     Float_t y0, Float_t y1, 
 	     Float_t z0, Float_t z1) : 
     EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
-  //  ~EdbDisplay(){};
 
   void Set0();
 
@@ -119,5 +64,71 @@ class EdbDisplay: public EdbDisplayBase {
 
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };
+//_________________________________________________________________________
+class EdbVertexG : public TPolyMarker3D {
+ private:
+
+  EdbVertex *eV;
+  EdbDisplay *eD;
+
+ public:
+  EdbVertexG():TPolyMarker3D(1) {eV=0; eD=0;}
+  EdbVertexG(EdbDisplay *D):TPolyMarker3D(1) {eV=0; eD=D;}
+  virtual ~EdbVertexG(){}
+
+  void SetVertex(EdbVertex *v) {eV=v;}
+
+  virtual void          DumpVertex();    // *MENU*
+  virtual void          InspectVertex(); // *MENU*
+  virtual void		SetAsWorking();  // *MENU*
+
+ ClassDef(EdbVertexG,1)  //EdbVertex graphics
+};
+
+//_________________________________________________________________________
+class EdbTrackG : public TPolyMarker3D {
+ private:
+
+  EdbTrackP *eTr;
+  EdbDisplay *eD;
+  
+ public:
+  EdbTrackG() {eTr=0; eD=0;}
+  EdbTrackG(EdbDisplay *D) {eTr=0; eD=D;}
+  EdbTrackG(Int_t nhits, EdbDisplay *D):TPolyMarker3D(nhits) {eTr=0; eD=D;}
+  virtual ~EdbTrackG(){}
+
+  void SetTrack(EdbTrackP *tr) {eTr=tr;}
+
+  virtual void          DumpTrack();    // *MENU*
+  virtual void          InspectTrack(); // *MENU*
+  virtual void		RemoveTrack();  // *MENU*
+  virtual void		AddTrack();  // *MENU*
+
+ ClassDef(EdbTrackG,1)  //EdbTrack graphics
+};
+
+//_________________________________________________________________________
+class EdbSegG : public TPolyLine3D {
+ private:
+
+  const EdbSegP *eSeg;
+  EdbDisplay *eD;
+
+ public:
+  EdbSegG() {eSeg=0; eD=0;}
+  EdbSegG(EdbDisplay *D) {eSeg=0; eD=D;}
+  EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0;}
+  EdbSegG(Int_t nhits, EdbDisplay *D):TPolyLine3D(nhits) {eSeg=0; eD=D;}
+  virtual ~EdbSegG(){}
+
+  void SetSeg(const EdbSegP *s) {eSeg=s;}
+
+  virtual void          DumpSegment(); 	  // *MENU*
+  virtual void          InspectSegment(); // *MENU*
+
+ ClassDef(EdbSegG,1) //
+};
+
 
 #endif /* ROOT_EdbDisplay */
