@@ -40,16 +40,23 @@ namespace Pb_CONST {
 }
 
 //______________________________________________________________________________
-double EdbPhysics::ThetaMS2( float p, float mass, float dx, float X0 )
+double EdbPhysics::ThetaMS2( float pr, float mass, float dx, float X0 )
 {
   // calculate the square of multiple scattering angle theta (in one projection)
   // after the distance dx [microns] in the media with radiation length X0
 
-  if (p < 0.0000001) return 2.;
+  double p = pr;
+  if (p < 0.001) p = 0.001;
   double k = 0.0136*0.0136;    // [GeV]
   double p2 = p*p;
-  double p4=p2*p2;
-  return  TMath::Abs(k*(mass*mass+p2)*dx/p4/X0);
+  double p4 = p2*p2;
+  double e2 = mass*mass+p2;
+  double dxx = TMath::Abs(dx/X0);
+  double fact = 1.+0.038*TMath::Log(dxx);
+  if (fact < 0.01) fact = 0.01;
+  double teta = k*e2*dxx/p4*fact*fact;
+  if (teta <= 1.) return teta;
+  else		  return 1.;
 }
 
 //________________________________________________________________________
@@ -66,12 +73,12 @@ double EdbPhysics::DeLandauPb(float pf, float massf, float xmicrons)
   //{
   //r=new TRandom();
   //}
-    if (xmicrons <= 0.) return 0.;
+    if (xmicrons == 0.) return 0.;
     if (pf       <= 0.) return 0.;
     if (massf    <= 0.) return 0.;
     double p=(double)pf;
     double mass=(double)massf;
-    double x=(double)xmicrons/10000.;
+    double x=TMath::Abs((double)xmicrons/10000.);
     double e=TMath::Sqrt(p*p+mass*mass);
     double beta=p/e;
     double gamma=e/mass;
@@ -117,12 +124,12 @@ double EdbPhysics::DeLandauPb(float pf, float massf, float xmicrons)
 double EdbPhysics::DeAveragePb(float pf, float massf, float xmicrons)
 {
   using namespace Pb_CONST;
-    if (xmicrons <= 0.) return 0.;
+    if (xmicrons == 0.) return 0.;
     if (pf       <= 0.) return 0.;
     if (massf    <= 0.) return 0.;
     double p=(double)pf;
     double mass=(double)massf;
-    double x=(double)xmicrons/10000.;
+    double x=TMath::Abs((double)xmicrons/10000.);
     double e=TMath::Sqrt(p*p+mass*mass);
     double beta=p/e;
     double gamma=e/mass;
@@ -206,7 +213,7 @@ double EdbPhysics::DeAveragePbFast(float pf, float massf, float xmicrons)
     if (pf       <= 0.) return 0.;
     if (massf    <= 0.) return 0.;
     if (xmicrons <= 0.) return 0.;
-    double x=(double)xmicrons/10000.;
+    double x=TMath::Abs((double)xmicrons/10000.);
     double de_aver=x*eDe_aver_fact;
     return de_aver;
 }
