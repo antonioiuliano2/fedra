@@ -596,7 +596,7 @@ void EdbViewHeader::Set0()
 
   eZlevels=0;
   eCol=0;
-  eRaw=0;
+  eRow=0;
   eStatus=0;
 }
 
@@ -604,8 +604,8 @@ void EdbViewHeader::Set0()
 void EdbViewHeader::Print() const
 {
   printf("ViewHeader:\t %d %d \t %f %f \n", eViewID, eAreaID, eXview, eYview);
-  printf("Nframes:   \t %d/%d \t Ncl = %d \t Nseg = %d \t col:raw = %d:%d\n",
-		eNframesTop,eNframesBot, eNclusters, eNsegments, eCol, eRaw);
+  printf("Nframes:   \t %d/%d \t Ncl = %d \t Nseg = %d \t col:row = %d:%d\n",
+		eNframesTop,eNframesBot, eNclusters, eNsegments, eCol, eRow);
   printf("View time: \t %d  \t Scan status = %d \n", eTime, eStatus );
 //    if(eZlevels) {
 //      printf("Zlevels(%d): \t", eZlevels->GetSize() );

@@ -36,15 +36,6 @@ NMAKE clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\libEdr\EdbDataSet.cxx">
-			</File>
-			<File
-				RelativePath="..\..\src\libEdr\EdbGA.cxx">
-			</File>
-			<File
-				RelativePath="..\..\src\libEdr\EdbIP.cxx">
-			</File>
-			<File
 				RelativePath="..\..\src\libEdr\EdbPattern.cxx">
 			</File>
 			<File
@@ -57,15 +48,6 @@ NMAKE clean"
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath="..\..\src\libEdr\EdbDataSet.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEdr\EdbGA.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEdr\EdbIP.h">
-			</File>
 			<File
 				RelativePath="..\..\src\libEdr\EdbPattern.h">
 			</File>

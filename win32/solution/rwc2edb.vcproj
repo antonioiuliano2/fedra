@@ -51,6 +51,9 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 				RelativePath="..\..\src\appl\rwc2edb\rwcread.cpp">
 			</File>
 			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwdcomp.cpp">
+			</File>
+			<File
 				RelativePath="..\..\src\appl\rwc2edb\rwdread.cpp">
 			</File>
 		</Filter>
@@ -68,6 +71,9 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\appl\rwc2edb\Makefile.w32">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

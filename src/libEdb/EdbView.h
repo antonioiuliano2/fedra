@@ -55,7 +55,7 @@ private:
   TArrayF  *eZlevels;    // z of each taken view (frame)
 
   Int_t   eCol;          // the position of the view in the scanned area, measured in views, 
-  Int_t   eRaw;          // starting from the reference angle (typically up-left)
+  Int_t   eRow;          // starting from the reference angle (typically up-left)
 
   Int_t   eStatus;       // View scanning status
 public:
@@ -97,7 +97,7 @@ public:
   void     SetCoordZ(float z1, float z2, float z3, float z4)  
     { eZ1=z1; eZ2=z2; eZ3=z3; eZ4=z4; }
   void     SetNframes( int top, int bot )  { eNframesTop=top; eNframesBot=bot; }
-  void     SetColRaw( int col, int raw) { eCol=col; eRaw=raw; }
+  void     SetColRow( int col, int row) { eCol=col; eRow=row; }
   void     SetStatus( int st) { eStatus=st; }
 
   Float_t  GetZ1()          const { return eZ1;  }
@@ -114,7 +114,7 @@ public:
   Int_t    GetNframesBot()  const { return eNframesBot;  }
 
   Int_t    GetCol()         const { return eCol; }
-  Int_t    GetRaw()         const { return eRaw; }
+  Int_t    GetRow()         const { return eRow; }
   Int_t    GetStatus()      const { return eStatus; }
   void     Print() const;
 
