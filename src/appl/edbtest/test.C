@@ -27,8 +27,10 @@ void w( int rid=2, int nviews=2 )
 
   run->GetHeader()->SetPlate( plateID, up,base,down, shrU,shrD );
 
+  run->GetHeader()->SetArea( 9, 300,300, 16,16, 0);
+
   float z1 = 0, z2=100, z3=800, z4=900; 
-  //run->GetPlateSet()->Set( z1,z2,z3,z4 );
+
 
   run->Print();
 
@@ -47,7 +49,10 @@ void w( int rid=2, int nviews=2 )
     Float_t  z4   = 900;   //
     Int_t    nft  = 3;     // top    | number of frames in the view (0,1,2...16...)
     Int_t    nfb  = 3;     // botoom | 
-    Float_t  *levels = new Float_t[nft+nfb];
+
+    Float_t  *levels = new Float_t[nft+nfb]; 
+    Int_t    *ncl     = new Int_t[nft+nfb];
+    Int_t    *npix    = new Int_t[nft+nfb];
 
     vh->SetViewID( iv );
     vh->SetAreaID( ia );
@@ -71,7 +76,9 @@ void w( int rid=2, int nviews=2 )
       }                                           // end of clusters cycle
 
         levels[ifr] = 10.*ifr+ivc;
-	view->AddFrame( ifr, levels[ifr] );
+        ncl[ifr]    = 100.*ifr+ivc;
+        npix[ifr]   = 1000.*ifr+ivc;
+	view->AddFrame( ifr, levels[ifr], ncl[ifr], npix[ifr] );
      
     }                                             // end of frames cycle
 
