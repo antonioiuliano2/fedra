@@ -326,8 +326,6 @@ class EdbPVRec : public EdbPatternsVolume {
   int     ProbVertex(TIndexCell &list1, TIndexCell &list2,
 		     int BinDifMin,     int BinDifMax,
 		     float dA,          float ProbMin,   float zBin, bool usemom);
-  int	  ProbVertex3(float ProbMin);
-  int	  ProbVertex4(float ProbMin);
   int	  ProbVertexN(float ProbMin);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);

@@ -21,12 +21,14 @@ class EdbVertex: public TObject {
  private:
 
   TObjArray eEdbTracks;       // pointers to data tracks
-  TArrayI   eZpos;            // 0-track start, 1-track end connect to the vertex
+  TArrayI   eZpos;            // 1-track start, 0-track end connect to the vertex
   Int_t     eNtr;
 
   Float_t eX;          // for generated vertexes - the real vertex position 
   Float_t eY;          // for reconstructed tracks - average point used as  
   Float_t eZ;          // local coordiantes origin (0,0,0) to avoid accuracy problem
+
+  Int_t	    eFlag;
 
   VERTEX::Vertex *eV;
   
@@ -45,6 +47,8 @@ class EdbVertex: public TObject {
   Float_t Y() const { return eY;}
   Float_t Z() const { return eZ;}
   void SetXYZ( float x, float y, float z) { eX=x; eY=y; eZ=z;} 
+  void SetFlag( int flag = 0 ) { eFlag = flag; }
+  Int_t Flag() { return eFlag; }
 
   bool AddTrack(EdbTrackP *track, int zmin, float ProbMin = 0.);
 
@@ -67,7 +71,7 @@ class EdbVertex: public TObject {
       }
     }
 
-  ClassDef(EdbVertex,1)  // vertex class for OPERA emulsion data
+  ClassDef(EdbVertex,2)  // vertex class for OPERA emulsion data
 };
 
 //_________________________________________________________________________

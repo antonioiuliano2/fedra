@@ -33,6 +33,7 @@ EdbVertex::EdbVertex()
   eY = 0.;
   eZ = 0.;
   eNtr = 0;
+  eFlag = 0;
 }
 
 //______________________________________________________________________________
@@ -44,6 +45,7 @@ EdbVertex::EdbVertex(EdbVertex &v) : eEdbTracks(v.GetEdbTracks()), eZpos(v.eZpos
   eY = v.eY;
   eZ = v.eZ;
   eNtr = v.N();
+  eFlag = v.Flag();
 }
 
 //________________________________________________________________________
@@ -62,6 +64,7 @@ void EdbVertex::Clear()
   eY = 0.;
   eZ = 0.;
   eNtr = 0;
+  eFlag = 0;
 }
 
 //________________________________________________________________________
@@ -75,6 +78,7 @@ int EdbVertex::MakeV( bool usemom )
   EdbSegP *seg=0;
   for(int i=0; i<eNtr; i++) {
     tr = (EdbTrackP*)(eEdbTracks.At(i));
+    if (tr->NF() <= 0) return 0;
     if   (eZpos.At(i)) seg = (EdbSegP *)(tr->TrackZmin());
     else  	       seg = (EdbSegP *)(tr->TrackZmax());
     Track *t=new Track();
@@ -108,7 +112,6 @@ void EdbVertex::SetTracksVertex( )
 bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 {
     if (!track) return false;
-    if (track->NF() <= 0) return false;
     bool result = true;
     EdbSegP *seg = 0;
     if   (zpos)
@@ -121,6 +124,7 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
     }
     if (eV)
     {
+	if (track->NF() <= 0) return false;
 	Track *t=new Track();
 	if( Edb2Vt( *seg, *t ) )
 	{
@@ -184,6 +188,7 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 	eZpos.Set(eNtr+1);
 	eZpos.AddAt(zpos, eNtr);
 	eNtr++;
+	if (track->NF() <= 0) return result;
 	if   (zpos)
 	{
 	    track->SetVertexS(this);
