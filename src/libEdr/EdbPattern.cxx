@@ -41,6 +41,53 @@ EdbSegP::EdbSegP()
   eCOV=0;
 }
 
+//______________________________________________________________________________
+void EdbSegP::SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2 )
+{ 
+  // setting the diagonal elements of covariance matrix
+
+  if(!eCOV) eCOV = new TMatrixD(5,5);
+  else eCOV->Clear();
+  (*eCOV)(0,0) = (double)sx2; 
+  (*eCOV)(1,1) = (double)sy2; 
+  (*eCOV)(2,2) = (double)stx2;
+  (*eCOV)(3,3) = (double)sty2;
+  (*eCOV)(4,4) = (double)sp2;
+  eSZ = sz2;
+}
+
+//______________________________________________________________________________
+void EdbSegP::SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2 )
+{ 
+  // calculation of the non-diagonal covariance matrix considering the input 
+  // sigma being in the track plane (Y - is transversal axis)
+
+  SetErrors( sx2, sy2, sz2, stx2, sty2, sp2 );
+
+  double Phi = -(TMath::ATan2((double)TY(),(double)TX()));
+  TMatrixD t(5,5);
+  TMatrixD tt(5,5);
+  t(0,0) =  TMath::Cos(Phi);
+  t(0,1) = -(TMath::Sin(Phi));
+  t(1,0) =  TMath::Sin(Phi);
+  t(1,1) =  TMath::Cos(Phi);
+  t(2,2) =  TMath::Cos(Phi);
+  t(2,3) = -(TMath::Sin(Phi));
+  t(3,2) =  TMath::Sin(Phi);
+  t(3,3) =  TMath::Cos(Phi);
+  t(4,4) =  1.;
+  tt(0,0) =  t(0,0);
+  tt(1,0) =  t(0,1);
+  tt(0,1) =  t(1,0);
+  tt(1,1) =  t(1,1);
+  tt(2,2) =  t(2,2);
+  tt(3,2) =  t(2,3);
+  tt(2,3) =  t(3,2);
+  tt(3,3) =  t(3,3);
+  tt(4,4) =  t(4,4);
+  TMatrixD c(5,5);
+  (*eCOV) = t*((*eCOV)*tt);
+}
 
 ///______________________________________________________________________________
 void EdbSegP::Copy(const EdbSegP &s)
@@ -749,9 +796,9 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
 
   seg0 = GetSegment(istart);
   par[istart] = new VtVector(  (double)(seg0->X()), 
-					(double)(seg0->Y()),  
-					(double)(seg0->TX()), 
-					(double)(seg0->TY()) );
+			       (double)(seg0->Y()),  
+			       (double)(seg0->TX()), 
+			       (double)(seg0->TY()) );
   meas[istart] = new VtVector(*par[istart]);
   pred[istart] = new VtSqMatrix(4);
   (*pred[istart]).clear();
@@ -885,6 +932,7 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
   eSegZmax.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
   eSegZmax.SetW( (float)nseg );
   eSegZmax.SetP( P() );
+  eSegZmax.SetPID( GetSegment(ima)->PID() );
 
   eSegZmin.Set(ID(),(float)(*pars[imi])(0),(float)(*pars[imi])(1),
 		(float)(*pars[imi])(2),(float)(*pars[imi])(3),1.);
@@ -894,6 +942,7 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
   eSegZmin.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
   eSegZmin.SetW( (float)nseg );
   eSegZmin.SetP( P() );
+  eSegZmin.SetPID( GetSegment(imi)->PID() );
 
 // Delete matrixes and vectors
 

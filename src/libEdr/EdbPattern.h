@@ -63,16 +63,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
 
   
-  void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 )
-    { if(!eCOV) eCOV = new TMatrixD(5,5);
-      else eCOV->Clear();
-      (*eCOV)(0,0) = (double)sx2; 
-      (*eCOV)(1,1) = (double)sy2; 
-      (*eCOV)(2,2) = (double)stx2;
-      (*eCOV)(3,3) = (double)sty2;
-      (*eCOV)(4,4) = (double)sp2;
-      eSZ = sz2;
-    }
+  void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 );
+
+  void    SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 );
   
   void    SetErrorP( float sp2 )
     { if(!eCOV) eCOV = new TMatrixD(5,5);
