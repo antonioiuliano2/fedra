@@ -1,0 +1,493 @@
+#ifndef __SKALMAN_ICC
+#define __SKALMAN_ICC
+// ********************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   10. Apr 2001
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: A fixed size class for Kalman filter Vertex fit
+//
+// changes:
+// 10 Apr 2001 (TG) creation
+// 18 Apr 2001 (TG) removed use_mom template parameter, moved all function
+//                  bodies into this file
+// 24 Apr 2001 (TG) tx(), ty() added
+// 04 Mai 2001 (TG) added TrackIf inheritance, some functions are dummy
+// 11 Jun 2001 (TG) added COV(), cov_tx(), cov_ty(), cov_p()
+// 29 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), xfabs() removed
+// 05 Jul 2001 (TG) collect() added
+// 09 Jul 2001 (TG) added isValid(), valid(), invalid() from TrackIf
+// 10 Jul 2001 (TG) operator==() added
+// 09 Jan 2002 (TG) changed return type of propagate() to bool
+// 16 Jan 2002 (TG) simplified print() output
+//
+// ********************************************************************
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+
+#include "SVertex.hh"
+
+//==============================================================================
+// Constructors
+//==============================================================================
+template <unsigned int NTR>
+SKalman<NTR>::SKalman() : 
+  track_(0),
+  vtx_  (0),
+  k_tx  (0),
+  k_ty  (0),
+  k_chi2(0),
+  k_qvs (0),
+  k_xv  (0),
+  k_qv  (0),
+  k_C   (0),
+  k_CINV(0),
+  k_pc  (0),
+  k_WBG (0),
+  k_W   (0),
+  k_F   (0),
+  k_ES  (0),
+  k_DS  (0)
+{}
+
+template <unsigned int NTR>
+SKalman<NTR>::SKalman(const TrackIf& t, const SVertex<NTR>& v) : 
+  track_(&t),
+  vtx_  (&v),
+  k_tx  (t.tx()),
+  k_ty  (t.ty()),
+  k_chi2(0),
+  k_qvs (SVector<double,3>(t.tx(),t.ty(),t.p())),
+  k_xv  (v.vposR()),
+  k_qv  (0),
+  k_C   (SMatrix<double,3>(1e5,true)),
+  k_CINV(SMatrix<double,3>(1e-5,true)),
+  k_pc  (0),
+  k_WBG (0),
+  k_W   (0),
+  k_F   (0),
+  k_ES  (0),
+  k_DS  (0)
+{}
+
+
+//==============================================================================
+// TrackIf methods
+//==============================================================================
+template <unsigned int NTR>
+float SKalman<NTR>::x() const { return vtx_->vx(); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::y() const { return vtx_->vy(); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::x(float z) const { return vtx_->vx() + k_qvs[0] * (z - vtx_->vz()); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::y(float z) const { return vtx_->vy() + k_qvs[1] * (z - vtx_->vz()); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::z() const { return vtx_->vz(); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::tx() const { return k_qvs[0]; }
+
+template <unsigned int NTR>
+float SKalman<NTR>::ty() const { return k_qvs[1]; }
+
+template <unsigned int NTR>
+float SKalman<NTR>::p() const { return k_qvs[2]; }
+
+template <unsigned int NTR>
+float SKalman<NTR>::pt() const { return k_qvs[2]/sqrt(1.+1./(square(k_qvs[0])+square(k_qvs[1]))); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::pz() const { return k_qvs[2]/sqrt(square(k_qvs[0])+square(k_qvs[1])+1.); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::chi2() const { return k_chi2; }
+
+template <unsigned int NTR>
+unsigned short int SKalman<NTR>::ndf() const { return 0; }
+
+template <unsigned int NTR>
+float SKalman<NTR>::phi() const { return 180. + 57.29577957*atan2(k_qvs[1],k_qvs[0]); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::theta() const { return acos(evec()[2]); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::eta() const { return -log(tan(theta()/2.)); }
+
+template <unsigned int NTR>
+int SKalman<NTR>::charge() const { return track_->charge(); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::energy(double mass) const { return sqrt(square(mass)+square(k_qvs[2])); }
+
+template <unsigned int NTR>
+float SKalman<NTR>::xf(double mass) const { return (pz() - energy(mass)*0.99898)/0.93827; }
+
+template <unsigned int NTR>
+float SKalman<NTR>::rap(double mass) const { return 0.5*log((energy(mass)+pz())/(energy(mass)-pz())); }
+
+template <unsigned int NTR>
+SVector<double,3> SKalman<NTR>::xvec() const {
+  return vtx_->vpos();
+}
+
+template <unsigned int NTR>
+SVector<double,3> SKalman<NTR>::tvec() const {
+  return SVector<double,3>(k_qvs[0],k_qvs[1],1);
+}
+
+template <unsigned int NTR>
+SVector<double,3> SKalman<NTR>::evec() const {
+  return SVector<double,3>(1./mag(tvec()) * tvec());
+}
+
+template <unsigned int NTR>
+SVector<double,3> SKalman<NTR>::pvec() const {
+  return SVector<double,3>(k_qvs[2]/mag(tvec()) * tvec());
+}
+
+template <unsigned int NTR>
+const SMatrix<double,5>& SKalman<NTR>::COV() const {
+  static const SMatrix<double,5> dummy;
+  return dummy;
+}
+
+template <unsigned int NTR>
+const SMatrix<double,5>& SKalman<NTR>::CINV() const {
+  static const SMatrix<double,5> dummy;
+  return dummy;
+}
+
+template <unsigned int NTR>
+float SKalman<NTR>::cov_x(double dz=0.)        const {
+  return 0;
+}
+
+template <unsigned int NTR>
+float SKalman<NTR>::cov_y(double dz=0.)        const {
+  return 0;
+}
+
+template <unsigned int NTR>
+float SKalman<NTR>::cov_tx()        const {
+  return 0;
+}
+
+template <unsigned int NTR>
+float SKalman<NTR>::cov_ty()        const {
+  return 0;
+}
+
+template <unsigned int NTR>
+float SKalman<NTR>::cov_p()        const {
+  return 0;
+}
+
+
+template <unsigned int NTR>
+bool SKalman<NTR>::isValid() const { return true; }
+
+template <unsigned int NTR>
+void SKalman<NTR>::valid() { ; }
+
+template <unsigned int NTR>
+void SKalman<NTR>::invalid() { ; }
+
+//==============================================================================
+// collect
+//==============================================================================
+template <unsigned int NTR>
+void SKalman<NTR>::collect(vector<TrackIf*>& c) const {
+  c.push_back(const_cast<SKalman<NTR>*>(this));
+}
+
+template <unsigned int NTR>
+bool SKalman<NTR>::propagate(const double zz) { return true; }
+
+//==============================================================================
+// operator==
+//==============================================================================
+template <unsigned int NTR>
+bool SKalman<NTR>::operator==( const TrackIf& rhs ) const {
+  return &rhs == track_;
+}
+
+//==============================================================================
+// Access methods
+//==============================================================================
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SKalman<NTR>::KCOV()  const { return k_C; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SKalman<NTR>::KCINV() const { return k_CINV; }
+
+template <unsigned int NTR>
+inline const SVector<double,3>& SKalman<NTR>::xv()   const { return k_xv; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SKalman<NTR>::F()  const { return k_F; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SKalman<NTR>::ES() const { return k_ES; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SKalman<NTR>::DS() const { return k_DS; }
+
+//==============================================================================
+// filter
+//==============================================================================
+template <unsigned int NTR>
+bool SKalman<NTR>::filter(const unsigned int I) {
+
+  const double z = vtx_->bk13();
+
+  k_tx = k_qvs[0];
+  k_ty = k_qvs[1];
+
+  //  cout << "k_tx: " << k_tx << " k_ty: " << k_ty << endl;
+
+  //  cout << " I: " << I << endl;
+	    
+  const SMatrix<double, 5>& G = track_->CINV();
+
+#ifdef XXX
+  SMatrix<double,5,3> B;
+  B(0,0) = B(1,1) = -z;
+  B(2,0) = B(3,1) = B(4,2) = 1;
+  //  const SMatrix<double,size_trait<use_mom>::DI2> Unit(1,true);
+  //  SMatrix<double,size_trait<use_mom>::DI2,size_trait<use_mom>::DIM> BT;
+  //  B.place_at(Unit,2,0);
+  //  BT=transpose(B);
+  // this expression has a very bad performance!!
+  //  SMatrix<double,size_trait<use_mom>::DI2> k_W2 = transpose(B) * G * B;
+  SMatrix<double,3> k_W2 = transpose(B)*G*B;
+  cout << "kw2: "<< endl << k_W2 << endl;
+#endif
+
+  const double z2 = square(z);
+
+  // compute Matrix W = (B^T*G*B)^-1
+  k_W(0,0) = z2 * G(0,0) - 2. * z * G(0,2) + G(2,2);
+  k_W(1,1) = z2 * G(1,1) - 2. * z * G(1,3) + G(3,3);
+  k_W(0,1) = k_W(1,0) = z2 * G(1,0) - z * ( G(1,2) + G(3,0) ) + G(3,2);
+
+  // momentum part
+  k_W(0,2) = k_W(2,0) = G(4,2) - z * G(4,0);
+  k_W(1,2) = k_W(2,1) = G(4,3) - z * G(4,1);
+  k_W(2,2) = G(4,4);
+
+  if(k_W.sinvert() == false) return false;
+
+  SMatrix<double,5,3> k_GB;
+  k_GB(0,0) = G(0,2) - z * G(0,0);
+  k_GB(0,1) = G(0,3) - z * G(0,1);
+  k_GB(1,0) = G(1,2) - z * G(1,0);
+  k_GB(1,1) = G(1,3) - z * G(1,1);
+  k_GB(2,0) = G(2,2) - z * G(2,0);
+  k_GB(2,1) = G(2,3) - z * G(2,1);
+  k_GB(3,0) = G(3,2) - z * G(3,0);
+  k_GB(3,1) = G(3,3) - z * G(3,1);
+
+  // momentum part
+  k_GB(4,0) = G(4,2) - z * G(4,0);
+  k_GB(4,1) = G(4,3) - z * G(4,1);
+  k_GB(0,2) = G(0,4);
+  k_GB(1,2) = G(1,4);
+  k_GB(2,2) = G(2,4);
+  k_GB(3,2) = G(3,4);
+  k_GB(4,2) = G(4,4);
+
+  k_WBG = k_W * transpose(k_GB);
+  const SMatrix<double,5> k_Gb = G - k_GB * k_WBG;
+
+  SMatrix<double,3> AGA;
+  AGA(0,0)            = k_Gb(0,0);
+  AGA(0,1) = AGA(1,0) = k_Gb(0,1);
+  AGA(1,1)            = k_Gb(1,1);
+  AGA(0,2) = AGA(2,0) = -k_tx*k_Gb(0,0) - k_ty*k_Gb(1,0);
+  AGA(1,2) = AGA(2,1) = -k_tx*k_Gb(0,1) - k_ty*k_Gb(1,1);
+  AGA(2,2) = square(k_tx)*k_Gb(0,0) + 2.*k_tx*k_ty*k_Gb(0,1) + square(k_ty)*k_Gb(1,1);
+
+  // SMatrix<double,3> prCINV; // only for monitoring
+  if(I==NTR-1) {
+    //    prCINV = vtx_->VCINV();
+    k_C = k_CINV = vtx_->VCINV() + AGA; // k_CINV = AGA: more failed vertex fits, faster algo!
+  } else {
+    //    prCINV = vtx_->kalman(I+1).KCINV();
+    k_C = k_CINV = vtx_->kalman(I+1).KCINV() + AGA;
+  }
+
+  if(k_C.sinvert() == false) return false;
+
+  k_pc[0] = track_->x() - z*k_tx;
+  k_pc[1] = track_->y() - z*k_ty;
+  k_pc[2] = track_->tx();
+  k_pc[3] = track_->ty();
+  k_pc[4] = track_->p();
+
+  const SVector<double,3> AGpc (k_Gb(0,0)*k_pc(0) + k_Gb(0,1)*k_pc(1) +
+				k_Gb(0,2)*k_pc(2) + k_Gb(0,3)*k_pc(3) +
+				k_Gb(0,4)*k_pc(4),
+				k_Gb(1,0)*k_pc(0) + k_Gb(1,1)*k_pc(1) +
+				k_Gb(1,2)*k_pc(2) + k_Gb(1,3)*k_pc(3) +
+				k_Gb(1,4)*k_pc(4),
+				(-k_tx*k_Gb(0,0) - k_ty*k_Gb(1,0))*k_pc(0) +
+				(-k_tx*k_Gb(0,1) - k_ty*k_Gb(1,1))*k_pc(1) +
+				(-k_tx*k_Gb(0,2) - k_ty*k_Gb(1,2))*k_pc(2) +
+				(-k_tx*k_Gb(0,3) - k_ty*k_Gb(1,3))*k_pc(3) +
+				(-k_tx*k_Gb(0,4) - k_ty*k_Gb(1,4))*k_pc(4));
+  
+  //    SVector<double,3> prkal_xv; // only for monitoring
+  //    SVector<double,3> Cx;       // only for monitoring
+  if(I==NTR-1) {
+    k_xv = k_C * (AGpc + vtx_->vposR()*1e-5);
+    //      prkal_xv = vtx_->vposR();
+    //      Cx = (AGpc + vtx_->vposR()*1e-5);
+  } else {
+    k_xv = k_C * (AGpc + vtx_->kalman(I+1).KCINV() * vtx_->kalman(I+1).xv());
+    //      prkal_xv = vtx_->kalman(I+1).xv();
+    //      Cx = (AGpc + vtx_->kalman(I+1).KCINV() * vtx_->kalman(I+1).xv());
+  }
+
+  SVector<double,5> pcAx = k_pc;
+  pcAx[0] += -k_xv[0] + k_tx*k_xv[2];
+  pcAx[1] += -k_xv[1] + k_ty*k_xv[2];
+  
+  k_qv = k_WBG * pcAx;
+
+  SVector<double,5> dp = pcAx;
+  dp[0] += z*k_qv[0];
+  dp[1] += z*k_qv[1];
+  dp[2] -= k_qv[0];
+  dp[3] -= k_qv[1];
+  dp[4] -= k_qv[2];
+
+  // filter chi2
+  if(I==NTR-1) {
+    k_chi2 = product(G,dp) + mag2(k_xv - vtx_->vposR())*1e-5;
+  } else {
+    const SKalman<NTR>& prKal = vtx_->kalman(I+1);
+    k_chi2 = prKal.chi2() + product(G,dp) + product(prKal.KCINV(), k_xv - prKal.xv());
+  }
+
+#ifdef XXX
+  cout << setprecision(6)
+       << " G: " << endl << G << endl
+    //       << " Unit: " << endl << Unit << endl
+    //       << " B: " << endl << B << endl
+    //       << " BT: " << endl << BT << endl
+    //       << " k_W2: " << endl << k_W2 << endl
+       << " k_W: " << endl << k_W << endl
+       << " k_GB: " << endl << k_GB << endl
+       << " k_Gb: " << endl << k_Gb << endl 
+       << " AGA: " << endl << AGA << endl
+       << " prCINV: " << endl << prCINV << endl
+       << " k_CINV: " << endl << k_CINV << endl
+       << " k_C: " << endl << k_C << endl
+       << " k_pc: " << k_pc << endl
+       << " AGpc: " << AGpc << endl
+       << "prkal_xv: " << prkal_xv << endl
+       << "Cx: " << Cx << endl
+       << " k_xv: " << k_xv << endl
+       << " k_qv: " << k_qv << endl
+       << "pcAx: " << pcAx << endl
+       << "z: " << z << endl
+       << "dp: " << dp << endl
+       << " k_chi2: " << k_chi2 << endl;
+#endif
+
+  return true;
+}
+
+//==============================================================================
+// smooth
+//==============================================================================
+template <unsigned int NTR>
+bool SKalman<NTR>::smooth() {
+
+  const SVector<double,3>& xvs = vtx_->vposR();
+
+  SVector<double,5> pcAx = k_pc;
+  pcAx[0] += -xvs[0] + k_tx*xvs[2];
+  pcAx[1] += -xvs[1] + k_ty*xvs[2];
+  
+  k_qvs = k_WBG * pcAx;
+
+#ifdef XXX  
+  cout << " smooth: " << endl
+       << "xvs: " << xvs << endl
+       << "pcAx: " << pcAx << endl
+       << "k_qvs: " << k_qvs << endl;
+#endif
+
+  return true;
+}
+
+
+//==============================================================================
+// smoothC
+//==============================================================================
+template <unsigned int NTR>
+bool SKalman<NTR>::smoothC() {
+
+  const SMatrix<double, 5>& G = track_->CINV();
+  const double z = vtx_->bk13();
+
+  SMatrix<double,3> BGA;
+  BGA(0,0) = G(2,0) - z * G(0,0);
+  BGA(0,1) = G(2,1) - z * G(0,1);
+  BGA(1,0) = G(3,0) - z * G(1,0);
+  BGA(1,1) = G(3,1) - z * G(1,1);
+
+  BGA(0,2) = -k_tx*BGA(0,0) - k_ty*BGA(0,1);
+  BGA(1,2) = -k_tx*BGA(1,0) - k_ty*BGA(1,1);
+
+  // momentum part
+  BGA(2,0) = G(4,0);
+  BGA(2,1) = G(4,1);
+  BGA(2,2) = -k_tx*BGA(2,0) - k_ty*BGA(2,1);
+  
+  k_F  = k_W * BGA;
+  k_ES = -k_F * vtx_->kalman(0).KCOV();
+  k_DS = k_W - k_ES * transpose(k_F);
+
+#ifdef XXX
+  cout << "smoothC: " << endl
+       << "BGA: " << endl << BGA << endl
+       << "k_F: " << endl << k_F << endl
+       << "k_ES: " << endl << k_ES << endl
+       << "k_DS: " << endl << k_DS << endl;
+#endif
+
+  return true;
+}
+
+//==============================================================================
+// print
+//==============================================================================
+template <unsigned int NTR>
+std::ostream& SKalman<NTR>::print( std::ostream& os ) const {
+  os.setf(ios::scientific,ios::floatfield);
+  return os << " ktx: " << setprecision(3) << k_tx
+	    << " kty: "                    << k_ty
+	    << " kqvs: "                   << k_qvs
+	    << " kxv: "                    << k_xv;
+}
+#endif
