@@ -1663,7 +1663,7 @@ void EdbPVRec::FitTracks(float p, float mass)
       //sy2 = GetScanCond()->SigmaY( seg->TY() );   sy2*=sy2;
       //stx2 = GetScanCond()->SigmaTX( seg->TX() ); stx2*=stx2;
       //sty2 = GetScanCond()->SigmaTY( seg->TY() ); stx2*=stx2;
-      seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
+      //seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
     }
 
     tr->SetP(p);
@@ -1730,9 +1730,6 @@ int EdbPVRec::MakeTracksTree()
   TClonesArray *segments  = new TClonesArray("EdbSegP");
   TClonesArray *segmentsf = new TClonesArray("EdbSegP");
 
-  //  TClonesArray *segments  = track->S()->GetSegments();
-  //  TClonesArray *segmentsf = track->SF()->GetSegments();
-
   int   nseg,trid,npl,n0;
   float xv=X();
   float yv=Y();
@@ -1778,85 +1775,6 @@ int EdbPVRec::MakeTracksTree()
   printf("%d tracks are written in tracks tree\n",ntr);
   return ntr; 
 }
-
-/*
-//______________________________________________________________________________
-int EdbPVRec::MakeTracksTree()
-{
-  EdbSegP *seg;
-  EdbTrackP *track = new EdbTrackP(8);
-  EdbSegP *tr = (EdbSegP*)track;
-
-  int nseg,trid,npl,n0;
-  float mass_pi = 0.139;
-  float xv=X();
-  float yv=Y();
- 
-  TFile fil("linked_tracks.root","RECREATE");
-  TTree *tracks= new TTree("tracks","tracks");
-
-  TClonesArray *segments  = track->S()->GetSegments();
-  TClonesArray *segmentsf = track->SF()->GetSegments();
-
-  tracks->Branch("trid",&trid,"trid/I");
-  tracks->Branch("nseg",&nseg,"nseg/I");
-  tracks->Branch("npl",&npl,"npl/I");
-  tracks->Branch("n0",&n0,"n0/I");
-  tracks->Branch("xv",&xv,"xv/F");
-  tracks->Branch("yv",&yv,"yv/F");
-  tracks->Branch("t.","EdbSegP",&tr,32000,99);
-  tracks->Branch("s", &segments);
-  tracks->Branch("sf",&segmentsf);
-
-  int ntr=0;
-  int nsegments = 2;
-  if(!eTracksCell) return ntr;
-  if(nsegments<2) return ntr;
-
-  EdbPattern *pat=0;
-  TIndexCell *ct;
-  Long_t vid=0;
-
-  float sx2=0.4, sy2=0.4, sz2=0., stx2=0.0018, sty2=0.0015, sp2=0.1;
-  sx2*=sx2;  sy2*=sy2;  sz2*=sz2;  stx2*=stx2;  sty2*=sty2;  sp2*=sp2;
-  
-  int ntc=eTracksCell->GetEntries();
-  for(int it=0; it<ntc; it++) {
-
-    ct = eTracksCell->At(it);
-    if( ct->N() < nsegments )     continue;
-
-    trid = ct->At(0)->Value();
-    nseg = ct->GetEntries();
-    npl = Pid(ct->At(nseg-1)->Value()) - Pid(ct->At(0)->Value()) +1;
-
-    n0=0;
-    for(int is=0; is<nseg; is++) {
-      vid = ct->At(is)->Value();
-      pat = GetPattern( Pid(vid) );
-      seg = pat->GetSegment( Sid(vid) );
-      seg->SetPID( Pid(vid) );
-      if(seg->Flag()<0) n0++;
-
-      seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
-      track->AddSegment(*seg);
-    }
-
-    track->SetID(it);
-    track->SetP(4.);
-    track->SetM(mass_pi);
-    track->FitTrackKFS(true);
-
-    tracks->Fill();
-    track->Clear();
-    ntr++;
-  }
-  tracks->Write();
-  fil.Close();
-  printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
-  return ntr; 
-}
-*/
 
 //______________________________________________________________________________
 int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff)
@@ -2049,22 +1967,142 @@ int EdbPVRec::SelectLongTracks(int nsegments)
 }
 
 ///______________________________________________________________________________
+int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
+{
+  //  extrapolate incomplete tracks and update them with new segments
+  //
+  //  input: nplmax - the maximal length of the track to be continued
+  //  input: nplmin - the minimal length of the track to be continued
+
+  TIndexCell cn;  //"npl:prob:entry"
+  Long_t v[3];
+
+  int nseg=0;
+  EdbTrackP *tr=0;
+  for(int i=0; i<eTracks->GetEntriesFast(); i++) {
+    tr = (EdbTrackP*)(eTracks->At(i));
+    tr->SetID(i);
+    nseg = tr->N();
+    for(int is=0; is<nseg; is++) tr->GetSegment(is)->SetTrack(i);
+
+    v[0]= -(tr->Npl());
+    v[1]= (Long_t)(tr->Prob()*100);
+    v[2]= i;
+    cn.Add(3,v);
+  }
+  cn.Sort();
+
+  int nsegTot=0;
+  TIndexCell *cp=0, *c=0;
+  int nn=cn.GetEntries();
+  for(int i=0; i<nn; i++) {
+    cp = cn.At(i);                              // tracks with fixed npl
+    if( -(cp->Value()) > nplmax )    continue;
+    if( -(cp->Value()) < nplmin )    continue;
+
+    int np = cp->GetEntries();
+    for(int ip=0; ip<np; ip++) {
+      c = cp->At(ip);                           // tracks with fixed Npl & Prob
+
+      int nt = c->GetEntries();
+      for(int it=0; it<nt; it++) {
+	
+	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
+
+	nseg = PropagateTrack(*tr, true);
+	nsegTot += nseg;
+
+	nseg = PropagateTrack(*tr, false);
+	nsegTot += nseg;
+
+      }
+    }
+  }
+  return nsegTot;
+}
+
+///______________________________________________________________________________
+int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
+{
+  float binx=10, bint=10;
+  float X0=5810.;
+  float probMin = 0.05;
+
+  EdbSegP ss; // the "selector" segment
+  int step = tr.MakeSelector(ss,followZ);     // step in pid
+
+  int pstart = ss.PID(), pend=0;
+  if     (step>0) pend = Npatterns()-1;
+  else if(step<0) pend = 0;
+  else return 0;
+
+  TObjArray arr;
+  EdbSegP *seg=0;
+  EdbSegP *segmax=0;
+
+  EdbPattern *pat  = 0;
+  int nseg =0, nsegTot=0;
+
+  //printf("pstart, pend, step: %d %d %d \n",pstart,pend,step);
+
+  for(int i=pstart+step; i!=pend+step; i+=step ) {
+    pat = GetPattern(i);
+    if(!pat)                   continue;
+    ss.PropagateTo(pat->Z());
+    
+    arr.Clear();
+    nseg = pat->FindCompliments(ss,arr,binx,bint);
+
+    float probmax=0, prob;
+    segmax=0;
+
+    if(nseg==1)   {                           // TODO add segment owner logic
+      probmax=1.;
+      segmax = (EdbSegP*)(arr.At(0));
+    } else if(nseg>1) {
+      for(int is=0; is<nseg; is++ ) {
+	seg = (EdbSegP*)(arr.At(is));
+	prob = EdbVertexRec::ProbeSeg( tr, *seg, X0 );
+	if( prob>probmax ) { probmax=prob; segmax=seg; }  
+      }
+    } else continue;
+    if(!segmax) continue;
+
+    int trind= segmax->Track();
+    printf(" trind = %d \n", trind);
+    if( trind >= 0 && trind<eTracks->GetEntriesFast() ) 
+      if( ((EdbTrackP*)eTracks->At(trind))->Npl() > tr.Npl() ) continue;
+
+    if(probmax>probMin) {
+      if( EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) {
+	segmax->SetTrack(tr.ID());
+	tr.SetNpl();
+
+	tr.FitTrackKFS(followZ);           // TODO remove refit?
+
+	tr.MakeSelector(ss,followZ);
+	nsegTot++;
+      }
+    }
+
+//      printf("i = %d    nseg = %d  nsegTot = %d  entries= %d \t probmax= %f\n", 
+//  	   i, nseg, nsegTot, tr.S()->GetEntries(), probmax);
+
+  }
+
+  printf("%d segments are attached \n",nsegTot);
+  return nsegTot;
+}
+
+///______________________________________________________________________________
 int EdbPVRec::ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 				    float binx, float bint )
 {
   int npat = Npatterns();
 
   EdbSegP ss; // the "selector" segment 
-  ss.SetCOV( tr.GetSegment(0)->COV() );
 
-  float dz  = (tr.GetSegment(tr.N()-1)->Z() - tr.GetSegment(0)->Z());
-  float tx  = (tr.GetSegment(tr.N()-1)->X() - tr.GetSegment(0)->X())/dz;
-  float ty  = (tr.GetSegment(tr.N()-1)->Y() - tr.GetSegment(0)->Y())/dz;
-  ss.SetTX(tx);
-  ss.SetTY(ty);
-  ss.SetX(tr.X());
-  ss.SetY(tr.Y());
-  ss.SetZ(tr.Z());
+  tr.MakeSelector(ss);
 
   EdbPattern *pat  = 0;
   int nseg =0;

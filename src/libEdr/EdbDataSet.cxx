@@ -1956,6 +1956,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
 
     pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
     pat->SetPID(i);
+    pat->SetSegmentsPID();
     if(datatype>0) {
       p1 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(1)->Z() );
       p2 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(2)->Z() );

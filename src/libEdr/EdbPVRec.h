@@ -377,6 +377,9 @@ class EdbPVRec : public EdbPatternsVolume {
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
 
+  int PropagateTracks(int nplmax, int nplmin);
+  int PropagateTrack( EdbTrackP &tr, bool followZ );
+
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };
  

@@ -28,6 +28,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t      eVid[2];          // [0]-view entry in the input tree, [1]-segment entry in the view
   Int_t      eAid[2];          // [0]-AreaID, [1]-ViewID
   Int_t      eFlag;
+  Int_t      eTrack;           // id of the track (-1) if no track
 
   Float_t    eX , eY, eZ;      // coordinates
   Float_t    eTX, eTY;         // direction tangents
@@ -48,9 +49,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
  public:
   EdbSegP();
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0)
-    { Set(id,x,y,tx,ty,w,flag); eCOV=0; eZ=0; }
-  virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
+    { Set(id,x,y,tx,ty,w,flag); eCOV=0; eZ=0; eTrack=-1; }
   EdbSegP(EdbSegP &s) { eCOV=0; Copy(s); }
+  virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
@@ -98,6 +99,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void     SetID( int id )   { eID=id; }
   void     SetPID( int pid ) { ePID=pid; }
   void     SetFlag( int flag ) { eFlag=flag; }
+  void     SetTrack( int trid ) { eTrack=trid; }
   void     SetW( float w )  { eW=w; }
   void     SetP( float p )  { eP=p; }
   void     SetProb( float prob )  { eProb=prob; }
@@ -111,6 +113,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t    ID()     const {return eID;}
   Int_t    PID()    const {return ePID;}
   Int_t    Flag()   const {return eFlag;}
+  Int_t    Track()  const {return eTrack;}
   Float_t  W()      const {return eW;}
   Float_t  P()      const {return eP;}
   Float_t  Z()      const {return eZ;}
@@ -145,7 +148,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  
   void       Print( Option_t *opt="") const;
  
-  ClassDef(EdbSegP,13)  // segment
+  ClassDef(EdbSegP,14)  // segment
 };
 
 //______________________________________________________________________________
@@ -249,6 +252,7 @@ class EdbTrackP : public EdbSegP {
   Int_t    N0()      const  {return eN0;}
 
   void     SetNpl( int npl )  { eNpl=npl; }
+  void     SetNpl()  { if(eS) eNpl = TMath::Abs(GetSegment(0)->PID() - GetSegment(N()-1)->PID()); }
   Int_t    Npl()      const   {return eNpl;}
 
   TObjArray *S()  const { return eS; }
@@ -279,6 +283,21 @@ class EdbTrackP : public EdbSegP {
       if(!eSF) eSF = new TObjArray(N());
       eSF->Add(s);
     }
+  void     AddSegmentLast( EdbSegP *s)  
+    { 
+      if(!eS) { eS = new TObjArray(N()); }
+      int n = eS->GetEntries();                           // TODO fast?
+      eS->Expand( n+1 );
+      (*eS)[n]=s;
+     }
+  void     AddSegmentFirst( EdbSegP *s)  
+    { 
+      if(!eS) { eS = new TObjArray(N()); }
+      int n = eS->GetEntries();                           // TODO fast?
+      eS->Expand( n+1 );
+      for(int i=n; i>0; i--) (*eS)[i] = (*eS)[i-1];
+      (*eS)[0]=s;
+    }
   void     AddSegmentF(int i, EdbSegP *s)  
     { 
       if(!eSF) {eSF = new TObjArray(N()); eSF->SetOwner(); }
@@ -288,13 +307,16 @@ class EdbTrackP : public EdbSegP {
   EdbSegP *GetSegment(int i)   const { return (eS) ? (EdbSegP*)(eS->At(i))  : 0; }
   EdbSegP *GetSegmentF(int i)  const { return (eS) ? (EdbSegP*)(eSF->At(i)) : 0; }
 
-  int      N() const  { if(eS)  return eS->GetEntriesFast(); else return 0; }
+  int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
   void     Reset()    { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
+  void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
   void Copy(const EdbTrackP &tr);
   void FitTrack();
   //int FitTrackKF( bool zmax=false );
   int FitTrackKFS( bool zmax=false );
+
+  int MakeSelector( EdbSegP &ss, bool followZ=true );
 
   float CHI2();
   float CHI2F();
@@ -340,6 +362,8 @@ class EdbPattern : public EdbSegmentsBox {
   void SetStep(float stepx, float stepy, float steptx, float stepty ) 
     {eStepX=stepx; eStepY=stepy; eStepTX=steptx; eStepTY=stepty;}
   void Reset();
+
+  void SetSegmentsPID();
 
   float StepX() const {return eStepX;}
   float StepY() const {return eStepY;}

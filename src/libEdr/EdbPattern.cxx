@@ -32,6 +32,7 @@ EdbSegP::EdbSegP()
   eVid[0]=0;
   eVid[1]=0;
   eFlag=0;
+  eTrack=-1;
   eProb=0;
   eW=0;
   eVolume=0;
@@ -105,6 +106,7 @@ void EdbSegP::Copy(const EdbSegP &s)
       SetDZem(s.DZem());
       SetP(s.P());
       SetChi2(s.Chi2());
+      SetTrack(s.Track());
 }
 
 
@@ -1049,6 +1051,26 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   return 0;
 }
 
+///______________________________________________________________________________
+int EdbTrackP::MakeSelector( EdbSegP &ss, bool followZ )
+{
+  if(N()<2)           return 0;
+  ss.SetCOV( GetSegment(0)->COV() );             // TODO ?
+  const EdbSegP *tr;
+  if( followZ ) tr = TrackZmax();
+  else  tr = TrackZmin();
+  ss.SetTX(tr->TX());
+  ss.SetTY(tr->TY());
+  ss.SetX(tr->X());
+  ss.SetY(tr->Y());
+  ss.SetZ(tr->Z());
+  ss.SetPID(tr->PID());
+
+  if( tr->PID() > GetSegment(0)->PID() )     return 1;
+  if( tr->PID() > GetSegment(N()-1)->PID() ) return 1;
+  return -1;
+}
+
 //______________________________________________________________________________
 float EdbTrackP::CHI2()
 {
@@ -1207,6 +1229,15 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 //      }
 
   return nseg;
+}
+
+//______________________________________________________________________________
+void EdbPattern::SetSegmentsPID()
+{
+  int nseg = N();
+  for(int i=0; i<nseg; i++) {
+    GetSegment(i)->SetPID(PID());
+  }
 }
 
 //______________________________________________________________________________
