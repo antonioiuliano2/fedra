@@ -124,3 +124,64 @@ double EdbPhysics::DeAveragePb(float pf, float massf, float xmicrons)
 		 
     return de_aver;
 }
+
+//	Kinematic parameters
+
+double eP=0.;
+double eMass=0.;
+double eE=0.;
+double eBeta=0.;
+double eGamma=0.;
+double eEmax=0.;
+double eEta=0.;
+double eEta2=0.;
+double eEta4=0.;
+double eEta6=0.;
+double eX=0.;
+double eDelta=0.;
+double eCe=0.;
+double eDe_aver_fact=0.;
+
+
+
+//________________________________________________________________________
+void EdbPhysics::DeAveragePbFastSet(float pf, float massf)
+{
+    if (pf       <= 0.) return;
+    if (massf    <= 0.) return;
+    eP=(double)pf;
+    eMass=(double)massf;
+    eE=TMath::Sqrt(eP*eP+eMass*eMass);
+    eBeta=eP/eE;
+    eGamma=eE/eMass;
+    eEmax=(2.*me*eBeta*eBeta*eGamma*eGamma)/
+		(1.+2.*eGamma*me/eMass+(me/eMass)*(me/eMass));
+    eEta=eGamma*eBeta;
+    eEta2=eEta*eEta;
+    eEta4=eEta2*eEta2;
+    eEta6=eEta2*eEta4;
+    eX=TMath::Log(eGamma*eGamma*eBeta*eBeta)/4.606;
+
+    if 	    (eX < X0) eDelta = 0;
+    else if (eX < X1) eDelta = 4.606*eX+C+aa*TMath::Power((X1-eX),mm);
+    else	      eDelta = 4.606*eX+C;
+    eCe=(0.42237/eEta2+0.0304/eEta4-0.00038/eEta6)*1.E-6*I*I +
+	(3.85800/eEta2-0.1668/eEta4+0.00158/eEta6)*1.E-9*I*I*I;
+
+    eDe_aver_fact=ro*(D*Z/(A*eBeta*eBeta))*
+	           (TMath::Log(2.*me*eBeta*eBeta*eGamma*eGamma*eEmax/(I*I*1.E-18))-
+		   2.*eBeta*eBeta-eDelta-2.*eCe/Z);
+		 
+    return;
+}
+
+//________________________________________________________________________
+double EdbPhysics::DeAveragePbFast(float pf, float massf, float xmicrons)
+{
+    if (pf       <= 0.) return 0.;
+    if (massf    <= 0.) return 0.;
+    if (xmicrons <= 0.) return 0.;
+    double x=(double)xmicrons/10000.;
+    double de_aver=x*eDe_aver_fact;
+    return de_aver;
+}

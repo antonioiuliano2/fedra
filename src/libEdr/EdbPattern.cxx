@@ -829,8 +829,6 @@ int  EdbTrackP::FitTrackKF( bool zmax)
 }
 
 */
-
-
 //______________________________________________________________________________
 int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 {
@@ -854,7 +852,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 
   //printf("%d segments to fit\n",N());
 
-  float dPb;
+  float dPb = 0.;
   double teta0sq;
   double dz, ptx, pty;
   int step;
@@ -1028,7 +1026,10 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
   AddSegmentF(new EdbSegP(segf));
 
   i=iend; 
-  double chi2p=0; 
+  double chi2p=0;
+  double DE=0.;
+  EdbPhysics::DeAveragePbFastSet(P(), M());
+   
   while( (i-=step) != istart-step ) {
 	VtSqMatrix BackTr(4);
 	BackTr = (*cov[i])*(((*pred[i]).T())*(*covpredinv[i+step]));
@@ -1051,10 +1052,14 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 	segf.SetP( P() );
 	segf.SetPID( GetSegment(i)->PID() );
 	AddSegmentF(new EdbSegP(segf));
+	dz = TMath::Abs(GetSegment(i)->Z() - GetSegment(i+step)->Z()); 
+        dPb = dz*TMath::Sqrt(1.+(*pars[i])(2)*(*pars[i])(2)+(*pars[i])(3)*(*pars[i])(3)); // thickness of the Pb+emulsion cell in microns
+	DE += EdbPhysics::DeAveragePbFast(P(),M(),dPb);
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,nseg*4));
   SetW( (float)nseg );
+  SetDE( (float)DE );
 
 // Delete matrixes and vectors
 

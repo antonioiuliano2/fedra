@@ -475,7 +475,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
   if ( y0 < lim[1] ) return; 
   if ( x0 > lim[2] ) return; 
   if ( y0 > lim[3] ) return;
-  Float_t p = p0, pa = p0, pn, de;
+  Float_t p = p0, pa = p0, pn, de = 0., DE = 0.;
   Float_t e = TMath::Sqrt((double)p*(double)p+(double)m*(double)m);
   x = x0;
   y = y0;
@@ -503,6 +503,8 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
 	pa = 0.5*(p+pn);
 	p  = pn;
+	DE += de;
+	
     }
     else if (eloss_flag == 2)
     {
@@ -512,6 +514,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
 	pa = 0.5*(p+pn);
 	p  = pn;
+	DE += de;
     }
     if (p < 0.001) break;
     if (k)
@@ -564,6 +567,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
 
     tr.AddSegment(     pat->AddSegment(*seg) );
   }
+  tr.SetDE(DE);
 }
 
 //______________________________________________________________________________

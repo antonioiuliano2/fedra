@@ -14,6 +14,9 @@
 //_________________________________________________________________________
 class EdbPhysics: public TObject {
  private:
+
+//	Pb constants
+
   static const double geu=0.577215;
   static const double geu1=0.422785;
   static const double me=0.000511; // Gev
@@ -35,6 +38,7 @@ class EdbPhysics: public TObject {
   static const double X1=3.0;
   static const double mm=2.0;
   static const double aa=-0.3291;
+
  public:
   static const float kX0_Pb;
   static const float kX0_Em;
@@ -46,9 +50,11 @@ class EdbPhysics: public TObject {
   static double ThetaMS2( float p, float mass, float dx, float X0 );
   static double ThetaPb2( float p, float mass, float dx );
   static double DeAveragePb( float p, float mass, float dx);
+  static void   DeAveragePbFastSet( float p, float mass);
+  static double DeAveragePbFast(  float p, float mass, float dx);
   static double DeLandauPb( float p, float mass, float dx);
   
-  ClassDef(EdbPhysics,1)  // some physics
+  ClassDef(EdbPhysics,2)  // some physics
 };
 
 #endif /* ROOT_EdbPhys */
