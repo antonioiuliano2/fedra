@@ -52,7 +52,7 @@ private:
   EdbAffine2D   eAff;    // affine transformation for the view 
                          // (make sence for SySal-converted data only)
 
-  TArrayF  *eZlevels;    //! z of each taken view (frame)
+  TArrayF  *eZlevels;    // z of each taken view (frame)
 
 public:
   EdbViewHeader();
@@ -68,11 +68,12 @@ public:
   EdbAffine2D const *GetAffine() const { return &eAff; }
 
   void     SetZlevels(Int_t n, const Float_t *array) { 
-    if(!eZlevels) eZlevels=new TArrayF(n); 
-    eZlevels->Set(n,array);
+    //dummy
+    //if(!eZlevels) eZlevels=new TArrayF(n); 
+    //eZlevels->Set(n,array);
   }
 
-  TArrayF *GetZlevels() const {return eZlevels;}
+  TArrayF *GetZlevels() const {return 0;} //eZlevels;}
 
   Int_t    GetTime()              { return eTime; }
   void     SetTime( Int_t time )  { eTime = time; }
@@ -108,7 +109,7 @@ public:
 
   void     Print() const;
 
-  ClassDef(EdbViewHeader,2)  // view identification
+  ClassDef(EdbViewHeader,1)  // view identification
 };
 
 //______________________________________________________________________________
@@ -121,9 +122,7 @@ private:
   TClonesArray     *eClusters;    // array of Clusters
   TClonesArray     *eSegments;    // array of Segments
   TClonesArray     *eTracks;      // array of Tracks
-
-  //  TObjArray        *eFrames;      // array of Frames (images)
-  TClonesArray        *eFrames;      // array of Frames (images)
+  TClonesArray     *eFrames;      // array of Frames (images)
 
   Long_t  eLastSystemTime;        // system time when view was saved
 
@@ -145,8 +144,7 @@ public:
   TClonesArray  *GetClusters() const { return eClusters; }
   TClonesArray  *GetSegments() const { return eSegments; }
   TClonesArray  *GetTracks()   const { return eTracks;   }
-  //  TObjArray     *GetFrames()   const { return eFrames;   }
-  TClonesArray     *GetFrames()   const { return eFrames;   }
+  TClonesArray  *GetFrames()   const { return eFrames;   }
 
   void          *GetHeaderAddr()    { return &eHeader;   }
   void          *GetClustersAddr()  { return &eClusters; }

@@ -573,7 +573,7 @@ EdbViewHeader::EdbViewHeader()
 //______________________________________________________________________________
 EdbViewHeader::~EdbViewHeader()
 {
-  if(eZlevels) delete eZlevels;
+  //if(eZlevels) delete eZlevels;
 }
 
 //______________________________________________________________________________
@@ -602,9 +602,9 @@ void EdbViewHeader::Print() const
 {
   printf("ViewHeader:\t %d %d \t %f %f \n", eViewID, eAreaID, eXview, eYview);
   printf("View time: \t %d \n", eTime );
-  if(eZlevels) {
-    printf("Zlevels(%d): \t", eZlevels->GetSize() );
-    for(int i=0; i<eZlevels->GetSize(); i++)       printf(" %f ", eZlevels->At(i) );
-    printf("\n");
-  }
+//    if(eZlevels) {
+//      printf("Zlevels(%d): \t", eZlevels->GetSize() );
+//      for(int i=0; i<eZlevels->GetSize(); i++)       printf(" %f ", eZlevels->At(i) );
+//      printf("\n");
+//    }
 }
