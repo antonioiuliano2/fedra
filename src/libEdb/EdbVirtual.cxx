@@ -141,6 +141,12 @@ EdbPointsBox2D::EdbPointsBox2D()
 }
 
 //_____________________________________________________________________________
+EdbPointsBox2D::EdbPointsBox2D(const EdbPointsBox2D &pb)
+{
+  eKeep = new EdbAffine2D(*pb.GetKeep());
+}
+
+//_____________________________________________________________________________
 EdbPointsBox2D::~EdbPointsBox2D()
 {
   if(eKeep) delete eKeep;

@@ -53,7 +53,6 @@ public:
   EdbRun( EdbRun &run, const char *fname );
   virtual ~EdbRun();
 
-
   EdbView             *GetView() const { return eView; }
   void                 SetView(EdbView *view);
   void                 SetView();

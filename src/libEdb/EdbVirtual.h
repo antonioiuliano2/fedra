@@ -150,6 +150,7 @@ class EdbPointsBox2D : public EdbPoint3D {
 
  public:
   EdbPointsBox2D();
+  EdbPointsBox2D(const EdbPointsBox2D &pb);
   virtual ~EdbPointsBox2D();
 
   virtual void Print( Option_t *opt="") const;
@@ -168,6 +169,7 @@ class EdbPointsBox2D : public EdbPoint3D {
   virtual void Substruct( EdbPointsBox2D *b );
   virtual void Retransform();
 
+  virtual const EdbAffine2D *GetKeep() const {return eKeep;}
   virtual void GetKeep( EdbAffine2D &aff );
   virtual void SetKeep(float a11,float a12,float a21,float a22,float b1,float b2);
 

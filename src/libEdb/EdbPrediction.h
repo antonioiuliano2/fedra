@@ -76,6 +76,7 @@ class EdbPredictionsBox : public TObject, public EdbPointsBox2D {
 
  public: 
   EdbPredictionsBox();
+  EdbPredictionsBox(const EdbPredictionsBox &pb);
   EdbPredictionsBox( int n );
   virtual ~EdbPredictionsBox();
 

@@ -85,8 +85,13 @@ EdbRun::EdbRun( const char *fname, const char *status )
 EdbRun::EdbRun( EdbRun &run, const char *fname )
 {
   Init();
-  EdbRunHeader &h = *run.GetHeader();
-  eHeader   = new EdbRunHeader(h);
+
+  if(run.GetHeader()) 
+    eHeader = new EdbRunHeader(*(run.GetHeader()));
+  if(run.GetMarks())  
+    eMarks  = new EdbMarksSet(*(run.GetMarks()));
+  if(run.GetPredictions())  
+    ePredictions  = new EdbPredictionsBox(*(run.GetPredictions()));
   SelectOpenMode( fname, "RECREATE" );
   printf("Run headers are copied\n");
 }

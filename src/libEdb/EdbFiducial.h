@@ -57,6 +57,7 @@ class EdbMarksBox : public TObject, public EdbPointsBox2D {
 
  public: 
   EdbMarksBox();
+  EdbMarksBox( const EdbMarksBox &mb );
   EdbMarksBox( int n );
   virtual ~EdbMarksBox();
 
@@ -90,6 +91,7 @@ class EdbMarksSet : public TObject {
 
  public: 
   EdbMarksSet();
+  EdbMarksSet( EdbMarksSet &ms );
   virtual ~EdbMarksSet();
 
   Int_t           GetN()     const;

@@ -54,6 +54,13 @@ EdbPredictionsBox::EdbPredictionsBox()
 }
 
 //______________________________________________________________________________
+EdbPredictionsBox::EdbPredictionsBox(const EdbPredictionsBox &pb) : EdbPointsBox2D(pb)
+{
+  if(pb.GetPredictions()) ePredictions = new TClonesArray(*pb.GetPredictions());
+  else ePredictions = new TClonesArray("EdbPredictionDC",1000);
+}
+
+//______________________________________________________________________________
 EdbPredictionsBox::EdbPredictionsBox(int n)
 {
   ePredictions = new TClonesArray("EdbPredictionDC",n);

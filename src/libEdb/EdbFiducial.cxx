@@ -25,16 +25,10 @@
 #include "EdbAffine.h"
 #endif
 
-//#ifndef ROOT_EdbBasic
-//#include "EdbBasic.h"
-//#endif
-
-
+ClassImp(EdbArea)
 ClassImp(EdbMark)
 ClassImp(EdbMarksBox)
 ClassImp(EdbMarksSet)
-
-ClassImp(EdbArea)
 
 //______________________________________________________________________________
 EdbArea::EdbArea( int N, float stepx, float stepy, int ft, int fb, int path ) : EdbMarksBox(N)
@@ -140,10 +134,20 @@ void   EdbArea::Scale( float dx, float dy )
 }
 
 //______________________________________________________________________________
+//______________________________________________________________________________
 EdbMarksSet::EdbMarksSet()
 {
   eAbsolute     = new EdbMarksBox();
   eStage        = new EdbMarksBox();
+}
+
+//______________________________________________________________________________
+EdbMarksSet::EdbMarksSet( EdbMarksSet &ms )
+{
+  if(ms.GetAbsolute()) eAbsolute = new EdbMarksBox( *(ms.GetAbsolute()) );
+  else                 eAbsolute     = new EdbMarksBox();
+  if(ms.GetStage())    eStage    = new EdbMarksBox( *(ms.GetStage()) );
+  else                 eStage        = new EdbMarksBox();
 }
 
 //______________________________________________________________________________
@@ -305,9 +309,17 @@ void EdbMarksSet::Print(Option_t *opt) const
 }
 
 //______________________________________________________________________________
+//______________________________________________________________________________
 EdbMarksBox::EdbMarksBox()
 {
   eMarks = new TClonesArray("EdbMark",4);
+}
+
+//______________________________________________________________________________
+EdbMarksBox::EdbMarksBox( const EdbMarksBox &mb ) : EdbPointsBox2D( mb )
+{
+  if(mb.GetMarks()) eMarks = new TClonesArray( *(mb.GetMarks()) );
+  else              eMarks = new TClonesArray("EdbMark",4);
 }
 
 //______________________________________________________________________________
@@ -369,6 +381,7 @@ void EdbMarksBox::AddMark(int id, float x, float y)
   new((*eMarks)[GetN()])  EdbMark( id,x,y );
 }
 
+//______________________________________________________________________________
 //______________________________________________________________________________
 void EdbMark::Print(Option_t *opt) const
 {

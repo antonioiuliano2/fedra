@@ -433,8 +433,8 @@ Int_t EdbAffine2D::CalculateTurn(int n, float *x0, float *y0, float *x1, float *
 			b = TMath::Sin(teta2);
 			c = -TMath::Sin(teta2);
 			d = TMath::Cos(teta2);
-			p = -a1*TMath::Cos(teta2) - b1*TMath::Sin(teta2);
-			q = a1*TMath::Sin(teta2) - b1*TMath::Cos(teta2);
+			p = -a2*TMath::Cos(teta2) - b2*TMath::Sin(teta2);
+			q = a2*TMath::Sin(teta2) - b2*TMath::Cos(teta2);
 		}
 
 	}
