@@ -51,8 +51,11 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 		throw 0;
 
 	int nFragments = pCat->Area.Fragments;
-	cout<<"Hdr.ID :"<<pCat->Hdr.ID.Part[0]<<"\t"<<pCat->Hdr.ID.Part[1]<<"\t"
-						 <<pCat->Hdr.ID.Part[1]<<"\t"<<pCat->Hdr.ID.Part[3]<<endl;
+	cout<<"Hdr.ID :"
+	    <<pCat->Hdr.ID.Part[0] <<"\t"
+	    <<pCat->Hdr.ID.Part[1]<<"\t"
+	    <<pCat->Hdr.ID.Part[2]<<"\t"
+	    <<pCat->Hdr.ID.Part[3]<<endl;
 	cout<<endl<<"Fragments: "<<nFragments<<endl;
 
 	EdbRunHeader *Header;
@@ -113,7 +116,7 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 			sprintf(rwdname,"%s.%08X", rwdname, f);
 
 			cout <<"(tot. fragm.:"<<nFragments<<")  ";
-			AddRWD(run, rwdname,f);
+			if (! AddRWD(run, rwdname,f) ) break;
 			delete[] rwdname;
 		}; //end of fragments (f)
 		cout <<endl;
@@ -129,9 +132,9 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 
 	// ISySalDataIO variables
 	ISySalDataIO*  iIO;
-   ISySalDataIO2* iIO2;
-   CoInitialize(NULL);
-   CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
+	ISySalDataIO2* iIO2;
+	CoInitialize(NULL);
+	CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
 		              IID_ISySalDataIO, (void **)&iIO);
 	iIO->QueryInterface(IID_ISySalDataIO2, (void**)&iIO2);
 	UINT ExtErrorInfo;
@@ -139,7 +142,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 	IO_VS_Fragment2* pFrag = 0;
 	
 	if (iIO2->Read2(NULL, (BYTE*)&pFrag, &ExtErrorInfo, (UCHAR*)rwdname) 
-		!= S_OK)	throw 1;
+		!= S_OK)	return FALSE;
 
 	int v, s, t, p;  // v=view, s=side, t=track, p=point
 	int tracks;		// number of tracks in the fragment
