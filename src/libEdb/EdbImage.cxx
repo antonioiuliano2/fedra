@@ -36,6 +36,7 @@ EdbImage::EdbImage(char *file, char *format)
   else if    ( !strcmp(format,"RAW") )  counter = LoadRAW(file);
   else if    ( !strcmp(format,"BMP") )  counter = LoadBMP(file);
 
+  printf("counter = %d\n",counter);
   if(counter != eBytes) 
     printf("ERROR:  EdbImage::EdbImage: counter != eBytes \n");
 }
@@ -253,9 +254,10 @@ typedef struct {
 
 HEADER hdr;
 INFOHEADER ihdr;
-
+ 
+ printf("hdr: %d    ihdr: %d\n",sizeof(hdr), sizeof(ihdr));
  char* ptr;
- fstream raw(file,ios::in);
+ fstream raw(file,ios::in | ios::binary);       // ios::binary added! 24.11.2003 (Stas)
  ptr=(char*)&hdr;
  raw.read(ptr,14);
  ptr=(char*)&ihdr;
