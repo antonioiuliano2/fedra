@@ -1,0 +1,4 @@
+INPUT_RUNS_LIST		jun2003_runs.lst
+OUTPUT_DATA_DIR		./data/
+PARAMETERS_DIR		./par/
+DBFILENAME		./jun2003_DB.root

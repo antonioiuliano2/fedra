@@ -1,0 +1,6 @@
+INCLUDE default.par
+
+ZLAYER  0 	100 0 200
+SHRINK  0 	1
+AFFXY   0 	1 0 0 1 	0 0
+AFFTXTY 0 	1 0 0 1 	0 0
