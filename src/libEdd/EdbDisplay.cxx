@@ -7,8 +7,9 @@
 // Class to display pattern volume in 3D                                //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-#include "EdbDisplay.h"
 
+#include "TStyle.h"
+#include "EdbDisplay.h"
 
 ClassImp(EdbDisplay);
 ClassImp(EdbSegG);
@@ -258,7 +259,9 @@ EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
                  seg->Y() + seg->TY()*seg->DZ(),
                  seg->Z() +           seg->DZ() );
 
-  line->SetLineColor( 2+seg->PID()%7 );
+  int eNpieces=30;
+  line->SetLineColor(gStyle->GetColorPalette(int(46.*(1.-1.*seg->PID()/eNpieces))));  
+  //line->SetLineColor( 2+seg->PID()%7 );
   line->SetLineWidth(int(seg->W()/10.));
   line->SetSeg(seg);
   return line;
