@@ -407,9 +407,8 @@ int EdbPatCouple::Align()
 
   npat = FindOffset01(eXoffsetMax,eYoffsetMax);   if(npat<2) return npat;
 
-  //EdbAffine2D *affA  = new EdbAffine2D();
   Long_t vdiff[4]={0,0,0,0};
-  int nitr=4;
+  int nitr=5;
 
   FillCell_XYaXaY(Cond(), Zlink(), 2 );    Pat2()->Cell()->DropCouples(4);
 
@@ -432,10 +431,13 @@ int EdbPatCouple::Align()
   SelectIsolated();
   CalculateAffXYZ(Zlink());
   Pat1()->Transform(GetAff());
-  GetAff()->Reset();
+  EdbAffine2D affA;
+  affA.Set( GetAff()->A11(), GetAff()->A12(), GetAff()->A21(), GetAff()->A22(),0,0 );
 
   //psel1->CalculateAXAY(psel2,affA);
-  //pat1->TransformA(affA);
+  Pat1()->TransformA(&affA);
+  GetAff()->Reset();
+
 
   //psel2->CalculateAXAY(psel1,affA);
   //pat2->TransformA(affA);

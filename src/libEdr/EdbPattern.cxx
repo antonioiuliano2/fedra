@@ -23,6 +23,62 @@ EdbSegP& EdbSegP::operator += (EdbSegP const& s)
 {
   float dz = s.Z() - Z();
 
+  float tx,ty;
+  float w1,w2;
+  float x1,y1,x2,y2;
+  float xa,ya,sxa,sya,xb,yb,sxb,syb;
+
+  // project to one side (a):
+
+  x1 = X();
+  w1 = 1./(SX()*SX());
+  x2 = s.X() - s.TX()*dz;
+  w2 = 1./(s.SX()*s.SX() + s.STX()*dz*s.STX()*dz); 
+  xa = (x1*w1+x2*w2)/(w1+w2);
+  sxa = TMath::Sqrt(1./(w1+w2));
+
+  y1 = Y();
+  w1 = 1./(SY()*SY());
+  y2 = s.Y() - s.TY()*dz;
+  w2 = 1./(s.SY()*s.SY() + s.STY()*dz*s.STY()*dz); 
+  ya = (y1*w1+y2*w2)/(w1+w2);
+  sya = TMath::Sqrt(1./(w1+w2));
+
+  // project to another side (b):
+
+  x1 = s.X();
+  w1 = 1./(s.SX()*s.SX());
+  x2 = X() + TX()*dz;
+  w2 = 1./(SX()*SX() + STX()*dz*STX()*dz); 
+  xb = (x1*w1+x2*w2)/(w1+w2);
+  sxb = TMath::Sqrt(1./(w1+w2));
+  
+  y1 = s.Y();
+  w1 = 1./(s.SY()*s.SY());
+  y2 = Y() + TY()*dz;
+  w2 = 1./(SY()*SY() + STY()*dz*STY()*dz); 
+  yb = (y1*w1+y2*w2)/(w1+w2);
+  syb = TMath::Sqrt(1./(w1+w2));
+
+  float z  = (Z()+s.Z())/2.;
+  tx = (xb-xa)/dz;
+  ty = (yb-ya)/dz;
+  float x  = (xb+xa)/2.;
+  float y  = (yb+ya)/2.;
+
+  Set(s.ID(),x,y,tx,ty,W()+s.W(),s.Flag());
+  SetZ(z);
+  //SetErrors(sx,sy,sz,stx,sty);
+
+  return *this;
+}
+
+//______________________________________________________________________________
+/*
+EdbSegP& EdbSegP::operator += (EdbSegP const& s) 
+{
+  float dz = s.Z() - Z();
+
   float tx,ty,stx,sty;   //base angle
   float w,w1,w2;
 
@@ -81,7 +137,7 @@ EdbSegP& EdbSegP::operator += (EdbSegP const& s)
 
   return *this;
 }
-
+*/
 //______________________________________________________________________________
 double EdbSegP::Chi2( EdbSegP &s ) const
 {

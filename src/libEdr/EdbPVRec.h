@@ -294,6 +294,8 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetSegmentErrors( EdbSegP &seg );
   void SetSegmentProbability( EdbSegP &seg );
 
+
+
   /*
 
   float Chi2( EdbSegP *s1,  EdbSegP *s2 ) const;
