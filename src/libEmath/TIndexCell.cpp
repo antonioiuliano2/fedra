@@ -265,7 +265,8 @@ void TIndexCell::PrintStat() const
   float phaseVol=1;
   int range=0;
   printf("level\t entries\t range\t occupancy\t minPop\t maxPop\n");
-  for(int i=1; i<Nlevels(); i++ ) {
+  int nlvl=Nlevels();
+  for(int i=1; i<nlvl; i++ ) {
     range = MaxV(i)-MinV(i)+1;
     phaseVol *= range;
     printf(" %d \t %d \t\t %d \t %f \%% \t %d \t %d\n",
@@ -433,7 +434,8 @@ Int_t TIndexCell::MinN( Int_t level, Int_t vind[] ) const
   Int_t n=kMaxInt, k=kMaxInt;
   if(fList) {
     if(level>0) {
-      for(int i=0; i<GetEntries(); i++)  {
+      int nentr=GetEntries();
+      for(int i=0; i<nentr; i++)  {
 	k=At(i)->MinN(level-1,vind+1);
 	if(n > k) {
 	  n=k;
@@ -466,7 +468,8 @@ Int_t TIndexCell::MaxN( Int_t level, Int_t vind[] ) const
   Int_t n=-999999999, k=-999999999;
   if(fList) {
     if(level>0) {
-      for(int i=0; i<GetEntries(); i++)  {
+      int nentr=GetEntries();
+      for(int i=0; i<nentr; i++)  {
 	k=At(i)->MaxN(level-1,vind+1);
 	if(n < k) {
 	  n=k;

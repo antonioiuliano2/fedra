@@ -170,7 +170,8 @@ EdbSegCouple   *EdbPatCouple::AddSegCouple( int id1, int id2 )
 void EdbPatCouple::PrintCouples()
 {
   EdbSegCouple *sc=0;
-  for(int i=0; i<eSegCouples->GetEntries(); i++) {
+  int ncp = eSegCouples->GetEntries();
+  for(int i=0; i<ncp; i++) {
     sc = GetSegCouple(i);
     sc->Print();
   }
@@ -305,7 +306,8 @@ int EdbPatCouple::FillCHI2P()
 {
   EdbSegCouple *scp=0;
   float       chi2;
-  for( int i=0; i<Ncouples(); i++ ) {
+  int ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
     chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2Aprob( *(Pat2()->GetSegment(scp->ID2())) );
     scp->SetCHI2P(chi2);
@@ -319,7 +321,8 @@ int EdbPatCouple::FillCHI2()
 {
   EdbSegCouple *scp=0;
   float       chi2;
-  for( int i=0; i<Ncouples(); i++ ) {
+  int ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
     chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2A( *(Pat2()->GetSegment(scp->ID2())) );
     scp->SetCHI2(chi2);
@@ -331,13 +334,23 @@ int EdbPatCouple::FillCHI2()
 ///______________________________________________________________________________
 int EdbPatCouple::CutCHI2P(float chi2max)
 {
+  TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
   printf("CutCHI2P (%4.1f):  %d -> ", chi2max,Ncouples() );
-  for( int i=Ncouples()-1; i>=0; i-- ) {
+  int ncp = Ncouples();
+ 
+  for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
-    if(sc->CHI2P()>chi2max)   RemoveSegCouple(sc);
+    if(sc->CHI2P()<=chi2max)      sCouples->Add(sc);
+    else {
+      delete sc;
+      sc=0;
+    }
   }
-  eSegCouples->Compress();
+  //eSegCouples->Clear();
+  delete eSegCouples;
+  eSegCouples=sCouples;
+  //eSegCouples->Compress();
   printf(" %d \n", Ncouples() );
   return Ncouples();
 }
@@ -346,8 +359,9 @@ int EdbPatCouple::CutCHI2P(float chi2max)
 int EdbPatCouple::SelectIsolated()
 {
   EdbSegCouple *sc = 0;
-  printf("SelectIsolated:  %d -> ", Ncouples() );
-  for( int i=Ncouples()-1; i>=0; i-- ) {
+  int ncp = Ncouples();
+  printf("SelectIsolated:  %d -> ", ncp );
+  for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
     if( sc->N1tot()>1 || sc->N2tot()>1 )   RemoveSegCouple(sc);
   }
@@ -365,14 +379,17 @@ int EdbPatCouple::SortByCHI2()
   eSegCouples->UnSort();
   eSegCouples->Sort();
 
-  int *found1 = new int[ePat1->N()];
-  int *found2 = new int[ePat2->N()];
-  for(int i=0; i<ePat1->N(); i++) found1[i]=0;
-  for(int i=0; i<ePat2->N(); i++) found2[i]=0;
+  int np1 = ePat1->N();
+  int np2 = ePat2->N();
+  int *found1 = new int[np1];
+  int *found2 = new int[np2];
+  for(int i=0; i<np1; i++) found1[i]=0;
+  for(int i=0; i<np2; i++) found2[i]=0;
 
   EdbSegCouple *sc = 0;
 
-  for( int i=0; i<Ncouples(); i++ ) {
+  int ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
     sc = GetSegCouple(i);
     found1[sc->ID1()]++;
     found2[sc->ID2()]++;
@@ -381,7 +398,8 @@ int EdbPatCouple::SortByCHI2()
     npat++;
   }
 
-  for( int i=0; i<Ncouples(); i++ ) {
+  ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
     sc = GetSegCouple(i);
     sc->SetN1tot( found1[sc->ID1()] );
     sc->SetN2tot( found2[sc->ID2()] );
@@ -427,8 +445,8 @@ int EdbPatCouple::Align()
 
   npat = DiffPat( Pat1(), Pat2(), vdiff );
   FillCHI2P();
-  CutCHI2P(1.5);
   SortByCHI2();
+  CutCHI2P(1.5);
   SelectIsolated();
   CalculateAffXYZ(Zlink());
   Pat1()->Transform(GetAff());
@@ -464,8 +482,11 @@ int EdbPatCouple::LinkSlow( float chi2max )
   EdbSegCouple   *c;
   float chi2;
 
-  for( int i1=0; i1<pat1->N(); i1++ ) {
-    for( int i2=0; i2<pat2->N(); i2++ ) {
+  int n1,n2;
+  n1 = pat1->N();
+  for( int i1=0; i1<n1; i1++ ) {
+    n2 = pat2->N();
+    for( int i2=0; i2<n2; i2++ ) {
       chi2 = (pat1->GetSegment(i1))->Chi2Aprob( *(pat2->GetSegment(i2)) );
       if( chi2 > chi2max )        continue;
       c=AddSegCouple(i1,i2);
@@ -544,28 +565,34 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
   Long_t val[5]={0,0,0,0,0};
   int    vind[5]={-1,-1,-1,-1,-1};
   
-  for( vind[0]=0; vind[0]<cel1->GetEntries(); vind[0]++) {                              //x1
+  int ncel1, nc10, nc11, nc12, nc13, nc23; 
+
+  ncel1 = cel1->GetEntries();
+  for( vind[0]=0; vind[0]<ncel1; vind[0]++) {                              //x1
     c1[0] = cel1->At(vind[0]);
     val0[0] = c1[0]->Value();
     for( val[0] = val0[0]-vdiff[0]; val[0]<=val0[0]+vdiff[0]; val[0]++ ) {              //x2
       c2[0] = cel2->Find(val[0]);
       if(!c2[0])                      continue;
 
-      for( vind[1]=0; vind[1]<c1[0]->GetEntries(); vind[1]++) {                         //y1
+      nc10 = c1[0]->GetEntries();
+      for( vind[1]=0; vind[1]<nc10; vind[1]++) {                         //y1
 	c1[1] = c1[0]->At(vind[1]);
 	val0[1] = c1[1]->Value();
 	for( val[1] = val0[1]-vdiff[1]; val[1]<=val0[1]+vdiff[1]; val[1]++ ) {          //y2
 	  c2[1] = c2[0]->Find(val[1]);
 	  if(!c2[1])                 continue;
 
-	  for( vind[2]=0; vind[2]<c1[1]->GetEntries(); vind[2]++) {                     //ax1
+	  nc11 = c1[1]->GetEntries();
+	  for( vind[2]=0; vind[2]<nc11; vind[2]++) {                     //ax1
 	    c1[2] = c1[1]->At(vind[2]);
 	    val0[2] = c1[2]->Value();
 	    for( val[2] = val0[2]-vdiff[2]; val[2]<=val0[2]+vdiff[2]; val[2]++ ) {      //ax2
 	      c2[2] = c2[1]->Find(val[2]);
 	      if(!c2[2])                      continue;
 	      
-	      for( vind[3]=0; vind[3]<c1[2]->GetEntries(); vind[3]++) {                 //ay1
+	      nc12 = c1[2]->GetEntries();
+	      for( vind[3]=0; vind[3]<nc12; vind[3]++) {                 //ay1
 		c1[3] = c1[2]->At(vind[3]);
 		val0[3] = c1[3]->Value();
 		for( val[3] = val0[3]-vdiff[3]; val[3]<=val0[3]+vdiff[3]; val[3]++ ) {  //ay2
@@ -574,8 +601,10 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 
 		  npat++;
 
-		  for(int ie1=0; ie1<c1[3]->GetEntries(); ie1++) {
-		    for(int ie2=0; ie2<c2[3]->GetEntries(); ie2++) {
+		  nc13 = c1[3]->GetEntries();
+		  for(int ie1=0; ie1<nc13; ie1++) {
+		    nc23 = c2[3]->GetEntries();
+		    for(int ie2=0; ie2<nc23; ie2++) {
 
 		      ncouples++;
 
@@ -627,7 +656,8 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
   float x,y,tx,ty;
   Long_t  val[5];  // x,y,ax,ay,i
   EdbSegP *p;
-  for(int i=0; i<pat->N(); i++ ) {
+  int npat = pat->N();
+  for(int i=0; i<npat; i++ ) {
     p = pat->GetSegment(i);
     tx = p->TX();
     ty = p->TY();
@@ -691,7 +721,8 @@ EdbPatCouple *EdbPVRec::AddCouple(int id1, int id2)
 //______________________________________________________________________________
 void EdbPVRec::SetOffsetsMax(float ox, float oy)
 {
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     GetCouple(i)->SetOffsetsMax(ox,oy);
   }
 }
@@ -700,7 +731,8 @@ void EdbPVRec::SetOffsetsMax(float ox, float oy)
 void EdbPVRec::SetCouples()
 {
   EdbPatCouple *pc = 0;
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     //printf("SetCouples: %d(%d) %d %d \n",i,Ncouples(), pc->ID1(),pc->ID2());
     pc->SetPat1( GetPattern(pc->ID1()) );
@@ -712,7 +744,8 @@ void EdbPVRec::SetCouples()
 void EdbPVRec::ResetCouples()
 {
   EdbPatCouple *pc = 0;
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->ClearSegCouples();
     pc->SetPat1( GetPattern(pc->ID1()) );
@@ -724,7 +757,8 @@ void EdbPVRec::ResetCouples()
 void EdbPVRec::SetCouplesAll()
 {
   EdbPatCouple *pc = 0;
-  for(int i=0; i<Npatterns()-1; i++ ) {
+  int npat=Npatterns();
+  for(int i=0; i<npat-1; i++ ) {
     pc = new EdbPatCouple();
     pc->SetID(i,i+1);
     pc->SetCond(eScanCond);
@@ -772,10 +806,12 @@ void EdbPVRec::SetSegmentsErrors()
   EdbPattern *pat;
   EdbSegP    *seg;
 
-  for(int i=0; i<Npatterns(); i++ ) {
+  int npat, nseg;
+  npat =Npatterns();
+  for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
-
-    for(int j=0; j<pat->N(); j++ ) {
+    nseg = pat->N();
+    for(int j=0; j<nseg; j++ ) {
       seg = pat->GetSegment(j);
       
       SetSegmentErrors( *seg );
@@ -795,7 +831,8 @@ int EdbPVRec::LinkSlow()
 
   EdbPatCouple *pc = 0;
 
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->LinkSlow( Chi2Max() );
     npat = pc->SortByCHI2();
@@ -813,11 +850,13 @@ int EdbPVRec::Link()
 
   EdbPatCouple *pc = 0;
 
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->LinkFast();
     pc->CutCHI2P(eChi2Max);
-    npat += pc->SortByCHI2();
+    pc->SortByCHI2();
+    npat += pc->Ncouples();
   }
   printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
   return npat;
@@ -830,10 +869,11 @@ int EdbPVRec::LinkTracks()
 
   EdbPatCouple *pc = 0;
 
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp=Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->LinkFast();
-    //pc->CutCHI2P(1.5);
+    pc->CutCHI2P(1.5);
     pc->SortByCHI2();
     pc->SelectIsolated();
   }
@@ -851,20 +891,22 @@ int EdbPVRec::LinkTracks()
 int EdbPVRec::AlignA()
 {
   // align patterns in volume
-  int npat=0;
+  int npat=Npatterns();
 
   TObjArray aKeep(Npatterns());  
   EdbAffine2D *a0;
-  for(int i=0; i<Npatterns(); i++ ) {
+  for(int i=0; i<npat; i++ ) {
     a0 = new EdbAffine2D();
     GetPattern(i)->GetKeep(*a0);
     aKeep[i]=a0;
   }
 
-  for(int i=0; i<Ncouples(); i++ )   GetCouple(i)->CalculateAffXY();
+  int ncp = Ncouples();
+  for(int i=0; i<ncp; i++ )   GetCouple(i)->CalculateAffXY();
 
   EdbAffine2D a;
-  for(int i=Npatterns()-1; i>0; i-- ) {
+  npat = Npatterns();
+  for(int i=npat-1; i>0; i-- ) {
     GetPattern(i)->GetKeep(a);
     a0=(EdbAffine2D *)(aKeep.At(i));
     a0->Invert();
@@ -879,11 +921,12 @@ int EdbPVRec::AlignA()
 int EdbPVRec::Align()
 {
   // align patterns in volume
-  int npat=0;
+  int npat=Npatterns();
 
   TObjArray aKeep(Npatterns());  
   EdbAffine2D *a0;
-  for(int i=0; i<Npatterns(); i++ ) {
+
+  for(int i=0; i<npat; i++ ) {
     a0 = new EdbAffine2D();
     GetPattern(i)->GetKeep(*a0);
     aKeep[i]=a0;
@@ -892,14 +935,16 @@ int EdbPVRec::Align()
 
   SetCouples();
   EdbPatCouple *pc = 0;
-  for(int i=0; i<Ncouples(); i++ ) {
+  int ncp = Ncouples();
+  for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->Align();
   }
 
 
   EdbAffine2D a;
-  for(int i=Npatterns()-1; i>0; i-- ) {
+  npat = Npatterns();
+  for(int i=npat-1; i>0; i-- ) {
     GetPattern(i)->GetKeep(a);
     a0=(EdbAffine2D *)(aKeep.At(i));
     a0->Invert();
@@ -924,9 +969,12 @@ void EdbPVRec::FillTracksCell()
   EdbPatCouple *pc = 0;
   EdbSegCouple *sc = 0;
 
-  for(int iv=0; iv<Ncouples(); iv++ ) {
+  int ncp = Ncouples();
+  int ncpp;
+  for(int iv=0; iv<ncp; iv++ ) {
     pc = GetCouple(iv);
-    for(int ip=0; ip<pc->Ncouples(); ip++) {
+    ncpp = pc->Ncouples();
+    for(int ip=0; ip<ncpp; ip++) {
       sc = pc->GetSegCouple(ip);
 
       vid1 = Vid( pc->ID1(),sc->ID1() );
@@ -971,7 +1019,8 @@ int EdbPVRec::MakeTracksTree()
   TIndexCell *ct;
   Long_t vid=0;
   
-  for(int it=0; it<eTracksCell->GetEntries(); it++) {
+  int ntc=eTracksCell->GetEntries();
+  for(int it=0; it<ntc; it++) {
 
     ct = eTracksCell->At(it);
     if( ct->N() < nsegments )     continue;
@@ -1015,14 +1064,18 @@ int EdbPVRec::SelectLongTracks(int nsegments, TIndexCell *tracksCell)
   TIndexCell *ct;
   Long_t vid1=0,vid2=0;
   
-  for(int it=0; it<tracksCell->GetEntries(); it++) {
+  int ntc, nct; 
+
+  ntc = tracksCell->GetEntries();
+  for(int it=0; it<ntc; it++) {
 
     ct = tracksCell->At(it);
     if( ct->N() < nsegments )     continue;
     //track = new EdbTrackP();
     //track->SetID( ct->Value() );
 
-    for(int is=0; is<ct->GetEntries()-1; is++) {
+    nct = ct->GetEntries()-1;
+    for(int is=0; is<nct; is++) {
 
       vid1 = ct->At(is)->Value();
       vid2 = ct->At(is+1)->Value();

@@ -75,12 +75,18 @@ void EdbView::Clear()
 //______________________________________________________________________________
 void EdbView::Transform( EdbAffine2D *aff )
 {
-  if(eClusters)   
-    for( int i=0; i<Nclusters(); i++ )   ((EdbPoint2D*)(GetCluster(i)))->Transform(aff);
-  if(eSegments) 
-    for( int i=0; i<Nsegments(); i++ )   GetSegment(i)->Transform(aff);
-  if(eTracks)   
-    for( int i=0; i<Ntracks(); i++ )     GetTrack(i)->Transform(aff);
+  if(eClusters) {
+    int ncl=Nclusters();
+    for( int i=0; i<ncl; i++ )   ((EdbPoint2D*)(GetCluster(i)))->Transform(aff);
+  }
+  if(eSegments) {
+    int nseg=Nsegments();
+    for( int i=0; i<nseg; i++ )   GetSegment(i)->Transform(aff);
+  }
+  if(eTracks) {
+    int ntr=Ntracks();
+    for( int i=0; i<ntr; i++ )     GetTrack(i)->Transform(aff);
+  }
 }
 
 //______________________________________________________________________________

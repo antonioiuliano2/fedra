@@ -40,6 +40,7 @@ depend:
 	$(CXX) $(CXXFLAGS) -c $<
 # DO NOT DELETE
 
+EdbGA.o: EdbGA.h
 EdbPVGen.o: /var/local/root/include/TRandom.h
 EdbPVGen.o: /var/local/root/include/TNamed.h
 EdbPVGen.o: /var/local/root/include/TObject.h

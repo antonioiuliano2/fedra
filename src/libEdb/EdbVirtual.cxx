@@ -161,7 +161,8 @@ void EdbPointsBox2D::GetKeep( EdbAffine2D &a )
 //_____________________________________________________________________________
 void EdbPointsBox2D::Transform( EdbAffine2D *a )
 {
-  for( int i=0; i<N(); i++ )  At(i)->Transform(a);
+  int n=N();
+  for( int i=0; i<n; i++ )  At(i)->Transform(a);
   eKeep->Transform(a);
 }
 
@@ -184,42 +185,47 @@ void EdbPointsBox2D::Retransform()
 //_____________________________________________________________________________
 void EdbPointsBox2D::Substruct( EdbPointsBox2D *b )
 {
-  for( int i=0; i<N(); i++ )  At(i)->Substruct( b->At(i) );
+  int n=N();
+  for( int i=0; i<n; i++ )  At(i)->Substruct( b->At(i) );
 }
 
 //_____________________________________________________________________________
 Float_t EdbPointsBox2D::Xmin()
 {
-  if( N()<1 )                 return 0;
+  int n=N();
+  if( n<1 )                 return 0;
   Float_t a = At(0)->X();
-  for( int i=0; i<N(); i++ )  a = TMath::Min(a,At(i)->X());
+  for( int i=0; i<n; i++ )  a = TMath::Min(a,At(i)->X());
   return a;
 }
 
 //_____________________________________________________________________________
 Float_t EdbPointsBox2D::Xmax()
 {
-  if( N()<1 )                 return 0;
+  int n=N();
+  if( n<1 )                 return 0;
   Float_t a = At(0)->X();
-  for( int i=0; i<N(); i++ )  a = TMath::Max(a,At(i)->X());
+  for( int i=0; i<n; i++ )  a = TMath::Max(a,At(i)->X());
   return a;
 }
 
 //_____________________________________________________________________________
 Float_t EdbPointsBox2D::Ymin()
 {
-  if( N()<1 )                 return 0;
+  int n=N();
+  if( n<1 )                 return 0;
   Float_t a = At(0)->Y();
-  for( int i=0; i<N(); i++ )  a = TMath::Min(a,At(i)->Y());
+  for( int i=0; i<n; i++ )  a = TMath::Min(a,At(i)->Y());
   return a;
 }
 
 //_____________________________________________________________________________
 Float_t EdbPointsBox2D::Ymax()
 {
-  if( N()<1 )                 return 0;
+  int n=N();
+  if( n<1 )                 return 0;
   Float_t a = At(0)->Y();
-  for( int i=0; i<N(); i++ )  a = TMath::Max(a,At(i)->Y());
+  for( int i=0; i<n; i++ )  a = TMath::Max(a,At(i)->Y());
   return a;
 }
 
@@ -227,7 +233,8 @@ Float_t EdbPointsBox2D::Ymax()
 TH1F *EdbPointsBox2D::Xhist()
 {
   TH1F *hist = new TH1F("xhist","X coordinate of the box",100, Xmin(),Xmax() );
-  for( int i=0; i<N(); i++ )  hist->Fill( At(i)->X() );
+  int n=N();
+  for( int i=0; i<n; i++ )  hist->Fill( At(i)->X() );
   return hist;
 }
 
@@ -235,7 +242,8 @@ TH1F *EdbPointsBox2D::Xhist()
 TH1F *EdbPointsBox2D::Yhist()
 {
   TH1F *hist = new TH1F("yhist","Y coordinate of the box",100, Ymin(),Ymax() );
-  for( int i=0; i<N(); i++ )  hist->Fill( At(i)->Y() );
+  int n=N();
+  for( int i=0; i<n; i++ )  hist->Fill( At(i)->Y() );
   return hist;
 }
 
@@ -245,7 +253,8 @@ TH2F *EdbPointsBox2D::XYhist()
   TH2F *hist = new TH2F("xyhist","X coordinate of the box",
 			100, Xmin(), Xmax(),
 			100, Ymin(), Ymax() );
-  for( int i=0; i<N(); i++ )  hist->Fill( At(i)->X(),  At(i)->Y() );
+  int n=N();
+  for( int i=0; i<n; i++ )  hist->Fill( At(i)->X(),  At(i)->Y() );
   return hist;
 }
 
@@ -254,7 +263,8 @@ void EdbPointsBox2D::DrawPoints( int   style, int   col, float size )
 {
   TGraph  *mark = new TGraph( N() );
 
-  for( int i=0; i<N(); i++ )  
+  int n=N();
+  for( int i=0; i<n; i++ )  
     mark->SetPoint( i, At(i)->X(),  At(i)->Y() );
 
   printf("EdbPointsBox2D::Draw: %d points\n", N() );

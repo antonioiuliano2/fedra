@@ -146,7 +146,7 @@ class EdbPatCouple : public TObject {
 
   EdbAffine2D *eAff;        // affine transformation as: pat2 = pat1->Transform(aff)
 
-  TObjArray *eSegCouples;  //
+  TObjArray *eSegCouples;   //
   
   EdbScanCond *eCond;
 
@@ -187,7 +187,10 @@ class EdbPatCouple : public TObject {
   EdbSegCouple   *AddSegCouple(int id1, int id2);
   EdbSegCouple   *GetSegCouple(int i) const 
     { return (EdbSegCouple *)(eSegCouples->At(i)); }
-  void   RemoveSegCouple(EdbSegCouple *sc) { eSegCouples->Remove(sc); if(sc) delete sc; }
+  void   RemoveSegCouple(EdbSegCouple *sc) { 
+    //eSegCouples->Remove(sc); 
+    if(sc) delete sc; sc=0;
+  }
 
   EdbPattern     *Pat1()  { return ePat1; }
   EdbPattern     *Pat2()  { return ePat2; }

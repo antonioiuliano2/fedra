@@ -332,7 +332,8 @@ void  EdbMarksBox::Draw(int style, int   col, float size, float tsiz )
   char lable[4];
 
 #ifndef WIN32
-  for( int i=0; i<N(); i++ ) {
+  int n=N();
+  for( int i=0; i<n; i++ ) {
     sprintf(lable,"%d",  GetMark(i)->GetID() );
     TText *t = new TText( At(i)->X(),  At(i)->Y(), lable );
     t->Draw();
@@ -345,7 +346,8 @@ void  EdbMarksBox::Draw(int style, int   col, float size, float tsiz )
 void EdbMarksBox::Print(Option_t *opt) const
 {
   printf("EdbMarksBox: %d fiducials\n", GetN() );
-  for(int i=0; i<GetN(); i++) GetMark(i)->Print();
+  int n=GetN();
+  for(int i=0; i<n; i++) GetMark(i)->Print();
 }
 
 //______________________________________________________________________________

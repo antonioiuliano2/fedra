@@ -376,8 +376,9 @@ void EdbSegmentsBox::ProjectTo(const float dz)
 {
   eZ += dz;  eDZkeep += dz;
  
- EdbSegP *p;
-  for(int i=0; i<N(); i++ ) {
+  EdbSegP *p;
+  int nseg = N();
+  for(int i=0; i<nseg; i++ ) {
     p = GetSegment(i);
     p->SetX( p->X() + p->TX()*dz );
     p->SetY( p->Y() + p->TY()*dz );
@@ -432,7 +433,8 @@ void EdbSegmentsBox::TransformA( EdbAffine2D *aff )
   EdbSegP *p;
   float tx,ty;
 
-  for(int i=0; i<N(); i++ ) {
+  int nseg = N();
+  for(int i=0; i<nseg; i++ ) {
     p = GetSegment(i);
 
     tx = aff->A11()*p->TX() + aff->A12()*p->TY() + aff->B1();
@@ -450,7 +452,8 @@ void EdbSegmentsBox::TransformARot( EdbAffine2D *aff )
   EdbSegP *p;
   float tx,ty;
 
-  for(int i=0; i<N(); i++ ) {
+  int nseg = N();
+  for(int i=0; i<nseg; i++ ) {
     p = GetSegment(i);
 
     tx = aff->A11()*p->TX() + aff->A12()*p->TY();
@@ -463,8 +466,9 @@ void EdbSegmentsBox::TransformARot( EdbAffine2D *aff )
 //______________________________________________________________________________
 void EdbSegmentsBox::Print(Option_t *opt) const
 {
-  printf("EdbSegmentsBox: %d segments\n", GetN() );
-  for(int i=0; i<GetN(); i++) GetSegment(i)->Print();
+  int nseg=GetN();
+  printf("EdbSegmentsBox: %d segments\n", nseg );
+  for(int i=0; i<nseg; i++) GetSegment(i)->Print();
 } 
 
 //______________________________________________________________________________
@@ -486,7 +490,8 @@ void EdbTrackP::Copy(EdbTrackP &tr)
 {
   Reset();
   eID = tr.ID();
-  for(int i=0; i<tr.N(); i++)
+  int nseg=tr.N();
+  for(int i=0; i<nseg; i++)
     AddSegment(*tr.GetSegment(i));
 }
 
@@ -552,8 +557,11 @@ EdbPatternsVolume::EdbPatternsVolume(EdbPatternsVolume &pvol)
   Set0();
 
   pvol.PassProperties(*this);
-  for(int j=0; j<Npatterns(); j++) {
-    for(int i=0; i<GetPattern(j)->N(); i++ ) {
+  int npat,nseg;
+  npat = Npatterns();
+  for(int j=0; j<npat; j++) {
+    nseg = GetPattern(j)->N();
+    for(int i=0; i<nseg; i++ ) {
       pvol.GetPattern(j)->AddSegment( *(GetPattern(j)->GetSegment(i)) );
     }
   }
@@ -578,7 +586,8 @@ void EdbPatternsVolume::Set0()
 int EdbPatternsVolume::DropCouples()
 {
   int count=0;
-  for(int i=0; i<Npatterns(); i++ )
+  int npat=Npatterns();
+  for(int i=0; i<npat; i++ )
     count += GetPattern(i)->Cell()->DropCouples(4);
   if(count) printf("%d couples are dropped in volume cells\n",count);
   return count;
@@ -587,14 +596,16 @@ int EdbPatternsVolume::DropCouples()
 //______________________________________________________________________________
 void EdbPatternsVolume::SetPatternsID()
 {
-  for(int i=0; i<Npatterns(); i++ )
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ )
     GetPattern(i)->SetID(i);
 }
  
 //______________________________________________________________________________
 void EdbPatternsVolume::Transform( EdbAffine2D *aff )
 {
-  for(int i=0; i<Npatterns(); i++ )  {
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ )  {
     GetPattern(i)->Transform(aff);
     GetPattern(i)->TransformARot(aff);
   }
@@ -609,7 +620,8 @@ void EdbPatternsVolume::Centralize()
 
   float xc=0;
   float yc=0;
-  for(int i=0; i<Npatterns(); i++ ) {
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ ) {
     xc += GetPattern(i)->Xmax() + GetPattern(i)->Xmin();
     yc += GetPattern(i)->Ymax() + GetPattern(i)->Ymin();
   }
@@ -619,7 +631,8 @@ void EdbPatternsVolume::Centralize()
   eX = xc;  eY=yc;
 
   Shift(-xc,-yc);
-  for(int i=0; i<Npatterns(); i++ ) 
+  npat = Npatterns();
+  for(int i=0; i<npat; i++ ) 
     GetPattern(i)->SetKeep(1,0,0,1,0,0);
 }
 
@@ -627,7 +640,8 @@ void EdbPatternsVolume::Centralize()
 void EdbPatternsVolume::PrintAff() const
 {
   EdbAffine2D a;
-  for(int i=0; i<Npatterns(); i++ ) {
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ ) {
     GetPattern(i)->GetKeep(a);
     printf(" %d ",i); a.Print();
   }
@@ -642,7 +656,7 @@ void EdbPatternsVolume::PrintStat( Option_t *opt="") const
   float dx,dy;
   EdbPattern *pat=0;
   printf("pat# \t segments \t dX \t\tdY \t meanDist \n");
-  for(int i=0; i<Npatterns(); i++ ) {
+  for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
     dx = pat->Xmax() - pat->Xmin();
     dy = pat->Ymax()- pat->Ymin();
@@ -650,7 +664,8 @@ void EdbPatternsVolume::PrintStat( Option_t *opt="") const
 	   i, pat->GetN(),dx,dy, TMath::Sqrt(dx*dy/pat->GetN()) );
   }
 
-  for(int i=0; i<Npatterns(); i++ ) {
+  npat=Npatterns();
+  for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
     pat->Cell()->PrintStat();
   }
@@ -682,7 +697,8 @@ void EdbPatternsVolume::PassProperties( EdbPatternsVolume &pvol )
   EdbAffine2D a;
   EdbPattern *p=0;
 
-  for(int i=0; i<Npatterns(); i++ ) {
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ ) {
     p = GetPattern(i);
     p->GetKeep(a);
     EdbPattern *psel = new EdbPattern( p->X(),p->Y(),p->Z() );
@@ -700,12 +716,14 @@ void EdbPatternsVolume::Shift( float x, float y )
   aff.ShiftX(x);
   aff.ShiftY(y);
 
-  for(int i=0; i<Npatterns(); i++)
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++)
     GetPattern(i)->Transform(&aff);
 }
 
 //______________________________________________________________________________
 void EdbPatternsVolume::DropCell()
 {
-  for(int i=0; i<Npatterns(); i++ ) GetPattern(i)->Cell()->Drop();
+  int npat = Npatterns();
+  for(int i=0; i<npat; i++ ) GetPattern(i)->Cell()->Drop();
 }
