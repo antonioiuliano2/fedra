@@ -86,8 +86,10 @@ Data processing scheme:
 	The procedure read base tracks from files produced in 5) and apply 
 	the defined cuts for them.
 	So for the first iteration alignment could be done for small 
-	data subsets with the big OFFSET; setted the correct affine parameters 
-	in the correspondent par file; and then repeated 
+	data subsets with the big OFFSET; 
+	the correct affine parameters will be automatically updated 
+	at the end of the correspondent par file;
+	then the procedure could be repeated 
 	with the full data set and small OFFSET.
 	
 	Note that alignment could be done for any number of plates >=2.
@@ -98,13 +100,15 @@ Data processing scheme:
 
 	ones the affine transformations are defined for N plates - for 
 	all of them could be done track linking. This procedure is similar to 
-	up/down linking and done for all couples of neibour plates and output 
-	is written to tracks.root
+	up/down linking and done for all couples of neibour plates, output 
+	is written to linked_tracks.root
 
 --------------------------------------------------
 
 TODO list:
 	- to fix const/file memory leak in link procedure
-	- to apply Andrey's routine for s par
+ok	- to apply Andrew's routine for s par
 	- to provide correct track linking with recalculation of 
 	  track parameters
+ok	- automatic update of AFFINE after Align
+	- may be redefine the concept of DataPiece
