@@ -27,3 +27,34 @@ During the linking (in "couples" tree):
        angle_exposured = angle_found/shrinkage
 
 
+Data processing:
+~~~~~~~~~~~~~~~~
+     - check the quality of raw data using the script check_raw.C
+
+     - link data using the script link.C
+	    The parameters using for linking:
+	    
+  float  plate[3] = {40, 214, 40};  - plate parameters (up, base, down)
+	                              base - is the most important parameter - it is used
+				      for calculation of base angle. 
+				      up and down are used to project the base point to the 
+				      centre of emulsion layer - it helps to improve the 
+				      accuracy of segment position. 
+				      With setting {0,214,0} base point is used for 
+				      calculations as is
+
+  float  shrU  = 0.93;              //  (exposure thickness) / (measured on stage thickness):
+  float  shrD  = 0.73;              //  tx_exp = tx_stage/shr
+				    
+	 shrinkage parameters are used for correction of the raw 
+	 data angles after reading
+	 Note that shrinkage and base are correlated: first it is necessary 
+	 to fix the base and then correct shrinkage if necessary
+
+  float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
+  float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
+
+	 angular offsets could be presented in the distorted emulsions
+
+	 All the above parameters are used to correct angular distributions 
+	 for minimization of chi2 for signal tracks.
