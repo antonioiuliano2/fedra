@@ -9,9 +9,6 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  int doCCD=0, doLink=0, doAlign=0, doTrack=0, 
-    doFine=0, doAngles=0, doRaw=0, noUpdate=0, doMerge=0;
-
   if (argc < 3)
     {
       cout<< "usage: \n \trecset { -l | -a | -t | -f | ...} input_data_set_file \n\n";
@@ -21,12 +18,17 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -a    - plate to plate alignment\n";
       cout<< "\t\t  -f    - fine alignment based on passed-throw tracks\n";
       cout<< "\t\t  -t[n] - tracking \n";
-      cout<< "\t\t  -m[n] - tracks merging (n - the maximal permitted gap in planes)\n";
+      cout<< "\t\t  -p[P] - tracks propagation (P is the momentum of the particle)\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
       cout<<endl;
       return 0;
     };
+
+  int doCCD=0, doLink=0, doAlign=0, doTrack=0, 
+    doFine=0, doAngles=0, doRaw=0, noUpdate=0;
+
+  float doPropagation=-1;
 
   char *name = argv[argc-1];
 
@@ -39,9 +41,9 @@ int main(int argc, char* argv[])
 	sscanf(key+2,"%d",&doTrack);
       if(doTrack==0) doTrack=1;
     }
-    if(!strncmp(key,"-m",2)) {
+    if(!strncmp(key,"-p",2)) {
       if(strlen(key)>2)
-	sscanf(key+2,"%d",&doMerge);
+	sscanf(key+2,"%f",&doPropagation);
     }
     if(!strcmp(key,"-ccd"))  doCCD=1;
     if(!strcmp(key,"-ang"))  doAngles=1;
@@ -61,7 +63,7 @@ int main(int argc, char* argv[])
   if(doTrack&&doAlign)   { proc.AlignLinkTracks(doTrack); doTrack=0; doAlign=0; }
   if(doAlign)            { proc.Align();                  doAlign=0; }
   if(doAngles)           { proc.CorrectAngles();          doAngles=0; }
-  if(doTrack)            { proc.LinkTracks(doTrack, doMerge); doTrack=0; doMerge=0; }
+  if(doTrack)            { proc.LinkTracks(doTrack, doPropagation); doTrack=0; doPropagation=-1; }
   if(doFine)             { proc.FineAlignment();          doFine=0; }
   if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0; }
 
