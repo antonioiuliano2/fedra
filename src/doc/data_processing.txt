@@ -1,3 +1,45 @@
+Data files organization (at Naples):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/opera/data/raws    - raw data coming from SySal  (rwd, etc)
+/opera/data/rawr    - raw data after rwc2edb conversion (root files)
+
+
+Internal structure of raws/ and rawr/  are identical:
+/opera/data/raws/brick_name/plXX/ ... file(s) 
+
+for example:
+/opera/data/rawr/b1_jun2003/pl10/raw_Jun2003_CMOS_01010110.root
+
+
+Analysis directory is organized by users per brick see as example
+fedra/src/appl/jun2003/README
+
+Analysis data flow:
+
+raw_pl10.root (View tree inside)
+	 |
+	 |  recset [ ccd|l ]
+	 v
+data/10_001.cp.root (couples tree inside) 
+	 |
+	 |  recset [ a|f|t ]
+	 v
+linked_tracks.root  (tracks tree inside)
+
+
+Concerning the details of processing refere to the file 
+fedra/src/appl/jun2003/README
+
+The structure of root files is explained in 
+doc/data_structure.txt
+
+
+
+----------------------------------------------------------------------
+Some additional notes (could be laboratory dependent)
+----------------------------------------------------------------------
+
 In the data coming from SySal scanning, orientation is:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -27,20 +69,12 @@ Shrinkage correction:
        angle_exposured = angle_found/shrinkage
 
 
-Data files organization (at Naples):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-/data/raws    - raw data coming from SySal  (rwd, etc)
-/data/rawr    - raw data after conversion (root files)
-/data/proc    - processed data (after linking, etc)
-
-Internal structure of raws/ and rawr/  are identical:
-/data/raws/brick_name/plXX/ ... file(s)
-
-
-Data processing:
-~~~~~~~~~~~~~~~~
-     - check the quality of raw data using the script check_raw.C
+------------------------------------------------------------------------------
+  the procedures below are OBSOLETE (new ones are in jun2003/README)
+  anyway most of them should work and could serve 
+  as the indication for the personal user analysis
+------------------------------------------------------------------------------
 
 Linking:
 ~~~~~~~~
