@@ -42,7 +42,7 @@ for hname in ${listEmath} ; do
  ln -fs $PROJECT_SRC/libEmath/${hname##*/} $PROJECT_INC/${hname##*/}
 done
 for hname in ${listEphys} ; do
- ln -fs $PROJECT_SRC/libTest/${hname##*/} $PROJECT_INC/${hname##*/}
+ ln -fs $PROJECT_SRC/libEphys/${hname##*/} $PROJECT_INC/${hname##*/}
 done
 ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
 ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
