@@ -1,0 +1,37 @@
+\contentsline {section}{\numberline {1}Introduction}{2}
+\contentsline {section}{\numberline {2}Compilation and Versioning}{3}
+\contentsline {section}{\numberline {3}Speed}{4}
+\contentsline {section}{\numberline {4}Vertexing}{4}
+\contentsline {subsection}{\numberline {4.1}Classes}{4}
+\contentsline {subsection}{\numberline {4.2}Namespace}{5}
+\contentsline {subsection}{\numberline {4.3}Functions and Templates}{5}
+\contentsline {section}{\numberline {5}Matrix computation}{6}
+\contentsline {subsection}{\numberline {5.1}Classes}{6}
+\contentsline {subsection}{\numberline {5.2}Namespace}{8}
+\contentsline {section}{\numberline {6}VERTEX Examples}{8}
+\contentsline {subsection}{\numberline {6.1}Using the header file}{8}
+\contentsline {subsection}{\numberline {6.2}Version information}{8}
+\contentsline {subsection}{\numberline {6.3}Example of two track vertices}{9}
+\contentsline {subsection}{\numberline {6.4}Vertex fit methods}{9}
+\contentsline {subsection}{\numberline {6.5}Using momentum in the vertex fit}{10}
+\contentsline {subsection}{\numberline {6.6}Adding more Tracks}{10}
+\contentsline {subsection}{\numberline {6.7}Vertex members functions}{11}
+\contentsline {subsection}{\numberline {6.8}Mean distance and opening angle}{11}
+\contentsline {subsection}{\numberline {6.9}Reconstructed Mass}{11}
+\contentsline {subsection}{\numberline {6.10}Using the Vertex-Iterator}{13}
+\contentsline {subsection}{\numberline {6.11}Mass constrained vertex fits}{15}
+\contentsline {subsection}{\numberline {6.12}Refitted Track parameters}{17}
+\contentsline {subsection}{\numberline {6.13}Store Vertex in RVER table}{18}
+\contentsline {subsection}{\numberline {6.14}Using an external Track list}{18}
+\contentsline {subsection}{\numberline {6.15}Reconstruct the incoming track}{20}
+\contentsline {subsection}{\numberline {6.16}Removing tracks from a Vertex}{21}
+\contentsline {subsection}{\numberline {6.17}Distance functions}{22}
+\contentsline {subsection}{\numberline {6.18}Pull - distributions}{23}
+\contentsline {section}{\numberline {7}MATRIX Examples}{23}
+\contentsline {subsection}{\numberline {7.1}VtVector Objects}{23}
+\contentsline {subsection}{\numberline {7.2}Constructing Matrix objects}{26}
+\contentsline {subsection}{\numberline {7.3}Accessing Matrix elements}{26}
+\contentsline {subsection}{\numberline {7.4}Choosing the right Matrix class}{26}
+\contentsline {subsection}{\numberline {7.5}Matrix operations}{27}
+\contentsline {subsection}{\numberline {7.6}Special member functions}{28}
+\contentsline {section}{\numberline {8}Vt++ running in ROOT/CINT}{29}

@@ -1,0 +1,173 @@
+This is TeX, Version 3.14159 (Web2C 7.3.7) (format=latex 2003.2.13)  14 FEB 2003 13:52
+**/data/data1/WORK/BEE-1-5/vt++/doc/vt++.tex
+(/data/data1/WORK/BEE-1-5/vt++/doc/vt++.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/tools/verbatim.sty
+Package: verbatim 2001/03/12 v1.5p LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks14
+\verbatim@line=\toks15
+\verbatim@in@stream=\read1
+)
+(/usr/share/texmf/tex/latex/graphics/color.sty
+Package: color 1999/02/16 v1.0i Standard LaTeX Color (DPC)
+
+(/usr/share/texmf/tex/latex/config/color.cfg
+File: color.cfg 2001/08/31 v1.1 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: dvips.def on input line 125.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+)
+(/usr/share/texmf/tex/latex/graphics/dvipsnam.def
+File: dvipsnam.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks16
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+)
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+) (./vt++.aux)
+\openout1 = `vt++.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 16.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 16.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 16.
+ (./vt++.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 5.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 5.
+
+[1
+
+])
+\tf@toc=\write3
+\openout3 = `vt++.toc'.
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 37.
+ (/usr/share/texmf/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 37.
+
+Overfull \hbox (4.51483pt too wide) in paragraph at lines 42--45
+\OT1/cmr/m/n/9 which, how-ever, can-not over-come the above men-tioned Vt-limit
+ations.
+ []
+
+[2] [3] [4]
+Overfull \hbox (1.11789pt too wide) in paragraph at lines 197--199
+\OT1/cmr/m/n/9 The \OT1/cmr/bx/n/9 Vt-Dis-tance.hh \OT1/cmr/m/n/9 head-er-file 
+de-clares dis-tance func-tions (part of names-
+ []
+
+
+Overfull \hbox (5.58199pt too wide) in paragraph at lines 202--204
+[]\OT1/cmr/m/n/9 spatial dis-tance be-tween
+ []
+
+
+Overfull \hbox (2.45909pt too wide) in paragraph at lines 204--206
+[]$\OML/cmm/m/it/9 ^^_[]$
+ []
+
+
+Overfull \hbox (7.6429pt too wide) in paragraph at lines 206--208
+[]$\OML/cmm/m/it/9 ^^_[]$ \OT1/cmr/m/n/9 dis-tance be-
+ []
+
+[5] [6]
+Overfull \hbox (1.38074pt too wide) in paragraph at lines 271--279
+\OT1/cmr/m/n/9 rived from Vt-Sym-Ma-trix and can be con-structed from RTRA, RSE
+G,
+ []
+
+[7] [8] [9] [10] [11] [12] [13] [14] [15] [16] [17]
+Missing character: There is no ´ in font cmr9!
+ [18] [19] [20] [21]
+[22]
+Overfull \hbox (4.57549pt too wide) in paragraph at lines 1130--1135
+[]\OT1/cmtt/m/n/9 SGNdistance(const Track& t, const Vertex& v)[] \OT1/cmr/m/n/9
+ re-turns the signed spa-
+ []
+
+File: vtxpull_vt0813.epsi Graphic file (type eps)
+<vtxpull_vt0813.epsi>
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 1151.
+ [23] [24]
+Overfull \hbox (2.55861pt too wide) in paragraph at lines 1177--1179
+[]\OT1/cmr/m/n/9 To ac-cess the vec-tor com-po-nents both []\OT1/cmtt/m/n/9 ope
+rator()()[] \OT1/cmr/m/n/9 and []\OT1/cmtt/m/n/9 operator[]()[]
+ []
+
+[25]
+Overfull \hbox (6.38034pt too wide) in paragraph at lines 1255--1258
+\OT1/cmr/m/n/9 Matrix el-e-ments can be ac-cessed in two ways: ei-ther us-ing t
+he []\OT1/cmtt/m/n/9 operator()()[]
+ []
+
+[26] [27]
+Missing character: There is no ´ in font cmtt9!
+ [28] [29] [30] [31] (./vt++.aux) ) 
+Here is how much of TeX's memory you used:
+ 804 strings out of 25847
+ 10197 string characters out of 195960
+ 57358 words of memory out of 384000
+ 3766 multiletter control sequences out of 10000+15000
+ 9142 words of font info for 33 fonts, out of 400000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 25i,8n,19p,215b,411s stack positions out of 300i,100n,500p,50000b,4000s
+
+Output written on vt++.dvi (31 pages, 86544 bytes).

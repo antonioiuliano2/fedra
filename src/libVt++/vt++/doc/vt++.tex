@@ -1,0 +1,1528 @@
+\documentclass{article}
+\usepackage{verbatim,color}
+\usepackage{graphicx}
+
+\newcommand{\tcb}[1]{\textcolor{blue}{#1}}
+\newenvironment{code}[1]{\color{#1}\verbatim}{\endverbatim\color{black}}
+
+\title{Vt++ Version 1.3}
+%\\[1ex]\normalsize{HERA-B Note 00-175}
+\author{Thorsten Glebe\\
+        Max-Planck-Institut f\"ur Kernphysik, Heidelberg\\
+        T.Glebe@mpi-hd.mpg.de\\[1ex]
+        http://www.mpi-hd.mpg.de/herab/vt++}
+
+\begin{document}
+\maketitle
+\abstract{Vt++ is the C++ reimplementation of the core part of the FORTRAN
+  based vertex fitting package \textbf{Vt}, written by T. Lohse. It consists
+  of the Kalman filter based vertex fit and the inverse Kalman filter. This
+  part of \textbf{Vt} is well investigated, used for many years and known to be
+  correct.
+  The goal is to provide an easy-to-use vertexing class which can be used
+  to explore different vertexing strategies and to cure limitations of the 
+  FORTRAN implementation.
+  It is not the goal to provide 'the' final primary/secodary vertex finder,
+  this is done by other vertexing software.}
+\tableofcontents
+%
+% Section
+%
+\section{Introduction}
+Vt, the FORTRAN based vertex fitting package written by T. Lohse
+\cite{Vt}, has been used in HERA-B for more than five years and proven
+to be a very useful tool. Nevertheless, some disadvantages are known,
+too:
+\begin{itemize}
+\item As a consequence of the FORTRAN implementation, fixed buffer sizes for
+  tracks and vertices exist, which can lead to problems while running on real
+  data.
+\item Support of Vt is missing.
+\item The implementation has not been optimized with respect to execution speed.
+\item For the usage of Vt in C++ some interfaces have been written, which, however,
+  cannot overcome the above mentioned Vt-limitations. Therefore it is not
+  attractive to use Vt in C++ code.
+\end{itemize}
+From this it became clear that a C++ port of (at least the base part) of Vt
+would be very useful. It would make the interfaces obsolete and allow to cure
+the disadvantages of the FORTRAN implementation. Making use of state-of-the-art
+C++ coding and STL also allows to write a code which is much better to maintain
+and to extend.  Porting Vt to C++ is easy and fast, as one can always compare
+with the original code.
+
+Vt++ consists at the moment of the Kalman filter based vertex fit, the inverse
+Kalman filter (for track removal), the mass constrained vertex fit and some
+distance functions. Three simple analytical vertex computation routines are
+available, too. The classes can be used to write more complex data analysis
+routines. The documentation about Vt++ version 1.0 has been published as a
+HERA-B note \cite{Vt++}.
+
+The Vt++ key features are:
+\begin{itemize}
+\item Dynamic memory is used to store tracks and vertices - no limitations on
+  the number of tracks or vertices does exist.
+\item Selecting tracks for vertexing is under user control. Vt++ can work with
+  track objects which can be filled from RTRA, RSEG and MTRA.
+\item Vertex fits are not saved automatically in the RVER table - the user can
+  decide which vertices should be kept.
+\item Kalman filter computation is based on a Matrix package which is
+  independent from Vt++ and ARTE.
+\item Removable track-vertex object relations allow fast track-vertex
+  assignment/removal.
+\item Three additional simple algorithms for vertex calculation are provided:
+  \begin{enumerate}
+    \item unweighted 2-D minimal distance
+    \item weighted 2-D minimal distance
+    \item unweighted 3-D minimal distance
+  \end{enumerate}
+\item A vertex object is a STL container for track-vertex relations. A
+  STL-iterator is provided to loop over the relations (see examples in section
+  \ref{IteratorEx}).
+\end{itemize}
+%
+% Section
+%
+\section{Compilation and Versioning}
+From ARTE-03-07-r6 on Vt++ will be part of the ARTE distribution. In case
+you want to recompile the package, please note the following compile-flags:
+\begin{description}
+\item[-DVtDEBUG] produces extensive debugging output.
+\item[-DVtFAST]  this compilation flag removes the \texttt{assert()} macros
+  from the MATRIX package. This makes the code faster but also less safe. One
+  should use this flag only if it is verified that MATRIX computation is
+  correct. The assert statements are Heisenbug-free\footnote{A Heisenbug is a
+    bug which disappears when the debugger is turned on. In case assert-macros
+    generate side-effects they are a source of those bugs.}.
+\end{description}
+The Vt++ package has an individual versioning independent from the
+ARTE version number. The Vt++ version number plus some additional
+information is represented by the \texttt{\tcb{VtIni}} class and
+printed out when the VtIni object file is loaded into memory.
+In case of ARTE the version string is the first information which is
+printed by the ARTE job. For more information see section \ref{VtIni}.
+%
+% Section
+%
+\section{Speed}
+Up to now, Vt++ has not been optimized with respect to execution
+speed. In the current phase of development it is more important to
+assure correctness, flexibility and maintainability. The structure of
+the code will allow a detailed profiling such that considerable
+improvements in execution speed will be possible. See also \cite{FastC++}.
+A speedup factor in the range of 2-15 can be expected \cite{ExprT}.
+%
+% Section
+%
+\section{Vertexing}
+%
+%
+\subsection{Classes}
+Vt++ consists of the following classes:
+\begin{description}
+\item[Vertex] the vertexing class. A vertex can be constructed from
+  \textbf{RVER}, \textbf{RTRA}, \textbf{MTRA}, \textbf{RSEG}, \textbf{Track}
+  and \textbf{Vertex} objects. Tracks can be added via the \textbf{push\_back}
+  member function. A vertex can own tracks or use tracks from an external list
+  of track objects. The latter is the optimal solution in case of pattern
+  recognition algorithms. A Vertex object also represents the incoming
+  track. In case you compute the track parameters of the incoming track, you
+  can use Vertex objects again as an input for vertexing routines (see example \ref{Mother}).
+\item[Track]  the track representation class. A track object can be
+  constructed from \textbf{RTRA}, \textbf{MTRA}, \textbf{RSEG} and
+  \textbf{Track} objects. It stores the track parameters, the ARTE-pointers and
+  the Track-Vertex relation. In case of a global track list this allows to loop
+  over all vertices a track is assigned to. Relations are optimized
+  with respect to fast addition and removal of relations. Therefore no
+  direct access to a certain relation is possible. An emulation of
+  this behaviour is provided, but one has to keep in mind that this is
+  in most cases less efficient.
+\item[Kalman] the Kalman mathematics class. A Kalman object is constructed by a
+  Relation and consists of all relevant Kalman filter objects (matrices and
+  vectors) of a track belonging to a certain vertex. For each Track-Vertex
+  relation a new Kalman object is generated automatically. As the Kalman filter
+  information of all filter steps is saved in this way, track removal from a
+  vertex is a fast operation in the Kalman language.
+\item[Relation] the Track-Vertex-Kalman relation class. A Relation is
+  constructed by a Track and a Vertex object. It consists of the
+  references to a Track, a Vertex and a Kalman object.  As FORTRAN
+  doesn't know dynamic memory allocation, removable object relations
+  are extremely difficult to program in FORTRAN. As a consequence it
+  is not possible to remove objects from ARTE-tables as then relations
+  would become invalid. Vt++ is an example which shows the
+  implementation of a removable object relation in C++ (see example
+  \ref{ex5.11}).  Vt++ is an application with which this idea can be
+  further developed and which can then be applied to other software
+  (e.g. CLUE).
+\item[RelationList] This is a container class for pointers to Relation
+  objects. As the Track and the Vertex classes are inherited from RelationList,
+  the many-to-many relation between them is automatically established. This
+  class implements the STL compatible iterators which are needed to
+  loop over the relations in a convienient and standardized way.
+\item[MassC] the mass constraint class. A MassC object describes a single mass
+  constraint. This class keeps track of the tracks which participate in a mass
+  constraint. A Vertex object can have many mass constraints. For an example,
+  see section \ref{MassConstr}.
+\end{description}
+%
+%
+\subsection{Namespace}
+Vt++ is coded in the \textbf{VERTEX} namespace. Therefore one can
+abbreviate the class names by declaring the namespace like this:
+\begin{code}{blue}
+  using namespace VERTEX;
+\end{code}
+Otherwise one has to use the full classname, which means to specify the
+\textbf{VERTEX::} prefix.
+%
+%
+\subsection{Functions and Templates}
+Some global functions and templates are provided, too. They belong to the
+\textbf{VERTEX} namespace. Functions which are not specific for Vt++ can be
+found in the \textbf{VtUtil.hh} header file. The following functions are
+implemented:
+\begin{description}
+\item[sqr] template to compute the square of a number: $\textrm{sqr}(x) = x\times x$
+\item[sgn] template to compute the sign of a number: $\textrm{sgn}(x)
+  = \left\{\begin{array}{rc} 0 & x = 0\\ -1 & x < 0\\ 1 & x > 0\\\end{array}\right.$
+\item[getIDX] template to compute the index of an ArtePointer:
+  \begin{code}{blue}
+    ArtePointer<RSEG> rseg(5);
+    unsigned int idx = getIDX<RSEG>(rseg);
+  \end{code}
+\item[getPTR] template to compute the ArtePointer from an index:
+  \begin{code}{blue}
+    ArtePointer<RSEG> = getPTR<RSEG>(idx);
+  \end{code}
+\end{description}
+The \textbf{VtDistance.hh} headerfile declares distance functions (part of
+namespace \textbf{VERTEX}). The most important are:
+\begin{description}
+\item[distanceChi2(const Track\& t1, const Track\& t2)] $\chi^2$ distance between
+  two Track objects.
+\item[distance(const Track\& t, const Vertex\& v)] spatial distance between a
+  Track and a Vertex object.
+\item[distanceChi2(const Vertex\& v, double x, double y, double z)] $\chi^2$
+  distance beween a Vertex object and a space point.
+\item[distanceChi2(const Vertex\& v1, const Vertex\& v2)] $\chi^2$ distance between
+  two vertices.
+\item[Vertex::distance(const Track\& t)] $\chi^2$ distance between
+  track and vertex (only available as member function of the Vertex class).
+\end{description}
+Some more useful distance functions have been added. Please see the reference
+manual for a complete list of distance functions.
+%
+% Section
+%
+\section{Matrix computation}
+A Kalman filter mainly consists of matrix operations. To exploit the
+abilities of C++ it is natural to base the Kalman filter computation
+on a Matrix class. Several packages with matrix computation abilities
+exist: CERNLIB, ROOT, LAPACK, CLHEP. The disadvantage of those
+packages is that they introduce a lot of overhead as they come with a
+lot of (unwanted) stuff, are difficult to compile (if the needed
+binary type is not available) and difficult to understand. In Vt++, the goal
+was to have a matrix computation package which contains only the most
+needed operations, is easy to oversee and simple to adopt to own
+needs. The matrix classes are designed to call CERNLIB functions. In
+case one wants to switch to other products (like eg. LAPACK), this is easy
+to achive due to the modularity of the code.
+%
+%
+\subsection{Classes}
+Vt-Matrix consists of the following classes:
+\begin{description}
+\item[VtVector] simple vector class. It can be constructed from a
+  dimension $n$, another VtVector object or from a couple of double
+  precision numbers (between 2 and 6 constructor arguments). Operators
+  \texttt{=}, \texttt{+=}, \texttt{-=}, \texttt{*=}, \texttt{/=}, \texttt{+},
+  \texttt{-}, \texttt{*} (scalar product) are defined.
+\item[VtMatrix] simple $m\times n$ Matrix class which can be
+  constructed from a VtMatrix object or by specifying the dimensions
+  $m$, $n$. The matrix elements can be accessed via the bracket
+  operators:
+  \begin{code}{blue}
+    VtMatrix a(2,3);  // 2x3 matrix
+    a(0,0)  = -2.5;
+    a[0][1] = 5.2;
+    cout << a;
+  \end{code}
+  The first access method is more efficient than the second.
+  The following operations are defined: \texttt{=}, \texttt{+=}, \texttt{-=},
+  \texttt{*=}, \texttt{/=}, \texttt{+}, \texttt{-} (both unary and binary),
+  \texttt{*}. Transponation is provided via a member function:
+  \begin{code}{blue}
+    const VtMatrix b = a.T(); // a is not modified
+    a.VtT(); // transform a into it's transpose
+  \end{code}
+\item[VtSqMatrix] representation of square $n\times n$
+  matrices. This class is inherited from VtMatrix. Additional
+  functionality is the computation of the inverse (via CERNLIB dinv()
+  function) and the determinant (via CERNLIB dfact() function). Two
+  different member functions for matrix inversion exist, one for
+  returning the inverse without modifying the matrix object, another
+  one for transforming the matrix object into it's inverse.
+\item[VtSymMatrix] representation of symmetric matrices. This class is
+  inherited from VtSqMatrix. Operators \texttt{=}, \texttt{+}, \texttt{-},
+  \texttt{*}, \texttt{+=}, \texttt{-=}, \texttt{*=}, \texttt{/=} are optimized
+  by exploiting the symmetry. The member function
+  \texttt{\tcb{product(const VtVector\& v)}} allows to compute the product
+  $v^t*A*v$ using an optimized expression. Matrix inversion is done via CERNLIB
+  function dsinv().
+\item[CMatrix] covariance matrix class specific to HERA-B. This class
+  is derived from VtSymMatrix and can be constructed from RTRA, RSEG, MTRA or
+  another VtSymMatrix, VtSqMatrix, VtMatrix or CMatrix object. The CMatrix
+  dimension is 5. \textbf{Note:} the CMatrix class makes the transformation
+  $\sigma(Q/p) \rightarrow \sigma(p)$ ($Q$ is the charge) because $\sigma(p)$
+  is needed by Vt. The \texttt{\tcb{propagate(double z)}} member function
+  allows to propagate the covariance matrix to a given z-position. Each element
+  of the covariance matrix can be accessed by a dedicated member function:
+  \begin{code}{blue}
+    ArtePointer<RTRA> rtra(5);
+    CMatrix cov(rtra);
+    cout << " rtra->cvf[0]: " << cov.x() 
+         << " rtra->cvf[1]: " << cov.x_y()
+         << " rtra->cvf[2]: " << cov.x_tx()
+         << endl;
+  \end{code}
+  Matrix elements can be modified in the following way:
+  \begin{code}{blue}
+    cov.set_x_y(0.00034);
+    cov.set_x_tx(1e-4);
+  \end{code}
+  To get a propagated matrix element:
+  \begin{code}{blue}
+    double dz = -5.;
+    double new_x = cov.x_prop(dz);
+    double new_x_tx = cov.x_tx_prop(dz);
+  \end{code}
+  For a full list of access methods see the reference manual.
+\item[VtNegMatrix] class for negative matrices. This class is inherited
+  from VtMatrix. It optimizes computations like $C=-A*B$ where the
+  negative of a matrix is involved.
+  A FORTRAN implementation would look like this:
+  \begin{code}{blue}
+    do  i = 1, 3
+      do  j = 1, 3
+        C(i,j) = 0.
+        do  m = 1, 3
+          C(i,j) = C(i,j) - A(i,m)*B(m,j)
+        enddo
+      enddo
+    enddo
+  \end{code}
+  Using the VtMatrix class, the computation would look like this:
+  \begin{code}{blue}
+    for(unsigned int i=0; i<3; ++i)
+      for(unsigned int j=0; j<3; ++j)
+          A(i,j) *= -1;
+
+    for(unsigned int i=0; i<3; ++i)
+      for(unsigned int j=0; j<3; ++j) {
+        C(i,j) = 0;
+        for(unsigned int m=0; m<3; ++m)
+          C(i,j) += A(i,m)*B(m,j);
+      }
+  \end{code}
+  With the VtNegMatrix class, computation can be as efficient as in the
+  FORTRAN example and as compact as the notation $C=-A*B$.
+\end{description}
+%
+%
+\subsection{Namespace}
+Vt-Matrix is coded in the \textbf{MATRIX} namespace. Therefore one can
+abbreviate the class names by declaring the namespace like this:
+\begin{code}{blue}
+  using namespace MATRIX;
+\end{code}
+Otherwise one has to use the full classname, which means to specify the
+\textbf{MATRIX::} prefix.
+%
+% Section
+%
+\section{VERTEX Examples}
+Some examples on how to use Vt++ are presented in the following subsections. A
+full list of available member functions can be found in the Vt++ reference
+manual. In this section the symbols \texttt{r1}, \texttt{r2}, \ldots represent
+RTRA, RSEG or MTRA ArtePointers.
+%
+%
+\subsection{Using the header file}
+In order to make use of Vt++, one has to include the appropriate headerfile:
+\begin{code}{blue}
+  #include "vt++/Vt++.hh"
+\end{code}
+%
+%
+\subsection{Version information}
+\label{VtIni}
+Information about the Vt++ package can be obtained via the
+\texttt{\tcb{VtIni}} class:
+\begin{code}{blue}
+  VERTEX::VtIni pkg;
+  cout << pkg << endl;
+\end{code}
+A string is printed which contains the name of the package, the
+version number and the creation time of this version. Example:
+\begin{code}{blue}
+vt++ version /1-2 loaded (Mit Okt 25 18:29:27 MEST 2000).
+\end{code}
+It is also possible to get the information separatly:
+\begin{code}{blue}
+  VERTEX::VtIni pkg;
+  cout << "Package name: "  << pkg.name()
+       << "Version: "       << pkg.version()
+       << "Creation time: " << pkg.date()
+       << endl;
+\end{code}
+%
+%
+\subsection{Example of two track vertices}
+A complete example on how to use the Vertex class to fit two-track
+vertices is shown here:
+\begin{code}{blue}
+  #include "vt++/Vt++.hh"
+  ...
+
+  for(ArteTable<RTRA>::const_iterator 
+        it1  = ArteTable<RTRA>::begin(); 
+        it1 != ArteTable<RTRA>::end();
+      ++it1) {
+      ArtePointer<RTRA> r1 = *it1;
+
+      if(r1->hsi < 6) continue;  // simple track selection
+
+      ArteTable<RTRA>::const_iterator tmp = it1;
+      for(ArteTable<RTRA>::const_iterator it2 = ++tmp;
+          it2 != ArteTable<RTRA>::end(); ++it2) {
+          ArtePointer<RTRA> r2 = *it2;
+      
+         if(r2->hsi < 6) continue;  // simple track selection
+
+          VERTEX::Vertex v(r1,r2);
+          if(v.findVertexVt() == true && v.chi2() < 4.) {
+            cout << "vertex found: " << v << endl;
+          }
+      }
+  }
+\end{code}
+%
+%
+\subsection{Vertex fit methods}
+Five different methods to compute a vertex are available:
+\begin{code}{blue}
+   VERTEX::Vertex v(r1,r2);
+   v.findVertexVt();     // Vt Kalman filter method
+   v.VtMass();           // Vt mass constrained Kalman filter
+   v.findVertex2D();     // unweighted 2-D min. distance
+   v.findVertex3D();     // unweighted 3-D min. distance
+   v.VtEstimateVertex(); // weighted 2-D min. distance
+\end{code}
+\textbf{Note:} the functions return \texttt{true} in case of success, else \texttt{false}.
+For mass constrained fits, see also section \ref{MassConstr}.
+%
+%
+\subsection{Using momentum in the vertex fit}
+Per default, the Kalman filter uses the track momentum for the vertex fit. To
+make a vertex fit without momentum (straight line fit) do the following:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.use_momentum(false);
+  v.findVertexVt();
+\end{code}
+To turn on momentum usage again, type
+\begin{code}{blue}
+  v.use_momentum(true);
+  v.findVertexVt(); // vertex fit with momentum
+\end{code}
+You can also set the momentum usage for tracks individually:
+\begin{code}{blue}
+  ArtePointer<RTRA> r1 = ...;
+  ArtePointer<RTRA> r2 = ...;
+  VERTEX::Vertex v(r1,r2);
+
+  // turn off momentum usage for tracks without OTR segment!
+  for(RelationList::iterator it = v.begin(); it != v.end();
+      ++it) {
+     // get back ArtePointer from Track object
+     ArtePointer<RTRA> rtra = it->track.rtra();
+
+     if(rtra->hou == 0)
+       it->kalman.use_momentum(false);
+  }
+
+  if(v.findVertexVt() == true) {
+    cout << "Vertex found: " << v << endl;
+  }
+\end{code}
+For more information about the Vertex-Iterator see section \ref{IteratorEx}.
+
+\textbf{Note:} The other three vertexing routines do not use momentum information.
+%
+%
+\subsection{Adding more Tracks}
+Because of performance reasons, a vertex is not automatically refitted
+if a track is added. The user can decide when the vertex fit should be done:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.push_back(r3);
+  v.push_back(r4);
+  v.findVertexVt();
+  if(v.valid()) cout << v << endl;
+\end{code}
+To use an efficient way to decide wether a track is compatible with
+the vertex or not, one can calculate the $\chi^2$-distance between the
+track and the vertex:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  if(v.findVertexVt() == true) {
+    Track t(r3);
+
+    // add track if chi2-dist is < 4. (ndf = 2)
+    if( v.distance(t) < 4.) {
+      v.push_back(t);
+      v.findVertexVt();
+    }
+  }
+\end{code}
+%
+%
+\subsection{Vertex members functions}
+Vertex information can be accessed like this:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  if(v.findVertexVt() == false) return;
+
+  cout << " x: " << v.vx()
+       << " y: " << v.vy()
+       << " z: " << v.vz()
+       << " error on x: " << v.vxerr()  // sqrt(rver->cv[0])
+       << " error on y: " << v.vyerr()  // sqrt(rver->cv[2])
+       << " error on z: " << v.vzerr()  // sqrt(rver->cv[5])
+       << " chi2: " << v.chi2() // only available for Kalman-fit
+       << " no of tracks: " << v.ntracks()
+       << endl;
+\end{code}
+See the reference manual for a full list of access functions.
+%
+%
+\subsection{Mean distance and opening angle}
+To compute the mean distance of the tracks to the vertex and the rms opening
+angle, a special member function exists:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.push_back(r3);
+  if(v.findVertexVt()) {
+    v.rmsDistAngle();
+    cout << " rms distance: " << v.dist()
+         << " rms angle: "    << v.angle()
+         << endl;
+  }
+\end{code}
+%
+%
+\subsection{Reconstructed Mass}
+To compute the reconstructed mass, one can choose to use the refitted momenta
+(in case the vertex fit was done using the Kalman filter) or to use the
+original track momenta. This behaviour can be toggled:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  if(v.findVertexVt()==false) return;
+  cout << "mass using orig. track momenta, particle rest mass=0: " 
+       << v.mass() << endl;
+
+  v.use_kalman(true); // turn on usage of refitted track params.
+
+  cout << "mass using refitted momenta, particle rest mass=0: " 
+       << v.mass() << endl;
+
+  v.use_kalman(false); // turn off refitted track params.
+\end{code}
+There are several methods to assign a rest mass to the tracks on the vertex.
+To assign a single rest mass to all tracks, do it like this:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  if(v.findVertexVt() == true) {
+    cout << " pi-pi mass: " << v.mass(0.1396)
+         << " K-K mass: "   << v.mass(0.494)
+         << endl;
+  }
+\end{code}
+For vertices with up to 4 tracks, rest masses can be assigned to the individual
+tracks:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  if(v.findVertexVt()) {
+    cout << " pi-K mass: " << v.mass(0.1396,0.494)
+         << " K-pi mass: " << v.mass(0.494,0.1396)
+         << endl;
+  }
+  v.push_back(r3);
+  if(v.findVertexVt()) { // fit 3-track vertex
+    cout << "pi-K-pi mass: " << v.mass(0.1396,0.494,0.1396)
+         << endl;
+  }
+  // wrong: 3-track vertex but only 2 arguments:
+  cout << " wrong mass assignment: " << v.mass(0.1396,0.494)
+       << endl;
+\end{code}
+In case of a wrong mass assigment, the result is $-1$.
+The mass assignment can also be done in case of $n$ tracks:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.push_back(r3);
+  v.push_back(r4);
+  v.push_back(r5);
+  v.push_back(r6);
+  v.push_back(r7);
+
+  // rest mass vector
+  vector<double> m0(7);
+  m0[0] = 0.1396*0.1396; // note: square of rest mass
+  m0[1] = ...
+  ...
+  m0[6] = 0.494*0.494;
+
+  cout << "mass: " << v.mass(m0);
+\end{code}
+You can also assign a rest mass permanently to a track:
+\begin{code}{blue}
+  ArtePointer<RTRA> r = ...;
+  ArtePointer<TOPP> pi(101);
+
+  Track t(r);
+  Track u(r);
+
+  t.rm(0.140);      // assign rest mass by hand
+  u.rm(pi->mass);   // or via TOPP-table:
+
+  cout << "Track rest mass: " << u.rm() << endl; 
+\end{code}
+In case you do not specify a rest mass, the permanent rest mass will be taken:
+\begin{code}{blue}
+  ArtePointer<TOPP> pi(101);
+
+  Track t1(r1);
+  Track t2(r2);
+  t1.rm(pi->mass);    // set pion rest mass
+  t2.rm(pi->mass);    // for both tracks
+  VERTEX::Vertex v(t1,t2);
+  
+  if(v.findVertexVt() == true) {
+    cout << "pi-pi mass: " << v.mass() << endl;
+  }
+\end{code}
+%
+%
+\subsection{Using the Vertex-Iterator}
+\label{IteratorEx}
+To loop over the tracks assigned to a vertex and to access the Kalman filter
+information, the Relation iterator can be used in the following way:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+
+  Vertex v(r1,r2);
+  if( v.findVertexVt() == false ) return;
+    
+  for(const_iterator it = v.begin(); it != v.end(); ++it) {
+    const Track& track = it->track;
+    cout << "original track parameters:"
+         << " x: " << track.x()
+         << " y: " << track.y() 
+         << " p: " << track.p()
+         << endl;
+  }
+\end{code}
+It is also possible to iterate over the tracks in reverse order:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+
+  Vertex v(r1,r2);
+  if( v.findVertexVt() == false ) return;
+    
+  for(const_reverse_iterator it = v.rbegin(); it != v.rend();
+      ++it) {
+    const Track& track = it->track;
+    cout << "original track parameters:"
+         << " x: " << track.x()
+         << " y: " << track.y() 
+         << " p: " << track.p()
+         << endl;
+  }
+\end{code}
+If you want to have a direct access to the track or kalman information without
+using the iterator, the following can be done:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+
+  Vertex v(r1,r2);
+  if(v.findVertexVt()) {
+    const Track& track1 = v[0]->track;
+    const Track& track2 = v[1]->track;
+    cout << " Track 1: " << track1 
+         << " Track 2: " << track2 
+         << endl;
+    cout << " p1: "      << track1.p() 
+         << " p2: "      << track2.p()
+         << endl;
+  }
+\end{code}
+This method also works with tracks:
+\begin{code}{blue}
+  Track t1(r1);  // generate Track objects from
+  Track t2(r2);  // ArtePointers
+
+  Vertex v(t1,t2);
+  if(v.findVertexVt()) {
+    const Vertex& vertex1 = t1[0]->vertex;
+    const Vertex& vertex2 = t2[0]->vertex;
+    // both vertex objects are the same in
+    // this simple example...
+  }
+\end{code}
+But be careful: \textbf{direct access is only emulated and therefore less efficient!}
+The Relation iterators are STL\footnote{Standard Template Library, see e.g. 
+  \texttt{http://www.sgi.com/Technology/STL}.}
+  compatible, that means standard STL algorithms
+can be used:
+\begin{code}{blue}
+  Vertex v(r1,r2);
+  v.push_back(r3);
+  cout << "No of tracks in vertex: " 
+       << distance(v.begin(),v.end()) 
+       << endl;
+\end{code}
+%
+%
+\subsection{Mass constrained vertex fits}
+\label{MassConstr}
+A mass constrained vertex fit can be used in case several tracks are known to
+originate from a narrow mass state. By this the precision of the parameters
+obtained from the vertex fit can be improved. In general several mass
+constraints with different combinations of tracks can be assigned to a vertex.
+In the most simple case, all tracks from a vertex participate in a single mass
+constraint:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+
+  // TOPP entry of mother particle (K0)
+  ArtePointer<TOPP> K0(160);
+
+  // all tracks in vertex originate from a
+  // K0 mass state
+  v.MassConstr(K0->mass);
+  
+  // mass constrained vertex fit
+  if( v.VtMass() == true ) {
+    cout << "K0-vertex: " << v << endl;
+  }
+\end{code}
+\textbf{Note:} performing a mass constrained vertex fit always implies that the
+track momenta are used. Therefore \texttt{VtMass()} calls
+\texttt{use\_momentum(true)} first. This will overwrite all
+\texttt{use\_momentum} settings in the track objects.
+
+The rest masses of the outgoing particles enter into the mass constraint, so in
+case you know in the above example that \texttt{r1} and \texttt{r2} are pions,
+you can set the pion rest mass before you perform the vertex fit:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+
+  ArtePointer<TOPP> pi(101);
+  ArtePointer<TOPP> K0(160);
+
+  for(iterator it = v.begin(); it != v.end(); ++it) {
+    it->track.rm(pi->mass);
+  }
+
+  v.MassConstr(K0->mass);
+
+  if( v.VtMass() == true ) {
+    cout << "Vertex: " << v << endl;
+  }
+\end{code}
+In case you want to apply a mass constraint to a subset of tracks, you have
+to select for each mass constraint the tracks which belongs to it. The
+user has to manipulate a MassC object, which is generated by the Vertex object:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.push_back(r3);
+
+  ArtePointer<TOPP> Jpsi(295);
+  ArtePointer<TOPP> B0(246);
+
+  // get a mass constraint object 
+  // attention: always use a reference!
+  MassC mC& = v.addMassConstr();
+
+  // set mass of mother particle
+  mC.mass(Jpsi->mass);
+
+  // loop over tracks on vertex
+  for(const_iterator it = v.begin(); it != v.end(); ++it) {
+    const Track& t = it->track;
+
+    // store relations to tracks which belongs
+    // to the mass constraint in MassC object
+    if( ... ) 
+      mC.push_back(*it);
+  }
+
+  // apply a second mass constraint for all tracks
+  v.MassConstr(B0->mass);
+
+  if( v.VtMass() == true ) {
+    cout << "B0 vertex: " << v << endl;
+  }
+\end{code}
+To remove all mass constraints from a vertex, use the
+\texttt{\tcb{clearMassConstr()}} member function (removing a single mass
+constraint object is not supported):
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  
+  v.MassConstr(0.496);
+  v.VtMass();
+  v.clearMassConstr(); // remove mass constraints
+  cout << "no of mass constraints: "
+       << v.nMassConstr()
+       << endl;
+\end{code}
+\textbf{Note:} In case a track is deleted from a vertex with mass constraints,
+make sure that the track was not part of a mass constraint. Otherwise you will
+have an invalid mass constraint object. If you want to delete a track which is
+part of a mass constraint, delete the mass constraints, too:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+  v.push_back(r3);
+
+  ArtePointer<TOPP> B0(246);
+  v.MassConstr(B0->mass);
+  v.VtMass();
+
+  ...
+
+  // remove track with biggest chi2 contribution
+  v.remove_worst(); 
+  // remove mass constraints if defined
+  if(v.nMassConstr() > 0)
+    v.clearMassConstr();
+\end{code}
+%
+%
+\subsection{Refitted Track parameters}
+After a successful Kalman filter based vertex fit, the track
+parameters are refitted with the constraint that the tracks originate
+in the vertex. You can get the refitted parameters like in the
+following example:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+
+  Vertex v(r1,r2);
+  if( v.findVertexVt() == true ) {
+    
+    cout << "Refitted track parameters: "
+         << " x: " << v.vx()  // same
+         << " y: " << v.vy()  // for all
+         << " z: " << v.vz()  // tracks
+         << endl;
+    for(iterator it = v.begin(); it != v.end(); ++it) {
+      const Kalman& kalman = it->kalman;
+      cout << " tx: " << kalman.tx()
+           << " ty: " << kalman.ty()
+           << " p: "  << kalman.p()
+           << endl;
+    }
+
+    // or:
+    cout << "refitted parameters of 1st track:"
+         << " x: "  << v.vx()
+         << " y: "  << v.vy()
+         << " tx: " << v[0]->kalman.tx()
+         << " ty: " << v[0]->kalman.ty()
+         << endl;
+  }
+
+\end{code}
+%
+%
+\subsection{Store Vertex in RVER table}
+A Vertex object can be stored as an RVER object in the following way:
+\begin{code}{blue}
+  VERTEX::Vertex v(r1,r2);
+
+  if(v.findVertexVt() && v.chi2() < 4.) {
+    cout << "Created new RVER entry: "
+         << v.createRVER() 
+         << endl;
+  }
+\end{code}
+The \texttt{\tcb{createRVER()}} member function returns an ArtePointer to the RVER
+object. If the Vertex object is not generated by RTRA tracks, the RREL
+relations are not set and a warning is printed to stdout.
+\textbf{Note:} in case of RSEG´s, no transformation into the global HERA-B coordinate
+system is done.
+%
+%
+\subsection{Using an external Track list}
+\label{ex5.11}
+For more complicated operations it is better to have a global track list to
+work with. The track list can be e.g. generated by a track selection routine:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  vector<Track> trvec;   // Track container
+
+  for(ArteTable<RTRA>::iterator it=ArteTable<RTRA>::begin();
+      it!=ArteTable<RTRA>::end(); ++it) {
+      ArtePointer<RTRA> rtra = *it;
+
+      if(rtra->hsi > 6 && rtra->hou > 20) // track selection
+         trvec.push_back(Track(rtra));    // store track
+  }
+\end{code}
+Now one can combine the selected tracks to fit e.g. two-track vertices:
+\begin{code}{blue}
+  vector<Vertex*> vtx;   // vertex container
+  
+  for(unsigned int i=0; i<trvec.size(); ++i) {
+    for(unsigned int j=i+1; j<trvec.size(); ++j) {
+      Vertex* v = new Vertex(trvec[i],trvec[j]);
+
+      if(v->findVertexVt())
+        vtx.push_back(v);
+      else
+        delete v;
+    }
+  }
+\end{code}
+The construction of a vertex generates track-vertex relations.  For
+sake of execution speed, one has to generate the Vertex-objects on the
+heap and store the Vertex-pointer in order to avoid useless
+copying. Despite of this fact it is always a bad idea to store Vertex
+objects in STL containers. For an explanation see \cite{STL}.  If the
+Vertex object is constructed on the stack memory, the relations are
+lost\footnote{Because they are deleted by the destructor of the
+temporary vertex object which owns the relations.}:
+\begin{code}{blue}
+  vector<Vertex> vtx;   // store found vertices
+
+  for(unsigned int i=0; i<trvec.size(); ++i) {
+    for(unsigned int j=i+1; j<trvec.size(); ++j) {
+      Vertex v(trvec[i],trvec[j]);
+
+      if(v.findVertexVt())
+        vtx.push_back(v); // inefficient copying!
+    }
+  }
+  // !! The Track-Vertex relations are lost now!!
+\end{code}
+Once the vertices are generated, one can exploit the relations.
+Looping over all vertices a track belongs to and plot the $\chi^2$
+is done in the following way:
+\begin{code}{blue}
+  // loop over tracks from global track list
+  for(unsigned int i=0; i<trvec.size(); ++i) {
+    const Track& track = trvec[i];
+
+    // loop over vertices a track belongs to
+    for(const_iterator it = track.begin(); 
+        it != track.end(); ++it)
+        cout << " vertex-chi2 " 
+             << it->vertex.chi2()
+             << " refitted track momentum: "
+             << it->kalman.p()
+             << endl;
+  }
+\end{code}
+Looping over all tracks of a vertex is done like this:
+\begin{code}{blue}
+  // loop over all vertices
+  for(unsigned int i=0; i<vtx.size(); ++i) {
+    const Vertex& vertex = *vtx[i];
+
+    // loop over tracks on a vertex
+    for(const_iterator it = vertex.begin(); 
+        it != vertex.end(); ++it)
+      cout << " track-momentum: " 
+           << it->track.p()
+           << " refitted track-momentum: "
+           << it->kalman.p()
+           << endl;
+  }
+\end{code}
+If you delete a Track from the global Track list, the track gets automatically
+removed from all vertices it belongs to. Those vertices which lost the track
+are flagged invalid and can be refittet:
+\begin{code}{blue}
+  trvec.pop_back(); // delete the last track 
+                    // from the global track list
+  
+  // do a garbage collection
+  for(unsigned int i=0; i<vtx.size(); ++i) {
+    Vertex* vertex = vtx[i];
+
+    if(vertex->size() < 2) {
+        delete vertex;
+        vtx[i] = 0; // set NULL pointer in vector
+        continue;
+    }
+
+    // refit vertices which lost a track
+    if(vertex->valid() == false) 
+       vertex->findVertexVt();
+  }
+\end{code}
+%
+%
+\subsection{Reconstruct the incoming track}
+\label{Mother}
+Once a vertex has been found, the track parameters of the incoming track can be
+reconstructed using the vertex space-point and the sum of the momenta of the
+outgoing tracks. The user can choose when the incoming track should be
+reconstructed by calling the \texttt{\tcb{calc\_mother()}} member function:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  Vertex v(r1,r2);
+  if(v.findVertexVt() == true) { // vertex found
+    v.calc_mother();
+    cout << v;
+    // or using member functions:
+    cout << "Reconstructed Track:"
+         << " x: "  << v.x()
+         << " y: "  << v.y()
+         << " z: "  << v.z()
+         << " tx: " << v.tx()
+         << " ty: " << v.ty()
+         << " p: "  << v.p()
+  }
+\end{code}
+The covariance matrix of the incoming track can be computed seperately. Once
+the covariance matrix is available, the vertex object can be used again for a
+Kalman-filter vertex fit:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  Vertex v(r1,r2);
+  if(v.findVertexVt() == true) {
+    // track parameters of incoming track
+    v.calc_mother();  
+    // covariance matrix of incoming track
+    v.calc_mother_cov();
+    cout << "Cov. matrix of incoming track: "
+         << v.V();
+
+    // vertex incoming track with an RTRA track r3:
+    Track t(r3);
+    Vertex vv(t,v);
+    if(vv.findVertexVt() == true) {
+      cout << " Vertex found: " << vv << endl;
+    }
+  }
+\end{code}
+%
+%
+\subsection{Removing tracks from a Vertex}
+\label{TrackRm}
+There are several ways to remove a track from a vertex. Special member
+functions are provided in order to remove the last track from the
+track list and the track with the worst $\chi^2$ contribution:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  Vertex v(r1,r2);
+  v.push_back(r3);
+  v.findVertexVt();
+  // remove r3 again using the inverse Kalman filter
+  if(v.remove_last() == true)
+    cout << "last track removed" << endl;
+
+  v.push_back(r3);
+  v.push_back(r4);
+  v.findVertexVt();
+  // remove track with biggest chi2 contribution using
+  // the inverse Kalman filter:
+  if(v.remove_worst() == true)
+    cout << "track with largest chi2 removed" << endl;
+\end{code}
+As \texttt{\tcb{remove\_worst()}}, \texttt{\tcb{remove\_last()}} and
+\texttt{\tcb{VtRemoveTrack()}} use the inverse Kalman filter, make sure that
+the vertex is fitted by \texttt{\tcb{findVertexVt()}} before you call these
+functions. You cannot use these functions in case of a 2-track vertex.
+
+The most flexible way to remove one or several tracks from a vertex is to use
+the \texttt{\tcb{erase()}} member function. This allows to use the STL way of
+removing an element from the relation container. The following example
+shows how to remove all tracks with a $\chi^2$-contribution larger than
+1 from the vertex:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  // take a primary vertex from RVER
+  ArtePointer<RVER> prim_vtx = ...;
+  Vertex v(prim_vtx);
+  // get full kalman information for this vertex
+  v.findVertexVt();
+
+  double prchi2 = 0;
+  // STL way to use erase()
+  for(iterator it=v.begin(); it!=v.end();) {
+    const Kalman& track = it->kalman;
+    double chi2 = track->chi2();
+
+    if( (chi2 - prchi2) > 1.) {
+      it = v.erase(it);
+    } else {
+      ++it;
+    }
+    prchi2 = chi2;
+  }
+
+  // refit the vertex in case tracks were removed
+  if(v.valid() == false)  
+    v.findVertexVt();
+\end{code}
+The \texttt{\tcb{erase()}} member function removes the relations without
+performing the inverse Kalman filter. It is under user control when
+the vertex should be again refitted.
+%
+%
+\subsection{Distance functions}
+A couple of distance functions do exist. They are all defined in the VERTEX
+namespace although not all distance functions deal with VERTEX classes:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  ArtePointer<RVER> rver(4);
+  ArtePointer<MVER> mver(3);
+  ArtePointer<GTAR> gtar(2);
+
+  // no clash with STL possible
+  cout << "spatial rver-mver distance: " << distance(rver,mver) 
+       << endl
+       << "spatial rver-gtar distance: " << distance(rver,gtar)
+       << endl;
+\end{code}
+Some distance functions are implemented as class members and can be 
+called in two ways:
+\begin{code}{blue}
+  using namespace VERTEX;
+  ...
+  Vertex v1(r1,r2);
+  Vertex v2(r3,r4);
+
+  cout << "chi2 vertex-vertex distance: "
+       << v1.distance(v2)
+       << " or: "
+       << distanceChi2(v1,v2) 
+       << endl;
+
+  cout << "chi2 distance vertex-space point: " 
+       << v1.distance(0.1,0.1,-4.9)
+       << " or: " 
+       << distanceChi2(v1, 0.1, 0.1, -4.9) 
+       << endl;
+\end{code}
+More special distance functions are named differently. E.g. the function
+\texttt{\tcb{SGNdistance(const Track\& t, const Vertex\& v)}} returns the signed
+spatial distance between Track and Vertex. The sign tells you if the point of
+the track closest to the vertex is upstream ($sgn = -1$) or downstream ($sgn =
++1$) of the vertex. This information can be used for background suppression.
+\subsection{Pull - distributions}
+The pull-distributions of the reconstructed vertices in $x$, $y$ and $z$ are
+shown in figure \ref{fig1}. A pull of a variable $x_i$ is defined like this:
+\begin{equation}
+  P(x_i) = \frac{x_i^{\textrm{REC}} - x_i^{\textrm{MC}}}{\sqrt{C_{ii}}}
+\end{equation}
+MC reconstruction was done with Geometry $99.0813$ and
+ARTE-version $\textrm{03-07-r1}$. VDS track segments reconstructed by
+CATS were used for the vertexing. One can see that apart from
+non-gaussian tails the width of the pull-distributions is about 1 as one would
+expect in case of a correct covariance matrix.
+Using RTRA tracks for vertexing broadens the sigma of the
+pull-distributions by about 30\%, which means that the errors in the RTRA
+covariance matrix are underestimated.
+\begin{figure}
+\centering\includegraphics[width=\textwidth]{vtxpull_vt0813.epsi}
+\caption{Vt++ vertex pull-distributions for $x$, $y$ and $z$ coordinate}
+\label{fig1}
+\end{figure}
+%
+% Section
+%
+\section{MATRIX Examples}
+The vector and matrix objects which can be constructed use only
+\texttt{\tcb{double}} precision numbers.
+%
+%
+\subsection{VtVector Objects}
+A default VtVector object can be constructed by giving the dimension as an
+argument. The components will be initialized to 0.:
+\begin{code}{blue}
+  MATRIX::VtVector v(10);  // 10-dim vector
+  cout << v << endl;
+\end{code}
+Another alternative is to define the vector by specifying the components
+already in the constructor call:
+\begin{code}{blue}
+  MATRIX::VtVector v(1.0,2.0);  // 2-dim vector
+  MATRIX::VtVector w(-2.4,3.14,2.714,4.55,17.77);
+\end{code}
+Up to 6 arguments are supported.
+
+To access the vector components both \texttt{\tcb{operator()()}} and
+\texttt{\tcb{operator[]()}} can be used:
+\begin{code}{blue}
+  MATRIX::VtVector v(4);
+
+  v(0) = 5.1;  // or: v[0] = 5.1
+  v(1) = -4.9; // or: v[1] = -4.9
+  
+  cout << "1st component: " << v[0]
+       << "2nd component: " << v[1]
+       << endl;
+\end{code}
+Both access methods are equivalent.
+
+Mathematics with VtVector objects is intuitive:
+\begin{code}{blue}
+  MATRIX::VtVector v(1.0,2.0);
+  MATRIX::VtVector w(3.0,4.0);
+
+  // create vector via copy-constructor
+  MATRIX::VtVector u = v + w;
+
+  // use a temporary vector object
+  cout << "v - w: " << v - w << endl;
+
+  v += 3.;  // add 3 to each component
+  double pi = 3.14159265;
+  w *= pi;
+
+  // skalar product is supported:
+  double vw = v * w;
+\end{code}
+\textbf{Note:} The dimensions of the VtVector objects must be the same. If they
+are not the same, the program will exit with an
+\texttt{\tcb{assert}}-statement in case the code is compiled without the
+\texttt{\tcb{-DVtFAST}} option. In case the \texttt{\tcb{-DVtFAST}} compile
+option was used, the unequal vector dimensions are ignored, which might lead to
+unexpected results.
+
+The following special functions exist:
+\begin{code}{blue}
+  MATRIX::VtVector v(-2.5,4.77);
+
+  cout << "dimension of v: " << v.size() // or v.nrow()
+       << "vector length : " << v.mag()
+       << "squared length: " << v.mag2()
+       << endl;
+\end{code}
+%
+%
+\subsection{Constructing Matrix objects}
+Four different kinds of matrices are supported: $n\times m$ matrices, $n\times
+n$ matrices, symmetric $n\times n$ matrices and symmetric, positive
+definite $5\times 5$ HERA-B Track covariance matrices.
+For each of the above matrix types a class exists: \texttt{VtMatrix}, \texttt{VtSqMatrix},
+\texttt{VtSymMatrix}, \texttt{CMatrix}. The constructors are different:
+\begin{code}{blue}
+  using namespace MATRIX;
+  ...
+  ArtePointer<RTRA> r(4);
+
+  VtMatrix    A(2,3);  // construct a 2x3 matrix
+  VtSqMatrix  B(2);    // construct a 2x2 matrix
+  VtSymMatrix C(2);    // construct a 2x2 sym. matrix
+  CMatrix     D(r);    // cov. matrix of 4th RTRA
+\end{code}
+For a full list of constructors see the reference manual.
+
+To print a matrix object, just use \texttt{\tcb{cout}}:
+\begin{code}{blue}
+  MATRIX::VtSqMatrix A(2);
+  A[0][0] = 0.5;
+
+  cout << "Matrix A: " << A << endl;
+\end{code}
+%
+%
+\subsection{Accessing Matrix elements}
+Matrix elements can be accessed in two ways: either using the
+\texttt{\tcb{operator()()}} or the \texttt{\tcb{operator[]()}} member
+functions:
+\begin{code}{blue}
+  using namespace MATRIX;
+  ...
+  VtMatrix A(2,3);
+
+  A(0,0)  = 1.;
+  A(0,1)  = 2.;
+  A(1,0)  = 5.;
+  ...
+  // or:
+  A[0][0] = 1.;
+  A[0][1] = 2.;
+  A[1][0] = 5.;
+  ...
+\end{code}
+The \texttt{\tcb{operator()()}} access method is slightly more efficient, on
+the other hand the \tcb{$[][]$}-method is well known from C and easier to recognize.
+%
+%
+\subsection{Choosing the right Matrix class}
+The special properties of the classes are exploited wherever possible, therefore
+it is a matter of execution speed to choose the right matrix class.
+
+Example: One can use the \texttt{VtMatrix}, \texttt{VtSqMatrix}
+and \texttt{VtSymMatrix} class in order to represent a symmetric matrix, but
+only the latter class is able to exploit the symmetry and produces faster
+code. For the user the code looks in any case the same:
+\begin{code}{blue}
+  using namespace MATRIX:
+  ...
+
+  // inefficient symmetric matrix:
+  VtMatrix A(2,2);
+  A[0][0]           = 1.;
+  A[0][1] = A[1][0] = 2.;
+  A[1][1]           = 3.;
+
+  VtMatrix    B = A;
+  B *= 5.4;
+  VtMatrix    C = B + A;
+
+  // efficient symmetric matrix:
+  VtSymMatrix a(2);
+  a[0][0]           = 1.;
+  a[0][1] = a[1][0] = 2.;
+  a[1][1]           = 3.;
+
+  VtSymMatrix b = a;
+  b *= 2.7;
+  VtSymMatrix c = b + a;
+\end{code}
+%
+%
+\subsection{Matrix operations}
+Using the matrix classes for mathematical operations is more or less self
+explaining:
+\begin{code}{blue}
+  VtMatrix A(2,3);
+
+  // fill matrix A
+  ...
+
+  A *= 4; A += 3.14;
+
+  VtMatrix B = A * 5.;
+  VtMatrix C = -B + A;
+
+  C = A.T();  // C is transpose of A
+  C.VtT();    // transform C into it's transpose
+
+  VtVector a(-1.0, 2.4, 3.5);
+  VtVector b = A * a;
+  cout << "scalar product: " << a * b << endl;
+
+  VtSymMatrix D(3);  // 3x3 matrix
+  
+  // fill matrix D
+  ...
+
+  VtSymMatrix E = D.dsinv(); // return inverse
+  D.VtDsinv(); // transform D into it´s inverse
+\end{code}
+For a full list of supported operations see the reference manual.
+
+Special member functions exist to calculate the product $v^t*A*v$ and 
+$B^t*A*B$ ($A$, $B$ are matrices, $v$ is a vector):
+\begin{code}{blue}
+  using namespace MATRIX;
+  ...
+  VtVector v(1.0,2.0,3.0);
+  VtSymMatrix A(3);
+  VtMatrix    B(3,2);
+
+  // fill matrices A, B
+  ...
+
+  // calculate v^t*A*v:
+  double vAv = A.product(v);
+  
+  // calculate B^t*A*B:
+  VtSymMatrix C(2);
+  C = A.product(B);
+\end{code}
+%
+%
+\subsection{Special member functions}
+With the \texttt{\tcb{clear()}} member function you can set the
+content of a matrix or vector object to zero:
+\begin{code}{blue}
+  using namespace MATRIX;
+  ...
+  VtVector a(2.5,1.0,0.9);
+  a.clear();
+  VtMatrix A(3,4);
+  A = ...;
+  A.clear();
+\end{code}
+To copy one matrix into another, two possibilities exist. In case
+the dimensions of both matrices are equal, \texttt{\tcb{operator=()}} can
+be used:
+\begin{code}{blue}
+  MATRIX::VtSymMatrix A(3);
+  A = ...;
+  MATRIX::VtSymMatrix B(3);
+  B = A;  // operator=() is used
+\end{code}
+If the dimensions of the matrices are not equal, the \texttt{\tcb{copy()}} member function can be used:
+\begin{code}{blue}
+  MATRIX::VtMatrix A(2,4);
+  A = ...;
+  MATRIX::VtMatrix B(2,3);
+  B.copy(A);
+\end{code}
+In this case only that part of \texttt{\tcb{A}} which fits into \texttt{\tcb{B}}
+is copied.
+Example:
+\begin{code}{blue}
+  A:   1.0  2.0  3.0  4.0    =>    B:   1.0  2.0  3.0
+       5.0  6.0  7.0  8.0               5.0  6.0  7.0
+\end{code}
+With the \texttt{\tcb{place\_at()}} member function you can copy a
+smaller matrix at a certain position in a bigger matrix. This is
+useful in case you have to construct a big matrix out of several small matrices.
+\begin{code}{blue}
+  using namespace MATRIX;
+  ...
+  VtMatrix A(2,2);
+  A = ...;
+  VtMatrix B(5,5);
+  B.place_at(A,2,1);
+\end{code}
+Example:
+\begin{code}{blue}
+  A:   1.  2.     =>  B:   0.  0.  0.  0.  0.
+       3.  4.              0.  0.  0.  0.  0.
+                           0.  1.  2.  0.  0.
+                           0.  3.  4.  0.  0.
+                           0.  0.  0.  0.  0.
+\end{code}
+%
+%
+%
+\section{Vt++ running in ROOT/CINT}
+It is possible to make use of Vt++ classes in ROOT\footnote{see
+ \texttt{http://root.cern.ch}}. An indirect way is to precompile user
+ functions which contain calls to Vt++ classes. But it is also
+ possible to use Vt++ classes directly in CINT. To do so, it is
+ neccessary to generate a shared library containing the Vt++
+ classes. This can be done by modifying the
+ \texttt{\tcb{Makefile.BEE}} makefile which is contained in the Vt++
+ package. In future a Vt++ shared library will be provided with the
+ BEE analysis software\footnote{see
+ \texttt{http://www.mpi-hd.mpg.de/herab/clue}}.
+For the following examples ROOT version 2.25.03 has been used.
+
+Once the shared library (including the cint dictionary) is available,
+it can be loaded into ROOT:
+\begin{code}{blue}
+  *******************************************
+  *                                         *
+  *        W E L C O M E  to  R O O T       *
+  *                                         *
+  *   Version   2.25/03   27 October 2000   *
+  *                                         *
+  *  You are welcome to visit our Web site  *
+  *          http://root.cern.ch            *
+  *                                         *
+  *******************************************
+
+CINT/ROOT C/C++ Interpreter version 5.14.50, Sep 2 2000
+Type ? for help. Commands must be C++ statements.
+Enclose multiple statements between { }.
+
+root [0] gSystem->Load("libvt++.so");
+vt++ version /1-2 loaded (Mit Okt 25 18:29:27 MEST 2000).
+\end{code}
+The version information will be printed automatically when the shared
+library is loaded.
+
+Now you can e.g. get the version information interactively:
+\begin{code}{blue}
+root [1] using namespace VERTEX
+root [2] VtIni a
+root [3] cout << a
+vt++ version /1-2 loaded (Mit Okt 25 18:29:27 MEST 2000).
+(class ostream)1076664544
+\end{code}
+
+In order to use the vertexing capabilities of Vt++, track information
+is needed. This will be provided within the BEE package. Outside BEE,
+the MATRIX classes can still be used:
+\begin{code}{blue}
+root [4] using namespace MATRIX
+root [5] VtVector v(1,2,3)
+root [6] cout << v
+
+            1
+            2
+            3
+(class ostream)1076664544
+\end{code}
+The classes can be used in the expected way:
+\begin{code}{blue}
+root [7] VtVector b(5,6,7)
+root [8] cout << "scalar product: " << v * b << endl;
+scalar product: 38
+(class ostream)1076664544
+\end{code}
+
+A problem is the \texttt{\tcb{operator[]()}} in the matrix
+classes. \texttt{\tcb{operator()()}} can be used instead:
+\begin{code}{blue}
+root [9] VtMatrix z(3,3)
+root [10] z(0,1) = 1.
+(const double)1.00000000000000000e+00
+root [11] cout << z
+
+            0             1             0
+            0             0             0
+            0             0             0
+(class ostream)1076664544
+\end{code}
+%
+% Bibliography
+%
+\begin{thebibliography}{99}
+\bibitem{Vt} T. Lohse, Vertex Reconstruction And Fitting, HERA-B Note 95-013
+\bibitem{Vt++} T. Glebe, Vt++ Version 1.0, HERA-B Note 00-175
+\bibitem{FastC++} Todd L. Veldhuizen et al., Will C++ be faster than
+  Fortran? Proceedings of the 1st International Scientific Computing
+  in Object Oriented Parallel Environments (ISCOPE'97), 1997 Springer.
+\bibitem{STL} D. K\"uhl, STL and OO Don't Easily Mix, Proceedings of the
+  2000 Workshop on C++ Template Programming.
+\bibitem{ExprT} T. Veldhuizen, Expression Templates, C++ Report, Vol. 7 No. 5
+  June 1995.
+\end{thebibliography}
+%
+% Section
+%
+%\section{ToDo}
+%The following things are missing and might be added in future:
+%\begin{itemize}
+%\item Vertex fit using mass constraints.
+%\item Decay chain fit using mass constraints.
+%\item Target wire treatment.
+%\item Add more useful member functions.
+%\item Extend abilities of the MATRIX package.
+%\item Optimize the code with respect to execution speed.
+%\item Improve documentation, provide Web-page.
+%\end{itemize}
+\end{document}
