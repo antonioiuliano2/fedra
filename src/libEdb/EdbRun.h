@@ -110,7 +110,8 @@ public:
   void Save();
   void SaveViews() { eTree->AutoSave(); }
 
-  //  void Test();
+  int  AddAsciiFile(const char *fname, const char *objname);
+  int  ExtractAsciiFile(const char *fname, const char *objname);
 
   ClassDef(EdbRun,1)  // main run class contained all objects
 };

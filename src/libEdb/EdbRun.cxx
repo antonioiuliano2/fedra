@@ -38,6 +38,7 @@
 
 #include "TBranchClones.h"
 #include "TSystem.h"
+#include "TObjString.h"
 
 #ifndef ROOT_EdbRun
 #include "EdbRun.h"
@@ -430,8 +431,39 @@ void EdbRun::Print() const
   if(eTree) nentr = (Int_t)eTree->GetEntries();
   printf("Number of entries: \t %d \n", nentr);
   printf("--------------------------------------------------------------------\n\n");
-
   //PrintBranchesStatus();
+}
+
+//______________________________________________________________________________
+int EdbRun::AddAsciiFile(const char *fname, const char *objname)
+{
+  // can be used for reading  relativly small ascii files from fname and 
+  // save into the current run with name objname as TObjString
+
+  FILE *fp=fopen(fname,"r");
+  if (fp==NULL)   {
+    printf("ERROR open file: %s n", fname);    return(-1);
+  }else
+    printf( "Read Ascii file: %s\n", fname );
+  TObjString  str;
+  char     buf[256];
+  while( fgets(buf,256,fp)!=NULL ) str.String().Append(buf);
+  fclose(fp);
+  return  str.Write(objname);
+}
+
+//______________________________________________________________________________
+int EdbRun::ExtractAsciiFile(const char *fname, const char *objname)
+{
+  FILE *fp=fopen(fname,"w");
+  if (fp==NULL)   {
+    printf("ERROR open file: %s n", fname);    return(-1);
+  }else
+    printf( "Write to Ascii file: %s\n", fname );
+  TObjString  *str=(TObjString *)(eFile->Get(objname));
+  fprintf(fp,"%s",str->String().Data());
+  fclose(fp);
+  return  str->String().Sizeof();
 }
 
 
