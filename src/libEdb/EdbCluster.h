@@ -39,6 +39,13 @@ public:
 
    void Print( Option_t *opt=0 ) const;
 
+   void Set0(); 
+   void SetArea(float a)    { eArea=a;}
+   void SetVolume(float v)  { eVolume=v;}
+   void SetFrame(int f)     { eFrame=f;}
+   void SetSide(int s)      { eSide=s;}
+   void SetSegment(int seg) { eSegment=seg;}
+
    Float_t  GetX()         const  { return eX      ;}
    Float_t  GetY()         const  { return eY      ;}
    Float_t  GetZ()         const  { return eZ      ;}
@@ -47,7 +54,6 @@ public:
    Int_t    GetFrame()     const  { return eFrame  ;}
    Int_t    GetSide()      const  { return eSide   ;}
    Int_t    GetSegment()   const  { return eSegment;}
-   void     SetSegment(int seg)   { eSegment=seg   ;}
 
    //mandatory virtual functions
    

@@ -15,11 +15,8 @@
 #include "EdbImage.h"
 #endif
 #include "Riostream.h"
-//#include <fstream>   //created problems under Windows
-//using namespace std;
  
 ClassImp(EdbImage)
-ClassImp(EdbFIRF)
 
 //______________________________________________________________________________
 EdbImage::EdbImage()
@@ -266,6 +263,7 @@ INFOHEADER ihdr;
  if(ihdr.bits!=8) { printf("Error: %d bits/pixel bitmap is not supported!\n",ihdr.bits); return -1;}
  int N=ihdr.width*ihdr.height;
  char* byte= new char[N];
+ raw.read(byte,1024);
  raw.read(byte,N);
  raw.close();
  eBytes=N;
@@ -280,155 +278,3 @@ INFOHEADER ihdr;
  return N;
 }
 
-//====================================================================================
-const Float_t EdbFIRF::eg3x3A[]  = {
-  1,  1, 1,   
-  1, -8, 1,  
-  1,  1, 1  };
-const Float_t EdbFIRF::egHP1[] = {  
-  1,  1, 1,   
-  1, -9, 1,  
-  1,  1, 1  };
-const Float_t EdbFIRF::egHP2[] = {  
-  0,  1, 0,   
-  1, -5, 1,  
-  0,  1, 0  };
-const Float_t EdbFIRF::egHP3[] = { 
-  -1,  2, -1, 
-   2, -5,  2, 
-  -1,  2, -1  };
-const Float_t EdbFIRF::eg5x5A[] = { 
-  4,  4,  4,  4,  4,
-  4, -7, -7, -7,  4,
-  4, -7, -7, -7,  4,
-  4, -7, -7, -7,  4,
-  4,  4,  4,  4,  4  };
-const Float_t EdbFIRF::eg5x5B[] = { 
-  4,  4,  4,  4,  4,
-  4, -7, -7, -7,  4,
-  4, -7, -8, -7,  4,
-  4, -7, -7, -7,  4,
-  4,  4,  4,  4,  4  };
-const Float_t EdbFIRF::eg6x6A[] = { 
-  4,  4,  4,  4,  4,  4,
-  4, -5, -5, -5, -5,  4,
-  4, -5, -5, -5, -5,  4,
-  4, -5, -5, -5, -5,  4,
-  4, -5, -5, -5, -5,  4,
-  4,  4,  4,  4,  4,  4  };
-
-
-//____________________________________________________________________________________
-EdbFIRF::EdbFIRF(int cols, int rows)
-{
- eArr = new TArrayF();
- eArr->Adopt(cols*rows, new float[cols*rows]);
- eColumns=cols;
- eRows=rows;
- eArr->Reset();
-}
-
-//===============================================================================
-EdbFIRF::EdbFIRF( const char *firf )
-{
-  SetName(firf);
-  eArr = new TArrayF();
-  if( !strcmp(firf,"HP1") ) {
-    eColumns=3;
-    eRows=3;
-    eArr->Set(eColumns*eRows,egHP1);
-  } else if( !strcmp(firf,"HP2") ) {
-    eColumns=3;
-    eRows=3;
-    eArr->Set(eColumns*eRows,egHP2);
-  } else if( !strcmp(firf,"HP3") ) {
-    eColumns=3;
-    eRows=3;
-    eArr->Set(eColumns*eRows,egHP3);
-  } else if( !strcmp(firf,"3x3A") ) {
-    eColumns=3;
-    eRows=3;
-    eArr->Set(eColumns*eRows,eg3x3A);
-  } else if( !strcmp(firf,"5x5A") ) {
-    eColumns=5;
-    eRows=5;
-    eArr->Set(eColumns*eRows,eg5x5A);
-  } else if( !strcmp(firf,"5x5B") ) {
-    eColumns=5;
-    eRows=5;
-    eArr->Set(eColumns*eRows,eg5x5B);
-  } else if( !strcmp(firf,"6x6A") ) {
-    eColumns=6;
-    eRows=6;
-    eArr->Set(eColumns*eRows,eg6x6A);
-  }
-  Print();
-}
-
-//______________________________________________________________________________
-EdbFIRF::~EdbFIRF()
-{
-  if(eArr) { delete eArr; eColumns=0; eRows=0; }
-}
-
-//______________________________________________________________________________
-void    EdbFIRF::Reflect4()
-{
- int X=eColumns;
- int Y=eRows;
- int HX=(int)((eColumns+1)/2);
- int HY=(int)((eRows+1)/2);
- for(int i=0;i<HY;i++){
-   for(int j=0;j<HX;j++){
-    SetAt(X-j-1,i,Cell(j,i));
-    SetAt(X-j-1,Y-i-1,Cell(j,i));
-    SetAt(j,Y-i-1,Cell(j,i));
-   }
- }
-}
-
-//______________________________________________________________________________
-void EdbFIRF::Print()
-{
-  printf("FIR filter: %s\n",GetName());
- float sum=0;
- for(int i=0;i<eRows;i++){
-   for(int j=0;j<eColumns;j++){
-     printf("%3.1f\t",Cell(j,i));
-     sum+=Cell(j,i);
-   }
-   printf("\n");
- }
- printf("\nSum = %f\n",sum);
-}
-
-//______________________________________________________________________________
-void EdbFIRF::PrintList()
-{
-  printf("known 3x3 filtres: \n\t3x3A \n\tHP1 \n\tHP2 \n\tHP3 \n");
-  printf("known 5x5 filtres: \n\t5x5A \n\t5x5B \n");
-  printf("known 6x6 filtres: \n\t6x6A \n");
-}
-
-//__________________________________________________________________________________
-TH2F* EdbFIRF::ApplyTo(EdbImage* img)
-{
-  int x0=eColumns/2+1;
-  int y0=eRows/2+1;
-  int x1=img->Width()-x0-1;
-  int y1=img->Height()-y0-1; //margins
-  Float_t S;
-
-  TH2F* buf=new TH2F("img","Filtered image",
-		     img->Width(),0,img->Width(),img->Height(),0,img->Height());
-
-  for(int y=y0;y<y1;y++) for(int x=x0;x<x1;x++){
-   S=0;
-   for(int yf=0;yf<eRows;yf++) for(int xf=0;xf<eColumns;xf++){
-     S+=img->Pixel(x+xf-eColumns/2,y+yf-eRows/2)*Cell(xf,yf);
-   }
-   buf->Fill(x,y,S);
-  }
-
-  return buf;
-}

@@ -20,6 +20,14 @@ ClassImp(EdbCluster)
 ClassImp(EdbClustersBox)
 
 //______________________________________________________________________________
+void EdbCluster::Set0()
+{
+  SetX(0); SetY(0); SetZ(0);
+  eArea=0; eVolume=0; 
+  eFrame=0; eSide=0; eSegment=0;
+}
+
+//______________________________________________________________________________
 void EdbCluster::Print( Option_t *opt ) const
 {
   printf("Cluster: %f %f %f \t %f %f \t %d %d %d\n", 
