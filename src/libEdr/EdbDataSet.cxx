@@ -764,7 +764,7 @@ EdbDataProc::~EdbDataProc()
 }
 
 ///------------------------------------------------------------------------------
-int EdbDataProc::Process()
+int EdbDataProc::Link()
 {
   if(!eDataSet) return 0;
   EdbDataPiece *piece;

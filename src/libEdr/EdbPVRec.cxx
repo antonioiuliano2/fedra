@@ -968,7 +968,7 @@ void EdbPVRec::FillTracksCell()
 
   // fill tracks cell "vid1:vid2"
   // second segment is considered as leading one
-  Long_t vid1,vid2,vtr[2];
+  Long_t vid1,vid2;
 
   TIndexCell *tracksCell = eTracksCell;  // "vid1:vid2"
   TIndexCell *cc=0;

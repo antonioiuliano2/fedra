@@ -182,7 +182,8 @@ class EdbDataProc : public TObject {
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
-  int  Process();
+  int  Process(){ return Link(); }  // to be removed
+  int  Link();
   int  Link(EdbDataPiece &piece);
   void Align();
   int  InitVolume(EdbPVRec *ali);
