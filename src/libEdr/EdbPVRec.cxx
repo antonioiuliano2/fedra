@@ -11,14 +11,11 @@
 #include "TIndexCell.h"
 #include "TArrayF.h"
 #include "TBenchmark.h"
-#include "EdbAffine.h"
 #include "EdbVertex.h"
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
 #include "EdbMath.h"
 
-
-ClassImp(EdbScanCond)
 ClassImp(EdbSegCouple)
 ClassImp(EdbPatCouple)
 ClassImp(EdbPVRec)
@@ -26,101 +23,6 @@ ClassImp(EdbAlignment)
 
 int EdbSegCouple::egSortFlag=0;
 
-
-//______________________________________________________________________________
-EdbScanCond::EdbScanCond()
-{
-  SetDefault();
-}
-
-//______________________________________________________________________________
-void EdbScanCond::SetDefault()
-{
-  eSigmaXgr=  .1;
-  eSigmaYgr=  .1;
-  eSigmaZgr= 3.;
-
-  eDegrad = .6;  // means that at .4 mrad degradation is 24 % in respect to 0 angle
-
-  eSigmaX0  = 8.;   // [microns]
-  eSigmaY0  = 8.;   // [microns]
-  eSigmaTX0 = .008; // [mrad]
-  eSigmaTY0 = .008; // [mrad]
-
-  ePuls0[0]     =  8;    // microtrack puls height (grains)
-  ePuls0[1]     = 10;    // at 0 angle
-  ePuls04[0]    =  5;    // microtrack puls height (grains)
-  ePuls04[1]    =  9;    // at 0.4 rad angle
-
-  eChi2Max  = 3.5;
-  eChi2PMax = 3.5;
-  eOffX=0;
-  eOffY=0;
-
-  eRadX0 = EdbPhysics::kX0_Cell();
-}
-
-//______________________________________________________________________________
-void EdbScanCond::Print() const
-{
-  printf( "******************************************************\n");
-  printf( "Scanning Conditions Parametres: %s\n", GetName() );
-  printf( "Sigma Grain: \t%f \t%f \t%f \n", 
-	  eSigmaXgr,eSigmaYgr,eSigmaZgr);
-  printf( "Sigma0 x,y,tx,ty: \t%f \t%f \t%f \t%f \n", 
-	  eSigmaX0,eSigmaY0,eSigmaTX0,eSigmaTY0);
-  printf( "Angular degradation: \t%f \n", eDegrad);
-  printf( "Acceptance bins:   \t%f \t%f \t%f \t%f\n",BinX(),BinY(),BinTX(),BinTY());
-  printf( "Puls ramp at 0   angle: \t%f \t%f \n", ePuls0[0],  ePuls0[1]  );
-  printf( "Puls ramp at 0.4 angle: \t%f \t%f \n", ePuls04[0], ePuls04[1] );
-  printf( "Chi2Max: \t %f\n",Chi2Max());
-  printf( "Chi2PMax:\t %f\n",Chi2PMax());
-  printf( "******************************************************\n");
-}
-
-//______________________________________________________________________________
-float EdbScanCond::StepX(float dz) const
-{
-  float sigma = TMath::Sqrt( eSigmaX0*eSigmaX0 + eSigmaTX0*dz*eSigmaTX0*dz );
-  return eBinX*sigma;
-}
-
-//______________________________________________________________________________
-float EdbScanCond::StepY(float dz) const
-{
-  float sigma = TMath::Sqrt( eSigmaY0*eSigmaY0 + eSigmaTY0*dz*eSigmaTY0*dz );
-  return eBinY*sigma;
-}
-
-//______________________________________________________________________________
-float EdbScanCond::Ramp(float x, float x1, float x2) const
-{
-  float pmin=.01;
-  float pmax=1.;
-  if(x2<=x1)   return 1.; //error value
-  if(x<x1)     return pmin;
-  if(x>x2)     return pmax;
-  float p = (x-x1)/(x2-x1);
-  if(p<pmin)   return pmin;
-  if(p>pmax)   return pmax;
-  return p;
-}
-
-//______________________________________________________________________________
-float EdbScanCond::ProbSeg(float tx, float ty, float puls) const
-{
-  float t = TMath::Sqrt(tx*tx + ty*ty);
-  return ProbSeg(t, puls);
-}
-
-//______________________________________________________________________________
-float EdbScanCond::ProbSeg(float t, float puls) const 
-{
-  // use linear puls ramp approximation
-  float pa1 = ePuls0[0] - t/.4*(ePuls0[0]-ePuls04[0]);
-  float pa2 = ePuls0[1] - t/.4*(ePuls0[1]-ePuls04[1]);
-  return Ramp(puls,pa1,pa2);
-}
 
 ///______________________________________________________________________________
 EdbSegCouple::EdbSegCouple() 
@@ -837,7 +739,6 @@ int EdbPatCouple::DiffPat( EdbPattern *pat1, EdbPattern *pat2,
   if(!pat2) return 0;
   TIndexCell   *c1=pat1->Cell();
   TIndexCell   *c2=pat2->Cell();
-
   int ncouples = 0; 
 
   ncouples = DiffPatCell(c1,c2,vdiff);
@@ -983,6 +884,7 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
     cell->Add(5,val);
   }
   cell->Sort();
+  //cell->PrintStat();
   //cell->SetName("x:y:tx:ty:entry");
 }
 

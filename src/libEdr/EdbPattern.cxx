@@ -1398,19 +1398,56 @@ float  EdbTrackP::P_MS( float X0, float m, bool de_correction )
   
   return (float)p;
 }
+
 //______________________________________________________________________________
 EdbVertex  *EdbTrackP::VertexS()
 {
     if(eVTAS) return eVTAS->GetVertex();
     return 0;
 }
+
 //______________________________________________________________________________
 EdbVertex  *EdbTrackP::VertexE()
 {
     if(eVTAE) return eVTAE->GetVertex();
     return 0;
 }
+
 //______________________________________________________________________________
+float EdbTrackP::Zmin() const
+{
+  float zmin = Z(); 
+  if(N()) if(GetSegmentFirst()->Z()<zmin) zmin=GetSegmentFirst()->Z();
+  return zmin;
+}
+
+//______________________________________________________________________________
+float EdbTrackP::Zmax() const
+{
+  float zmax = Z(); 
+  if(N()) if(GetSegmentLast()->Z()>zmax) zmax=GetSegmentLast()->Z();
+  return zmax;
+}
+
+//______________________________________________________________________________
+const EdbSegP  *EdbTrackP::TrackStart() const 
+{ 
+  if(!N())    return (EdbSegP*)this;
+  if(Dir()<0) return GetSegmentLast();
+  if(Dir()>0) return GetSegmentFirst();
+  return (EdbSegP*)this;
+}
+
+//______________________________________________________________________________
+const EdbSegP  *EdbTrackP::TrackEnd() const 
+{ 
+  if(!N())    return (EdbSegP*)this;
+  if(Dir()>0) return GetSegmentLast();
+  if(Dir()<0) return GetSegmentFirst();
+  return (EdbSegP*)this;
+}
+
+//==============================================================================
 EdbPattern::EdbPattern() : EdbSegmentsBox()
 {
   eCell     = new TIndexCell();
@@ -1831,4 +1868,18 @@ void EdbPatternsVolume::DropCell()
 {
   int npat = Npatterns();
   for(int i=0; i<npat; i++ ) GetPattern(i)->Cell()->Drop();
+}
+
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
+{
+  EdbPattern *pat=0;
+  float dz=dir*99999999.;
+  float zpat;
+  for(int i=0; i<Npatterns(); i++) {
+    zpat=GetPattern(i)->Z();
+    if(dir>0) if(zpat>z) if(zpat-z<dz) {dz=zpat-z; pat=GetPattern(i);}
+    if(dir<0) if(zpat<z) if(zpat-z>dz) {dz=zpat-z; pat=GetPattern(i);}
+  }
+  return pat;
 }

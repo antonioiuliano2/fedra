@@ -318,6 +318,14 @@ class EdbTrackP : public EdbSegP {
   const EdbSegP  *TrackZmin() const { return GetSegmentFFirst(); }
   const EdbSegP  *TrackZmax() const { return GetSegmentFLast();  }
 
+  float Zmax()   const;
+  float Zmin()   const;
+  int   Dir()    const { if(DZ()<0) return -1; else return 1; }
+  const EdbSegP  *TrackStart() const;
+  const EdbSegP  *TrackEnd()   const;
+  float Zstart() const { return TrackStart()->Z(); }
+  float Zend()   const { return TrackEnd()->Z(); }
+
   void     AddTrack(const EdbTrackP &tr);
   
   void   AddSegment(EdbSegP *s)
@@ -458,6 +466,7 @@ class EdbPatternsVolume : public TObject {
   void         AddPattern( EdbPattern *pat );
   EdbPattern  *GetPattern( int id ) const;
 
+  EdbPattern  *NextPattern(float z, int dir) const;
 
   void DropCell();
 
