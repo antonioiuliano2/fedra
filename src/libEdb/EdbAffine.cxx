@@ -84,7 +84,17 @@ void EdbAffine2D::Invert()
 }
 
 //______________________________________________________________________________
-Int_t EdbAffine2D::Calculate(int n, float *x0, float *y0, float *x1, float *y1)
+Int_t EdbAffine2D::Calculate(int n, float *x0, float *y0, float *x1, float *y1, int flag)
+{
+  // Calculate affine transformation for 2 patterns
+  // if flag==2 : do not permit scaling of patterns
+
+  if(flag==2) return CalculateTurn( n, x0,y0, x1,y1 );
+  else        return CalculateFull( n, x0,y0, x1,y1 );
+}
+
+//______________________________________________________________________________
+Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *y1)
 {
   //
   // Calculate affine transformation for 2 patterns.
@@ -347,7 +357,7 @@ void EdbAffine3D::Reset()
 Int_t EdbAffine2D::CalculateTurn(int n, float *x0, float *y0, float *x1, float *y1)
 {
   //
-  // Calculate affine transformation for 2 patterns.
+  // Calculate affine transformation for 2 patterns: shift and rotation only
   // b1 == b0->Transform(this);
   //
 
