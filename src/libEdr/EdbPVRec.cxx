@@ -19,6 +19,7 @@
 #include "EdbVertex.h"
 #include "EdbMath.h"
 
+
 ClassImp(EdbScanCond)
 ClassImp(EdbSegCouple)
 ClassImp(EdbPatCouple)
