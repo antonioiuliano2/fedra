@@ -108,22 +108,16 @@ void EdbVertex::SetTracksVertex( )
 bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 {
     if (!track) return false;
-    bool result = true;
-    eEdbTracks.Add(track);
-    eZpos.Set(eNtr+1);
-    eZpos.AddAt(zpos, eNtr);
-    eNtr++;
     if (track->NF() <= 0) return false;
+    bool result = true;
     EdbSegP *seg = 0;
     if   (zpos)
     {
 	seg = (EdbSegP *)(track->TrackZmin());
-	track->SetVertexS(this);
     }
     else
     {
 	seg = (EdbSegP *)(track->TrackZmax());
-	track->SetVertexE(this);
     }
     if (eV)
     {
@@ -138,9 +132,6 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 //		eV->use_momentum(true);
 		if (!(eV->findVertexVt()))
 		{
-		    eEdbTracks.Remove(track);   //TODO: check removing (holes?)
-		    eNtr--;
-		    eZpos.Set(eNtr);
 		    eV->remove_last();
 		    delete t;
 		    t=0;
@@ -149,9 +140,6 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		}
 		else if (!(eV->valid()))
 		{
-		    eEdbTracks.Remove(track);
-		    eNtr--;
-		    eZpos.Set(eNtr);
 		    eV->remove_last();
 		    delete t;
 		    t=0;
@@ -160,29 +148,30 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		}
 		else if (eV->prob() < ProbMin )
 		{
-		    eEdbTracks.Remove(track);
-		    eNtr--;
-		    eZpos.Set(eNtr);
 		    eV->remove_last();
 		    delete t;
 		    t=0;
 		    result = false;
 		}
-		if   (zpos)
-		{
-		    track->SetVertexS(this);
-		}
 		else
 		{
-		    track->SetVertexE(this);
+		    eEdbTracks.Add(track);
+		    eZpos.Set(eNtr+1);
+		    eZpos.AddAt(zpos, eNtr);
+		    eNtr++;
+		    if   (zpos)
+		    {
+			track->SetVertexS(this);
+		    }
+		    else
+		    {
+			track->SetVertexE(this);
+		    }
 		}
 	    }
 	}
 	else
 	{ 
-	    eEdbTracks.Remove(track);   //TODO: check removing (holes?)
-	    eNtr--;
-	    eZpos.Set(eNtr);
 	    delete t;
 	    t=0;
 	    result = false;
@@ -191,6 +180,18 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
     }
     else
     {
+	eEdbTracks.Add(track);
+	eZpos.Set(eNtr+1);
+	eZpos.AddAt(zpos, eNtr);
+	eNtr++;
+	if   (zpos)
+	{
+	    track->SetVertexS(this);
+	}
+	else
+	{
+	    track->SetVertexE(this);
+	}
 	eX = ((eNtr-1)*eX + seg->X())/eNtr;
 	eY = ((eNtr-1)*eY + seg->Y())/eNtr;
 	eZ = ((eNtr-1)*eZ + seg->Z())/eNtr;
