@@ -242,8 +242,10 @@ void EdbSegP::PropagateTo( float z )
   eX  = X() + TX()*dz;
   eY  = Y() + TY()*dz;
   eZ  = z;
-  (*eCOV)(0,0) = SX() + STX()*dz*dz;
-  (*eCOV)(1,1) = SY() + STY()*dz*dz;
+  if(eCOV) {
+    (*eCOV)(0,0) = SX() + STX()*dz*dz;
+    (*eCOV)(1,1) = SY() + STY()*dz*dz;
+  }
 }
 
 //______________________________________________________________________________
