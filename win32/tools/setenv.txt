@@ -1,0 +1,31 @@
+SETENV.EXE (by Vincent Fatica)
+
+SETENV.EXE (for NT, Intel) offers greater functionality than the ResKit's command-line utility SETX.EXE in viewing and manipulating the WindowsNT "master" environments. By accessing either "HKEY_CURRENT_USER\Environment" or "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" ("user" or "machine" environment) SETENV will display an entire environment or the value of a single variable, set or change the value of a single variable, or delete a variable. [*New: support (-v) for the "volatile" environment; see below.] Upon successfully making changes to an environment, SETENV calls "RegFlushKey" to ensure that the changes are written to disk immediately, and then calls "BroadcastSystemMessage" to inform all (interested) components that a change to the environment has been made. EXPLORER (and not many other programs) acts on this message by updating its environment. "BroadcastSystemMessage" is an improvement over "SendMessageTimeout" which is apparently used by SETX as well as the MyComputer\Properties\Environment page; "SendMessageTimeout" can fail if EXPLORER is running as a separate process from the TaskBar/Desktop (see the Knowledge Base's Q104011) and, at the moment, has no windows open to process the message. SETENV's syntax message (which will be displayed if an otherwise invalid syntax is used) appears below. Get SETENV.EXE by anonymous FTP. 
+
+I have recently modified SETENV.EXE to create (and set) variables as type REG_EXPAND_SZ whenever at least two occurrences of "%" are found in the value string (this is a good indication that some expansion is intended); otherwise, the type REG_SZ is used. For variables of type REG_EXPAND_SZ, references within a variable to another environment variable will be expanded upon use. To set a variable containing a reference to another variable, you must tell CMD.EXE not to expand the name of the referenced variable before sending the command line to SETENV; do this as follows (for example): 
+
+setenv -u foo "%"userprofile"%"
+With the 4NT.EXE command interpreter, use: 
+setenv -u foo %%userprofile%%
+The variable "foo" will be set to "%userprofile%", and when referenced, will return whatever is the value of the variable "userprofile". 
+*More recently (8/5/98) I have added support (-v) for NT's "volatile" environment, which is stored in "HKEY_CURRENT_USER\Volatile Environment". This is also part of the environment which Explorer gives to applications. The variables and values in the volatile environment do not survive logouts and reboots, and are not propagated by the operating system. The new option tests OK, including when SETENV is called from a login script. 
+
+*Even more recentlt (12/19/98) I have added support (-d) for the HKEY_USERS\.DEFAULT\Environment key 
+
+SETENV syntax:
+ To set or change the value of a variable:
+        User environment:           setenv -u name value        (also /u)
+        Machine environment:        setenv -m name value        (also /m)
+Default user environment    setenv -d name value        (also /d)
+        Volatile environment:       setenv -v name value        (also /v)
+ To display a variable:      setenv -u|-m|-d|-v name
+ To delete a variable:       setenv -u|-m|-d|-v name -delete   (also /delete)
+ To display an environment:  setenv -u|-m|-d|-v
+ Use double-quotes around values containing spaces.
+ If a variable name or value is to CONTAIN a double-quote, escape that double-quote as \"
+ Return codes: 0 = success,        1 = variable not found,
+               2 = access denied,  3 = other error
+           4 = SETENV has shown this syntax message
+ Requested output goes to STDOUT; help and error messages to STDERR.
+
+--------------------------------------------------------------------------------
