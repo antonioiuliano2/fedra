@@ -8,4 +8,6 @@
 #pragma link C++ class TIndexCellIter;
 #pragma link C++ class TIndexCellIterV;
 
+#pragma link C++ class EdbMath;
+
 #endif

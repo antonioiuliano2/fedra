@@ -5,7 +5,7 @@
 
 LIB_TGT       = $(LIB_DIR)/libEmath.so
 
-headers       = TIndexCell.h
+headers       = TIndexCell.h EdbMath.h
 
 classes       = $(headers:.h=.$(SrcSuf))
 Cint          = $(headers) EmathLinkDef.h
