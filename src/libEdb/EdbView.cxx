@@ -42,9 +42,9 @@ ClassImp(EdbViewHeader)
 EdbView::EdbView()
 {
   eHeader   = new EdbViewHeader();
-  eClusters = new TClonesArray("EdbCluster", 20000);
+  eClusters = new TClonesArray("EdbCluster",  5000);
   eSegments = new TClonesArray("EdbSegment",  5000);
-  eTracks   = new TClonesArray("EdbTrack",    2000);
+  eTracks   = new TClonesArray("EdbTrack",     200);
   eFrames   = new TClonesArray("EdbFrame",      32);
 
   eLastSystemTime = gSystem->Now();
@@ -53,13 +53,13 @@ EdbView::EdbView()
 //______________________________________________________________________________
 EdbView::~EdbView()
 {
-  Clear();
+  //  Clear();
 
-  if(eClusters)  delete eClusters;
-  if(eSegments)  delete eSegments;
-  if(eTracks)    delete eTracks;
+  if(eClusters)  { eClusters->Delete(); delete eClusters; }
+  if(eSegments)  { eSegments->Delete(); delete eSegments; }
+  if(eTracks)    { eTracks->Delete();   delete eTracks;   }
   if(eHeader)    delete eHeader;
-  if(eFrames)    delete eFrames; 
+  if(eFrames)    { eFrames->Delete();   delete eFrames;   }
 }
 
 //______________________________________________________________________________

@@ -1,3 +1,5 @@
+Now this procedure is obsolete: use install.sh instead
+
 development installation procedure (will be modified):
 
 in setup.sh set the correct value for FEDRA_ROOT

@@ -10,8 +10,8 @@ make clean
 cd ../libEdd
 make clean
 
-# cd ../libMarilisa
-# make clean
+cd ../libMarilisa
+make clean
 
 cd ../libTest
 make clean
