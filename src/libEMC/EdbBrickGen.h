@@ -12,7 +12,7 @@
 
 //______________________________________________________________________________
 class EdbBeamGen : public TObject {
- 
+
  public:
 
   Float_t   eMass;    // particle mass to be generated

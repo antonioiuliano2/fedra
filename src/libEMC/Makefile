@@ -5,9 +5,9 @@ include ../config/RootDef.mk
 
 NAME          = EMC
 
-headers       = EdbPVGen.h EdbBrick.h EdbBrickGen.h
+headers       = EdbPVGen.h EdbBrickGen.h EdbBrick.h
 
-PROJECT_LIBS += -lEdr -lEmath -lEdb -lEphys
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEdr -lEmath -lEdb -lEphys
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

@@ -181,6 +181,7 @@ class EdbDataProc : public TObject {
 
  public:
   EdbDataProc() { eDataSet=0; ePVR=0; }
+  EdbDataProc(int npl, TArrayI &ids, TArrayF &zs);
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
@@ -195,9 +196,9 @@ class EdbDataProc : public TObject {
   EdbPVRec *ExtractDataVolumeF( EdbTrackP &tr, float binx=20, float bint=10,
 			       int datatype=0 );
 
-  int  InitVolume(int datatype=0);
+  int  InitVolume(int datatype=0, const char *rcut="1");
   int  InitVolume(EdbPVRec *ali, int datatype=0);
-  int  InitVolumeTracks(EdbPVRec *ali);
+  int  InitVolumeTracks(EdbPVRec *ali, const char *rcut);
   int  InitVolumeRaw(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
   int  CheckCCD();
@@ -225,7 +226,8 @@ class EdbDataProc : public TObject {
   int   ReadTracksTree( EdbPVRec &ali,
 			char *fname="linked_tracks.root",
 			int   nsegMin=3,
-			float probMin=0.01 );
+			float probMin=0.01, 
+			const char *rcut="t.eFlag>-1&&nseg>2&&t.eProb>.01" );
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };

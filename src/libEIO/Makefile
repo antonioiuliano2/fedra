@@ -7,7 +7,7 @@ NAME          = EIO
 
 headers       = EdbRunAccess.h EdbDataSet.h
 
-PROJECT_LIBS += -lEdb -lEdr
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEdb -lEdr -lEmath
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

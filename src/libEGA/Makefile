@@ -7,7 +7,7 @@ NAME          = EGA
 
 headers       = EdbGA.h EdbIP.h
 
-PROJECT_LIBS += -lvt -lEmath -lEdb
+PROJECT_LIBS  = $(PROJECT_LIBS) -lvt -lEmath -lEdb
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

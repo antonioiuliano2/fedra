@@ -221,7 +221,7 @@ void EdbDataPiece::AddRCut(int layer, TCut &cut)
   if(layer<0) return;
   if(layer>2) return;
   
-  if(!eRCuts[layer]) eRCuts[layer] = new TCut(cut); 
+  if(!eRCuts[layer]) eRCuts[layer] = new TCut(cut);
   else (*(eRCuts[layer]))+=cut;
 }
 
@@ -1350,7 +1350,8 @@ EdbDataSet::EdbDataSet()
 EdbDataSet::EdbDataSet(const char *file)
 {
   Set0();
-  ReadDataSetDef(file);
+  if(ReadDataSetDef(file)<0);
+  Set0();
 }
 
 ///______________________________________________________________________________
@@ -1416,8 +1417,7 @@ int EdbDataSet::ReadDataSetDef(const char *file)
       }
   }
   fclose(fp);
-  GetRunList(eInputList.Data());
-  return 0;
+  return GetRunList(eInputList.Data());
 }
 
 ///______________________________________________________________________________
@@ -1500,7 +1500,11 @@ int EdbDataSet::GetRunList(const char *file)
       piece->MakeNamePar(GetParDir());
       if(piece->TakePiecePar()>=0)
 	ePieces.Add(piece);
-      else printf("skip piece!!!\n");
+      else {
+	printf("Missing par file for piece!!!\n");
+	if(fp) fclose(fp);
+	return -1;
+      }
     }
   }
   fclose(fp);
@@ -1514,6 +1518,31 @@ EdbDataProc::EdbDataProc(const char *file)
   eDataSet = new EdbDataSet(file);
   ePVR     = 0;
   eNoUpdate=0;
+}
+
+///------------------------------------------------------------------------------
+EdbDataProc::EdbDataProc(int npl, TArrayI &ids, TArrayF &zs)
+{
+	// Special constructor (requested by Nicolai) set everything as default as possible
+
+  eDataSet  = new EdbDataSet();
+  ePVR      = 0;
+  eNoUpdate = 0;
+
+  if( npl>ids.GetSize() )  return;
+  if( npl>zs.GetSize() )   return;
+
+  ePVR = new EdbPVRec();
+  EdbPattern *pat =0;
+  for(int i=0; i<npl; i++) {
+    pat = new EdbPattern( 0,0, zs.At(i) );
+    pat->SetPID(ids.At(i));
+    ePVR->AddPattern(pat);
+  }
+  ePVR->SetPatternsID();
+
+  ePVR->SetScanCond( new EdbScanCond() );
+  ePVR->SetCouplesAll();
 }
 
 ///------------------------------------------------------------------------------
@@ -1969,19 +1998,19 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
 }
 
 ///______________________________________________________________________________
-int EdbDataProc::InitVolume(int datatype)
+int EdbDataProc::InitVolume(int datatype, const char *rcut)
 {
   // datatype: 0   - couples basetrack data
   //           10  - couples full data
   //           100 - tracks only
 
   if(!ePVR) ePVR = new EdbPVRec();
-  if(datatype==100) return InitVolumeTracks(ePVR);
+  if(datatype==100) return InitVolumeTracks(ePVR, rcut);
   return InitVolume(ePVR, datatype);
 }
 
 ///______________________________________________________________________________
-int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali)
+int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
 {
   EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
   ali->SetScanCond( cond );
@@ -2003,7 +2032,7 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali)
   }
   ali->SetPatternsID();
 
-  int ntr = ReadTracksTree( *ali );
+  int ntr = ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
   printf("ntr=%d\n",ntr);
 
   ali->SetSegmentsErrors();
@@ -2379,13 +2408,9 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv)
 int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 				 char     *fname,
 				 int      nsegMin,
-				 float    probMin  )
+				 float    probMin,
+				 const char *rcut )
 {
-  //TODO: FILL PATTERNS
-
-  //TObjArray *trarr = ali.eTracks;
-  //if(!trarr) trarr = new TObjArray();
-
   TFile f(fname);
   TTree *tracks = (TTree*)f.Get("tracks");
   Int_t   trid=0;
@@ -2394,6 +2419,13 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
   Int_t   n0=0;
   Float_t xv=0.;
   Float_t yv=0.;
+
+  int nentr = (int)(tracks->GetEntries());
+  TCut cut = rcut;
+  tracks->Draw(">>lst", cut );
+  TEventList *lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
+  int nlst =lst->GetN();
+  if(cut) printf("select %d of %d tracks by cut %s\n",nlst, nentr, cut.GetTitle() );
 
   TClonesArray *seg  = new TClonesArray("EdbSegP", 60);
   TClonesArray *segf = new TClonesArray("EdbSegP", 60);
@@ -2410,27 +2442,21 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
   tracks->SetBranchAddress("s",  &seg);
   tracks->SetBranchAddress("t.", &trk);
 
-  int nentr = (int)(tracks->GetEntries());
-  printf("Read tracks from  %s  (%d entries)\n",fname,nentr);
-
   EdbPattern *pat=0;
-  int ntr=0;
-  for (int j=0; j<nentr; j++){
-    tracks->GetEntry(j);
-
-    if(trk->Flag() < 0)       continue;
-    if(nseg        < nsegMin) continue;
-    if(trk->Prob() < probMin) continue;
-
-    //if((float(nseg)/float(npl)<=0.6)) continue;
+  int entr=0;
+  for (int j=0; j<nlst; j++){
+    entr = lst->GetEntry(j);
+    tracks->GetEntry(entr);
 
     EdbTrackP *tr1 = new EdbTrackP();
 
+    tr1->SetID(trk->ID());
     tr1->SetP(trk->P());
     tr1->SetErrorP(trk->SP());
-    tr1->SetM(0.129);                  //TODO!
+    tr1->SetM(0.129);                 //TODO
     tr1->SetFlag(trk->Flag());
     tr1->SetProb(trk->Prob());
+
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
       //tr1->AddSegment( new EdbSegP(*s1) );
@@ -2439,14 +2465,10 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
       pat->AddSegment(*s1 );
       tr1->AddSegment( pat->GetSegmentLast() );
     }
-    tr1->SetID(j);
-    tr1->SetSegmentsTrack(j);
+    tr1->SetSegmentsTrack(tr1->ID());
     tr1->SetCounters();
     tr1->FitTrackKFS(true);
     ali.AddTrack(tr1);
-    ntr++;
   }
-
-  printf("%d tracks are readed from the tree\n",ntr);
-  return ntr;
+  return nlst;
 }

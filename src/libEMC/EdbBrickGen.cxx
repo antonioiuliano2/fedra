@@ -2,15 +2,15 @@
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// EdbBrickGen - OPERA simulation                                             //
+// EdbBrickGen - OPERA simulation                                       //
 //                                                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TRandom.h"
 #include "EdbBrickGen.h"
 
-ClassImp(EdbBrickGen)
 ClassImp(EdbBeamGen)
+ClassImp(EdbBrickGen)
 
 //____________________________________________________________________________________
 EdbBeamGen::EdbBeamGen()
