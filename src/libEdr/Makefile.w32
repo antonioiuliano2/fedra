@@ -11,7 +11,7 @@ PROJECT_LIBS  = $(PROJECT_LIBS) libvt.lib libEmath.lib libEdb.lib libEphys.lib
 
 LIB_TGT       = $(LIB_DIR)/$(LIB_NAME).dll
 
-headers       = EdbPattern.h EdbPVRec.h EdbVertex.h
+headers       = EdbPattern.h EdbPVRec.h EdbVertex.h EdbLayer.h
 
 classes   = $(headers:.h=.cxx)
 CINT      = $(headers) $(LINKDEF_NAME).h

@@ -32,6 +32,7 @@ for lib in ${LIBS} ; do
 	ln -fs $PROJECT_SRC/${lib}/${hname##*/} $PROJECT_INC/${hname##*/}
     done
 done
+echo "set links for libVt++ ..."
 ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
 ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
 
