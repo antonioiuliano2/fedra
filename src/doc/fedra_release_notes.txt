@@ -1,3 +1,14 @@
+VT: 7/07/2003
+
+In new version of convertor (based on the new SysalDataIO) the eAreaID is 
+started from 1 instead of 0. 
+
+Schema evolution problems: eElements branch was commented out by 
+the //! in EdbSegment.h. Seems not back-compatible - the data should 
+be reconverted. The old data is readable anyway with no loading 
+libraries, but if new version of libraries are loaded them give segfault 
+(Views->Draw("eAreaID*121")
+
 
 VT: 30/05/2003
  Framework for Emulsions Data Reconstruction and Analysis
