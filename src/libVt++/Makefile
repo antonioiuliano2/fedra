@@ -76,7 +76,7 @@ remake: slib
 endif
 
 clean:
-	@rm -rf vt++/*.o vt++/cintdict/vt++dict.* vt++/.depfile
+	@rm -rf vt++/*.o vt++/cintdict/vt++dict.* vt++/.depfile $(ldir)/libvt*
 
 
 postinstall:
