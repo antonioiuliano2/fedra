@@ -95,7 +95,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  
   void       Print( Option_t *opt="") const;
  
-  ClassDef(EdbSegP,1)  // segment
+  ClassDef(EdbSegP,2)  // segment
 };
 
 //______________________________________________________________________________

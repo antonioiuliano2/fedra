@@ -17,7 +17,7 @@ void check_z()
   cz_4->cd();       Views->Draw("eZ2-eZ3");
   cz_2->cd();       Views->Draw("eZ1:eAreaID*121+eViewID");
   cz_1->cd();       Views->Draw("eZ1:eXview:eYview");
-  cz_3->cd();       Views->Draw("eZ3-eZ2:eXview:eYview");
+  cz_3->cd();       Views->Draw("eNcl:eZframe");
 
   c->SaveAs("z.gif");
 }

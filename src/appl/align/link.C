@@ -23,7 +23,8 @@ void link()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_03010109_nc.root"
+			       //     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_03010109_nc.root"
+     "/mnt/operalabdb_e/data/rawr/b1_jul2002_32/pl08/raw_jul2002_32_03010308_nc.root"
     ,"READ");
 
   //                up base down  - nominal values during exposure (will be used for projection only)
