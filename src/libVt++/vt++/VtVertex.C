@@ -240,9 +240,6 @@ namespace VERTEX {
   unsigned short int Vertex::ntracks() const { return size(); }
 
 #if defined USE_ROOT
-//  const TrackIf* Vertex::track(unsigned int i) const { return 0; }
-//  const TrackIf*& Vertex::track(unsigned int i) 
-//    { static const TrackIf* ptr=0; return ptr; }
 
   SVector<double,3> Vertex::vpos() const {
     return SVector<double,3>(kal_xvs[0], kal_xvs[1], kal_xvs[2]);
