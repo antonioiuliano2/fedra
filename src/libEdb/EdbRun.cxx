@@ -278,6 +278,7 @@ void EdbRun::Close()
 {
   const char *status = eFile->GetOption();
 
+  GetFile()->cd();
   eHeader->GetFinishTime()->Set();
   //*** eHeader->SetCPU( TStopwatch::GetCPUTime() );
 
