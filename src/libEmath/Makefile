@@ -60,4 +60,8 @@ EdbMath.o: /var/local/root/include/Varargs.h
 EdbMath.o: /var/local/root/include/TStorage.h
 EdbMath.o: /var/local/root/include/Riosfwd.h
 EdbMath.o: /var/local/root/include/TBuffer.h /var/local/root/include/Bytes.h
-EdbMath.o: /usr/include/string.h
+EdbMath.o: /usr/include/string.h /var/local/root/include/TMatrixD.h
+EdbMath.o: /var/local/root/include/TVectorD.h
+EdbMath.o: /var/local/root/include/TError.h /var/local/root/include/TString.h
+EdbMath.o: /var/local/root/include/TRefCnt.h
+EdbMath.o: /var/local/root/include/TMatrixDUtils.h
