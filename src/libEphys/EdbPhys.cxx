@@ -13,35 +13,31 @@
 
 ClassImp(EdbPhysics);
 
-//______________________________________________________________________________
+//Pb constants 
 
-//	Pb constants
-
-const double  EdbPhysics::geu=0.577215;
-const double  EdbPhysics::geu1=0.422785;
-const double  EdbPhysics::me=0.000511; // Gev
-const double  EdbPhysics::me_kg=9.10938188E-31; // kg
-const double  EdbPhysics::mpi=0.13957; // Gev
-const double  EdbPhysics::ro=11.35; // g/cm**3
-const double  EdbPhysics::Z=82.;
-const double  EdbPhysics::A=207.2;
-const double  EdbPhysics::Nav=6.02214199E+23; // 1/mol
-const double  EdbPhysics::I=844.408; // eV
-const double  EdbPhysics::Nel=2.705E+24;     // 1/cm**3
-const double  EdbPhysics::h=4.1357E-15; // eV*s
-const double  EdbPhysics::D=0.000153537; // (GeV * cm**2)/s 
-const double  EdbPhysics::ec=1.602176462E-19; // Coulombs
-const double  EdbPhysics::vp=1.5577E+11; // 1/s
-const double  EdbPhysics::C=-28.1723;
-const double  EdbPhysics::Xa=6.1164;
-const double  EdbPhysics::X0=7.6842;
-const double  EdbPhysics::X1=3.0;
-const double  EdbPhysics::mm=2.0;
-const double  EdbPhysics::aa=-0.3291;
-
-const float EdbPhysics::kX0_Pb   =   5600.; // pure Pb [microns]
-const float EdbPhysics::kX0_Em   = 286000.; // pure Emulsion (?)
-const float EdbPhysics::kX0_Cell =   5810.; // Pb+emulsion mixture [microns]
+namespace Pb_CONST {
+  static double const geu = 0.577215;
+  static double const geu1 = 0.422785;
+  static double const me = 0.000511;            // Gev
+  static double const me_kg = 9.10938188E-31;   // kg
+  static double const mpi = 0.13957;            // Gev
+  static double const ro = 11.35;               // g/cm**3 
+  static double const Z = 82.;
+  static double const A = 207.2;
+  static double const Nav = 6.02214199E+23;      // 1/mol
+  static double const I = 844.408;               // eV
+  static double const Nel = 2.705E+24;           // 1/cm**3
+  static double const h = 4.1357E-15;            // eV*s
+  static double const D = 0.000153537;           // (GeV * cm**2)/s
+  static double const ec = 1.602176462E-19;      // Coulombs
+  static double const vp = 1.5577E+11;           // 1/s
+  static double const C = -28.1723;
+  static double const Xa = 6.1164;
+  static double const X0 = 7.6842;
+  static double const X1 = 3.0;
+  static double const mm = 2.0;
+  static double const aa = -0.3291;
+}
 
 //______________________________________________________________________________
 double EdbPhysics::ThetaMS2( float p, float mass, float dx, float X0 )
@@ -58,13 +54,14 @@ double EdbPhysics::ThetaMS2( float p, float mass, float dx, float X0 )
 
 //________________________________________________________________________
 double EdbPhysics::ThetaPb2( float p, float mass, float dx ) 
-    { return ThetaMS2(p,mass,dx, kX0_Pb); }
+    { return ThetaMS2(p,mass,dx, kX0_Pb()); }
 
 //static TRandom *r=0;
 //static TRandom *r=gRandom;
 //________________________________________________________________________
 double EdbPhysics::DeLandauPb(float pf, float massf, float xmicrons)
 {
+  using namespace Pb_CONST;
   //if (!r)
   //{
   //r=new TRandom();
@@ -119,6 +116,7 @@ double EdbPhysics::DeLandauPb(float pf, float massf, float xmicrons)
 //________________________________________________________________________
 double EdbPhysics::DeAveragePb(float pf, float massf, float xmicrons)
 {
+  using namespace Pb_CONST;
     if (xmicrons <= 0.) return 0.;
     if (pf       <= 0.) return 0.;
     if (massf    <= 0.) return 0.;
@@ -172,6 +170,7 @@ double eDe_aver_fact=0.;
 //________________________________________________________________________
 void EdbPhysics::DeAveragePbFastSet(float pf, float massf)
 {
+  using namespace Pb_CONST;
     if (pf       <= 0.) return;
     if (massf    <= 0.) return;
     eP=(double)pf;
@@ -203,6 +202,7 @@ void EdbPhysics::DeAveragePbFastSet(float pf, float massf)
 //________________________________________________________________________
 double EdbPhysics::DeAveragePbFast(float pf, float massf, float xmicrons)
 {
+  using namespace Pb_CONST;
     if (pf       <= 0.) return 0.;
     if (massf    <= 0.) return 0.;
     if (xmicrons <= 0.) return 0.;
