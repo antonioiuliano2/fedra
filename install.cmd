@@ -32,9 +32,9 @@
  for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %fsutil% hardlink create %PROJECT_INC%\vt++\%%~nF%%~xF    %%F
  for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %fsutil% hardlink create %PROJECT_INC%\smatrix\%%~nF%%~xF %%F
 
-:: create ProjectDef_w32.mk in ./config-directory
+:: create ProjectDef.mk in ./config-directory
 :: ----------------------------------------------
- set ProjectDef=%installdir%\src\config\ProjectDef.w32.mk
+ set ProjectDef=%installdir%\src\config\ProjectDef.mk
  echo PROJECT_ROOT=%installdir%> %ProjectDef%
  echo. >> %ProjectDef%
  echo BIN_DIR = $(PROJECT_ROOT)/bin>> %ProjectDef%
@@ -43,9 +43,17 @@
  echo. >> %ProjectDef%
  echo PROJECT_LIBS = -LIBPATH:$(LIB_DIR)>> %ProjectDef%
 
+:: create RootDef.mk and TargetsDef.mk links
+:: ----------------------------------------------
+ set configdir=%installdir%\src\config
+ if exist %configdir%\RootDef.mk    del /q %configdir%\RootDef.mk
+ if exist %configdir%\TargetsDef.mk del /q %configdir%\TargetsDef.mk
+ %fsutil% hardlink create %configdir%\RootDef.mk %configdir%\RootDef.windows.mk
+ %fsutil% hardlink create %configdir%\TargetsDef.mk %configdir%\TargetsDef.windows.mk
+
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
-set SetupNew=%installdir%\setup_new.cmd
+ set SetupNew=%installdir%\setup_new.cmd
  echo set FEDRA_ROOT=%installdir%>  %SetupNew%
  echo path %%FEDRA_ROOT%%\bin;%%FEDRA_ROOT%%\lib;%%PATH%%>>  %SetupNew%
  echo win32\tools\setenv.exe  -u FEDRA_ROOT %installdir%>>  %SetupNew%
@@ -67,7 +75,7 @@ set SetupNew=%installdir%\setup_new.cmd
 :: ------------------------
  set /P YesNo=Do you want to compile the libraries: [y/n]?
 	IF /I '%YesNo%'=='Y' cd %installdir%\src
-	IF /I '%YesNo%'=='Y' call cleanall.cmd
+	IF /I '%YesNo%'=='Y' call makeall.cmd clean
 	IF /I '%YesNo%'=='Y' call makeall.cmd
 
 :: load environment variables

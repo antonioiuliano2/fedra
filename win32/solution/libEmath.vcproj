@@ -21,11 +21,11 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\libEmath
-NMAKE /f &quot;Makefile.w32&quot;"
+NMAKE "
 				ReBuildCommandLine="cd ..\..\src\libEmath
-NMAKE /f &quot;Makefile.w32&quot; /a"
+NMAKE /a"
 				CleanCommandLine="cd ..\..\src\libEmath
-NMAKE /f &quot;Makefile.w32&quot; clean"
+NMAKE  clean"
 				Output="..\..\lib\libEmath.dll"/>
 		</Configuration>
 	</Configurations>

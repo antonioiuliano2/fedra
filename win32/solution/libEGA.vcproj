@@ -2,7 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="libEphys"
+	Name="libEGA"
+	ProjectGUID="{066BA35A-25AE-43C4-90AA-302C5674FC00}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -20,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEphys
-NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEphys
-NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEphys
+				BuildCommandLine="cd ..\..\src\libEGA
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\libEGA
+NMAKE  /a"
+				CleanCommandLine="cd ..\..\src\libEGA
 NMAKE clean"
-				Output="..\..\lib\libEphys.dll"/>
+				Output="..\..\lib\libEGA.dll"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -36,17 +37,23 @@ NMAKE clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\libEphys\EdbPhys.cxx">
+				RelativePath="..\..\src\libEGA\EdbGA.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEGA\EdbIP.cxx">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="..\..\src\libEphys\EdbPhys.h">
+				RelativePath="..\..\src\libEGA\EdbGA.h">
 			</File>
 			<File
-				RelativePath="..\..\src\libEphys\EphysLinkDef.h">
+				RelativePath="..\..\src\libEGA\EdbIP.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEGA\EGALinkDef.h">
 			</File>
 		</Filter>
 		<Filter

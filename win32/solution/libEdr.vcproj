@@ -1,92 +1,92 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
-    ProjectType="Visual C++"
-    Version="7.10"
-    Name="libEdr"
-    SccProjectName=""
-    SccLocalPath=""
-    Keyword="MakeFileProj">
-    <Platforms>
-        <Platform
-            Name="Win32"/>
-    </Platforms>
-    <Configurations>
-        <Configuration
-            Name="Release|Win32"
-            OutputDirectory=".\Release"
-            IntermediateDirectory=".\Release"
-            ConfigurationType="0"
-            UseOfMFC="0"
-            ATLMinimizesCRunTimeLibraryUsage="FALSE">
-            <Tool
-                Name="VCNMakeTool"
-                BuildCommandLine="cd ..\..\src\libEdr
-NMAKE /f &quot;Makefile.w32&quot;"
-                ReBuildCommandLine="cd ..\..\src\libEdr
-NMAKE /f &quot;Makefile.w32&quot; /a"
-                CleanCommandLine="cd ..\..\src\libEdr
-NMAKE /f &quot;Makefile.w32&quot; clean"
-                Output="..\..\lib\libEdr.dll"/>
-        </Configuration>
-    </Configurations>
-    <References>
-    </References>
-    <Files>
-        <Filter
-            Name="Source Files"
-            Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
-            <File
-                RelativePath="..\..\src\libEdr\EdbDataSet.cxx">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbGA.cxx">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbIP.cxx">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbPattern.cxx">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbPVRec.cxx">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbVertex.cxx">
-            </File>
-        </Filter>
-        <Filter
-            Name="Header Files"
-            Filter="h;hpp;hxx;hm;inl">
-            <File
-                RelativePath="..\..\src\libEdr\EdbDataSet.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbGA.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbIP.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbPattern.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbPVGen.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbPVRec.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdbVertex.h">
-            </File>
-            <File
-                RelativePath="..\..\src\libEdr\EdrLinkDef.h">
-            </File>
-        </Filter>
-        <Filter
-            Name="Resource Files"
-            Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
-        </Filter>
-    </Files>
-    <Globals>
-    </Globals>
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="libEdr"
+	SccProjectName=""
+	SccLocalPath=""
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEdr
+NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEdr
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEdr
+NMAKE clean"
+				Output="..\..\lib\libEdr.dll"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\..\src\libEdr\EdbDataSet.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbGA.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbIP.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbPattern.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbPVRec.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbVertex.cxx">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="..\..\src\libEdr\EdbDataSet.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbGA.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbIP.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbPattern.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbPVGen.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbPVRec.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbVertex.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdrLinkDef.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
 </VisualStudioProject>

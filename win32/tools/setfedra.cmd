@@ -1,7 +1,9 @@
-@:: SetFedra.cmd           Set variables for FEDRA
-@:: Gabriele Sirri (31-10-2003)
-
 @ECHO OFF
+:: SetFedra.cmd           Set variables for FEDRA
+:: Gabriele Sirri (31-10-2003)
+:: 
+:: OBSOLETE !!!!!!! used by install.cmd to remove the old variables
+
 	IF '%1'=='-m'       goto MACHINESETTINGS
 	IF '%1'=='-u'       goto USERSETTINGS
 goto HELP

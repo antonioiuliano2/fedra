@@ -22,11 +22,11 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\libEIO
-NMAKE /f &quot;Makefile.w32&quot;"
+NMAKE "
 				ReBuildCommandLine="cd ..\..\src\libEIO
-NMAKE /f &quot;Makefile.w32&quot; /a"
+NMAKE /a"
 				CleanCommandLine="cd ..\..\src\libEIO
-NMAKE /f &quot;Makefile.w32&quot; clean"
+NMAKE  clean"
 				Output="..\..\lib\libEIO.dll"/>
 		</Configuration>
 	</Configurations>

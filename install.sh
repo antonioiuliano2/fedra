@@ -5,7 +5,7 @@
 installdir=`pwd`
 if [[ ${installdir##*/} == "src" ]] ; then
  installdir=`cd ..; pwd`
-fi 
+fi
 export installdir=$installdir
 
 # making directories, if not already existing
@@ -36,6 +36,9 @@ echo "set links for libVt++ ..."
 ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
 ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
 
+chmod +x $PROJECT_SRC/libVt++/smatrix/CreateBinaryOp.sh
+chmod +x $PROJECT_SRC/libVt++/smatrix/CreateUnaryOp.sh
+chmod +x $PROJECT_SRC/libVt++/version.sh
 
 # create ProjectDef.mk in ./config-directory
 ProjectDef="$installdir/src/config/ProjectDef.mk"
@@ -48,6 +51,10 @@ echo 'INC_DIR = $(PROJECT_ROOT)/include' >> $ProjectDef
 echo >> $ProjectDef
 echo 'PROJECT_LIBS = -L$(LIB_DIR)' >> $ProjectDef
 
+# create RootDef.mk and TargetsDef.mk links
+configdir="$installdir/src/config"
+ln -fs $configdir/RootDef.linux.mk $configdir/RootDef.mk 
+ln -fs $configdir/TargetsDef.linux.mk $configdir/TargetsDef.mk 
 
 # create setup_new.sh, depending on default-shell used
 usedshell=`echo $SHELL`
@@ -57,7 +64,7 @@ if [[ (${usedshell##*/} == "tcsh") ||  (${usedshell##*/} == "csh") ]] ; then
  echo 'setenv  PATH ${PATH}:$FEDRA_ROOT/bin' >> $installdir/setup_new.sh
 fi
 
-if [[ (${usedshell##*/} == "bash") ||  ${usedshell##*/} == "sh" || ${usedshell##*/} == "ksh" ]] ; then 
+if [[ (${usedshell##*/} == "bash") ||  ${usedshell##*/} == "sh" || ${usedshell##*/} == "ksh" ]] ; then
  echo 'export FEDRA_ROOT='"$installdir" > $installdir/setup_new.sh
  echo 'export LD_LIBRARY_PATH=$FEDRA_ROOT/lib:${LD_LIBRARY_PATH}' >> $installdir/setup_new.sh
  echo 'export PATH=${PATH}:$FEDRA_ROOT/bin' >> $installdir/setup_new.sh
@@ -74,12 +81,3 @@ if [[ $yesno == 'y' ]] ; then
   cd $installdir/src
   $installdir/src/makeall.sh
 fi
-  
-   
- 
-  
-
-
-
- 
- 

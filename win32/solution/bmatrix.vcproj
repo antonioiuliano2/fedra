@@ -22,11 +22,11 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\appl\bmatrix
-NMAKE /f &quot;Makefile.w32&quot;"
+NMAKE"
 				ReBuildCommandLine="cd ..\..\src\appl\bmatrix
-NMAKE /f &quot;Makefile.w32&quot; /a"
+NMAKE /a"
 				CleanCommandLine="cd ..\..\src\appl\bmatrix
-NMAKE /f &quot;Makefile.w32&quot; clean"
+NMAKE clean"
 				Output="..\..\lib\bmatrix.dll"/>
 		</Configuration>
 	</Configurations>
