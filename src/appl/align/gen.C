@@ -29,12 +29,15 @@ void gen()
 
   ali->SetCouplesAll();
   ali->SetChi2Max(15);
-  ali->SetOffsetsMax(60,60);
+  ali->SetOffsetsMax(120,120);
   ali->Align();
   ali->PrintAff();
   ali->Link();
 
-  filltree(tree,ali,1);
+  filltree(tree,ali,0);
+
+  ali->MakeTracksTree();
+
 }
 
 ///------------------------------------------------------------

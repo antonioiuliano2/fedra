@@ -23,7 +23,9 @@ void link()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-  "/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl02/Sep2002_pl2_1.root"
+			       "/mnt/nusrv4_2/week/scan1.root"
+			       //"/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl02/Sep2002_pl2_1.root"
+			       //"/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_03010109_nc1.root"
    ,"READ");
 
   //                up base down  - nominal values during exposure (up/down are used for projection only)
@@ -45,12 +47,15 @@ void link()
 
   TIndexCell uplist;
   TIndexCell downlist;
-  make_views_map(edbRun,uplist,downlist);
+
+  make_views_coord_map(edbRun,uplist,downlist);
+  //make_views_map(edbRun,uplist,downlist);
+
+  int nareas= uplist->N(1);
 
   TIndexCell *up=0;
   TIndexCell *down=0;
 
-  int nareas= edbRun->GetHeader()->GetNareas();
   //for(int aid=1; aid<11; aid++) {
   for(int aid=0; aid<nareas+1; aid++) {
 
@@ -69,7 +74,7 @@ void link()
     ali->SetChi2Max(2.5);
     ali->Link();
 
-    filltree(tree, ali);
+    filltree(tree, ali,0);
     delete pvol;
     delete ali;
   }

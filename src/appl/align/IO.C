@@ -3,7 +3,7 @@ void make_views_map( EdbRun *edbRun, TIndexCell &up, TIndexCell &down )
   int nentr = edbRun->GetEntries();
   printf("Make views entry map,  nentr = %d\n",nentr);
 
-  Long_t v[2];
+  Long_t v[2];   // areaID,entry
   EdbViewHeader *head=0;
   for(int iv=0; iv<nentr; iv++ ) {
 
@@ -19,6 +19,107 @@ void make_views_map( EdbRun *edbRun, TIndexCell &up, TIndexCell &down )
       up.Add(2,v);
     }
   }
+
+  //up->PrintStat();
+  //down->PrintStat();
+}
+
+//--------------------------------------------------------------
+void make_views_coord_map( EdbRun *edbRun, TIndexCell &up, TIndexCell &down )
+{
+  int nentr = edbRun->GetEntries();
+  printf("Make views coordinate map,  nentr = %d\n",nentr);
+
+
+  TIndexCell upc;
+  TIndexCell downc;
+  Long_t v[3];   // x,y,entry
+  EdbViewHeader *head=0;
+
+  Long_t xx=0, yy=0;
+  float cx = 1000., cy = 1000.;  // 2x2 mm cells
+  float dx = 400. , dy = 400.;   // 400 microns margins
+  float xv,yv;
+  int mx[9] = {0, 0, 0,-1,  1, -1,-1, 1, 1};
+  int my[9] = {0,-1, 1, 0,  0, -1, 1,-1, 1};
+
+  for(int iv=0; iv<nentr; iv++ ) {
+
+    head = edbRun->GetEntryHeader(iv);
+    yv = head->GetXview();
+    xv = head->GetYview();
+    xx = xv/cx;
+    yy = yv/cx;
+    v[0] = xx;
+    v[1] = yy;
+    v[2] = iv;
+
+    if(head->GetNframesBot()==0) {              // fill up views
+      upc.Add(3,v);
+    }
+    else if(head->GetNframesTop()==0) {         // fill down views
+      downc.Add(3,v);                           // add center
+      for( int im=1; im<5; im++ ) {             // add sides margins
+	v[0] = ( xv+dx*mx[im] ) / cx;
+	v[1] = ( yv+dy*my[im] ) / cy;
+	if( (v[0] != xx) || (v[1] != yy) )
+	    downc.Add(3,v);
+      }
+      for( int im=5; im<9; im++ ) {             // add angles margins
+	v[0] = ( xv+dx*mx[im] ) / cx;
+	v[1] = ( yv+dy*my[im] ) / cy;
+	if( (v[0] != xx) && (v[1] != yy) )
+	  //	  if(!downc.Find(3,v))              
+	    downc.Add(3,v);
+      }
+
+    }
+
+  }
+
+  upc.Sort();
+  downc.Sort();
+
+  upc.SetName("x:y:entry");
+  downc.SetName("x:y:entry");
+
+  upc.PrintStat();
+  downc.PrintStat();
+
+  TIndexCell *clx=0;
+  TIndexCell *cly=0;
+
+  int areac=0;
+  int nix,niy,nie;
+  nix=upc.N(1);
+  for(int ix=0; ix<nix; ix++) {
+    clx = upc.At(ix);
+    xx = clx->Value();
+    niy=clx->N(1);
+    for(int iy=0; iy<niy; iy++) {
+      cly  = clx->At(iy);
+      yy = cly->Value();
+      areac++;
+
+      nie = cly->N(1);
+      for(int ie=0; ie<nie; ie++) {
+	v[0]=areac;
+	v[1]  = cly->At(ie)->Value();
+	up->Add(2,v);
+      }
+      
+      cly = downc.Find(xx)->Find(yy);
+      nie=cly->N(1);
+      for(int ie=0; ie<nie; ie++) {
+	v[0] = areac;
+	v[1] = cly->At(ie)->Value();
+	down->Add(2,v);
+      }
+    }
+  }
+
+  up->Sort();
+  down->Sort();
 
   up->PrintStat();
   down->PrintStat();
@@ -65,24 +166,26 @@ void getPatternEdb( EdbRun *edbRun,
 
   int nseg=0;
   int nentr = edbRun->GetEntries();
-  printf("nentr = %d\n",nentr);
+  //printf("nentr = %d\n",nentr);
 
   EdbViewHeader *head=0;
   int entry;
 
-  for(int iu=0; iu<elist->N(); iu++) {
+  int nsegV;
+  int niu=elist->N();
+  for(int iu=0; iu<niu; iu++) {
     entry = elist->At(iu)->Value();
     view = edbRun->GetEntry(entry);
 
 
     head = view->GetHeader();
 
-    printf(" View %d (%5.1f\% ): \t %d/%d ",
-  	   entry,100.*entry/nentr,head->GetNframesTop(),head->GetNframesBot() );
+    printf(" View %d : \t %d/%d ",
+  	   entry,head->GetNframesTop(),head->GetNframesBot() );
     nseg=0;
 
-    
-    for(int j=0;j<view->Nsegments();j++) {
+    nsegV=view->Nsegments();
+    for(int j=0;j<nsegV;j++) {
 
       seg = view->GetSegment(j);
 
@@ -207,7 +310,8 @@ void getDataTreeJ( const char *file,
     printf( "**** %d (%d)  nseg=%d  run: %d   event: %d  plate = %d\n",
 	    ipl,npl, rawdb->N(),rawdb->getRUN(),rawdb->getEVENT(),rawdb->getPOS() );
 
-    for( int i=0; i<rawdb->N(); i++ ) {
+    int nraw=rawdb->N();
+    for( int i=0; i<nraw; i++ ) {
       seg = (NSSegRawDB*)(rawdb->getSegments()->At(i));
 
       //if( TMath::Abs(seg->getAY()) < gAYcut ) continue;
@@ -272,7 +376,8 @@ void getDataTree( const char *file,
 
     printf( "**** npl=%d, nseg=%d \n",npl, rawdb->N() );
 
-    for( int i=0; i<rawdb->N(); i++ ) {
+    int nraw=rawdb->N();
+    for( int i=0; i<nraw; i++ ) {
       seg = (NSSegRawDB*)(rawdb->getSegments()->At(i));
 
       //if( TMath::Abs(seg->getAY()) < gAYcut ) continue;
@@ -365,12 +470,14 @@ void filltree( TTree *tree, EdbPVRec *al, int fillraw=0 )
   if(fillraw) {
     // **** fill tree with raw segments ****
     EdbPattern *pat=0;
-    for( int ip=0; ip<al->Npatterns(); ip++ ) {
+    int nic;
+    int nip=al->Npatterns();
+    for( int ip=0; ip<nip; ip++ ) {
       pat  = al->GetPattern(ip);
       pid1 = pat->ID();
       pid2 = -1;
-
-      for( int ic=0; ic<pat->N(); ic++ ) {
+      nic=pat->N();
+      for( int ic=0; ic<nic; ic++ ) {
 	s1 = pat->GetSegment(ic);
 	tree->Fill();
       }
@@ -380,12 +487,14 @@ void filltree( TTree *tree, EdbPVRec *al, int fillraw=0 )
   // **** fill tree with found couples ****
   s = new EdbSegP();
 
-  for( int ip=0; ip<al->Ncouples(); ip++ ) {
+  int nip=al->Ncouples();
+  for( int ip=0; ip<nip; ip++ ) {
     patc = al->GetCouple(ip);
     pid1 = patc->Pat1()->ID();
     pid2 = patc->Pat2()->ID();
 
-    for( int ic=0; ic<patc->Ncouples(); ic++ ) {
+    int nic=patc->Ncouples();
+    for( int ic=0; ic<nic; ic++ ) {
       //      printf("%d %d\n",ip,ic);
       cp = patc->GetSegCouple(ic);
       s1 = patc->Pat1()->GetSegment(cp->ID1());
