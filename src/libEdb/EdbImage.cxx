@@ -92,6 +92,16 @@ void EdbImage::AdoptImage(int columns, int rows, char *image, int col)
 }
 
 //______________________________________________________________________________
+Int_t EdbImage::FillBufferDouble( TArrayD &image ) const
+{
+  int npix = Width()*Height();
+  if(npix<=0) return 0;
+  image.Set(npix);
+  for(int i=0; i<npix; i++) image[i]=(Double_t)(Pixel(i));
+  return npix;
+}
+
+//______________________________________________________________________________
 void EdbImage::Print( Option_t *opt ) const
 {
   printf("Image: %d x %d \t :  %d bytes\n", eColumns, eRows, eBytes);
@@ -240,6 +250,32 @@ Int_t EdbImage::LoadPGM( char *file )
 }
 
 //____________________________________________________________________________________
+Int_t EdbImage::DumpPGM( char *file )
+{
+  //VT: 3/05/2004
+
+  FILE    *out = fopen( file, "w" );
+  if(!out) return 0;
+  fprintf(out,"P2\n");                           // grey-scale magic identifier
+  fprintf(out,"%d %d\n",Width(),Height());       // image size
+  fprintf(out,"255\n");                          // max pixel value
+  int nbytes = Width()*Height();
+  int ibyte=0;
+  unsigned char *buf = (unsigned char*)(eBuffer->GetArray());
+  while(1) {
+    for(int istr=0; istr<16; istr++)   {
+      fprintf(out,"%d ",(int)(buf[ibyte]));
+      ibyte++;
+      if(ibyte>=nbytes) break;
+    }
+    fprintf(out,"\n");
+    if(ibyte>nbytes-1) break;
+  }
+  fclose(out);
+  return ibyte;
+}
+
+//____________________________________________________________________________________
 Int_t EdbImage::LoadBMP( char *file )
 {
 /*
@@ -268,7 +304,7 @@ typedef struct {
 HEADER hdr;
 INFOHEADER ihdr;
  
- printf("hdr: %d    ihdr: %d\n",sizeof(hdr), sizeof(ihdr));
+//printf("hdr: %d    ihdr: %d\n",sizeof(hdr), sizeof(ihdr));
  char* ptr;
  fstream raw(file,ios::in | ios::binary);       // ios::binary added! 24.11.2003 (Stas)
  ptr=(char*)&hdr;

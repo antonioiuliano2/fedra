@@ -167,7 +167,8 @@ EdbFrame.o: /usr/include/libio.h /usr/include/_G_config.h
 EdbFrame.o: /usr/include/wchar.h /usr/include/bits/wchar.h
 EdbFrame.o: /usr/include/gconv.h /usr/include/bits/stdio_lim.h
 EdbFrame.o: /var/local/root/include/TGenericClassInfo.h
-EdbFrame.o: /var/local/root/include/TH2.h /var/local/root/include/TH1.h
+EdbFrame.o: /var/local/root/include/TArrayD.h /var/local/root/include/TH2.h
+EdbFrame.o: /var/local/root/include/TH1.h
 EdbFrame.o: /var/local/root/include/TVirtualHistPainter.h
 EdbFrame.o: /var/local/root/include/TClass.h
 EdbFrame.o: /var/local/root/include/TDictionary.h
@@ -181,7 +182,6 @@ EdbFrame.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbFrame.o: /var/local/root/include/TRefCnt.h /var/local/root/include/TAxis.h
 EdbFrame.o: /var/local/root/include/TAttAxis.h
 EdbFrame.o: /var/local/root/include/Gtypes.h
-EdbFrame.o: /var/local/root/include/TArrayD.h
 EdbFrame.o: /var/local/root/include/THashList.h
 EdbFrame.o: /var/local/root/include/TAttLine.h
 EdbFrame.o: /var/local/root/include/TAttFill.h
@@ -226,7 +226,6 @@ EdbImage.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbImage.o: /var/local/root/include/TRefCnt.h /var/local/root/include/TAxis.h
 EdbImage.o: /var/local/root/include/TAttAxis.h
 EdbImage.o: /var/local/root/include/Gtypes.h /var/local/root/include/Htypes.h
-EdbImage.o: /var/local/root/include/TArrayD.h
 EdbImage.o: /var/local/root/include/THashList.h
 EdbImage.o: /var/local/root/include/TAttLine.h
 EdbImage.o: /var/local/root/include/TAttFill.h
@@ -237,6 +236,7 @@ EdbImage.o: /var/local/root/include/TArrayF.h
 EdbImage.o: /var/local/root/include/Foption.h /var/local/root/include/TH2.h
 EdbImage.o: EdbImage.h /var/local/root/include/TArrayC.h
 EdbImage.o: /var/local/root/include/TArray.h
+EdbImage.o: /var/local/root/include/TArrayD.h
 EdbImage.o: /var/local/root/include/Riostream.h
 EdbOnline.o: /usr/include/string.h /usr/include/features.h
 EdbOnline.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
@@ -595,7 +595,6 @@ EdbView.o: /var/local/root/include/TH1.h
 EdbView.o: /var/local/root/include/TVirtualHistPainter.h
 EdbView.o: /var/local/root/include/TAxis.h /var/local/root/include/TAttAxis.h
 EdbView.o: /var/local/root/include/Gtypes.h /var/local/root/include/Htypes.h
-EdbView.o: /var/local/root/include/TArrayD.h
 EdbView.o: /var/local/root/include/THashList.h
 EdbView.o: /var/local/root/include/TAttLine.h
 EdbView.o: /var/local/root/include/TAttFill.h
@@ -609,9 +608,9 @@ EdbView.o: /var/local/root/include/X3DBuffer.h EdbCluster.h
 EdbView.o: /var/local/root/include/TClonesArray.h
 EdbView.o: /var/local/root/include/TObjArray.h EdbVirtual.h EdbFrame.h
 EdbView.o: EdbImage.h /var/local/root/include/TArrayC.h
-EdbView.o: /var/local/root/include/TArray.h EdbView.h
-EdbView.o: /var/local/root/include/TPolyMarker3D.h EdbAffine.h EdbSegment.h
-EdbView.o: EdbRun.h /var/local/root/include/TFile.h
+EdbView.o: /var/local/root/include/TArray.h /var/local/root/include/TArrayD.h
+EdbView.o: EdbView.h /var/local/root/include/TPolyMarker3D.h EdbAffine.h
+EdbView.o: EdbSegment.h EdbRun.h /var/local/root/include/TFile.h
 EdbView.o: /var/local/root/include/TCache.h /var/local/root/include/TTree.h
 EdbView.o: /var/local/root/include/TBranch.h
 EdbView.o: /var/local/root/include/TStringLong.h
@@ -659,7 +658,6 @@ EdbVirtual.o: /var/local/root/include/TAxis.h
 EdbVirtual.o: /var/local/root/include/TAttAxis.h
 EdbVirtual.o: /var/local/root/include/Gtypes.h
 EdbVirtual.o: /var/local/root/include/Htypes.h
-EdbVirtual.o: /var/local/root/include/TArrayD.h
 EdbVirtual.o: /var/local/root/include/THashList.h
 EdbVirtual.o: /var/local/root/include/TAttLine.h
 EdbVirtual.o: /var/local/root/include/TAttFill.h

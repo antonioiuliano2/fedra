@@ -14,6 +14,7 @@
 
 #include "TObject.h"
 #include "TArrayC.h"
+#include "TArrayD.h"
 
 class TH2F;
 class TH1F;
@@ -44,11 +45,14 @@ public:
   void AdoptImage(int columns, int rows, char *image, int col=256);
 
   void SetColors(int col) {eColors=col;}
-  char   *GetBuffer()         const { return eBuffer->GetArray(); }
+  char   *GetBuffer()            const { return eBuffer->GetArray(); }
+  Int_t   FillBufferDouble(TArrayD &image)  const;
   int    Pixel(int c, int r) const 
     { if(r<0) return 0; if(r>eRows)    return 0;
       if(c<0) return 0; if(c>eColumns) return 0;
-      return (int)(((unsigned char*)(eBuffer->GetArray()))[eColumns*r + c]); }
+      return Pixel(eColumns*r + c); }
+  int    Pixel(int ipix) const 
+    { return (int)(((unsigned char*)(eBuffer->GetArray()))[ipix]); }
   TH2F   *GetHist2(int flip=0) const;
   TH1F   *GetHist1() const;
 
@@ -57,6 +61,8 @@ public:
   Int_t   LoadPGM( char *file );
   Int_t   LoadRAW( char *file );
   Int_t   LoadBMP( char *file );
+
+  Int_t   DumpPGM( char *file );
 
   ClassDef(EdbImage,1)  // CCD Image in bytemap format
 };
