@@ -1,5 +1,5 @@
 //-- Author of drawing part : Igor Kreslo     27.11.2003
-//   Based on AliDisplay class (AliRoot framework - ALICE CERN
+//   Based on AliDisplay class (AliRoot framework - ALICE CERN)
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // EdbDisplay                                                           //
@@ -585,13 +585,13 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 
   EdbSegP *seg=0;
   line = new TPolyLine3D(tr->N());
-  for(int is=0; is<tr->N(); is++) {
+  for(int is=0; is<tr->NF(); is++) {
     seg = tr->GetSegmentF(is);
     if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
   }
   line->SetLineColor(kWhite);
   line->SetLineWidth(1);
-  line->SetLineStyle(2);
+  line->SetLineStyle(3);
   line->Draw();
 }
 
