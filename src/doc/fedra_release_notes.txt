@@ -1,19 +1,218 @@
-VT: 7/07/2003
+Date: Fri, 21 Nov 2003 19:49:04 +0100 (MET)
+From: Valeri Tioukov 
+Subject: Fedra release 21-11-03
 
-In new version of convertor (based on the new SysalDataIO) the eAreaID is 
-started from 1 instead of 0. 
+Dear friends,
 
-Schema evolution problems: eElements branch was commented out by 
-the //! in EdbSegment.h. Seems not back-compatible - the data should 
-be reconverted. The old data is readable anyway with no loading 
-libraries, but if new version of libraries are loaded them give segfault 
-(Views->Draw("eAreaID*121")
+I put on the cvs the new release of Fedra.
+
+The main new features:
+
+- all code is compilable under Win32 and gcc3.2, (not only gcc2.96 as before)
+- new building utilities for Windows (Gabriele)
+- new install script for Linux (Markus)
+- under windows new root was tested succesfully: root3.10.01gdk
+  (recommended by the root team). Fedra libraries tested with new root
+- some image processing tools (FIR, clasterization, etc) is added (Linux only yet)
+- event display (by Igor)  is added to the distribution as the separate library: libEdd
+- added the possibility to do the fast traceback (from track to raw segment)
+
+During this activity some bugs were introduced and then fixed, so if you got the
+code from the cvs in the last 3 weeks and experienced some crashes it could be useful
+to move to the last version.
+
+As concerning the priciple algorithms them do not changed in this version
+
+About the installation refere to the file
+http://ntslab01.na.infn.it/cgi-bin/cvsweb.cgi/fedra/README.INSTALL
 
 
-VT: 30/05/2003
- Framework for Emulsions Data Reconstruction and Analysis
- First tarball
- Main modules are:
- libEdb      - emulsion data storage
- libEdr      - reconstruction
- libEmath    - general algorithms
+Example of the Display usage:
+
+// Usage: (script testd.C)
+//
+//	EdbDisplay*  ds;
+//	void testd()
+//	{
+//	gSystem->Load("libEdd.so");
+//	gStyle->SetPalette(1);
+//	ds=new EdbDisplay("display-t",-6000.,6000.,-6000.,6000.,-20050,110.);
+//	ds->SetCuts(-9000,9000,-9000,9000); //Coordinate cuts
+//	  TTree *tree;
+//	  TFile *f = new TFile("linked_tracks.root");
+//	  if (f)  tree = (TTree*)f->Get("tracks");
+//	  ds->SetAffine(1,0,0,1,0,0);
+//	  ds->SetNsegmin(4);
+//	  ds->AddTracksTree(tree,0.,-1.,1.,-1.,1.);
+//	  ds->Refresh();
+//	}
+
+http://ntslab01.na.infn.it/cgi-bin/cvsweb.cgi/fedra/src/libEdd/testd.C
+
+
+Example of Image Processing usage in the interactive root session:
+
+  gStyle->SetPalette(1);
+  EdbImage *image = new EdbImage("/mnt/nusrv4_2/week/imm.bmp","BMP");
+  TH1F *h1 = image->GetHist1();               // pixels amplitude
+  TH2F *ccd = image->GetHist2(1);             // raw image (inverted)
+  EdbFIRF  *fir = new EdbFIRF("6x6A");
+  TH2F *img = fir->ApplyTo(image);            //filtered image
+  img->Draw("colZ");
+
+  EdbIP::Clusterize(img, 1000);    // find clusters with threshold 1000
+                                   // output went to clusters.root
+
+
+How to find the raw segment for a given track segment from tracks tree:
+
+linked_tracks.root: s.eVid[0] - pieceID (02001 = plate*1000+piece)
+                    s.eVid[1] - entry number in the correspondent couples tree
+
+02_001.cp.root:     s1.eVid[0] - viewID in the Views tree
+                    s1.eVid[1] - entryID in the array of segments
+                                 in the correspondent view
+
+
+
+
+
+-------------------------------------------------------------------------------
+Date: Fri, 17 Oct 2003 12:23:54 +0200 (MET DST)
+From: Valeri Tioukov 
+
+I put on the cvs the new tarball with the updated version. The list of
+the main new features:
+
+- new cards in the parameter file (default.par):
+
+	CLUST   0   # 1- with grains analysis (time consuming), 0 - no grains
+
+		if this card is 1, "recset -l" will read also grains from the Views tree.
+		For the time being the grain analisys is just the calculation of the sum of
+		all pixels/segment into the new variable of s1/s2 : eVolume.
+
+	#	   	  x0	  	 y0		z0	tx  ty
+	VOLUME0		-60000.		55000.		0.	0.  0.
+	VOLUMEA	  	 5000.	 	5000.
+
+		These 2 cards define the brick volume to be analised, defined as
+		the space point (x0,y0,z0), direction (tx,ty) and acceptance in (dx,dy).
+		(directions are assumed to be 0 for the moment)
+		The data selection is applied from the very beginning (from linking).
+		So in the above example only 1cm x 1cm zone with the center at (x0,y0)
+		will be readed from the raw data (Views tree) and linked.
+		The coordinates are the same wich arrive later to the couples tree:
+		stage coordinate if "AFID 0"
+		fiducial coordinates if "AFID 1".
+		It is very convenient with the new data set to select first the small area (volume),
+		in this case the full data chain upto tracking with N plates and tuning
+		of all parameters could be passed in a few minutes, after that the acceptance
+		could be increased.
+
+		If these 2 cards are commented out, x0 and y0 are assumed to be 0 with infinite
+		acceptance.
+
+		Once selected the center of dataset is better not to change it, in this
+		case the affine transformations (alignment) found with the different position
+		cuts will be compatible with high precision.
+
+New options of recset:
+
+recset { l | a | t | at | ...} input_data_set_file
+
+                  ccd - to remove ccd defects (update par/xxx.par file)
+                  l   - link up/down
+                  ang - correct up/down angles offset and rotations
+                  a   - plate to plate alignment
+                  at  - alignment+tracking (could be used for prealigned data)
+                  f   - fine alignment based on passed-throw tracks
+                  t   - tracking
+
+ccd - will update par/*.par files with the position cuts (XCUT) removing 1micron X 1micron area
+ 	around the peaks provocated by CCD spots. The procedure will be done for all data pieces
+	switched on in runs.lst file. This procedure should be done just once.
+
+l   - link up/down (as usual), calculate the shrinkage correction and update it
+	in par/*.par files (automatically)
+	If shrinkage is significantly changed - usefull to do one more iteration.
+
+ang - optional (see README for details)
+
+f   - (see README)
+
+Note that now all parameters corrections found by program will be automatically
+updated to correspondent par/*.par files. This updates could be checked and edited
+manually if necessary.
+
+Please check
+http://ntslab01/cgi-bin/cvsweb.cgi/fedra/src/appl/jun2003/README
+for the more details.
+
+
+-------------------------------------------------------------------------------
+Date: Tue, 30 Sep 2003 19:23:25 +0200 (MET DST)
+From: Valeri Tioukov
+
+
+I put on the CVS the new tarball with an updated version.
+The main new features:
+
+- new cards in parameter files:
+	AFID    0   # 1-use fiducial marks, 0 - stage coord (as written in run files)
+
+	# CUTCP can be used before alignment and linking:
+	# Max for:  	N1  	N1tot	N2 	N2tot	Chi2	Chi2P
+	CUTCP 0		1	10	1	10	5.	5.
+
+
+- automatic update of shrinkage after link procedure:
+	recset l ...
+	in *.par files appear new lines
+	SHRINK 1 ...
+	SHRINK 2 ...
+	if procedure repeated the new parameters will be taken from par files
+
+- automatic update of affine transformation after align procedure
+	recset a ...
+	in *.par files appear new line
+	AFFINE 0 ....
+	if procedure repeated the new parameters will be taken from par files
+	it is convenient to do first align iteration with small subset of data
+	(use ICUT 0.... ; XCUT 0 .... to reduce the amount of basetracks)
+
+- new options of recset:
+        recset { l | a | t | at} input_data_set_file
+
+                  l  - link up/down
+                  a  - plate to plate alignment
+                  t  - tracking
+                  at - alignment+tracking (could be used for prealigned data)
+
+- after tracking procedure 2 "new" output files:
+
+	recset [a]t ....
+
+	linked_couples.root - contained all couples for aligned and
+		linked patterns: basetrack<->basetrack
+	        The branches are:
+		s1 - first segment
+		s2 - second segment
+		s  - linked segment: s1+s2
+		cp - quality parameters
+
+	linked_tracks.root - contained all chains of segments for all patterns (aka tracks)
+		The branches are:
+		nseg - number of segments
+		s    - the array of segments with length = nseg
+		t    - one segment = Mean(all segments from s) i.e. "track"
+		npl  ==nseg at the moment
+		n0   - not used yet
+
+The code is fresh, so let me know about all possible inconsistencies. I decided
+to release it beacuse the additional output can be very useful for the analysis
+you are doing.
+
+Regards,
+Valeri
+
