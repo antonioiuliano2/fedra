@@ -35,7 +35,15 @@ default.par  - default parameters for data piece (see comments inside the file)
 	Here should be created (manually for the moment) parameter 
 	files per each data piece: see ./par/09_001.par as example.
 
-Data processing scheme:
+Data processing scheme (assuming that the data are converted by rwc2edb):
+
+0) check the quality of raw data you are going to process:
+
+	root> .x check_raw.C   - the script could be customized according to data specifics
+
+	define the Zbaze: the z-distance between up and down segments,
+	according to this value should be setted later cards  ZLAYER 1 and ZLAYER 2 in 
+	the default.par
 
 1) create the file XXXX_data_set.def and correspondent directory structure
 
@@ -72,6 +80,18 @@ Data processing scheme:
 	especially the SHRINK.
 	After corrections linking should be repeated for pieces with 
 	modified parameters.
+
+	If data do not linked correctly tune SHRINK parameter.
+
+	If them do not linked at all the  most probable reason is that:
+	ZLAYER 1 0   0 0
+	ZLAYER 2 214 0 0 
+
+	should be:
+
+	ZLAYER 2 0   0 0
+	ZLAYER 1 214 0 0 
+	
 	
 5) Alingment:
 	> recset a XXXX_data_set.def
@@ -98,6 +118,16 @@ Data processing scheme:
 	Note that alignment could be done for any number of plates >=2.
 	The most economic way to do it is by couples: 2->1; 3->2; etc.
 
+	If the alignment is failed the most probable reason that the plate 
+	Z coordinates should encrease to opposit direction.
+
+	Another possible reason that the plate-to-plate offset is too big - 
+	sometimes the "fiducial marks" are printed terribly bad - we observed 
+	the offsets upto 4 mm with the rotation upto 3 deg.
+	In this case one can try to scan without using of the fiducials - just 
+	reset stage coordinate on the angle of the plate and then use 
+	AFID 0  in default.par
+
 6) Track linking:
 	> recset t XXXX_data_set.def
 
@@ -106,6 +136,8 @@ Data processing scheme:
 	up/down linking and done for all couples of neibour plates, output 
 	is written to linked_tracks.root
 
+--------------------------------------------------
+VT: 22-Sep-2003
 --------------------------------------------------
 
 TODO list:
