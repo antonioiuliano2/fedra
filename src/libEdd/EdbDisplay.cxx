@@ -10,33 +10,23 @@
 //////////////////////////////////////////////////////////////////////////
 //
 //
-// Usage:
-//EdbDisplay*  ds;
-//void testd()
-//{
-//ds=new EdbDisplay("display-t",-6000.,6000.,-6000.,6000.,-50.,5060.);
-//float plate[3]={40.,214.,40.};
-//ds->SetCuts(0,1000,0,1000);
-//  TTree *tree;
-//  TFile *f = new TFile("aedb11.c.0.1.root");
-//  if (f)  tree = (TTree*)f->Get("couples");
-//  ds->SetAffine(1.000124, -0.000670, 0.000435, 0.999706,        83.550468, -806.370361);
-//  ds->AddCouplesTree(tree,plate,0);
-//  TFile *f = new TFile("aedb12.c.0.1.root");
-//  if (f)  tree = (TTree*)f->Get("couples");
-//  ds->SetAffine(1.000049, 0.001917, -0.002245, 0.999782,        14.215584, -1170.401733);
-//    ds->AddCouplesTree(tree,plate,1300);
-//  TFile *f = new TFile("aedb13.c.0.1.root");
-//  if (f)  tree = (TTree*)f->Get("couples");
-//  ds->SetAffine(1.000207, 0.000725, -0.000861, 0.999999,        20.532038, -1145.611572);
-//    ds->AddCouplesTree(tree,plate,2600);
-//  TFile *f = new TFile("aedb14.c.0.1.root");
-//  if (f)  tree = (TTree*)f->Get("couples");
-//  ds->SetAffine(1,0,0,1,0,0);
-//  ds->AddCouplesTree(tree,plate,3900);
-//  ds->Refresh();
-//}
+// Usage: (script testd.C)
 //
+//	EdbDisplay*  ds;
+//	void testd()
+//	{
+//	gSystem->Load("libEdd.so");
+//	gStyle->SetPalette(1);
+//	ds=new EdbDisplay("display-t",-6000.,6000.,-6000.,6000.,-20050,110.);
+//	ds->SetCuts(-9000,9000,-9000,9000); //Coordinate cuts
+//	  TTree *tree;
+//	  TFile *f = new TFile("linked_tracks.root");
+//	  if (f)  tree = (TTree*)f->Get("tracks");
+//	  ds->SetAffine(1,0,0,1,0,0);
+//	  ds->SetNsegmin(4);
+//	  ds->AddTracksTree(tree,0.,-1.,1.,-1.,1.);
+//	  ds->Refresh();
+//	}
 //
 //
 
@@ -77,6 +67,7 @@ EdbDisplay::EdbDisplay(const char *title, Float_t x0, Float_t x1 , Float_t y0, F
       cutY1=100000.;
       eNsegmax=100;
       eNsegmin=2;
+      eNpieces=0;
       eTr_Co=kFALSE; // Default - show couples
       MaxChi=kTRUE;
       (new TButton("Best Chi2","((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->MaxChi=kTRUE;((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->Refresh();",0.1,0.96,0.3,0.99))->Draw();
@@ -150,7 +141,9 @@ void EdbDisplay::Refresh()
    x0=seg->X();
    y0=seg->Y();
    z0=seg->Z();
-  if((*DZs)[j]<=0) DZ=(seg->W())/2.;
+//  if((*DZs)[j]<=0) DZ=(seg->W())/2.;
+//   DZ=(seg->Volume())/2.;
+   DZ=(seg->DZ())/2.;
    x[1]=x0+tx*DZ;
    y[1]=y0+ty*DZ;
    z[1]=z0+DZ;
@@ -160,7 +153,8 @@ void EdbDisplay::Refresh()
    fImagepad->cd();
    pl= new TPolyLine3D(2,x,y,z);
    if(color>=0) pl->SetLineColor(color);
-   else pl->SetLineColor(gStyle->GetColorPalette(seg->PID()*4+1));
+   else pl->SetLineColor(gStyle->GetColorPalette(int(46.*(1.-1.*seg->PID()/eNpieces))));
+   pl->SetLineWidth(int(seg->W()));
    if(seg->Flag()==-1) pl->SetLineColor(kWhite);
    pl->Draw();
   }
@@ -180,7 +174,7 @@ void EdbDisplay::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 }
 
 //________________________________________________________________________
-void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
+void EdbDisplay::AddCouplesTree(TTree* tree,  Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
 {
   printf("Reading tree..\n");
   EdbSegCouple    *cp = 0;
@@ -217,13 +211,20 @@ void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Floa
     s->SetZ(s->Z()+Zoffs);
     s1->SetZ(s1->Z()+Zoffs);
     s2->SetZ(s2->Z()+Zoffs);
-    s->SetW(fabs(s2->Z()-s1->Z()));
+//    s->SetW(fabs(s2->Z()-s1->Z()));
+    s->SetW(1);
+    s1->SetW(2);
+    s2->SetW(2);
     if(cp->N1()==1 && cp->N2()==1) s->SetFlag(1); else s->SetFlag(0);
     if(cp->N1()==1 && cp->N2()==1) s1->SetFlag(1); else s1->SetFlag(0);
     if(cp->N1()==1 && cp->N2()==1) s2->SetFlag(1); else s2->SetFlag(0);
 //    s1->SetFlag(1);
 //    s2->SetFlag(1);
 //    if(s->Flag()==1) s->SetFlag(gStyle->GetColorPalette(pid2*5+1));
+     s->SetDZ(fabs(s1->Z()-s2->Z())-fabs(s1->DZ()));
+//     s->SetVolume(fabs(s1->Z()-s2->Z())-plate[2]);
+//     s1->SetVolume(plate[0]);
+//     s2->SetVolume(plate[2]);
     alic->AddSegment( *s );
     alisu->AddSegment( *s1 );
     alisd->AddSegment( *s2 );
@@ -233,18 +234,20 @@ void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Floa
 //     alic->ProjectTo(-plate[1]/2.-plate[0]/2.);
 //     AddPattern(alisu,kRed,plate[0]);
 //     AddPattern(alisd,kBlue,plate[2]);
-     AddPattern(alic,-1,plate[1]);
+     AddPattern(alic,-1);
 
 
 }
 
 
 //________________________________________________________________________
-void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
+void EdbDisplay::AddTracksTree(TTree* tree, Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
 {
   printf("Reading tree..\n");
   EdbSegP         *t = 0;
   EdbSegP         *s  = 0;
+  EdbSegP         *so  = 0;
+  EdbSegP         *sc  = 0;
   TClonesArray   *as = 0;
   Int_t           nseg;
   
@@ -256,8 +259,9 @@ void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float
 
   int ntrcks = 0;
     EdbPattern* alic      =  new EdbPattern(0.,0.,0.);
+    EdbPattern* alicon      =  new EdbPattern(0.,0.,0.);
     EdbPattern* alit      =  new EdbPattern(0.,0.,0.);
-  Float_t candZ;
+//  Float_t candZ;
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
 //    printf("Entry %d nseg %d\n",i,nseg);
@@ -279,7 +283,22 @@ void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float
     s->SetZ(s->Z()+Zoffs);
 //    candZ=2.*fabs(s->Z()-t->Z());
 //    if(candZ>t->W()) t->SetW(candZ);
+//    s->SetVolume(plate[0]); //seg length for display
+    s->SetW(2); //width for display
     alic->AddSegment( *s );
+    //Draw connecting line
+    if(ci>0) so=(EdbSegP*)(as->At(ci-1)); else so=s;
+    sc=(EdbSegP*)s->Clone();
+    sc->SetZ((s->Z()+so->Z())/2.);
+    sc->SetX((s->X()+so->X())/2.);
+    sc->SetY((s->Y()+so->Y())/2.);
+    sc->SetTX((s->X()-so->X())/(s->Z()-so->Z()));
+    sc->SetTY((s->Y()-so->Y())/(s->Z()-so->Z()));
+//    sc->SetVolume(fabs(s->Z()-so->Z())-plate[0]);
+    sc->SetDZ(fabs(s->Z()-so->Z())-fabs(s->DZ()));
+    sc->SetW(1);
+    alicon->AddSegment( *sc );
+    if(sc->PID()>eNpieces) eNpieces=sc->PID();
     }
     alit->AddSegment( *t );
      ntrcks++;
@@ -288,7 +307,8 @@ void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float
 //     alic->SetID(1);
 //     alit->SetID(2);
 //     AddPattern(alit,kYellow,-1);
-     AddPattern(alic,-1,plate[1]);
+     AddPattern(alic,-1);
+     AddPattern(alicon,-1);
      printf("%d tracks to display.\n",ntrcks);
 
 
@@ -296,12 +316,12 @@ void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float
 
 
 //________________________________________________________________________
-void EdbDisplay::AddPattern(EdbPattern* pat, Int_t color,Float_t DZ)
+void EdbDisplay::AddPattern(EdbPattern* pat, Int_t color)
 {
  Npats++;
  DZs->Set(Npats);
  colors->Set(Npats);
- (*DZs)[Npats-1]=DZ;
+// (*DZs)[Npats-1]=DZ;
  (*colors)[Npats-1]=color;
  printf("Adding pattern.\n");
  new ((*pats)[Npats-1]) EdbPattern(0,0,0);
@@ -312,13 +332,13 @@ void EdbDisplay::AddPattern(EdbPattern* pat, Int_t color,Float_t DZ)
 }
 
 //________________________________________________________________________
-void EdbDisplay::AddPatternsVolume(EdbPatternsVolume* pat, Int_t colorU, Int_t colorD, Float_t DZU, Float_t DZD)
+void EdbDisplay::AddPatternsVolume(EdbPatternsVolume* pat, Int_t colorU, Int_t colorD)
 {
  printf("Adding pattern volume.\n");
  EdbPattern* ptt;
  for(int i=0;i<pat->Npatterns();i++) {
    ptt=pat->GetPattern(i);
-   if(ptt->ID()==1) AddPattern(ptt,colorU,DZU);
-   else                AddPattern(ptt,colorD,DZD);
+   if(ptt->ID()==1) AddPattern(ptt,colorU);
+   else                AddPattern(ptt,colorD);
  }
 }

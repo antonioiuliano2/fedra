@@ -44,7 +44,7 @@ private:
 	 TArrayF* DZs;
 	 Int_t Npats;
 	 Float_t vx0,vy0,vz0,vx1,vy1,vz1;
-	 Int_t eNsegmax,eNsegmin;
+	 Int_t eNsegmax,eNsegmin,eNpieces;
 	 Bool_t eTr_Co; // Tracks/Couples switch
 
 public:
@@ -58,10 +58,10 @@ Bool_t MaxChi;
     void SetShowCouples(){eTr_Co=kFALSE;};
     void SetCuts(Float_t x0, Float_t x1 , Float_t y0, Float_t y1){cutX0=x0;cutX1=x1;cutY0=y0;cutY1=y1;}
     void SetAffine(Float_t a1, Float_t a2, Float_t a3, Float_t a4, Float_t ax, Float_t ay);
-    void AddPattern(EdbPattern* pat, Int_t color, Float_t DZ);
-    void AddPatternsVolume(EdbPatternsVolume* pat, Int_t colorU, Int_t colorD, Float_t DZU, Float_t DZD);
-    void AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
-    void AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
+    void AddPattern(EdbPattern* pat, Int_t color);
+    void AddPatternsVolume(EdbPatternsVolume* pat, Int_t colorU, Int_t colorD);
+    void AddCouplesTree(TTree* tree,Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
+    void AddTracksTree(TTree* tree, Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
 //    void AddLinkedCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs=0, );
     void Refresh();
     virtual void ExecuteEvent(Int_t event, Int_t px, Int_t py);
