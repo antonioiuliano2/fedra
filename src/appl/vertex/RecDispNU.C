@@ -13,15 +13,25 @@ bool  scanning = false;  // scanning mode - reconstruct and draw event by event
 bool  write_mc_data = false; // write MC data for using with RecDispMC.C script
 bool  smear = true; // smear segments with measurement errors
 bool  setz = true; // set Z for segments
+// background (not implemented yet!)
 float back1_tetamax =  0.35; // angle acceptance for uncorrelated background
 float back2_tetamax =  0.25; // angle acceptance for cosmictracks
 float back2_plim[2] = {0.5, 5.5}; // momentum range for cosmic
-float fiducial_border = 20000.;
-float fiducial_border_z = 20000.;
+float fiducial_border = 20000.;      // Working brick area is:
+float fiducial_border_z = 20000.;    // xmin = brick.xmin + fiducial_border
+				     // xmax = brick.xmax - fiducial_border
+				     // ymin = brick.ymin + fiducial_border
+				     // ymax = brick.ymax - fiducial_border
+				     // zmin = fiducial_border_z
+				     // zmax = brick.zmax - fiducial_border_z
+				     // note: tracks orinated from this
+				     // fiducial volume not limited by this
+				     // volume, but total brick volume
 float dpp = 0.20;   // average dp/P 
 float seg_s[4]={1.2, 1.2, 0.0015, 0.0015}; // sx,sy,stx,sty
 float ProbGap = 0.10; // probability to have pattern hole
-float RightRatioMin = 0.5;
+float RightRatioMin = 0.5; // minimal contamination of "right" segments in
+			   // reconstructed track
 
 int maxgaps[6] = {0,3,3,6,3,6}; // all combinations
 
@@ -51,7 +61,7 @@ float ProbMinVN = 0.01;      // min vertex probability
 float ProbMinP  = 0.01;     // minimal propagate probability
 float ProbMinT  = 0.01;     // minimal track probability to be used for vtx
 int   nsegMin = 2;          // minimal number segments for track to be used for vtx
-bool  usemom=false;
+bool  usemom=false;	    // using or not tracks momenta in vertex fitting
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -72,22 +82,31 @@ using namespace VERTEX;
 
 const char filename[256];
 const char *INfile = &filename[0];
-TFile *fmicro;
-My_Track *micro = 0;
-TTree *TreeMS = 0;
-int Ntr = 0, Nvt = 0, MaxTrack = 0, MaxVertex = 0, Ntrg = 0, Nvtg = 0;
-int Nst[500];
-int PdgId[500];
-int Numgent[500];
-int Numgenv[500];
-int nvggood = 0;
-float Pt[500];
-float TXt[500];
-float TYt[500];
-float NVt[500];
-float DIRt[500];
-float VTx[500], VTy[500], VTz[500], Nvtr[500], Numvtr[500][500];
-float TMass[500];
+TFile *fmicro;       // ROOT file with microtracks
+My_Track *micro = 0; // microtrack object
+TTree *TreeMS = 0;   // microtracks tree
+int Ntr = 0;       // count all Geant tracks
+int Nvt = 0;       // count all Geant vertexes
+int MaxTrack = 0;  // maximal Geant track index
+int MaxVertex = 0; // maximal Geant vertex index
+int Nst[500];     // number of segments for corresponding Geant track index
+int PdgId[500];   // PDG particle Id for corresponding Geant track index
+int Numgent[500]; // PVGen track number for corresponding Geant track index
+int Numgenv[500]; // Geant vertex number for corresponding PVGen vertex index
+int nvggood = 0;  // count accepted generated vertexes
+int ntrgood_gen1 = 0; // primary vertex generated multiplicity (accepted tracks)
+int ntgood = 0; // count accepted tracks
+float Pt[500];    // momentum for corresponding Geant track index
+float TXt[500];   // Slope X for corresponding Geant track index
+float TYt[500];   // Slope Y for corresponding Geant track index
+int   NVt[500];   // Geant vertex index for corresponding Geant track index
+float DIRt[500];  // z-direction for corresponding Geant track index
+float VTx[500], VTy[500], VTz[500]; // vertex coordinates for corresponding
+				    // Geant vertex index
+float Nvtr[500]; // vertex multiplicity for corresponding Geant vertex index
+float Numvtr[500][500]; // Numvtr[i][j] is Geant track index for "j"-th track
+			// at vertex with Geant vertex index "i"
+float TMass[500];       // mass for corresponding Geant track index
 
 EdbDataProc  *dset=0;
 EdbDisplay   *ds=0;
@@ -95,10 +114,12 @@ EdbDisplay   *ds2=0;
 EdbPVRec     *gAli=0;
 EdbPVGen     *gener=0;
 EdbPatternsVolume *vol=0;
-EdbScanCond  *scan = 0;
-int evnum = 0;
-float z0shift = 295.;
-int nutypes = 2;
+EdbScanCond  *scan=0;
+
+int evnum = 0; // current event number in scan mode
+float z0shift = 295.; // shift on Z-coordinate of origin
+int nutypes = 0; // nutypes = 0 - NC events, 1 - CC events in scanning mode 
+
 //---------------------------------------------------------
 void scan()
 {
@@ -131,7 +152,6 @@ void scan1()
 	 {
 	    printf("No more events!");
 	    evnum = 0;
-	    nutypes = 2;
 	    scanning = false;
 	    return;
 	 }
@@ -154,8 +174,8 @@ void run(int ib = 1, int ie = 100, int nutype = 2)
 
     char line[80], nusmtype[7], nutyp[3];
     FILE *frunlist = 0; 
-    int i, j, k, l, Event, evold;
-    int Event, Track, nV, Trackold, Vertexold;
+    int i, j, k, evold;
+    int Event, Track, nV;
     float Vt, Vx, Vy, Vz, VPx, VPy, VPz, Tx, Ty, P;
 
     // initialize Geant Codes arrays
@@ -177,8 +197,10 @@ void run(int ib = 1, int ie = 100, int nutype = 2)
     {
       if (nut == 0 && nutype == 1) continue;
       if (nut == 1 && nutype == 0) continue;
+      // build dir and file names for corresponding collection
       if (nut == 0) { strcpy(nusmtype, "NC"); strcpy(nutyp, "nc"); }
       if (nut == 1) { strcpy(nusmtype, "CC"); strcpy(nutyp, "cc"); }
+      // use data w/o smearing at generation phase
       if (smear == 1) strcat(nusmtype,"_NOS");
       // loop on events in selected (NC or CC) collection
       for (i = ib; i <= ie; i++)
@@ -208,8 +230,6 @@ void run(int ib = 1, int ie = 100, int nutype = 2)
 	for (j = 0; j<500; j++) VTx[j] = -1000000.;
 	Ntr = 0;
 	Nvt = 0;
-	Ntrg = 0;
-	Nvtg = 0;
 	for (j = 0; j<500; j++) Nst[j] = 0;
 	for (j = 0; j<500; j++) Nvtr[j] = 0;
 	for (j = 0; j<500; j++) Numgent[j] = -1;
@@ -308,54 +328,17 @@ void RecDispNU()
 {
   init_rec();
 }
-
 //---------------------------------------------------------
-void init_rec(char *data_set="data_set.def")
+void FillPVGen()
 {
-
-  Vertex *v = 0, *vc = 0;
-  int Track = 0;
-
-  if (Geant[11] != 3) GCodesInit();
-
-  // delete previous objects
-  if (dset)
-  {
-    if (gAli->eVTX) gAli->eVTX->Delete();
-    if (gAli->eTracks) gAli->eTracks->Delete();
-    gAli->ResetCouples();
-    int npat=gAli->Npatterns();
-    TClonesArray *segs = 0;
-    for(int i=0; i<npat; i++ )
-	if ( segs = (gAli->GetPattern(i))->GetSegments()) segs->Delete();
-    delete dset;
-    dset = 0;
-    gAli = 0;
-  }
-  if (gener)
-  {
-    delete gener;
-    gener = 0;
-  }
-
-  dset=new EdbDataProc(data_set);
-  dset->InitVolume(0);
-  gAli = dset->PVR();
-
-  vol=(EdbPatternsVolume*)gAli;
-  gener = new EdbPVGen();
-  gener->SetVolume(vol);
-  gener->eVTX = new TObjArray(1000);
-  scan = gAli->GetScanCond();
-  gener->SetScanCond(scan);
-
   EdbTrackP *trg = 0;
   EdbVertex *vert = 0;
-  int numv = 0, numt = 0, nv = 0, Track = 0, ntgood = 0, ntgoodv = 0, ntrgood_gen1 = 0;
+  int numt = 0, Track = 0, ntgoodv = 0;
   nvggood = 0;
+  ntgood  = 0;
 
   SmearSegments();
-  // loop on event vertexes
+  // loop on event vertexes and fill PVGen with vertexes and tracks
   for (int iv = 0; iv <= MaxVertex; iv++)
   {
 	    if (VTx[iv] != -1000000.)
@@ -374,7 +357,7 @@ void init_rec(char *data_set="data_set.def")
 			ntgood++;
 			trg = new EdbTrackP(); 
 			Numgent[Track] = numt;
-	    		trg->Set(numt++, VTx[iv], VTy[iv], TXt[Track], TYt[Track], Nst[Track], nv+1);
+	    		trg->Set(numt++, VTx[iv], VTy[iv], TXt[Track], TYt[Track], Nst[Track], nvggood+1);
 			trg->SetZ(VTz[iv]-z0shift);
 			trg->SetP(Pt[Track]);
 			if (TMass[Track] < 0.)
@@ -434,6 +417,51 @@ void init_rec(char *data_set="data_set.def")
 		}
 	    }
   }
+}
+//---------------------------------------------------------
+void init_rec(char *data_set="data_set.def")
+{
+
+  EdbTrackP *trg = 0;
+  Vertex *v = 0, *vc = 0;
+  int Track = 0;
+
+  if (Geant[11] != 3) GCodesInit();
+
+  // delete previous objects
+  if (dset)
+  {
+    if (gAli->eVTX) gAli->eVTX->Delete();
+    if (gAli->eTracks) gAli->eTracks->Delete();
+    gAli->ResetCouples();
+    int npat=gAli->Npatterns();
+    TClonesArray *segs = 0;
+    for(int i=0; i<npat; i++ )
+	if ( segs = (gAli->GetPattern(i))->GetSegments()) segs->Delete();
+    delete dset;
+    dset = 0;
+    gAli = 0;
+  }
+  if (gener)
+  {
+    delete gener;
+    gener = 0;
+  }
+
+  dset=new EdbDataProc(data_set);
+  dset->InitVolume(0);
+  gAli = dset->PVR();
+
+  vol=(EdbPatternsVolume*)gAli;
+  gener = new EdbPVGen();
+  gener->SetVolume(vol);
+  gener->eVTX = new TObjArray(1000);
+  scan = gAli->GetScanCond();
+  gener->SetScanCond(scan);
+
+  // fill PVGen object with generated vertexes and tracks
+  FillPVGen();
+  // if nothing generated
   if (!(gener->eVTX) || !(gener->eTracks) || (nvggood == 0))
   {
     if (hp[25]) hp[25]->Fill(0.);
@@ -441,16 +469,19 @@ void init_rec(char *data_set="data_set.def")
     return;
   }
 
-  // fill hists with generated parameters
+  // fill hists with generated tracks parameters
   FillHistsGen();
+
   // link microtracks
   gAli->Link();
 
-  printf("Monte-Carlo Ntr = %d Nvt = %d MaxTrackNumber = %d MaxVertexNumber = %d\n", ntgood, nv, MaxTrack, MaxVertex);
   if (hp[25]) hp[25]->Fill((float)ntgood);
   if (hp[26]) hp[26]->Fill((float)nvggood);
 
   gAli->FillTracksCell();
+
+  printf("Monte-Carlo Ntr = %d Nvt = %d MaxTrackIndex = %d MaxVertexIndex = %d\n", ntgood, nvggood, MaxTrack, MaxVertex);
+
   // make track candidates
   gAli->MakeTracks();
 
