@@ -15,6 +15,7 @@
 
 class EdbImage;
 class EdbFrame;
+class TTree;
 
 //______________________________________________________________________________
 class EdbFIRF : public TNamed {
