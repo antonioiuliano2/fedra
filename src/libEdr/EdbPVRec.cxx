@@ -399,14 +399,20 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
   EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
 
-  float sx   = eCond->SigmaX(0);
-  float sy   = eCond->SigmaY(0);
-  float stx   = eCond->SigmaTX(0);
-  float sty   = eCond->SigmaTY(0);
+  float tx,sx,sy,stx,sty;
 
+  tx = TMath::Sqrt(s1->TX()*s1->TX()+s1->TY()*s1->TY());
+  sx    = eCond->SigmaX(tx);
+  sy    = eCond->SigmaY(0);
+  stx   = eCond->SigmaTX(tx);
+  sty   = eCond->SigmaTY(0);
   float sx2 = sx*sx, sy2 = sy*sy, sz2 = 0., stx2 = stx*stx, sty2= sty*sty;
-
   s1->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
+
+  tx = TMath::Sqrt(s2->TX()*s2->TX()+s2->TY()*s2->TY());
+  sx    = eCond->SigmaX(tx);
+  stx   = eCond->SigmaTX(tx);
+  sx2 = sx*sx; stx2 = stx*stx;
   s2->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
 
   if(scp->eS) delete (scp->eS);
@@ -1024,6 +1030,7 @@ void EdbPVRec::SetCouplesAll()
 {
   EdbPatCouple *pc = 0;
   int npat=Npatterns();
+  for(int i=0; i<npat; i++ ) GetPattern(i)->SetSegmentsPID();
   for(int i=0; i<npat-1; i++ ) {
     pc = new EdbPatCouple();
     pc->SetID(i,i+1);
@@ -1598,7 +1605,7 @@ int EdbPVRec::MergeTracks1(int maxgap)
 		 s2->TX()-s1->TX(), s2->TY()-s1->TY(),
 		 tre->N(),trs->N() );
 
-	  printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(*s1,*s2, 5810., tre->M()) );
+	  printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(s1,s2, 5810., tre->M()) );
 
 	  tre->AddTrack(*trs);
 	  tre->FitTrackKFS(true);
@@ -1731,7 +1738,7 @@ int EdbPVRec::MakeTracks(int nsegments)
     for(int is=0; is<nseg; is++) {
       vid = ct->At(is)->Value();
       seg = GetSegment(vid);
-      seg->SetPID( Pid(vid) );
+      //seg->SetPID( Pid(vid) );   //TODO check!!!
       if(seg->Flag()<0) n0++;
       track->AddSegment(seg);
     }
@@ -1750,7 +1757,9 @@ int EdbPVRec::MakeTracksTree()
 {
   if(!eTracks) return 0;
 
-  TFile fil("linked_tracks.root","RECREATE");
+  char *file="linked_tracks.root";
+  printf("\nwrite tracks into %s ...\t ",file);
+  TFile fil(file,"RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
   EdbTrackP    *track = new EdbTrackP(8);
@@ -1800,7 +1809,7 @@ int EdbPVRec::MakeTracksTree()
 
   tracks->Write();
   fil.Close();
-  printf("%d tracks are written in tracks tree\n",ntr);
+  printf("%d tracks are written \n",ntr);
   return ntr; 
 }
 
@@ -1982,7 +1991,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
     for(is=0; is<nct; is++) {
       vid1 = ct->At(is)->Value();
       seg = GetPattern(Pid(vid1))->GetSegment(Sid(vid1));
-      seg->SetPID(Pid(vid1));
+      //seg->SetPID(Pid(vid1));
       track->AddSegment(seg);
     }
 
@@ -2038,14 +2047,14 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
 
 	if(tr->Flag()==-10) continue; 
 
-	printf("propagate track: %d with %d segments ",tr->ID(),tr->N());
+	printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
 	nseg = PropagateTrack(*tr, true);
   	nsegTot += nseg;
 	printf("\t %d after true ",tr->N());
 
-	if(tr->Npl()>nplmax)  { printf("\n"); continue;}
-	if(tr->Flag()==-10)   { printf("\n"); continue;}
+	if(tr->Npl()>nplmax)   continue;
+	if(tr->Flag()==-10)    continue;
 
   	nseg = PropagateTrack(*tr, false);
   	nsegTot += nseg;
@@ -2091,29 +2100,32 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
     arr.Clear();
     nseg = pat->FindCompliments(ss,arr,binx,bint);
 
-    float probmax=0, prob;
+    float probmax=0, prob=0;
     segmax=0;
-
     if(nseg==1)   {                           // TODO add segment owner logic
       probmax=1.;
       segmax = (EdbSegP*)(arr.At(0));
     } else if(nseg>1) {
       for(int is=0; is<nseg; is++ ) {
 	seg = (EdbSegP*)(arr.At(is));
-	prob = EdbVertexRec::ProbeSeg( tr, *seg, X0 );
-	if( prob>probmax ) { probmax=prob; segmax=seg; }  
+	prob = EdbVertexRec::ProbeSeg( &tr, seg, X0 );
+	if( prob>probmax ) { probmax=prob; segmax=seg; }
       }
-    } else continue;
+    }
     if(!segmax) continue;
 
     int trind= segmax->Track();
-    //printf(" trind = %d \n", trind);
+
     if( trind >= 0 && trind<ntr ) {
       EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
       if( ttt->N() > tr.N() ) {
 	tr.SetFlag(-10);
-	continue;
-      } else ttt->SetFlag(-10);
+	tr.SetSegmentsTrack(-1);
+	return 0;
+      } else {
+	ttt->SetFlag(-10);
+	ttt->SetSegmentsTrack(-1);
+      }
     }
 
     if(probmax>probMin) {
@@ -2122,18 +2134,14 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 	tr.SetNpl();
 
 	tr.FitTrackKFS(followZ);           // TODO remove refit?
+	tr.SetSegmentsTrack();
 
 	tr.MakeSelector(ss,followZ);
 	nsegTot++;
       }
     }
-
-    //printf("i = %d    nseg = %d  nsegTot = %d  entries= %d \t probmax= %f\n", 
-    //   i, nseg, nsegTot, tr.N(), probmax);
-
   }
 
-  //printf("%d segments are attached \n",nsegTot);
   return nsegTot;
 }
 
@@ -2149,10 +2157,11 @@ int EdbPVRec::ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr,
 
   EdbPattern *pat  = 0;
   int nseg =0;
+
   for(int i=0; i<npat; i++) {
     pat = GetPattern(i);
     if(!pat)                   continue;
-    ss.PropagateTo(pat->Z());
+    //ss.PropagateTo(pat->Z());
 
     nseg += pat->FindCompliments(ss,arr,binx,bint);
   }

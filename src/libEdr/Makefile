@@ -93,6 +93,7 @@ EdbDataSet.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbDataSet.o: /var/local/root/include/TClass.h
 EdbDataSet.o: /var/local/root/include/TDictionary.h
 EdbDataSet.o: /var/local/root/include/Property.h
+EdbDataSet.o: /var/local/root/include/TSortedList.h
 EdbDataSet.o: /var/local/root/include/TArrayL.h
 EdbDataSet.o: /var/local/root/include/TMatrixD.h
 EdbDataSet.o: /var/local/root/include/TVectorD.h
@@ -218,6 +219,7 @@ EdbPVGen.o: /var/local/root/include/TClass.h
 EdbPVGen.o: /var/local/root/include/TDictionary.h
 EdbPVGen.o: /var/local/root/include/Property.h
 EdbPVGen.o: /var/local/root/include/TObjArray.h
+EdbPVGen.o: /var/local/root/include/TSortedList.h
 EdbPVGen.o: /var/local/root/include/TArrayL.h
 EdbPVGen.o: /var/local/root/include/TMatrixD.h
 EdbPVGen.o: /var/local/root/include/TVectorD.h
@@ -273,6 +275,7 @@ EdbPVRec.o: /var/local/root/include/TClass.h
 EdbPVRec.o: /var/local/root/include/TDictionary.h
 EdbPVRec.o: /var/local/root/include/Property.h
 EdbPVRec.o: /var/local/root/include/TObjArray.h
+EdbPVRec.o: /var/local/root/include/TSortedList.h
 EdbPVRec.o: /var/local/root/include/TArrayL.h
 EdbPVRec.o: /var/local/root/include/TMatrixD.h
 EdbPVRec.o: /var/local/root/include/TVectorD.h
@@ -310,6 +313,7 @@ EdbPattern.o: /var/local/root/include/TClass.h
 EdbPattern.o: /var/local/root/include/TDictionary.h
 EdbPattern.o: /var/local/root/include/Property.h
 EdbPattern.o: /var/local/root/include/TObjArray.h
+EdbPattern.o: /var/local/root/include/TSortedList.h
 EdbPattern.o: /var/local/root/include/TArrayL.h
 EdbPattern.o: /var/local/root/include/TMatrixD.h
 EdbPattern.o: /var/local/root/include/TVectorD.h
@@ -426,6 +430,7 @@ EdbVertex.o: /var/local/root/include/TArrayS.h
 EdbVertex.o: /var/local/root/include/TArrayF.h
 EdbVertex.o: /var/local/root/include/Foption.h EdbPattern.h
 EdbVertex.o: /var/local/root/include/TObjArray.h
+EdbVertex.o: /var/local/root/include/TSortedList.h
 EdbVertex.o: /var/local/root/include/TArrayL.h
 EdbVertex.o: /var/local/root/include/TMatrixD.h
 EdbVertex.o: /var/local/root/include/TVectorD.h

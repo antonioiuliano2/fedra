@@ -88,11 +88,11 @@ class EdbVertexRec: public TObject {
 
   EdbTrackP *GetEdbTrack( const int index );
 
-  static double ProbeSeg( const EdbTrackP& s1, EdbTrackP& s2, 
+  static double ProbeSeg( const EdbTrackP *s1, EdbTrackP *s2, 
 			  const float X0=5810. );
-  static double ProbeSeg( const EdbTrackP& s1, EdbSegP& s2, 
+  static double ProbeSeg( const EdbTrackP *s1, EdbSegP *s2, 
 			  const float X0=5810. );
-  static double ProbeSeg( const EdbSegP& s1, EdbSegP& s2, 
+  static double ProbeSeg( const EdbSegP *s1, EdbSegP *s2, 
 			  const float X0=5810., const float mass=0.1396 );
   static float  Chi2Seg( EdbSegP *s1, EdbSegP *s2);
 

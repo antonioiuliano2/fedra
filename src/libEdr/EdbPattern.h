@@ -24,7 +24,7 @@ class TIndexCell;
 class EdbSegP : public TObject, public EdbTrack2D {
  
  private:
-  Int_t      ePID;             // plate id
+  Int_t      ePID;             // mother pattern ID
   Int_t      eID;              // segment id (unique in plate)
   Int_t      eVid[2];          // [0]-view entry in the input tree, [1]-segment entry in the view
   Int_t      eAid[2];          // [0]-AreaID, [1]-ViewID
@@ -258,7 +258,8 @@ class EdbTrackP : public EdbSegP {
   Int_t    N0()      const  {return eN0;}
 
   void     SetNpl( int npl )  { eNpl=npl; }
-  void     SetNpl()  { if(eS) eNpl = TMath::Abs(GetSegment(0)->PID() - GetSegment(N()-1)->PID()); }
+  void     SetNpl()  
+    { if(eS) eNpl = 1+TMath::Abs(GetSegment(0)->PID() - GetSegment(N()-1)->PID()); }
   Int_t    Npl()      const   {return eNpl;}
 
   //  TList *S()  const { return eS; }
@@ -296,6 +297,7 @@ class EdbTrackP : public EdbSegP {
 
   void     Reset()    { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
+  void SetSegmentsTrack(int id) {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(id);}
   void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
   void Copy(const EdbTrackP &tr);
   void FitTrack();

@@ -779,20 +779,20 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
     if( !TakeCPSegment(*cp,*s) )      continue;
     if(pat) {
       s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
-      s->SetPID( ePlate*10 );
+      //s->SetPID( ePlate*10 );       /// TO CHECK !!!
       s->SetVid(ePlate*1000+ePiece,i);
       pat->AddSegment( *s  ); 
       nseg++; 
     }
     if(p1)  { 
       s1->SetZ( s1->Z() + pat->Z() );
-      s1->SetPID( ePlate*10 +1 );
+      //s1->SetPID( ePlate*10 +1 );    /// TO CHECK !!!
       p1->AddSegment(  *s1 ); 
       nseg++; 
     }
     if(p2)  { 
       s2->SetZ( s2->Z() + pat->Z() );
-      s2->SetPID( ePlate*10 + 2 );
+      //s2->SetPID( ePlate*10 + 2 );   /// TO CHECK !!!
       p2->AddSegment(  *s2 ); 
       nseg++; 
     }
@@ -1174,7 +1174,8 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
 
       f->cd();
       tree = new TTree(tree_name,tree_name);
-      
+      tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
+
       int pid1,pid2;
       float xv,yv;
       EdbSegCouple *cp=0;
@@ -1962,7 +1963,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
 
     pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
     pat->SetPID(i);
-    pat->SetSegmentsPID();
+    //pat->SetSegmentsPID();  //TO CHECK!!
     if(datatype>0) {
       p1 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(1)->Z() );
       p2 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(2)->Z() );
@@ -2021,12 +2022,12 @@ void EdbDataProc::Align()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::LinkTracks( int alg, int merge )
+void EdbDataProc::LinkTracks( int alg, float p )
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
   ali->Link();
-  printf("link ok  alg = %d \t merge= %d\n", alg, merge);
+  printf("link ok  alg = %d \t p= %f\n", alg, p);
 
   if(alg>1) {
     int nhol;
@@ -2047,8 +2048,17 @@ void EdbDataProc::LinkTracks( int alg, int merge )
   //CloseCouplesTree(cptree);
 
   ali->MakeTracks();
-  ali->FitTracks(4.);
-  if(merge>0) ali->MergeTracks(merge);
+
+  if(p<0.1) ali->FitTracks(4.);   // default momentum: 4 GeV
+  else      ali->FitTracks(p);
+
+  //if(merge>0) ali->MergeTracks(merge);
+
+  if(p>0) {
+    ali->FillCell(50,50,0.015,0.015);
+    ali->PropagateTracks(ali->Npatterns()-1,2);
+  }
+
   ali->MakeTracksTree();
 }
 

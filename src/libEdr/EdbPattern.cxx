@@ -1226,24 +1226,39 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
   // return the array of segments compatible with the
   // prediction segment s with the accuracy of nsig (in sigmas)
 
-  long vcent[4] = { (long)(s.X()/StepX()),
-		    (long)(s.Y()/StepY()),
+  float dz = Z()-s.Z();
+  float x = s.X() + s.TX()*dz;
+  float y = s.Y() + s.TY()*dz;
+  float sx = TMath::Sqrt( s.SX() + s.STX()*dz*dz );
+  float sy = TMath::Sqrt( s.SY() + s.STY()*dz*dz );
+
+  long vcent[4] = { (long)(x/StepX()),
+		    (long)(y/StepY()),
 		    (long)(s.TX()/StepTX()),
 		    (long)(s.TY()/StepTY())  };
-  long vdiff[4] = { (long)(TMath::Sqrt(s.SX())*nsigx/StepX()+1),
-		    (long)(TMath::Sqrt(s.SY())*nsigx/StepY()+1),
+  long vdiff[4] = { (long)(sx*nsigx/StepX()+1),
+		    (long)(sy*nsigx/StepY()+1),
 		    (long)(TMath::Sqrt(s.STX())*nsigt/StepTX()+1),
 		    (long)(TMath::Sqrt(s.STY())*nsigt/StepTY()+1) };
+
+  sy*=sy;
+  sx*=sx;
+
+  float dx,dy,dtx,dty;
 
   int nseg=0;
   EdbSegP *seg=0;
 
 
+  //printf("find compliments in pattern %d\n",ID());
+  //s.Print();
   long vmin[4],vmax[4];
   for(int i=0; i<4; i++) {
     vmin[i] = vcent[i]-vdiff[i];
     vmax[i] = vcent[i]+vdiff[i];
+    //printf("%f +- %f \t",(float)vcent[i],(float)vdiff[i]);
   }
+  //printf("\n");
 
   ///TODO: move this cycle into iterator
 
@@ -1263,7 +1278,19 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 
 	  for(int i=0; i<c4->N(); i++) {
 	    seg = GetSegment(c4->At(i)->Value());
-	    if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
+
+
+	    dtx=s.TX()-seg->TX();
+	    if( dtx*dtx > s.STX()*nsigt*nsigt )    continue;
+	    dty=s.TY()-seg->TY();
+	    if( dty*dty > s.STY()*nsigt*nsigt )    continue;
+	    dz = seg->Z()-s.Z();
+	    dx=s.X()+s.TX()*dz-seg->X();
+	    if( dx*dx > sx*nsigx*nsigx )           continue;
+	    dy=s.Y()+s.TY()*dz-seg->Y();
+	    if( dy*dy > sy*nsigx*nsigx )           continue;	    
+	    
+	    //if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
 	    arr.Add(seg);
 	    nseg++;
 	  }

@@ -280,7 +280,7 @@ class EdbDataProc : public TObject {
   int  Link();
   int  Link(EdbDataPiece &piece);
   void Align();
-  void LinkTracks(int alg=0, int merge=0);
+  void LinkTracks(int alg=0, float p=-1.);
   void LinkRawTracks(int alg=0);
   void AlignLinkTracks(int alg=0);
   void SetNoUpdate(int nu) { eNoUpdate=nu; }

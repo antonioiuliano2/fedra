@@ -51,10 +51,11 @@ EdbVertexRec::EdbVertexRec()
 //----------------------------------------------------------------------------
 TTree *EdbVertexRec::init_tracks_tree(const char *file_name, EdbTrackP *track)
 {
-  char *tree_name="tracks";
-  TFile *f = new TFile(file_name);
   TTree *tracks=0;
   /*
+  char *tree_name="tracks";
+  TFile *f = new TFile(file_name);
+
   if (f)  tracks = (TTree*)f->Get(tree_name);
   if(!tracks) return 0;
   f->cd();
@@ -173,20 +174,20 @@ bool EdbVertexRec::Edb2Vt(const EdbSegP& tr, Track& t)
 }
 
 //________________________________________________________________________
-double EdbVertexRec::ProbeSeg(const EdbTrackP& tr1, EdbTrackP& tr2, const float X0)
+double EdbVertexRec::ProbeSeg(const EdbTrackP *tr1, EdbTrackP *tr2, const float X0)
 {
-  return ProbeSeg( *((EdbSegP*)&tr1), *((EdbSegP*)&tr2), X0, tr1.M() );
+  return ProbeSeg( (EdbSegP*)tr1, (EdbSegP*)tr2, X0, tr1->M() );
 }
 
 //________________________________________________________________________
-double EdbVertexRec::ProbeSeg(const EdbTrackP& tr, EdbSegP& s,
+double EdbVertexRec::ProbeSeg(const EdbTrackP *tr, EdbSegP *s,
 				   const float X0)
 {
-  return ProbeSeg( *((EdbSegP*)&tr), s, X0, tr.M() );
+  return ProbeSeg( (EdbSegP*)tr, s, X0, tr->M() );
 }
 
 //________________________________________________________________________
-double EdbVertexRec::ProbeSeg(const EdbSegP& tr, EdbSegP& s,
+double EdbVertexRec::ProbeSeg(const EdbSegP *tr, EdbSegP *s,
 			      const float X0, const float ma)
 {
   // Return value:        Prob: is Chi2 probability (area of the tail of Chi2-distribution)
@@ -199,14 +200,14 @@ double EdbVertexRec::ProbeSeg(const EdbSegP& tr, EdbSegP& s,
   double teta0sq;
   double dz;
 
-  VtVector par( (double)(tr.X()), 
-		(double)(tr.Y()),  
-		(double)(tr.TX()), 
-		(double)(tr.TY()) );
+  VtVector par( (double)(tr->X()), 
+		(double)(tr->Y()),  
+		(double)(tr->TX()), 
+		(double)(tr->TY()) );
 
   VtSymMatrix cov(4);             // covariance matrix for seg0 (measurements errors)
   for(int k=0; k<4; k++) 
-    for(int l=0; l<4; l++) cov(k,l) = (tr.COV())(k,l);
+    for(int l=0; l<4; l++) cov(k,l) = (tr->COV())(k,l);
 
   Double_t chi2=0.; 
 
@@ -214,9 +215,9 @@ double EdbVertexRec::ProbeSeg(const EdbSegP& tr, EdbSegP& s,
   VtSymMatrix dms(4);   // multiple scattering matrix (depends on P,m)
   dms.clear();
 
-  dz = s.Z()-tr.Z();
+  dz = s->Z()-tr->Z();
   ds = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of media in microns
-  teta0sq = EdbPhysics::ThetaMS2( tr.P(), ma, ds, X0 );
+  teta0sq = EdbPhysics::ThetaMS2( tr->P(), ma, ds, X0 );
 
   dms(0,0) = teta0sq*dz*dz/3.;
   dms(1,1) = dms(0,0);
@@ -245,17 +246,17 @@ double EdbVertexRec::ProbeSeg(const EdbSegP& tr, EdbSegP& s,
 
   VtSymMatrix dmeas(4);           // original covariance  matrix for seg2
   for(int k=0; k<4; k++) 
-    for(int l=0; l<4; l++) dmeas(k,l) = (s.COV())(k,l);
+    for(int l=0; l<4; l++) dmeas(k,l) = (s->COV())(k,l);
   
   covpred = covpred.dsinv();
   dmeas   = dmeas.dsinv();
   cov = covpred + dmeas;
   cov = cov.dsinv();
   
-  VtVector meas( (double)(s.X()), 
-		 (double)(s.Y()),  
-		 (double)(s.TX()), 
-		 (double)(s.TY()) );
+  VtVector meas( (double)(s->X()), 
+		 (double)(s->Y()),  
+		 (double)(s->TX()), 
+		 (double)(s->TY()) );
 
   par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
 
