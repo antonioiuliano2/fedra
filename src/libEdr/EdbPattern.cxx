@@ -7,14 +7,13 @@
 // Segments pattern                                                     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include <iostream.h>
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
-#include "vt++/VtVector.hh"
 #include "vt++/CMatrix.hh"
+#include "vt++/VtVector.hh"
 
-#include <iostream.h>
 
 ClassImp(EdbSegP)
 ClassImp(EdbSegmentsBox)
@@ -538,18 +537,21 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 } 
 
 //______________________________________________________________________________
-//______________________________________________________________________________
 EdbTrackP::EdbTrackP(int nseg=0)
 {
   eS=0;
+  eSF=0;
   eVid = 0;  
+  eM=0;
   if(nseg>0) eS = new EdbSegmentsBox(nseg);
+  if(nseg>0) eSF = new EdbSegmentsBox(nseg);
 }
  
 //______________________________________________________________________________
 EdbTrackP::~EdbTrackP()
 {
-  if(eS)   { delete eS; eS=0; }
+  if(eS)    { delete eS;  eS=0;  }
+  if(eSF)   { delete eSF; eSF=0; }
   if(eVid) { delete eVid; eVid=0; }
 }
 
@@ -559,15 +561,19 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   Reset();
   SetID(tr.ID());
   int nseg=tr.N();
-  eSegZmin.Copy(*tr.TrackZmin());
-  eSegZmax.Copy(*tr.TrackZmax());
   for(int i=0; i<nseg; i++)
     AddSegment(*tr.GetSegment(i));
+  for(int i=0; i<nseg; i++)
+    AddSegmentF(*tr.GetSegmentF(i));
+
+  SetM(tr.M());
 }
 
 //______________________________________________________________________________
 void EdbTrackP::FitTrack()
 {
+  // track fit by averaging of segments parameters
+
   int nseg=N();
   float x=0,y=0,z=0,tx=0,ty=0,w=0;
   EdbSegP *seg=0;
@@ -593,7 +599,8 @@ void EdbTrackP::FitTrack()
 double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
 {
   // calculate the square of multiple scattering angle theta (in one projection)
-  // after the distance dPb in lead  [microns]
+  // after the distance dPb in lead+emulsion  [microns]
+  // TODO: service class
 
   if (p < 0.0000001) return 2.;
   const double Xrad=5810.;           // X0 of the Pb in microns
@@ -602,11 +609,20 @@ double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
   return  abs(k*(ma*ma+p2)*dPb/p4/Xrad);
 }
 
+/*
 //______________________________________________________________________________
-int  EdbTrackP::FitTrackKF(float ma, bool zmax)
+int  EdbTrackP::FitTrackKF( bool zmax)
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
   // if (zmax==false) track parameters are calculated at segment with min Z
+  //
+  // Note: SetP() for track must be setted before!
+  // Note: SetErrorP() for track should be setted - necessary for vertex fit with momenta
+  //
+  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = (nseg-1)*4
+  //                Prob: is Chi2 probability (area of the tail of Chi2-distribution)
+  //                      If we accept events with Prob >= ProbMin then ProbMin is the 
+  //                      probability to reject the good event
 
   float dPb;
   double teta0sq;
@@ -617,6 +633,8 @@ int  EdbTrackP::FitTrackKF(float ma, bool zmax)
   int nseg=N();
   if(nseg<2)   return -1;
  
+  //TODO: elaborate case of 1 segment
+
   EdbSegP *seg0=0;
   EdbSegP *seg=0;
 
@@ -674,7 +692,7 @@ int  EdbTrackP::FitTrackKF(float ma, bool zmax)
 
     dz = seg->Z()-seg0->Z();                        //?
     dPb = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of the Pb+emulsion cell in microns
-    teta0sq = ThetaPb2( P(), dPb, ma );
+    teta0sq = ThetaPb2( P(), dPb, M() );
 
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
@@ -738,11 +756,24 @@ int  EdbTrackP::FitTrackKF(float ma, bool zmax)
   return 0;
 }
 
+*/
+
+
 //______________________________________________________________________________
-int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
+int  EdbTrackP::FitTrackKFS( bool zmax)
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
   // if (zmax==false) track parameters are calculated at segment with min Z
+  // TODO: track parameters??
+  //
+  // Note: SetP() for track must be setted before!
+  // Note: SetErrorP() for track should be setted - necessary for vertex fit with momenta
+  //
+  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = (nseg-1)*4
+  //                Prob: is Chi2 probability (area of the tail of Chi2-distribution)
+  //                      If we accept events with Prob >= ProbMin then ProbMin is the 
+  //                      probability to reject the good event
+
 
   float dPb;
   double teta0sq;
@@ -756,9 +787,9 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
  
   int i=0;
   int nseg=N();
-  if(nseg<2)   return -1;
+  if(nseg<2)    return -1;
   if(nseg>59)   return -1;
- 
+
   EdbSegP *seg0=0;
   EdbSegP *seg=0;
 
@@ -817,7 +848,7 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
   while( (i+=step) != iend+step ) {
 
     seg = GetSegment(i);
-
+ 
     VtSymMatrix dms(4);   // multiple scattering matrix
     dms.clear();
 
@@ -825,7 +856,7 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
     ptx = (*par[i-step])(2);                        //?
     pty = (*par[i-step])(3);                        //?
     dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-    teta0sq = ThetaPb2( P(), dPb, ma );
+    teta0sq = ThetaPb2( P(), dPb, M() );
 
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
@@ -888,6 +919,7 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
 	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.);
   SetZ(GetSegment(iend)->Z());
   SetCOV( (*cov[iend]).array(), 4 );
+
   //SetChi2((float)chi2);
   //SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
 
@@ -899,7 +931,23 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
   dresid = (*dmeas[iend]) - (*covs[iend]);
   dresid = dresid.dsinv();
   chi2 = ((*pars[iend])-(*meas[iend]))*(dresid*((*pars[iend])-(*meas[iend])));
+
+  EdbSegP segf;
+  segf.Set(ID(),(float)(*pars[iend])(0),(float)(*pars[iend])(1),
+	   (float)(*pars[iend])(2),(float)(*pars[iend])(3),1.);
+  segf.SetZ(GetSegment(iend)->Z());
+  segf.SetCOV( (*covs[iend]).array(), 4 );
+  segf.SetChi2((float)chi2);
+  segf.SetProb( (float)TMath::Prob(chi2,4));
+  segf.SetW( (float)nseg );
+  segf.SetP( P() );
+  segf.SetPID( GetSegment(iend)->PID() );
+  AddSegmentF(segf);
+
+  //TODO: fitted segments sequence!!!!!
+
   i=iend; 
+  double chi2p=0; 
   while( (i-=step) != istart-step ) {
 	VtSqMatrix BackTr(4);
 	BackTr = (*cov[i])*(((*pred[i]).T())*(*covpredinv[i+step]));
@@ -909,40 +957,23 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
 	(*covs[i]) = (*cov[i]) + BackTr*(((*covs[i+step])-(*covpred[i+step]))*BackTr.T());
 	dresid = (*dmeas[i]) - (*covs[i]);
 	dresid = dresid.dsinv();
-	chi2 += ((*pars[i])-(*meas[i]))*(dresid*((*pars[i])-(*meas[i])));
+	chi2p = ((*pars[i])-(*meas[i]))*(dresid*((*pars[i])-(*meas[i])));
+	chi2 += chi2p;
+
+	segf.Set(ID(),(float)(*pars[i])(0),(float)(*pars[i])(1),
+		 (float)(*pars[i])(2),(float)(*pars[i])(3),1.);
+	segf.SetZ(GetSegment(i)->Z());
+	segf.SetCOV( (*covs[i]).array(), 4 );
+	segf.SetChi2((float)chi2p);
+	segf.SetProb( (float)TMath::Prob(chi2p,4));
+	segf.SetW( (float)nseg );
+	segf.SetP( P() );
+	segf.SetPID( GetSegment(i)->PID() );
+	AddSegmentF(segf);
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,(nseg-1)*4));
   SetW( (float)nseg );
-
-  int imi, ima;
-  if(zmax) {
-    imi=istart;
-    ima=iend;
-  }else{
-    imi=iend;
-    ima=istart;
-  }
-
-  eSegZmax.Set(ID(),(float)(*pars[ima])(0),(float)(*pars[ima])(1),
-		(float)(*pars[ima])(2),(float)(*pars[ima])(3),1.);
-  eSegZmax.SetZ(GetSegment(ima)->Z());
-  eSegZmax.SetCOV( (*covs[ima]).array(), 4 );
-  eSegZmax.SetChi2((float)chi2);
-  eSegZmax.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
-  eSegZmax.SetW( (float)nseg );
-  eSegZmax.SetP( P() );
-  eSegZmax.SetPID( GetSegment(ima)->PID() );
-
-  eSegZmin.Set(ID(),(float)(*pars[imi])(0),(float)(*pars[imi])(1),
-		(float)(*pars[imi])(2),(float)(*pars[imi])(3),1.);
-  eSegZmin.SetZ(GetSegment(imi)->Z());
-  eSegZmin.SetCOV( (*covs[imi]).array(), 4 );
-  eSegZmin.SetChi2((float)chi2);
-  eSegZmin.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
-  eSegZmin.SetW( (float)nseg );
-  eSegZmin.SetP( P() );
-  eSegZmin.SetPID( GetSegment(imi)->PID() );
 
 // Delete matrixes and vectors
 

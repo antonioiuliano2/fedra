@@ -43,7 +43,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    eP;               // momentum of the particle
 
  protected: 
-  TMatrixD   *eCOV;            // covariant matrix of the parameters (x,y,tx,ty,p)
+  TMatrixD   *eCOV;            // covariance matrix of the parameters (x,y,tx,ty,p)
 
  public:
   EdbSegP();
@@ -61,7 +61,6 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
-
   
   void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 );
 
@@ -144,7 +143,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  
   void       Print( Option_t *opt="") const;
  
-  ClassDef(EdbSegP,12)  // segment
+  ClassDef(EdbSegP,13)  // segment
 };
 
 //______________________________________________________________________________
@@ -224,45 +223,64 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 };
 
 //______________________________________________________________________________
-
 class EdbTrackP : public EdbSegP {
  
  private:
-  EdbSegP  eSegZmin;
-  EdbSegP  eSegZmax;
+  EdbSegmentsBox  *eS;     //! array of segments
+  EdbSegmentsBox  *eSF;    //! array of fitted segments
 
-  EdbSegmentsBox  *eS;    //! array of segments
   TArrayL         *eVid;  //! volume-wide segments id's
+
+  Float_t    eM;               // invariant mass of the particle
 
  public:
   EdbTrackP(int nseg=0);
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) )
     {
-      eS = new EdbSegmentsBox(*(track.S()));
-      eSegZmin.Copy(*track.TrackZmin());
-      eSegZmax.Copy(*track.TrackZmax());
+      eS  = new EdbSegmentsBox(*(track.S()));
+      eSF = new EdbSegmentsBox(*(track.SF()));
     }
   virtual ~EdbTrackP();
 
-  EdbSegmentsBox *S() const { return eS; }
+  void     SetM( float m )  { eM=m; }
+  Float_t  M()      const {return eM;}
 
-  const EdbSegP  *TrackZmin() const {return &eSegZmin;}
-  const EdbSegP  *TrackZmax() const {return &eSegZmax;}
+  EdbSegmentsBox *S()  const { return eS; }
+  EdbSegmentsBox *SF() const { return eSF; }
+
+  const EdbSegP  *TrackZmin() const 
+    { 
+      if(!eSF)  return 0; 
+      if(GetSegmentF(0)->Z() < GetSegmentF(N()-1)->Z())  return GetSegmentF(0);
+      else return GetSegmentF(N()-1);
+    }
+  const EdbSegP  *TrackZmax() const
+    { 
+      if(!eSF)  return 0; 
+      if(GetSegmentF(0)->Z() >= GetSegmentF(N()-1)->Z())  return GetSegmentF(0);
+      else return GetSegmentF(N()-1);
+    }
 
   void     AddSegment(EdbSegP &s)  
     { 
       if(!eS) eS = new EdbSegmentsBox();
       eS->AddSegment(s);
     }
+  void     AddSegmentF(EdbSegP &s)  
+    { 
+      if(!eSF) eSF = new EdbSegmentsBox();
+      eSF->AddSegment(s);
+    }
 
-  EdbSegP *GetSegment(int i) const {if(eS) return eS->GetSegment(i); else return 0; }
+  EdbSegP *GetSegment(int i)  const {if(eS) return eS->GetSegment(i); else return 0; }
+  EdbSegP *GetSegmentF(int i) const {if(eSF) return eSF->GetSegment(i); else return 0; }
   int      N() const  {if(eS)  return eS->N(); else return 0; }
   void     Reset()    { if(eS) eS->Reset(); }
 
   void Copy(const EdbTrackP &tr);
   void FitTrack();
-  int FitTrackKF( float mass, bool zmax=false );
-  int FitTrackKFS( float mass, bool zmax=false );
+  //int FitTrackKF( bool zmax=false );
+  int FitTrackKFS( bool zmax=false );
 
   static double ThetaPb2( float p, float dPath, float mass);
 
@@ -271,11 +289,12 @@ class EdbTrackP : public EdbSegP {
   TArrayL  *GetVid() const { return eVid; }
   void SetVid(int n) {if(eVid) delete eVid; eVid = new TArrayL(n);}
 
-  void Clear() {if(eS) eS->Reset();}
+  void Clear() { if(eS) eS->Reset(); if(eSF) eSF->Reset(); }
 
   void Print() 
     { 
       printf("EdbTrackP with %d segments:\n", N());
+      printf("particle mass = %f\n", M() );
       ((EdbSegP*)this)->Print(); 
       if(eS) eS->Print(); 
     }

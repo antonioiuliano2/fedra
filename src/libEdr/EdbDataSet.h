@@ -121,6 +121,8 @@ class EdbDataPiece : public TNamed {
   TIndexCell  *eAreas[3];       // base/up/down  surface areas list
   TObjArray   *eCuts[3];        // array of cuts
   Float_t      eCutCP[6];       //
+  Float_t      eCutGR;          // grain cut (chi)
+  Int_t        eOUTPUT;         //
 
  public: 
   TIndexCell  *eCouplesInd;     //
@@ -161,11 +163,16 @@ class EdbDataPiece : public TNamed {
     { if(eCond[id]) return (EdbScanCond *)eCond[id]; else return 0; }
 
 
+  void           SetOUTPUT(int out=1) {eOUTPUT=out;}
+  void           SetCutGR(float chi) {eCutGR=chi;}
   void           AddCutCP(float var[6]);
   void           AddSegmentCut(int layer, int xi, float var[5]);
   int            NCuts(int layer);
   EdbSegmentCut *GetCut(int layer, int i)
     { return (EdbSegmentCut *)(eCuts[layer]->UncheckedAt(i)); }
+
+  float           GetCutGR() const {return eCutGR;}
+  int             GetOUTPUT() const {return eOUTPUT;}
 
   int  AcceptViewHeader(const EdbViewHeader *head);
   void MakeNamePar(const char *dir);
@@ -184,7 +191,9 @@ class EdbDataPiece : public TNamed {
   int  PassCuts(int id, float var[5]);
   int  PassCutCP(float var[6]);
 
-  float GetRawSegmentPix( EdbSegment *seg, EdbView *view );
+  float GetRawSegmentPix( EdbSegment *seg );
+  float CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz );
+
   int  GetRawData(EdbPVRec *ali);
   int  GetCPData(EdbPVRec *ali);
   int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);

@@ -14,6 +14,7 @@
 #include "TArrayF.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
+#include "EdbVertex.h"
 
 ClassImp(EdbScanCond)
 ClassImp(EdbSegCouple)
@@ -33,6 +34,10 @@ EdbScanCond::EdbScanCond()
 //______________________________________________________________________________
 void EdbScanCond::SetDefault()
 {
+  eSigmaXgr=  .1;
+  eSigmaYgr=  .1;
+  eSigmaZgr= 3.;
+
   eDegrad = .6;  // means that at .4 mrad degradation is 24 % in respect to 0 angle
 
   eSigmaX0  = 8.;   // [microns]
@@ -56,6 +61,8 @@ void EdbScanCond::Print() const
 {
   printf( "******************************************************\n");
   printf( "Scanning Conditions Parametres: %s\n", GetName() );
+  printf( "Sigma Grain: \t%f \t%f \t%f \n", 
+	  eSigmaXgr,eSigmaYgr,eSigmaZgr);
   printf( "Sigma0 x,y,tx,ty: \t%f \t%f \t%f \t%f \n", 
 	  eSigmaX0,eSigmaY0,eSigmaTX0,eSigmaTY0);
   printf( "Angular degradation: \t%f \n", eDegrad);
@@ -1445,6 +1452,7 @@ int EdbPVRec::InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid )
   EdbPattern *pat = GetPattern(pid);
   //s.SetProbability( pat->Cond()->ProbSeg( s.TX(),s.TY(),s.W() );
   s.PropagateTo(pat->Z());
+  s.SetDZ(s1->DZ());
   pat->AddSegment(s);
   return pat->N()-1;
 }
@@ -1455,8 +1463,6 @@ int EdbPVRec::MakeTracksTree()
   EdbSegP *seg;
   EdbTrackP *track = new EdbTrackP(8);
   EdbSegP *tr = (EdbSegP*)track;
-  const EdbSegP *tmin = track->TrackZmin();
-  const EdbSegP *tmax = track->TrackZmax();
 
   int nseg,trid,npl,n0;
   float mass_pi = 0.139;
@@ -1466,7 +1472,8 @@ int EdbPVRec::MakeTracksTree()
   TFile fil("linked_tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
-  TClonesArray *segments=track->S()->GetSegments();
+  TClonesArray *segments  = track->S()->GetSegments();
+  TClonesArray *segmentsf = track->SF()->GetSegments();
 
   tracks->Branch("trid",&trid,"trid/I");
   tracks->Branch("nseg",&nseg,"nseg/I");
@@ -1474,11 +1481,9 @@ int EdbPVRec::MakeTracksTree()
   tracks->Branch("n0",&n0,"n0/I");
   tracks->Branch("xv",&xv,"xv/F");
   tracks->Branch("yv",&yv,"yv/F");
-  tracks->Branch("tmin.","EdbSegP",&tmin,32000,99);
-  tracks->Branch("tmax.","EdbSegP",&tmax,32000,99);
   tracks->Branch("t.","EdbSegP",&tr,32000,99);
-  tracks->Branch("s",&segments);
-
+  tracks->Branch("s", &segments);
+  tracks->Branch("sf",&segmentsf);
 
   int ntr=0;
   int nsegments = 2;
@@ -1516,7 +1521,8 @@ int EdbPVRec::MakeTracksTree()
 
     track->SetID(it);
     track->SetP(4.);
-    track->FitTrackKFS(mass_pi, false);
+    track->SetM(mass_pi);
+    track->FitTrackKFS(true);
 
     tracks->Fill();
     track->Clear();

@@ -24,6 +24,12 @@ class EdbScanCond : public TNamed {
   // 
  private:
 
+  // grain:
+  Float_t eSigmaXgr;
+  Float_t eSigmaYgr;
+  Float_t eSigmaZgr;
+
+  // segment:
   Float_t  eDegrad;    // angular degradation of parameters: S = S0*(1 + eDegrad*Ang)
 
   Float_t  eSigmaX0;   // [microns]  Parameters at 0 angle
@@ -52,6 +58,8 @@ class EdbScanCond : public TNamed {
 
   void SetDefault();
 
+  void SetSigmaGR(  float sx, float sy, float sz ) 
+    { eSigmaXgr=sx;  eSigmaYgr=sy;  eSigmaZgr=sz; }
   void SetSigma0(  float x, float y, float tx, float ty ) 
     { eSigmaX0=x;  eSigmaY0=y;  eSigmaTX0=tx;  eSigmaTY0=ty;  }
   void SetBins(float bx, float by, float btx, float bty) 
@@ -79,6 +87,10 @@ class EdbScanCond : public TNamed {
   float StepY(float dz)   const;
   float StepTX(float tx)  const { return BinTX()*SigmaTX(tx); }
   float StepTY(float ty)  const { return BinTY()*SigmaTY(ty); }
+
+  float SigmaXgr()  const { return eSigmaXgr; }
+  float SigmaYgr()  const { return eSigmaYgr; }
+  float SigmaZgr()  const { return eSigmaZgr; }
 
   float SigmaX(float ax)  const { return eSigmaX0*(1. + TMath::Abs(ax)*eDegrad); }
   float SigmaY(float ay)  const { return eSigmaY0*(1. + TMath::Abs(ay)*eDegrad); }

@@ -12,6 +12,7 @@
 #include "EdbDataSet.h"
 #include "EdbSegment.h"
 #include "EdbCluster.h"
+#include "EdbMath.h"
 
 ClassImp(EdbSegmentCut)
 ClassImp(EdbLayer)
@@ -137,6 +138,7 @@ EdbDataPiece::~EdbDataPiece()
 ///______________________________________________________________________________
 void EdbDataPiece::Set0()
 {
+  eOUTPUT=1;
   ePlate=0;
   ePiece=0;
   eFlag=0;
@@ -408,6 +410,12 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	sscanf(buf+strlen(key),"%d %f %f",&id,&x1,&x2);
 	GetMakeCond(id)->SetOffset(x1,x2);
       }
+    else if ( !strcmp(key,"SIGMAGR")  )
+      {
+	sscanf(buf+strlen(key),"%d %f %f %f %f",&id,&x1,&x2,&x3,&x4);
+	GetMakeCond(id)->SetSigmaGR(x1,x2,x3);
+	SetCutGR(x4);
+      }
     else if ( !strcmp(key,"XCUT")  )
       {
 	sscanf(buf+strlen(key),"%d %f %f %f %f %f %f %f %f %f %f",&id,
@@ -430,6 +438,11 @@ int EdbDataPiece::ReadPiecePar(const char *file)
       {
 	sscanf(buf+strlen(key),"%d",&id);
 	eAFID=id;
+      }
+    else if ( !strcmp(key,"OUTPUT")  )
+      {
+	sscanf(buf+strlen(key),"%d",&id);
+	eOUTPUT=id;
       }
     else if ( !strcmp(key,"VOLUME0")  )
       {
@@ -613,6 +626,20 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 
   if( !PassCuts(side,var) )     return 0;
 
+  float pix, chi2;
+  if(eCLUST) {
+    pix = GetRawSegmentPix(seg);
+    segP.SetVolume( pix );
+    chi2 = CalculateSegmentChi2( seg,
+				 GetCond(1)->SigmaXgr(),  //TODO: side logic
+				 GetCond(1)->SigmaYgr(), 
+				 GetCond(1)->SigmaZgr());
+
+    if(chi2>GetCutGR())  return 0;
+    segP.SetChi2( chi2 );    
+  }
+
+
   EdbLayer  *layer=GetLayer(side);
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
 
@@ -635,25 +662,59 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
-  float pix = GetRawSegmentPix(seg,view);
-  segP.SetVolume( pix );
 
   return 1;
 }
 
 ///______________________________________________________________________________
-float EdbDataPiece::GetRawSegmentPix( EdbSegment *seg, EdbView *view )
+float EdbDataPiece::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz )
 {
+  //assumed that clusters are attached to segments
+  float chi2=0;
+  EdbCluster *cl=0;
+  TObjArray *clusters = seg->GetElements();
+  if(!clusters) return 0;
+  int ncl = clusters->GetLast()+1;
+  if(ncl<=0)     return 0;
+
+  float xyz1[3], xyz2[3];             // segment line parametrized as 2 points
+  float xyz[3];
+  bool inside=true;
+
+  xyz1[0] = seg->GetX0() /sx;
+  xyz1[1] = seg->GetY0() /sy;
+  xyz1[2] = seg->GetZ0() /sz;
+  xyz2[0] = (seg->GetX0() + seg->GetDz()*seg->GetTx()) /sx;
+  xyz2[1] = (seg->GetY0() + seg->GetDz()*seg->GetTy()) /sy;
+  xyz2[2] = (seg->GetZ0() + seg->GetDz())              /sz;
+
+  //seg->Print();
+  for(int i=0; i<ncl; i++ ) {
+    cl = (EdbCluster*)clusters->At(i);
+    xyz[0] = cl->GetX()/sx;
+    xyz[1] = cl->GetY()/sy;
+    xyz[2] = cl->GetZ()/sz;
+    float d = EdbMath::DistancePointLine3(xyz,xyz1,xyz2, inside);
+    chi2 += d;
+    //printf("cluster : %f %f %f \t %f\n",cl->GetX(),cl->GetY(),cl->GetZ(),d);
+  }
+
+  return chi2/ncl;
+}
+
+///______________________________________________________________________________
+float EdbDataPiece::GetRawSegmentPix( EdbSegment *seg )
+{
+  //assumed that clusters are attached to segments
   float pix=0;
   EdbCluster *cl=0;
-  int ncl = view->Nclusters();
-  int iseg = seg->GetID();
-  //  printf("%d %d\n",ncl,seg->GetID());
+  TObjArray *clusters = seg->GetElements();
+  if(!clusters) return 0;
+  int ncl = clusters->GetLast()+1;
   for(int i=0; i<ncl; i++ ) {
-    cl = view->GetCluster(i);
-    if( cl->GetSegment()==iseg )   pix += cl->GetArea();
+    cl = (EdbCluster*)clusters->At(i);
+    pix += cl->GetArea();
   }
-  //  printf("%f\n",pix);
   return pix;
 }
 
@@ -937,8 +998,10 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
     if( !AcceptViewHeader(head) )  continue;
 
 
-    //printf("** %d\n",eCLUST);
-    if(eCLUST)       view = eRun->GetEntry(iv,1,1,1);
+    if(eCLUST)       {
+      view = eRun->GetEntry(iv,1,1,1);
+      view->AttachClustersToSegments();
+    }
     else             view = eRun->GetEntry(iv);
 
     nsegV = view->Nsegments();
@@ -979,8 +1042,10 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
   int niu=elist->N();
   for(int iu=0; iu<niu; iu++) {
     entry = elist->At(iu)->Value();
-    //    view = eRun->GetEntry(entry);
-    if(eCLUST)       view = eRun->GetEntry(entry,1,1,1);
+    if(eCLUST)       {
+      view = eRun->GetEntry(entry,1,1,1);
+      view->AttachClustersToSegments();
+    }
     else             view = eRun->GetEntry(entry);
 
     nsegV = view->Nsegments();
@@ -1595,7 +1660,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 	shrtot2 += nshr*shr2;
       }
 
-      FillCouplesTree(cptree, ali,0);
+      FillCouplesTree(cptree, ali,piece.GetOUTPUT());  //!!! 0
 
       delete ali;
     }
