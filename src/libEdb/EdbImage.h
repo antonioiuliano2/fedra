@@ -43,7 +43,10 @@ public:
   virtual void   Print( Option_t *opt="" ) const;
 
   char   *GetBuffer()         const { return eBuffer->GetArray(); }
-  char    Pixel(int c, int r) const { return eBuffer->At(eColumns*r + c); }
+  int    Pixel(int c, int r) const 
+    { if(r<0) return 0; if(r>eRows)    return 0;
+      if(c<0) return 0; if(c>eColumns) return 0;
+      return (int)(((unsigned char*)(eBuffer->GetArray()))[eColumns*r + c]); }
   TH2F   *GetHist2(int flip=0) const;
   TH1F   *GetHist1() const;
 

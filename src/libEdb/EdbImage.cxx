@@ -14,8 +14,9 @@
 #ifndef ROOT_EdbImage
 #include "EdbImage.h"
 #endif
-#include <fstream>   //created problems under Windows
-using namespace std;
+#include "Riostream.h"
+//#include <fstream>   //created problems under Windows
+//using namespace std;
  
 ClassImp(EdbImage)
 ClassImp(EdbFIRF)
@@ -82,7 +83,7 @@ EdbImage::EdbImage( int columns, int rows, char *image )
 //______________________________________________________________________________
 void EdbImage::Print( Option_t *opt ) const
 {
-  printf("Image: %d x %d \t :  %d bytes\n", eRows, eColumns, eBytes);
+  printf("Image: %d x %d \t :  %d bytes\n", eColumns, eRows, eBytes);
 }
 
 //______________________________________________________________________________

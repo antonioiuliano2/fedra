@@ -233,6 +233,7 @@ EdbImage.o: /var/local/root/include/TIterator.h
 EdbImage.o: /var/local/root/include/TArrayF.h
 EdbImage.o: /var/local/root/include/TArray.h
 EdbImage.o: /var/local/root/include/TArrayC.h
+EdbImage.o: /var/local/root/include/Riostream.h
 EdbOnline.o: /usr/include/string.h /usr/include/features.h
 EdbOnline.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
 EdbOnline.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
