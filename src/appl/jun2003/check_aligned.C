@@ -1,8 +1,12 @@
 void check_aligned()
 {
-  check_diff();
+  check_corr();
   //  check_shrinkage();
 }
+//couples->Draw("s2.eX-(s1.eX+(s2.eZ-s1.eZ)*s.eTX):s1.eX","pid1==0");
+
+//tracks->Draw("eTX[0]-(eX[1]-eX[0])/(eZ[1]-eZ[0]):(eX[1]-eX[0])/(eZ[1]-eZ[0])","nseg==4");
+//tracks->Draw("eTX[1]-(eX[1]-eX[0])/(eZ[1]-eZ[0]):eTX[0]-(eX[1]-eX[0])/(eZ[1]-eZ[0])","nseg==4");
 
 //-----------------------------------------------------------------
 void check_diff()
@@ -13,13 +17,32 @@ void check_diff()
   gStyle->SetOptFit(0001);
 
   diff_1->cd();   
-  couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2<1.5&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+  couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2P<1.2&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
   diff_2->cd();   
-  couples->Draw("s2.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2<1.5&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+  couples->Draw("s2.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2P<1.2&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
 
   diff_3->cd();   
   couples->Draw("eCHI2","pid2>-1&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
   diff_4->cd();   
+  couples->Draw("eCHI2P","pid2>-1&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+}
+
+//-----------------------------------------------------------------
+void check_corr()
+{
+  TCanvas *diff = new TCanvas("corr","corr");
+  diff->Clear();
+  diff->Divide(2,2);
+  gStyle->SetOptFit(0001);
+
+  corr_1->cd();   
+  couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2P<1.2&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+  corr_2->cd();   
+  couples->Draw("s1.eTX-(s2.eX+s2.eTX*10-s1.eX-s1.eTX*10)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2P<1.2&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+
+  corr_3->cd();   
+  couples->Draw("eCHI2","pid2>-1&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
+  corr_4->cd();   
   couples->Draw("eCHI2P","pid2>-1&&abs(s1.eTY)<.1&&abs(s2.eTY)<.1");
 }
 

@@ -1,18 +1,21 @@
 INCLUDE default.par
 
-SHRINK	1	1.05
-SHRINK	2	.89
-
 ZLAYER  0 	0 0 0     # plate Z must be setted correctly before alingment
 
 #
 # calculated by EdbDataProc::Align() affine transformation must be setted here 
 # before using EdbDataProc::LinkTrack()
 #
+SHRINK 	 1 	 1.066958 
+SHRINK 	 2 	 0.882310 
+
+SHRINK 	 1 	 1.067037 
+SHRINK 	 2 	 0.881825 
 
 AFFXY 	 0 	 1.000000 0.000000 0.000000 1.000000 0.000000 0.000000
 
-AFFXY 	 0 	 1.000000 0.000000 0.000000 1.000000 0.000000 0.000000
+SHRINK 	 1 	 1.067070 
+SHRINK 	 2 	 0.881748 
 
 AFFXY 	 0 	 1.000000 0.000000 0.000000 1.000000 0.000000 0.000000
 

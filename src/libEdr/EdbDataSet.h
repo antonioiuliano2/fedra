@@ -109,8 +109,10 @@ class EdbDataPiece : public TNamed {
   const char *GetRunFile(int i) const;
   const char *MakeName();
   const char *MakeNameCP(const char *dir);
+  const char *GetNameCP() const {return eFileNameCP.Data();}
   void Print();
 
+  void SetCouplesTree(TTree *tree) {eCouplesTree=tree;}
   int       Nruns() const { return eRunFiles.GetEntries(); }
   int       Flag() const {return eFlag;}
   EdbLayer *GetMakeLayer(int id);
@@ -120,7 +122,6 @@ class EdbDataPiece : public TNamed {
   EdbScanCond *GetCond(int id)
     { if(eCond[id]) return (EdbScanCond *)eCond[id]; else return 0; }
 
-  TTree *InitCouplesTree( const char *mode="READ" );
 
   void           AddCutCP(float var[6]);
   void           AddSegmentCut(int layer, int xi, float var[5]);
@@ -129,6 +130,8 @@ class EdbDataPiece : public TNamed {
     { return (EdbSegmentCut *)(eCuts[layer]->UncheckedAt(i)); }
 
   void MakeNamePar(const char *dir);
+  void CorrectShrinkage( float shr1, float shr2 );
+  int  UpdateShrPar();
   int  UpdateAffPar( int layer, EdbAffine2D &aff);
   int  TakePiecePar();
   int  ReadPiecePar(const char *file);
@@ -203,8 +206,13 @@ class EdbDataProc : public TObject {
   void LinkTracks();
   void AlignLinkTracks();
 
+  int    ShrinkCorr() {return 1;}
+  int    CheckShrinkage( EdbPVRec *ali, int couple, float &shr1, float &shr2 );
+
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
+
+  TTree *InitCouplesTree( const char *file, const char *mode="READ" );
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };

@@ -4,7 +4,7 @@ AFID    0   # 1-use fiducial marks, 0 - stage coord (as written in run files)
 # 0/1/2 - layerID: 1 and 2 - emulsion surfaces (segments in view coord), 0- basetrack in plate coord
 # 
 
-ZLAYER  2 	0. 0. 0.        # layerID z zmin zmax  (only z is used yet)
+ZLAYER  2 	0. -0. 0.        # layerID z zcorr
 SHRINK  2 	.89
 AFFXY   2 	1 0 0 1 	0 0
 AFFTXTY 2 	1 0 0 1 	0 0
@@ -28,7 +28,7 @@ RAMP04   1       5   9			# puls(Signal 1%) puls(Signal 80%) at .4 rad angle
 CHI2MAX  1	 3.5			# chi2 simple
 CHI2PMAX 1	 3.5			# chi2 with puls weighting (ramp used)
 
-#     "Prototype_OPERA_basetrack"
+#     "Prototype_OPERA_basetrack_300micron"
 SIGMA0   0       9.  10.  .006  .006
 DEGRAD   0       5.
 BINS     0       3   3   3  3
@@ -68,7 +68,7 @@ XCUT 2	   -109. -108.	-159.  -156.	-.06   .06	-.06   .06	10.  17.
 #
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
-ICUT 0	-65000. -55000.	50000. 55000.	 -.6     .6	  -.6    .6	0.  33.
+# XCUT 0	-100000. 100000. -100000. 100000.	-.6     .6	  -.6    .6	0.  33.
 
 
 # CUTCP can be used before alignment and linking

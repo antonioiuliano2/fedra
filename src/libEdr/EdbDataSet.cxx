@@ -204,40 +204,6 @@ EdbScanCond *EdbDataPiece::GetMakeCond(int id)
   return GetCond(id);
 }
 
-///______________________________________________________________________________
-TTree *EdbDataPiece::InitCouplesTree(const char *mode)
-{
-  const char *file_name=eFileNameCP.Data();
-  const char *tree_name="couples";
-  TTree *tree=0;
-
-  if (!tree) {
-    TFile *f = new TFile(file_name,mode);
-    if (f)  tree = (TTree*)f->Get(tree_name);
-    if(!tree) {
-
-      f->cd();
-      tree = new TTree(tree_name,tree_name);
-      
-      int pid1,pid2;
-      EdbSegCouple *cp=0;
-      EdbSegP      *s1=0;
-      EdbSegP      *s2=0;
-      EdbSegP      *s=0;
-      
-      tree->Branch("pid1",&pid1,"pid1/I");
-      tree->Branch("pid2",&pid2,"pid2/I");
-      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
-      tree->Branch("s1.","EdbSegP",&s1,32000,99);
-      tree->Branch("s2.","EdbSegP",&s2,32000,99);
-      tree->Branch("s." ,"EdbSegP",&s,32000,99);
-      tree->Write();
-      tree->SetAutoSave(2000000);
-    }
-  }
-  eCouplesTree=tree;
-  return tree;
-}
 
 ///______________________________________________________________________________
 void EdbDataPiece::MakeNamePar(const char *dir)
@@ -380,6 +346,37 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 }
 
 ///______________________________________________________________________________
+void EdbDataPiece::CorrectShrinkage(float shr1, float shr2)
+{
+  float shr=GetLayer(1)->Shr();
+  GetLayer(1)->SetShrinkage( shr1*shr );
+  shr=GetLayer(2)->Shr();
+  GetLayer(2)->SetShrinkage( shr2*shr );
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::UpdateShrPar()
+{
+  const char *file=eFileNamePar.Data();
+
+  FILE *fp=fopen(file,"a");
+  if (fp==NULL)   {
+    printf("ERROR open file: %s \n", file);
+    return 0;
+  }else
+    printf( "\nUpdate shrinkage parameters file (AFFXY): %s\n\n", file );
+
+  char str[64];
+  sprintf(str,"SHRINK \t %d \t %f \n",1, GetLayer(1)->Shr() );
+  fprintf(fp,"\n%s",str);
+  sprintf(str,"SHRINK \t %d \t %f \n",2, GetLayer(2)->Shr() );
+  fprintf(fp,"%s",str);
+
+  fclose(fp);
+  return 1;
+}
+
+///______________________________________________________________________________
 int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
 {
   const char *file=eFileNamePar.Data();
@@ -436,11 +433,12 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   EdbLayer  *layer=GetLayer(side);
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
 
-  float x,y,tx,ty,puls;
+  float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
   ty   = seg->GetTy()/layer->Shr();
-  x    = seg->GetX0(); // + dz*tx;
-  y    = seg->GetY0(); // + dz*ty;
+  x    = seg->GetX0() + layer->Zmin()*tx;
+  y    = seg->GetY0() + layer->Zmin()*ty;
+  z    = layer->Z() + layer->Zmin();
   if(eAFID==0) {
     x+=view->GetXview();
     y+=view->GetYview();
@@ -448,7 +446,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   puls = seg->GetPuls();
 
   segP.Set( seg->GetID(),x,y,tx,ty);
-  segP.SetZ( layer->Z() );
+  segP.SetZ( z );
   segP.SetW( puls );
 
   return 1;
@@ -995,6 +993,39 @@ void EdbDataProc::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
 }
 
 ///______________________________________________________________________________
+TTree *EdbDataProc::InitCouplesTree(const char *file_name, const char *mode)
+{
+  const char *tree_name="couples";
+  TTree *tree=0;
+
+  if (!tree) {
+    TFile *f = new TFile(file_name,mode);
+    if (f)  tree = (TTree*)f->Get(tree_name);
+    if(!tree) {
+
+      f->cd();
+      tree = new TTree(tree_name,tree_name);
+      
+      int pid1,pid2;
+      EdbSegCouple *cp=0;
+      EdbSegP      *s1=0;
+      EdbSegP      *s2=0;
+      EdbSegP      *s=0;
+      
+      tree->Branch("pid1",&pid1,"pid1/I");
+      tree->Branch("pid2",&pid2,"pid2/I");
+      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
+      tree->Branch("s1.","EdbSegP",&s1,32000,99);
+      tree->Branch("s2.","EdbSegP",&s2,32000,99);
+      tree->Branch("s." ,"EdbSegP",&s,32000,99);
+      tree->Write();
+      tree->SetAutoSave(2000000);
+    }
+  }
+  return tree;
+}
+
+///______________________________________________________________________________
 void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
 {
   tree->GetDirectory()->cd();
@@ -1046,12 +1077,12 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
 
-      /*
-        s->Set( ic, s1->X(), s1->Y(),
+      /*      
+      s->Set( ic, s1->X(), s1->Y(),
               (s1->X()-s2->X())/(s1->Z()-s2->Z()),
               (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
               s1->W()+s2->W());
-        s->SetZ( s1->Z() );
+      s->SetZ( s1->Z() );
       */
 
       LinkMT(s1,s2,s);
@@ -1072,17 +1103,65 @@ void EdbDataProc::CloseCouplesTree(TTree *tree)
 }
 
 ///______________________________________________________________________________
+int EdbDataProc::CheckShrinkage(EdbPVRec *ali, int couple, float &shr1, float &shr2)
+{
+  EdbPatCouple  *patc = ali->GetCouple(couple);
+  EdbSegCouple *sc=0;
+  EdbSegP *s1=0, *s2=0;
+
+  double dz,tx,ty,t,t1,t2,sumt1=0,sumt2=0;
+  int    nsum=0;
+
+  int  nc=patc->Ncouples();
+  for( int ic=0; ic<nc; ic++ ) {
+    sc = patc->GetSegCouple(ic);
+
+    if(sc->CHI2()>1.5)  continue;
+
+    s1 = patc->Pat1()->GetSegment(sc->ID1());
+    s2 = patc->Pat2()->GetSegment(sc->ID2());
+
+    dz = s2->Z() - s1->Z();
+    tx = (s2->X() - s1->X())/dz;
+    ty = (s2->Y() - s1->Y())/dz;
+ 
+    t  = TMath::Sqrt( tx*tx + ty*ty );
+    if(t<.1) continue;
+    if(t>.4) continue;
+    t1 = TMath::Sqrt( s1->TX()*s1->TX() + s1->TY()*s1->TY() );
+    t2 = TMath::Sqrt( s2->TX()*s2->TX() + s2->TY()*s2->TY() );
+
+    nsum++;
+    sumt1 += t1/t;
+    sumt2 += t2/t;
+  }
+
+  if(nsum<10)  return nsum;
+
+  shr1 = sumt1/nsum;
+  shr2 = sumt2/nsum;
+
+  return nsum;
+}
+
+///______________________________________________________________________________
 int EdbDataProc::Link(EdbDataPiece &piece)
 {
   EdbPVRec  *ali;
 
-  TTree *cptree=piece.InitCouplesTree("RECREATE");
+  const char *file_name=piece.GetNameCP();
+  TTree *cptree=InitCouplesTree(file_name,"RECREATE");
   EdbScanCond *cond = piece.GetCond(1);
 
   int ntot=0, nareas=0;
 
+  float  shr1=1,shr2=1;
+  double shrtot1=0, shrtot2=0;
+  int    nshr=0,nshrtot=0;
+
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
-    nareas = piece.MakeLinkListCoord(irun);
+    //    nareas = piece.MakeLinkListCoord(irun);
+    nareas = piece.MakeLinkListArea(irun);
     for(int i=0; i<nareas; i++ ) {
 
       ali      = new EdbPVRec();
@@ -1097,11 +1176,25 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       ali->SetChi2Max(cond->Chi2PMax());
       ali->Link();
 
+      if( ShrinkCorr() ) {
+	shr1 = 1;
+	shr2 = 1;
+	nshr = CheckShrinkage( ali,0, shr1, shr2 );
+	nshrtot += nshr;
+	shrtot1 += nshr*shr1;
+	shrtot2 += nshr*shr2;
+      }
+      
       FillCouplesTree(cptree, ali,0);
 
       delete ali;
     }
     ntot+=nareas;
+    shrtot1 = shrtot1/nshrtot;
+    shrtot2 = shrtot2/nshrtot;
+    printf("Shrinkage mean: %f %f\n", (float)shrtot1,(float)shrtot2);
+    piece.CorrectShrinkage( (float)shrtot1, (float)shrtot2 );
+    piece.UpdateShrPar();
   }
   CloseCouplesTree(cptree);
 
@@ -1119,10 +1212,13 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
   printf("npieces = %d\n",npieces);
   if(!npieces) return 0;
 
+  TTree *cptree=0;
   for(int i=0; i<npieces; i++ ) {
     printf("\n");
     piece = eDataSet->GetPiece(i);
-    if( !piece->InitCouplesTree())  printf("no tree %d\n",i);
+    cptree=InitCouplesTree(piece->GetNameCP());
+    if( !cptree )  printf("no tree %d\n",i);
+    piece->SetCouplesTree(cptree);
     piece->GetCPData(ali);
   }
   ali->Centralize();
@@ -1162,6 +1258,11 @@ void EdbDataProc::LinkTracks()
   InitVolume(ali);
   ali->Link();
   printf("link ok\n");
+
+  TTree *cptree=InitCouplesTree("linked_couples","RECREATE");
+  FillCouplesTree(cptree, ali,0);
+  CloseCouplesTree(cptree);
+
   ali->MakeTracksTree();
 }
 
@@ -1181,5 +1282,9 @@ void EdbDataProc::AlignLinkTracks()
 
   ali->Link();
   printf("link ok\n");
+  TTree *cptree=InitCouplesTree("linked_couples","RECREATE");
+  FillCouplesTree(cptree, ali,0);
+  CloseCouplesTree(cptree);
+
   ali->MakeTracksTree();
 }
