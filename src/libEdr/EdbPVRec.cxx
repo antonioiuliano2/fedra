@@ -11,6 +11,7 @@
 #include "TFile.h"
 #include "TVector3.h"
 #include "TIndexCell.h"
+#include "TArrayF.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
 
@@ -172,8 +173,7 @@ int EdbSegCouple::Compare( const TObject *obj ) const
  
 }
 
-///______________________________________________________________________________
-///______________________________________________________________________________
+///==============================================================================
 EdbPatCouple::EdbPatCouple()
 {
   eSegCouples = new TObjArray(1000);
@@ -190,10 +190,10 @@ EdbPatCouple::~EdbPatCouple()
 }
 
 ///______________________________________________________________________________
-EdbSegCouple   *EdbPatCouple::AddSegCouple( int id1, int id2 )
+EdbSegCouple  *EdbPatCouple::AddSegCouple( int id1, int id2 )
 {
-  EdbSegCouple *sc = new EdbSegCouple(id1,id2);
   if(!eSegCouples)   eSegCouples = new TObjArray(1000);
+  EdbSegCouple *sc = new EdbSegCouple(id1,id2);
   eSegCouples->Add(sc);
   return sc;
 }
@@ -220,11 +220,13 @@ void EdbPatCouple::CalculateAffXYZ( float z )
   EdbSegCouple *scp=0;
   EdbSegP *s1, *s2;
   int   ncp=Ncouples();
-  float *x1 = new float[ncp];
-  float *y1 = new float[ncp];
-  float *x2 = new float[ncp];
-  float *y2 = new float[ncp];
-  float dz1,dz2;
+  
+  Float_t *x1 = new Float_t[ncp];
+  Float_t *y1 = new Float_t[ncp];
+  Float_t *x2 = new Float_t[ncp];
+  Float_t *y2 = new Float_t[ncp];
+
+  Float_t dz1,dz2;
 
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
@@ -402,7 +404,6 @@ int EdbPatCouple::FillCHI2()
     chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2A( *(Pat2()->GetSegment(scp->ID2())) );
     scp->SetCHI2(chi2);
   }
-  //printf("Chi2 filled:  %d \n",Ncouples());
   return Ncouples();
 }
 
@@ -411,21 +412,16 @@ int EdbPatCouple::CutCHI2P(float chi2max)
 {
   TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
-  printf("CutCHI2P (%4.1f):  %d -> ", chi2max,Ncouples() );
   int ncp = Ncouples();
+  printf("CutCHI2P (%4.1f):  %d -> ", chi2max,ncp );
  
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
     if(sc->CHI2P()<=chi2max)      sCouples->Add(sc);
-    else {
-      delete sc;
-      sc=0;
-    }
+    else{ delete sc;  sc=0; }
   }
-  //eSegCouples->Clear();
   delete eSegCouples;
   eSegCouples=sCouples;
-  //eSegCouples->Compress();
   printf(" %d \n", Ncouples() );
   return Ncouples();
 }
@@ -433,14 +429,18 @@ int EdbPatCouple::CutCHI2P(float chi2max)
 ///______________________________________________________________________________
 int EdbPatCouple::SelectIsolated()
 {
+  TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
   int ncp = Ncouples();
   printf("SelectIsolated:  %d -> ", ncp );
+
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
-    if( sc->N1tot()>1 || sc->N2tot()>1 )   RemoveSegCouple(sc);
+    if( sc->N1tot()>1 || sc->N2tot()>1 )   { delete sc;  sc=0; }
+    else sCouples->Add(sc);    
   }
-  eSegCouples->Compress();
+  delete eSegCouples;
+  eSegCouples=sCouples;
   printf(" %d \n", Ncouples() );
   return Ncouples();
 }
@@ -685,7 +685,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 		      v[0] = c1[3]->At(ie1)->Value();
 		      v[1] = c2[3]->At(ie2)->Value();
 
-		      AddSegCouple(v[0],v[1]);
+		      AddSegCouple((int)v[0],(int)v[1]);
 
 		    }
 		  }

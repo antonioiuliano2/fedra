@@ -165,6 +165,7 @@ class EdbPatCouple : public TObject {
   EdbAffine2D *eAff;        // affine transformation as: pat2 = pat1->Transform(aff)
 
   TObjArray *eSegCouples;   //
+  //  TClonesArray *eSegCouples;   //
   
   EdbScanCond *eCond;
 

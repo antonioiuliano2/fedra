@@ -649,6 +649,7 @@ int EdbDataPiece::GetCPData(EdbPVRec *ali)
     tree->GetEntry(i);
     if( !TakeCPSegment(*cp,*s) )      continue;
     s->SetZ(pat->Z());
+    s->SetVid(i,0);
     pat->AddSegment( *s );
     nseg++;
   }

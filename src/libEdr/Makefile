@@ -225,7 +225,8 @@ EdbPVRec.o: /usr/include/string.h /var/local/root/include/TMatrix.h
 EdbPVRec.o: /var/local/root/include/TVector.h
 EdbPVRec.o: /var/local/root/include/TString.h
 EdbPVRec.o: /var/local/root/include/TRefCnt.h
-EdbPVRec.o: /var/local/root/include/TMatrixUtils.h EdbPVRec.h EdbPattern.h
+EdbPVRec.o: /var/local/root/include/TMatrixUtils.h
+EdbPVRec.o: /var/local/root/include/TArrayF.h EdbPVRec.h EdbPattern.h
 EdbPVRec.o: /var/local/root/include/TTree.h
 EdbPVRec.o: /var/local/root/include/TClonesArray.h
 EdbPVRec.o: /var/local/root/include/TAttLine.h
