@@ -1,0 +1,110 @@
+This is an example of data processing directory 
+with the input card files:
+
+jun2003_data_set.def  - in this file are defined:
+			- where is the data set list
+			- where to get input parameters per each data element
+			- where to put output data
+
+jun2003_runs.lst      - data set list, here should be listed all 
+			data files to be processd together (i.e for 1 
+			brick scanning)
+
+	The format of this file:
+
+plateID	pieceID		/data/file/name/run.root  Flag
+
+	here: 	plateID - the consequtive plate number (1-57)
+		pieceID - the number of data piece INSIDE the 
+			  current plate. For example plate could 
+			  be divided into zones scanned separatly, 
+			  using of pieceID permits to combine them together
+
+		from plateID and pieceID will be constracted the standard 
+		names used for input and output files during analysis:
+		01_001 - for plate 1, piece 1
+
+		Flag	=0 - do not use this piece
+			=1 - use this piece
+
+default.par  - default parameters for data piece (see comments inside the file)
+
+./par  - the parameters directory.
+	Here should be created (manually for the moment) parameter 
+	files per each data piece: see ./par/09_001.par as example.
+
+Data processing scheme:
+
+1) create the file XXXX_data_set.def and correspondent directory structure
+
+2) create the XXXX_runs.lst with list of data files.
+	Note that it is convenient to select from the inition which 
+	plate (data piece) will be the reference one - all other data 
+	pieces will be transformated to the coordinate system of this one.
+	This data piece should be on BOTTOM of the list:
+	
+	...........
+	2  1 ......
+	1  2 ......
+	1  1 ......
+
+	In this example all data after the alignment will be transformed to 
+	coordinate system of piece 01_001.
+	So if the scannig started from the first plate, the list 
+	should be updated by the data of consequtive plates at the top.
+
+3) create the parameters files per each data piece in the directory ./par 
+   as it is done in jun2003/par. All common settings could be combined together 
+   into dedicated file(s) - default.par in our example.
+   For all parameters used the last setting.
+   All cuts will be applied one by one in the same sequence as them setted.
+
+4) Linking: 
+      >	recset link XXXX_data_set.def
+	
+	With this instruction for all pieces listed in runs.lst with flag 1
+	will be performed up/down linking. Output root files with "couples" 
+	trees go to the ./data directory. Them could be used to check the 
+	quality of the procedure and for the individual tuning of parameters, 
+	especially the SHRINK.
+	After corrections linking should be repeated for pieces with 
+	modified parameters.
+	
+5) Alingment:
+	> recset align XXXX_data_set.def
+
+	this procedure will search plate to plate offset in the limits 
+	defined by OFFSET parameter and then calculate the affine 
+	transformation.
+
+	Note that alingment is an expensive procedure especially if the 
+	possible offset is big (for example >~ 500 micron). It is not 
+	necessary to use all data volume for alingment: 1000 tracks/pattern 
+	is quite enough. To reduce number of tracks the cuts could be used:
+	ICUT 0 .....
+	XCUT 0 .....
+	The procedure read base tracks from files produced in 5) and apply 
+	the defined cuts for them.
+	So for the first iteration alignment could be done for small 
+	data subsets with the big OFFSET; setted the correct affine parameters 
+	in the correspondent par file; and then repeated 
+	with the full data set and small OFFSET.
+	
+	Note that alignment could be done for any number of plates >=2.
+	The most economic way to do it is by couples: 2->1; 3->2; etc.
+
+6) Track linking:
+	> recset track XXXX_data_set.def
+
+	ones the affine transformations are defined for N plates - for 
+	all of them could be done track linking. This procedure is similar to 
+	up/down linking and done for all couples of neibour plates and output 
+	is written to tracks.root
+
+--------------------------------------------------
+
+TODO list:
+	- to fix const/file memory leak in link procedure
+	- to apply Andrey's routine for s par
+	- to provide correct track linking with recalculation of 
+	  track parameters

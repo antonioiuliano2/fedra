@@ -37,13 +37,13 @@ RAMP0    0       15  15
 RAMP04   0       15  15
 CHI2MAX  0	 3.
 CHI2PMAX 0	 3.
-OFFSET   0       10. 10.		# maximal offset for alingment search (dX dY)
+OFFSET   0       100. 100.		# maximal offset for alingment search (dX dY)
 
 #
 # Cuts for segments (view coord - same as in run files) used for up/down linking
 #
-#  XCUT - cut out inside  phase volume (remains eXternal part)
-#  ICUT - cut out outside phase volume (remains Internal part)
+#  XCUT - reject inside  phase volume (accept the eXternal part)
+#  ICUT - reject outside phase volume (accept the Internal part)
 
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
