@@ -11,12 +11,18 @@
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
+#include "vt++/VtVector.hh"
+#include "vt++/CMatrix.hh"
+
+#include <iostream.h>
 
 ClassImp(EdbSegP)
 ClassImp(EdbSegmentsBox)
 ClassImp(EdbTrackP)
 ClassImp(EdbPattern)
 ClassImp(EdbPatternsVolume)
+
+using namespace MATRIX;
 
 //______________________________________________________________________________
 EdbSegP::EdbSegP() 
@@ -39,6 +45,7 @@ void EdbSegP::Copy(EdbSegP &s)
 {
       SetPID(s.PID());
       Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
+      SetZ(s.Z());
       SetCOV(s.COV());
       SetSZ(s.SZ());
       SetVid(s.Vid(0),s.Vid(1));
@@ -182,8 +189,8 @@ void EdbSegP::PropagateTo( float z )
   eX  = X() + TX()*dz;
   eY  = Y() + TY()*dz;
   eZ  = z;
-  eCOV->set_x( SX() + STX()*dz*dz );
-  eCOV->set_y( SY() + STY()*dz*dz );
+  (*eCOV)(0,0)=  SX() + STX()*dz*dz;
+  (*eCOV)(1,1) = SY() + STY()*dz*dz;
 }
 
 //______________________________________________________________________________
@@ -230,13 +237,13 @@ void EdbSegP::MergeTo( EdbSegP &s )
 
   eX = (X()*wx1 + s.X()*wx2)/(wx1+wx2);
   eY = (Y()*wy1 + s.Y()*wy2)/(wy1+wy2);
-  eCOV->set_x( 1./(wx1+wx2) );
-  eCOV->set_x( 1./(wy1+wy2) );
+  (*eCOV)(0,0)=  1./(wx1+wx2);
+  (*eCOV)(1,1)=  1./(wy1+wy2);
 
   eTX = (TX()*wtx1 + s.TX()*wtx2)/(wtx1+wtx2);
   eTY = (TY()*wty1 + s.TY()*wty2)/(wty1+wty2);
-  eCOV->set_tx( 1./(wtx1+wtx2) );
-  eCOV->set_ty( 1./(wty1+wty2) );
+  (*eCOV)(2,2)= 1./(wtx1+wtx2);
+  (*eCOV)(3,3)= 1./(wty1+wty2);
 
   eZ = s.Z();
   eSZ = TMath::Sqrt(( SZ() + s.SZ())/2);
@@ -355,7 +362,9 @@ float EdbSegmentsBox::Diff(EdbSegmentsBox &p)
 void EdbSegmentsBox::SetSegmentsZ()
 {
   int nseg = N();
-  for(int i=0; i<nseg; i++ )    GetSegment(i)->SetZ( Z() );
+  for(int i=0; i<nseg; i++ )    {
+    GetSegment(i)->SetZ( Z() );
+  }
 }
 
 //______________________________________________________________________________
@@ -483,6 +492,8 @@ EdbTrackP::EdbTrackP(int nseg=0)
   eS=0;
   eVid = 0;  
   if(nseg>0) eS = new EdbSegmentsBox(nseg);
+  //mCOV.ResizeTo(5,5);
+  //eCOV=&mCOV;
 }
  
 //______________________________________________________________________________
@@ -528,6 +539,126 @@ void EdbTrackP::FitTrack()
 }
 
 //______________________________________________________________________________
+double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
+{
+  // calculate the square of multiple scattering angle theta (in one projection)
+  // after the distance dPb in lead  [microns]
+
+  const double Xrad=5810.;           // X0 of the Pb in microns
+  const double k = 0.0136*0.0136;    // [GeV]
+  double p2 = p*p, p4=p2*p2;
+  return  k*(ma*ma+p2)*dPb/p4/Xrad;
+}
+
+//______________________________________________________________________________
+int  EdbTrackP::FitTrackKF(bool backward)
+{
+  // if (backward==true)  track parameters are calculated at Z of the first segment
+  // if (backward==false) track parameters are calculated at Z of the last segment
+
+  int nseg=N();
+  if(nseg<2)   return -1;
+ 
+  FitTrack();
+  SetP(4.);
+
+  double   ma=0.139;     // mass of particle (GeV) (Pion at the moment)
+  float    dPb = 1300.*TMath::Sqrt(1+TX()*TX()+TY()*TY()); // thickness of the Pb+emulsion cell in microns
+
+  double teta0sqF= ThetaPb2( P(), dPb, ma );
+
+  EdbSegP *seg0=0;
+  EdbSegP *seg=0;
+
+  if(  GetSegment(N()-1)->Z() <  GetSegment(0)->Z() ) backward = !backward;
+
+  int step=1;
+  int istart=0, iend=nseg-1;
+  if(backward) {
+    step=-1;
+    istart=nseg-1;
+    iend=0;
+  }
+
+  seg0 = GetSegment(istart);
+  VtVector par( (double)(seg0->X()), 
+		(double)(seg0->Y()),  
+		(double)(seg0->TX()), 
+		(double)(seg0->TY()) );
+
+  VtSymMatrix cov(4);             // covariance matrix for seg0
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) cov(k,l) = (seg0->COV())(k,l);
+
+  Double_t chi2=0.L; 
+
+  int i=istart; 
+  while( (i+=step) != iend+step ) {
+
+    seg = GetSegment(i);
+
+    VtSymMatrix dms(4);   // multiple scattering matrix
+    dms.clear();
+
+    double teta0sq = teta0sqF*TMath::Abs(seg0->PID()-seg->PID());
+    double dz = seg->Z()-seg0->Z();                        //?
+
+    dms(0,0) = teta0sq*dz*dz/3.;
+    dms(1,1) = teta0sq*dz*dz/3.;
+    dms(2,2) = teta0sq;
+    dms(3,3) = teta0sq;
+    dms(2,0) = teta0sq*dz/2.;
+    dms(3,1) = teta0sq*dz/2.;
+    dms(0,2) = teta0sq*dz/2.;
+    dms(1,3) = teta0sq*dz/2.;
+
+    VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
+    pred.clear();
+
+    pred(0,0) = 1.L;
+    pred(1,1) = 1.L;
+    pred(2,2) = 1.L;
+    pred(3,3) = 1.L;
+    pred(0,2) = dz;
+    pred(1,3) = dz;
+
+    VtVector parpred(4);            // prediction from seg0 to seg
+    parpred = pred*par;
+
+    VtSymMatrix covpred(4);         // covariation matrix for prediction
+    covpred = pred*(cov*pred.T())+dms;
+
+    VtSymMatrix dmeas(4);           // original covariation  matrix for seg
+    for(int k=0; k<4; k++) 
+      for(int l=0; l<4; l++) dmeas(k,l) = (seg->COV())(k,l);
+
+    covpred = covpred.dsinv();
+    dmeas   = dmeas.dsinv();
+    cov = covpred + dmeas;
+    cov = cov.dsinv();
+
+    VtVector meas( (double)(seg->X()), 
+		   (double)(seg->Y()),  
+		   (double)(seg->TX()), 
+		   (double)(seg->TY()) );
+
+    par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
+
+    chi2 += (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
+
+    seg0 = seg;
+  }
+
+  Set(ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),1.);
+  SetZ(GetSegment(iend)->Z());
+  SetCOV( cov.array(), 4 );
+  SetChi2((float)chi2);
+  SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+
+  return 0;
+}
+
+//______________________________________________________________________________
 float EdbTrackP::CHI2()
 {
   double dtx=0,dty=0,chi2=0;
@@ -537,8 +668,8 @@ float EdbTrackP::CHI2()
     seg = GetSegment(i);
     dtx = seg->TX()-TX();
     dty = seg->TY()-TY();
-    chi2 += TMath::Sqrt( dtx*dtx/seg->STX()/seg->STX() + 
-			 dty*dty/seg->STY()/seg->STY() );
+    chi2 += TMath::Sqrt( dtx*dtx/seg->STX() + 
+			 dty*dty/seg->STY() );
   }
   chi2  /= nseg;
   return chi2;

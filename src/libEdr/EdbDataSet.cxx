@@ -602,8 +602,6 @@ int EdbDataPiece::PassCuts(int id, float var[5])
 ///______________________________________________________________________________
 int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 {
-  //TODO: add transformations
-
   EdbSegment *seg = view->GetSegment(id);
 
   float var[5];
@@ -639,9 +637,6 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetW( puls );
   float pix = GetRawSegmentPix(seg,view);
   segP.SetVolume( pix );
-
-  //printf("%d\n",eCLUST);
-  //  if(eCLUST) segP.SetProbability( GetRawSegmentPix(seg,view) );
 
   return 1;
 }
@@ -1004,6 +999,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
 
   printf("Area: %d ( %d%%)  %d \t viwes: %d \t nseg: %d \t rejected: %d\n", 
 	 aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
+  pat->SetSegmentsZ();
   ali->AddPattern(pat);
   return nseg;
 }
@@ -1501,7 +1497,6 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
       //EdbSegP::LinkMT(s1,s2,s);
       s->SetVolume( s1->Volume()+s2->Volume() );
 
-      //s->Print();
       tree->Fill();
     }
   }
@@ -1585,7 +1580,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       piece.GetAreaData(ali,i,1);
       piece.GetAreaData(ali,i,2);
 
-      ali->SetSegmentsErrors();
+      //ali->SetSegmentsErrors();
 
       ali->SetCouplesAll();
       ali->SetChi2Max(cond->Chi2PMax());
@@ -1708,8 +1703,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
     ali->GetPattern(i)->TransformShr( eDataSet->GetPiece(i)->GetLayer(0)->Shr()  );
   }
   ali->SetPatternsID();
-  //ali->Print();
-  //ali->GetScanCond()->Print();
+
   ali->SetSegmentsErrors();
 
   ali->SetCouplesAll();

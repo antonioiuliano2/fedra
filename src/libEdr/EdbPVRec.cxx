@@ -425,12 +425,7 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   // application: up/down linking, alignment (offset search)
   //
   // All calculation are done in the track plane which remove the 
-  // dependancy of the polar angle (phi)
-
-  float tx,ty;
-
-  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
-  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
+  // dependency of the polar angle (phi)
 
   TVector3 v1,v2,v;
   v1.SetXYZ( s1->TX(), s1->TY() , -1. );
@@ -445,10 +440,12 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   v2.RotateZ( -phi );
 
   float dz  = v.Z();
-  tx  = v.X()/dz;
-  ty  = v.Y()/dz;
+  float tx  = v.X()/dz;
+  float ty  = v.Y()/dz;
   float stx   = eCond->SigmaTX(tx);
   float sty   = eCond->SigmaTY(ty);
+
+  //printf("dz,tx,ty,stx,sty:  %f\t %f %f\t %f %f\n",dz,tx,ty,stx,sty); 
   float prob1=1., prob2=1.;
   if(iprob) {
     prob1 = eCond->ProbSeg(tx,ty,s1->W());
@@ -458,7 +455,9 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   float dty1 = (v1.Y()-ty)*(v1.Y()-ty)/sty/sty/prob1;
   float dtx2 = (v2.X()-tx)*(v2.X()-tx)/stx/stx/prob2;
   float dty2 = (v2.Y()-ty)*(v2.Y()-ty)/sty/sty/prob2;
-  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+
+  float chi2a=TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+  return chi2a;
 }
 
 /*
@@ -1454,11 +1453,8 @@ int EdbPVRec::InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid )
 int EdbPVRec::MakeTracksTree()
 {
   EdbSegP *seg;
-  EdbSegP *s0=0;
-  EdbTrackP *track = new EdbTrackP();
+  EdbTrackP *track = new EdbTrackP(8);
   EdbSegP *tr = (EdbSegP*)track;
-  track->AddSegment(*tr);
-  track->Clear();
 
   int nseg,trid,npl,n0;
   float xv=X();
@@ -1486,6 +1482,9 @@ int EdbPVRec::MakeTracksTree()
   EdbPattern *pat=0;
   TIndexCell *ct;
   Long_t vid=0;
+
+  float sx2=0.4, sy2=0.4, sz2=0., stx2=0.0018, sty2=0.0015, sp2=0.1;
+  sx2*=sx2;  sy2*=sy2;  sz2*=sz2;  stx2*=stx2;  sty2*=sty2;  sp2*=sp2;
   
   int ntc=eTracksCell->GetEntries();
   for(int it=0; it<ntc; it++) {
@@ -1505,19 +1504,10 @@ int EdbPVRec::MakeTracksTree()
       seg->SetPID( Pid(vid) );
       if(seg->Flag()<0) n0++;
 
+      seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
       track->AddSegment(*seg);
-      //      track->Fit();
-
-//        if(is==0)  tr = new EdbSegP(*seg);
-//        else       {
-//  	s0 = new EdbSegP(*tr);          
-//  	EdbSegP::LinkMT(s0,seg,tr);
-//  	delete s0;
-//        }
-//        new((*segments)[is])  EdbSegP( *seg );
     }
-
-    ((EdbSegP*)track)->Copy(*(track->GetSegment(0)));
+    track->FitTrackKF();
     tracks->Fill();
     track->Clear();
     ntr++;
