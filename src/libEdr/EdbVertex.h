@@ -102,7 +102,7 @@ class EdbVertexRec: public TObject {
   bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
 
   static void  TrackMC( EdbPatternsVolume &pv,
-			float lim[4], 
+			float lim[4], float sigma[4], 
 			EdbTrackP &tr);
 
   static float  P_MS(EdbTrackP &tr, float X0=5810., bool draw=false);

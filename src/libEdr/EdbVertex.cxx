@@ -433,7 +433,7 @@ float EdbVertexRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 
 //______________________________________________________________________________
 void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, 
-			     float lim[4], 
+			     float lim[4], float sigma[4], 
 			     EdbTrackP &tr)
 {
   // Segments generation for single MC track with taking into account MS and 
@@ -453,7 +453,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
   Float_t ty0 =tr.TY();
   Float_t p0  =tr.P();
   Float_t m   =tr.M();
-  Float_t sx=1., sy=1., stx=0.001, sty=0.001, dpp=0.1;
+  Float_t sx=sigma[0], sy=sigma[1], stx=sigma[2], sty=sigma[3];
   Float_t x,y,z,tx,ty, xs, ys, txs, tys;
   Float_t dz, dzm, cost, r1, r2, teta0, zold;
   Float_t dx = 0., dy = 0., dtx = 0., dty = 0.;
@@ -477,23 +477,23 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
 
     pat = pv.GetPattern(k);
     z = pat->Z();
-    if ( z < zold ) continue;
+    if ( z < zold ) { zold = z; continue; }
     
     dz = z - zold;
-    cost = TMath::Sqrt((double)1.-(double)tx*(double)tx-(double)ty*(double)ty);
+    cost = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
     if (cost <= 0.001) break;
-    dzm = dz/cost;
+    dzm = dz*cost;
     if (k)
       {
-	teta0 = EdbPhysics::ThetaPb2( p0, m, dzm);
+	teta0 = EdbPhysics::ThetaMS2( p0, m, dzm, EdbPhysics::kX0_Cell);
 	teta0 = TMath::Sqrt(teta0);
 	r1 = gRandom->Gaus();
 	r2 = gRandom->Gaus();
-	dx = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205/cost;
+	dx = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
 	dtx = r2*teta0;
 	r1 = gRandom->Gaus();
 	r2 = gRandom->Gaus();
-	dy = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205/cost;
+	dy = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
 	dty = r2*teta0;
       }
     else
@@ -528,7 +528,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
     seg->SetZ(z);
     seg->SetPID(k);
     seg->SetFlag(tr.Flag());
-    seg->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, p0*p0*dpp*dpp);
+    seg->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
 
     tr.AddSegment(     pat->AddSegment(*seg) );
   }
