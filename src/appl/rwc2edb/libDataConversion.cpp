@@ -107,13 +107,14 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 		for (int f = 1; f < nFragments+1; f++)
 		{
 			// build rwd name 
-			char* rwdname;
-			rwdname = _strdup( rwcname );
+			char* rwdname=new char[strlen(rwcname)+16];
+			strcpy( rwdname,rwcname );
 			strncpy( rwdname + strlen(rwdname)-1, "d", 1 );
 			sprintf(rwdname,"%s.%08X", rwdname, f);
 
 			cout <<"(tot. fragm.:"<<nFragments<<")  ";
 			AddRWD(run, rwdname,f);
+			delete[] rwdname;
 		}; //end of fragments (f)
 		cout <<endl;
 	}
