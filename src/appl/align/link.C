@@ -23,14 +23,14 @@ void link()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-  "/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl01/pl01_zona1.root"
+  "/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl02/Sep2002_pl2_1.root"
    ,"READ");
 
   //                up base down  - nominal values during exposure (up/down are used for projection only)
   float  plate[3] = {40, 214, 40}; // we do not rely yet on values coming after convertor
 
-  float  shrU  = 0.93;              //  (exposure thickness) / (measured on stage thickness):
-  float  shrD  = 0.73;              //  tx_exp = tx_stage/shr
+  float  shrU  = 1.12;              //  (exposure thickness) / (measured on stage thickness):
+  float  shrD  = .98;              //  tx_exp = tx_stage/shr
 
   float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
   float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
@@ -51,8 +51,8 @@ void link()
   TIndexCell *down=0;
 
   int nareas= edbRun->GetHeader()->GetNareas();
-  for(int aid=1; aid<11; aid++) {
-  //for(int aid=0; aid<nareas+1; aid++) {
+  //for(int aid=1; aid<11; aid++) {
+  for(int aid=0; aid<nareas+1; aid++) {
 
     up   = uplist.Find(aid);      if(!up)   continue;
     down = downlist.Find(aid);    if(!down) continue; 

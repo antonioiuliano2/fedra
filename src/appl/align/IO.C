@@ -124,6 +124,8 @@ void getDataCouples( const char *file_name,
   EdbSegP         *s2 = 0;
   EdbSegP         *s  = 0;
 
+  printf("get couples from file: %s\n",file_name);
+
   TFile *f = new TFile( file_name );
   if (f)  tree = (TTree*)f->Get(tree_name);
 

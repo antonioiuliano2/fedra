@@ -1,0 +1,68 @@
+From Gabriele.Sirri@bo.infn.it Wed Jul  9 12:42:55 2003
+Date: Tue,  8 Jul 2003 16:17:44 +0200
+From: Gabriele Sirri <Gabriele.Sirri@bo.infn.it>
+To: Valeri.Tioukov@na.infn.it, Ciro.Pistillo@na.infn.it,
+     Gabriele.Sirri@bo.infn.it, igor.kreslo@cern.ch, Luigi.Esposito@bo.infn.it,
+     Michela.Cozzi@bo.infn.it
+Subject: Rwc2edb updates
+
+    [ The following text is in the "ISO-8859-1" character set. ]
+    [ Your display is set for the "ISO-8859-5" character set.  ]
+    [ Some characters may be displayed incorrectly. ]
+
+Dear all, 
+	a new revision (1.6) of the converter is available on the fedra site. 
+This "converging" revision includes some bug corrections and modifications 
+concerning the coordinates and the sysalDataio2 library.
+
+I have just re-writed that revision in order to have a structured source code 
+(should be 1.8). All the conversions are made using a library of functions 
+which I called libDataConversion in order to keep separated the data 
+conversion code from the root files manipulation code in the converter. The 
+library is still in its initial state but could evolve in the future to become 
+a class, a namespace or a win32 dll (sigh... another one). 
+
+I want to point your attention to the very crucial change of point-of-view: 
+starting from 1.6, the clusters and segments coordinates are given in the 
+original coordinates of the camera (converted in microns) and not anymore in 
+the fiducial marks coordinates as in the past. 
+
+An affine transformation, which is computed on-line, is stored inside every 
+View and performs the needed transformation. 
+
+This affine contains :
+- the rotation of the sheet related to the stage computed using the three more 
+closed fiducial marks (so it contains also possible effects of local 
+macroscopic planar distortions...) and
+- the translations of the view computed from the origin (see the .map file, 
+usually the first mark)
+
+I also included the possibility to read and store the .map file created by the 
+on-line. So in the future we can compute by ourself this rotations (this is 
+the way I prefer). I suggest you to don't forget the map file...
+
+In the "test and configure" conversions (which Igor included starting from the 
+revision 1.4 - unfortunately, missed in the 1.6), I create different root 
+files for the RWD and TXT (grains) file. The reason is that the clusters 
+coordinates are given with different measure unit (microns for the RWD and 
+pixels for the TXT) and there is no way to retrieve the pixel2micron parameter 
+from the files. Do you agree? In any case, I think it could be better to ask 
+to Cristiano to dump also a catalog file after "test and configure".
+
+Finally, I ask to people which convert grains data from "test and configure", 
+to check if the eSide element of the EdbCluster is correct. (The txt grains 
+file uses the opposite convention of the rwd...). 
+
+Sorry for the long mail...
+
+Ciao ciao
+	Gabriele
+
+
+P.S. Starting from this mail, also Michela and Luillo should join the group, 
+which, at present, is composed by Ciro, Gabriele, Igor, Luillo, Michela, 
+Valeri. 
+
+
+
+

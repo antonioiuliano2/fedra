@@ -15,17 +15,24 @@ void check_shrinkage()
   cshr->Divide(2,2);
   gStyle->SetOptFit(0001);
 
-  cshr_1->cd();   couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)");
-  cshr_2->cd();   couples->Draw("s2.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)");
-
-  cshr_3->cd();   
-  couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","","prof");
+  cshr_1->cd();   
+  couples->Draw("s1.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2<1.5","prof");
+  htemp->Fit("pol1","w","",-.4,.4);
+  float p0 = htemp->GetFunction("pol1")->GetParameter(0);
+  float p1 = htemp->GetFunction("pol1")->GetParameter(1);
+  char str[160]="";
+  sprintf(str,"s1.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)",p1,p0);
+  cshr_3->cd();   couples->Draw(str,"pid2>-1&&eCHI2<1.5","prof");
   htemp->Fit("pol1","w","",-.4,.4);
 
-  cshr_4->cd();   
-  couples->Draw("s2.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","","prof");
+  cshr_2->cd();   
+  couples->Draw("s2.eTX-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)","pid2>-1&&eCHI2<1.5","prof");
   htemp->Fit("pol1","w","",-.4,.4);
-  
+  p0 = htemp->GetFunction("pol1")->GetParameter(0);
+  p1 = htemp->GetFunction("pol1")->GetParameter(1);
+  sprintf(str,"s2.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)",p1,p0);
+  cshr_4->cd();   couples->Draw(str,"pid2>-1&&eCHI2<1.5","prof");
+  htemp->Fit("pol1","w","",-.4,.4);
 }
 
 //-----------------------------------------------------------------
