@@ -86,6 +86,7 @@ class EdbDataPiece : public TNamed {
   Int_t        eFlag;           // 0-do nothing, 1-link only, 2-align also
   TString      eFileNameRaw;    // name of the raw data file (run)
   TString      eFileNameCP;     // name of the couples data file
+  TString      eFileNamePar;    // name of the parameters file
   Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
 
   EdbLayer    *eLayers[3];      // base(0),up(1),down(2)  layers
@@ -122,7 +123,9 @@ class EdbDataPiece : public TNamed {
   EdbSegmentCut *GetCut(int layer, int i)
     { return (EdbSegmentCut *)(eCuts[layer]->UncheckedAt(i)); }
 
-  int  TakePiecePar( const char *dir);
+  void MakeNamePar(const char *dir);
+  int  UpdateAffPar( int layer, EdbAffine2D &aff);
+  int  TakePiecePar();
   int  ReadPiecePar(const char *file);
   int  MakeLinkListArea();
   int  MakeLinkListCoord();
@@ -181,6 +184,8 @@ class EdbDataProc : public TObject {
   EdbDataProc() {eDataSet=0;}
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
+
+  void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);  // to be displaced
 
   int  Process(){ return Link(); }  // to be removed
   int  Link();

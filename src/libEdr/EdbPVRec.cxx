@@ -1007,7 +1007,7 @@ int EdbPVRec::MakeTracksTree()
   EdbSegP *seg;
   int nseg,trid;
  
-  TFile fil("tracks.root","RECREATE");
+  TFile fil("linked_tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
   TClonesArray *segments=new TClonesArray("EdbSegP",100);
