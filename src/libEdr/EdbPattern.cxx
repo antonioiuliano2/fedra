@@ -604,6 +604,8 @@ EdbTrackP::EdbTrackP(int nseg)
   eSF=0;
   eM=0;
   eDE=0;
+  eVertexS = 0;
+  eVertexE = 0;
   if(nseg>0) eS  = new TSortedList();
   if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
@@ -620,11 +622,15 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
 {
   // do the physical copy of segments
   Reset();
+  ((EdbSegP*)(this))->Copy( *((EdbSegP*)(&tr)) );
+
   SetID(tr.ID());
   SetM(tr.M());
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
   SetDE(tr.DE());
+  SetVertexS(tr.VertexS());
+  SetVertexE(tr.VertexE());
 
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)

@@ -29,14 +29,146 @@ using namespace VERTEX;
 //______________________________________________________________________________
 EdbVertex::EdbVertex()
 {
-  eEdbTracks = 0;
+  eV = 0;
+}
+
+//______________________________________________________________________________
+EdbVertex::EdbVertex(EdbVertex &v) : eEdbTracks(v.GetEdbTracks())
+{
+  if(v.V()) eV = new VERTEX::Vertex(*(v.V()));
+  else eV=0;
 }
 
 //________________________________________________________________________
 EdbVertex::~EdbVertex()
 {
-  if(eEdbTracks) delete eEdbTracks;
-  eEdbTracks=0;
+  if(eV) delete eV; eV=0;
+}
+
+//________________________________________________________________________
+void EdbVertex::Clear()
+{
+  eEdbTracks.Clear();
+  if(eV) { delete eV; eV=0; }
+}
+
+//________________________________________________________________________
+int EdbVertex::MakeV( TObjArray &segs )
+{
+  if(eV) { delete eV; eV=0; }
+  int nt=segs.GetEntries();
+  eV = new Vertex();
+  EdbSegP *seg=0;
+  for(int i=0; i<nt; i++) {
+    seg = (EdbSegP*)(segs.At(i));
+    Track *t=new Track();
+    if( EdbVertexRec::Edb2Vt( *seg, *t ) ) eV->push_back(*t);
+  }
+  return eV->ntracks();
+}
+
+//________________________________________________________________________
+bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
+{
+  int nt = N(); 
+  if(!nt) return false;
+
+  double tx_sum  = 0.;
+  double x_sum   = 0.;
+  double xw_sum  = 0.;
+  double xtx_sum = 0.;
+  double tx2_sum = 0.;
+  double ty_sum  = 0.;
+  double y_sum   = 0.;
+  double yw_sum  = 0.;
+  double yty_sum = 0.;
+  double ty2_sum = 0.;
+  EdbTrackP *track = 0;
+  const EdbSegP   *seg = 0;
+
+  double x,y,tx,ty,xweight,yweight,xweight2,yweight2;
+
+  // fill cumulants
+  for( int i = 0; i < nt; i++ ) {
+    
+    track = GetTrack(i);
+    if(      this == track->VertexS() ) seg=track->TrackZmin();
+    else if( this == track->VertexE() ) seg=track->TrackZmax();
+    else return false;
+
+    x        = seg->X();
+    y        = seg->Y();
+    tx       = seg->TX();
+    ty       = seg->TY();
+    xweight  = 1./(seg->COV())(0,0);
+    yweight  = 1./(seg->COV())(1,1);
+    xweight2 = xweight*xweight;
+    yweight2 = yweight*yweight;
+
+    tx_sum  += tx * xweight;
+    x_sum   += x  * xweight;
+    xw_sum  += xweight;
+    xtx_sum += x  * tx * xweight2;
+    tx2_sum += tx * tx * xweight2;
+
+    ty_sum  += ty * yweight;
+    y_sum   += y  * yweight;
+    yw_sum  += yweight;
+    yty_sum += y  * ty * yweight2;
+    ty2_sum += ty * ty * yweight2;
+
+  } // for track
+
+  double det = -tx2_sum - ty2_sum + tx_sum*tx_sum/xw_sum + ty_sum*ty_sum/yw_sum;
+
+  if(det == 0.) {
+    return false;
+  }
+
+  zv = ( xtx_sum + yty_sum - tx_sum*x_sum/xw_sum - ty_sum*y_sum/yw_sum ) / det;
+  xv = ( x_sum + tx_sum * zv ) / xw_sum;
+  yv = ( y_sum + ty_sum * zv ) / yw_sum;
+
+
+  float zTolerance=300.;
+
+  for( int i = 0; i < nt; i++ ) {
+    track = GetTrack(i);
+    if(      this == track->VertexS() ) {
+      seg=track->TrackZmin();
+      if( zv > (seg->Z() + zTolerance) )  return false;
+    }
+    else if( this == track->VertexE() ) {
+      seg=track->TrackZmax();
+      if( zv < (seg->Z() - zTolerance) )  return false;
+    }
+    else return false;
+  }
+
+  double drx;
+  double dry;
+  double drz;
+  double drt;
+  double drms = 0.;
+
+  for( int i = 0; i < nt; i++ ) {
+
+    track = GetTrack(i);
+    if(      this == track->VertexS() ) seg=track->TrackZmin();
+    else if( this == track->VertexE() ) seg=track->TrackZmax();
+    else return false;
+    
+    drx = seg->X() - xv;
+    dry = seg->Y() - yv;
+    drz = seg->Z() - zv;
+    drt = (drx*seg->TX() + dry*seg->TY() + drz);
+    drms += drx*drx + dry*dry + drz*drz -
+      (drt*drt)/(1.+seg->TX()*seg->TX()+seg->TY()*seg->TY());
+  }
+
+  d = TMath::Sqrt(drms/nt);
+
+  return true;
 }
 
 //________________________________________________________________________
@@ -519,7 +651,7 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
     if (p < 0.001) break;
     if (k)
       {
-	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell);
+	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, EdbPhysics::kX0_Cell());
 	teta0 = TMath::Sqrt(teta0);
 	r1 = gRandom->Gaus();
 	r2 = gRandom->Gaus();

@@ -17,48 +17,38 @@
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"
 
-//using namespace VERTEX;
-
 //_________________________________________________________________________
 class EdbVertex: public TObject {
  private:
 
-  TObjArray *eEdbTracks;       // pointers to data tracks
+  TObjArray eEdbTracks;       // pointers to data tracks
 
- public:
-  VERTEX::Vertex eV;
-  TVector3  ePoint;            // vertex point
+  VERTEX::Vertex *eV;
   
  public:
   EdbVertex();
+  EdbVertex(EdbVertex &v);
   virtual ~EdbVertex();
 
+  int MakeV( TObjArray &segs );
 
-  int N() const {if(!eEdbTracks) return 0; return eEdbTracks->GetEntries();}
-  void SetXYZ(float x,float y,float z){ePoint.SetXYZ(x,y,z);}
+  VERTEX::Vertex *V() const {return eV;}
+  void Clear();
+  int N() const {return eEdbTracks.GetEntries();}
+  void AddTrack(EdbTrackP *track)     { eEdbTracks.Add(track); }
 
-  void AddTrack(EdbTrackP *track)
-    { 
-      if(!eEdbTracks) eEdbTracks = new TObjArray(); 
-      eEdbTracks->Add(track);
-    }
+  TObjArray &GetEdbTracks() {return eEdbTracks;}
+  EdbTrackP *GetTrack(int i) const { return (EdbTrackP *)(eEdbTracks.At(i)); }
 
-  EdbTrackP *GetTrack(int i) const 
-    { 
-      if(!eEdbTracks) return 0; 
-      return (EdbTrackP*)eEdbTracks->At(i); 
-    }
+  bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
 
   void Print() const 
     {
-      printf("%f %f %f\n",ePoint.X(),ePoint.Y(),ePoint.Z());
-      if(eEdbTracks) {
-	printf("%d edbtracks:\n",N());
-	EdbTrackP *tr=0;
-	for(int i=0; i<N(); i++) {
-	  tr = GetTrack(i);
-	  if(tr)  tr->Print();
-	}
+      printf("%d edbtracks:\n",N());
+      EdbTrackP *tr=0;
+      for(int i=0; i<N(); i++) {
+	tr = GetTrack(i);
+	if(tr)  tr->Print();
       }
     }
 
@@ -98,8 +88,8 @@ class EdbVertexRec: public TObject {
 
   static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
 			  const float X0, const float ProbMin, float &prob );
-  bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t );
-  bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
+  static bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t );
+  static bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
 
   static void  TrackMC( EdbPatternsVolume &pv, float zlim[2],
 			float lim[4], float sigma[4], 

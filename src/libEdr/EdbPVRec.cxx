@@ -12,11 +12,12 @@
 #include "TVector3.h"
 #include "TIndexCell.h"
 #include "TArrayF.h"
+#include "TBenchmark.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
 #include "EdbVertex.h"
-#include "TBenchmark.h"
+#include "EdbMath.h"
 
 ClassImp(EdbScanCond)
 ClassImp(EdbSegCouple)
@@ -57,7 +58,7 @@ void EdbScanCond::SetDefault()
   eOffX=0;
   eOffY=0;
 
-  eRadX0 = EdbPhysics::kX0_Cell;
+  eRadX0 = EdbPhysics::kX0_Cell();
 }
 
 //______________________________________________________________________________
@@ -1307,6 +1308,83 @@ void EdbPVRec::FillTracksCell()
 }
 
 //______________________________________________________________________________
+void EdbPVRec::FillTracksCellFast()
+{
+  // fill tracks cell "vid1:vid2"
+  // second segment is considered as leading one
+
+  int ncp = Ncouples();
+  printf("build tracks from couples for ncp=%d ... \n", ncp);
+  if(ncp<1)     return;
+
+  if(eTracks) delete eTracks;
+  eTracks  = new TObjArray();
+
+  EdbPatCouple *pc = 0;
+  TIndex2 itracks(0);
+
+  for( int iv=0; iv<ncp; iv++ ) {
+    pc = GetCouple(iv);
+    AddCouplesToTracks( pc , itracks );
+  }
+
+  int nsegmax=100, nfound=0;
+  TArrayI segtab(nsegmax);
+  segtab.Reset();
+  int nseg=0;
+  int ntr = eTracks->GetEntries();
+  for( int i=0; i<ntr; i++ ) {
+    nseg=((EdbTrackP*)(eTracks->At(i)))->N();
+    if(nseg>nsegmax-1) nseg=nsegmax;
+    if(nseg>nfound) nfound=nseg;
+    segtab[nseg] =  segtab[nseg]+1;
+  }
+
+  for(int i=0; i<nfound+1; i++) 
+    printf("%d \t tracks with  %d segments\n",segtab[i],i);
+
+  printf("%d tracks are found \n", ntr);
+}
+
+//_________________________________________________________________________
+void EdbPVRec::AddCouplesToTracks(EdbPatCouple *pc, TIndex2 &itracks )
+{
+  EdbTrackP  *track = 0;
+
+  EdbSegCouple *sc = 0;
+  int ncpp = pc->Ncouples();
+
+  Double_t *w    = new Double_t[ncpp];
+
+  int ind=-1;
+  int nind=itracks.GetSize();
+
+  for(int ip=0; ip<ncpp; ip++) {
+    sc = pc->GetSegCouple(ip);
+    track=0; 
+
+    if(nind)    ind = itracks.FindIndex( sc->ID1() );
+    else        ind = -1;
+
+    if(ind>-1)  track = (EdbTrackP*)(eTracks->At(ind));
+    if(!track)  {
+      track = new EdbTrackP();
+      track->AddSegment( GetPattern(pc->ID1())->GetSegment(sc->ID1()) );
+      AddTrack(track);
+      ind = eTracks->GetLast();
+    }
+    track->AddSegment( GetPattern(pc->ID2())->GetSegment(sc->ID2()) );
+
+    w[ip] = TIndex2::BuildValue( sc->ID2(), ind );
+  }
+  itracks.Set(0);
+  itracks.BuildIndex(ncpp,w);
+  delete[] w;
+
+  //printf("%d <->%d :\t %d ******* ok ********\n", pc->ID1(), pc->ID2(), ncpp);
+}
+
+//______________________________________________________________________________
 void EdbPVRec::FillTracksCell1()
 {
   // TODO: speed-up this algorithm
@@ -1554,33 +1632,29 @@ int EdbPVRec::MergeTracks(int maxgap)
 }
 
 //______________________________________________________________________________
-int EdbPVRec::MergeTracks1(int maxgap)
+void EdbPVRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends, 
+				  float zfrom, float zto, float zBin)
 {
-  int imerged=0;
-  float X0 = GetScanCond()->RadX0();
+  // fill tracks starts and ends lookup tables "pid:entry"
+  // inside sorted tracks: starts - minimal Z; ends - maximal Z
 
-  EdbTrackP *tr =0;
-
-  int npat = Npatterns();
-  int ntr  = eTracks->GetEntriesFast();
   int nseg;
-
+  EdbTrackP *tr=0;
+  int ntr  = eTracks->GetEntriesFast();
   Long_t  v[2];
-  TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
 
   for(int itr=0; itr<ntr; itr++)   {
     tr = (EdbTrackP*)(eTracks->At(itr));
-    tr->SetFlag(0);
+    if( tr->Flag() == -10 ) continue;
     nseg = tr->N();
-    if(nseg>=npat-1)                              continue;
 
-    if( tr->GetSegment(0)->PID()      > 1      )  {        // tracks with missing starts
-      v[0] = tr->GetSegment(0)->PID();
+    if( tr->TrackZmin()->Z()      > zfrom      )  {    // tracks with missing starts
+      v[0] = (Long_t)(tr->TrackZmin()->Z()/zBin);
       v[1] = itr;
       starts.Add(2,v);
     }
-    if( tr->GetSegment(nseg-1)->PID() < npat-2 )  {        // tracks with missing ends
-      v[0] = tr->GetSegment(nseg-1)->PID();
+    if( tr->TrackZmax()->Z() < zto )  {           // tracks with missing ends
+      v[0] = (Long_t)(tr->TrackZmax()->Z()/zBin);
       v[1] = itr;
       ends.Add(2,v);
     }
@@ -1588,6 +1662,169 @@ int EdbPVRec::MergeTracks1(int maxgap)
 
   starts.Sort();
   ends.Sort();
+}
+
+//______________________________________________________________________________
+int EdbPVRec::ProbVertex(int maxgap, float dMax)
+{
+  int nvtx = 0;
+  int npat = Npatterns();
+
+  if( npat<2 )  return 0;
+
+  float z1 = GetPattern(0)->Z();
+  float z2 = GetPattern(npat-1)->Z();
+
+  float zFrom = TMath::Min(z1,z2);
+  float zTo   = TMath::Max(z1,z2);
+  float zBin=100;  // [microns]
+
+  TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
+  FillTracksStartEnd( starts, ends, zFrom, zTo, zBin );
+
+  float dZ = 4000.; 
+  float dA = .4;  // angular acceptance [rad]
+  float sA = .01; // nominal angular accuracy [rad]
+
+  nvtx += ProbVertex(ends  ,  dZ, starts, -dZ, dA,sA, zBin);
+  nvtx += ProbVertex(ends  ,  dZ, ends,    dZ, dA,sA, zBin);
+  nvtx += ProbVertex(starts, -dZ, starts, -dZ, dA,sA, zBin);
+
+  return nvtx;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::ProbVertex( TIndexCell list1, float dZ1,
+			  TIndexCell list2, float dZ2,
+			  float dA, float sA, float zBin )
+{
+  int nvtx = 0; 
+
+  float dz = TMath::Max( TMath::Abs(dZ1),TMath::Abs(dZ2) );
+  float   deltaX = dz*dA;  // limit for the transverse coordinates difference
+  float   deltaY = deltaX;
+
+  TIndexCell *c1=0, *c2=0;
+  EdbTrackP  *tr1=0, *tr2=0;
+  const EdbSegP    *s1=0,  *s2=0;
+  int   itr1, itr2;
+  float z1,z2;
+
+  TObjArray vsegs;
+  EdbVertex v2;  // temporary vertex for couples check
+  EdbVertex *vnew;
+  float x,y,z,d;
+
+  int n1 = list1.GetEntries();
+  int n2 = list2.GetEntries();
+  printf("n1   = %d  %d \n", n1, list1.N() );
+  printf("n2   = %d  %d \n", n2, list2.N() );
+
+  for(int i1=0; i1<n1; i1++)   {        // first group
+    c1 = list1.At(i1);
+    z1 = zBin*c1->Value();
+
+    for(int i2=0; i2<n2; i2++)   {        // second group
+      c2 = list2.At(i2);
+      z2 = zBin*c2->Value();
+
+      if( z2 < TMath::Min(z1,z1+dZ1)) continue;
+      if( z2 > TMath::Max(z1,z1+dZ1)) continue;
+
+      float dz0  = TMath::Abs(z2-z1);
+      float dMax = 50. + sA*dz0;
+
+      int nc1=c1->GetEntries();
+      int nc2=c2->GetEntries();
+      printf("z1,dZ1 = %f %f \t z2,dZ2 = %f %f \t",z1,dZ1,z2,dZ2);
+      printf("nc1,nc2 = %d %d\n",nc1,nc2);
+
+      for(int ic1=0; ic1<nc1; ic1++) {    // first group entries
+	itr1 = c1->At(ic1)->Value();
+	tr1  = (EdbTrackP*)((*eTracks)[itr1]);
+	if(!tr1)             continue;
+
+	if(dZ1>0) s1 = tr1->TrackZmax();
+	else      s1 = tr1->TrackZmin();
+
+	int nc2=c2->GetEntries();
+	for(int ic2=0; ic2<nc2; ic2++) {    // first group entries
+	  itr2 = c2->At(ic2)->Value();
+	  tr2  = (EdbTrackP*)((*eTracks)[itr2]);
+	  if(!tr2)             continue;
+
+	  if(dZ2>0) s2 = tr2->TrackZmax();
+	  else      s2 = tr2->TrackZmin();
+
+	  if(tr1==tr2)  continue;
+
+	  if( TMath::Abs(s2->X()-s1->X()) > deltaX )      continue;
+	  if( TMath::Abs(s2->Y()-s1->Y()) > deltaY )      continue;
+
+	  v2.Clear();
+
+	  if(dZ1>0) tr1->SetVertexE(&v2);
+	  else      tr1->SetVertexS(&v2);
+
+	  if(dZ2>0) tr2->SetVertexE(&v2);
+	  else      tr2->SetVertexS(&v2);
+
+	  v2.AddTrack(tr1);
+	  v2.AddTrack(tr2);
+
+	  //if( !v2.EstimateVertexMath(x,y,z,d) )  continue;
+	  //	    printf("%d xyz: %f %f %f \t d: %f\n",nvtx,x,y,z,d);    
+
+	  vsegs.Clear();
+	  vsegs.Add((TObject*)s1);
+	  vsegs.Add((TObject*)s2);
+	  v2.MakeV( vsegs );
+          v2.V()->use_kalman(false);
+	  v2.V()->use_momentum(false);
+	  v2.V()->findVertexVt();
+	  if(!(v2.V()->valid()))         continue;
+
+	  d = v2.V()->rmsDistAngle();
+	  x = v2.V()->vx();
+	  y = v2.V()->vy();
+	  z = v2.V()->vz();
+
+	  if(z<0)     continue;
+	  if(z>40000) continue;
+
+	  if(d<dMax) {
+	    printf("z: %f %f %f %f \n",
+		   tr1->TrackZmin()->Z(),
+		   tr1->TrackZmax()->Z(),
+		   tr2->TrackZmin()->Z(),
+		   tr2->TrackZmax()->Z() );
+
+	    printf("%d xyz: %f %f %f \t d: %f\n",nvtx,x,y,z,d);
+	    vnew = new EdbVertex(v2);
+	    AddVertex(vnew);
+	    nvtx++;
+	  }
+
+	}
+      }
+    }
+  }
+
+  return nvtx;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::MergeTracks1(int maxgap)
+{
+  int imerged=0;
+
+  /*
+  float X0 = GetScanCond()->RadX0();
+
+  int npat = Npatterns();
+
+  TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
+  FillTracksStartEnd( starts, ends, 1, npat-2 );
 
   TIndexCell *ce=0, *cs=0;
   int         itre,itrs, iend;
@@ -1654,6 +1891,8 @@ int EdbPVRec::MergeTracks1(int maxgap)
   }
 
   eTracks->Compress();
+
+  */
   return imerged;
 }
 
@@ -1709,13 +1948,14 @@ float EdbPVRec::Chi2Fast(EdbSegP &s1, EdbSegP &s2)
 void EdbPVRec::FitTracks(float p, float mass)
 {
   // measurement errors: TODO
-
+  
   float X0 = GetScanCond()->RadX0();
 
   EdbTrackP *tr =0;
-  //EdbSegP   *seg=0;
-
   int ntr = eTracks->GetEntriesFast();
+  printf("fit %d tracks assuming p = %f , mass = %f  and  X0 = %f ...\n",
+	 ntr,p,mass,X0);
+
   int nseg;
   for(int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(eTracks->At(itr));
@@ -1788,7 +2028,7 @@ int EdbPVRec::MakeTracksTree()
   if(!eTracks) return 0;
 
   char *file="linked_tracks.root";
-  printf("\nwrite tracks into %s ...\t ",file);
+  printf("write tracks into %s ... \n",file);
   TFile fil(file,"RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
@@ -2044,6 +2284,10 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
   //  input: nplmax - the maximal length of the track to be continued
   //  input: nplmin - the minimal length of the track to be continued
 
+  int ntr = eTracks->GetEntries();
+  printf("propagate %d tracks, selecting one longer then %d but shorter then %d plates...\n"
+	 ,ntr,nplmin,nplmax);
+
   TIndexCell cn;  //"npl:prob:entry"
   Long_t v[3];
 
@@ -2054,6 +2298,8 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
     tr->SetID(i);
     tr->SetFlag(0);
     tr->SetSegmentsTrack();
+    tr->SetNpl();
+    tr->SetN0(0);
     v[0]= -(tr->Npl());
     v[1]= (Long_t)(tr->Prob()*100);
     v[2]= i;
@@ -2096,6 +2342,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
       }
     }
   }
+  printf("%d segments are attached after propagation\n",nsegTot);
   return nsegTot;
 }
 
@@ -2181,10 +2428,9 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
   }
 
   tr.SetNpl();
-  tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
+  tr.SetN0();
+  tr.FitTrackKFS(followZ,X0);
   tr.SetSegmentsTrack();
-
-
 
   return nsegTot;
 }
