@@ -108,8 +108,9 @@ int main(int argc, char *argv[])
 	IO_VS_Fragment2 *pFrag = 0;
 	Track2* rwdTrack;
 	VS_View2* rwdView;
-	
 
+	if(rwcname[strlen(rwcname)-1]=='d') testrun=TRUE; //if we have .rwd first
+	
 //try {
 	if(testrun) 
 	{
@@ -201,6 +202,7 @@ int main(int argc, char *argv[])
 		rwdname = _strdup( rwcname );
 		strncpy( rwdname + strlen(rwdname)-1, "d", 1 );
 		sprintf(rwdname,"%s.%08X", rwdname, f);
+		printf("open rwd file: %s\n",rwdname);
 		
 		if (iIO2->Read2(NULL, (BYTE *)&pFrag, &ExtErrorInfo, (UCHAR *)rwdname) != S_OK)	throw 1;
 
@@ -365,6 +367,7 @@ if(mapname)
 	iIO->Release();
 	CoUninitialize();
 
+	printf("\n*******************************\n");
 	outrun->Print();
 	outrun->Close();
 	return 0;
