@@ -1,10 +1,10 @@
-The data coming from SySal scanning:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In the data coming from SySal scanning, orientation is:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Axis Z direction is from bottom to top on the stage.
+-  Axis Z directed from bottom to top on the stage.
 -  fiducial marks are on the bottom surface
 
-in the data coming after convertor (in Edb):
+in the data coming after rwc2edb (in EdbViews):
 
 - top views segments and clusters has higher Z
 - segments.eSide is "0" for top, "1" for bottom
@@ -20,41 +20,68 @@ During the linking (in "couples" tree):
        - down  side data is read next  as pattern 2, and segments go to s2.
 
 
-       Shrinkage correction:
-
+Shrinkage correction:
+~~~~~~~~~~~~~~~~~~~~~
        shrinkage = (exposure thickness) / (measured on stage thickness),  so:
 
        angle_exposured = angle_found/shrinkage
+
+
+Data files organization (at Naples):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/data/raws    - raw data coming from SySal  (rwd, etc)
+/data/rawr    - raw data after conversion (root files)
+/data/proc    - processed data (after linking, etc)
+
+Internal structure of raws/ and rawr/  are identical:
+/data/raws/brick_name/plXX/ ... file(s)
 
 
 Data processing:
 ~~~~~~~~~~~~~~~~
      - check the quality of raw data using the script check_raw.C
 
+Linking:
+~~~~~~~~
      - link data using the script link.C
-	    The parameters using for linking:
+	    The parameters using for linking ( in function link() ):
 	    
-  float  plate[3] = {40, 214, 40};  - plate parameters (up, base, down)
-	                              base - is the most important parameter - it is used
+  float  plate[3] = {40, 214, 40};  - plate thickness parameters (up, base, down)
+	                              base - is very important - it is used
 				      for calculation of base angle. 
-				      up and down are used to project the base point to the 
-				      centre of emulsion layer - it helps to improve the 
-				      accuracy of segment position. 
-				      With setting {0,214,0} base point is used for 
+				      up and down are used only to project the base point to the 
+				      center of emulsion layer - it helps to improve the 
+				      accuracy of the segment position ( X0, Y0 ).
+				      With setting {0,base,0} base point is used for 
 				      calculations as is
 
   float  shrU  = 0.93;              //  (exposure thickness) / (measured on stage thickness):
-  float  shrD  = 0.73;              //  tx_exp = tx_stage/shr
+  float  shrD  = 0.92;              //  tx_exp = tx_stage/shr
 				    
 	 shrinkage parameters are used for correction of the raw 
 	 data angles after reading
-	 Note that shrinkage and base are correlated: first it is necessary 
-	 to fix the base and then correct shrinkage if necessary
+	 Note that shrinkage and base thickness are correlated: first it is necessary 
+	 to fix the base and then correct shrinkage if needed
 
   float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
   float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
-	 angular offsets could be presented in the distorted emulsions
+	 angular offsets could be in the distorted emulsions
 
-	 All the above parameters are used to correct angular distributions 
+	 All the above parameters could be used to correct angular distributions
 	 for minimization of chi2 for signal tracks.
+
+	 function cut_seg(...) could be used to reject part of raw segments 
+	 before linking - for example fake vertical segments due to the CCD 
+	 defects (black spots). If this function, called per each segment, return 
+	 0 - the segment rejected.
+
+   ScanCond.C - expected resolutions are setted for each type of data set here.
+		This parameters are very important for correct linking&alingment 
+		but typically should not be tuned per each plate as it happens 
+		sometimes with shrinkage and distortion corrections
+
+Alingment:
+~~~~~~~~~~
+	script align.C

@@ -17,7 +17,7 @@ int cut_seg(float x0, float y0, float tx0, float ty0, float puls )
 }
 
 //------------------------------------------------------------
-void aedb()
+void link()
 {
   gROOT->LoadMacro("ScanCond.C");
   gROOT->LoadMacro("IO.C");
@@ -36,7 +36,7 @@ void aedb()
   float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
   TTree *tree = inittree("couples",
-			 "aedb.root",
+			 "link.root",
 			 "RECREATE");  // "RECREATE" "NEW" or "UPDATE" open modes
 
   EdbScanCond *scanCond = new EdbScanCond();
