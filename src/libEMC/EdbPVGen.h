@@ -66,7 +66,7 @@ class EdbPVGen : public TObject {
   void GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float zlim[2],
 				 float lim[4],    float sig[4],
 				 float ProbGap,   int eloss_flag,
-				 int prim_charge );
+				 int *charges );
 
   ClassDef(EdbPVGen,1)  // PatternsVolume Generator
 };

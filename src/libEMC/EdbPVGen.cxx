@@ -244,12 +244,14 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   Double_t Phi,CPhi,SPhi;
 
   EdbPattern *pat = 0;
-  EdbSegP    *seg = new EdbSegP();
 
   if ( x0 < lim[0] ) return; 
   if ( y0 < lim[1] ) return; 
   if ( x0 > lim[2] ) return; 
   if ( y0 > lim[3] ) return;
+
+  EdbSegP    *seg = new EdbSegP();
+
   Float_t p = p0, pa = p0, pn, de = 0., DE = 0.;
   Float_t e = TMath::Sqrt((double)p*(double)p+(double)m*(double)m);
   x = x0;
@@ -346,10 +348,12 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
 //    seg->SetErrors(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
 
     tr.AddSegment(     pat->AddSegment(*seg) );
+//    pat->AddSegment(*seg);
   }
   tr.SetDE(DE);
   tr.SetCounters();
   tr.SetSegmentsTrack();
+  delete seg;
 }
 //______________________________________________________________________________
 void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float sigma[4],
@@ -363,6 +367,7 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float sigma[4]
   EdbSegP *s=0;
   EdbPattern *pat = 0;
   EdbPatternsVolume *pv = GetVolume();
+  s = new EdbSegP();
  
   for(int np=0; np<pv->Npatterns(); np++)
   {
@@ -381,7 +386,6 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float sigma[4]
 	ez = cost;
 	tx = ex/ez;
 	ty = ey/ez;
-	s = new EdbSegP();
 	s->Set(0, x, y, tx, ty, 1, flag);
 	s->SetZ(z);
 	s->SetP(4.);
@@ -391,7 +395,7 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4], float sigma[4]
         pat->AddSegment( *s );
     }
   }
-
+  delete s;
 }
 
 //------------------------------------------------------------
@@ -448,7 +452,7 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
 void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float zlim[2],
 					 float lim[4],    float sig[4],
 					 float ProbGap,   int eloss_flag,
-					 int prim_charge )
+					 int *charges )
 {
   // Phase Space event generation
   float x;
@@ -486,6 +490,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float z
 	pys += pi->Py();
 	pzs += pi->Pz();
 	es  += pi->E();
+	if (!charges[ip]) continue;
 	tr = new EdbTrackP();
 	tx = pi->Px()/pi->Pz();
 	ty = pi->Py()/pi->Pz();
@@ -497,16 +502,16 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float z
 	    vedb->AddTrack(tr, 0);
 	else
 	    vedb->AddTrack(tr, 1);
-	AddTrack(tr);
 
 	// generation of track segments for secondary particles
 
 	zlimt[0] = z - 1300.;
 	zlimt[1] = 100000.;
 	TrackMC( zlimt, lim, sig, *tr, eloss_flag, ProbGap);
+	AddTrack(tr);
     }
 
-    if (z > 300. && prim_charge)
+    if (z > 300. && charges[nt])
     {
 	p2 = pxs*pxs + pys*pys + pzs*pzs;
 	pp = TMath::Sqrt(p2);
@@ -514,16 +519,17 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float z
 	tr = new EdbTrackP();
 	tr->Set(numt++, x, y, 0., 0., 1, iv+1);
 	tr->SetZ(0);
-	tr->SetP(pp);
+//	tr->SetP(pp);
+	tr->SetP(1000000.);
 	tr->SetM(mp);
 	vedb->AddTrack(tr, 0);
-	AddTrack(tr);
 
 	// generation of track segments for primary particle
 
 	zlimt[0] = 0.;
 	zlimt[1] = z;
 	TrackMC( zlimt, lim, sig, *tr, eloss_flag, ProbGap );
+	AddTrack(tr);
     }
   }
 }
