@@ -7,7 +7,7 @@ PROJECT_LIBS += -lEmath -lEdb
 
 LIB_TGT       = $(LIB_DIR)/libEdd.so
 
-headers       = EdbDisplay.h
+headers       = EdbDisplayBase.h  EdbDisplay.h
 
 classes	      = $(headers:.h=.$(SrcSuf))
 EddCint	      = $(headers) EddLinkDef.h
@@ -20,9 +20,6 @@ CXXFLAGS += -I$(INC_DIR)
 
 $(LIB_TGT): $(OBJ)
 	$(CXX) -O -shared $(LIBS) -o $(LIB_TGT) $(OBJ)
-
-#EddCint.cxx: $(EddCint)
-#	rootcint -f EddCint.cxx -c $(INCLUDE) -I$(INC_DIR) $(EddCint)
 
 EddCint.cxx: $(EddCint)
 	@echo "Generating dictionary $@..."
@@ -40,7 +37,7 @@ depend:
 	$(CXX) $(CXXFLAGS) -c $<
 # DO NOT DELETE
 
-EdbDisplay.o: EdbDisplay.h /var/local/root/include/TObject.h
+EdbDisplay.o: EdbDisplay.h EdbDisplayBase.h /var/local/root/include/TObject.h
 EdbDisplay.o: /var/local/root/include/Rtypes.h
 EdbDisplay.o: /var/local/root/include/RConfig.h
 EdbDisplay.o: /var/local/root/include/RVersion.h
@@ -128,10 +125,99 @@ EdbDisplay.o: /var/local/root/include/TEllipse.h
 EdbDisplay.o: /var/local/root/include/TSliderBox.h
 EdbDisplay.o: /var/local/root/include/TWbox.h
 EdbDisplay.o: /var/local/root/include/TGaxis.h
-EdbDisplay.o: /var/local/root/include/TROOT.h
-EdbDisplay.o: /var/local/root/include/TDirectory.h
-EdbDisplay.o: /var/local/root/include/TDatime.h
-EdbDisplay.o: /var/local/root/include/TUUID.h
-EdbDisplay.o: /var/local/root/include/TInetAddress.h
-EdbDisplay.o: /var/local/root/include/TStyle.h
-EdbDisplay.o: /var/local/root/include/TAttAxis.h
+EdbDisplayBase.o: EdbDisplayBase.h /var/local/root/include/TObject.h
+EdbDisplayBase.o: /var/local/root/include/Rtypes.h
+EdbDisplayBase.o: /var/local/root/include/RConfig.h
+EdbDisplayBase.o: /var/local/root/include/RVersion.h
+EdbDisplayBase.o: /var/local/root/include/DllImport.h
+EdbDisplayBase.o: /var/local/root/include/Rtypeinfo.h
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+EdbDisplayBase.o: /usr/include/stdio.h /usr/include/features.h
+EdbDisplayBase.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+EdbDisplayBase.o: /usr/include/bits/types.h /usr/include/libio.h
+EdbDisplayBase.o: /usr/include/_G_config.h /usr/include/wchar.h
+EdbDisplayBase.o: /usr/include/bits/wchar.h /usr/include/gconv.h
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+EdbDisplayBase.o: /usr/include/bits/stdio_lim.h
+EdbDisplayBase.o: /var/local/root/include/TGenericClassInfo.h
+EdbDisplayBase.o: /var/local/root/include/Varargs.h
+EdbDisplayBase.o: /var/local/root/include/TStorage.h
+EdbDisplayBase.o: /var/local/root/include/Riosfwd.h
+EdbDisplayBase.o: /var/local/root/include/TBuffer.h
+EdbDisplayBase.o: /var/local/root/include/Bytes.h /usr/include/string.h
+EdbDisplayBase.o: /var/local/root/include/TCanvas.h
+EdbDisplayBase.o: /var/local/root/include/TPad.h
+EdbDisplayBase.o: /var/local/root/include/TVirtualPad.h
+EdbDisplayBase.o: /var/local/root/include/TAttPad.h
+EdbDisplayBase.o: /var/local/root/include/Gtypes.h
+EdbDisplayBase.o: /var/local/root/include/Htypes.h
+EdbDisplayBase.o: /var/local/root/include/TVirtualX.h
+EdbDisplayBase.o: /var/local/root/include/TNamed.h
+EdbDisplayBase.o: /var/local/root/include/TList.h
+EdbDisplayBase.o: /var/local/root/include/TSeqCollection.h
+EdbDisplayBase.o: /var/local/root/include/TCollection.h
+EdbDisplayBase.o: /var/local/root/include/TIterator.h
+EdbDisplayBase.o: /var/local/root/include/TString.h
+EdbDisplayBase.o: /var/local/root/include/TMath.h
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbDisplayBase.o: /var/local/root/include/TRefCnt.h
+EdbDisplayBase.o: /var/local/root/include/TAttLine.h
+EdbDisplayBase.o: /var/local/root/include/TAttFill.h
+EdbDisplayBase.o: /var/local/root/include/TAttText.h
+EdbDisplayBase.o: /var/local/root/include/TAttMarker.h
+EdbDisplayBase.o: /var/local/root/include/GuiTypes.h
+EdbDisplayBase.o: /var/local/root/include/Buttons.h
+EdbDisplayBase.o: /var/local/root/include/TQObject.h
+EdbDisplayBase.o: /var/local/root/include/TClass.h
+EdbDisplayBase.o: /var/local/root/include/TDictionary.h
+EdbDisplayBase.o: /var/local/root/include/Property.h
+EdbDisplayBase.o: /var/local/root/include/TAttCanvas.h
+EdbDisplayBase.o: /var/local/root/include/TCanvasImp.h
+EdbDisplayBase.o: /var/local/root/include/TSlider.h
+EdbDisplayBase.o: /var/local/root/include/TView.h
+EdbDisplayBase.o: /var/local/root/include/TPolyLine3D.h
+EdbDisplayBase.o: /var/local/root/include/TAtt3D.h
+EdbDisplayBase.o: /var/local/root/include/X3DBuffer.h
+EdbDisplayBase.o: /var/local/root/include/TPolyMarker3D.h
+EdbDisplayBase.o: /var/local/root/include/TClonesArray.h
+EdbDisplayBase.o: /var/local/root/include/TObjArray.h
+EdbDisplayBase.o: /var/local/root/include/TArrayF.h
+EdbDisplayBase.o: /var/local/root/include/TArray.h
+EdbDisplayBase.o: /var/local/root/include/TArrayI.h
+EdbDisplayBase.o: /var/local/root/include/TButton.h
+EdbDisplayBase.o: /var/local/root/include/TGClient.h
+EdbDisplayBase.o: /var/local/root/include/TGButton.h
+EdbDisplayBase.o: /var/local/root/include/TGFrame.h
+EdbDisplayBase.o: /var/local/root/include/TGWindow.h
+EdbDisplayBase.o: /var/local/root/include/TGObject.h
+EdbDisplayBase.o: /var/local/root/include/TGDimension.h
+EdbDisplayBase.o: /var/local/root/include/TGGC.h
+EdbDisplayBase.o: /var/local/root/include/TGFont.h
+EdbDisplayBase.o: /var/local/root/include/TGLayout.h
+EdbDisplayBase.o: /var/local/root/include/TGString.h
+EdbDisplayBase.o: /var/local/root/include/TGWidget.h
+EdbDisplayBase.o: /var/local/root/include/WidgetMessageTypes.h
+EdbDisplayBase.o: /var/local/root/include/TTree.h
+EdbDisplayBase.o: /var/local/root/include/TBranch.h
+EdbDisplayBase.o: /var/local/root/include/TStringLong.h
+EdbDisplayBase.o: /var/local/root/include/TArrayD.h
+EdbDisplayBase.o: /var/local/root/include/TVirtualTreePlayer.h
+EdbDisplayBase.o: /var/local/root/include/TPaveLabel.h
+EdbDisplayBase.o: /var/local/root/include/TPave.h
+EdbDisplayBase.o: /var/local/root/include/TBox.h
+EdbDisplayBase.o: /var/local/root/include/TPaveText.h
+EdbDisplayBase.o: /var/local/root/include/TText.h
+EdbDisplayBase.o: /var/local/root/include/TLine.h
+EdbDisplayBase.o: /var/local/root/include/TDiamond.h
+EdbDisplayBase.o: /var/local/root/include/TArc.h
+EdbDisplayBase.o: /var/local/root/include/TEllipse.h
+EdbDisplayBase.o: /var/local/root/include/TSliderBox.h
+EdbDisplayBase.o: /var/local/root/include/TWbox.h
+EdbDisplayBase.o: /var/local/root/include/TGaxis.h
+EdbDisplayBase.o: /var/local/root/include/TROOT.h
+EdbDisplayBase.o: /var/local/root/include/TDirectory.h
+EdbDisplayBase.o: /var/local/root/include/TDatime.h
+EdbDisplayBase.o: /var/local/root/include/TUUID.h
+EdbDisplayBase.o: /var/local/root/include/TInetAddress.h
