@@ -33,8 +33,19 @@ EdbDisplayBase::EdbDisplayBase()
   fRangeSlider = 0;
   fPickButton = 0;
   fZoomButton = 0;
+  fZooms = 0;
   fArcButton = 0;
   fFruits = 0;
+  fUnZoomButton = 0;
+  fTitle = 0;
+  fLabel = 0;
+  fButton1 = 0;
+  fButton2 = 0;
+  fButton3 = 0;
+  fButton4 = 0;
+  fButton5 = 0;
+  fButton6 = 0;
+  fDiamond = 0;
 }
 
 //________________________________________________________________________
@@ -43,19 +54,10 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 			       Float_t y0, Float_t y1, 
 			       Float_t z0, Float_t z1)
 {
-      fPad=0;
-     vx0=x0;vx1=x1;vy0=y0;vy1=y1;vz0=z0;vz1=z1;
+    char text[256];
 
-      //     (new TButton("Best Chi2","((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->MaxChi=kTRUE;((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->Refresh();",0.1,0.96,0.3,0.99))->Draw();
- //     (new TButton("All Chi2","((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->MaxChi=kFALSE;((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->Refresh();",0.4,0.96,0.7,0.99))->Draw();
-
-//        fTXSlider = new TSlider("xslider","x",0.1,0.01,0.98,0.045);
-//        fTXSlider->SetObject(this);
-//        fTXSlider->SetRange(.5+cutTX0/2.,.5+cutTX1/2.);
-//        fTYSlider = new TSlider("yslider","y",0.01,0.1,0.045,0.98);
-//        fTYSlider->SetObject(this);
-//        fTYSlider->SetRange(.5+cutTY0/2.,.5+cutTY1/2.);
-
+    fPad=0;
+    vx0=x0;vx1=x1;vy0=y0;vy1=y1;vz0=z0;vz1=z1;
 
    // Set front view by default
    fTheta = 0;
@@ -64,21 +66,27 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fDrawAllViews  = kFALSE;
    fZoomMode      = 1;
    fZooms         = 0;
-   fCanvas = new TCanvas("Canvas", "Emulsion Data Display",14,47,800,700);
+   strcpy(text, "Canvas-");
+   strcat(text, title);
+   fCanvas = new TCanvas(text, "Emulsion Data Display",14,47,800,700);
    fCanvas->ToggleEventStatus();
   // Create main display pad
-   fPad = new TPad("viewpad", "Emulsion display",0.15,0,0.97,0.96);
+   strcpy(text, "Viewpad--");
+   strcat(text, title);
+   fPad = new TPad(text, "Emulsion display",0.15,0,0.97,0.96);
    fPad->Draw();
    fPad->Modified();
    fPad->SetFillColor(1);
    fPad->SetBorderSize(2);
   // Create user interface control pad
-   DisplayButtons();
+   DisplayButtons(title);
    fCanvas->cd();
    // Create Range and mode pad
    Float_t dxtr     = 0.15;
    Float_t dytr     = 0.45;
-   fTrigPad = new TPad("trigger", "range and mode pad",0,0,dxtr,dytr);
+   strcpy(text, "Trigger-");
+   strcat(text, title);
+   fTrigPad = new TPad(text, "range and mode pad",0,0,dxtr,dytr);
    fTrigPad->Draw();
    fTrigPad->cd();
    fTrigPad->SetFillColor(22);
@@ -96,9 +104,9 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fArcButton->SetFillColor(kGreen);
    fArcButton->Draw();
    char butUnzoom[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->UnZoom()";
-   TButton *button = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
-   button->SetFillColor(38);
-   button->Draw();
+   TButton *fUnZoomButton = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
+   fUnZoomButton->SetFillColor(38);
+   fUnZoomButton->Draw();
 
    fTrigPad->SetEditable(kFALSE);
    fButtons->SetEditable(kFALSE);
@@ -121,21 +129,21 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
    Float_t dy   = ymax-ymin;
 
    if (strlen(option) == 0) {
-      TPaveText *title = new TPaveText(xmin +0.01*dx, ymax-0.09*dy, xmin +0.5*dx, ymax-0.01*dy);
-      title->SetBit(kCanDelete);
-      title->SetFillColor(42);
-      title->Draw();
+      TPaveText *fTitle = new TPaveText(xmin +0.01*dx, ymax-0.09*dy, xmin +0.5*dx, ymax-0.01*dy);
+      fTitle->SetBit(kCanDelete);
+      fTitle->SetFillColor(42);
+      fTitle->Draw();
       char ptitle[100];
       sprintf(ptitle,"OPERA emulsion view");
-      title->AddText(ptitle);
+      fTitle->AddText(ptitle);
  //     Int_t nparticles = gAlice->Particles()->GetEntriesFast();
 //      sprintf(ptitle,"Nparticles = %d  Nhits = %d",nparticles, fHitsCuts);
 //      title->AddText(ptitle);
    } else {
-      TPaveLabel *label = new TPaveLabel(xmin +0.01*dx, ymax-0.07*dy, xmin +0.2*dx, ymax-0.01*dy,option);
-      label->SetBit(kCanDelete);
-      label->SetFillColor(42);
-      label->Draw();
+      TPaveLabel *fLabel = new TPaveLabel(xmin +0.01*dx, ymax-0.07*dy, xmin +0.2*dx, ymax-0.01*dy,option);
+      fLabel->SetBit(kCanDelete);
+      fLabel->SetFillColor(42);
+      fLabel->Draw();
    }
 }
 
@@ -146,16 +154,19 @@ void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, F
    vx0=x0;vx1=x1;vy0=y0;vy1=y1;vz0=z0;vz1=z1;
 
    if (!fPad) return;
+
    fPad->Clear();
    Draw();
 }
 
 //_____________________________________________________________________________
-void EdbDisplayBase::DisplayButtons()
+void EdbDisplayBase::DisplayButtons(const char *title)
 {
 //    Create the user interface buttons
+   char text[256]="buttons-";
+   strcat(text, title);
 
-   fButtons = new TPad("buttons", "newpad",0,0.45,0.15,1);
+   fButtons = new TPad(text, "newpad",0,0.45,0.15,1);
    fButtons->Draw();
    fButtons->SetFillColor(38);
    fButtons->SetBorderSize(2);
@@ -168,72 +179,53 @@ void EdbDisplayBase::DisplayButtons()
    Float_t x0 = 0.05;
    Float_t x1 = 0.95;
 
-   TButton *button;
-   char but1[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->MaxChi=kTRUE; ((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->Draw();";
-   button = new TButton("Best CHI2",but1,x0,y-dbutton,x1,y);
-   button->SetFillColor(38);
-//   button->Draw();
-
-   y -= dbutton +dy;
-   char but2[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->MaxChi=kFALSE; ((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->Draw();";
-   button = new TButton("All Chi2",but2,x0,y-dbutton,x1,y);
-   button->SetFillColor(38);
-//   button->Draw();
-
-   y -= dbutton +dy;
+   y -= 2.*(dbutton +dy);
    char but3[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(90,-90,90)";
-   button = new TButton("Top View",but3,x0,y-dbutton,x1,y);
-   button->SetFillColor(butcolor);
-   button->Draw();
+   fButton1 = new TButton("Top View",but3,x0,y-dbutton,x1,y);
+   fButton1->SetFillColor(butcolor);
+   fButton1->Draw();
 
    y -= dbutton +dy;
    char but4[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(90,0,90)";
-   button = new TButton("Side View",but4,x0,y-dbutton,x1,y);
-   button->SetFillColor(butcolor);
-   button->Draw();
+   fButton2 = new TButton("Side View",but4,x0,y-dbutton,x1,y);
+   fButton2->SetFillColor(butcolor);
+   fButton2->Draw();
 
    y -= dbutton +dy;
    char but5[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(0,-90,0)";
-   button = new TButton("Front View",but5,x0,y-dbutton,x1,y);
-   button->SetFillColor(butcolor);
-   button->Draw();
+   fButton3 = new TButton("Front View",but5,x0,y-dbutton,x1,y);
+   fButton3->SetFillColor(butcolor);
+   fButton3->Draw();
 
-   y -= dbutton +dy;
-   char but6[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawAllViews()";
-   button = new TButton("All Views",but6,x0,y-dbutton,x1,y);
-   button->SetFillColor(butcolor);
-//   button->Draw();
-
-   y -= dbutton +dy;
+   y -= 2.*(dbutton +dy);
    char but7[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawViewGL()";
-   button = new TButton("OpenGL",but7,x0,y-dbutton,x1,y);
-   button->SetFillColor(38);
-   button->Draw();
+   fButton4 = new TButton("OpenGL",but7,x0,y-dbutton,x1,y);
+   fButton4->SetFillColor(38);
+   fButton4->Draw();
 
    y -= dbutton +dy;
    char but8[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawViewX3D()";
-   button = new TButton("X3D",but8,x0,y-dbutton,x1,y);
-   button->SetFillColor(38);
-   button->Draw();
+   fButton5 = new TButton("X3D",but8,x0,y-dbutton,x1,y);
+   fButton5->SetFillColor(38);
+   fButton5->Draw();
 
    y -= dbutton +dy;
    char but9[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawTracks()";
-   button = new TButton("TRACKS",but9,x0,y-dbutton,x1,y);
-   button->SetFillColor(30);
-//   button->Draw();
+   fButton6 = new TButton("TRACKS",but9,x0,y-dbutton,x1,y);
+   fButton6->SetFillColor(30);
 
    // display logo
-   TDiamond *diamond = new TDiamond(0.05,0.015,0.95,0.22);
-   diamond->SetFillColor(50);
-   diamond->SetTextAlign(22);
-   diamond->SetTextColor(5);
-   diamond->SetTextSize(0.11);
-   diamond->Draw();
-   diamond->AddText(".. ");
-   diamond->AddText("ROOT");
-   diamond->AddText("OPERA");
-   diamond->AddText("... ");
-   diamond->AddText(" ");
+   fDiamond = new TDiamond(0.05,0.015,0.95,0.22);
+   fDiamond->SetFillColor(50);
+   fDiamond->SetTextAlign(22);
+   fDiamond->SetTextColor(5);
+   fDiamond->SetTextSize(0.11);
+   fDiamond->Draw();
+   fDiamond->AddText(".. ");
+   fDiamond->AddText("ROOT");
+   fDiamond->AddText("OPERA");
+   fDiamond->AddText("... ");
+   fDiamond->AddText(" ");
 }
 
 //_____________________________________________________________________________
@@ -247,8 +239,6 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 
    Int_t iret;
    TView *view = new TView(1);
- //  Float_t range = fRrange*fRangeSlider->GetMaximum();
-//  Float_t range = fRrange;
    view->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
@@ -292,7 +282,6 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
    }
 
    // something to zoom ?
-//   fPad->SetCursor(kCross);
    gPad->SetCursor(kCross);
 
    switch (event) {
@@ -336,16 +325,6 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
       return;
    }
 
-
-/* if(px==0 && py==0 && event==kButton1Up){
-  cutTX0=fTXSlider->GetMinimum()*2.-1.;
-  cutTX1=fTXSlider->GetMaximum()*2.-1.;
-  cutTY0=fTYSlider->GetMinimum()*2.-1.;
-  cutTY1=fTYSlider->GetMaximum()*2.-1.;
-  printf("Ang cuts: %f %f %f %f\n",cutTX0,cutTX1,cutTY0,cutTY1);
-  Refresh();
- }
- */
 }
 //_____________________________________________________________________________
 void EdbDisplayBase::SetView(Float_t theta, Float_t phi, Float_t psi)
@@ -438,11 +417,6 @@ void EdbDisplayBase::Draw(Option_t *)
 
    DrawView(fTheta, fPhi, fPsi);
 
-   // Display the event number and title   TODO???
-   //fPad->cd();
-   //DrawTitle();
-//   fPad->cd();
-
 }
 
 
@@ -486,7 +460,7 @@ void EdbDisplayBase::UnZoom()
 }
 
 //______________________________________________________________________________
-Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t)
+Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
 {
 // Compute distance from point px,py to objects in event
 
@@ -503,6 +477,12 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t)
    Float_t dx   = 0.02*(xmax - xmin);
    Float_t x    = gPad->AbsPixeltoX(px);
    if (x < xmin+dx || x > xmax-dx) return dist;
+
+   Float_t ymin = gPad->GetY1();
+   Float_t ymax = gPad->GetY2();
+   Float_t dy   = 0.02*(ymax - ymin);
+   Float_t y    = gPad->AbsPixeltoX(py);
+   if (y < ymin+dy || y > ymax-dy) return dist;
 
    if (fZoomMode) return 0;
    else           return 7;
