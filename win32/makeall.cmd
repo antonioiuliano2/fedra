@@ -1,87 +1,94 @@
-@:: makeall.cmd 	Build FEDRA for WindowsNT/2000/XP/2003 
-@:: Gabriele Sirri (20-11-2003)
+:: makeall.cmd 	
+:: Gabriele Sirri (8-dic-2003)
+::
+:: Build FEDRA for WindowsNT/2000/XP/2003
 
 @ECHO OFF
-setlocal
+	IF /I '%1'=='clean'	GOTO CLEAN
+	IF /I '%1'=='chktgt'	GOTO CHECKTARGET
+	IF /I '%1'=='archive'	GOTO ARCHIVE
+	IF NOT '%1'=='' IF NOT '%1'=='-vc7' IF NOT '%1'=='-novars' IF NOT '%1'=='clean' IF NOT '%1'=='chktgt' IF NOT '%1'=='archive'  GOTO HELP
+	GOTO MAKEALL
+GOTO END
 
-if /I '%1'=='clean' goto CLEAN
-if /I '%1'=='chktgt' goto CHECKTARGET
-if /I '%1'=='archive' goto ARCHIVE
-
-IF '%1'=='-7' SET compilerver=-7
 ::----------------------------------------------------------------------
-:START
+:MAKEALL
+	SETLOCAL
+	IF '%1'=='-vc7'    SET compilerver=-vc7
+	IF '%1'=='-novars' SET compilerver=-novars
 	SET CURRENTDIR=%CD%
 
-:: Archive old fedra binaries
-	if exist lib\*.* call %0 ARCHIVE
-	
-ECHO Check if ROOT is installed 
-	if not defined ROOTSYS goto ROOTSYS_NOT_DEFINED
-	if not exist %ROOTSYS%\bin\root.exe goto ROOT_DONT_EXIST
-	ECHO ok!
+	:: Archive old fedra binaries
+	IF EXIST lib\*.* CALL %0 ARCHIVE
 
-ECHO Check the version of ROOT
-       IF NOT EXIST workspace\obj\rootver.txt GOTO ROOTISCHANGED
-       dir %ROOTSYS%\bin |find "." > rootver.temp
-       fc workspace\obj\rootver.txt rootver.temp > temp.temp
-       if %ERRORLEVEL%==0 GOTO ROOTISNOTCHANGED
-
-	:ROOTISCHANGED
-		ECHO The version of ROOT has been changed, I will remove FEDRA binaries...
-		call %0 clean
-		goto ROOTCHECKEND
-	:ROOTISNOTCHANGED
+	ECHO Check IF ROOT is installed 
+		IF NOT DEFINED ROOTSYS GOTO ROOTSYS_NOT_DEFINED
+		IF NOT EXIST %ROOTSYS%\bin\root.exe GOTO ROOT_DONT_EXIST
 		ECHO ok!
-	:ROOTCHECKEND
-		if exist temp.temp del temp.temp
-		if exist rootver.temp del rootver.temp
-::-----------------------------------------------------------------------------
-:BUILDFEDRA
-	if not exist workspace\obj mkdir workspace\obj 
-	dir %ROOTSYS%\bin |find "." > workspace\obj\rootver.txt
 
-ECHO Remove old FEDRA environment variables
-	cd tools
-	call setfedra -u -d
-	cd %CURRENTDIR%
+	ECHO Check the version of ROOT
+      	dir %ROOTSYS%\bin |find ".dll" > rootver.temp
+      	IF EXIST workspace\obj\rootver.txt fc workspace\obj\rootver.txt rootver.temp > temp.temp
+      
+	IF %ERRORLEVEL%==0 GOTO ROOT_NOT_CHANGED
+	:ROOT_CHANGED
+		ECHO The version of ROOT has been changed, I will remove FEDRA binaries...
+		CALL %0 clean
+		GOTO ROOT_END
+	:ROOT_NOT_CHANGED
+		ECHO ROOT ok!
+		GOTO ROOT_END
+	:ROOT_END
+		IF EXIST temp.temp del temp.temp
+		IF EXIST rootver.temp del rootver.temp
+   ::-----------------------------------------------------------------------------
+   :BUILDFEDRA
+	IF NOT EXIST workspace\obj mkdir workspace\obj 
+	dir %ROOTSYS%\bin |find ".dll" > workspace\obj\rootver.txt
 
-ECHO Build FEDRA
-	cd workspace
-	call make.cmd	libEdb	%compilerver%
-	call make.cmd	libEmath	%compilerver%
-	call make.cmd	libEdr	%compilerver%
-	call make.cmd	libEdd	%compilerver%
-	call make.cmd	rwc2edb	%compilerver%
-	call make.cmd	recset	%compilerver%
-	echo FOR %%1 %%%%F IN (*.rwc) DO rwc2edb %%%%f %%%%f.root > ..\bin\convertall.cmd
-	cd %CURRENTDIR%
-
+	ECHO Remove old FEDRA environment variables
 	ECHO.
-ECHO Set the environment variables
+	cd tools
+	CALL setfedra -u -d
+	cd %CURRENTDIR%
+
+	ECHO Build FEDRA
+	ECHO -----------
+	cd workspace
+	CALL make.cmd	libEdb	%compilerver%
+	CALL make.cmd	libEmath	%compilerver%
+	CALL make.cmd	libEdr	%compilerver%
+	CALL make.cmd	libEdd	%compilerver%
+	CALL make.cmd	rwc2edb	%compilerver%
+	CALL make.cmd	recset	%compilerver%
+	echo FOR %%1 %%%%F IN (*.rwc) DO rwc2edb %%%%F %%%%F.root > ..\bin\convertall.cmd
+	cd %CURRENTDIR%
+	ECHO.
+
+	ECHO SET the environment variables
 	ECHO -----------------------------
 	ECHO.
 	cd tools
-	call setfedra -u
+	CALL setfedra -u
 	cd %CURRENTDIR%
-	set FEDRA=%CURRENTDIR%
-	set path=%CURRENTDIR%\bin;%CURRENTDIR%\lib;%PATH% 
+	SET FEDRA=%CURRENTDIR%
+	SET path=%CURRENTDIR%\bin;%CURRENTDIR%\lib;%PATH% 
 	ECHO Environment variables have been changed only for the current user.
-	ECHO Other users should set their own variables using setfedra utility.
+	ECHO Other users should SET their own variables using setfedra utility.
 	ECHO.
 
-ECHO Check Targets:
-ECHO --------------
-call %0 chktgt lib\libEdb.lib
-call %0 chktgt lib\libEdb.dll
-call %0 chktgt lib\libEmath.lib
-call %0 chktgt lib\libEmath.dll
-call %0 chktgt lib\libEdr.lib
-call %0 chktgt lib\libEdr.dll
-call %0 chktgt lib\libEdd.lib
-call %0 chktgt lib\libEdd.dll
-call %0 chktgt bin\rwc2edb.exe
-call %0 chktgt bin\recset.exe
+	ECHO Check Targets:
+	ECHO --------------
+	CALL %0 chktgt lib\libEdb.lib
+	CALL %0 chktgt lib\libEdb.dll
+	CALL %0 chktgt lib\libEmath.lib
+	CALL %0 chktgt lib\libEmath.dll
+	CALL %0 chktgt lib\libEdr.lib
+	CALL %0 chktgt lib\libEdr.dll
+	CALL %0 chktgt lib\libEdd.lib
+	CALL %0 chktgt lib\libEdd.dll
+	CALL %0 chktgt bin\rwc2edb.exe
+	CALL %0 chktgt bin\recset.exe
 
 	ECHO.
 	ECHO NOTES:
@@ -90,9 +97,9 @@ call %0 chktgt bin\recset.exe
 	ECHO.
 	
 	pause
-	goto STOP
+	endlocal
 
-::------ SUBROUTINES
+GOTO END
 
 ::----------------------------------------------------------------------
 :ROOTSYS_NOT_DEFINED
@@ -100,13 +107,13 @@ call %0 chktgt bin\recset.exe
         ECHO ERROR: the ROOTSYS environment variable has not been set. Please read 
 	ECHO        the installation note of ROOT to run on the Windows command prompt 
 	ECHO. 
-	goto STOP
+	GOTO END
 ::----------------------------------------------------------------------
 :ROOT_DONT_EXIST 
 	ECHO.
-        ECHO ERROR: root.exe doesn't exist in %%ROOTSYS%%\bin\root.exe
+        ECHO ERROR: root.exe doesn't EXIST in %%ROOTSYS%%\bin\root.exe
 	ECHO. 
-	goto STOP
+	GOTO END
 ::----------------------------------------------------------------------
 :CLEAN
 	ECHO Deleting FEDRA binaries...
@@ -115,22 +122,23 @@ call %0 chktgt bin\recset.exe
 	IF EXIST workspace\obj RD /S/Q workspace\obj
 	IF EXIST workspace\rootcompare.txt DEL workspace\rootcompare.txt
 	ECHO ok!
-	goto STOP
+	GOTO END
 ::----------------------------------------------------------------------
 :CHECKTARGET
         IF EXIST     %2 ECHO 	%2...ok!
         IF NOT EXIST %2 ECHO 	%2...ERROR
-	  goto STOP
+	  GOTO END
 ::----------------------------------------------------------------------
 :ARCHIVE
+	IF NOT EXIST lib\*.dll IF NOT EXIST lib\*.lib IF NOT EXIST bin\*.lib GOTO END
    :LOOP
 	SET Choice=
-	SET /P Choice=Previous FEDRA binaries exist, do you want to archive these files (Y/N)? 
+	SET /P Choice=Previous FEDRA binaries EXIST, do you want to archive these files (Y/N)? 
 	IF NOT '%Choice%'=='' SET Choice=%Choice:~0,1%
 	ECHO.
 	IF /I '%Choice%'=='Y' GOTO SAVEARCHIVE
-	IF /I '%Choice%'=='N' GOTO STOP
-   GOTO LOOP
+	IF /I '%Choice%'=='N' GOTO END
+  GOTO LOOP
 	
    :SAVEARCHIVE
    ECHO.
@@ -146,12 +154,28 @@ call %0 chktgt bin\recset.exe
 	move  bin\*.*   old\%Choice%\bin
 	move  lib\*.*   old\%Choice%\lib
 	copy  tools\*.* old\%Choice%\tools 
-	ECHO Files saved. If you want to use these files, change the environment variables
+	ECHO Files saved. IF you want to use these files, change the environment variables
 	ECHO using %CD%\old\%Choice%\tools\setfedra -u
 	echo.
 	pause
 	echo.
-	goto STOP
+	GOTO END
 ::----------------------------------------------------------------------
-:STOP
-endlocal
+:HELP
+	ECHO.
+	ECHO usage: makeall [clean,-vc7, archive]
+	ECHO.	
+	ECHO Build FEDRA for WindowsNT/2000/XP/2003 with MS Visual Studio 6 /.NET/.NET 2003.
+	ECHO The script automatically cleans the files when ROOT version has been changed. 
+	ECHO N.B. Clean the files by yourself if you want to change the compiler version. 
+	ECHO. 
+	ECHO examples: makeall            build (MS Visual Studio 6)
+	ECHO           makeall -vc7       build using MS Visual Studio .NET (2003)
+	ECHO           makeall -novars    build without defining VC variables (for develop.)
+	ECHO           makeall clean      remove targets and intermediate files
+	ECHO           makeall archive    move current binaries in a separated folder
+	ECHO           makeall -? (/?,-h) this help
+	ECHO.
+	GOTO END
+::----------------------------------------------------------------------
+:END
