@@ -1,15 +1,22 @@
 ---------------------------------------------------------------------
+Linux: 
+
+download src.tgz and install.sh  from
+http://ntslab01.na.infn.it/cgi-bin/cvsweb.cgi/fedra/
+
+in your fedra directory unpack src.tgz as 
+[fedra]$ tar zxvf src.tgz
+
 Automatic instalaltion procedure for linux (thanks to Markus)
 
-type 
+type in this directory
 "./install.sh" or 
-". ./install.sh" (depending on the shell) 
-from your fedra directory.
-This script do: 
+". ./install.sh" (depending on the shell)
 
-- setting of variables in config-files is done automatically.
-- compilation of libraries and "recset" is done on demand.
-- creation of  "setup_new.sh" is included, depending on default SHELL from 
+This script do: 
+- setting of variables in config-files
+- compilation of libraries and "recset" on demand.
+- creation of  "setup_new.sh" is included, depending on default SHELL from
   the user, placed at top directory.
 
 at this point all libraries/binaries should be created and ready for use
@@ -59,3 +66,4 @@ The recommended configuration is:
 
 W2000/WXP   root3.10.01gdk   VC++6.0+SP5
 
+--------------------------------------------------------------------------
