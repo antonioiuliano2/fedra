@@ -22,8 +22,9 @@ OPLIST="
 Minus,operator-,-
 Fabs,fabs,fabs
 Sqr,sqr,square
-Sqrt,sqrt,sqrt
 "
+# commented out by VT due to name clashes with root4.01
+#Sqrt,sqrt,sqrt
 
 # generate code:
 (

@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 
     if(!strcmp(key,"-l"))                doLink=1;
 
-    if(!strncmp(key,"-a",2)) {
+    if(!strncmp(key,"-a",2) && strcmp(key,"-ang") ) {
       if(strlen(key)>2)
 	sscanf(key+2,"%d",&doAlign);
       if(doAlign==0)                     doAlign=1;
