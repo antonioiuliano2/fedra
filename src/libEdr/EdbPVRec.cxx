@@ -1457,6 +1457,7 @@ int EdbPVRec::MakeTracksTree()
   EdbSegP *tr = (EdbSegP*)track;
 
   int nseg,trid,npl,n0;
+  float mass_pi = 0.139;
   float xv=X();
   float yv=Y();
  
@@ -1507,7 +1508,7 @@ int EdbPVRec::MakeTracksTree()
       seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
       track->AddSegment(*seg);
     }
-    track->FitTrackKF();
+    track->FitTrackKF(mass_pi, false);
     tracks->Fill();
     track->Clear();
     ntr++;

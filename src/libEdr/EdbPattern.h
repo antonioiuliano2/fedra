@@ -68,12 +68,17 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 )
     { if(!eCOV) eCOV = new TMatrixD(5,5);
       else eCOV->Clear();
-      (*eCOV)(0,0) = sx2; 
-      (*eCOV)(1,1) = sy2; 
-      (*eCOV)(2,2) = stx2;
-      (*eCOV)(3,3) = sty2;
-      (*eCOV)(4,4) = sp2;
+      (*eCOV)(0,0) = (double)sx2; 
+      (*eCOV)(1,1) = (double)sy2; 
+      (*eCOV)(2,2) = (double)stx2;
+      (*eCOV)(3,3) = (double)sty2;
+      (*eCOV)(4,4) = (double)sp2;
       eSZ = sz2;
+    }
+  
+  void    SetErrorP( float sp2 )
+    { if(!eCOV) eCOV = new TMatrixD(5,5);
+      (*eCOV)(4,4) = (double)sp2;
     }
   
 
@@ -148,7 +153,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  
   void       Print( Option_t *opt="") const;
  
-  ClassDef(EdbSegP,10)  // segment
+  ClassDef(EdbSegP,12)  // segment
 };
 
 //______________________________________________________________________________
@@ -254,17 +259,17 @@ class EdbTrackP : public EdbSegP {
 
   void Copy(EdbTrackP &tr);
   void FitTrack();
-  int FitTrackKF( bool backward=true);
+  int FitTrackKF( float mass, bool zmax=false );
+  int FitTrackKFS( float mass, bool zmax=false );
 
-  double ThetaPb2(float p, float dPb, float ma);
-
+  double ThetaPb2( float p, float dPath, float mass);
 
   float CHI2();
 
   TArrayL  *GetVid() const { return eVid; }
   void SetVid(int n) {if(eVid) delete eVid; eVid = new TArrayL(n);}
 
-  void Clear() {eS->Reset();}
+  void Clear() {if(eS) eS->Reset();}
 
   void Print() 
     { 
@@ -273,7 +278,7 @@ class EdbTrackP : public EdbSegP {
       if(eS) eS->Print(); 
     }
 
-  ClassDef(EdbTrackP,2)  // track consists of segments
+  ClassDef(EdbTrackP,4)  // track consists of segments
 };
 
 //______________________________________________________________________________

@@ -544,40 +544,61 @@ double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
   // calculate the square of multiple scattering angle theta (in one projection)
   // after the distance dPb in lead  [microns]
 
+  if (p < 0.0000001) return 2.;
   const double Xrad=5810.;           // X0 of the Pb in microns
   const double k = 0.0136*0.0136;    // [GeV]
   double p2 = p*p, p4=p2*p2;
-  return  k*(ma*ma+p2)*dPb/p4/Xrad;
+  return  abs(k*(ma*ma+p2)*dPb/p4/Xrad);
 }
 
 //______________________________________________________________________________
-int  EdbTrackP::FitTrackKF(bool backward)
+int  EdbTrackP::FitTrackKF(float ma, bool zmax)
 {
-  // if (backward==true)  track parameters are calculated at Z of the first segment
-  // if (backward==false) track parameters are calculated at Z of the last segment
+  // if (zmax==true)  track parameters are calculated at segment with max Z
+  // if (zmax==false) track parameters are calculated at segment woth min Z
+
+  float dPb;
+  double teta0sq;
+  double dz;
+  int step;
+  int istart, iend;
 
   int nseg=N();
   if(nseg<2)   return -1;
  
-  FitTrack();
-  SetP(4.);
-
-  double   ma=0.139;     // mass of particle (GeV) (Pion at the moment)
-  float    dPb = 1300.*TMath::Sqrt(1+TX()*TX()+TY()*TY()); // thickness of the Pb+emulsion cell in microns
-
-  double teta0sqF= ThetaPb2( P(), dPb, ma );
-
   EdbSegP *seg0=0;
   EdbSegP *seg=0;
 
-  if(  GetSegment(N()-1)->Z() <  GetSegment(0)->Z() ) backward = !backward;
+  if(  GetSegment(N()-1)->Z() <  GetSegment(0)->Z() )
+  {
+    if (zmax)
+    {
+	step=-1;
+	istart=nseg-1;
+	iend=0;
+    }
+    else
+    {
+	step=1;
+	istart=0;
+	iend=nseg-1;
+    }
+  }
+  else
+  {
+    if (!zmax)
+    {
+	step=-1;
+	istart=nseg-1;
+	iend=0;
+    }
+    else
+    {
+	step=1;
+	istart=0;
+	iend=nseg-1;
+    }
 
-  int step=1;
-  int istart=0, iend=nseg-1;
-  if(backward) {
-    step=-1;
-    istart=nseg-1;
-    iend=0;
   }
 
   seg0 = GetSegment(istart);
@@ -590,7 +611,7 @@ int  EdbTrackP::FitTrackKF(bool backward)
   for(int k=0; k<4; k++) 
     for(int l=0; l<4; l++) cov(k,l) = (seg0->COV())(k,l);
 
-  Double_t chi2=0.L; 
+  Double_t chi2=0.; 
 
   int i=istart; 
   while( (i+=step) != iend+step ) {
@@ -600,25 +621,26 @@ int  EdbTrackP::FitTrackKF(bool backward)
     VtSymMatrix dms(4);   // multiple scattering matrix
     dms.clear();
 
-    double teta0sq = teta0sqF*TMath::Abs(seg0->PID()-seg->PID());
-    double dz = seg->Z()-seg0->Z();                        //?
+    dz = seg->Z()-seg0->Z();                        //?
+    dPb = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of the Pb+emulsion cell in microns
+    teta0sq = ThetaPb2( P(), dPb, ma );
 
     dms(0,0) = teta0sq*dz*dz/3.;
-    dms(1,1) = teta0sq*dz*dz/3.;
+    dms(1,1) = dms(0,0);
     dms(2,2) = teta0sq;
-    dms(3,3) = teta0sq;
+    dms(3,3) = dms(2,2);
     dms(2,0) = teta0sq*dz/2.;
-    dms(3,1) = teta0sq*dz/2.;
-    dms(0,2) = teta0sq*dz/2.;
-    dms(1,3) = teta0sq*dz/2.;
+    dms(3,1) = dms(2,0);
+    dms(0,2) = dms(2,0);
+    dms(1,3) = dms(2,0);
 
     VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
     pred.clear();
 
-    pred(0,0) = 1.L;
-    pred(1,1) = 1.L;
-    pred(2,2) = 1.L;
-    pred(3,3) = 1.L;
+    pred(0,0) = 1.;
+    pred(1,1) = 1.;
+    pred(2,2) = 1.;
+    pred(3,3) = 1.;
     pred(0,2) = dz;
     pred(1,3) = dz;
 
@@ -655,6 +677,225 @@ int  EdbTrackP::FitTrackKF(bool backward)
   SetChi2((float)chi2);
   SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
 
+  return 0;
+}
+
+//______________________________________________________________________________
+int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
+{
+  // if (zmax==true)  track parameters are calculated at segment with max Z
+  // if (zmax==false) track parameters are calculated at segment woth min Z
+
+  float dPb;
+  double teta0sq;
+  double dz, ptx, pty;
+  int step;
+  int istart, iend;
+
+  VtVector *par[60], *parpred[60], *pars[60], *meas[60];
+  VtSqMatrix *pred[60];
+  VtSymMatrix *cov[60], *covpred[60], *covpredinv[60], *covs[60], *dmeas[60];
+ 
+  int i=0;
+  int nseg=N();
+  if(nseg<2)   return -1;
+  if(nseg>59)   return -1;
+ 
+  EdbSegP *seg0=0;
+  EdbSegP *seg=0;
+
+  if(  GetSegment(N()-1)->Z() <  GetSegment(0)->Z() )
+  {
+    if (zmax)
+    {
+	step=-1;
+	istart=nseg-1;
+	iend=0;
+    }
+    else
+    {
+	step=1;
+	istart=0;
+	iend=nseg-1;
+    }
+  }
+  else
+  {
+    if (!zmax)
+    {
+	step=-1;
+	istart=nseg-1;
+	iend=0;
+    }
+    else
+    {
+	step=1;
+	istart=0;
+	iend=nseg-1;
+    }
+
+  }
+
+  seg0 = GetSegment(istart);
+  par[istart] = new VtVector(  (double)(seg0->X()), 
+					(double)(seg0->Y()),  
+					(double)(seg0->TX()), 
+					(double)(seg0->TY()) );
+  meas[istart] = new VtVector(*par[istart]);
+  pred[istart] = new VtSqMatrix(4);
+  (*pred[istart]).clear();
+  (*pred[istart])(0,0) = 1.;
+  (*pred[istart])(1,1) = 1.;
+  (*pred[istart])(2,2) = 1.;
+  (*pred[istart])(3,3) = 1.;
+  cov[istart] = new VtSymMatrix(4);             // covariance matrix for seg0
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) (*cov[istart])(k,l) = (seg0->COV())(k,l);
+  dmeas[istart] = new VtSymMatrix(*cov[istart]);             // covariance matrix for seg0
+
+  Double_t chi2=0.; 
+
+  i=istart; 
+  while( (i+=step) != iend+step ) {
+
+    seg = GetSegment(i);
+
+    VtSymMatrix dms(4);   // multiple scattering matrix
+    dms.clear();
+
+    dz = seg->Z()-seg0->Z();
+    ptx = (*par[i-step])(2);                        //?
+    pty = (*par[i-step])(3);                        //?
+    dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
+    teta0sq = ThetaPb2( P(), dPb, ma );
+
+    dms(0,0) = teta0sq*dz*dz/3.;
+    dms(1,1) = dms(0,0);
+    dms(2,2) = teta0sq;
+    dms(3,3) = dms(2,2);
+    dms(2,0) = teta0sq*dz/2.;
+    dms(3,1) = dms(2,0);
+    dms(0,2) = dms(2,0);
+    dms(1,3) = dms(2,0);
+
+    pred[i] = new VtSqMatrix(4);        //propagation matrix for track parameters (x,y,tx,ty)
+    pred[i]->clear();
+
+    (*pred[i])(0,0) = 1.;
+    (*pred[i])(1,1) = 1.;
+    (*pred[i])(2,2) = 1.;
+    (*pred[i])(3,3) = 1.;
+    (*pred[i])(0,2) = dz;
+    (*pred[i])(1,3) = dz;
+
+    parpred[i] = new VtVector(4);            // prediction from seg0 to seg
+    *parpred[i] = (*pred[i])*(*par[i-step]);
+
+    covpred[i] = new VtSymMatrix(4);         // covariation matrix for prediction
+    *covpred[i] = (*pred[i])*((*cov[i-step])*((*pred[i]).T()))+dms;
+
+    dmeas[i] = new VtSymMatrix(4);           // original covariation  matrix for seg
+    for(int k=0; k<4; k++) 
+      for(int l=0; l<4; l++) (*dmeas[i])(k,l) = (seg->COV())(k,l);
+
+    covpredinv[i] = new VtSymMatrix(4);
+    (*covpredinv[i]) = (*covpred[i]).dsinv();
+    VtSymMatrix dmeasinv(4);
+    dmeasinv  = (*dmeas[i]).dsinv();
+    cov[i] = new VtSymMatrix(4);
+    (*cov[i]) = (*covpredinv[i]) + dmeasinv;
+    (*cov[i]) = (*cov[i]).dsinv();
+
+    meas[i] = new VtVector( (double)(seg->X()), 
+			    (double)(seg->Y()),  
+			    (double)(seg->TX()), 
+			    (double)(seg->TY()) );
+
+    par[i] = new VtVector(4);
+    (*par[i]) = (*cov[i])*((*covpredinv[i])*(*parpred[i]) + dmeasinv*(*meas[i]));   // new parameters for seg
+
+    chi2 += ((*par[i])-(*parpred[i]))*((*covpredinv[i])*((*par[i])-(*parpred[i]))) + 
+	    ((*par[i])-(*meas[i]))*(dmeasinv*((*par[i])-(*meas[i])));
+
+//    VtSymMatrix dresid(4);
+//    dresid = (*dmeas[i]) - (*cov[i]);
+//    dresid = dresid.dsinv();
+//
+//    chi2 += ((*par[i])-(*meas[i]))*(dresid*((*par[i])-(*meas[i])));
+
+    seg0 = seg;
+  }
+
+  Set(ID(),(float)(*par[iend])(0),(float)(*par[iend])(1),
+	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.);
+  SetZ(GetSegment(iend)->Z());
+  SetCOV( (*cov[iend]).array(), 4 );
+  SetErrorP(P()*0.1);
+  SetChi2((float)chi2);
+  SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+
+// Smoothing
+
+  pars[iend] = new VtVector(*par[iend]);
+  covs[iend] = new VtSymMatrix(*cov[iend]);
+  VtSymMatrix dresid(4);
+  dresid = (*dmeas[iend]) - (*covs[iend]);
+  dresid = dresid.dsinv();
+  chi2 = ((*pars[iend])-(*meas[iend]))*(dresid*((*pars[iend])-(*meas[iend])));
+  i=iend; 
+  while( (i-=step) != istart-step ) {
+	VtSqMatrix BackTr(4);
+	BackTr = (*cov[i])*(((*pred[i]).T())*(*covpredinv[i+step]));
+	pars[i] = new VtVector(4);
+	covs[i] = new VtSymMatrix(4);
+	(*pars[i]) = (*par[i]) + BackTr*((*pars[i+step])-(*parpred[i+step]));
+	(*covs[i]) = (*cov[i]) + BackTr*(((*covs[i+step])-(*covpred[i+step]))*BackTr.T());
+	dresid = (*dmeas[i]) - (*covs[i]);
+	dresid = dresid.dsinv();
+	chi2 += ((*pars[i])-(*meas[i]))*(dresid*((*pars[i])-(*meas[i])));
+  }
+  SetChi2((float)chi2);
+  SetProb((float)TMath::Prob(chi2,(nseg-1)*4));
+
+// Delete matrixes and vectors
+
+  delete par[istart];
+  par[istart] = 0;
+  delete cov[istart];
+  cov[istart] = 0;
+  delete meas[istart];
+  meas[istart] = 0;
+  delete dmeas[istart];
+  dmeas[istart] = 0;
+  delete pred[istart];
+  pred[istart] = 0;
+  delete pars[istart];
+  pars[istart] = 0;
+  delete covs[istart];
+  covs[istart] = 0;
+  i=istart; 
+  while( (i+=step) != iend+step ) {
+    delete pred[i];
+    pred[i] = 0;
+    delete parpred[i];
+    parpred[i] = 0;
+    delete covpred[i];
+    covpred[i] = 0;
+    delete covpredinv[i];
+    covpredinv[i] = 0;
+    delete par[i];
+    par[i] = 0;
+    delete cov[i];
+    cov[i] = 0;
+    delete meas[i];
+    meas[i] = 0;
+    delete dmeas[i];
+    dmeas[i] = 0;
+    delete pars[i];
+    pars[i] = 0;
+    delete covs[i];
+    covs[i] = 0;
+  }
   return 0;
 }
 
