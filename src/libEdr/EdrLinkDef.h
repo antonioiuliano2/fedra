@@ -19,6 +19,9 @@
 #pragma link C++ class EdbPVGen;
 
 #pragma link C++ class EdbGA;
+#pragma link C++ class EdbFIRF;
+#pragma link C++ class EdbClustP;
+#pragma link C++ class EdbIP;
 
 #pragma link C++ class EdbSegmentCut;
 #pragma link C++ class EdbLayer;

@@ -85,6 +85,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    STX() const  { return eSTX; }
   Float_t    STY() const  { return eSTY; }
   Float_t    SZ()  const  {return eSZ;}
+  Int_t      Vid(int i) const 
+    {if(i<0) return -1; if(i>1) return -1; return eVid[i];}
 
   // mandatory virtual functions:
   Float_t    X()  const  { return eX; }

@@ -7,7 +7,7 @@ PROJECT_LIBS += -lEmath -lEdb
 
 LIB_TGT       = $(LIB_DIR)/libEdr.so
 
-headers       = EdbPattern.h EdbPVGen.h EdbPVRec.h EdbGA.h EdbDataSet.h
+headers       = EdbPattern.h EdbPVGen.h EdbPVRec.h EdbGA.h EdbDataSet.h EdbIP.h
 
 classes	      = $(headers:.h=.$(SrcSuf))
 EdrCint	      = $(headers) EdrLinkDef.h
@@ -99,6 +99,52 @@ EdbDataSet.o: /var/local/root/include/TDictionary.h
 EdbDataSet.o: /var/local/root/include/Property.h
 EdbDataSet.o: /var/local/root/include/TArrayL.h
 EdbGA.o: EdbGA.h
+EdbIP.o: /var/local/root/include/TH1.h
+EdbIP.o: /var/local/root/include/TVirtualHistPainter.h
+EdbIP.o: /var/local/root/include/TClass.h
+EdbIP.o: /var/local/root/include/TDictionary.h
+EdbIP.o: /var/local/root/include/Property.h /var/local/root/include/TAxis.h
+EdbIP.o: /var/local/root/include/TNamed.h /var/local/root/include/TObject.h
+EdbIP.o: /var/local/root/include/Rtypes.h /var/local/root/include/RConfig.h
+EdbIP.o: /var/local/root/include/RVersion.h
+EdbIP.o: /var/local/root/include/DllImport.h
+EdbIP.o: /var/local/root/include/Rtypeinfo.h
+EdbIP.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+EdbIP.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+EdbIP.o: /usr/include/stdio.h /usr/include/features.h
+EdbIP.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbIP.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+EdbIP.o: /usr/include/bits/types.h /usr/include/libio.h
+EdbIP.o: /usr/include/_G_config.h /usr/include/wchar.h
+EdbIP.o: /usr/include/bits/wchar.h /usr/include/gconv.h
+EdbIP.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+EdbIP.o: /usr/include/bits/stdio_lim.h
+EdbIP.o: /var/local/root/include/TGenericClassInfo.h
+EdbIP.o: /var/local/root/include/Varargs.h /var/local/root/include/TStorage.h
+EdbIP.o: /var/local/root/include/Riosfwd.h /var/local/root/include/TBuffer.h
+EdbIP.o: /var/local/root/include/Bytes.h /usr/include/string.h
+EdbIP.o: /var/local/root/include/TList.h
+EdbIP.o: /var/local/root/include/TSeqCollection.h
+EdbIP.o: /var/local/root/include/TCollection.h
+EdbIP.o: /var/local/root/include/TIterator.h
+EdbIP.o: /var/local/root/include/TString.h /var/local/root/include/TMath.h
+EdbIP.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbIP.o: /var/local/root/include/TRefCnt.h /var/local/root/include/TAttAxis.h
+EdbIP.o: /var/local/root/include/Gtypes.h /var/local/root/include/TArrayD.h
+EdbIP.o: /var/local/root/include/TArray.h /var/local/root/include/THashList.h
+EdbIP.o: /var/local/root/include/TAttLine.h
+EdbIP.o: /var/local/root/include/TAttFill.h
+EdbIP.o: /var/local/root/include/TAttMarker.h
+EdbIP.o: /var/local/root/include/TArrayC.h /var/local/root/include/TArrayS.h
+EdbIP.o: /var/local/root/include/TArrayF.h /var/local/root/include/TH2.h
+EdbIP.o: /var/local/root/include/TTree.h
+EdbIP.o: /var/local/root/include/TClonesArray.h
+EdbIP.o: /var/local/root/include/TBranch.h
+EdbIP.o: /var/local/root/include/TStringLong.h /var/local/root/include/TCut.h
+EdbIP.o: /var/local/root/include/TArrayI.h
+EdbIP.o: /var/local/root/include/TVirtualTreePlayer.h
+EdbIP.o: /var/local/root/include/TFile.h /var/local/root/include/TCache.h
+EdbIP.o: EdbIP.h
 EdbPVGen.o: /var/local/root/include/TRandom.h
 EdbPVGen.o: /var/local/root/include/TNamed.h
 EdbPVGen.o: /var/local/root/include/TObject.h
@@ -148,7 +194,38 @@ EdbPVGen.o: /var/local/root/include/Property.h
 EdbPVGen.o: /var/local/root/include/TObjArray.h
 EdbPVGen.o: /var/local/root/include/TArrayL.h
 EdbPVRec.o: /var/local/root/include/TFile.h /var/local/root/include/TCache.h
-EdbPVRec.o: /var/local/root/include/THashList.h EdbPVRec.h EdbPattern.h
+EdbPVRec.o: /var/local/root/include/THashList.h
+EdbPVRec.o: /var/local/root/include/TVector3.h
+EdbPVRec.o: /var/local/root/include/TMath.h
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbPVRec.o: /var/local/root/include/TError.h /var/local/root/include/Rtypes.h
+EdbPVRec.o: /var/local/root/include/RConfig.h
+EdbPVRec.o: /var/local/root/include/RVersion.h
+EdbPVRec.o: /var/local/root/include/DllImport.h
+EdbPVRec.o: /var/local/root/include/Rtypeinfo.h
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+EdbPVRec.o: /usr/include/stdio.h /usr/include/features.h
+EdbPVRec.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+EdbPVRec.o: /usr/include/bits/types.h /usr/include/libio.h
+EdbPVRec.o: /usr/include/_G_config.h /usr/include/wchar.h
+EdbPVRec.o: /usr/include/bits/wchar.h /usr/include/gconv.h
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+EdbPVRec.o: /usr/include/bits/stdio_lim.h
+EdbPVRec.o: /var/local/root/include/TGenericClassInfo.h
+EdbPVRec.o: /var/local/root/include/Varargs.h
+EdbPVRec.o: /var/local/root/include/TVector2.h /usr/include/limits.h
+EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/limits.h
+EdbPVRec.o: /var/local/root/include/TObject.h
+EdbPVRec.o: /var/local/root/include/TStorage.h
+EdbPVRec.o: /var/local/root/include/Riosfwd.h
+EdbPVRec.o: /var/local/root/include/TBuffer.h /var/local/root/include/Bytes.h
+EdbPVRec.o: /usr/include/string.h /var/local/root/include/TMatrix.h
+EdbPVRec.o: /var/local/root/include/TVector.h
+EdbPVRec.o: /var/local/root/include/TString.h
+EdbPVRec.o: /var/local/root/include/TRefCnt.h
+EdbPVRec.o: /var/local/root/include/TMatrixUtils.h EdbPVRec.h EdbPattern.h
 EdbPVRec.o: /var/local/root/include/TTree.h
 EdbPVRec.o: /var/local/root/include/TClonesArray.h
 EdbPVRec.o: /var/local/root/include/TAttLine.h
@@ -158,10 +235,7 @@ EdbPVRec.o: /var/local/root/include/TAttMarker.h
 EdbPVRec.o: /var/local/root/include/TBranch.h
 EdbPVRec.o: /var/local/root/include/TStringLong.h
 EdbPVRec.o: /var/local/root/include/TCut.h /var/local/root/include/TArrayD.h
-EdbPVRec.o: /var/local/root/include/TArray.h /usr/include/string.h
-EdbPVRec.o: /usr/include/features.h /usr/include/sys/cdefs.h
-EdbPVRec.o: /usr/include/gnu/stubs.h
-EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+EdbPVRec.o: /var/local/root/include/TArray.h
 EdbPVRec.o: /var/local/root/include/TArrayI.h
 EdbPVRec.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbPVRec.o: /var/local/root/include/TClass.h

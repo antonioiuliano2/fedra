@@ -223,6 +223,7 @@ class EdbPatCouple : public TObject {
   int          DiffPatCell( TIndexCell *cel1, TIndexCell *cel2, 
 			    Long_t vdiff[4]); 
 
+  int          FillCHI2n();
   int          FillCHI2();
   int          FillCHI2P();
 

@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "TFile.h"
+#include "TVector3.h"
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
@@ -349,6 +350,44 @@ int EdbPatCouple::FillCHI2P()
     scp->SetCHI2P(chi2);
   }
   //printf("Chi2P filled:  %d \n",Ncouples());
+  return Ncouples();
+}
+
+///______________________________________________________________________________
+int EdbPatCouple::FillCHI2n()
+{
+  EdbSegP *s1=0, *s2=0;
+  float sx=.5, sy=.5, sz=3., dz=44.;
+  float sa;
+  float chi2, a1,a2;
+  float tx,ty;
+
+  TVector3 v1,v2,v;
+
+  EdbSegCouple *scp=0;
+  int ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
+    scp=GetSegCouple(i);
+    s1 = Pat1()->GetSegment(scp->ID1());
+    s2 = Pat2()->GetSegment(scp->ID2());
+
+    tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
+    ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
+
+    v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
+    v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
+    v.SetXYZ(  -( s2->X() - s1->X() )/sx , 
+	       -( s2->Y() - s1->Y() )/sy , 
+	       -( s2->Z() - s1->Z() )/sz   );
+    a1 = v.Angle(v1);
+    a2 = v.Angle(v2);
+    sa = sz/dz*TMath::Cos(v.Theta());
+
+    chi2 = TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
+      eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
+    scp->SetCHI2(chi2);
+  }
+
   return Ncouples();
 }
 
