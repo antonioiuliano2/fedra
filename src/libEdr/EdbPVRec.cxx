@@ -1788,7 +1788,7 @@ void EdbPVRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends,
 
 //______________________________________________________________________________
 int EdbPVRec::ProbVertex(int maxgap[6], float dA, float ProbMin, float ProbMinT,
-			 int Nsegmin)
+			 int Nsegmin, bool usemom)
 {
   // maxgap[0] <= PID[end]   - PID[start] <= maxgap[1] for starts-ends pairs
   // maxgap[2] <= PID[start] - PID[start] <= maxgap[3] for starts-starts pairs
@@ -1812,9 +1812,24 @@ int EdbPVRec::ProbVertex(int maxgap[6], float dA, float ProbMin, float ProbMinT,
 
   FillTracksStartEnd( starts, ends, zFrom, zTo, zBin, ProbMinT, Nsegmin );
 
-  nvtx += ProbVertex(ends  , starts, maxgap[0], maxgap[1], dA, ProbMin, zBin);
-  nvtx += ProbVertex(starts, starts, maxgap[2], maxgap[3], dA, ProbMin, zBin);
-  nvtx += ProbVertex(ends  , ends,   maxgap[4], maxgap[5], dA, ProbMin, zBin);
+  printf("-----Search 2-track vertexes----------------------------\n");
+
+  if (maxgap[0] >= 0)
+  {
+    printf(" End-Begin tracks combinations:\n");
+    nvtx += ProbVertex(ends  , starts, maxgap[0], maxgap[1], dA, ProbMin, zBin, usemom);
+  }
+  if (maxgap[2] >= 0)
+  {
+    printf(" Begin-Begin tracks combinations:\n");
+    nvtx += ProbVertex(starts, starts, maxgap[2], maxgap[3], dA, ProbMin, zBin, usemom);
+  }
+  if (maxgap[4] >= 0)
+  {
+    printf(" End-End tracks combinations:\n");
+    nvtx += ProbVertex(ends  , ends,   maxgap[4], maxgap[5], dA, ProbMin, zBin, usemom);
+  }
+  printf("--------------------------------------------------------\n");
 
   return nvtx;
 }
@@ -1822,10 +1837,11 @@ int EdbPVRec::ProbVertex(int maxgap[6], float dA, float ProbMin, float ProbMinT,
 //______________________________________________________________________________
 int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 			  int BinDifMin,     int BinDifMax,
-			  float dA, float ProbMin, float zBin)
+			  float dA, float ProbMin, float zBin, bool usemom)
 {
   int nvtx = 0; 
-
+  int ncombin = 0;
+  int ncombinv = 0;
   float dz = TMath::Max( TMath::Abs(BinDifMin*zBin),TMath::Abs(BinDifMax*zBin));
   if (dz == 0.) dz = zBin;
   float   deltaX = dz*dA;  // limit for the transverse coordinates difference
@@ -1892,6 +1908,8 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //	    printf(" Tr1 ID = %d Z = %f Tr2 ID = %d Z = %f\n",
 //	    tr1->ID(), tr1->Z(), tr2->ID(), tr2->Z());
 
+	  ncombin++;
+
 	  if(zmin2) s2 = (EdbSegP *)tr2->TrackZmin();
 	  else      s2 = (EdbSegP *)tr2->TrackZmax();
 
@@ -1942,7 +1960,7 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 	  //if( !v2.EstimateVertexMath(x,y,z,d) )  continue;
 	  //	    printf("%d xyz: %f %f %f \t d: %f\n",nvtx,x,y,z,d);    
 
-	  v2->MakeV();
+	  v2->MakeV(usemom);
 	  if(!(v2->V()->findVertexVt()))
 	  {
 //	    if (iid1 == iid2)
@@ -1958,6 +1976,17 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //	    if (iid1 == iid2)
 //	    {
 //		printf("Valid-Cut Vertex # %d, tracks %d and %d\n", iid1, id1%3, id2%3);
+//	    }
+	    delete v2;
+	    v2 = 0;
+	    continue;
+	  }
+
+	  if(v2->V()->ntracks() != 2)
+	  {
+//	    if (iid1 == iid2)
+//	    {
+//		printf("Ntracks-Cut Vertex # %d, tracks %d and %d\n", iid1, id1%3, id2%3);
 //	    }
 	    delete v2;
 	    v2 = 0;
@@ -1990,7 +2019,7 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //	    v2 = 0;
 //	    continue;
 //	  }
-
+	  ncombinv++;
 	  if(prob >= ProbMin) {
 //	    printf("**********\nTr1 zmin: %f tr1 zmax: %f tr2 zmin: %f tr2 zmax: %f \n",
 //		   tr1->TrackZmin()->Z(),
@@ -2018,6 +2047,9 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
     }
   }
 
+  printf("  %6d pairs, %d vertexes, %d with Prob > %f\n",
+	    ncombin, ncombinv, nvtx, ProbMin);
+
   return nvtx;
 }
 //______________________________________________________________________________
@@ -2030,31 +2062,36 @@ int EdbPVRec::ProbVertex3(float ProbMin)
   int zpos = 0;
   int nvtx = eVTX->GetEntries();
   int nadd = 0;
+  int ncombin = 0;
+  int ncombinv = 0;
+
+  printf("-----Merge 2-track vertex pairs to 3-track vertexes-----\n");
 
   for (int i1=0; (i1<nvtx); i1++)
     {
   	edbv1 = (EdbVertex *)(eVTX->At(i1));
-	if (edbv1->N() > 2) continue;
-	if (edbv1)
+	if (!edbv1) continue;
+	if (edbv1->N() < 3)
 	{
+	    int nt1 = edbv1->N();
 	    int nomatch = 1;
 	    for (int i2=i1+1; (i2<nvtx) && nomatch; i2++)
 	    {
   		edbv2 = (EdbVertex *)(eVTX->At(i2));
-		if (edbv2->N() > 2) continue;
-		if (edbv2)
+		if (!edbv2) continue;
+		if (edbv2->N() < 3)
 		{
-		    int nt1 = edbv1->N();
 		    int nt2 = edbv2->N();
 		    int it1=0;
 		    while ( (it1<nt1) && nomatch )
 		    {
 		      int it2=0;
+		      tr = edbv1->GetTrack(it1);
 		      while ( (it2<nt2) && nomatch)
 		      {
-			tr = edbv1->GetTrack(it1);
 			if (edbv2->GetTrack(it2) == tr)
 			{
+			    ncombin++;
 			    if      (it2 == 0) 
 			    {
 				tr = edbv2->GetTrack(1);
@@ -2071,15 +2108,15 @@ int EdbPVRec::ProbVertex3(float ProbMin)
 			    {
 			      if (edbv->N() <= edbv1->N())			    
 			      {
+			        ncombinv++;
 				if(edbv1->AddTrack(tr, zpos, ProbMin))
 				{
 				    nadd++;
 				    edbv1->SetTracksVertex();
+				    nomatch = 0;
 				}
 			      }
 			    }
-			    nomatch = 0;
-			    break;
 			}
 			it2++;
 		      }
@@ -2089,6 +2126,96 @@ int EdbPVRec::ProbVertex3(float ProbMin)
 	    }
 	}
     }
+    printf("  %6d 2-track vertex pairs with common track\n",
+	      ncombin);
+    printf("  %6d pairs when common track not yet attached\n  %6d 3-track vertexes with Prob > %f\n",
+	      ncombinv, nadd, ProbMin);
+    printf("--------------------------------------------------------\n");
+    return nadd;
+}
+//______________________________________________________________________________
+int EdbPVRec::ProbVertex4(float ProbMin)
+{
+  EdbVertex *edbv  = 0;
+  EdbVertex *edbv1 = 0;
+  EdbVertex *edbv2 = 0;
+  EdbTrackP *tr = 0;
+  int zpos = 0;
+  int nvtx = eVTX->GetEntries();
+  int nadd = 0;
+  int ncombin = 0;
+  int ncombinv = 0;
+
+  printf("-----Merge 2-track vertex pairs to 4-track vertexes-----\n");
+
+  for (int i1=0; (i1<nvtx); i1++)
+    {
+  	edbv1 = (EdbVertex *)(eVTX->At(i1));
+	if (!edbv1) continue;
+	if (edbv1->N() < 4)
+	{
+	    int nt1 = edbv1->N();
+	    for (int i2=i1+1; (i2<nvtx); i2++)
+	    {
+  		edbv2 = (EdbVertex *)(eVTX->At(i2));
+		if (!edbv2) continue;
+		if (edbv2->N() < 3)
+		{
+		    int nt2 = edbv2->N();
+		    int it1=0;
+		    int nomatch = 1;
+		    while ( (it1<nt1) && nomatch )
+		    {
+		      int it2=0;
+		      tr = edbv1->GetTrack(it1);
+		      while ( (it2<nt2) && nomatch)
+		      {
+			if (edbv2->GetTrack(it2) == tr)
+			{
+			    ncombin++;
+			    if      (it2 == 0) 
+			    {
+				tr = edbv2->GetTrack(1);
+				zpos = edbv2->Zpos(1);
+			    }
+			    else if (it2 == 1)
+			    {
+				tr = edbv2->GetTrack(0);
+				zpos = edbv2->Zpos(0);
+			    }
+			    if (zpos) edbv = tr->VertexS();
+			    else      edbv = tr->VertexE();
+			    if (edbv)
+			    {
+			      if (edbv->N() <= edbv1->N())			    
+			      {
+			        ncombinv++;
+				if(edbv1->AddTrack(tr, zpos, ProbMin))
+				{
+				    edbv1->SetTracksVertex();
+				    nomatch = 0;
+				}
+			      }
+			    }
+			}
+			it2++;
+		      }
+		      it1++;
+		    }
+		}
+		if (edbv1->N() == 4)
+		{
+		    nadd++;
+		    break;
+		}
+	    }
+	}
+    }
+    printf("  %6d 2-track vertex pairs with common track\n",
+	      ncombin);
+    printf("  %6d pairs when common track not yet attached\n  %6d 4-track vertexes with Prob > %f\n",
+	      ncombinv, nadd, ProbMin);
+    printf("--------------------------------------------------------\n");
     return nadd;
 }
 //______________________________________________________________________________

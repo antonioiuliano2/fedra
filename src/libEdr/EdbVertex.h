@@ -35,7 +35,7 @@ class EdbVertex: public TObject {
   EdbVertex(EdbVertex &v);
   virtual ~EdbVertex();
 
-  int MakeV();
+  int MakeV( bool usemom = true );
 
   VERTEX::Vertex *V() const {return eV;}
   void Clear();

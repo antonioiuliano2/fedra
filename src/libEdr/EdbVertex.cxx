@@ -49,7 +49,7 @@ EdbVertex::EdbVertex(EdbVertex &v) : eEdbTracks(v.GetEdbTracks()), eZpos(v.eZpos
 //________________________________________________________________________
 EdbVertex::~EdbVertex()
 {
-  if(eV) delete eV; eV=0;
+  if(eV) { eV->clear(); delete eV; eV=0; }
 }
 
 //________________________________________________________________________
@@ -57,7 +57,7 @@ void EdbVertex::Clear()
 {
   eEdbTracks.Clear();
   eZpos.Set(0);
-  if(eV) { delete eV; eV=0; }
+  if(eV) { eV->clear(); delete eV; eV=0; }
   eX = 0.;
   eY = 0.;
   eZ = 0.;
@@ -65,12 +65,12 @@ void EdbVertex::Clear()
 }
 
 //________________________________________________________________________
-int EdbVertex::MakeV( )
+int EdbVertex::MakeV( bool usemom )
 {
-  if(eV) { delete eV; eV=0; }
+  if(eV) { eV->clear(); delete eV; eV=0; }
   eV = new Vertex();
   eV->use_kalman(true);               //TODO: define as parameter
-  eV->use_momentum(true);
+  eV->use_momentum(usemom);
   EdbTrackP *tr=0;
   EdbSegP *seg=0;
   for(int i=0; i<eNtr; i++) {
@@ -93,6 +93,11 @@ void EdbVertex::SetTracksVertex( )
   EdbTrackP *tr=0;
   for(int i=0; i<eNtr; i++) {
     tr = (EdbTrackP*)(eEdbTracks.At(i));
+    if ( !tr )
+    {
+	printf("EdbVertex::SetTracksVertex - null pointer for track %d!\n", i);
+	return; 
+    }
     if   (eZpos.At(i)) tr->SetVertexS(this);
     else	       tr->SetVertexE(this);
   }
@@ -128,17 +133,18 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 	    {
 		t->rm((double)(track->M()));
 		eV->push_back(*t);
-		eV->use_kalman(true);
-		eV->use_momentum(true);
+//		eV->use_kalman(true);
+//		eV->use_momentum(true);
 		if (!(eV->findVertexVt()))
 		{
-		  eEdbTracks.Remove(track);   //TODO: check removing (holes?)
+		    eEdbTracks.Remove(track);   //TODO: check removing (holes?)
 		    eNtr--;
 		    eZpos.Set(eNtr);
 		    eV->remove_last();
 		    delete t;
 		    t=0;
 		    result = false;
+		    printf("EdbVertex::AddTrack - vertex not found!");
 		}
 		else if (!(eV->valid()))
 		{
@@ -149,6 +155,7 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		    delete t;
 		    t=0;
 		    result = false;
+		    printf("EdbVertex::AddTrack - vertex not valid!");
 		}
 		else if (eV->prob() < ProbMin )
 		{
@@ -160,9 +167,23 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		    t=0;
 		    result = false;
 		}
+		if   (zpos)
+		{
+		    track->SetVertexS(this);
+		}
+		else
+		{
+		    track->SetVertexE(this);
+		}
 	    }
 	}
-	else { delete t; t=0; result = false; }
+	else
+	{ 
+	    delete t;
+	    t=0;
+	    result = false;
+	    printf("EdbVertex::AddTrack - conversion to VT failed!");
+	}
     }
     else
     {

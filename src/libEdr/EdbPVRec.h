@@ -322,11 +322,12 @@ class EdbPVRec : public EdbPatternsVolume {
 			     float ProbMinT, int Nsegmin);
 
   int     ProbVertex(int maxgap[6], float dA, float ProbMin,
-		     float ProbMinT=0.05, int Nsegmin=3);
+		     float ProbMinT=0.05, int Nsegmin=3, bool usemom=true);
   int     ProbVertex(TIndexCell &list1, TIndexCell &list2,
 		     int BinDifMin,     int BinDifMax,
-		     float dA,          float ProbMin,   float zBin);
+		     float dA,          float ProbMin,   float zBin, bool usemom);
   int	  ProbVertex3(float ProbMin);
+  int	  ProbVertex4(float ProbMin);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);
   void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
