@@ -670,7 +670,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 float EdbDataPiece::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz )
 {
   //assumed that clusters are attached to segments
-  float chi2=0;
+  double chi2=0;
   EdbCluster *cl=0;
   TObjArray *clusters = seg->GetElements();
   if(!clusters) return 0;
@@ -688,18 +688,17 @@ float EdbDataPiece::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, f
   xyz2[1] = (seg->GetY0() + seg->GetDz()*seg->GetTy()) /sy;
   xyz2[2] = (seg->GetZ0() + seg->GetDz())              /sz;
 
-  //seg->Print();
+  double d;
   for(int i=0; i<ncl; i++ ) {
     cl = (EdbCluster*)clusters->At(i);
     xyz[0] = cl->GetX()/sx;
     xyz[1] = cl->GetY()/sy;
     xyz[2] = cl->GetZ()/sz;
-    float d = EdbMath::DistancePointLine3(xyz,xyz1,xyz2, inside);
-    chi2 += d;
-    //printf("cluster : %f %f %f \t %f\n",cl->GetX(),cl->GetY(),cl->GetZ(),d);
+    d = EdbMath::DistancePointLine3(xyz,xyz1,xyz2, inside);
+    chi2 += d*d;
   }
 
-  return chi2/ncl;
+  return TMath::Sqrt(chi2/ncl);
 }
 
 ///______________________________________________________________________________
