@@ -430,7 +430,8 @@ threadEdbRun.o: /var/local/root/include/TStreamerInfo.h
 threadEdbRun.o: /var/local/root/include/TFile.h
 threadEdbRun.o: /var/local/root/include/TCache.h
 threadEdbRun.o: /var/local/root/include/THashList.h
-threadEdbRun.o: /var/local/root/include/TTime.h EdbRun.h
+threadEdbRun.o: /var/local/root/include/TTime.h
+threadEdbRun.o: /var/local/root/include/TObjString.h EdbRun.h
 threadEdbRun.o: /var/local/root/include/TTree.h
 threadEdbRun.o: /var/local/root/include/TAttLine.h
 threadEdbRun.o: /var/local/root/include/TAttFill.h
@@ -439,8 +440,7 @@ threadEdbRun.o: /var/local/root/include/Gtypes.h
 threadEdbRun.o: /var/local/root/include/Htypes.h
 threadEdbRun.o: /var/local/root/include/TArrayD.h
 threadEdbRun.o: /var/local/root/include/TArrayI.h
-threadEdbRun.o: /var/local/root/include/TVirtualTreePlayer.h
-threadEdbRun.o: /var/local/root/include/TObjString.h EdbView.h
+threadEdbRun.o: /var/local/root/include/TVirtualTreePlayer.h EdbView.h
 threadEdbRun.o: /var/local/root/include/TPolyMarker3D.h
 threadEdbRun.o: /var/local/root/include/TAtt3D.h
 threadEdbRun.o: /var/local/root/include/TArrayF.h EdbAffine.h EdbRunHeader.h
