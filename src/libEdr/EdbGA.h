@@ -40,6 +40,7 @@ class EdbGA : public TObject {
   void   SetBin( float bx, float by, float bz ) 
     { eBinX=bx; eBinY=by; eBinZ=bz; } 
 
+  void   GetClustPFile( const char *file );
   void   InitTree(const char *file="grain_chains.root");
   void   CheckViewGrains();
   void   CheckViewGrains(int vid);

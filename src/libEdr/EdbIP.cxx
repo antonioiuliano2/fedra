@@ -13,6 +13,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "EdbImage.h"
+#include "EdbFrame.h"
 #include "EdbIP.h"
 
 ClassImp(EdbFIRF)
@@ -206,6 +207,14 @@ void  EdbClustP::Reset()
 }
 
 //====================================================================================
+EdbIP::EdbIP()
+{
+  eFIR=0;
+  eThr=0;
+}
+
+
+//-----------------------------------------------------------------------------------
 int  EdbIP::Peak8( TH2F *h, float thr )
 {
   int xn[8] = { 1, -1, 0,  0, 1,  1, -1, -1 }; //pixel 3x3 suburbs
@@ -217,7 +226,6 @@ int  EdbIP::Peak8( TH2F *h, float thr )
 
   printf("hist: %d %d\n",nc,nr);
   int npeaks=0;
-
   int ic,ir,in;           // declare here to fix marazmatic eror messages of VC++
   for(ic=2; ic<nc-3; ic++) {
     for(ir=2; ir<nr-3; ir++) {
@@ -293,12 +301,70 @@ int  EdbIP::Peak12( TH2F *h, float thr )
 }
 
 //------------------------------------------------------------------------------------
-int  EdbIP::Clusterize( TH2F *h, float thr )
+TTree  *EdbIP::InitTree()
+{
+  TFile *f    = new TFile("clusters.root","RECREATE");
+  f->cd();
+  TTree *tree = new TTree("clust","clusters tree");  
+
+  EdbClustP *cl = new EdbClustP();
+  tree->Branch("cl","EdbClustP",&cl,32000,99);
+
+  return tree;
+  //  f.Close();
+}
+
+//------------------------------------------------------------------------------------
+int  EdbIP::CutBG( EdbFrame *frame )
+{
+  int npix = 0;
+  TH2F *h = eFIR->ApplyTo(frame->GetImage());
+  int nc = h->GetNbinsX();
+  int nr = h->GetNbinsY();
+  float pix;
+  for(int ic=0; ic<nc; ic++) {
+    for(int ir=0; ir<nr; ir++) {
+      pix = (float)(h->GetBinContent(ic,ir));
+      if(pix<=eThr) h->SetBinContent(ic,ir,0);
+      else h->SetBinContent(ic,ir,pix-eThr);
+    }
+  }
+
+  float binmax = h->GetMaximum();
+  printf("binmax = %f\n",binmax);
+  unsigned char *buf = (unsigned char*)(frame->GetImage()->GetBuffer());
+
+  for(int ic=0; ic<nc; ic++) {
+    for(int ir=0; ir<nr; ir++) {
+      pix = (float)(h->GetBinContent(ic,ir));
+      if(pix>0)   {
+	buf[nc*ir+ic] = (unsigned char)(pix*255/binmax);
+	npix++;
+      }
+      else buf[nc*ir+ic] =0;
+    }
+  }
+  
+  delete h;
+  return npix;
+}
+
+
+//------------------------------------------------------------------------------------
+int  EdbIP::Clusterize( EdbFrame *frame, TTree *tree )
+{
+  TH2F *img = eFIR->ApplyTo(frame->GetImage());
+  float z = frame->GetZ();
+  int   ifr = frame->GetID();
+  int ncl = Clusterize( img, eThr, tree, z, ifr );
+  delete img;
+  return ncl;
+}
+
+//------------------------------------------------------------------------------------
+int  EdbIP::Clusterize( TH2F *h, float thr, TTree *tree, float z, int ifr )
 {
   // c++ remake of my good old "Fire in steppe ;-)"
-
-  TFile f("clusters.root","RECREATE");
-  TTree tree("clust","clusters tree");
 
   int nc = h->GetNbinsX();
   int nr = h->GetNbinsY();
@@ -307,8 +373,10 @@ int  EdbIP::Clusterize( TH2F *h, float thr )
   int   ncl=0;
   printf("hist: %d %d\n",nc,nr);
 
-  EdbClustP *cl = new EdbClustP();
-  tree.Branch("cl","EdbClustP",&cl,32000,99);
+  tree->GetDirectory()->cd();
+  EdbClustP *cl = 0;
+  tree->SetBranchAddress("cl",&cl);
+  cl = new EdbClustP();
 
   for(int ic=2; ic<nc-3; ic++) {
     for(int ir=2; ir<nr-3; ir++) {
@@ -318,14 +386,14 @@ int  EdbIP::Clusterize( TH2F *h, float thr )
 
       cl->Reset();
       wcl = BurnPix( h, ic,ir, thr, *cl);
-      cl->Print();
-      tree.Fill();
+      cl->SetZ(z);
+      cl->SetFrame(ifr);
+      tree->Fill();
       ncl++;
     }
   }
 
-  tree.AutoSave();
-  f.Close();
+  tree->AutoSave();
 
   return ncl;
 }

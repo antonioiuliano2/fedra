@@ -1478,10 +1478,10 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
 
-      
-      s->Set( ic, 
-	      s1->X(), 
-	      s1->Y(),
+
+      s->Set( ic,
+	      (s1->X()+s2->X())/2.,
+	      (s1->Y()+s2->Y())/2.,
               (s1->X()-s2->X())/(s1->Z()-s2->Z()),
               (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
               s1->W()+s2->W()

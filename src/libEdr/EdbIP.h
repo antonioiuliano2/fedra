@@ -14,6 +14,7 @@
 #include "EdbCluster.h"
 
 class EdbImage;
+class EdbFrame;
 
 //______________________________________________________________________________
 class EdbFIRF : public TNamed {
@@ -81,12 +82,21 @@ class EdbClustP : public EdbCluster {
 class EdbIP : public TObject {
 
  private:
+  EdbFIRF  *eFIR;
+  Float_t   eThr;    // threshold
+
  public:
-  EdbIP(){};
+  EdbIP();
+
+  TTree *InitTree();
+  void SetFIR(EdbFIRF *fir) {eFIR = fir;}
+  void SetThr(Float_t thr)  {eThr = thr;}
 
   static int   Peak8 ( TH2F *h, float thr );
   static int   Peak12( TH2F *h, float thr );
-  static int   Clusterize( TH2F *h, float thr );
+  int          CutBG( EdbFrame *frame );
+  int          Clusterize( EdbFrame *frame, TTree *tree );
+  static int   Clusterize( TH2F *h, float thr, TTree *tree, float z, int ifr );
   static float BurnPix( TH2F *h, int ic, int ir, float thr, EdbClustP &cl );
 
   ClassDef(EdbIP,1)  // Image Processing

@@ -20,6 +20,7 @@
 #include "EdbCluster.h"
 #include "EdbView.h"
 #include "EdbGA.h"
+#include "EdbIP.h"
 
 ClassImp(EdbGA)
 
@@ -40,6 +41,44 @@ EdbGA::~EdbGA()
     eGrainsFile->Close(); 
   }
   if(eRun)   delete eRun;  
+}
+
+///-----------------------------------------------------------------------------
+void EdbGA::GetClustPFile(const char *file)
+{
+  TFile *fcl = new TFile(file);
+  TTree *clust = (TTree *)fcl->Get("clust");
+  EdbClustP *clp = 0;
+  clust->SetBranchAddress("cl",&clp);
+
+  int nentr=clust->GetEntries();
+  TClonesArray *clarr = new TClonesArray("EdbCluster");
+
+  int ncl =0;
+  for(int i=0; i<nentr; i++) {
+    clust->GetEntry(i);
+    if( clp->GetZ()>-50.) continue;
+    //if( clp->Xp()<500.) continue;
+    //if( clp->Xp()>600.) continue;
+    //if( clp->Yp()<500.) continue;
+    //if( clp->Yp()>600.) continue;
+
+    new((*clarr)[ncl])  
+      EdbCluster( clp->Xcg(),clp->Ycg(),clp->GetFrame(),
+		  clp->GetArea(), clp->Peak(), clp->GetFrame(), 0);
+    ncl++;
+  }
+  fcl->Close();
+  delete fcl;
+  printf("%d clusters are readed from %s\n",ncl,file);
+
+
+  SetBin(4,4,1);
+  TIndexCell chains;
+  VerticalChains(clarr,chains);
+  InitTree("grains_tree.root");
+  MakeGrainsTree(clarr,chains);
+  eGrainsFile->Close();  
 }
 
 ///-----------------------------------------------------------------------------
