@@ -1,4 +1,3 @@
- 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // EdbPVRec                                                             //
@@ -1859,8 +1858,12 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
   int nvtx = 0; 
   int ncombin = 0;
   int ncombinv = 0;
-  float dz = TMath::Max( TMath::Abs(BinDifMin*zBin),TMath::Abs(BinDifMax*zBin));
-  if (dz == 0.) dz = zBin;
+  float dz = 0.;
+  if( ((&list1)==(&list2)) )
+    dz = TMath::Abs((BinDifMin+1)*zBin);
+  else
+    dz = TMath::Max( TMath::Abs(BinDifMin*zBin),TMath::Abs(BinDifMax*zBin));
+  if (dz <= 0.) dz = zBin;
   float   deltaX = dz*dA;  // limit for the transverse coordinates difference
   float   deltaY = deltaX;
   float   dzseg = 0;
@@ -2682,7 +2685,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
 	    }
 	}
     }
-    tr->FitTrackKFS(true,X0);
+    tr->FitTrackKFS(false,X0);
   }
 
 }

@@ -72,7 +72,10 @@ class EdbVertex: public TObject {
 
   Int_t	    eFlag;	 // 0 - neutral (tracks starts attached only)
 			 // 1 - charge (tracks ends&starts attached)
-			 // 2 - back charge (tracks ends attached only)
+			 // 2 - back neutral (tracks ends attached only)
+			 // 3 - neutral, linked (has common track with other vertex)
+			 // 4 - charge, linked
+			 // 5 - back neutral, linked
   Int_t	    eID;
   Float_t   eQuality;	 // Probability/(vsigmax**2+vsigmay**2)
 
