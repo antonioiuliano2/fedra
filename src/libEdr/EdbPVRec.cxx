@@ -2164,12 +2164,8 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 
     if(probmax>probMin) {
       if( EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) {
+
 	segmax->SetTrack(tr.ID());
-	tr.SetNpl();
-
-//	tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
-	tr.SetSegmentsTrack();
-
 	tr.MakeSelector(ss,followZ);
 	nsegTot++;
 	ngap =0;
@@ -2178,8 +2174,14 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
       }
     }
 
-    if(ngap>ngapMax) return nsegTot;
+    if(ngap>ngapMax) break;
   }
+
+  tr.SetNpl();
+  tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
+  tr.SetSegmentsTrack();
+
+
 
   return nsegTot;
 }
