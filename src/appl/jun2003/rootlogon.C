@@ -2,24 +2,31 @@
  // project lib path should be setted in LD_LIBRARY_PATH
 
   if (!TClassTable::GetDict("TIndexCell")) { 
-    if(gSystem->Load("libEmath.so")==0)
-      printf("libEmath.so \tloaded \n");
+    if(gSystem->Load("libEmath")==0)
+      printf("libEmath \tloaded \n");
     else 
-      printf("libEmath.so do NOT loaded!\n");
+      printf("libEmath do NOT loaded!\n");
   }
 
   if (!TClassTable::GetDict("EdbView")) { 
-    if(gSystem->Load("libEdb.so")==0) 
-      printf("libEdb.so \tloaded \n");
+    if(gSystem->Load("libEdb")==0) 
+      printf("libEdb   \tloaded \n");
     else 
-      printf("libEdb.so do NOT loaded!\n");
+      printf("libEdb do NOT loaded!\n");
   }
 
   if (!TClassTable::GetDict("EdbPattern")) { 
-    if(gSystem->Load("libEdr.so")==0) 
-      printf("libEdr.so \tloaded \n");
+    if(gSystem->Load("libEdr")==0) 
+      printf("libEdr   \tloaded \n");
     else 
-      printf("libEdr.so do NOT loaded!\n");
+      printf("libEdr do NOT loaded!\n");
+  }
+
+  if (!TClassTable::GetDict("EdbDisplay")) { 
+    if(gSystem->Load("libEdd")==0) 
+      printf("libEdd   \tloaded \n");
+    else 
+      printf("libEdd do NOT loaded!\n");
   }
 
 }
