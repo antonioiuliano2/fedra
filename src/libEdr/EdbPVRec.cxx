@@ -8,6 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TFile.h"
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPVRec.h"
@@ -667,13 +668,15 @@ EdbPVRec::EdbPVRec()
   eScanCond = 0;
   eChi2Max=999.;
   eVdiff[0]=eVdiff[1]=eVdiff[2]=eVdiff[3]=0;
+  eTracksCell = new TIndexCell();
 }
 
 ///______________________________________________________________________________
 EdbPVRec::~EdbPVRec()
 {
-  if(ePatCouples) delete ePatCouples;
-  if(eTracks)     delete eTracks;
+  if(ePatCouples)     delete ePatCouples;
+  if(eTracks)         delete eTracks;
+  if(eTracksCell)     delete eTracksCell;
 }
 
 ///______________________________________________________________________________
@@ -830,13 +833,13 @@ int EdbPVRec::LinkTracks()
   for(int i=0; i<Ncouples(); i++ ) {
     pc = GetCouple(i);
     pc->LinkFast();
-    pc->CutCHI2P(1.5);
+    //pc->CutCHI2P(1.5);
     pc->SortByCHI2();
     pc->SelectIsolated();
   }
-  TIndexCell tracksCell;
-  FillTracksCell(&tracksCell);
-  SelectLongTracks( Npatterns(), &tracksCell );
+  TIndexCell *tracksCell = eTracksCell;
+  FillTracksCell();
+  SelectLongTracks( Npatterns(), tracksCell );
 
   AlignA();
 
@@ -908,13 +911,15 @@ int EdbPVRec::Align()
 }
 
 //______________________________________________________________________________
-void EdbPVRec::FillTracksCell(TIndexCell *tracksCell)
+void EdbPVRec::FillTracksCell()
 {
   // fill tracks cell "vid1:vid2"
   // second segment is considered as leading one
   Long_t vid1,vid2,vtr[2];
 
-  //TIndexCell *tracksCell = new TIndexCell();  // "vid1:vid2"
+  TIndexCell *tracksCell = eTracksCell;  // "vid1:vid2"
+
+  if(tracksCell) tracksCell->Drop();
 
   EdbPatCouple *pc = 0;
   EdbSegCouple *sc = 0;
@@ -937,7 +942,61 @@ void EdbPVRec::FillTracksCell(TIndexCell *tracksCell)
     }
   }
   tracksCell->Sort();
+  tracksCell->PrintPopulation(1);
 }
+
+//______________________________________________________________________________
+int EdbPVRec::MakeTracksTree()
+{
+  FillTracksCell();
+
+  EdbSegP *seg;
+  int nseg,trid;
+ 
+  TFile fil("tracks.root","RECREATE");
+  TTree *tracks= new TTree("tracks","tracks");
+
+  TClonesArray *segments=new TClonesArray("EdbSegP");
+
+  tracks->Branch("trid",&trid,"trid/I");
+  tracks->Branch("nseg",&nseg,"nseg/I");
+  tracks->Branch("segments",&segments);
+
+  int ntr=0;
+  int nsegments = 2;
+  if(!eTracksCell) return ntr;
+  if(nsegments<2) return ntr;
+
+  EdbPattern *pat=0;
+  TIndexCell *ct;
+  Long_t vid=0;
+  
+  for(int it=0; it<eTracksCell->GetEntries(); it++) {
+
+    ct = eTracksCell->At(it);
+    if( ct->N() < nsegments )     continue;
+
+    trid = ct->At(0)->Value();
+    nseg = ct->GetEntries();
+    for(int is=0; is<nseg; is++) {
+      vid = ct->At(is)->Value();
+      pat = GetPattern( Pid(vid) );
+      seg = pat->GetSegment( Sid(vid) );
+      seg->SetPID( Pid(vid) );
+      new((*segments)[is])  EdbSegP( *seg );
+    }
+    tracks->SetBranchAddress("segments",&segments);
+    tracks->Fill();
+    segments->Clear();
+    ntr++;
+  }
+
+  tracks->Write();
+  fil.Close();
+  printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
+  return ntr; 
+}
+
 
 //______________________________________________________________________________
 int EdbPVRec::SelectLongTracks(int nsegments, TIndexCell *tracksCell)

@@ -253,6 +253,7 @@ class EdbPVRec : public EdbPatternsVolume {
   Long_t  eVdiff[4];          // how many ajenced bins should be taken into account
   EdbScanCond *eScanCond;     // scanning conditions (sigma, puls, etc)
 
+  TIndexCell  *eTracksCell;
   TObjArray   *eTracks;
 
  public:
@@ -281,12 +282,15 @@ class EdbPVRec : public EdbPatternsVolume {
                                return (EdbPatCouple  *)(ePatCouples->At(i));
                                else return 0; }
 
+  TIndexCell *GetTracksCell() const { return eTracksCell; }
+  int   MakeTracksTree();
+
   int    LinkSlow();
   int    Link();
   int    Align();
   int    AlignA();
   int    LinkTracks();
-  void   FillTracksCell(TIndexCell *tracksCell);
+  void   FillTracksCell();
   int    SelectLongTracks(int nsegments, TIndexCell *tracksCell);
 
   void SetOffsetsMax(float ox, float oy);
