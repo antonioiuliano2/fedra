@@ -46,6 +46,7 @@ errora:
 	@echo "Please set ROOTSYS environment variable to specify ROOT location!"
 endif
 
+depfile  = .depfile
 ##########################################################
 # targets
 ##########################################################
@@ -77,6 +78,9 @@ endif
 
 clean:
 	@rm -rf vt++/*.o vt++/cintdict/vt++dict.* vt++/.depfile $(ldir)/libvt*
+
+depend:
+	  @echo "--> Make depend: TODO for vt++"
 
 
 postinstall:

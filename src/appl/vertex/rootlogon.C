@@ -36,6 +36,13 @@
       printf("libEdr do NOT loaded!\n");
   }
 
+  if (!TClassTable::GetDict("EdbLayer")) { 
+    if(gSystem->Load("libEIO")==0) 
+      printf("libEIO   \tloaded \n");
+    else 
+      printf("libEIO do NOT loaded!\n");
+  }
+
   if (!TClassTable::GetDict("EdbDisplay")) { 
     if(gSystem->Load("libEdd")==0) 
       printf("libEdd   \tloaded \n");
@@ -55,6 +62,13 @@
       printf("libEIO   \tloaded \n");
     else 
       printf("libEIO do NOT loaded!\n");
+  }
+
+  if (!TClassTable::GetDict("EmrPoint")) { 
+    if(gSystem->Load("libEmr")==0) 
+      printf("libEmr   \tloaded \n");
+    else 
+      printf("libEmr do NOT loaded!\n");
   }
 
 }

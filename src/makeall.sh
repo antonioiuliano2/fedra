@@ -1,45 +1,38 @@
+# usage:
+#       ./makeall.sh         - build all libraries
+#       ./makeall.sh  clean  - clean all directories
+#       ./makeall.sh  depend - create all dipendencies
+#
+
 cd libEmath
-make clean
-make depend
-make
+make $1
 
 cd ../libEdb
-make clean
-make depend
-make
+make $1
 
 cd ../libEdr
-make clean
-make depend
-make
+make $1
 
 cd ../libEIO
-make clean
-make depend
-make
+make $1
 
 cd ../libEdd
-make clean
-make depend
-make
+make $1
 
 cd ../libEMC
-make clean
-make depend
-make
-
-cd ../libVt++
-make clean
-make
+make $1
 
 cd ../libEphys
-make clean
-make depend
-make
+make $1
+
+cd ../libEmr
+make $1
+
+cd ../libVt++
+make $1
 
 cd ../appl/recset
-make clean
-make
+make $1
 
 cd ..
 cd ..

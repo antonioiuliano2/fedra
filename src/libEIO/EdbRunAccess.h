@@ -105,7 +105,7 @@ class EdbRunAccess : public TObject {
     (eCond[ud]) = new EdbScanCond(cond);
   }
 
-  EdbScanCond *GetMakeCond(int ud);
+  EdbScanCond *GetMakeCond(int ud) {return 0;} //TODO?
   EdbScanCond *GetCond(int ud)
     { if(eCond[ud]) return (EdbScanCond *)eCond[ud]; else return 0; }
 

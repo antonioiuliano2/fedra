@@ -90,8 +90,37 @@ threadEdbDataSet.o: /var/local/root/include/TVirtualUtilHist.h
 threadEdbDataSet.o: /var/local/root/include/TError.h
 threadEdbDataSet.o: /var/local/root/include/TMatrixFUtils.h EdbDataSet.h
 threadEdbDataSet.o: EdbLayer.h
-threadEdbLayer.o: EdbLayer.h
-threadEdbRunAccess.o: EdbRunAccess.h EdbLayer.h
+threadEdbLayer.o: EdbLayer.h /var/local/root/include/TNamed.h
+threadEdbLayer.o: /var/local/root/include/TObject.h
+threadEdbLayer.o: /var/local/root/include/Rtypes.h
+threadEdbLayer.o: /var/local/root/include/RConfig.h
+threadEdbLayer.o: /var/local/root/include/RVersion.h
+threadEdbLayer.o: /var/local/root/include/DllImport.h
+threadEdbLayer.o: /var/local/root/include/Rtypeinfo.h
+threadEdbLayer.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+threadEdbLayer.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+threadEdbLayer.o: /usr/include/stdio.h /usr/include/features.h
+threadEdbLayer.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+threadEdbLayer.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+threadEdbLayer.o: /usr/include/bits/types.h /usr/include/libio.h
+threadEdbLayer.o: /usr/include/_G_config.h /usr/include/wchar.h
+threadEdbLayer.o: /usr/include/bits/wchar.h /usr/include/gconv.h
+threadEdbLayer.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+threadEdbLayer.o: /usr/include/bits/stdio_lim.h
+threadEdbLayer.o: /var/local/root/include/TGenericClassInfo.h
+threadEdbLayer.o: /var/local/root/include/Varargs.h
+threadEdbLayer.o: /var/local/root/include/TStorage.h
+threadEdbLayer.o: /var/local/root/include/Riosfwd.h
+threadEdbLayer.o: /var/local/root/include/TBuffer.h
+threadEdbLayer.o: /var/local/root/include/Bytes.h /usr/include/string.h
+threadEdbLayer.o: /var/local/root/include/TList.h
+threadEdbLayer.o: /var/local/root/include/TSeqCollection.h
+threadEdbLayer.o: /var/local/root/include/TCollection.h
+threadEdbLayer.o: /var/local/root/include/TIterator.h
+threadEdbLayer.o: /var/local/root/include/TString.h
+threadEdbLayer.o: /var/local/root/include/TMath.h
+threadEdbLayer.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+threadEdbLayer.o: /var/local/root/include/TRefCnt.h
 threadEdbRunAccess.o: /var/local/root/include/TSystem.h /usr/include/stdio.h
 threadEdbRunAccess.o: /usr/include/features.h /usr/include/sys/cdefs.h
 threadEdbRunAccess.o: /usr/include/gnu/stubs.h
@@ -152,4 +181,5 @@ threadEdbRunAccess.o: /var/local/root/include/TFile.h
 threadEdbRunAccess.o: /var/local/root/include/TCache.h
 threadEdbRunAccess.o: /var/local/root/include/THashList.h
 threadEdbRunAccess.o: /var/local/root/include/TClonesArray.h
-threadEdbRunAccess.o: /var/local/root/include/TTime.h
+threadEdbRunAccess.o: /var/local/root/include/TTime.h EdbRunAccess.h
+threadEdbRunAccess.o: EdbLayer.h
