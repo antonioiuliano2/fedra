@@ -40,12 +40,7 @@ depend:
 	$(CXX) $(CXXFLAGS) -c $<
 # DO NOT DELETE
 
-EdbDisplay.o: EdbDisplay.h /var/local/root/include/TCanvas.h
-EdbDisplay.o: /var/local/root/include/TPad.h
-EdbDisplay.o: /var/local/root/include/TVirtualPad.h
-EdbDisplay.o: /var/local/root/include/TAttPad.h
-EdbDisplay.o: /var/local/root/include/Gtypes.h
-EdbDisplay.o: /var/local/root/include/Htypes.h
+EdbDisplay.o: EdbDisplay.h /var/local/root/include/TObject.h
 EdbDisplay.o: /var/local/root/include/Rtypes.h
 EdbDisplay.o: /var/local/root/include/RConfig.h
 EdbDisplay.o: /var/local/root/include/RVersion.h
@@ -62,14 +57,19 @@ EdbDisplay.o: /usr/include/bits/wchar.h /usr/include/gconv.h
 EdbDisplay.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
 EdbDisplay.o: /usr/include/bits/stdio_lim.h
 EdbDisplay.o: /var/local/root/include/TGenericClassInfo.h
-EdbDisplay.o: /var/local/root/include/TVirtualX.h
-EdbDisplay.o: /var/local/root/include/TNamed.h
-EdbDisplay.o: /var/local/root/include/TObject.h
 EdbDisplay.o: /var/local/root/include/Varargs.h
 EdbDisplay.o: /var/local/root/include/TStorage.h
 EdbDisplay.o: /var/local/root/include/Riosfwd.h
 EdbDisplay.o: /var/local/root/include/TBuffer.h
 EdbDisplay.o: /var/local/root/include/Bytes.h /usr/include/string.h
+EdbDisplay.o: /var/local/root/include/TCanvas.h
+EdbDisplay.o: /var/local/root/include/TPad.h
+EdbDisplay.o: /var/local/root/include/TVirtualPad.h
+EdbDisplay.o: /var/local/root/include/TAttPad.h
+EdbDisplay.o: /var/local/root/include/Gtypes.h
+EdbDisplay.o: /var/local/root/include/Htypes.h
+EdbDisplay.o: /var/local/root/include/TVirtualX.h
+EdbDisplay.o: /var/local/root/include/TNamed.h
 EdbDisplay.o: /var/local/root/include/TList.h
 EdbDisplay.o: /var/local/root/include/TSeqCollection.h
 EdbDisplay.o: /var/local/root/include/TCollection.h
@@ -112,8 +112,26 @@ EdbDisplay.o: /var/local/root/include/TGLayout.h
 EdbDisplay.o: /var/local/root/include/TGString.h
 EdbDisplay.o: /var/local/root/include/TGWidget.h
 EdbDisplay.o: /var/local/root/include/WidgetMessageTypes.h
-EdbDisplay.o: /var/local/root/include/TRint.h
-EdbDisplay.o: /var/local/root/include/TApplication.h
-EdbDisplay.o: /var/local/root/include/TApplicationImp.h
+EdbDisplay.o: /var/local/root/include/TTree.h
+EdbDisplay.o: /var/local/root/include/TBranch.h
+EdbDisplay.o: /var/local/root/include/TStringLong.h
+EdbDisplay.o: /var/local/root/include/TCut.h
+EdbDisplay.o: /var/local/root/include/TArrayD.h
+EdbDisplay.o: /var/local/root/include/TVirtualTreePlayer.h
+EdbDisplay.o: /var/local/root/include/TPaveLabel.h
+EdbDisplay.o: /var/local/root/include/TPave.h /var/local/root/include/TBox.h
+EdbDisplay.o: /var/local/root/include/TPaveText.h
+EdbDisplay.o: /var/local/root/include/TText.h /var/local/root/include/TLine.h
+EdbDisplay.o: /var/local/root/include/TDiamond.h
+EdbDisplay.o: /var/local/root/include/TArc.h
+EdbDisplay.o: /var/local/root/include/TEllipse.h
+EdbDisplay.o: /var/local/root/include/TSliderBox.h
+EdbDisplay.o: /var/local/root/include/TWbox.h
+EdbDisplay.o: /var/local/root/include/TGaxis.h
+EdbDisplay.o: /var/local/root/include/TROOT.h
+EdbDisplay.o: /var/local/root/include/TDirectory.h
+EdbDisplay.o: /var/local/root/include/TDatime.h
+EdbDisplay.o: /var/local/root/include/TUUID.h
+EdbDisplay.o: /var/local/root/include/TInetAddress.h
 EdbDisplay.o: /var/local/root/include/TStyle.h
 EdbDisplay.o: /var/local/root/include/TAttAxis.h
