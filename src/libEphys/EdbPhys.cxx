@@ -8,7 +8,6 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include <cmath>
 #include "TMath.h"
 #include "EdbPhys.h"
 
@@ -30,7 +29,7 @@ double EdbPhysics::ThetaMS2( float p, float mass, float dx, float X0 )
   double k = 0.0136*0.0136;    // [GeV]
   double p2 = p*p;
   double p4=p2*p2;
-  return  abs(k*(mass*mass+p2)*dx/p4/X0);
+  return  TMath::Abs(k*(mass*mass+p2)*dx/p4/X0);
 }
 
 //________________________________________________________________________

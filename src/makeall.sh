@@ -27,4 +27,9 @@ make clean
 make depend
 make
 
+cd ../appl/recset
+make clean
+make
+
+cd ..
 cd ..

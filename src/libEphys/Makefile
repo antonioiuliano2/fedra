@@ -38,8 +38,8 @@ depend:
 
 # DO NOT DELETE
 
-EdbPhys.o: EdbPhys.h /var/local/root/include/TObject.h
-EdbPhys.o: /var/local/root/include/Rtypes.h /var/local/root/include/RConfig.h
+EdbPhys.o: /var/local/root/include/TMath.h /var/local/root/include/Rtypes.h
+EdbPhys.o: /var/local/root/include/RConfig.h
 EdbPhys.o: /var/local/root/include/RVersion.h
 EdbPhys.o: /var/local/root/include/DllImport.h
 EdbPhys.o: /var/local/root/include/Rtypeinfo.h
@@ -54,8 +54,16 @@ EdbPhys.o: /usr/include/bits/wchar.h /usr/include/gconv.h
 EdbPhys.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
 EdbPhys.o: /usr/include/bits/stdio_lim.h
 EdbPhys.o: /var/local/root/include/TGenericClassInfo.h
+EdbPhys.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h EdbPhys.h
+EdbPhys.o: /var/local/root/include/TObject.h
 EdbPhys.o: /var/local/root/include/Varargs.h
 EdbPhys.o: /var/local/root/include/TStorage.h
 EdbPhys.o: /var/local/root/include/Riosfwd.h
 EdbPhys.o: /var/local/root/include/TBuffer.h /var/local/root/include/Bytes.h
-EdbPhys.o: /usr/include/string.h
+EdbPhys.o: /usr/include/string.h /var/local/root/include/TRandom.h
+EdbPhys.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
+EdbPhys.o: /var/local/root/include/TSeqCollection.h
+EdbPhys.o: /var/local/root/include/TCollection.h
+EdbPhys.o: /var/local/root/include/TIterator.h
+EdbPhys.o: /var/local/root/include/TString.h
+EdbPhys.o: /var/local/root/include/TRefCnt.h

@@ -16,4 +16,8 @@ make clean
 cd ../libEphys
 make clean
 
+cd ../appl/recset
+make clean
+
+cd ..
 cd ..
