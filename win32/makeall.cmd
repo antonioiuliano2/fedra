@@ -18,6 +18,14 @@ GOTO END
 	IF '%1'=='-novars' SET compilerver=-novars
 	SET CURRENTDIR=%CD%
 
+	:: Suggest using vc7
+	IF NOT '%compilerver%'=='-vc7' ECHO   The current version of libVt++ can be compiled only with Visual C++ 7,
+	IF NOT '%compilerver%'=='-vc7' ECHO   however libEdb.dll and rwc2edb.exe can be built anyway.
+	IF NOT '%compilerver%'=='-vc7' ECHO   If you have installed MS Visual Studio .NET or MS Visual Studio .NET 2003,
+	IF NOT '%compilerver%'=='-vc7' ECHO   you should use makeall with the "-vc7" option (es. makeall -vc7).
+	IF NOT '%compilerver%'=='-vc7' pause 
+	
+
 	:: Archive old fedra binaries
 	IF EXIST lib\*.* CALL %0 ARCHIVE
 
@@ -128,6 +136,13 @@ GOTO END
 	IF EXIST lib RD /S/Q lib
 	IF EXIST workspace\obj RD /S/Q workspace\obj
 	IF EXIST workspace\rootcompare.txt DEL workspace\rootcompare.txt
+	IF EXIST workspace\Fedra.ncb DEL workspace\Fedra.ncb 
+	IF EXIST workspace\Fedra.opt DEL workspace\Fedra.opt 
+	IF EXIST workspace\Fedra.dsp DEL workspace\Fedra.dsp
+	IF EXIST workspace\Fedra.suo DEL /A workspace\Fedra.suo
+	FOR /R %%F IN (.) DO IF EXIST %%F\Debug RD /s/q %%F\Debug
+	FOR /R %%F IN (.) DO IF EXIST %%F\Release RD /s/q %%F\Release
+	FOR /R %%F IN (.def) DO IF EXIST %%F del %%F
 	ECHO ok!
 	GOTO END
 ::----------------------------------------------------------------------
@@ -139,14 +154,18 @@ GOTO END
 :ARCHIVE
 	IF NOT EXIST lib\*.dll IF NOT EXIST lib\*.lib IF NOT EXIST bin\*.lib GOTO END
    :LOOP
+::	echo Previous FEDRA binaries EXIST, do you want to archive these files ?
+::	SET Choice=
+::	SET /P Choice=(Y/N/A=delete all/E=exit)? 
 	SET Choice=
-	SET /P Choice=Previous FEDRA binaries EXIST, do you want to archive these files (Y/N)? 
+	SET /P Choice=Previous FEDRA binaries EXIST: archive, remove or continue (A/R/C)?
 	IF NOT '%Choice%'=='' SET Choice=%Choice:~0,1%
 	ECHO.
-	IF /I '%Choice%'=='Y' GOTO SAVEARCHIVE
-	IF /I '%Choice%'=='N' GOTO END
+	IF /I '%Choice%'=='A' GOTO SAVEARCHIVE
+	IF /I '%Choice%'=='R' GOTO CLEAN
+	IF /I '%Choice%'=='C' GOTO END
   GOTO LOOP
-	
+
    :SAVEARCHIVE
    ECHO.
    ECHO The files will be saved in %cd%\old\"folder"
