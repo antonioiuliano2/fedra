@@ -29,6 +29,8 @@
  for %%F in (%PROJECT_SRC%\libEIO\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEdd\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEMC\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
+ for %%F in (%PROJECT_SRC%\libEdg\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
+ for %%F in (%PROJECT_SRC%\libEMR\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %fsutil% hardlink create %PROJECT_INC%\vt++\%%~nF%%~xF    %%F
  for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %fsutil% hardlink create %PROJECT_INC%\smatrix\%%~nF%%~xF %%F
 
@@ -66,19 +68,37 @@
 
 :: copy vsvars.bat into src directory
 :: ----------------------------------
- IF DEFINED VS71COMNTOOLS                                copy "%VS71COMNTOOLS%"\vsvars32.bat src
- IF NOT DEFINED VS71COMNTOOLS IF DEFINED VSCOMNTOOLS     copy "%VSCOMNTOOLS%"\vsvars32.bat src
- IF NOT DEFINED VS71COMNTOOLS IF NOT DEFINED VSCOMNTOOLS echo "Not found MS Visual Studio .NET or MS Visual Studio .NET 2003" 
- if exist src\vsvars.bat src\vsvars.bat 
+ IF DEFINED VS71COMNTOOLS ( 
+	copy "%VS71COMNTOOLS%"\vsvars32.bat src 
+ ) ELSE IF DEFINED VSCOMNTOOLS (
+        copy "%VSCOMNTOOLS%"\vsvars32.bat src
+ ) ELSE echo "MS Visual Studio .NET or MS Visual Studio .NET 2003 not found" 
+
+:: check SySalDataIO.dll registration
+:: ----------------------------------
+ set regutil=win32\tools\reg.exe
+ ECHO Check SySalDataIO.dll registration ......
+ @%regutil% query HKEY_LOCAL_MACHINE\SOFTWARE\SySal2\Classes\SySalDataIO
+ IF '%ERRORLEVEL%'=='0' ( 
+	ECHO ok!  
+ ) ELSE (
+	ECHO WARNING: SySalDataIO is not registered on this machine!!!! 
+ )
+	
+ echo.
 
 :: compilation of libraries
 :: ------------------------
  set /P YesNo=Do you want to compile the libraries: [y/n]?
-	IF /I '%YesNo%'=='Y' cd %installdir%\src
-	IF /I '%YesNo%'=='Y' call makeall.cmd clean
-	IF /I '%YesNo%'=='Y' call makeall.cmd
+	IF /I '%YesNo%'=='Y' (
+		cd %installdir%\src
+		call makeall.cmd clean
+		call makeall.cmd
+	)
 
 :: load environment variables
 :: --------------------------
  cd %installdir%
- setup_new.cmd
+ call setup_new.cmd
+
+ pause

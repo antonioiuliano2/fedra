@@ -1,13 +1,13 @@
+download fedra-vx-xx-xx.tgz  from
+http://ntslab01.na.infn.it/fedra/download/
+
 ---------------------------------------------------------------------
 Linux: 
 
-download src.tgz and install.sh  from
-http://ntslab01.na.infn.it/cgi-bin/cvsweb.cgi/fedra/
+in your fedra directory unpack fedra-vx-xx-xx.tgz as 
+[fedra]$ tar zxvf fedra-vx-xx-xx.tgz  
 
-in your fedra directory unpack src.tgz as 
-[fedra]$ tar zxvf src.tgz
-
-Automatic instalaltion procedure for linux (thanks to Markus)
+Automatic installation procedure for linux (thanks to Markus)
 
 type in this directory
 "./install.sh" or 
@@ -23,26 +23,31 @@ at this point all libraries/binaries should be created and ready for use
 
 type "source ./setup_new.sh" to update PATH and LD_LIBRARY_PATH
 
-
 ---------------------------------------------------------------------
 Windows (new installation procedure):
 needs: MS Visual Studio .NET or MS Visual Studio .NET 2003
 
-- download and unpack the fedra package
+How to compile FEDRA (standard procedure):
 
-- the installation starts by clicking on the "install.cmd" icon.
+1. download fedra-vx-xx-xx.tgz and unpack the fedra package
+2. register the SySalDataIO library (regsvr32 SysalDataIO.dll)
+3. click on the "install.cmd" icon.
+4. the environment variables are updated only for the current user. 
+   Other users must execute the "setup_new.cmd" to update their environments.
 
-or in details:
+
+How to compile FEDRA from the command prompt:
 
 - Open a Command Prompt and execute "%ProgramFiles%\Microsoft Visual Studio .NET 2003\Vc7
   \bin\vsvars32.bat" or artenatively open a "Visual Studio .NET 2003 Command Prompt" from
   the start menu (Visual Studio .NET Tools).
 - Change to the fedra directory and type install.cmd
-	This script do the same installation as the linux version. 
 	Type "setup_new.cmd" to update PATH and environment variables.
 	Restart the command prompt to use the new environment variables.
 
-note:
+
+How to compile FEDRA from the Visual Studio Development Environment:
+
 Once you have set the environment variables and path, FEDRA can be compiled 
 also from the Visual Studio Development Environment.
 The MS Visual Studio solution is $(FEDRA_ROOT)\win32\solution\Fedra.sln
