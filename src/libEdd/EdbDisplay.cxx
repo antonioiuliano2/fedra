@@ -605,7 +605,7 @@ EdbSegG *EdbDisplay::SegLine(EdbSegP *seg)
                  seg->Y() + seg->TY()*seg->DZ(),
                  seg->Z()+            seg->DZ() );
 
-  line->SetLineColor( 2 + seg->PID()%10 );
+  line->SetLineColor( 2 + seg->PID() );
   line->SetLineWidth(int(seg->W()/10.));
   line->SetSeg(seg);
   return line;
@@ -645,7 +645,7 @@ void EdbDisplay::PatternDraw(EdbPattern &pat)
     //  fPad->cd();
     pl= new TPolyLine3D(2,x,y,z);
 
-    pl->SetLineColor( 2 + seg->PID()%10 );
+    pl->SetLineColor( 2 + seg->PID() );
     pl->SetLineWidth(int(seg->W()/10.));
     if(seg->Flag()==-1) pl->SetLineColor(kWhite);
     pl->Draw();
