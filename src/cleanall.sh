@@ -7,8 +7,8 @@ make clean
 cd ../libEdr
 make clean
 
-cd ../libMarilisa
-make clean
+# cd ../libMarilisa
+# make clean
 
 cd ../libTest
 make clean
