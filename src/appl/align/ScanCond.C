@@ -31,7 +31,7 @@ void Set_Prototype_OPERA_microtrack( EdbScanCond *cond )
 {
   cond->SetSigma0( 2., 2.,.013,.013 );  // sigma0 "x,y,tx,ty" at 0 angle
   cond->SetDegrad( 6. );                  // sigma(tx) = sigma0*(1+degrad*tx)
-  cond->SetBins(5,5,3,3);                 // bins in [sigma] for checks
+  cond->SetBins(3,3,3,3);                 // bins in [sigma] for checks
   cond->SetPulsRamp0(  7.,11. );     // in range (Pmin:Pmax) Signal/All is nearly linear
   cond->SetPulsRamp04( 6.,10. );     //
   cond->SetName("Prototype_OPERA_microtrack");
