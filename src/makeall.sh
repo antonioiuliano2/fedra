@@ -1,41 +1,23 @@
 # usage:
-#       ./makeall.sh         - build all libraries
-#       ./makeall.sh  clean  - clean all directories
+#       ./makeall.sh         - build  all libraries
+#       ./makeall.sh  clean  - clean  all directories
 #       ./makeall.sh  depend - create all dipendencies
 #
 
-cd libEmath
-make $1
+LIBS="libEdb libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++"
+for lib in ${LIBS} ; do
+    echo 
+    echo "make $1 in ${lib} ..."
+    cd ${lib}
+    make $1
+    cd ..
+done
 
-cd ../libEdb
-make $1
-
-cd ../libEGA
-make $1
-
-cd ../libEdr
-make $1
-
-cd ../libEIO
-make $1
-
-cd ../libEdd
-make $1
-
-cd ../libEMC
-make $1
-
-cd ../libEphys
-make $1
-
-cd ../libEmr
-make $1
-
-cd ../libVt++
-make $1
-
-cd ../appl/recset
-make $1
-
-cd ..
-cd ..
+APPLS="appl/recset"
+for appl in ${APPLS} ; do
+    echo 
+    echo "make $1 in ${appl} ..."
+    cd ${appl}
+    make $1
+    cd ../..
+done

@@ -23,34 +23,14 @@ fi
 PROJECT_INC=$installdir/include
 PROJECT_SRC=$installdir/src
 
-listEdr=`ls $installdir/src/libEdr/*.h`
-listEdd=`ls $installdir/src/libEdd/*.h`
-listEMC=`ls $installdir/src/libEMC/*.h`
-listEIO=`ls $installdir/src/libEIO/*.h`
-listEdb=`ls $installdir/src/libEdb/*.h`
-listEmath=`ls $installdir/src/libEmath/*.h`
-listEphys=`ls $installdir/src/libEphys/*.h`
+LIBS="libEdb libEmath libEGA libEphys libEdr libEIO libEdd libEMC"
 
-for hname in ${listEdr} ; do
- ln -fs $PROJECT_SRC/libEdr/${hname##*/} $PROJECT_INC/${hname##*/}
-done
-for hname in ${listEdd} ; do
- ln -fs $PROJECT_SRC/libEdd/${hname##*/} $PROJECT_INC/${hname##*/}
-done
-for hname in ${listEMC} ; do
- ln -fs $PROJECT_SRC/libEMC/${hname##*/} $PROJECT_INC/${hname##*/}
-done
-for hname in ${listEIO} ; do
- ln -fs $PROJECT_SRC/libEIO/${hname##*/} $PROJECT_INC/${hname##*/}
-done 
-for hname in ${listEdb} ; do
- ln -fs $PROJECT_SRC/libEdb/${hname##*/} $PROJECT_INC/${hname##*/}
-done 
-for hname in ${listEmath} ; do
- ln -fs $PROJECT_SRC/libEmath/${hname##*/} $PROJECT_INC/${hname##*/}
-done
-for hname in ${listEphys} ; do
- ln -fs $PROJECT_SRC/libEphys/${hname##*/} $PROJECT_INC/${hname##*/}
+for lib in ${LIBS} ; do
+    echo "set links for ${lib} ..."
+    listLib=`ls $installdir/src/${lib}/*.h`
+    for hname in ${listLib} ; do
+	ln -fs $PROJECT_SRC/${lib}/${hname##*/} $PROJECT_INC/${hname##*/}
+    done
 done
 ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
 ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
@@ -92,19 +72,6 @@ if [[ $yesno == 'y' ]] ; then
   chmod u+x $installdir/src/makeall.sh
   cd $installdir/src
   $installdir/src/makeall.sh
-fi
-
-# compilation of recset
-if [[ ! -a $installdir/bin/recset ]] ; then
-  echo
-  echo
-  echo "Do you want to compile recset [y/n]"
-  read yesno
-  if [[ $yesno == 'y' ]] ; then
-    cd $installdir/src/appl/recset
-    gmake
-    cd $installdir
-  fi 
 fi
   
    
