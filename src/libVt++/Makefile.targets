@@ -1,0 +1,152 @@
+##########################################################
+#
+# type:      makefile
+#
+# created:   21. Nov 2000
+#
+# author:    Thorsten Glebe
+#            HERA-B Collaboration
+#            Max-Planck-Institut fuer Kernphysik
+#            Saupfercheckweg 1
+#            69117 Heidelberg
+#            Germany
+#            E-mail: T.Glebe@mpi-hd.mpg.de
+#
+# Description: central makefile for BEE projects
+#              compiling rules are defined here
+#
+##########################################################
+
+PWD=${shell pwd}
+
+##########################################################
+# targets
+##########################################################
+slib: objdir_check depend $(libname).so
+
+alib: objdir_check depend $(libname).a
+
+$(libname).so: $(OBJS) $(cintdict).o
+	@echo "--------> Build $(project) shared library "
+	$(CXX) $(soflags) $^ $(CERNLIB) $(syslibpath) $(shell $(ROOTSYS)/bin/root-config --libs) -o $@
+
+$(libname).a: $(OBJS) $(cintdict).o
+	@echo "--------> Build $(project) static library "
+	ar rc $@ $^
+
+bin: objdir_check depend soexe
+
+version:
+	@echo $(shell ../version.sh CVStag.*)
+
+run:
+	$(exe) $(args)
+
+rungdb:
+	gdb $(exe)
+
+soexe: objdir_check oexe
+
+saexe: objdir_check aexe
+
+oexe: $(MAINOBJ) $(OBJS)
+	@echo "Build executable $(exe)"
+	$(CXX) $(ldflags) $(wildcard *.o) $^ $(beelibs) $(shell $(ROOTSYS)/bin/root-config --libs) -o $(exe)
+
+aexe: $(MAINOBJ) $(OBJS)
+	@echo "Build static executable $(exe)"
+	$(CXX) $(ldflags) $(wildcard *.o) $^ $(beelibp)/libBEE$(suff).a $(shell $(ROOTSYS)/bin/root-config --libs) -o $(exe)
+
+objdir_check:
+	@echo "check for $(objdir)"
+	@if [ ! -d "$(objdir)" ]; then mkdir -p $(objdir); fi
+	@echo "check for $(cintdir)"
+	@if [ ! -d "$(cintdir)" ]; then mkdir -p $(cintdir); fi
+
+$(objdir)/%.o: %.C
+	@echo "*"
+	@echo "* compile "$@
+	@echo "*"
+	$(CXX) $(CFLAGS) $(addprefix -I, $(ALL_INCS)) -c $< -o $@
+
+$(cintdict).o: $(cintdict).C
+	@echo "=======>"
+	@echo "=======> compile "$@
+	@echo "=======>"
+	$(CXX) $(GXXFLAGS) $(CINT_FLAGS) $(addprefix -I, $(CINT_INCS)) -c $< -o $@
+
+# to trace rootcint: -t or -T option
+$(cintdict).C:  $(HEADRS) $(linkdef)
+	@echo "Generating dictionary: " $@
+	$(ROOTSYS)/bin/rootcint -f $@ -c $(ROOTOPT)\
+ $(addprefix -I, $(CINT_INCS))\
+ -I$(ROOTSYS)/cint/stl\
+  $(CINT_FLAGS)\
+  $(HEADRS)\
+  $(PWD)/$(linkdef)
+
+
+depend: rmdep dep
+
+rmdep:
+	@echo "remove $(depfile)"
+	@if [ -f $(depfile) ]; then rm -f $(depfile); fi
+
+dep:
+	@if [ ! -f $(depfile) ]; then \
+	  echo "--> Make depend"; \
+	  touch $(depfile); \
+	  makedepend -f $(depfile) -p$(objdir)/ $(addprefix -I, $(ALL_INCS)) $(mainsrc) $(sources) 2>/dev/null; \
+	fi
+
+docu:
+	@if [ -d $(docdir) ]; then \
+	   cd $(docdir);\
+	   $(MAKE) $(MFLAGS) all;\
+	else\
+	   echo "No $(docdir) directory to process.";\
+	fi
+
+clean:
+	\rm -fr $(objdir)/*
+	\rm -f $(ldir)/lib*
+	\rm -f $(depfile)
+
+cleandoc:
+	@if [ -d $(docdir) ]; then $(MAKE) -C $(docdir) clean; fi
+
+rmdict:
+	rm -f $(cintdir)/*
+
+check:
+	@echo " project    :" $(project)
+	@echo " ldir       :" $(ldir)
+	@echo " objdir     :" $(objdir)
+	@echo " version    :" $(version)
+	@echo " depfile    :" $(depfile)
+	@echo " libname    :" $(libname)
+	@echo " cintdir    :" $(cintdir)
+	@echo " cintdict   :" $(cintdict)
+	@echo " linkdef    :" $(linkdef)
+	@echo " docdir     :" $(docdir)
+	@echo " FLAGS      :" $(FLAGS)
+	@echo " soflags    :" $(soflags)
+	@echo " GXXFLAGS   :" $(GXXFLAGS)
+	@echo " CFLAGS     :" $(CFLAGS)
+	@echo " OBJS       :" $(OBJS)
+	@echo " HEADRS     :" $(HEADRS)
+	@echo " ALL_INCS   :" $(ALL_INCS)
+	@echo " CINT_INCS  :" $(CINT_INCS)
+	@echo " CINT_FLAGS :" $(CINT_FLAGS)
+	@echo " CERN_LIBS  :" $(CERN_LIBS)
+	@echo " CERNLIB    :" $(CERNLIB)
+	@echo " ROOTSYS    :" $(ROOTSYS)
+	@echo " ROOTOPT    :" $(ROOTOPT)
+	@echo " binary     :" $(binary)
+	@echo " exe        :" $(exe)
+	@echo " beelibs    :" $(beelibs)
+	@echo " LD_LIBRARY_PATH: " $(LD_LIBRARY_PATH)
+
+ifeq ($(depfile), $(wildcard $(depfile)))
+include $(depfile)
+endif

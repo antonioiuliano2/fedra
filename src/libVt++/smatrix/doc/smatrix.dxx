@@ -1,0 +1,51 @@
+/** @name SMatrix
+
+    @memo An active library for high performance computations in C++
+
+    @author T. Glebe, MPI fuer Kernphysik Heidelberg
+*/
+//@{
+/**@name SMatrix
+
+   @memo An active library for high performance vector and matrix computations in C++
+
+   @author T. Glebe, MPI fuer Kernphysik Heidelberg
+*/
+//@{
+//@Include:     ../include/SVector.hh
+//@Include:     ../include/SMatrix.hh
+//@Include:     ../include/Expression.hh
+//@Include:     ../include/Functions.hh
+//@Include:     ../include/Dfact.hh
+//@Include:     ../include/Dfactir.hh
+//@Include:     ../include/Dfinv.hh
+//@Include:     ../include/Dinv.hh
+//@Include:     ../include/Dsfact.hh
+//@Include:     ../include/Dsinv.hh
+//@Include:     ../include/Erf.hh
+//@Include:     ../include/Prob.hh
+//@Include:     ../include/sassert.hh
+//@Include:     ../include/minfc.hh
+//@}
+
+/**@name SVertex
+
+   @memo A high-speed C++ vertex fit class (formerly Vt++).
+
+   @author T. Glebe, MPI fuer Kernphysik Heidelberg
+*/
+//@{
+//@Include:     ../include/SVertex.hh
+//@Include:     ../include/SKalman.hh
+//@}
+
+/**@name SDistance
+
+   @memo Distance functions for Track and Vertex objects.
+
+   @author T. Glebe, MPI fuer Kernphysik Heidelberg
+*/
+//@{
+//@Include:     ../include/SDistance.hh
+//@}
+//@}

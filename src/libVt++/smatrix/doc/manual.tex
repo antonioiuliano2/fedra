@@ -1,0 +1,2959 @@
+\documentclass{article}
+\usepackage{bookman}
+\usepackage{docxx}
+\begin{document}
+\pagebreak
+\sloppy
+\cxxAuthor{
+T. Glebe, MPI fuer Kernphysik Heidelberg\strut}
+\cxxTitle{}
+        {SMatrix}
+        {}
+        {An active library for high performance computations in C++
+}
+        {}
+\begin{cxxContents}
+\cxxContentsEntry{1}{SMatrix}{An active library for high performance vector and matrix computations in C++
+}
+\begin{cxxContents}
+\cxxContentsEntry{1.1}{SVector}{SVector
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.2}{SMatrix}{SMatrix
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.3}{Expr}{Expr.
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.4}{BinaryOp}{BinaryOp
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.5}{UnaryOp}{UnaryOp
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.6}{Constant}{Constant
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.22}{Invert}{Invert}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.23}{0}{Invert\<0\>}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.24}{1}{Invert\<1\>}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.25}{2}{Invert\<2\>}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.26}{3}{Invert\<3\>}
+\begin{cxxContents}
+\end{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2}{SVertex}{A high-speed C++ vertex fit class (formerly Vt++).
+}
+\begin{cxxContents}
+\cxxContentsEntry{2.1}{SVertex}{Fixed size Vertex class}
+\begin{cxxContents}
+\cxxContentsEntry{2.1.1}{--- TrackIf Access methods ---\\}{}
+\end{cxxContents}
+\cxxContentsEntry{2.2}{SKalman}{Fixed size Kalman filter class}
+\begin{cxxContents}
+\end{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{3}{SDistance}{Distance functions for Track and Vertex objects.
+}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{}{Class Graph}{}\end{cxxContents}
+\clearpage\pagebreak
+\begin{cxxentry}
+{}
+        {SMatrix}
+        {}
+        {An active library for high performance vector and matrix computations in C++
+}
+        {1}
+\cxxAuthor{
+T. Glebe, MPI fuer Kernphysik Heidelberg\strut}
+\begin{cxxnames}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ class\ }
+        {SVector}
+        {}
+        {SVector
+}
+        {1.1}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D1,\ unsigned\ int\ D2\ =\ D1\>\ \ \ class\ }
+        {SMatrix}
+        {}
+        {SMatrix
+}
+        {1.2}
+\cxxitem{template\ \<class\ ExprType,\ class\ T,\ unsigned\ int\ D,\ unsigned\ int\ D2\ =\ 0\>\ \ \ class\ }
+        {Expr}
+        {}
+        {Expr.
+}
+        {1.3}
+\cxxitem{template\ \<class\ Operator,\ class\ LHS,\ class\ RHS,\ class\ T\>\ \ \ class\ }
+        {BinaryOp}
+        {}
+        {BinaryOp
+}
+        {1.4}
+\cxxitem{template\ \<class\ Operator,\ class\ RHS,\ class\ T\>\ \ \ class\ }
+        {UnaryOp}
+        {}
+        {UnaryOp
+}
+        {1.5}
+\cxxitem{template\ \<class\ T\>\ \ \ class\ }
+        {Constant}
+        {}
+        {Constant
+}
+        {1.6}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {square}
+        {(const\ T\&\ x)}
+        {square}
+        {1.7}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {maximum}
+        {(const\ T\&\ lhs,\ const\ T\&\ rhs)}
+        {maximum}
+        {1.8}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {minimum}
+        {(const\ T\&\ lhs,\ const\ T\&\ rhs)}
+        {minimum}
+        {1.9}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ int\ }
+        {round}
+        {(const\ T\&\ x)}
+        {round}
+        {1.10}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ int\ }
+        {sign}
+        {(const\ T\&\ x)}
+        {sign}
+        {1.11}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {dot}
+        {(const\ SVector\<T,\ D\>\&\ lhs,\ const\ SVector\<T,\ D\>\&\ rhs)}
+        {dot}
+        {1.12}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {mag2}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {mag2}
+        {1.13}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {mag}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {mag}
+        {1.14}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ T\ }
+        {Lmag2}
+        {(const\ SVector\<T,\ 4\>\&\ rhs)}
+        {Lmag2}
+        {1.15}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ T\ }
+        {Lmag}
+        {(const\ SVector\<T,\ 4\>\&\ rhs)}
+        {Lmag}
+        {1.16}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ SVector\ \<T,3\>\ \ }
+        {cross}
+        {(const\ SVector\<T,\ 3\>\&\ lhs,\ const\ SVector\<T,\ 3\>\&\ rhs)}
+        {cross}
+        {1.17}
+\cxxitem{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ SVector\ \<T,D\>\ \ }
+        {unit}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {unit}
+        {1.18}
+\cxxitem{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfact}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det)}
+        {Dfact}
+        {1.19}
+\cxxitem{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfactir}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det,\ unsigned\ int*\ ir)}
+        {Dfactir}
+        {1.20}
+\cxxitem{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfinv}
+        {(Matrix\&\ rhs,\ unsigned\ int*\ ir)}
+        {Dfinv}
+        {1.21}
+\cxxitem{template\ \<unsigned\ int\ idim,\ unsigned\ int\ n\ =\ idim\>\ \ \ class\ }
+        {Invert}
+        {}
+        {Invert}
+        {1.22}
+\cxxitem{template\ \<\>\ \ \ class\ \ Invert}
+        {0}
+        {}
+        {Invert\<0\>}
+        {1.23}
+\cxxitem{template\ \<\>\ \ \ class\ \ Invert}
+        {1}
+        {}
+        {Invert\<1\>}
+        {1.24}
+\cxxitem{template\ \<\>\ \ \ class\ \ Invert}
+        {2}
+        {}
+        {Invert\<2\>}
+        {1.25}
+\cxxitem{template\ \<\>\ \ \ class\ \ Invert}
+        {3}
+        {}
+        {Invert\<3\>}
+        {1.26}
+\cxxitem{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dsfact}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det)}
+        {Dsfact}
+        {1.27}
+\cxxitem{template\ \<class\ T,\ int\ n,\ int\ idim\>\ \ \ bool\ }
+        {Dsinv}
+        {(T*\ a)}
+        {Dsinv}
+        {1.28}
+\cxxitem{template\ \<class\ T\>\ \ \ T\ }
+        {erf\_0\_}
+        {(int\ n,\ const\ T\&\ rhs)}
+        {erf\_0\_}
+        {1.29}
+\cxxitem{template\ \<class\ T\>\ \ \ T\ }
+        {erf}
+        {(const\ T\&\ rhs)}
+        {Error function}
+        {1.30}
+\cxxitem{template\ \<class\ T\>\ \ \ T\ }
+        {erfc}
+        {(const\ T\&\ rhs)}
+        {Error function}
+        {1.31}
+\cxxitem{template\ \<class\ T\>\ \ \ T\ }
+        {Prob}
+        {(const\ T\&\ rhs,\ int\ n)}
+        {Upper Tail Probability of Chi-Squared Distribution}
+        {1.32}
+\cxxitem{static\ \ bool\ }
+        {errfunc}
+        {(const\ char*\ expr,\ const\ char*\ function,\ const\ unsigned\ int\ line)}
+        {errfunc}
+        {1.33}
+\cxxitem{\#define}
+        {Sassert}
+        {(expr)}
+        {Sassert}
+        {1.34}
+\cxxitem{template\ \<class\ T,\ class\ P\>\ \ \ bool\ }
+        {Rminfc}
+        {(\ T\ (*f)(P),\ P\ a,\ P\ b,\ double\ eps,\ double\ delta,\ P\&\ x,\ P\&\ y)}
+        {Rminfc}
+        {1.35}
+\cxxitem{template\ \<class\ C,\ class\ T,\ class\ P\>\ \ \ bool\ }
+        {RminfcM}
+        {(const\ C\&\ part,\ T\ (C::*f)(P)\ const,\ P\ a,\ P\ b,\ double\ eps,\ double\ delta,\ P\&\ x,\ P\&\ y)}
+        {RminfcM}
+        {1.36}
+\end{cxxnames}
+\begin{cxxdoc}
+
+\end{cxxdoc}
+\begin{cxxclass}
+{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ class\ }
+        {SVector}
+        {}
+        {SVector
+}
+        {1.1}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Typedefs --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.1}
+\cxxitem{typedef\ \ T\ }
+        {value\_type}
+        {}
+        {}
+        {}
+\label{cxx.1.1.2}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.3}
+\cxxitem{}
+        {SVector}
+        {()}
+        {}
+        {}
+\label{cxx.1.1.4}
+\cxxitem{template\ \<class\ A\>\ \ }
+        {SVector}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.5}
+\cxxitem{}
+        {SVector}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.6}
+\cxxitem{template\ \<unsigned\ int\ D1\>\ \ }
+        {SVector}
+        {(const\ SVector\<T,\ D1\>\&\ rhs)}
+        { $D1\le D$ required!}
+        {}
+\label{cxx.1.1.7}
+\cxxitem{template\ \<unsigned\ int\ D1\>\ \ }
+        {SVector}
+        {(const\ T\&\ a1,\ const\ SVector\<T,\ D1\>\&\ rhs)}
+        { $D1\le D-1$ required!}
+        {}
+\label{cxx.1.1.8}
+\cxxitem{}
+        {SVector}
+        {(const\ T*\ a,\ unsigned\ int\ len)}
+        { fill from array, len must be equal to D!}
+        {}
+\label{cxx.1.1.9}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.10}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2)}
+        {}
+        {}
+\label{cxx.1.1.11}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3)}
+        {}
+        {}
+\label{cxx.1.1.12}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4)}
+        {}
+        {}
+\label{cxx.1.1.13}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5)}
+        {}
+        {}
+\label{cxx.1.1.14}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5,\ const\ T\&\ a6)}
+        {}
+        {}
+\label{cxx.1.1.15}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5,\ const\ T\&\ a6,\ const\ T\&\ a7)}
+        {}
+        {}
+\label{cxx.1.1.16}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5,\ const\ T\&\ a6,\ const\ T\&\ a7,\ const\ T\&\ a8)}
+        {}
+        {}
+\label{cxx.1.1.17}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5,\ const\ T\&\ a6,\ const\ T\&\ a7,\ const\ T\&\ a8,\ const\ T\&\ a9)}
+        {}
+        {}
+\label{cxx.1.1.18}
+\cxxitem{}
+        {SVector}
+        {(const\ T\&\ a1,\ const\ T\&\ a2,\ const\ T\&\ a3,\ const\ T\&\ a4,\ const\ T\&\ a5,\ const\ T\&\ a6,\ const\ T\&\ a7,\ const\ T\&\ a8,\ const\ T\&\ a9,\ const\ T\&\ a10)}
+        {}
+        {}
+\label{cxx.1.1.19}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {operator=}
+        {(const\ T\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.20}
+\cxxitem{template\ \<class\ A\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {operator=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.21}
+\cxxitem{}
+        {--- Access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.22}
+\cxxitem{inline\ \ static\ \ unsigned\ \ int\ }
+        {dim}
+        {()}
+        { return dimension $D$}
+        {}
+\label{cxx.1.1.23}
+\cxxitem{T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        { access the parse tree}
+        {}
+\label{cxx.1.1.24}
+\cxxitem{const\ \ T*\ }
+        {Array}
+        {()\ const\ }
+        { return read-only pointer to internal array}
+        {}
+\label{cxx.1.1.25}
+\cxxitem{T*\ }
+        {Array}
+        {()}
+        { return pointer to internal array}
+        {}
+\label{cxx.1.1.26}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.27}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.28}
+\cxxitem{bool\ }
+        {operator!=}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.29}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ SVector\<T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.30}
+\cxxitem{bool\ }
+        {operator!=}
+        {(const\ SVector\<T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.31}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator==}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.32}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator!=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.33}
+\cxxitem{bool\ }
+        {operator\>}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.34}
+\cxxitem{bool\ }
+        {operator\<}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.35}
+\cxxitem{bool\ }
+        {operator\>}
+        {(const\ SVector\<T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.36}
+\cxxitem{bool\ }
+        {operator\<}
+        {(const\ SVector\<T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.37}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator\>}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.38}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator\<}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.1.39}
+\cxxitem{const\ \ T\&\ }
+        {operator[]}
+        {(unsigned\ int\ i)\ const\ }
+        { read-only access}
+        {}
+\label{cxx.1.1.40}
+\cxxitem{const\ \ T\&\ }
+        {operator()}
+        {(unsigned\ int\ i)\ const\ }
+        { read-only access}
+        {}
+\label{cxx.1.1.41}
+\cxxitem{T\&\ }
+        {operator[]}
+        {(unsigned\ int\ i)}
+        { read/write access}
+        {}
+\label{cxx.1.1.42}
+\cxxitem{T\&\ }
+        {operator()}
+        {(unsigned\ int\ i)}
+        { read/write access}
+        {}
+\label{cxx.1.1.43}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {operator+=}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.44}
+\cxxitem{template\ \<class\ A\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {operator+=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.45}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {operator-=}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.46}
+\cxxitem{template\ \<class\ A\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {operator-=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.47}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {operator*=}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.48}
+\cxxitem{template\ \<class\ A\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {operator*=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.49}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {operator/=}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.50}
+\cxxitem{template\ \<class\ A\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {operator/=}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.51}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.52}
+\cxxitem{SVector\ \<T,D\>\ \&\ }
+        {unit}
+        {()}
+        { transform vector into a vector of lenght 1}
+        {}
+\label{cxx.1.1.53}
+\cxxitem{template\ \<unsigned\ int\ D2\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {place\_at}
+        {(const\ SVector\<T,\ D2\>\&\ rhs,\ const\ unsigned\ int\ row)}
+        { place a sub-vector starting at \<row\>}
+        {}
+\label{cxx.1.1.54}
+\cxxitem{template\ \<class\ A,\ unsigned\ int\ D2\>\ \ \ SVector\ \<T,D\>\ \&\ }
+        {place\_at}
+        {(const\ Expr\<A,\ T,\ D2\>\&\ rhs,\ const\ unsigned\ int\ row)}
+        { place a sub-vector starting at \<row\>}
+        {}
+\label{cxx.1.1.55}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { used by operator\<\<()}
+        {}
+\label{cxx.1.1.56}
+\end{cxxpublic}
+\begin{cxxdoc}
+SVector.
+A generic fixed size Vector class.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<class\ T,\ unsigned\ int\ D1,\ unsigned\ int\ D2\ =\ D1\>\ \ \ class\ }
+        {SMatrix}
+        {}
+        {SMatrix
+}
+        {1.2}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Typedefs --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.3}
+\cxxitem{typedef\ \ T\ }
+        {value\_type}
+        {}
+        {}
+        {}
+\label{cxx.1.2.4}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.5}
+\cxxitem{}
+        {SMatrix}
+        {()}
+        {}
+        {}
+\label{cxx.1.2.6}
+\cxxitem{}
+        {SMatrix}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.7}
+\cxxitem{template\ \<class\ A\>\ \ }
+        {SMatrix}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.8}
+\cxxitem{}
+        {SMatrix}
+        {(const\ T\&\ rhs,\ const\ bool\ diagonal=false)}
+        { 2nd arg: set only diagonal?}
+        {}
+\label{cxx.1.2.9}
+\cxxitem{}
+        {SMatrix}
+        {(const\ SVector\<T,\ D1\>\&\ rhs)}
+        { constructor via dyadic product}
+        {}
+\label{cxx.1.2.10}
+\cxxitem{template\ \<class\ A\>\ \ }
+        {SMatrix}
+        {(const\ Expr\<A,\ T,\ D1\>\&\ rhs)}
+        { constructor via dyadic product}
+        {}
+\label{cxx.1.2.11}
+\cxxitem{template\ \<class\ T1\>\ \ }
+        {SMatrix}
+        {(const\ T1*\ a,\ const\ bool\ triang=false,\ const\ unsigned\ int\ len=D1*D2)}
+        {constructor via array, triag=true: array contains only upper/lower
+triangular part of a symmetric matrix, len: length of array }
+        {}
+\label{cxx.1.2.12}
+\cxxitem{SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator=}
+        {(const\ T\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.13}
+\cxxitem{template\ \<class\ A\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.14}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {rows}
+        {}
+        { return no. of matrix rows}
+        {}
+\label{cxx.1.2.15}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {cols}
+        {}
+        { return no. of matrix columns}
+        {}
+\label{cxx.1.2.16}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {size}
+        {}
+        { return no of elements: rows*columns}
+        {}
+\label{cxx.1.2.17}
+\cxxitem{}
+        {--- Access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.18}
+\cxxitem{T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        { access the parse tree}
+        {}
+\label{cxx.1.2.19}
+\cxxitem{const\ \ T*\ }
+        {Array}
+        {()\ const\ }
+        { return read-only pointer to internal array}
+        {}
+\label{cxx.1.2.20}
+\cxxitem{T*\ }
+        {Array}
+        {()}
+        { return pointer to internal array}
+        {}
+\label{cxx.1.2.21}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.22}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.23}
+\cxxitem{bool\ }
+        {operator!=}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.24}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.25}
+\cxxitem{bool\ }
+        {operator!=}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.26}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator==}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.27}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator!=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.28}
+\cxxitem{bool\ }
+        {operator\>}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.29}
+\cxxitem{bool\ }
+        {operator\<}
+        {(const\ T\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.30}
+\cxxitem{bool\ }
+        {operator\>}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.31}
+\cxxitem{bool\ }
+        {operator\<}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.32}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator\>}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.33}
+\cxxitem{template\ \<class\ A\>\ \ \ bool\ }
+        {operator\<}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)\ const\ }
+        { element wise comparison}
+        {}
+\label{cxx.1.2.34}
+\cxxitem{const\ \ T\&\ }
+        {operator()}
+        {(unsigned\ int\ i,\ unsigned\ int\ j)\ const\ }
+        { read-only access}
+        {}
+\label{cxx.1.2.35}
+\cxxitem{T\&\ }
+        {operator()}
+        {(unsigned\ int\ i,\ unsigned\ int\ j)}
+        { read/write access}
+        {}
+\label{cxx.1.2.36}
+\cxxitem{SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator+=}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.37}
+\cxxitem{template\ \<class\ A\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator+=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.38}
+\cxxitem{SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator-=}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.39}
+\cxxitem{template\ \<class\ A\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator-=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.40}
+\cxxitem{SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator*=}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.41}
+\cxxitem{template\ \<class\ A\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator*=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.42}
+\cxxitem{SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator/=}
+        {(const\ SMatrix\<T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.43}
+\cxxitem{template\ \<class\ A\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {operator/=}
+        {(const\ Expr\<A,\ T,\ D1,\ D2\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.44}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.45}
+\cxxitem{bool\ }
+        {sinvert}
+        {()}
+        { invert symmetric, pos. def. Matrix via Dsinv}
+        {}
+\label{cxx.1.2.46}
+\cxxitem{bool\ }
+        {sdet}
+        {(T\&\ det)}
+        {determinant of symmetrc, pos}
+        {1.2.1}
+\cxxitem{bool\ }
+        {invert}
+        {()}
+        { invert square Matrix via Dinv}
+        {}
+\label{cxx.1.2.47}
+\cxxitem{bool\ }
+        {det}
+        {(T\&\ det)}
+        {determinant of square Matrix via Dfact}
+        {1.2.2}
+\cxxitem{template\ \<unsigned\ int\ D\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_in\_row}
+        {(const\ SVector\<T,\ D\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a vector in a Matrix row}
+        {}
+\label{cxx.1.2.48}
+\cxxitem{template\ \<class\ A,\ unsigned\ int\ D\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_in\_row}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a vector expression in a Matrix row}
+        {}
+\label{cxx.1.2.49}
+\cxxitem{template\ \<unsigned\ int\ D\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_in\_col}
+        {(const\ SVector\<T,\ D\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a vector in a Matrix column}
+        {}
+\label{cxx.1.2.50}
+\cxxitem{template\ \<class\ A,\ unsigned\ int\ D\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_in\_col}
+        {(const\ Expr\<A,\ T,\ D\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a vector expression in a Matrix column}
+        {}
+\label{cxx.1.2.51}
+\cxxitem{template\ \<unsigned\ int\ D3,\ unsigned\ int\ D4\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_at}
+        {(const\ SMatrix\<T,\ D3,\ D4\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a matrix in this matrix}
+        {}
+\label{cxx.1.2.52}
+\cxxitem{template\ \<class\ A,\ unsigned\ int\ D3,\ unsigned\ int\ D4\>\ \ \ SMatrix\ \<T,D1,D2\>\ \&\ }
+        {place\_at}
+        {(const\ Expr\<A,\ T,\ D3,\ D4\>\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { place a matrix expression in this matrix}
+        {}
+\label{cxx.1.2.53}
+\cxxitem{SVector\ \<T,D2\>\ \ }
+        {row}
+        {(const\ unsigned\ int\ therow)\ const\ }
+        { return a Matrix row as a vector}
+        {}
+\label{cxx.1.2.54}
+\cxxitem{SVector\ \<T,D1\>\ \ }
+        {col}
+        {(const\ unsigned\ int\ thecol)\ const\ }
+        { return a Matrix column as a vector}
+        {}
+\label{cxx.1.2.55}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { used by operator\<\<()}
+        {}
+\label{cxx.1.2.56}
+\end{cxxpublic}
+\begin{cxxdoc}
+SMatrix.
+A generic fixed size n x m Matrix class.q
+
+
+\end{cxxdoc}
+\begin{cxxfunction}
+{bool\ }
+        {sdet}
+        {(T\&\ det)}
+        {determinant of symmetrc, pos}
+        {1.2.1}
+\begin{cxxdoc}
+determinant of symmetrc, pos. def. Matrix via Dsfact. \textbf{Note:} this
+will destroy the contents of the Matrix!
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{bool\ }
+        {det}
+        {(T\&\ det)}
+        {determinant of square Matrix via Dfact}
+        {1.2.2}
+\begin{cxxdoc}
+determinant of square Matrix via Dfact. \textbf{Note:} this will destroy
+the contents of the Matrix! 
+\end{cxxdoc}
+\end{cxxfunction}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<class\ ExprType,\ class\ T,\ unsigned\ int\ D,\ unsigned\ int\ D2\ =\ 0\>\ \ \ class\ }
+        {Expr}
+        {}
+        {Expr.
+}
+        {1.3}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {Expr}
+        {(const\ ExprType\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.3.1}
+\cxxitem{}
+        {\cxxtilde Expr}
+        {()}
+        {}
+        {}
+\label{cxx.1.3.2}
+\cxxitem{inline\ \ T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.3}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {rows}
+        {}
+        {}
+        {}
+\label{cxx.1.3.4}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {cols}
+        {}
+        {}
+        {}
+\label{cxx.1.3.5}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { used by operator\<\<()}
+        {}
+\label{cxx.1.3.6}
+\end{cxxpublic}
+\begin{cxxdoc}
+Expr.
+An Expression wrapper class.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<class\ Operator,\ class\ LHS,\ class\ RHS,\ class\ T\>\ \ \ class\ }
+        {BinaryOp}
+        {}
+        {BinaryOp
+}
+        {1.4}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {BinaryOp}
+        {(\ Operator\ op,\ const\ LHS\&\ lhs,\ const\ RHS\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.4.1}
+\cxxitem{}
+        {\cxxtilde BinaryOp}
+        {()}
+        {}
+        {}
+\label{cxx.1.4.2}
+\cxxitem{inline\ \ T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        {}
+        {}
+\label{cxx.1.4.3}
+\end{cxxpublic}
+\begin{cxxdoc}
+BinaryOp.
+A class representing binary operators in the parse tree.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<class\ Operator,\ class\ RHS,\ class\ T\>\ \ \ class\ }
+        {UnaryOp}
+        {}
+        {UnaryOp
+}
+        {1.5}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {UnaryOp}
+        {(\ Operator\ op,\ const\ RHS\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.5.1}
+\cxxitem{}
+        {\cxxtilde UnaryOp}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.2}
+\cxxitem{inline\ \ T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        {}
+        {}
+\label{cxx.1.5.3}
+\end{cxxpublic}
+\begin{cxxdoc}
+UnaryOp.
+A class representing unary operators in the parse tree.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<class\ T\>\ \ \ class\ }
+        {Constant}
+        {}
+        {Constant
+}
+        {1.6}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{}
+        {Constant}
+        {(\ const\ T\&\ rhs\ )}
+        {}
+        {}
+\label{cxx.1.6.1}
+\cxxitem{}
+        {\cxxtilde Constant}
+        {()}
+        {}
+        {}
+\label{cxx.1.6.2}
+\cxxitem{inline\ \ T\ }
+        {apply}
+        {(unsigned\ int\ i)\ const\ }
+        {}
+        {}
+\label{cxx.1.6.3}
+\end{cxxpublic}
+\begin{cxxdoc}
+Constant.
+A class representing constant expressions (literals) in the parse tree.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {square}
+        {(const\ T\&\ x)}
+        {square}
+        {1.7}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+square.
+Template to compute $x\cdot x$
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {maximum}
+        {(const\ T\&\ lhs,\ const\ T\&\ rhs)}
+        {maximum}
+        {1.8}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+maximum.
+Template to compute $\max(i,j)$
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {minimum}
+        {(const\ T\&\ lhs,\ const\ T\&\ rhs)}
+        {minimum}
+        {1.9}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+minimum.
+Template to compute $\min(i,j)$
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ int\ }
+        {round}
+        {(const\ T\&\ x)}
+        {round}
+        {1.10}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+round.
+Template to compute nearest integer value.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ const\ \ int\ }
+        {sign}
+        {(const\ T\&\ x)}
+        {sign}
+        {1.11}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+sign.
+Template to compute the sign of a number $\textrm{sgn}(i)$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {dot}
+        {(const\ SVector\<T,\ D\>\&\ lhs,\ const\ SVector\<T,\ D\>\&\ rhs)}
+        {dot}
+        {1.12}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+dot.
+Template to compute $\vec{a}\cdot\vec{b} = \sum_i a_i\cdot b_i$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {mag2}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {mag2}
+        {1.13}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+mag2.
+Template to compute $|\vec{v}|^2 = \sum_iv_i^2$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ T\ }
+        {mag}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {mag}
+        {1.14}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+mag.
+Length of a vector: $|\vec{v}| = \sqrt{\sum_iv_i^2}$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ T\ }
+        {Lmag2}
+        {(const\ SVector\<T,\ 4\>\&\ rhs)}
+        {Lmag2}
+        {1.15}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Lmag2.
+Template to compute $|\vec{v}|^2 = v_0^2 - v_1^2 - v_2^2 -v_3^2$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ T\ }
+        {Lmag}
+        {(const\ SVector\<T,\ 4\>\&\ rhs)}
+        {Lmag}
+        {1.16}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Lmag.
+Length of a vector Lorentz-Vector: $|\vec{v}| = \sqrt{v_0^2 -
+v_1^2 - v_2^2 -v_3^2}$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ inline\ \ SVector\ \<T,3\>\ \ }
+        {cross}
+        {(const\ SVector\<T,\ 3\>\&\ lhs,\ const\ SVector\<T,\ 3\>\&\ rhs)}
+        {cross}
+        {1.17}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+cross.
+Cross product of two 3-dim vectors: $\vec{c} = \vec{a}\times\vec{b}$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T,\ unsigned\ int\ D\>\ \ \ inline\ \ SVector\ \<T,D\>\ \ }
+        {unit}
+        {(const\ SVector\<T,\ D\>\&\ rhs)}
+        {unit}
+        {1.18}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+unit.
+Return a vector of unit lenght: $\vec{e}_v = \vec{v}/|\vec{v}|$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfact}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det)}
+        {Dfact}
+        {1.19}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Dfact.
+Function to compute the determinant from a square matrix ($\det(A)$) of
+dimension $idim$ and order $n$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfactir}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det,\ unsigned\ int*\ ir)}
+        {Dfactir}
+        {1.20}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Dfactir.
+Function to compute the determinant from a square matrix ($\det(A)$) of
+dimension $idim$ and order $n$. A working area $ir$ is returned which is
+needed by the Dfinv routine.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dfinv}
+        {(Matrix\&\ rhs,\ unsigned\ int*\ ir)}
+        {Dfinv}
+        {1.21}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Dfinv.
+Function to compute the inverse of a square matrix ($A^{-1}$) of
+dimension $idim$ and order $n$. The routine Dfactir must be called
+before Dfinv!
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxclass}
+{template\ \<unsigned\ int\ idim,\ unsigned\ int\ n\ =\ idim\>\ \ \ class\ }
+        {Invert}
+        {}
+        {Invert}
+        {1.22}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{template\ \<class\ Matrix\>\ \ \ static\ \ bool\ }
+        {Dinv}
+        {(Matrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.22.1}
+\end{cxxpublic}
+\begin{cxxdoc}
+Invert.
+Class to specialize calls to Dinv. Dinv computes the inverse of a square
+matrix if dimension $idim$ and order $n$. The content of the matrix will be
+replaced by its inverse. In case the inversion fails, the matrix content is
+destroyed. Invert specializes Dinv by the matrix order. E.g. if the order
+of the matrix is two, the routine Invert\<2\> is called which implements
+Cramers rule.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<\>\ \ \ class\ \ Invert}
+        {0}
+        {}
+        {Invert\<0\>}
+        {1.23}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{template\ \<class\ Matrix\>\ \ \ inline\ \ static\ \ bool\ }
+        {Dinv}
+        {(Matrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.23.1}
+\end{cxxpublic}
+\begin{cxxdoc}
+Invert\<0\>.
+In case of zero order, do nothing.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<\>\ \ \ class\ \ Invert}
+        {1}
+        {}
+        {Invert\<1\>}
+        {1.24}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{template\ \<class\ Matrix\>\ \ \ static\ \ bool\ }
+        {Dinv}
+        {(Matrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.24.1}
+\end{cxxpublic}
+\begin{cxxdoc}
+Invert\<1\>.
+$1\times1$ (sub-)matrix. $a_{11} \to 1/a_{11}$
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<\>\ \ \ class\ \ Invert}
+        {2}
+        {}
+        {Invert\<2\>}
+        {1.25}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{template\ \<class\ Matrix\>\ \ \ static\ \ bool\ }
+        {Dinv}
+        {(Matrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.25.1}
+\end{cxxpublic}
+\begin{cxxdoc}
+Invert\<2\>.
+$2\times2$ (sub-)matrix. Use Cramers rule.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<\>\ \ \ class\ \ Invert}
+        {3}
+        {}
+        {Invert\<3\>}
+        {1.26}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxpublic}
+\cxxitem{template\ \<class\ Matrix\>\ \ \ static\ \ bool\ }
+        {Dinv}
+        {(Matrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.26.1}
+\end{cxxpublic}
+\begin{cxxdoc}
+Invert\<3\>.
+$3\times3$ (sub-)matrix. Use pivotisation.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxfunction}
+{template\ \<class\ Matrix,\ unsigned\ int\ n,\ unsigned\ int\ idim\>\ \ \ bool\ }
+        {Dsfact}
+        {(Matrix\&\ rhs,\ typename\ Matrix::value\_type\&\ det)}
+        {Dsfact}
+        {1.27}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Dsfact.
+Compute determinant of a symmetric, positive definite matrix of dimension
+$idim$ and order $n$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T,\ int\ n,\ int\ idim\>\ \ \ bool\ }
+        {Dsinv}
+        {(T*\ a)}
+        {Dsinv}
+        {1.28}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Dsinv.
+Compute inverse of a symmetric, positive definite matrix of dimension
+$idim$ and order $n$.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ T\ }
+        {erf\_0\_}
+        {(int\ n,\ const\ T\&\ rhs)}
+        {erf\_0\_}
+        {1.29}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+erf\_0\_.
+Routine which does the basic work.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ T\ }
+        {erf}
+        {(const\ T\&\ rhs)}
+        {Error function}
+        {1.30}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Error function.
+\begin{displaymath}
+\textrm{erf}(x) = \frac{2}{\sqrt{\pi}} \int^x_0 e^{-t^2} dt
+\end{displaymath}
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ T\ }
+        {erfc}
+        {(const\ T\&\ rhs)}
+        {Error function}
+        {1.31}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Error function.
+\begin{displaymath}
+\textrm{erfc}(x) = \frac{2}{\sqrt{\pi}} \int^\infty_x e^{-t^2} dt
+\end{displaymath}
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ T\>\ \ \ T\ }
+        {Prob}
+        {(const\ T\&\ rhs,\ int\ n)}
+        {Upper Tail Probability of Chi-Squared Distribution}
+        {1.32}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Upper Tail Probability of Chi-Squared Distribution.
+\begin{displaymath}
+Q(X|N) = \frac{1}{\sqrt{2^N}\Gamma(\frac{1}{2}N)} \int^\infty_X
+e^{-\frac{1}{2}t} t^{\frac{1}{2}N-1} dt
+\end{displaymath}
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{static\ \ bool\ }
+        {errfunc}
+        {(const\ char*\ expr,\ const\ char*\ function,\ const\ unsigned\ int\ line)}
+        {errfunc}
+        {1.33}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+errfunc.
+Function which prints an error message and then exits the program.
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxmacro}
+{\#define}
+        {Sassert}
+        {(expr)}
+        {Sassert}
+        {1.34}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxdoc}
+Sassert.
+An assert macro which is invoced only once (in contrast
+to standard assert(), which is repeatedly called).
+Sassert is more performant in case it is placed in a routine
+which is called more than once. Otherwise assert() is more
+performant.
+
+
+\end{cxxdoc}
+\end{cxxmacro}
+\begin{cxxfunction}
+{template\ \<class\ T,\ class\ P\>\ \ \ bool\ }
+        {Rminfc}
+        {(\ T\ (*f)(P),\ P\ a,\ P\ b,\ double\ eps,\ double\ delta,\ P\&\ x,\ P\&\ y)}
+        {Rminfc}
+        {1.35}
+\cxxParameter{
+{\tt\strut f}\strut{} --- one-dimensional function
+\\
+{\tt\strut a,b}\strut{} --- end-points of search interval
+\\
+{\tt\strut eps}\strut{} --- accuracy parameter $\epsilon$
+\\
+{\tt\strut delta}\strut{} --- tolerance interval $\delta$ near $a$ and $b$. Suggested value: $\delta = 10\epsilon$
+\\
+{\tt\strut x}\strut{} --- computed approximation to the abscissa of a minimum of the function $f$
+\\
+{\tt\strut y}\strut{} --- value of $f(x)$\strut}
+\begin{cxxdoc}
+Rminfc. 
+Function which finds a single, local minimum of a function with one
+variable in a given interval. The "golden section search" is applied. The
+method uses a fixed number $n$ of function evaluations, where 
+$n = [2.08\cdot\ln(|a-b|/\epsilon)+1/2] + 1$. 
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<class\ C,\ class\ T,\ class\ P\>\ \ \ bool\ }
+        {RminfcM}
+        {(const\ C\&\ part,\ T\ (C::*f)(P)\ const,\ P\ a,\ P\ b,\ double\ eps,\ double\ delta,\ P\&\ x,\ P\&\ y)}
+        {RminfcM}
+        {1.36}
+\cxxParameter{
+{\tt\strut f}\strut{} --- one-dimensional function
+\\
+{\tt\strut a,b}\strut{} --- end-points of search interval
+\\
+{\tt\strut eps}\strut{} --- accuracy parameter $\epsilon$
+\\
+{\tt\strut delta}\strut{} --- tolerance interval $\delta$ near $a$ and $b$. Suggested value: $\delta = 10\epsilon$
+\\
+{\tt\strut x}\strut{} --- computed approximation to the abscissa of a minimum of the function $f$
+\\
+{\tt\strut y}\strut{} --- value of $f(x)$\strut}
+\begin{cxxdoc}
+RminfcM. 
+Rminfc version for const class member functions.
+
+Function which finds a single, local minimum of a function with one
+variable in a given interval. The "golden section search" is applied. The
+method uses a fixed number $n$ of function evaluations, where 
+$n = [2.08\cdot\ln(|a-b|/\epsilon)+1/2] + 1$. 
+
+
+\end{cxxdoc}
+\end{cxxfunction}
+\end{cxxentry}
+\begin{cxxentry}
+{}
+        {SVertex}
+        {}
+        {A high-speed C++ vertex fit class (formerly Vt++).
+}
+        {2}
+\cxxAuthor{
+T. Glebe, MPI fuer Kernphysik Heidelberg\strut}
+\begin{cxxnames}
+\cxxitem{template\ \<unsigned\ int\ NTR\>\ \ \ class\ }
+        {SVertex}
+        {:\ public\ VertexIf,\ public\ TrackIf}
+        {Fixed size Vertex class}
+        {2.1}
+\cxxitem{template\ \<unsigned\ int\ NTR\>\ \ \ class\ }
+        {SKalman}
+        {:\ public\ TrackIf}
+        {Fixed size Kalman filter class}
+        {2.2}
+\end{cxxnames}
+\begin{cxxdoc}
+
+\end{cxxdoc}
+\begin{cxxclass}
+{template\ \<unsigned\ int\ NTR\>\ \ \ class\ }
+        {SVertex}
+        {:\ public\ VertexIf,\ public\ TrackIf}
+        {Fixed size Vertex class}
+        {2.1}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{}{TrackIf}{\cxxPubleft}
+\cxxInheritanceEntry{}{}{VertexIf}{\cxxLastPubLeft}
+\cxxInheritanceEntry[x]{\cxxNone}{2.1}{SVertex}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.2}
+\cxxitem{}
+        {SVertex}
+        {()}
+        {}
+        {}
+\label{cxx.2.1.3}
+\cxxitem{}
+        {SVertex}
+        {(const\ SVertex\<NTR\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.1.4}
+\cxxitem{}
+        {SVertex}
+        {(const\ TrackIf\&\ t)}
+        { create Vertex object \& set mother track by $t$}
+        {}
+\label{cxx.2.1.5}
+\cxxitem{}
+        {SVertex}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2)}
+        {}
+        {}
+\label{cxx.2.1.6}
+\cxxitem{}
+        {SVertex}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2,\ const\ TrackIf\&\ t3)}
+        {}
+        {}
+\label{cxx.2.1.7}
+\cxxitem{}
+        {SVertex}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2,\ const\ TrackIf\&\ t3,\ const\ TrackIf\&\ t4)}
+        {}
+        {}
+\label{cxx.2.1.8}
+\cxxitem{}
+        {SVertex}
+        {(const\ SVertex\<NTR-1\>\&\ vtx,\ const\ TrackIf\&\ t)}
+        { add a track}
+        {}
+\label{cxx.2.1.9}
+\cxxitem{SVertex\ \<NTR\>\ \&\ }
+        {operator=}
+        {(const\ SVertex\<NTR\>\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.1.10}
+\cxxitem{}
+        {--- static variables --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.11}
+\cxxitem{static\ \ const\ \ unsigned\ \ int\ }
+        {size}
+        {}
+        {}
+        {}
+\label{cxx.2.1.12}
+\cxxitem{}
+        {--- VertexIf Access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.13}
+\cxxitem{float\ }
+        {vx}
+        {()\ const\ }
+        { vertex $x$ position $v_x$}
+        {}
+\label{cxx.2.1.14}
+\cxxitem{float\ }
+        {vy}
+        {()\ const\ }
+        { vertex $y$ position $v_y$}
+        {}
+\label{cxx.2.1.15}
+\cxxitem{float\ }
+        {vz}
+        {()\ const\ }
+        { vertex $z$ position $v_z$}
+        {}
+\label{cxx.2.1.16}
+\cxxitem{float\ }
+        {chi2}
+        {()\ const\ }
+        { vertex $\chi^2$}
+        {}
+\label{cxx.2.1.17}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ndf}
+        {()\ const\ }
+        { degrees of freedom of vertex fit}
+        {}
+\label{cxx.2.1.18}
+\cxxitem{float\ }
+        {prob}
+        {()\ const\ }
+        { upper tail $\chi^2$ probability}
+        {}
+\label{cxx.2.1.19}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ntracks}
+        {()\ const\ }
+        { no of tracks in vertex}
+        {}
+\label{cxx.2.1.20}
+\cxxitem{const\ \ TrackIf*\ }
+        {track}
+        {(unsigned\ int\ i)\ const\ }
+        { read only track access}
+        {}
+\label{cxx.2.1.21}
+\cxxitem{const\ \ TrackIf*\&\ }
+        {track}
+        {(unsigned\ int\ i)}
+        { read/write track access}
+        {}
+\label{cxx.2.1.22}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {vpos}
+        {()\ const\ }
+        { vertex position $\vec{v} = (v_x,v_y,v_z)$}
+        {}
+\label{cxx.2.1.23}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {VCOV}
+        {()\ const\ }
+        { vertex cov. matrix}
+        {}
+\label{cxx.2.1.24}
+\cxxitem{float\ }
+        {vtx\_cov\_x}
+        {()\ const\ }
+        { $\sigma_x^2$ of vertex}
+        {}
+\label{cxx.2.1.25}
+\cxxitem{float\ }
+        {vtx\_cov\_y}
+        {()\ const\ }
+        { $\sigma_y^2$ of vertex}
+        {}
+\label{cxx.2.1.26}
+\cxxitem{float\ }
+        {vtx\_cov\_z}
+        {()\ const\ }
+        { $\sigma_z^2$ of vertex}
+        {}
+\label{cxx.2.1.27}
+\cxxitem{}
+        {--- SVertex members --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.28}
+\cxxitem{const\ \ SVector\ \<double,3\>\ \&\ }
+        {vposR}
+        {()\ const\ }
+        { vertex position $\vec{v} = (v_x,v_y,v_z)$ (fast readonly access)}
+        {}
+\label{cxx.2.1.29}
+\cxxitem{SVector\ \<double,3\>\ \&\ }
+        {vposR}
+        {()}
+        { vertex position $\vec{v} = (v_x,v_y,v_z)$ (fast read/write access)}
+        {}
+\label{cxx.2.1.30}
+\cxxitem{void\ }
+        {set\_vpos}
+        {(const\ SVector\<double,\ 3\>\&\ pos)}
+        { set vertex position manually}
+        {}
+\label{cxx.2.1.31}
+\cxxitem{void\ }
+        {set\_track}
+        {(unsigned\ int\ i,\ const\ TrackIf\&\ t)}
+        { set track list}
+        {}
+\label{cxx.2.1.32}
+\cxxitem{const\ \ SKalman\ \<NTR\>\ \&\ }
+        {kalman}
+        {(unsigned\ int\ i)\ const\ }
+        { read only access to Kalman objects}
+        {}
+\label{cxx.2.1.33}
+\cxxitem{SKalman\ \<NTR\>\ \&\ }
+        {kalman}
+        {(unsigned\ int\ i)}
+        { read/write access to Kalman objects}
+        {}
+\label{cxx.2.1.34}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {VCINV}
+        {()\ const\ }
+        { inverse vertex cov. matrix}
+        {}
+\label{cxx.2.1.35}
+\cxxitem{const\ \ SVector\ \<double,6\>\ \&\ }
+        {mother}
+        {()\ const\ }
+        { mother track parameters $\vec{m}=(x,y,z,t_x,t_y,p)$}
+        {}
+\label{cxx.2.1.36}
+\cxxitem{const\ \ SMatrix\ \<double,3*NTR+3\>\ \&\ }
+        {covn}
+        {()\ const\ }
+        { for internal use only}
+        {}
+\label{cxx.2.1.37}
+\cxxitem{}
+        {--- Vertex computations --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.38}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {findVertex2D}
+        {()\ const\ }
+        { return vertex computed with 2D analytical method}
+        {}
+\label{cxx.2.1.39}
+\cxxitem{bool\ }
+        {calcVertex2D}
+        {()}
+        { compute vertex with a 2D analytical method}
+        {}
+\label{cxx.2.1.40}
+\cxxitem{bool\ }
+        {findVertex3D}
+        {(SVector\<double,\ 3\>\&\ pos)\ const\ }
+        { return vertex computed with 3D analytical method}
+        {}
+\label{cxx.2.1.41}
+\cxxitem{bool\ }
+        {findVertexVt}
+        {()}
+        { Vt based Kalman filter vertex fit}
+        {}
+\label{cxx.2.1.42}
+\cxxitem{bool\ }
+        {findVertexNe}
+        {()}
+        { Vt based Kalman filter vertex fit, without first estimation}
+        {}
+\label{cxx.2.1.43}
+\cxxitem{SVector\ \<double,2\>\ \ }
+        {rmsDistAngle}
+        {()\ const\ }
+        { return rms distance and rms opening angle of tracks in vertex}
+        {}
+\label{cxx.2.1.44}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {EstimateVertex}
+        {()\ const\ }
+        { compute vertex with error weighted 2D analytical method}
+        {}
+\label{cxx.2.1.45}
+\cxxitem{double\ }
+        {mass}
+        {(const\ SVector\<double,\ NTR\>\&\ rm)\ const\ }
+        { compute invariant mass using refitted track momenta}
+        {}
+\label{cxx.2.1.46}
+\cxxitem{double\ }
+        {massError}
+        {(const\ SVector\<double,\ NTR\>\&\ rm)\ const\ }
+        { compute invariant mass error caused by momentum error}
+        {}
+\label{cxx.2.1.47}
+\cxxitem{double\ }
+        {mass\_tr}
+        {(const\ SVector\<double,\ NTR\>\&\ rm)\ const\ }
+        { compute invariant mass using measured track momenta}
+        {}
+\label{cxx.2.1.48}
+\cxxitem{}
+        {--- TrackIf Access methods ---\\}
+        {}
+        {}
+        {2.1.1}
+\cxxitem{float\ }
+        {x}
+        {()\ const\ }
+        { $x$ of reconstructed track}
+        {}
+\label{cxx.2.1.49}
+\cxxitem{float\ }
+        {y}
+        {()\ const\ }
+        {  $y$ of reconstructed track}
+        {}
+\label{cxx.2.1.50}
+\cxxitem{float\ }
+        {x}
+        {(float\ z)\ const\ }
+        { linear extrapolation of $x$ to z}
+        {}
+\label{cxx.2.1.51}
+\cxxitem{float\ }
+        {y}
+        {(float\ z)\ const\ }
+        { linear extrapolation of $y$ to z}
+        {}
+\label{cxx.2.1.52}
+\cxxitem{float\ }
+        {z}
+        {()\ const\ }
+        { $z$ of reconstructed track}
+        {}
+\label{cxx.2.1.53}
+\cxxitem{float\ }
+        {tx}
+        {()\ const\ }
+        { mother track rack slope $t_x$}
+        {}
+\label{cxx.2.1.54}
+\cxxitem{float\ }
+        {ty}
+        {()\ const\ }
+        { mother track slope $t_y$}
+        {}
+\label{cxx.2.1.55}
+\cxxitem{float\ }
+        {p}
+        {()\ const\ }
+        { mother track momentum $p$}
+        {}
+\label{cxx.2.1.56}
+\cxxitem{float\ }
+        {pt}
+        {()\ const\ }
+        { transverse mother track momentum $p_t$}
+        {}
+\label{cxx.2.1.57}
+\cxxitem{float\ }
+        {pz}
+        {()\ const\ }
+        { mother track momentum along $z$: $p / \sqrt{t_x^2+t_y^2+1}$ }
+        {}
+\label{cxx.2.1.58}
+\cxxitem{float\ }
+        {phi}
+        {()\ const\ }
+        { azimuthal angle $\phi$ [deg]}
+        {}
+\label{cxx.2.1.59}
+\cxxitem{float\ }
+        {theta}
+        {()\ const\ }
+        { polar angle $\theta = \cos^{-1}(e_z)$ [deg]}
+        {}
+\label{cxx.2.1.60}
+\cxxitem{float\ }
+        {eta}
+        {()\ const\ }
+        { rapidity $\eta = -\log\tan(\theta/2.)$}
+        {}
+\label{cxx.2.1.61}
+\cxxitem{int\ }
+        {charge}
+        {()\ const\ }
+        { track charge (=sum of track charges in vertex)}
+        {}
+\label{cxx.2.1.62}
+\cxxitem{float\ }
+        {energy}
+        {(double\ mass\ =\ 0.)\ const\ }
+        { $E = \sqrt{m^2 + p^2}$}
+        {}
+\label{cxx.2.1.63}
+\cxxitem{float\ }
+        {xf}
+        {(double\ mass\ =\ 0.)\ const\ }
+        {$x_f = (p_z - E(m)\cdot\sqrt{1 - \frac{2m_p}{920 GeV/c + m_p}})/m_p$,
+$m_p$ = Proton mass, $m$ = Particle mass }
+        {}
+\label{cxx.2.1.64}
+\cxxitem{float\ }
+        {rap}
+        {(double\ mass\ =\ 0.)\ const\ }
+        { Rapidity $y = \frac{1}{2}\ln(\frac{E+p_z}{E-p_z})$}
+        {}
+\label{cxx.2.1.65}
+\cxxitem{float\ }
+        {cov\_x}
+        {(double\ dz=0.)\ const\ }
+        { get $\sigma_x^2|_{z+dz}$}
+        {}
+\label{cxx.2.1.66}
+\cxxitem{float\ }
+        {cov\_y}
+        {(double\ dz=0.)\ const\ }
+        { get $\sigma_y^2|_{z+dz}$}
+        {}
+\label{cxx.2.1.67}
+\cxxitem{float\ }
+        {cov\_tx}
+        {()\ const\ }
+        { get $\sigma_{t_x}^2$}
+        {}
+\label{cxx.2.1.68}
+\cxxitem{float\ }
+        {cov\_ty}
+        {()\ const\ }
+        { get $\sigma_{t_y}^2$}
+        {}
+\label{cxx.2.1.69}
+\cxxitem{float\ }
+        {cov\_p}
+        {()\ const\ }
+        { get $\sigma_p^2$}
+        {}
+\label{cxx.2.1.70}
+\cxxitem{bool\ }
+        {isValid}
+        {()\ const\ }
+        {Kalman fit: reconstructed track and covariance matrix are computed and
+propagated to $z=0$?\\
+else: is reconstructed track computed?}
+        {}
+\label{cxx.2.1.71}
+\cxxitem{void\ }
+        {valid}
+        {()}
+        { mark mother track as valid}
+        {}
+\label{cxx.2.1.72}
+\cxxitem{void\ }
+        {invalid}
+        {()}
+        { mark mother track as invalid}
+        {}
+\label{cxx.2.1.73}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {xvec}
+        {()\ const\ }
+        { position $\vec{x} = (x,y,z)$ of mother track}
+        {}
+\label{cxx.2.1.74}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {tvec}
+        {()\ const\ }
+        { slope $\vec{t} = (t_x,t_y,1)$ of mother track}
+        {}
+\label{cxx.2.1.75}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {evec}
+        {()\ const\ }
+        { $\vec{e} = (e_x,e_y,ez)$ unit vector along $\vec{p}$ of mother track}
+        {}
+\label{cxx.2.1.76}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {pvec}
+        {()\ const\ }
+        { mother track momentum vector $\vec{p} = (p_x,p_y,p_z)$}
+        {}
+\label{cxx.2.1.77}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {COV}
+        {()\ const\ }
+        { covariance matrix of mother track}
+        {}
+\label{cxx.2.1.78}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {CINV}
+        {()\ const\ }
+        { inverse cov. matrix of mother track}
+        {}
+\label{cxx.2.1.79}
+\cxxitem{void\ }
+        {collect}
+        {(vector\<TrackIf*\>\&\ c)\ const\ }
+        { collect pointers}
+        {}
+\label{cxx.2.1.80}
+\cxxitem{bool\ }
+        {propagate}
+        {(const\ double\ z)}
+        { propagate reconsructed track to $z$}
+        {}
+\label{cxx.2.1.81}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(\ std::ostream\&\ )\ const\ }
+        { used by operator\<\<()}
+        {}
+\label{cxx.2.1.82}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.83}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ TrackIf\&\ rhs)\ const\ }
+        { compare TrackIf pointers}
+        {}
+\label{cxx.2.1.84}
+\cxxitem{}
+        {--- SVertex methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.85}
+\cxxitem{bool\ }
+        {isMotherTr}
+        {()\ const\ }
+        { is mother track calculated?}
+        {}
+\label{cxx.2.1.86}
+\cxxitem{bool\ }
+        {isMotherCov}
+        {()\ const\ }
+        { is mother cov. matrix calculated?}
+        {}
+\label{cxx.2.1.87}
+\cxxitem{bool\ }
+        {isKalmanFit}
+        {()\ const\ }
+        { has Kalman fit succeeded?}
+        {}
+\label{cxx.2.1.88}
+\cxxitem{bool\ }
+        {filter}
+        {()}
+        { do a filter step}
+        {}
+\label{cxx.2.1.89}
+\cxxitem{bool\ }
+        {smooth}
+        {()}
+        { smooth vertex parameters}
+        {}
+\label{cxx.2.1.90}
+\cxxitem{bool\ }
+        {smoothC}
+        {()}
+        { needed for bigcov()}
+        {}
+\label{cxx.2.1.91}
+\cxxitem{inline\ \ double\ }
+        {bk13}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.1.92}
+\cxxitem{bool\ }
+        {calc\_mother}
+        {()}
+        { calculate mother track + cov. matrix}
+        {}
+\label{cxx.2.1.93}
+\cxxitem{bool\ }
+        {calc\_mother\_tr}
+        {()}
+        { calculate mother track using kalman info}
+        {}
+\label{cxx.2.1.94}
+\cxxitem{bool\ }
+        {calc\_mother\_trtr}
+        {()}
+        { calculate mother track using track info}
+        {}
+\label{cxx.2.1.95}
+\cxxitem{bool\ }
+        {calc\_mother\_cov}
+        {()}
+        { calculate covariance matrix of mother track}
+        {}
+\label{cxx.2.1.96}
+\cxxitem{bool\ }
+        {bigcov}
+        {()}
+        { construct $(3\cdot n+3)\times(3\cdot n+3)$ cov. matrix}
+        {}
+\label{cxx.2.1.97}
+\end{cxxpublic}
+\begin{cxxdoc}
+Fixed size Vertex class.
+
+
+\end{cxxdoc}
+\begin{cxxentry}
+{}
+        {--- TrackIf Access methods ---\\}
+        {}
+        {}
+        {2.1.1}
+\begin{cxxdoc}
+The following functions apply only to the mother track and give only
+useful results in case you reconstructed the mother track (see section of
+expert methods). 
+\end{cxxdoc}
+\end{cxxentry}
+\end{cxxclass}
+\begin{cxxclass}
+{template\ \<unsigned\ int\ NTR\>\ \ \ class\ }
+        {SKalman}
+        {:\ public\ TrackIf}
+        {Fixed size Kalman filter class}
+        {2.2}
+\cxxAuthor{
+T. Glebe\strut}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{}{TrackIf}{\cxxLastPubleft}
+\cxxInheritanceEntry[x]{\cxxNone}{2.2}{SKalman}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.1}
+\cxxitem{}
+        {SKalman}
+        {()}
+        {}
+        {}
+\label{cxx.2.2.2}
+\cxxitem{}
+        {SKalman}
+        {(const\ TrackIf\&\ t,\ const\ SVertex\<NTR\>\&\ v)}
+        {}
+        {}
+\label{cxx.2.2.3}
+\cxxitem{}
+        {--- TrackIf methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.4}
+\cxxitem{float\ }
+        {x}
+        {()\ const\ }
+        { refitted Track $x$ position (= vertex $x$ position)}
+        {}
+\label{cxx.2.2.5}
+\cxxitem{float\ }
+        {y}
+        {()\ const\ }
+        { refitted Track $y$ position (= vertex $y$ position)}
+        {}
+\label{cxx.2.2.6}
+\cxxitem{float\ }
+        {x}
+        {(float\ z)\ const\ }
+        { refitted Track $x$ position at $z$}
+        {}
+\label{cxx.2.2.7}
+\cxxitem{float\ }
+        {y}
+        {(float\ z)\ const\ }
+        { refitted Track $y$ position at $z$}
+        {}
+\label{cxx.2.2.8}
+\cxxitem{float\ }
+        {z}
+        {()\ const\ }
+        { refitted Track $z$ position (= vertex $z$ position)}
+        {}
+\label{cxx.2.2.9}
+\cxxitem{float\ }
+        {tx}
+        {()\ const\ }
+        { refitted track slope $t_x$}
+        {}
+\label{cxx.2.2.10}
+\cxxitem{float\ }
+        {ty}
+        {()\ const\ }
+        { refitted track slope $t_y$}
+        {}
+\label{cxx.2.2.11}
+\cxxitem{float\ }
+        {p}
+        {()\ const\ }
+        { refitted momentum}
+        {}
+\label{cxx.2.2.12}
+\cxxitem{float\ }
+        {pt}
+        {()\ const\ }
+        { refitted transverse Track momentum $p_t$}
+        {}
+\label{cxx.2.2.13}
+\cxxitem{float\ }
+        {pz}
+        {()\ const\ }
+        { momentum along $z$: $p / \sqrt{t_x^2+t_y^2+1}$ }
+        {}
+\label{cxx.2.2.14}
+\cxxitem{float\ }
+        {chi2}
+        {()\ const\ }
+        { Kalman $\chi^2$. Use only if you know what it is!}
+        {}
+\label{cxx.2.2.15}
+\cxxitem{float\ }
+        {phi}
+        {()\ const\ }
+        { refitted azimuthal angle $\phi$ [deg]}
+        {}
+\label{cxx.2.2.16}
+\cxxitem{float\ }
+        {theta}
+        {()\ const\ }
+        { refitted polar angle $\theta = \cos^{-1}(e_z)$ [deg]}
+        {}
+\label{cxx.2.2.17}
+\cxxitem{float\ }
+        {eta}
+        {()\ const\ }
+        { refitted rapidity $\eta = -\log\tan(\theta/2.)$}
+        {}
+\label{cxx.2.2.18}
+\cxxitem{int\ }
+        {charge}
+        {()\ const\ }
+        { particle charge: -1 for neg. +1 for pos. \& neutrals}
+        {}
+\label{cxx.2.2.19}
+\cxxitem{float\ }
+        {energy}
+        {(double\ mass\ =\ 0.)\ const\ }
+        { $E = \sqrt{m^2 + p^2}$}
+        {}
+\label{cxx.2.2.20}
+\cxxitem{float\ }
+        {xf}
+        {(double\ mass\ =\ 0.)\ const\ }
+        {$x_f = (p_z - E(m)\cdot\sqrt{1 - \frac{2m_p}{920 GeV/c + m_p}})/m_p$,
+$m_p$ = Proton mass, $m$ = Particle mass }
+        {}
+\label{cxx.2.2.21}
+\cxxitem{float\ }
+        {rap}
+        {(double\ mass\ =\ 0.)\ const\ }
+        { Rapidity $y = \frac{1}{2}\ln(\frac{E+p_z}{E-p_z})$}
+        {}
+\label{cxx.2.2.22}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {xvec}
+        {()\ const\ }
+        { vertex position}
+        {}
+\label{cxx.2.2.23}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {tvec}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,1.)$ refitted slope vector}
+        {}
+\label{cxx.2.2.24}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {evec}
+        {()\ const\ }
+        { $\vec{v} = (e_x,e_y,e_z)$ unit vector along refitted track}
+        {}
+\label{cxx.2.2.25}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {pvec}
+        {()\ const\ }
+        { $\vec{v} = (p_x,p_y,p_z)$ refitted mom. vector}
+        {}
+\label{cxx.2.2.26}
+\cxxitem{void\ }
+        {collect}
+        {(vector\<TrackIf*\>\&\ c)\ const\ }
+        { collect pointers}
+        {}
+\label{cxx.2.2.27}
+\cxxitem{}
+        {--- Dummy TrackIf functions --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.28}
+\cxxitem{bool\ }
+        {isValid}
+        {()\ const\ }
+        { returns always true}
+        {}
+\label{cxx.2.2.29}
+\cxxitem{void\ }
+        {valid}
+        {()}
+        { does nothing}
+        {}
+\label{cxx.2.2.30}
+\cxxitem{void\ }
+        {invalid}
+        {()}
+        { does nothing}
+        {}
+\label{cxx.2.2.31}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {COV}
+        {()\ const\ }
+        { returns a 0 matrix}
+        {}
+\label{cxx.2.2.32}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {CINV}
+        {()\ const\ }
+        { returns a 0 matrix}
+        {}
+\label{cxx.2.2.33}
+\cxxitem{bool\ }
+        {propagate}
+        {(const\ double\ z)}
+        { dummy function: do nothing}
+        {}
+\label{cxx.2.2.34}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ndf}
+        {()\ const\ }
+        { returns always 0}
+        {}
+\label{cxx.2.2.35}
+\cxxitem{float\ }
+        {cov\_x}
+        {(double\ dz=0.)\ const\ }
+        { returns 0}
+        {}
+\label{cxx.2.2.36}
+\cxxitem{float\ }
+        {cov\_y}
+        {(double\ dz=0.)\ const\ }
+        { returns 0}
+        {}
+\label{cxx.2.2.37}
+\cxxitem{float\ }
+        {cov\_tx}
+        {()\ const\ }
+        { returns 0}
+        {}
+\label{cxx.2.2.38}
+\cxxitem{float\ }
+        {cov\_ty}
+        {()\ const\ }
+        { returns 0}
+        {}
+\label{cxx.2.2.39}
+\cxxitem{float\ }
+        {cov\_p}
+        {()\ const\ }
+        { returns 0}
+        {}
+\label{cxx.2.2.40}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.41}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ TrackIf\&\ rhs)\ const\ }
+        { compare TrackIf pointers}
+        {}
+\label{cxx.2.2.42}
+\cxxitem{}
+        {--- Access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.43}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {KCOV}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.44}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {KCINV}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.45}
+\cxxitem{const\ \ SVector\ \<double,3\>\ \&\ }
+        {xv}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.46}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {F}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.47}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {ES}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.48}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {DS}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.2.2.49}
+\cxxitem{}
+        {--- Expert methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.50}
+\cxxitem{bool\ }
+        {filter}
+        {(const\ unsigned\ int\ I)}
+        { filter step}
+        {}
+\label{cxx.2.2.51}
+\cxxitem{bool\ }
+        {smooth}
+        {()}
+        { smoother step}
+        {}
+\label{cxx.2.2.52}
+\cxxitem{bool\ }
+        {smoothC}
+        {()}
+        { cov. matrices of smoothed parameters}
+        {}
+\label{cxx.2.2.53}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(\ std::ostream\&\ )\ const\ }
+        { used by operator\<\<()}
+        {}
+\label{cxx.2.2.54}
+\end{cxxpublic}
+\begin{cxxdoc}
+Fixed size Kalman filter class.
+
+
+\end{cxxdoc}
+\end{cxxclass}
+\end{cxxentry}
+\begin{cxxentry}
+{}
+        {SDistance}
+        {}
+        {Distance functions for Track and Vertex objects.
+}
+        {3}
+\cxxAuthor{
+T. Glebe, MPI fuer Kernphysik Heidelberg\strut}
+\begin{cxxnames}
+\cxxitem{inline\ \ double\ }
+        {Sdistance}
+        {(const\ SVector\<double,\ 3\>\&\ x1,\ const\ SVector\<double,\ 3\>\&\ x2)}
+        {Spatial distance between two space points}
+        {3.1}
+\cxxitem{inline\ \ double\ }
+        {Sdistance}
+        {(const\ VertexIf\&\ v1,\ const\ VertexIf\&\ v2)}
+        {Spatial distance between two VertexIf objects}
+        {3.2}
+\cxxitem{inline\ \ double\ }
+        {SGNVVdistance}
+        {(const\ VertexIf\&\ v1,\ const\ VertexIf\&\ v2)}
+        {Signed spatial distance between two VertexIf objects}
+        {3.3}
+\cxxitem{inline\ \ double\ }
+        {Sdistance}
+        {(const\ VertexIf\&\ v,\ const\ SVector\<double,\ 3\>\&\ x)}
+        {Spatial distance between Vertex and space point}
+        {3.4}
+\cxxitem{inline\ \ double\ }
+        {TVdistance}
+        {(const\ TrackIf\&\ t,\ const\ VertexIf\&\ v)}
+        {Clostest spatial distance between Track and Vertex object}
+        {3.5}
+\cxxitem{inline\ \ double\ }
+        {Tdistance}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2)}
+        {Clostest spatial distance between two Track objects}
+        {3.6}
+\cxxitem{inline\ \ double\ }
+        {Sdistance}
+        {(const\ TrackIf\&\ t,\ const\ Wire\&\ w)}
+        {Closest spatial distance between Track and Wire}
+        {3.7}
+\cxxitem{inline\ \ double\ }
+        {SGNdistance}
+        {(const\ TrackIf\&\ t,\ const\ VertexIf\&\ v)}
+        {Signed closest distance between Track and Vertex object}
+        {3.8}
+\cxxitem{inline\ \ double\ }
+        {Chi2distance}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2)}
+        {$\chi^2$ distance between two tracks}
+        {3.9}
+\cxxitem{template\ \<unsigned\ int\ NTR\>\ \ \ inline\ \ double\ }
+        {Chi2distance}
+        {(const\ SVertex\<NTR\>\&\ v,\ const\ SVector\<double,\ 3\>\&\ x)}
+        {$\chi^2$ distance between SVertex and space point}
+        {3.10}
+\cxxitem{template\ \<unsigned\ int\ NTR,\ unsigned\ int\ NTR2\>\ \ \ inline\ \ double\ }
+        {Chi2distance}
+        {(const\ SVertex\<NTR\>\&\ v1,\ const\ SVertex\<NTR2\>\&\ v2)}
+        {$\chi^2$ distance between two SVertex objects}
+        {3.11}
+\end{cxxnames}
+\begin{cxxdoc}
+
+\end{cxxdoc}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Sdistance}
+        {(const\ SVector\<double,\ 3\>\&\ x1,\ const\ SVector\<double,\ 3\>\&\ x2)}
+        {Spatial distance between two space points}
+        {3.1}
+\begin{cxxdoc}
+Spatial distance between two space points.
+\begin{displaymath}
+d = |\vec{x}_1 - \vec{x}_2|
+\end{displaymath}
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Sdistance}
+        {(const\ VertexIf\&\ v1,\ const\ VertexIf\&\ v2)}
+        {Spatial distance between two VertexIf objects}
+        {3.2}
+\begin{cxxdoc}
+Spatial distance between two VertexIf objects.
+\begin{displaymath}
+d = |\vec{v}_1 - \vec{v}_2|
+\end{displaymath}
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {SGNVVdistance}
+        {(const\ VertexIf\&\ v1,\ const\ VertexIf\&\ v2)}
+        {Signed spatial distance between two VertexIf objects}
+        {3.3}
+\begin{cxxdoc}
+Signed spatial distance between two VertexIf objects.
+\begin{displaymath}
+d = |\vec{v}_1 - \vec{v}_2|\times\texttt{sgn}(v_{z,1} - v_{z,2})
+\end{displaymath}
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Sdistance}
+        {(const\ VertexIf\&\ v,\ const\ SVector\<double,\ 3\>\&\ x)}
+        {Spatial distance between Vertex and space point}
+        {3.4}
+\begin{cxxdoc}
+Spatial distance between Vertex and space point.
+\begin{displaymath}
+d = |\vec{x}_v - \vec{x}|
+\end{displaymath}
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {TVdistance}
+        {(const\ TrackIf\&\ t,\ const\ VertexIf\&\ v)}
+        {Clostest spatial distance between Track and Vertex object}
+        {3.5}
+\begin{cxxdoc}
+Clostest spatial distance between Track and Vertex object.
+\begin{displaymath}
+d = \frac{|(\vec{x}_t - \vec{x}_v) \times \vec{t}|}{|\vec{t}|}
+\end{displaymath}
+$g: \vec{x}_t + m\cdot\vec{t}$ track definition\\
+$\vec{x}_v$: vertex position
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Tdistance}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2)}
+        {Clostest spatial distance between two Track objects}
+        {3.6}
+\begin{cxxdoc}
+Clostest spatial distance between two Track objects.
+\begin{eqnarray*}
+d\vec{x} = \vec{x}_2 - \vec{x}_1\\
+f_1 = d\vec{x}\cdot\frac{\vec{t}_1}{|\vec{t}_1|}\\
+f_2 = d\vec{x}\cdot\frac{\vec{t}_2}{|\vec{t}_2|}
+\end{eqnarray*}
+\begin{displaymath}
+d = \left| d\vec{x} + f_2\cdot\frac{\vec{t}_2}{|\vec{t}_2|} -
+f_1\cdot\frac{\vec{t}_1}{|\vec{t}_1|}\right|
+\end{displaymath}
+$g: \vec{x}_1 + m\cdot\vec{t}_1$ track definition 1st track\\
+$g: \vec{x}_2 + m'\cdot\vec{t}_2$ track definition 2nd track\\
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Sdistance}
+        {(const\ TrackIf\&\ t,\ const\ Wire\&\ w)}
+        {Closest spatial distance between Track and Wire}
+        {3.7}
+\begin{cxxdoc}
+Closest spatial distance between Track and Wire.
+\begin{displaymath}
+d = \frac{(\vec{t}_w\times\vec{t}_t) \cdot (\vec{x}_t -
+\vec{x}_w)}{|\vec{t}_w\times\vec{t}_t|^2}
+\end{displaymath}
+$g: \vec{x}_t + m\cdot\vec{t}_t$ track definition\\
+$w: \vec{x}_w + m'\cdot\vec{t}_w$ wire definition
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {SGNdistance}
+        {(const\ TrackIf\&\ t,\ const\ VertexIf\&\ v)}
+        {Signed closest distance between Track and Vertex object}
+        {3.8}
+\begin{cxxdoc}
+Signed closest distance between Track and Vertex object.
+The sign is determined by the z component and tells whether the point
+of closest approach is upstream or downstream of the vertex position.
+\begin{displaymath}
+\rho = \frac{\vec{t}\cdot(\vec{x}_t-\vec{x}_v)}{|\vec{t}|}
+\end{displaymath}
+\begin{displaymath}
+d\vec{x} = \vec{x}_t - \rho\cdot\vec{t} - \vec{x}_v
+\end{displaymath}
+\begin{displaymath}
+d = \textrm{sgn}(d\vec{x}_z)\cdot|d\vec{x}|
+\end{displaymath}
+$g: \vec{x}_t + m\cdot\vec{t}$ track definition\\
+$\vec{x}_v$: vertex position\\
+$\vec{x}_t - \rho\cdot\vec{t}$: point of track closest to vertex
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{inline\ \ double\ }
+        {Chi2distance}
+        {(const\ TrackIf\&\ t1,\ const\ TrackIf\&\ t2)}
+        {$\chi^2$ distance between two tracks}
+        {3.9}
+\begin{cxxdoc}
+$\chi^2$ distance between two tracks.
+Determined by Kalman filter vertex fit.
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<unsigned\ int\ NTR\>\ \ \ inline\ \ double\ }
+        {Chi2distance}
+        {(const\ SVertex\<NTR\>\&\ v,\ const\ SVector\<double,\ 3\>\&\ x)}
+        {$\chi^2$ distance between SVertex and space point}
+        {3.10}
+\begin{cxxdoc}
+$\chi^2$ distance between SVertex and space point.\\
+Assumption: SVertex has been fitted with findVertexVt().
+\end{cxxdoc}
+\end{cxxfunction}
+\begin{cxxfunction}
+{template\ \<unsigned\ int\ NTR,\ unsigned\ int\ NTR2\>\ \ \ inline\ \ double\ }
+        {Chi2distance}
+        {(const\ SVertex\<NTR\>\&\ v1,\ const\ SVertex\<NTR2\>\&\ v2)}
+        {$\chi^2$ distance between two SVertex objects}
+        {3.11}
+\begin{cxxdoc}
+$\chi^2$ distance between two SVertex objects.\\
+Assumption: Both SVertex objects have been fitted with findVertexVt().
+\end{cxxdoc}
+\end{cxxfunction}
+\end{cxxentry}
+\begin{cxxClassGraph}
+\label{cxx.}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.1}{SVector}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.2}{SMatrix}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.3}{Expr}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.4}{BinaryOp}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.5}{UnaryOp}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.6}{Constant}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.22}{Invert}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.23}{0}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.24}{1}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.25}{2}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.26}{3}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{2.1}{SVertex}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{2.2}{SKalman}{}
+\end{cxxClassGraph}
+\end{document}

@@ -1,0 +1,99 @@
+##########################################################
+#
+# type:      makefile
+#
+# created:   25. Nov 2000
+#
+# author:    Thorsten Glebe
+#            HERA-B Collaboration
+#            Max-Planck-Institut fuer Kernphysik
+#            Saupfercheckweg 1
+#            69117 Heidelberg
+#            Germany
+#            E-mail: T.Glebe@mpi-hd.mpg.de
+#
+# Description: main BEE setup makefile
+#
+##########################################################
+
+##########################################################
+
+##########################################################
+# Debugging
+##########################################################
+ifdef DEBUGFLAG
+GXXFLAGS  += -g -ggdb -DDEBUG
+else
+ifdef DEBUG
+GXXFLAGS  += -g -ggdb -DDEBUG
+suff       = _g
+else
+GXXFLAGS  += -O2 -funroll-loops
+endif
+endif
+
+##########################################################
+# global settings
+##########################################################
+instproj = vt++ smatrix
+projects = vt++
+htmlproj = smatrix vt++
+libp  = ${FEDRA_ROOT}/lib
+libs  = -L$(libp)  $(CERNLIB) 
+
+##########################################################
+# definitions of paths
+##########################################################
+ldir     = ${FEDRA_ROOT}/lib
+#objdir   = $(ldir)/$(project)$(suff)
+objdir   = .
+version  = $(shell $(ROOT)/version.sh CVStag.* | head -1)
+depfile  = $(objdir)/.depfile
+sources  = $(filter-out $(mainsrc),$(wildcard *.C))
+headers  = *.hh
+libbase  = lib$(project)$(version)$(suff)
+libname  = $(ldir)/$(libbase)
+cintdir  = $(objdir)/cintdict$(suff)
+cintdict = $(cintdir)/$(project)dict
+linkdef  = cintdict/LinkDef.hh
+docdir   = doc
+docdirs  = doc $(addsuffix /doc, $(instproj))
+binary   = a.out
+exe      = $(bindir)/$(binary)$(suff)
+htmldir  = $(HOME)/public_html/BEE$(version)
+
+LD_LIBRARY_PATH := ${FEDRA_ROOT}/lib:$(LD_LIBRARY_PATH)
+
+##########################################################
+# definitions of flags
+##########################################################
+FLAGS     += -DUSE_ROOT -I/cern/root/include
+soflags    += -Wl,-soname,$(libbase).so -shared
+GXXFLAGS   += -fPIC -Wall -ansi -ftemplate-depth-40
+CFLAGS      = $(GXXFLAGS) $(FLAGS)
+CINT_FLAGS  = -DCINTOBJECT $(FLAGS)
+ROOTOPT     =
+ldflags    +=
+
+##########################################################
+# definitions of includes,objects,libraries
+##########################################################
+OBJS       = $(addprefix $(objdir)/,$(addsuffix .o, $(basename $(wildcard $(sources)))))
+MAINOBJ    = $(addprefix $(objdir)/,$(addsuffix .o, $(basename $(mainsrc))))
+ifndef HEADRS
+HEADRS     = $(wildcard $(ROOT)/include/$(project)/$(headers))
+endif
+ALL_INCS   = $(ROOT)/include $(PWD)/include
+ALL_INCS  += $(ROOTSYS)/include
+CINT_INCS  = $(ALL_INCS)
+CERN_LIBS  = mathlib kernlib g2c
+CERNLIB    = -L${CERN_LIB} $(addprefix -l, $(CERN_LIBS))
+
+##########################################################
+# Namespace
+##########################################################
+ifdef USE_NAMESPACE
+FLAGS     += -DNAMESPACE
+linkdef    = cintdict/LinkDef_ns.hh
+endif
+

@@ -1,0 +1,48 @@
+#ifndef __CVSTAG_smatrix_H
+#define __CVSTAG_smatrix_H
+#ifdef __cplusplus
+extern "C" {
+#endif 
+/*TIME/-1011371896//0-20VersionMSPRIV/0-21+*/
+#define xcvsMODULE_smatrix  "smatrix" 
+#define xcvsVERSION_smatrix "/0-21" 
+#define xcvsDAYTIME_smatrix "Fri Jan 18 16:38:16 2002" 
+/*"CVSROOT=/afs/desy.de/user/h/hbxxcus/BEE"*/
+/* list of files in module smatrix 
+>./doc/Makefile
+>./doc/smatrix.dxx
+>./doc/smatrix.tex
+>./Comparison.txt
+>./CreateBinaryOp.sh
+>./CreateUnaryOp.sh
+>./Makefile
+>./cintdict/LinkDef.hh
+>./include/Dfact.hh
+>./include/Dfactir.hh
+>./include/Dfinv.hh
+>./include/Dinv.hh
+>./include/Dsfact.hh
+>./include/Dsinv.hh
+>./include/Erf.hh
+>./include/Expression.hh
+>./include/Functions.hh
+>./include/MatrixFunctions.hh
+>./include/Prob.hh
+>./include/SDistance.hh
+>./include/SKalman.hh
+>./include/SKalman.icc
+>./include/SMatrix.hh
+>./include/SMatrix.icc
+>./include/SVector.hh
+>./include/SVector.icc
+>./include/SVertex.hh
+>./include/SVertex.icc
+>./include/minfc.hh
+>./include/sassert.hh
+>./test/Makefile
+>./test/main.C
+*/
+#ifdef __cplusplus
+}
+#endif
+#endif

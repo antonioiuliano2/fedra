@@ -1,0 +1,441 @@
+This is TeX, Version 3.14159 (Web2C 7.3.7) (format=latex 2003.2.13)  14 FEB 2003 13:52
+**/data/data1/WORK/BEE-1-5/smatrix/doc/manual.tex
+(/data/data1/WORK/BEE-1-5/smatrix/doc/manual.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/psnfss/bookman.sty
+Package: bookman 2001/06/04 PSNFSS-v8.2 (SPQR) 
+) (/home/gradl/.TeX/docxx.sty
+\cxxcodewidth=\dimen103
+\cxxIdWidth=\dimen104
+\cxxTypeWidth=\dimen105
+\cxxProtoWidth=\dimen106
+\cxxMemoWidth=\dimen107
+\cxxPageWidth=\dimen108
+\cxxProtoMemoWidth=\dimen109
+\cxxtypestart=\dimen110
+\cxxnamestart=\dimen111
+\cxxargsstart=\dimen112
+\cxxargswidth=\dimen113
+\cxxmemostart=\dimen114
+\cxxBoxLen=\skip43
+\cxxBoxHt=\skip44
+\cxxBoxDp=\skip45
+\cxxSideHt=\skip46
+\cxxSideLen=\skip47
+\cxxTitleLen=\skip48
+\cxxHeadName=\box26
+\c@cxxContentsDepth=\count87
+\cxxContentsLengthIncr=\dimen115
+\cxxContentsLength=\dimen116
+\cxxClassGraphShift=\dimen117
+\cxxClassGraphLength=\dimen118
+\cxxClassGraphHeight=\dimen119
+\cxxClassGraphDepth=\dimen120
+\cxxClassGraphTotV=\dimen121
+LaTeX Font Info:    Try loading font information for OT1+pbk on input line 519.
+
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pbk.fd
+File: ot1pbk.fd 2001/06/04 font definitions for OT1/pbk.
+)
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 519.
+LaTeX Font Info:    Try loading font information for OT1+pag on input line 519.
+
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pag.fd
+File: ot1pag.fd 2001/06/04 font definitions for OT1/pag.
+)
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 519.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 519.
+\cxxgenericstart=\dimen122
+\cxxgenericwidth=\dimen123
+\c@cxxDepth=\count88
+\cxxSize=\skip49
+) (./manual.aux)
+\openout1 = `manual.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 4.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 14.
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 14.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 14.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 14.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <14.4> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 14.
+LaTeX Font Info:    Font shape `OT1/pbk/m/it' in size <14.4> not available
+(Font)              Font shape `OT1/pbk/l/it' tried instead on input line 14.
+ [1
+
+]
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 15.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 15.
+LaTeX Font Info:    Font shape `OT1/pbk/bx/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/b/it' tried instead on input line 17.
+LaTeX Font Info:    Font shape `OT1/pbk/b/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/db/it' tried instead on input line 17.
+LaTeX Font Info:    Font shape `OT1/pbk/m/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/l/it' tried instead on input line 20.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 46.
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <5> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 75.
+LaTeX Font Info:    Try loading font information for OMS+pag on input line 75.
+(/usr/share/texmf/tex/latex/psnfss/omspag.fd
+File: omspag.fd 
+)
+LaTeX Font Info:    Font shape `OMS/pag/m/n' in size <5> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 75.
+ [2]
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 82.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 82.
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--274
+
+ []
+
+[3
+
+
+] [4] [5]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 326.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 326.
+ [6] [7] [8]
+Underfull \hbox (badness 10000) in paragraph at lines 699--699
+[]\OT1/pbk/l/it/10 constructor via ar-ray,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 699--699
+\OT1/pbk/l/it/10 triag=true: ar-ray con-tains
+ []
+
+
+Underfull \hbox (badness 6592) in paragraph at lines 699--699
+\OT1/pbk/l/it/10 only up-per/lower tri-an-gu-lar
+ []
+
+
+Underfull \hbox (badness 1762) in paragraph at lines 699--699
+\OT1/pbk/l/it/10 part of a sym-met-ric ma-trix,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 729--729
+[]\OT1/pbk/l/it/10 return no of el-e-ments:
+ []
+
+[9] [10] [11] [12] [13] [14] [15] [16] [17] [18]
+Underfull \hbox (badness 10000) in paragraph at lines 1307--1307
+|\OT1/pbk/l/n/12 (const SVec-
+ []
+
+[19] [20] [21] [22] [23] [24]
+Underfull \hbox (badness 2894) in paragraph at lines 1622--1622
+\OT1/pbk/l/n/12 func-tion, const un-signed int
+ []
+
+[25] [26]
+Underfull \hbox (badness 10000) in paragraph at lines 1707--1716
+
+ []
+
+[27]
+Underfull \hbox (badness 10000) in paragraph at lines 1719--1732
+
+ []
+
+
+Underfull \hbox (badness 5504) in paragraph at lines 1771--1771
+[]\OT1/pbk/l/it/10 create Ver-tex ob-ject & set
+ []
+
+
+Underfull \hbox (badness 1496) in paragraph at lines 1975--1975
+[]\OT1/pbk/l/it/10 return ver-tex com-puted with
+ []
+
+
+Underfull \hbox (badness 1496) in paragraph at lines 1987--1987
+[]\OT1/pbk/l/it/10 return ver-tex com-puted with
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2011--2011
+[]\OT1/pbk/l/it/10 compute ver-tex with er-ror
+ []
+
+
+Underfull \hbox (badness 1577) in paragraph at lines 2088--2088
+[]\OT1/pbk/l/it/10 transverse mother track mo-
+ []
+
+
+Underfull \hbox (badness 1400) in paragraph at lines 2118--2118
+[]\OT1/pbk/l/it/10 track charge (=sum of track
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2131--2131
+[]$\OML/cmm/m/it/10 x[] \OT1/cmr/m/n/10 = (\OML/cmm/m/it/10 p[] \OMS/cmsy/m/n/1
+0 ^^@ \OML/cmm/m/it/10 E\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 m\OT1/cmr/m/n/10 ) \O
+MS/cmsy/m/n/10 ^^A
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2131--2131
+[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 =m[]$\OT1/pbk/l/it/10 ,  $\OML/cmm/m/it/10 
+m[]$
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 2175--2175
+[]\OT1/pbk/l/it/10 else: is re-con-structed track
+ []
+
+
+Underfull \hbox (badness 2384) in paragraph at lines 2217--2217
+[]\OT1/pbk/l/it/10 covariance ma-trix of mother
+ []
+
+
+Underfull \hbox (badness 1360) in paragraph at lines 2235--2235
+[]\OT1/pbk/l/it/10 propagate re-con-sructed track
+ []
+
+
+Underfull \hbox (badness 1377) in paragraph at lines 2313--2313
+[]\OT1/pbk/l/it/10 calculate mother track us-ing
+ []
+
+
+Underfull \hbox (badness 1377) in paragraph at lines 2319--2319
+[]\OT1/pbk/l/it/10 calculate mother track us-ing
+ []
+
+[28
+
+] [29] [30] [31] [32] [33] [34]
+Underfull \hbox (badness 10000) in paragraph at lines 2448--2448
+[]\OT1/pbk/l/it/10 momentum along $\OML/cmm/m/it/10 z$\OT1/pbk/l/it/10 :
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2466--2466
+[]\OT1/pbk/l/it/10 refitted po-lar an-gle
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2472--2472
+[]\OT1/pbk/l/it/10 refitted ra-pid-ity $\OML/cmm/m/it/10 ^^Q \OT1/cmr/m/n/10 =
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2491--2491
+[]$\OML/cmm/m/it/10 x[] \OT1/cmr/m/n/10 = (\OML/cmm/m/it/10 p[] \OMS/cmsy/m/n/1
+0 ^^@ \OML/cmm/m/it/10 E\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 m\OT1/cmr/m/n/10 ) \O
+MS/cmsy/m/n/10 ^^A
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2491--2491
+[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 =m[]$\OT1/pbk/l/it/10 ,  $\OML/cmm/m/it/10 
+m[]$
+ []
+
+[35] [36] [37]
+Underfull \hbox (badness 10000) in paragraph at lines 2696--2705
+
+ []
+
+[38]
+Underfull \hbox (badness 4048) in paragraph at lines 2723--2723
+[]\OT1/pbk/l/it/10 Signed spa-tial dis-tance be-
+ []
+
+
+Underfull \hbox (badness 1377) in paragraph at lines 2733--2733
+[]\OT1/pbk/l/it/10 Clostest spa-tial dis-tance be-
+ []
+
+
+Underfull \hbox (badness 1377) in paragraph at lines 2738--2738
+[]\OT1/pbk/l/it/10 Clostest spa-tial dis-tance be-
+ []
+
+
+Underfull \hbox (badness 2772) in paragraph at lines 2743--2743
+[]\OT1/pbk/l/it/10 Closest spa-tial dis-tance be-
+ []
+
+
+Underfull \hbox (badness 4181) in paragraph at lines 2748--2748
+[]\OT1/pbk/l/it/10 Signed clos-est dis-tance be-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2753--2753
+[]$\OML/cmm/m/it/10 ^^_[]$ \OT1/pbk/l/it/10 dis-tance be-tween two
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2708--2766
+
+ []
+
+[39
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 2773--2773
+|\OT1/pbk/l/n/12 (const SVec-tor\OT1/pcr/m/n/12 <\OT1/pbk/l/n/12 double,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2773--2773
+\OT1/pbk/l/n/12 3\OT1/pcr/m/n/12 >\OT1/pbk/l/n/12 & x1, const SVec-
+ []
+
+[40] [41] [42]
+Underfull \hbox (badness 1881) in paragraph at lines 2861--2861
+|\OT1/pbk/l/n/12 (const TrackIf& t, const
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2901--2901
+|\OT1/pbk/l/n/12 (const TrackIf& t1,
+ []
+
+[43]
+Underfull \hbox (badness 1496) in paragraph at lines 2912--2912
+\OT1/pbk/l/n/12 template \OT1/pcr/m/n/12 <\OT1/pbk/l/n/12 un-signed int NTR\OT1
+/pcr/m/n/12 >   \OT1/pbk/l/n/12 in-line  dou-ble
+ []
+
+[44]
+Underfull \hbox (badness 10000) in paragraph at lines 2932--2932
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2934--2934
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2936--2936
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2938--2938
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2940--2940
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2942--2942
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2944--2944
+
+ []
+
+[45
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 2946--2946
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2948--2948
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2950--2950
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2952--2952
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2954--2954
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2956--2956
+
+ []
+
+[46] (./manual.aux) ) 
+Here is how much of TeX's memory you used:
+ 919 strings out of 25847
+ 10866 string characters out of 195960
+ 75473 words of memory out of 384000
+ 3907 multiletter control sequences out of 10000+15000
+ 12083 words of font info for 33 fonts, out of 400000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 29i,14n,28p,230b,486s stack positions out of 300i,100n,500p,50000b,4000s
+
+Output written on manual.dvi (46 pages, 111556 bytes).
