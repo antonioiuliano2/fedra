@@ -19,7 +19,9 @@ void make_views_map( EdbRun *edbRun, TIndexCell &up, TIndexCell &down )
       up.Add(2,v);
     }
   }
-  
+
+  up->PrintStat();
+  down->PrintStat();
 }
 
 //--------------------------------------------------------------
@@ -70,21 +72,23 @@ void getPatternEdb( EdbRun *edbRun,
 
   for(int iu=0; iu<elist->N(); iu++) {
     entry = elist->At(iu)->Value();
-
     view = edbRun->GetEntry(entry);
+
+
     head = view->GetHeader();
 
     printf(" View %d (%5.1f\% ): \t %d/%d ",
-	   entry,100.*entry/nentr,head->GetNframesTop(),head->GetNframesBot() );
+  	   entry,100.*entry/nentr,head->GetNframesTop(),head->GetNframesBot() );
     nseg=0;
 
+    
     for(int j=0;j<view->Nsegments();j++) {
 
       seg = view->GetSegment(j);
 
       if( !cut_seg(seg->GetX0(), seg->GetY0(),
-		   seg->GetTx(), seg->GetTy(), 
-		   seg->GetPuls() )  )          continue;
+  		   seg->GetTx(), seg->GetTy(), 
+  		   seg->GetPuls() )  )          continue;
 
       nseg++;
       //segP->SetDZ( seg->GetDz() );
@@ -100,8 +104,12 @@ void getPatternEdb( EdbRun *edbRun,
       pat->AddSegment( *segP);
 
     }
+    
     printf("\t nseg = %d  ( %d rejected ) \n", nseg, view->Nsegments()-nseg );
+    
   }
+   
+  
 }
 
 

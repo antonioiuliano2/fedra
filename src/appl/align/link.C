@@ -23,12 +23,10 @@ void link()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-			       //     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_03010109_nc.root"
-			       //"/mnt/operalabdb_e/data/rawr/b1_jul2002_32/pl08/raw_jul2002_32_03010308.root"
-  "/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl01/Sept2002_pl1_1.root"
-    ,"READ");
+  "/mnt/operalabdb_e/data/rawr/b1_sep2002/Pl01/pl01_zona1.root"
+   ,"READ");
 
-  //                up base down  - nominal values during exposure (will be used for projection only)
+  //                up base down  - nominal values during exposure (up/down are used for projection only)
   float  plate[3] = {40, 214, 40}; // we do not rely yet on values coming after convertor
 
   float  shrU  = 0.93;              //  (exposure thickness) / (measured on stage thickness):
@@ -53,10 +51,11 @@ void link()
   TIndexCell *down=0;
 
   int nareas= edbRun->GetHeader()->GetNareas();
-  for(int aid=0; aid<2; aid++) {
+  for(int aid=1; aid<11; aid++) {
+  //for(int aid=0; aid<nareas+1; aid++) {
 
-    up   = uplist.Find(aid);
-    down = downlist.Find(aid);
+    up   = uplist.Find(aid);      if(!up)   continue;
+    down = downlist.Find(aid);    if(!down) continue; 
 
     ali      = new EdbPVRec();
     ali->SetScanCond(scanCond);
