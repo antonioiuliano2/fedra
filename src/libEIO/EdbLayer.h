@@ -1,5 +1,5 @@
-#ifndef ROOT_EdbLayer1
-#define ROOT_EdbLayer1
+#ifndef ROOT_EdbLayer
+#define ROOT_EdbLayer
 
 #include "EdbAffine.h"
 

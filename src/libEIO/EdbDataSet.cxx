@@ -1551,7 +1551,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
     nareas = piece.MakeLinkListCoord(irun);
     //nareas = piece.MakeLinkListArea(irun);
-    if(nareas<=0) continue; 
+    printf("%d areas mapped\n",nareas);
+    if(nareas<=0) continue;
     for(int i=0; i<nareas; i++ ) {
 
       ali      = new EdbPVRec();
