@@ -1,6 +1,8 @@
 AFID    0   # 1-use fiducial marks, 0 - stage coord (stored in the run files)
 
-CLUST   0   # 1- with grains analysis (time consuming), 0 - no grains
+CLUST   1   # 1- with grains analysis (time consuming), 0 - no grains
+
+OUTPUT  0  # output level: 0-standard : 1-max
 
 #
 # 0/1/2 - layerID: 1 and 2 - emulsion surfaces (segments in view coord), 0- basetrack in plate coord
@@ -22,7 +24,7 @@ AFFXY   0 	1 0 0 1 	0 0
 AFFTXTY 0 	1 0 0 1 	0 0
 
 #     "Prototype_OPERA_microtrack"
-SIGMAGR  1       .5  .5   3.            # sigmaX sigmaY sigmaZ for one grain
+SIGMAGR  1       .01  .01   2.   100.     # "sigmaX sigmaY sigmaZ Cut"  for one grain
 SIGMA0   1       .5  .5  .010  .010 	# sigmaX sigmaY  sigmaTX sigmaTY
 DEGRAD   1       5.			# angular degradation: sig(tx) = sig(0)*(1+deg*tx)
 BINS     1       5   5   4  4		# bin*sigma = acceptance

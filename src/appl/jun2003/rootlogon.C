@@ -1,6 +1,13 @@
 {
  // project lib path should be setted in LD_LIBRARY_PATH
 
+  if (!TClassTable::GetDict("CMatrix")) { 
+    if(gSystem->Load("libvt")==0)
+      printf("libvt   \tloaded \n");
+    else 
+      printf("libvt do NOT loaded!\n");
+  }
+
   if (!TClassTable::GetDict("TIndexCell")) { 
     if(gSystem->Load("libEmath")==0)
       printf("libEmath \tloaded \n");
@@ -27,6 +34,13 @@
       printf("libEdd   \tloaded \n");
     else 
       printf("libEdd do NOT loaded!\n");
+  }
+
+  if (!TClassTable::GetDict("EdbVertex")) { 
+    if(gSystem->Load("libEdv")==0)
+      printf("libEdv   \tloaded \n");
+    else 
+      printf("libEdv do NOT loaded!\n");
   }
 
 }
