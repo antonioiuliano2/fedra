@@ -22,13 +22,14 @@ AFFXY   0 	1 0 0 1 	0 0
 AFFTXTY 0 	1 0 0 1 	0 0
 
 #     "Prototype_OPERA_microtrack"
+SIGMAGR  1       .5  .5   3.            # sigmaX sigmaY sigmaZ for one grain
 SIGMA0   1       .5  .5  .010  .010 	# sigmaX sigmaY  sigmaTX sigmaTY
 DEGRAD   1       6.			# angular degradation: sig(tx) = sig(0)*(1+deg*tx)
 BINS     1       5   5   3  3		# bin*sigma = acceptance
-RAMP0    1       6  10			# puls(Signal 1%) puls(Signal 80%) at  0 rad angle
-RAMP04   1       5   9			# puls(Signal 1%) puls(Signal 80%) at .4 rad angle
-CHI2MAX  1	 3.5			# chi2 simple
-CHI2PMAX 1	 3.5			# chi2 with puls weighting (ramp used)
+RAMP0    1       8   12			# puls(Signal 1%) puls(Signal 80%) at  0 rad angle
+RAMP04   1       7   11			# puls(Signal 1%) puls(Signal 80%) at .4 rad angle
+CHI2MAX  1	 5.5			# chi2 simple
+CHI2PMAX 1	 5.5			# chi2 with puls weighting (ramp used)
 
 #     "Prototype_OPERA_basetrack_300micron"
 SIGMA0   0       9.  10.  .006  .006
@@ -66,4 +67,4 @@ ICUT 2	   -500. 500.	-500.   500.	-.9    .9 	-.2    .2 	 0.  17.
 # CUTCP can be used before alignment and linking
 # Max for:  	N1  	N1tot	N2 	N2tot	Chi2	Chi2P
 
-CUTCP 0		1	10	1	10	2.5	2.5
+CUTCP 0		1	10	1	10	3.5	3.5
