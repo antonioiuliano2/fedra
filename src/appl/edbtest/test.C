@@ -7,6 +7,23 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 //____________________________________________________________________________________
+void updateframe( int rid=2, int nviews=2 )
+{
+  // test of writing into run file 
+  // Parameters:  rid    - run identifier
+  //              nviews - number of views to be written
+  //
+
+  EdbRun *run = new EdbRun(rid,"UPDATE");
+  EdbView       *view=run->GetView();
+  for( int ivc=0;  ivc<nviews; ivc++) {           // views cycle
+    view->AddFrame(ivc+1,10.);
+    run->AddView(view);
+  }
+  run->Close();
+}
+
+//____________________________________________________________________________________
 void w( int rid=2, int nviews=2 )
 {
   // test of writing into run file 
