@@ -63,12 +63,12 @@ namespace VERTEX {
     ///
     inline Kalman& getKalman() { return kalman; }
 
-#ifndef __CINT__
+    //#ifndef __CINT__
     // reference members are currently a CINT limitation
     Track&   track;  // reference to track
     Vertex&  vertex; // reference to vertex 
     Kalman&  kalman; // reference to Kalman-object
-#endif
+    //#endif
     MassC_v  massc;  // vector of mass-constraint objects
   };
 
