@@ -94,83 +94,31 @@ SOURCE=.\rwc2edb.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\bscan_ds.h
+SOURCE=C:\libEdb\EdbCluster.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\bspred_ds.h
+SOURCE=C:\libEdb\EdbFiducial.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Cluster.h
+SOURCE=C:\libEdb\EdbRun.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Config.h
+SOURCE=C:\libEdb\EdbRunHeader.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Connection.h
+SOURCE=C:\libEdb\EdbSegment.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\datastructs.h
+SOURCE=C:\libEdb\EdbView.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\dbpred_ds.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\FlatTrack.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\GUIdefs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\id.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\MarkMap.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\mmap_ds.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\scscan_ds.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Segment.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\SySalDataIO.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Track.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\tscan_ds.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\TSTrack.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\TVectors.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Vectors.h
+SOURCE=.\Track2.h
 # End Source File
 # Begin Source File
 
@@ -191,7 +139,7 @@ SOURCE=C:\root\lib\libWin32.lib
 # End Source File
 # Begin Source File
 
-SOURCE=C:\libEdb_FREEZED\libEdb.lib
+SOURCE=..\..\libEdb_FREEZED\libEdb.lib
 # End Source File
 # Begin Source File
 

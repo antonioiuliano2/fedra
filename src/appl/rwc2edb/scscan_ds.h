@@ -10,6 +10,7 @@
 #define CS_SS_OLD_HEADER_TYPE		0X08
 #define CS_SS_OLD2_HEADER_TYPE		0X02
 #define CS_SS_HEADER_TYPE			0X01
+#define OPERA_HEADER_TYPE			0X03
 
 #pragma pack(push)
 #pragma pack(1)
@@ -17,6 +18,7 @@
 #include "id.h"
 #include "TVectors.h"
 #include "Track.h"
+#include "Track2.h"
 
 typedef struct 
 {
@@ -39,6 +41,25 @@ typedef struct
 		} RelevantZs;
 	} CS_SS_TracksHeader;
 
+typedef struct 
+{
+	IO_Header Type;
+	Identifier ID;
+	float XPos, YPos;
+	float MinX, MaxX, MinY, MaxY;
+	float fReserved;
+	int TCount[2];
+	int LCount;
+	int FCount;
+	struct
+	{
+		float TopExt;
+		float TopInt;
+   		float BottomInt;
+		float BottomExt;
+		} RelevantZs;
+	} OPERA_TracksHeader;
+
 typedef struct
 {
 	int PointsN;
@@ -52,11 +73,29 @@ typedef struct
 
 typedef struct
 {
+	unsigned AreaSum;
+	unsigned Grains;
+	TVector Intercept;
+	TVector Slope;
+	float Sigma;
+	Track2 *pTracks[2];
+	} OPERA_LinkedTrack;
+
+typedef struct
+{
 	CS_SS_TracksHeader Hdr;
 	BYTE *FieldHistory;
 	Track *pTracks[2];
 	CS_SS_LinkedTrack *pLinked;
 	} IO_CS_SS_Tracks;
+
+typedef struct
+{
+	OPERA_TracksHeader Hdr;
+	BYTE *FieldHistory;
+	Track2 *pTracks[2];
+	OPERA_LinkedTrack *pLinked;
+	} IO_OPERA_Tracks;
 
 #pragma pack(pop)
 

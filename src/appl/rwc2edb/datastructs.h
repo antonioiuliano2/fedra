@@ -20,11 +20,13 @@ typedef union
 	IO_BULK_PhotoSeq BPhSeq;
 	IO_BULK_ClustersDump BCDmp;
 	IO_CS_SS_Tracks STks;
+	IO_OPERA_Tracks OTks;
 	IO_BS_Batch BSBatch;
 	IO_TS_Reconstruction TSRec;
 	IO_DBPred_Tracks DBPTks;
 	IO_MarkMap MkMap;
 	IO_VS_Fragment VSFrag;
+	IO_VS_Fragment2 VSFrag2;
 	IO_VS_Catalog VSCat;
 	} IO_Data;
 
@@ -40,6 +42,7 @@ typedef union
 #define IODATA_EXT_ERROR_UNKCOMPRESS	0x09000000L
 #define IODATA_EXT_ERROR_COMPRESS		0x0A000000L
 #define IODATA_EXT_ERROR_DECOMPRESS		0x0B000000L
+#define IODATA_EXT_ERROR_OBSOLETE		0x0C000000L
 #define IODATA_EXT_ERROR_UNKNOWN		0xFF000000L
 
 #define MAKE_IO_EXT_ERROR(x, h) (x | ((unsigned)h.InfoType << 16) | ((unsigned)h.HeaderFormat))

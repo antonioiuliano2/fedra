@@ -2,6 +2,7 @@
 #define _VERTIGOSCAN_RAW_DATA_
 
 #include "Track.h"
+#include "Track2.h"
 #include "TVectors.h"
 
 #pragma pack(push)
@@ -29,6 +30,34 @@ typedef struct
 	int TCount[2];
 	Track *pTracks[2];
 	} VS_View;
+
+typedef struct
+{
+	int TileX, TileY;
+	float X[2], Y[2];
+	float MapX[2], MapY[2];
+	float ImageMat[2][2][2];
+	struct t_RelevantZs2
+	{
+		float TopExt;
+		float TopInt;
+		float BottomInt;
+		float BottomExt;
+		} RelevantZs;
+	struct t_LayerInfo
+	{
+		int Clusters;
+		float Z;
+		};
+	struct t_Layers2
+	{
+		int Count;
+		struct t_LayerInfo *pLayerInfo;
+		} Layers[2];
+	unsigned char Status[2];
+	int TCount[2];
+	Track2 *pTracks[2];
+	} VS_View2;
 
 #define VSSCAN_OK						0x00
 #define VSSCAN_NOTOPFOCUS				0x01

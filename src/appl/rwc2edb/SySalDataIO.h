@@ -2,7 +2,7 @@
 
 
 /* File created by MIDL compiler version 5.01.0164 */
-/* at Mon Jul 22 00:17:28 2002
+/* at Mon Dec 09 16:31:13 2002
  */
 /* Compiler settings for D:\SySal2\SySalDataIO\SySalDataIO.idl:
     Oicf (OptLev=i2), W1, Zp8, env=Win32, ms_ext, c_ext
@@ -47,6 +47,12 @@ typedef interface ISySalObject ISySalObject;
 #define __ISySalDataIO_FWD_DEFINED__
 typedef interface ISySalDataIO ISySalDataIO;
 #endif 	/* __ISySalDataIO_FWD_DEFINED__ */
+
+
+#ifndef __ISySalDataIO2_FWD_DEFINED__
+#define __ISySalDataIO2_FWD_DEFINED__
+typedef interface ISySalDataIO2 ISySalDataIO2;
+#endif 	/* __ISySalDataIO2_FWD_DEFINED__ */
 
 
 #ifndef __SySalDataIO_FWD_DEFINED__
@@ -708,6 +714,164 @@ void __RPC_STUB ISySalDataIO_GetStatus_Stub(
 
 
 #endif 	/* __ISySalDataIO_INTERFACE_DEFINED__ */
+
+
+#ifndef __ISySalDataIO2_INTERFACE_DEFINED__
+#define __ISySalDataIO2_INTERFACE_DEFINED__
+
+/* interface ISySalDataIO2 */
+/* [unique][helpstring][uuid][object] */ 
+
+
+EXTERN_C const IID IID_ISySalDataIO2;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("5892a1f5-5dd9-4fe3-a024-d8b624917c1d")
+    ISySalDataIO2 : public ISySalDataIO
+    {
+    public:
+        virtual /* [helpstring] */ HRESULT STDMETHODCALLTYPE Write2( 
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName) = 0;
+        
+        virtual /* [helpstring] */ HRESULT STDMETHODCALLTYPE Read2( 
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName) = 0;
+        
+    };
+    
+#else 	/* C style interface */
+
+    typedef struct ISySalDataIO2Vtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *QueryInterface )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            /* [in] */ REFIID riid,
+            /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *AddRef )( 
+            ISySalDataIO2 __RPC_FAR * This);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *Release )( 
+            ISySalDataIO2 __RPC_FAR * This);
+        
+        /* [helpstring] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Write )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName);
+        
+        /* [helpstring] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Read )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName);
+        
+        /* [helpstring] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetStatus )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            UINT __RPC_FAR *pExtErrorInfo);
+        
+        /* [helpstring] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Write2 )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName);
+        
+        /* [helpstring] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Read2 )( 
+            ISySalDataIO2 __RPC_FAR * This,
+            HSySalHANDLE hWnd,
+            BYTE __RPC_FAR *pData,
+            UINT __RPC_FAR *pExtErrorInfo,
+            BYTE __RPC_FAR *FileName);
+        
+        END_INTERFACE
+    } ISySalDataIO2Vtbl;
+
+    interface ISySalDataIO2
+    {
+        CONST_VTBL struct ISySalDataIO2Vtbl __RPC_FAR *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define ISySalDataIO2_QueryInterface(This,riid,ppvObject)	\
+    (This)->lpVtbl -> QueryInterface(This,riid,ppvObject)
+
+#define ISySalDataIO2_AddRef(This)	\
+    (This)->lpVtbl -> AddRef(This)
+
+#define ISySalDataIO2_Release(This)	\
+    (This)->lpVtbl -> Release(This)
+
+
+#define ISySalDataIO2_Write(This,hWnd,pData,pExtErrorInfo,FileName)	\
+    (This)->lpVtbl -> Write(This,hWnd,pData,pExtErrorInfo,FileName)
+
+#define ISySalDataIO2_Read(This,hWnd,pData,pExtErrorInfo,FileName)	\
+    (This)->lpVtbl -> Read(This,hWnd,pData,pExtErrorInfo,FileName)
+
+#define ISySalDataIO2_GetStatus(This,pExtErrorInfo)	\
+    (This)->lpVtbl -> GetStatus(This,pExtErrorInfo)
+
+
+#define ISySalDataIO2_Write2(This,hWnd,pData,pExtErrorInfo,FileName)	\
+    (This)->lpVtbl -> Write2(This,hWnd,pData,pExtErrorInfo,FileName)
+
+#define ISySalDataIO2_Read2(This,hWnd,pData,pExtErrorInfo,FileName)	\
+    (This)->lpVtbl -> Read2(This,hWnd,pData,pExtErrorInfo,FileName)
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+/* [helpstring] */ HRESULT STDMETHODCALLTYPE ISySalDataIO2_Write2_Proxy( 
+    ISySalDataIO2 __RPC_FAR * This,
+    HSySalHANDLE hWnd,
+    BYTE __RPC_FAR *pData,
+    UINT __RPC_FAR *pExtErrorInfo,
+    BYTE __RPC_FAR *FileName);
+
+
+void __RPC_STUB ISySalDataIO2_Write2_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring] */ HRESULT STDMETHODCALLTYPE ISySalDataIO2_Read2_Proxy( 
+    ISySalDataIO2 __RPC_FAR * This,
+    HSySalHANDLE hWnd,
+    BYTE __RPC_FAR *pData,
+    UINT __RPC_FAR *pExtErrorInfo,
+    BYTE __RPC_FAR *FileName);
+
+
+void __RPC_STUB ISySalDataIO2_Read2_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+
+#endif 	/* __ISySalDataIO2_INTERFACE_DEFINED__ */
 
 
 

@@ -22,7 +22,8 @@
 #define VS_DATA_BYTES					0x30
 #define VS_HEADER_BYTES					0x60
 
-#define VS_HEADER_TYPE					0x701
+#define VS_OLD_HEADER_TYPE				0x701
+#define VS_HEADER_TYPE					0x702
 
 #define VS_COMPRESSION_NULL				0
 #define VS_COMPRESSION_METHOD			0x100
@@ -44,6 +45,16 @@ typedef struct
 	int CodingMode;
 	VS_View *pViews;
 	} VS_Fragment;
+
+typedef struct
+{
+	int Index;
+	int StartView;
+	int CountOfViews;
+	int FitCorrectionDataSize;
+	int CodingMode;
+	VS_View2 *pViews;
+	} VS_Fragment2;
 
 typedef struct
 {
@@ -90,6 +101,20 @@ typedef struct
 	VS_Fragment Fragment;
 	unsigned char Reserved[256];
 	} IO_VS_Fragment;
+
+typedef struct
+{
+	struct 
+#ifdef USE_MIDL_INCOMPATIBLE_STRUCTS
+		   t_Hdr
+#endif
+	{
+		IO_Header Type;
+		Identifier ID;
+		} Hdr;
+	VS_Fragment2 Fragment;
+	unsigned char Reserved[256];
+	} IO_VS_Fragment2;
 
 #pragma pack(pop)
 
