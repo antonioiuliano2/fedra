@@ -605,7 +605,7 @@ EdbSegG *EdbDisplay::SegLine(EdbSegP *seg)
                  seg->Y() + seg->TY()*seg->DZ(),
                  seg->Z()+            seg->DZ() );
 
-  line->SetLineColor( 2 + seg->PID() );
+  line->SetLineColor( 2+seg->PID()%7 );
   line->SetLineWidth(int(seg->W()/10.));
   line->SetSeg(seg);
   return line;

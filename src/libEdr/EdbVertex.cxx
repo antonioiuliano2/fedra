@@ -432,7 +432,7 @@ float EdbVertexRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 }
 
 //______________________________________________________________________________
-void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, 
+void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
 			     float lim[4], float sigma[4], 
 			     EdbTrackP &tr)
 {
@@ -477,8 +477,11 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
 
     pat = pv.GetPattern(k);
     z = pat->Z();
-    if ( z < zold ) { zold = z; continue; }
-    
+
+    if ( z < zlim[0] ) { continue; }
+    if ( z > zlim[1] ) { continue; }
+    if ( z < zold    ) { continue; }
+
     dz = z - zold;
     cost = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
     if (cost <= 0.001) break;
@@ -523,9 +526,10 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv,
     ys = y + dxs*SPhi + dys*CPhi;        // along the track projection to XY plane 
     txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
     tys = ty + dtys*SPhi + dtys*CPhi;
-    seg->Set(k, xs, ys, txs, tys,1,0);
+    seg->Set(k, xs, ys, txs, tys,25,0);
     seg->SetP(p0);
     seg->SetZ(z);
+    seg->SetDZ(300.);
     seg->SetPID(k);
     seg->SetFlag(tr.Flag());
     seg->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
