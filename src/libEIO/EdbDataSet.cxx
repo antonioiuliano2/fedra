@@ -799,9 +799,8 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   if(cut)       tree->Draw(">>lst", *cut );
   else          tree->Draw(">>lst", "" );
   lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
-  int nlst = 0;
-  if(lst) nlst=lst->GetN();
-  printf("select %d of %d segments by cut %s\n",nlst, nentr, cut->GetTitle() );
+  int nlst =lst->GetN();
+  if(cut) printf("select %d of %d segments by cut %s\n",nlst, nentr, cut->GetTitle() );
 
   int entr=0;
   for(int i=0; i<nlst; i++ ) {
