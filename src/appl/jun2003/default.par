@@ -42,6 +42,9 @@ OFFSET   0       10. 10.		# maximal offset for alingment search (dX dY)
 #
 # Cuts for segments (view coord - same as in run files) used for up/down linking
 #
+#  XCUT - cut out inside  phase volume (remains eXternal part)
+#  ICUT - cut out outside phase volume (remains Internal part)
+
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
 XCUT 1    -500.  500.	-500.   500.	-.006   .006	-.006   .006	15.  17.
@@ -62,8 +65,8 @@ XCUT 2	   -109. -108.	-159.  -156.	-.06   .06	-.06   .06	10.  17.
 
 #
 # Cuts for basetrack (coord - same as in couples tree) used for alingment search
-# and plate to plate linking
+# and plate-to-plate linking
 #
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
-#ICUT 0	 30000. 40000.	40000. 50000.	 -.6     .6	  -.6    .6	10.  33.
+#ICUT 0	 30000. 40000.	40000. 50000.	 -.6     .6	  -.6    .6	0.  33.
