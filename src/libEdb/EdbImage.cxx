@@ -15,6 +15,7 @@
 #ifndef ROOT_EdbImage
 #include "EdbImage.h"
 #endif
+using namespace std;
  
 ClassImp(EdbImage)
 ClassImp(EdbFIRF)
