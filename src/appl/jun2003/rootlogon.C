@@ -43,4 +43,18 @@
       printf("libEdd do NOT loaded!\n");
   }
 
+  if (!TClassTable::GetDict("EdbPVGen")) { 
+    if(gSystem->Load("libEMC")==0) 
+      printf("libEMC   \tloaded \n");
+    else 
+      printf("libEMC do NOT loaded!\n");
+  }
+
+  if (!TClassTable::GetDict("EdbRunAccess")) { 
+    if(gSystem->Load("libEIO")==0) 
+      printf("libEIO   \tloaded \n");
+    else 
+      printf("libEIO do NOT loaded!\n");
+  }
+
 }

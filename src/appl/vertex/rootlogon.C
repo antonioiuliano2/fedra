@@ -50,4 +50,11 @@
       printf("libEMC do NOT loaded!\n");
   }
 
+  if (!TClassTable::GetDict("EdbRunAccess")) { 
+    if(gSystem->Load("libEIO")==0) 
+      printf("libEIO   \tloaded \n");
+    else 
+      printf("libEIO do NOT loaded!\n");
+  }
+
 }

@@ -26,6 +26,7 @@ PROJECT_SRC=$installdir/src
 listEdr=`ls $installdir/src/libEdr/*.h`
 listEdd=`ls $installdir/src/libEdd/*.h`
 listEMC=`ls $installdir/src/libEMC/*.h`
+listEIO=`ls $installdir/src/libEIO/*.h`
 listEdb=`ls $installdir/src/libEdb/*.h`
 listEmath=`ls $installdir/src/libEmath/*.h`
 listEphys=`ls $installdir/src/libEphys/*.h`
@@ -39,6 +40,9 @@ done
 for hname in ${listEMC} ; do
  ln -fs $PROJECT_SRC/libEMC/${hname##*/} $PROJECT_INC/${hname##*/}
 done
+for hname in ${listEIO} ; do
+ ln -fs $PROJECT_SRC/libEIO/${hname##*/} $PROJECT_INC/${hname##*/}
+done 
 for hname in ${listEdb} ; do
  ln -fs $PROJECT_SRC/libEdb/${hname##*/} $PROJECT_INC/${hname##*/}
 done 
