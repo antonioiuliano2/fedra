@@ -610,6 +610,7 @@ EdbTrackP::EdbTrackP(int nseg)
   eSF=0;
   eM=0;
   eDE=0;
+  ePDG=-999;
   eVTAS = 0;
   eVTAE = 0;
   if(nseg>0) eS  = new TSortedList();
