@@ -8,27 +8,28 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TMath.h"
 #include "EdbMath.h"
-#include <math.h>
+//#include <math.h>
 
 ClassImp(EdbMath)
 
 //-------------------------------------------------------------------------------------
-float EdbMath::Magnitude3( float Point1[3], float Point2[3] )
+double EdbMath::Magnitude3( float Point1[3], float Point2[3] )
 {
-    float dx = Point2[0] - Point1[0];
-    float dy = Point2[1] - Point1[1];
-    float dz = Point2[2] - Point1[2];
-    return (float)sqrt( dx*dx+dy*dy+dz*dz );
+    double dx = Point2[0] - Point1[0];
+    double dy = Point2[1] - Point1[1];
+    double dz = Point2[2] - Point1[2];
+    return TMath::Sqrt( dx*dx+dy*dy+dz*dz );
 }
 
 //-------------------------------------------------------------------------------------
-float EdbMath::DistancePointLine3( float Point[3], float LineStart[3], float LineEnd[3], bool inside )
+double EdbMath::DistancePointLine3( float Point[3], float LineStart[3], float LineEnd[3], bool inside )
 {
   // Disclamer: This code is partially stalled from site of Paul Bourke
 
-    float LineMag;
-    float U;
+    double LineMag;
+    double U;
     float Intersection[3];
  
     LineMag = Magnitude3( LineEnd, LineStart );
