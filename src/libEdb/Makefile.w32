@@ -8,9 +8,15 @@ OutPutOpt     = /out:
 !include <win32.mak>
 CC            = $(cc)
 CXX           = $(cc)
-CXXFLAGS      = $(cvarsdll) /O2 /G5 /MD -DWIN32 -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
-CXXDEBUG      = /Zi -Fd$*.pdb
+#CXXFLAGS      = $(cvarsdll) /O2 /G5 /MD -GX -DWIN32 -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
+CXXFLAGS      = $(cvarsdll) -EHsc  -nologo -GX -G5 -GR -MD -DWIN32 \
+                -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
+CXXOPT        = -O2
+
+#CXXDEBUG      = /Zi -Fd$*.pdb
  
+WIN32         = 1
+
 LD            = $(link)
 LDFLAGS       = $(conlflags)
 SOFLAGS       = $(dlllflags:/PDB:NONE=)
@@ -24,7 +30,7 @@ LIBSALL       = $(ROOTLIBS)
 headers       = EdbCluster.h EdbView.h EdbRunHeader.h EdbRun.h EdbImage.h EdbFrame.h EdbSegment.h EdbStage.h EdbAffine.h EdbFiducial.h EdbVirtual.h EdbOnline.h EdbPrediction.h
 
 
-Cint	        = $(headers) LinkDef.h
+Cint	        = $(headers) EdbLinkDef.h
 
 EDBS          = EdbCluster.cxx EdbView.cxx EdbRunHeader.cxx EdbRun.cxx EdbImage.cxx EdbFrame.cxx EdbSegment.cxx EdbStage.cxx EdbAffine.cxx EdbFiducial.cxx EdbVirtual.cxx EdbOnline.cxx EdbPrediction.cxx Cint.cxx
 

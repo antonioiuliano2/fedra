@@ -1,15 +1,16 @@
-set VC_PATH=c:\Program Files\Microsoft Visual Studio\VC98
-set INCLUDE=%VC_PATH%\include
-set LIB=%VC_PATH%\lib
-path %VC_PATH%\bin;%path%
+set PATH=C:\WINNT\system32;C:\WINNT;C:\WINNT\System32\Wbem
+rem call "C:\Program Files\Microsoft Visual Studio\VC98\Bin\vcvars32.bat"
 
-set rootsys=D:\root_2_24
+set TEMP=c:\temp
+set HOME=c:\valeri
+set TMPDIR=c:\temp
+
+set ROOTSYS=f:\valeri\root
 set CINTSYSDIR = %rootsys%\cint
-path %rootsys%\bin;%path%
+set PATH=%PATH%;%ROOTSYS%\bin
 
-set EDB_PATH=D:\R\Edb_jul15
-set LIB=%LIB%;%EDB_PATH%\src
-path %EDB_PATH%\src;%path%
+set EDB_PATH=f:\valeri\fedra
+set PATH=%PATH%;%EDB_PATH%\lib
 
-set SCAN_ONLINE=D:\R\ONLINE
-set SCAN_DATA=D:\R\DATA
+rem set SCAN_ONLINE=D:\R\ONLINE
+rem set SCAN_DATA=D:\R\DATA

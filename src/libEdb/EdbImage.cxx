@@ -8,7 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include <fstream.h> 
+//#include <fstream.h>   //created problems under Windows
 
 #ifndef ROOT_EdbImage
 #include "EdbImage.h"
@@ -121,13 +121,14 @@ TH2S *EdbImage::GetHist2(int flip) const
   return hist;
 }
 
+
 //____________________________________________________________________________
 Int_t EdbImage::LoadRAW( char *file )
 {
 /*
   Loads a .raw format file...
   Author: Alfredo Cocco
-*/
+
 
   eColumns = 512;
   eRows    = 512;
@@ -151,8 +152,9 @@ Int_t EdbImage::LoadRAW( char *file )
   // }
 
   eBuffer->Adopt(eBytes+save,byte);
- 
-  return eBytes;
+ return eBytes;
+ */
+ return 0;
 }
 
 //____________________________________________________________________________
