@@ -13,7 +13,8 @@
 #include "EdbImage.h"
 #endif
 
-class TH2S;
+class TH2F;
+class TH1F;
 
 //______________________________________________________________________________
 class EdbFrame : public TObject {
@@ -44,8 +45,8 @@ public:
   void    Print( Option_t *opt="" ) const;
   char   *GetBuffer()         const { return eImage->GetBuffer(); }
   char    Pixel(int r, int c) const { return eImage->Pixel(r,c);  }
-  TH2S   *GetHist2(int flip=0) const { return eImage->GetHist2(flip); }
-  TH1S   *GetHist1() const { return eImage->GetHist1(); }
+  TH2F   *GetHist2(int flip=0) const { return eImage->GetHist2(flip); }
+  TH1F   *GetHist1() const { return eImage->GetHist1(); }
 
   ClassDef(EdbFrame,3)  // Scanning Frame: image+positin information
 };

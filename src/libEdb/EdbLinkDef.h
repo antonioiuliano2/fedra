@@ -27,6 +27,7 @@
 #pragma link C++ class EdbPredictionsBox;
 
 #pragma link C++ class EdbImage;
+#pragma link C++ class EdbFIRF;
 #pragma link C++ class EdbFrame;
 
 #pragma link C++ class EdbCCD;

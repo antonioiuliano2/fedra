@@ -8,13 +8,16 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-//#include <fstream.h>   //created problems under Windows
+#include <fstream.h>   //created problems under Windows
+#include "TH1.h"
+#include "TH2.h"
 
 #ifndef ROOT_EdbImage
 #include "EdbImage.h"
 #endif
  
 ClassImp(EdbImage)
+ClassImp(EdbFIRF)
 
 //______________________________________________________________________________
 EdbImage::EdbImage()
@@ -32,6 +35,7 @@ EdbImage::EdbImage(char *file, char *format)
 
   if         ( !strcmp(format,"PGM") )  counter = LoadPGM(file);
   else if    ( !strcmp(format,"RAW") )  counter = LoadRAW(file);
+  else if    ( !strcmp(format,"BMP") )  counter = LoadBMP(file);
 
   if(counter != eBytes) 
     printf("ERROR:  EdbImage::EdbImage: counter != eBytes \n");
@@ -81,9 +85,9 @@ void EdbImage::Print( Option_t *opt ) const
 }
 
 //______________________________________________________________________________
-TH1S *EdbImage::GetHist1() const
+TH1F *EdbImage::GetHist1() const
 {
-  TH1S *hist = new TH1S("pix","Pixels distribution", 
+  TH1F *hist = new TH1F("pix","Pixels distribution", 
 			eColors, 0, eColors);
   int i=0;
   unsigned char *buf = (unsigned char*)(eBuffer->GetArray());
@@ -91,7 +95,7 @@ TH1S *EdbImage::GetHist1() const
   for (int icl=0; icl<eColumns; icl++) {
     for (int ir=0; ir<eRows; ir++) {
       i = ir*eColumns + icl;
-      hist->Fill( (short)(buf[i]) );
+      hist->Fill( (int)(buf[i]) );
     }
   }
 
@@ -99,9 +103,9 @@ TH1S *EdbImage::GetHist1() const
 }
 
 //______________________________________________________________________________
-TH2S *EdbImage::GetHist2(int flip) const
+TH2F *EdbImage::GetHist2(int flip) const
 {
-  TH2S *hist = new TH2S("ccd","CCD image", 
+  TH2F *hist = new TH2F("ccd","CCD image", 
 			eColumns, 0, eColumns, 
 			eRows, 0, eRows);
   int i=0;
@@ -112,7 +116,7 @@ TH2S *EdbImage::GetHist2(int flip) const
   for (int icl=0; icl<eColumns; icl++) {
     for (int ir=0; ir<eRows; ir++) {
       i = ir*eColumns + icl;
-      pix = (short)(buf[i]);
+      pix = (int)(buf[i]);
       if(flip) pix = eColors-pix;
       hist->Fill( icl, ir, pix );
     }
@@ -154,7 +158,7 @@ Int_t EdbImage::LoadRAW( char *file )
   eBuffer->Adopt(eBytes+save,byte);
  return eBytes;
  */
- return 0;
+  return 0;
 }
 
 //____________________________________________________________________________
@@ -220,4 +224,122 @@ Int_t EdbImage::LoadPGM( char *file )
   printf("EdbImage::LoadPGM: file %s  is readed...\n", file);
  
   return counter;
+}
+
+//____________________________________________________________________________________
+Int_t EdbImage::LoadBMP( char *file )
+{
+/*
+  Loads a BMP format file...
+  Author: Igor Kreslo
+*/
+typedef struct {
+   unsigned short int type;                 /* Magic identifier            */
+   unsigned int size;                       /* File size in bytes          */
+   unsigned short int reserved1, reserved2;
+   unsigned int offset;                     /* Offset to image data, bytes */
+} HEADER;
+
+typedef struct {
+   unsigned int size;               /* Header size in bytes      */
+   int width,height;                /* Width and height of image */
+   unsigned short int planes;       /* Number of colour planes   */
+   unsigned short int bits;         /* Bits per pixel            */
+   unsigned int compression;        /* Compression type          */
+   unsigned int imagesize;          /* Image size in bytes       */
+   int xresolution,yresolution;     /* Pixels per meter          */
+   unsigned int ncolours;           /* Number of colours         */
+   unsigned int importantcolours;   /* Important colours         */
+} INFOHEADER;
+
+HEADER hdr;
+INFOHEADER ihdr;
+
+ char* ptr;
+ fstream raw(file,ios::in);
+ ptr=(char*)&hdr;
+ raw.read(ptr,14);
+ ptr=(char*)&ihdr;
+ raw.read(ptr,40);
+ if(ihdr.bits!=8) { printf("Error: %d bits/pixel bitmap is not supported!\n",ihdr.bits); return -1;}
+ int N=ihdr.width*ihdr.height;
+ char* byte= new char[N];
+ raw.read(byte,N);
+ raw.close();
+ eBytes=N;
+ eColumns=ihdr.width;
+ eRows=ihdr.height;
+ eColors=256;
+
+ eBuffer->Adopt(eBytes,byte);
+
+ printf("EdbImage::LoadBMP: file %s  is readed...Image %d x %d pixels.\n", file,eColumns,eRows);
+
+ return N;
+}
+
+//===============================================================================
+EdbFIRF::EdbFIRF(int cols, int rows)
+{
+ eArr = new TArrayC();
+ eArr->Adopt(cols*rows, new char[cols*rows]);
+ eColumns=cols;
+ eRows=rows;
+ eArr->Reset();
+}
+
+//______________________________________________________________________________
+EdbFIRF::~EdbFIRF()
+{
+  if(eArr) { delete eArr; eColumns=0; eRows=0; }
+}
+
+//______________________________________________________________________________
+void    EdbFIRF::Reflect4()
+{
+ int X=eColumns;
+ int Y=eRows;
+ int HX=(int)((eColumns+1)/2);
+ int HY=(int)((eRows+1)/2);
+ for(int i=0;i<HY;i++){
+   for(int j=0;j<HX;j++){
+    SetAt(X-j-1,i,Cell(j,i));
+    SetAt(X-j-1,Y-i-1,Cell(j,i));
+    SetAt(j,Y-i-1,Cell(j,i));
+   }
+ }
+}
+
+//______________________________________________________________________________
+void EdbFIRF::Print()
+{
+ for(int i=0;i<eRows;i++){
+   for(int j=0;j<eColumns;j++){
+     printf("%d\t",Cell(j,i));
+   }
+   printf("\n");
+ }
+}
+
+//__________________________________________________________________________________
+TH2F* EdbFIRF::ApplyTo(EdbImage* img)
+{
+  int x0=eColumns/2+1;
+  int y0=eRows/2+1;
+  int x1=img->Width()-x0-1;
+  int y1=img->Height()-y0-1; //margins
+  Int_t S;
+
+  TH2F* buf=new TH2F("img","Filtered image",
+		     img->Width(),0,img->Width(),img->Height(),0,img->Height());
+
+  for(int y=y0;y<y1;y++) for(int x=x0;x<x1;x++){
+   S=0;
+   for(int yf=0;yf<eRows;yf++) for(int xf=0;xf<eColumns;xf++){
+     S+=img->Pixel(x+xf-eColumns/2,y+yf-eRows/2)*Cell(xf,yf);
+   }
+   buf->Fill(x,y,S);
+  }
+
+  return buf;
 }
