@@ -42,9 +42,7 @@ int EdbSegmentCut::PassCutX(float var[5])
 {
   // exclusive cut: if var is inside cut volume - return 0
 
-  //printf("passcut:\n");
   for(int i=0; i<5; i++) {
-    //printf("%f \t%f %f \n",var[i],eMin[i],eMax[i]);
     if(var[i]<eMin[i])  return 1;
     if(var[i]>eMax[i])  return 1;
   }
@@ -54,8 +52,6 @@ int EdbSegmentCut::PassCutX(float var[5])
 ///______________________________________________________________________________
 const char *EdbSegmentCut::CutLine(char *str, int i, int j) const
 {
-  // exclusive cut: if var is inside cut volume - return 0
-
   if(eXI==0) {
 
     sprintf(str,
@@ -147,7 +143,6 @@ void EdbDataPiece::Set0()
     if(eLayers[i]) delete eLayers[i]; 
     eLayers[i]=new EdbLayer();
   }
-  //for(int i=0; i<3; i++) eLayers[i]=0;
   for(int i=0; i<3; i++) eCond[i]=0;
   for(int i=0; i<3; i++) eAreas[i]=0;
   for(int i=0; i<3; i++) eCuts[i]=0;
@@ -1055,11 +1050,6 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
   upc.Sort();
   downc.Sort();
 
-  //upc.SetName("x:y:entry");
-  //downc.SetName("x:y:entry");
-  //upc.PrintStat();
-  //downc.PrintStat();
-
   TIndexCell *clx=0;
   TIndexCell *cly=0;
 
@@ -1334,7 +1324,7 @@ TTree *EdbDataProc::InitCouplesTree(const char *file_name, const char *mode)
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
+void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 {
   tree->GetDirectory()->cd();
 
@@ -1389,7 +1379,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
 
-      /*      
+      /*
       s->Set( ic, s1->X(), s1->Y(),
               (s1->X()-s2->X())/(s1->Z()-s2->Z()),
               (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
@@ -1398,6 +1388,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
       */
 
       EdbSegP::LinkMT(s1,s2,s);
+      s->SetVolume( s1->Volume()+s2->Volume() );
 
       tree->Fill();
     }

@@ -1291,8 +1291,6 @@ int EdbPVRec::MakeTracksTree()
       }
       new((*segments)[is])  EdbSegP( *seg );
     }
-    //    tracks->SetBranchAddress("s",&segments);
-    //    tracks->SetBranchAddress("t.",&tr);
     tracks->Fill();
     segments->Clear();
     ntr++;

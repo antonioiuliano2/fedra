@@ -790,7 +790,7 @@ void EdbPatternsVolume::PrintAff() const
 }
 
 //______________________________________________________________________________
-void EdbPatternsVolume::PrintStat( Option_t *opt="") const
+void EdbPatternsVolume::PrintStat( Option_t *opt) const
 {
   int npat = Npatterns();
   printf("\nVolume statistics for %d patterns\n",npat);
