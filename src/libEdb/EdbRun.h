@@ -92,6 +92,9 @@ public:
   void Close();
   TFile    *GetFile(){ return eFile; }
 
+  int    GetEntryNumberWithIndex( int event, int view ) const
+    { return eTree->GetEntryNumberWithIndex( event,view ); }
+
   EdbView        *GetEntry(         int entry, int ih=1, int icl=0, int iseg=1, int itr=0, int ifr=0 );
   EdbViewHeader  *GetEntryHeader(   int entry ) const;
   TClonesArray   *GetEntryClusters( int entry ) const;
