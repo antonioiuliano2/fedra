@@ -809,7 +809,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
   }
 
   printf("ncheck=%d\n",ncheck);
-  for(i=0; i<50; i++ ) {           //eliminate upto 50 CCD defects
+  for(i=0; i<200; i++ ) {           //eliminate upto 200 CCD defects
     if(!RemoveCCDPeak(matr)) break;
     npeak++;
   }
