@@ -66,10 +66,10 @@ int main(int argc, char *argv[])
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,FindConfig(pCat,"Flexible Sheet Map","FramesPerSecond")?2:1); 
 	Header->SetLimits(pCat->Area.XMin,pCat->Area.XMax,pCat->Area.YMin,pCat->Area.YMax);
-	Header->SetArea(pCat->Area.Fragments*pCat->Area.XViews*pCat->Area.YViews,
-		             pCat->Area.XStep,pCat->Area.YStep, 
-						 FindConfig(pCat,"Vertigo Scan","VLayers"),
-						 FindConfig(pCat,"Vertigo Scan","VLayers"));
+//  	Header->SetArea(pCat->Area.Fragments*pCat->Area.XViews*pCat->Area.YViews,
+//  			pCat->Area.XStep,pCat->Area.YStep, 
+//  			FindConfig(pCat,"Vertigo Scan","VLayers"),
+//  			FindConfig(pCat,"Vertigo Scan","VLayers"));
 	Header->SetNareas(pCat->Area.Fragments);
 	Header->SetCCD(FindConfig(pCat,"Objective","Width"),
 						FindConfig(pCat,"Objective","Height"),
@@ -145,8 +145,9 @@ int main(int argc, char *argv[])
 				else     edbViewHeader->SetNframes(0,FindConfig(pCat,"Vertigo Scan","VLayers"));
 				edbViewHeader->SetNsegments(rwdView->TCount[s]);
 				edbViewHeader->SetViewID(v);
-				edbViewHeader->SetZlevels(rwdView->Layers[s].Count,rwdView->Layers[s].pZs);
-
+//				edbViewHeader->SetZlevels(rwdView->Layers[s].Count,rwdView->Layers[s].pZs);
+				for( int nlvl=0; nlvl<rwdView->Layers[s].Count; nlvl++ )
+				  edbView->AddFrame(nlvl,rwdView->Layers[s].pZs[nlvl]);
 				
 				int nclu = 0;	//number of clusters
 				for (t = 0; t < rwdView->TCount[s]; t++)
@@ -200,12 +201,12 @@ int main(int argc, char *argv[])
 				outrun->AddView(edbView);
 			}; //end of views (v) 
 		};//end of sides (s)
-		cout<<":  Fragment: "<<f<<" tracks:"<<tracks<<"\tclusters: "<<clusters<<endl;	
+		cout<<"Fragment: "<<f<<" microtracks: "<<tracks<<"\tclusters: "<<clusters<<endl;	
 		cout << flush;
+		CoTaskMemFree(pFrag);
+		pFrag = 0;
 	}; //end of fragments (f)
 
-   CoTaskMemFree(pFrag);
-	pFrag = 0;
 
 	cout <<endl;
 	cout<<" Total: "<<nviews<<" views\t"<<endl<<endl;;
