@@ -102,7 +102,7 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 
 	Note that alingment is an expensive procedure especially if the 
 	possible offset is big (for example >~ 500 micron). It is not 
-	necessary to use all data volume for alingment: 1000 tracks/pattern 
+	necessary to use all data volume for alingment: 1000-5000 tracks/pattern 
 	is quite enough. To reduce number of tracks the cuts could be used:
 	ICUT 0 .....
 	XCUT 0 .....
@@ -122,7 +122,7 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	Z coordinates should encrease to opposit direction.
 
 	Another possible reason that the plate-to-plate offset is too big - 
-	sometimes the "fiducial marks" are printed terribly bad - we observed 
+	sometimes the so-called "fiducial marks" are printed terribly bad - we observed 
 	the offsets upto 4 mm with the rotation upto 3 deg.
 	In this case one can try to scan without using of the fiducials - just 
 	reset stage coordinate on the angle of the plate and then use 
