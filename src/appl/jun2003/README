@@ -36,7 +36,7 @@ default.par  - default parameters for data piece (see comments inside the file)
 	files per each data piece: see ./par/09_001.par as example.
 
 Data processing scheme (assuming that the data are converted by rwc2edb):
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 0) check the quality of raw data you are going to process:
 
 	root> .x check_raw.C   - the script could be customized according to data specifics
