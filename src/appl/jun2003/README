@@ -16,9 +16,11 @@ plateID	pieceID		/data/file/name/run.root  Flag
 
 	here: 	plateID - the consequtive plate number (1-57)
 		pieceID - the number of data piece INSIDE the 
-			  current plate. For example plate could 
-			  be divided into zones scanned separatly, 
-			  using of pieceID permits to combine them together
+			  current plate. Data of one piece must have the 
+			  same set of parameters.
+			  For example data of several runs could be 
+			  combined into one piece if them have exactly the same 
+			  set of parameters (including affine transformations).
 
 		from plateID and pieceID will be constracted the standard 
 		names used for input and output files during analysis:
@@ -43,10 +45,11 @@ Data processing scheme:
 	pieces will be transformated to the coordinate system of this one.
 	This data piece should be on BOTTOM of the list:
 	
-	...........
-	2  1 ......
-	1  2 ......
-	1  1 ......
+	......................
+	2  1 ......run4.root 1
+	1  2 ......run3.root 1   - this run may have different affine transformations
+	1  1 ......run2.root 1   - here run1 and run2 were taken with same plate setting, 
+	1  1 ......run1.root 1     them could be combined into the same piece (01_001.par)
 
 	In this example all data after the alignment will be transformed to 
 	coordinate system of piece 01_001.
@@ -106,9 +109,8 @@ Data processing scheme:
 --------------------------------------------------
 
 TODO list:
+	- add CUTCP
 	- to fix const/file memory leak in link procedure
 ok	- to apply Andrew's routine for s par
 	- to provide correct track linking with recalculation of 
 	  track parameters
-ok	- automatic update of AFFINE after Align
-	- may be redefine the concept of DataPiece

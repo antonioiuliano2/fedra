@@ -1,21 +1,20 @@
-
 AFID    0   # 1-use fiducial marks, 0 - stage coord (as written in run files)
 
 #
 # 0/1/2 - layerID: 1 and 2 - emulsion surfaces (segments in view coord), 0- basetrack in plate coord
 # 
 
-ZLAYER  2 	0. -40. 0.        # layerID z zmin zmax  (only z is used yet)
-SHRINK  2 	.82
+ZLAYER  2 	0. 0. 0.        # layerID z zmin zmax  (only z is used yet)
+SHRINK  2 	.89
 AFFXY   2 	1 0 0 1 	0 0
 AFFTXTY 2 	1 0 0 1 	0 0
 
-ZLAYER  1 	214 214 254
-SHRINK  1 	.84
+ZLAYER  1 	214 0. 0.
+SHRINK  1 	1.
 AFFXY   1 	1 0 0 1 	0 0
 AFFTXTY 1 	1 0 0 1 	0 0
 
-ZLAYER  0 	100 0 200
+ZLAYER  0 	100 0. 0.
 SHRINK  0 	1
 AFFXY   0 	1 0 0 1 	0 0
 AFFTXTY 0 	1 0 0 1 	0 0
@@ -47,16 +46,16 @@ OFFSET   0       100. 100.		# maximal offset for alingment search (dX dY)
 
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
-XCUT 1    -500.  500.	-500.   500.	-.006  .006	-.006  .006	15.  17.
-ICUT 1    -500.  500.   -500.   500.    -.65   .65      -.1    .1        0.  17.
+XCUT 1    -500.  500.	-500.   500.	-.04  .04	-.04  .04	0.  17.
+ICUT 1    -500.  500.   -500.   500.    -.9    .9      -.1    .1        0.  17.
 XCUT 1	   133.  134.	-144.  -143.	-.06   .06	-.06   .06	10.  17.
 XCUT 1	   118.  119.	 -14.   -13.	-.06   .06	-.06   .06	10.  17.
 XCUT 1	   -65.  -64.	 139.   140.	-.06   .06	-.06   .06	10.  17.
 XCUT 1	   -46.  -43.	 138.   141.	-.06   .06	-.06   .06	10.  17.
 XCUT 1	  -109. -108.	-159.  -156.	-.06   .06	-.06   .06	10.  17.
 
-XCUT 2	   -500. 500.	-500.   500.	-.006  .006	-.006  .006	15.  17.
-ICUT 2	   -500. 500.	-500.   500.	-.65   .65	-.1    .1 	 0.  17.
+XCUT 2	   -500. 500.	-500.   500.	-.04  .04	-.04  .04	15.  17.
+ICUT 2	   -500. 500.	-500.   500.	-.9    .9	-.1    .1 	 0.  17.
 XCUT 2	    133. 134.	-144.  -143.	-.06   .06	-.06   .06	10.  17.
 XCUT 2	    118. 119.	 -14.   -13.	-.06   .06	-.06   .06	10.  17.
 XCUT 2	    -65. -64.	 139.   140.	-.06   .06	-.06   .06	10.  17.
@@ -69,4 +68,10 @@ XCUT 2	   -109. -108.	-159.  -156.	-.06   .06	-.06   .06	10.  17.
 #
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
-#ICUT 0	 30000. 40000.	40000. 50000.	 -.6     .6	  -.6    .6	0.  33.
+# ICUT 0	-65000. -55000.	50000. 55000.	 -.6     .6	  -.6    .6	0.  33.
+
+
+# CUTCP can be used before alignment and linking
+# Max for:  	N1  	N1tot	N2 	N2tot	Chi2	Chi2P
+
+CUTCP 0		1	10	1	10	5.	5.

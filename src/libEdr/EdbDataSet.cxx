@@ -91,7 +91,7 @@ EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
   Set0();
   ePlate=plate;
   ePiece=piece;
-  eFileNameRaw=file;
+  AddRunFile(file);
   eFlag=flag;
 }
 
@@ -101,6 +101,7 @@ EdbDataPiece::~EdbDataPiece()
   for(int i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
   for(int i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
   for(int i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
+  for(int i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
 }
 
 ///______________________________________________________________________________
@@ -108,9 +109,9 @@ void EdbDataPiece::Set0()
 {
   ePlate=0;
   ePiece=0;
-  eFileNameRaw="";
   eFlag=0;
   eAFID=0;
+  eCutCP[0]=-1;
 
   for(int i=0; i<3; i++) eLayers[i]=0;
   for(int i=0; i<3; i++) eAreas[i]=0;
@@ -123,12 +124,28 @@ void EdbDataPiece::Set0()
 void EdbDataPiece::Print()
 {
   printf("Piece: %s\n",GetName());
-  printf("%d %d %s %d\n", ePlate,ePiece, GetFileNameRaw(),eFlag);
+  printf("%d %d \n", ePlate,ePiece);
+  for(int i=0; i<eRunFiles.GetEntries(); i++)  
+    printf("%s\n",GetRunFile(i));
   for(int i=0; i<3; i++)  if(eLayers[i])  eLayers[i]->Print();
   for(int i=0; i<3; i++)  if(eCond[i])    eCond[i]->Print();
   for(int i=0; i<3; i++)  
     if(eCuts[i])
       for(int j=0; j<NCuts(i); j++)  GetCut(i,j)->Print();
+}
+
+///______________________________________________________________________________
+void EdbDataPiece::AddRunFile( const char *name )
+{
+  TObjString *str = new TObjString(name);
+  eRunFiles.Add(str);
+}
+
+///______________________________________________________________________________
+const char *EdbDataPiece::GetRunFile( int i ) const
+{
+  if(eRunFiles.GetEntries()<i+1) return 0;
+  return ((TObjString *)eRunFiles.At(i))->GetName();
 }
 
 ///______________________________________________________________________________
@@ -163,6 +180,12 @@ void EdbDataPiece::AddSegmentCut(int layer, int xi, float var[10])
 {
   if(!eCuts[layer])  eCuts[layer] = new TObjArray();
   eCuts[layer]->Add( new EdbSegmentCut(xi,var) );
+}
+
+///______________________________________________________________________________
+void EdbDataPiece::AddCutCP(float var[6])
+{
+  for(int i=0; i<6; i++) eCutCP[i]=var[i];
 }
 
 ///______________________________________________________________________________
@@ -337,6 +360,12 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	       var,var+1,var+2,var+3,var+4,var+5,var+6,var+7,var+8,var+9);
 	AddSegmentCut(id,1,var);
       }
+    else if ( !strcmp(key,"CUTCP")  )
+      {
+	sscanf(buf+strlen(key),"%d %f %f %f %f %f %f",&id,
+	       var,var+1,var+2,var+3,var+4,var+5);
+	AddCutCP(var);
+      }
     else if ( !strcmp(key,"AFID")  )
       {
 	sscanf(buf+strlen(key),"%d",&id);
@@ -368,6 +397,14 @@ int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
   fprintf(fp,"\n%s",str);
 
   fclose(fp);
+  return 1;
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::PassCutCP(float var[6])
+{
+  if(eCutCP[0]<0) return 1;
+  for(int i=0; i<6; i++)    if(var[i]>eCutCP[i])  return 0;
   return 1;
 }
 
@@ -418,9 +455,19 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::TakeCPSegment(EdbSegP &seg)
+int EdbDataPiece::TakeCPSegment( EdbSegCouple &cp, EdbSegP &seg)
 {
-  float var[5];
+  float var[6];
+
+  var[0] = cp.N1();
+  var[1] = cp.N1tot();
+  var[2] = cp.N2();
+  var[3] = cp.N2tot();
+  var[4] = cp.CHI2();
+  var[5] = cp.CHI2P();
+
+  if( !PassCutCP(var) )     return 0;
+
   var[0] = seg.X();
   var[1] = seg.Y();
   var[2] = seg.TX();
@@ -441,11 +488,12 @@ int EdbDataPiece::GetCPData(EdbPVRec *ali)
   EdbSegP    segP;
 
   TTree *tree=eCouplesTree;
-  //EdbSegCouple    *cp = 0;
+  EdbSegCouple    *cp = 0;
   //EdbSegP         *s1 = 0;
   //EdbSegP         *s2 = 0;
   EdbSegP         *s  = 0;
 
+  tree->SetBranchAddress("cp"  , &cp  );
   tree->SetBranchAddress("s."  , &s  );
 
   int nseg = 0;
@@ -453,7 +501,7 @@ int EdbDataPiece::GetCPData(EdbPVRec *ali)
   printf("nentr = %d\n",nentr);
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
-    if( !TakeCPSegment(*s) )      continue;
+    if( !TakeCPSegment(*cp,*s) )      continue;
     s->SetZ(pat->Z());
     pat->AddSegment( *s );
     nseg++;
@@ -503,9 +551,10 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::MakeLinkListArea()
+int EdbDataPiece::MakeLinkListArea(int irun)
 {
-  if(!eRun)  eRun =  new EdbRun( GetFileNameRaw(),"READ" );
+  if (eRun ) delete eRun;
+  eRun =  new EdbRun( GetRunFile(irun),"READ" );
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -537,9 +586,10 @@ int EdbDataPiece::MakeLinkListArea()
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::MakeLinkListCoord()
+int EdbDataPiece::MakeLinkListCoord(int irun)
 {
-  if(!eRun)  eRun =  new EdbRun( GetFileNameRaw(),"READ" );
+  if(eRun) delete eRun;
+  eRun =  new EdbRun( GetRunFile(irun),"READ" );
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -744,6 +794,19 @@ void EdbDataSet::WriteRunList()
 }
 
 ///______________________________________________________________________________
+EdbDataPiece *EdbDataSet::FindPiece(const char *name)
+{
+  const char *nn;
+  EdbDataPiece *piece=0;
+  for(int i=0; i<ePieces.GetEntries(); i++){
+    piece = (EdbDataPiece*)ePieces.At(i);
+    nn = piece->GetName();
+    if(!strcmp(nn,name)) return piece;
+  }
+  return 0;
+}
+
+///______________________________________________________________________________
 int EdbDataSet::GetRunList(const char *file)
 {
   char            buf[256];
@@ -758,6 +821,7 @@ int EdbDataSet::GetRunList(const char *file)
     printf( "\nRead runs list from file: %s\n\n", file );
 
   EdbDataPiece *piece=0;
+  EdbDataPiece *pp=0;
   int plateID,pieceID,flag;
 
   int ntok=0;
@@ -768,10 +832,15 @@ int EdbDataSet::GetRunList(const char *file)
     nrun++;
     piece = new EdbDataPiece(plateID,pieceID,filename,flag);
     piece->MakeName();
-    piece->MakeNameCP(GetAnaDir());
-    piece->MakeNamePar(GetParDir());
-    piece->TakePiecePar();
-    ePieces.Add(piece);
+    if( (pp=FindPiece(piece->GetName())) ) {
+      pp->AddRunFile( filename );
+      delete piece;
+    } else {
+      piece->MakeNameCP(GetAnaDir());
+      piece->MakeNamePar(GetParDir());
+      piece->TakePiecePar();
+      ePieces.Add(piece);
+    }
   }
   fclose(fp);
 
@@ -1008,31 +1077,35 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   EdbPVRec  *ali;
 
   TTree *cptree=piece.InitCouplesTree("RECREATE");
-  
   EdbScanCond *cond = piece.GetCond(1);
 
-  int nareas = piece.MakeLinkListCoord();
-  for(int i=0; i<nareas; i++ ) {
+  int ntot=0, nareas=0;
 
-    ali      = new EdbPVRec();
-    ali->SetScanCond( cond );
+  for( int irun=0; irun<piece.Nruns(); irun++ ) {
+    nareas = piece.MakeLinkListCoord(irun);
+    for(int i=0; i<nareas; i++ ) {
 
-    piece.GetAreaData(ali,i,1);
-    piece.GetAreaData(ali,i,2);
+      ali      = new EdbPVRec();
+      ali->SetScanCond( cond );
 
-    ali->SetSegmentsErrors();
+      piece.GetAreaData(ali,i,1);
+      piece.GetAreaData(ali,i,2);
 
-    ali->SetCouplesAll();
-    ali->SetChi2Max(cond->Chi2PMax());
-    ali->Link();
+      ali->SetSegmentsErrors();
 
-    FillCouplesTree(cptree, ali,0);
+      ali->SetCouplesAll();
+      ali->SetChi2Max(cond->Chi2PMax());
+      ali->Link();
 
-    delete ali;
+      FillCouplesTree(cptree, ali,0);
+
+      delete ali;
+    }
+    ntot+=nareas;
   }
   CloseCouplesTree(cptree);
 
-  return nareas;
+  return ntot;
 }
 
 ///______________________________________________________________________________

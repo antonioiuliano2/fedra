@@ -83,8 +83,9 @@ class EdbDataPiece : public TNamed {
  private:
   Int_t        ePlate;          // plate id
   Int_t        ePiece;          // piece id in this plate
-  Int_t        eFlag;           // 0-do nothing, 1-link only, 2-align also
-  TString      eFileNameRaw;    // name of the raw data file (run)
+  Int_t        eFlag;           // 0-do nothing, 1-do something
+  TObjArray    eRunFiles;       //
+  //  TString      eFileNameRaw;    // name of the raw data file (run)
   TString      eFileNameCP;     // name of the couples data file
   TString      eFileNamePar;    // name of the parameters file
   Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
@@ -93,6 +94,7 @@ class EdbDataPiece : public TNamed {
   EdbScanCond *eCond[3];        //
   TIndexCell  *eAreas[3];       // base/up/down  surface areas list
   TObjArray   *eCuts[3];        // array of cuts
+  Float_t      eCutCP[6];       //
 
   EdbRun      *eRun;            //!
   TTree       *eCouplesTree;    //!
@@ -103,11 +105,13 @@ class EdbDataPiece : public TNamed {
   virtual ~EdbDataPiece();
 
   void Set0();
-  const char *GetFileNameRaw() const { return eFileNameRaw.Data(); }
+  void AddRunFile( const char *name );
+  const char *GetRunFile(int i) const;
   const char *MakeName();
   const char *MakeNameCP(const char *dir);
   void Print();
 
+  int       Nruns() const { return eRunFiles.GetEntries(); }
   int       Flag() const {return eFlag;}
   EdbLayer *GetMakeLayer(int id);
   EdbLayer *GetLayer(int id)
@@ -118,6 +122,7 @@ class EdbDataPiece : public TNamed {
 
   TTree *InitCouplesTree( const char *mode="READ" );
 
+  void           AddCutCP(float var[6]);
   void           AddSegmentCut(int layer, int xi, float var[5]);
   int            NCuts(int layer);
   EdbSegmentCut *GetCut(int layer, int i)
@@ -127,14 +132,15 @@ class EdbDataPiece : public TNamed {
   int  UpdateAffPar( int layer, EdbAffine2D &aff);
   int  TakePiecePar();
   int  ReadPiecePar(const char *file);
-  int  MakeLinkListArea();
-  int  MakeLinkListCoord();
+  int  MakeLinkListArea(int irun);
+  int  MakeLinkListCoord(int irun);
   int  GetAreaData(EdbPVRec *ali, int const area, int const side);
   int  TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side);
   int  PassCuts(int id, float var[5]);
+  int  PassCutCP(float var[6]);
 
   int  GetCPData(EdbPVRec *ali);
-  int  TakeCPSegment(EdbSegP &segP);
+  int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);
 
   ClassDef(EdbDataPiece,1)  // Edb raw data unit (scanned plate) associated with run file
 };
@@ -169,6 +175,8 @@ class EdbDataSet : public TNamed {
   int  GetRunList(const char *file);
   void PrintRunList();
   void WriteRunList();
+
+  EdbDataPiece *FindPiece(const char *name);
 
   ClassDef(EdbDataSet,1)  // OPERA emulsion data set
 };
