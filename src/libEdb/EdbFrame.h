@@ -21,7 +21,7 @@ class EdbFrame : public TObject {
 private:
 
   Int_t       eFrameID;           // frame identifier
-  Float_t     eZframe;            // Z-coordainate of the frame
+  Float_t     eZframe;            // Z-coordinate of the frame
   EdbImage    *eImage;            // CCD image
 
 public:

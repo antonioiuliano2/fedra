@@ -8,20 +8,20 @@ OutPutOpt     = /out:
 !include <win32.mak>
 CC            = $(cc)
 CXX           = $(cc)
-#CXXFLAGS      = $(cvarsdll) /O2 /G5 /MD -GX -DWIN32 -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
-CXXFLAGS      = $(cvarsdll) -EHsc  -nologo -GX -G5 -GR -MD -DWIN32 \
-                -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
-CXXOPT        = -O2
 
-#CXXDEBUG      = /Zi -Fd$*.pdb
- 
-WIN32         = 1
+CXXFLAGS      = $(cvarsdll) -nologo  -G5 -GR -MD -DWIN32 -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
 
 LD            = $(link)
-LDFLAGS       = $(conlflags)
+LDOPT         = -opt:ref
+LDFLAGS       = $(LDOPT) $(conlflags) -nologo -pdb:none
 SOFLAGS       = $(dlllflags:/PDB:NONE=)
-LDDEBUG       = -DEBUG -PDB:$*.pdb
-ROOTLIBS      = $(ROOTSYS)/lib/*.lib
+ROOTLIBS      = $(ROOTSYS)/lib/libCore.lib \
+                $(ROOTSYS)/lib/libCint.lib $(ROOTSYS)/lib/libHist.lib \
+                $(ROOTSYS)/lib/libGraf.lib $(ROOTSYS)/lib/libGraf3d.lib \
+                $(ROOTSYS)/lib/libGpad.lib $(ROOTSYS)/lib/libTree.lib \
+                $(ROOTSYS)/lib/libRint.lib $(ROOTSYS)/lib/libPostscript.lib \
+                $(ROOTSYS)/lib/libMatrix.lib $(ROOTSYS)/lib/libPhysics.lib
+
 LIBS          = $(ROOTLIBS) $(guilibsdll) MSVCIRT.LIB
 LIBSALL       = $(ROOTLIBS)
  
@@ -52,7 +52,7 @@ Cint.cxx: $(Cint)
 			rootcint -f Cint.cxx -c $(Cint)
 
 clean:
-		@del /q $(OBJ) Cint.$(SrcSuf) Cint.h
+		@del /q $(OBJ) Cint.$(SrcSuf) Cint.h *.dll *.lib *.exp *.pdb *.def
 
 depend:
 		@makedepend -I$(INCLUDE) *.cxx >& /dev/null

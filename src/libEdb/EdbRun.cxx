@@ -162,6 +162,7 @@ void EdbRun::OpenUpdate( const char *fname )
 //______________________________________________________________________________
 void EdbRun::Create( const char *fname )
 {
+
   ePredictions   = new EdbPredictionsBox();
   eMarks         = new EdbMarksSet();
 
@@ -186,6 +187,7 @@ void EdbRun::Create( const char *fname )
 
   //  TObjArray *frames = new TObjArray();
   //  eTree->Branch("frames", "TObjArray", eView->GetFramesAddr() , bufsize*4, 0);
+
 }
 
 //______________________________________________________________________________
