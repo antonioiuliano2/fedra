@@ -215,7 +215,7 @@ class EdbPVRec : public EdbPatternsVolume {
 
  public:
   TObjArray   *eTracks;
-  TObjArray   *eVTX;          //
+  TObjArray   *eVTX;          // array of vertex
   TList        eVTA;          // vertex-track associations
 
  public:

@@ -163,6 +163,7 @@ int EdbVertex::Compare(const TObject *o) const
     else if ( eQuality == ((EdbVertex *)o)->eQuality )  return  0;
     else	      	       				return  1;
 }
+//________________________________________________________________________
 bool EdbVertex::IsEqual(const TObject *o) const
 {
     /*printf("Inside isequal\n");*/
@@ -529,7 +530,7 @@ EdbVertexRec::EdbVertexRec()
   eEdbTracks = new TObjArray(8000);
 }
 
-//----------------------------------------------------------------------------
+//________________________________________________________________________
 TTree *EdbVertexRec::init_tracks_tree(const char *file_name, EdbTrackP *track)
 {
   TTree *tracks=0;
@@ -619,6 +620,7 @@ EdbTrackP *EdbVertexRec::GetEdbTrack(const int index)
   return     (EdbTrackP *)eEdbTracks->At(index);
 }
 
+//________________________________________________________________________
 //  Track& EdbVertexRec::GetVtTrack(const int index, Track& t)
 //  {
 //      if (!pVtTracks) return t;
