@@ -322,8 +322,9 @@ int  EdbIP::CutBG( EdbFrame *frame )
   int nc = h->GetNbinsX();
   int nr = h->GetNbinsY();
   float pix;
-  for(int ic=0; ic<nc; ic++) {
-    for(int ir=0; ir<nr; ir++) {
+  int ic,ir;
+  for(ic=0; ic<nc; ic++) {
+    for(ir=0; ir<nr; ir++) {
       pix = (float)(h->GetBinContent(ic,ir));
       if(pix<=eThr) h->SetBinContent(ic,ir,0);
       else h->SetBinContent(ic,ir,pix-eThr);
@@ -334,8 +335,8 @@ int  EdbIP::CutBG( EdbFrame *frame )
   printf("binmax = %f\n",binmax);
   unsigned char *buf = (unsigned char*)(frame->GetImage()->GetBuffer());
 
-  for(int ic=0; ic<nc; ic++) {
-    for(int ir=0; ir<nr; ir++) {
+  for(ic=0; ic<nc; ic++) {
+    for(ir=0; ir<nr; ir++) {
       pix = (float)(h->GetBinContent(ic,ir));
       if(pix>0)   {
 	buf[nc*ir+ic] = (unsigned char)(pix*255/binmax);
