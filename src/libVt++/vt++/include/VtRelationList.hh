@@ -73,7 +73,7 @@ namespace VERTEX {
     typedef Relation_it::value_type        value_type;
     typedef Relation_it::pointer           pointer;
     typedef Relation_it::reference         reference;
-    typedef Relation_it::size_type         size_type;
+    ///    typedef Relation_it::size_type         size_type;
     typedef Relation_it::difference_type   difference_type;
 
     RelationIterator();
@@ -109,7 +109,7 @@ namespace VERTEX {
     typedef Relation_cit::value_type        value_type;
     typedef Relation_cit::pointer           pointer;
     typedef Relation_cit::reference         reference;
-    typedef Relation_cit::size_type         size_type;
+    ///    typedef Relation_cit::size_type         size_type;
     typedef Relation_cit::difference_type   difference_type;
 
 
