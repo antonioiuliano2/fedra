@@ -14,6 +14,7 @@
 #include "TVectorD.h"
 
 ClassImp(EdbMath)
+ClassImp(TIndex2)
 
 //-------------------------------------------------------------------------------------
 double EdbMath::Magnitude3( float Point1[3], float Point2[3] )
@@ -27,7 +28,7 @@ double EdbMath::Magnitude3( float Point1[3], float Point2[3] )
 //-------------------------------------------------------------------------------------
 double EdbMath::DistancePointLine3( float Point[3], float LineStart[3], float LineEnd[3], bool inside )
 {
-  // Disclamer: This code is partially stalled from site of Paul Bourke
+  // Disclamer: This is a modified code from site of Paul Bourke
 
     double LineMag;
     double U;
@@ -49,6 +50,64 @@ double EdbMath::DistancePointLine3( float Point[3], float LineStart[3], float Li
     Intersection[2] = LineStart[2] + U * ( LineEnd[2] - LineStart[2] );
  
     return Magnitude3( Point, Intersection );
+}
+
+//-------------------------------------------------------------------------------------
+bool EdbMath::LineLineIntersect( float p1[3], float p2[3], float p3[3], float p4[3],
+				 float pa[3], float pb[3],
+				 double &mua, double &mub)
+{
+// Disclamer: This is a modified code from site of Paul Bourke
+//
+//     Calculate the line segment PaPb that is the shortest route between
+//     two lines P1P2 and P3P4. Calculate also the values of mua and mub where
+//        Pa = P1 + mua (P2 - P1)
+//        Pb = P3 + mub (P4 - P3)
+//     Return FALSE if no solution exists.
+
+   float p13[3],p43[3],p21[3];
+   double d1343,d4321,d1321,d4343,d2121;
+   double numer,denom;
+   const float EPS=1.E-10;
+
+   p13[0] = p1[0] - p3[0];
+   p13[1] = p1[1] - p3[1];
+   p13[2] = p1[2] - p3[2];
+   p43[0] = p4[0] - p3[0];
+   p43[1] = p4[1] - p3[1];
+   p43[2] = p4[2] - p3[2];
+   if (TMath::Abs(p43[0])  < EPS && 
+       TMath::Abs(p43[1])  < EPS && 
+       TMath::Abs(p43[2])  < EPS)      return false;
+   p21[0] = p2[0] - p1[0];
+   p21[1] = p2[1] - p1[1];
+   p21[2] = p2[2] - p1[2];
+   if (TMath::Abs(p21[0])  < EPS && 
+       TMath::Abs(p21[1])  < EPS && 
+       TMath::Abs(p21[2])  < EPS)      return false;
+
+   d1343 = p13[0] * p43[0] + p13[1] * p43[1] + p13[2] * p43[2];
+   d4321 = p43[0] * p21[0] + p43[1] * p21[1] + p43[2] * p21[2];
+   d1321 = p13[0] * p21[0] + p13[1] * p21[1] + p13[2] * p21[2];
+   d4343 = p43[0] * p43[0] + p43[1] * p43[1] + p43[2] * p43[2];
+   d2121 = p21[0] * p21[0] + p21[1] * p21[1] + p21[2] * p21[2];
+
+   denom = d2121 * d4343 - d4321 * d4321;
+   if (TMath::Abs(denom) < EPS)
+      return false;
+   numer = d1343 * d4321 - d1321 * d4343;
+
+   mua = numer / denom;
+   mub = (d1343 + d4321 * (mua)) / d4343;
+
+   pa[0] = p1[0] + mua * p21[0];
+   pa[1] = p1[1] + mua * p21[1];
+   pa[2] = p1[2] + mua * p21[2];
+   pb[0] = p3[0] + mub * p43[0];
+   pb[1] = p3[1] + mub * p43[1];
+   pb[2] = p3[2] + mub * p43[2];
+
+   return true;
 }
 
 //-------------------------------------------------------------------------------------
@@ -215,4 +274,42 @@ void EdbMath::LFITW( float *X, float *Y, float *W, int L, int KEY, float &A, flo
   if(ICNT<3)     return;
   E = (W2Y2-W2Y*W2Y/W2 -
        (W2XY-W2X*W2Y/W2)*(W2XY-W2X*W2Y/W2)/(W2X2-W2X*W2X/W2))/(ICNT-2);
+}
+
+//-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
+void TIndex2::BuildIndex( int n, double *w )
+{
+  Int_t  *ind = new Int_t[n];
+  TMath::Sort(n,w,ind,0);
+  Set(n);
+  for (Int_t i=0;i<n;i++) {
+    (*this)[i] = w[ind[i]];
+  }
+}
+
+//-------------------------------------------------------------------------------------
+Int_t TIndex2::Find(Int_t major, Int_t minor)
+{
+  if (GetSize()<1) return -1;
+  Double_t value = BuildValue(major,minor);
+  Int_t i = TMath::BinarySearch( fN, GetArray(), value);
+  if (i < 0) return -1;
+  if (TMath::Abs((*this)[i] - value) > 1.e-10) return -1;
+  return i;
+}
+
+//-------------------------------------------------------------------------------------
+Int_t TIndex2::FindIndex(Int_t major)
+{
+  if (fN<1) return -1;
+  Double_t value = (Double_t)major;
+  Int_t i = TMath::BinarySearch( fN, GetArray(), value);
+  if (i < -1) return -1;
+  if (i == -1) i++;
+  if(i>fN-1) return -1;
+  if( (*this)[i]<major ) i++; 
+  if(i>fN-1) return -1;
+  if (TMath::Abs((*this)[i] - value) > .5) return -1;
+  return (Int_t)( ((*this)[i]-value+1e-10)*1e+9 );
 }

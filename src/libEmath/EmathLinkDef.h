@@ -9,5 +9,6 @@
 #pragma link C++ class TIndexCellIterV;
 
 #pragma link C++ class EdbMath;
+#pragma link C++ class TIndex2;
 
 #endif
