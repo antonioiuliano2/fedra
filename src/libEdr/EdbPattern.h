@@ -264,6 +264,8 @@ class EdbTrackP : public EdbSegP {
   void     SetM( float m )  { eM=m; }
   Float_t  M()      const {return eM;}
 
+  void     SetCounters() { SetNpl(); SetN0(); }
+
   void     SetN0( int n0 )  { eN0 = n0; }
   void     SetN0()          { eN0 = eNpl-N(); }
   Int_t    N0()      const  {return eN0;}

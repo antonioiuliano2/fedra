@@ -1640,15 +1640,18 @@ void EdbPVRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends,
 
   int nseg;
   EdbTrackP *tr=0;
-  int ntr  = eTracks->GetEntriesFast();
+  int ntr  = eTracks->GetEntries();
   Long_t  v[2];
 
+  printf("ntr =%d\n",ntr);
   for(int itr=0; itr<ntr; itr++)   {
     tr = (EdbTrackP*)(eTracks->At(itr));
     if( tr->Flag() == -10 ) continue;
     nseg = tr->N();
 
-    if( tr->TrackZmin()->Z()      > zfrom      )  {    // tracks with missing starts
+    printf("  nseg =%d\n",nseg);
+
+    if( tr->TrackZmin()->Z() > zfrom      )  {    // tracks with missing starts
       v[0] = (Long_t)(tr->TrackZmin()->Z()/zBin);
       v[1] = itr;
       starts.Add(2,v);
@@ -1694,8 +1697,8 @@ int EdbPVRec::ProbVertex(int maxgap, float dMax)
 }
 
 //______________________________________________________________________________
-int EdbPVRec::ProbVertex( TIndexCell list1, float dZ1,
-			  TIndexCell list2, float dZ2,
+int EdbPVRec::ProbVertex( TIndexCell &list1, float dZ1,
+			  TIndexCell &list2, float dZ2,
 			  float dA, float sA, float zBin )
 {
   int nvtx = 0; 
@@ -1720,6 +1723,7 @@ int EdbPVRec::ProbVertex( TIndexCell list1, float dZ1,
   printf("n1   = %d  %d \n", n1, list1.N() );
   printf("n2   = %d  %d \n", n2, list2.N() );
 
+  int ic2start=0;
   for(int i1=0; i1<n1; i1++)   {        // first group
     c1 = list1.At(i1);
     z1 = zBin*c1->Value();
@@ -1748,15 +1752,15 @@ int EdbPVRec::ProbVertex( TIndexCell list1, float dZ1,
 	else      s1 = tr1->TrackZmin();
 
 	int nc2=c2->GetEntries();
-	for(int ic2=0; ic2<nc2; ic2++) {    // first group entries
+	if( (&list1)==(&list2) ) ic2start=ic1+1;
+	for(int ic2=ic2start; ic2<nc2; ic2++) {    // first group entries
 	  itr2 = c2->At(ic2)->Value();
 	  tr2  = (EdbTrackP*)((*eTracks)[itr2]);
 	  if(!tr2)             continue;
+	  if(tr1==tr2)         continue;
 
 	  if(dZ2>0) s2 = tr2->TrackZmax();
 	  else      s2 = tr2->TrackZmin();
-
-	  if(tr1==tr2)  continue;
 
 	  if( TMath::Abs(s2->X()-s1->X()) > deltaX )      continue;
 	  if( TMath::Abs(s2->Y()-s1->Y()) > deltaY )      continue;
@@ -1952,7 +1956,7 @@ void EdbPVRec::FitTracks(float p, float mass)
   float X0 = GetScanCond()->RadX0();
 
   EdbTrackP *tr =0;
-  int ntr = eTracks->GetEntriesFast();
+  int ntr = eTracks->GetEntries();
   printf("fit %d tracks assuming p = %f , mass = %f  and  X0 = %f ...\n",
 	 ntr,p,mass,X0);
 
@@ -1971,8 +1975,8 @@ void EdbPVRec::FitTracks(float p, float mass)
       //seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
     //}
 
-    tr->SetP(p);
-    tr->SetM(mass);
+    if(p>0)    tr->SetP(p);
+    if(mass>0) tr->SetM(mass);
     tr->FitTrackKFS(true,X0);
   }
 
@@ -2285,7 +2289,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
   //  input: nplmin - the minimal length of the track to be continued
 
   int ntr = eTracks->GetEntries();
-  printf("propagate %d tracks, selecting one longer then %d but shorter then %d plates...\n"
+  printf("propagate %d tracks, selecting in range [%d : %d] plates...\n"
 	 ,ntr,nplmin,nplmax);
 
   TIndexCell cn;  //"npl:prob:entry"

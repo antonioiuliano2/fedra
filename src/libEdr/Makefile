@@ -206,7 +206,9 @@ EdbPVRec.o: /var/local/root/include/TString.h
 EdbPVRec.o: /var/local/root/include/TRefCnt.h
 EdbPVRec.o: /var/local/root/include/TMatrixUtils.h
 EdbPVRec.o: /var/local/root/include/TArrayF.h
-EdbPVRec.o: /var/local/root/include/TArray.h EdbPVRec.h EdbPattern.h
+EdbPVRec.o: /var/local/root/include/TArray.h
+EdbPVRec.o: /var/local/root/include/TBenchmark.h
+EdbPVRec.o: /var/local/root/include/TStopwatch.h EdbPVRec.h EdbPattern.h
 EdbPVRec.o: /var/local/root/include/TTree.h
 EdbPVRec.o: /var/local/root/include/TClonesArray.h
 EdbPVRec.o: /var/local/root/include/TAttLine.h
@@ -238,8 +240,6 @@ EdbPVRec.o: /var/local/root/include/TAttAxis.h
 EdbPVRec.o: /var/local/root/include/TArrayC.h
 EdbPVRec.o: /var/local/root/include/TArrayS.h
 EdbPVRec.o: /var/local/root/include/Foption.h EdbPVGen.h
-EdbPVRec.o: /var/local/root/include/TBenchmark.h
-EdbPVRec.o: /var/local/root/include/TStopwatch.h
 EdbPattern.o: EdbPattern.h /var/local/root/include/TTree.h
 EdbPattern.o: /var/local/root/include/TClonesArray.h
 EdbPattern.o: /var/local/root/include/TAttLine.h

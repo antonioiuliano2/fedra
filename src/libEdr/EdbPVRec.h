@@ -320,8 +320,8 @@ class EdbPVRec : public EdbPatternsVolume {
   void    FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends,
 			     float zFrom, float zTo, float zBin);
   int     ProbVertex(int maxgap, float dMax=100.);
-  int     ProbVertex( TIndexCell list1, float dZ1,
-		      TIndexCell list2, float dZ2,
+  int     ProbVertex( TIndexCell &list1, float dZ1,
+		      TIndexCell &list2, float dZ2,
 		      float dA, float sA, float zBin );
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);

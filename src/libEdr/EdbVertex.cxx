@@ -700,6 +700,8 @@ void  EdbVertexRec::TrackMC( EdbPatternsVolume &pv, float zlim[2],
     tr.AddSegment(     pat->AddSegment(*seg) );
   }
   tr.SetDE(DE);
+  tr.SetCounters();
+  tr.SetSegmentsTrack();
 }
 
 //______________________________________________________________________________
