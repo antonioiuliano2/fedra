@@ -130,7 +130,7 @@ Int_t TIndexCell::ComparePatterns( Int_t level, Long_t vdiff[],
   }
 
   if(strip) {
-    //    fList->Compress();
+    fList->Compress();
     Sort();
   }
 
@@ -307,7 +307,7 @@ void TIndexCell::Purge(int level)
   }
   if(GetEntries()<1)   Drop();
   if(fList) {
-    //    fList->Compress();
+    fList->Compress();
     Sort();
   }
 }

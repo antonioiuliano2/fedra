@@ -69,7 +69,6 @@ class TIndexCell : public TObject {
   Int_t Add( Long_t p1 );
 
   TIndexCell *FindAdd( Long_t p1 );
-  TIndexCell *FindBinary( Long_t p1 ) const;
   TIndexCell *Find( Int_t narg, Long_t varg[] ) const;
   TIndexCell *Find( Long_t p1 ) const;
   TIndexCell const *At( Int_t narg, Int_t vind[] ) const;
@@ -81,8 +80,11 @@ class TIndexCell : public TObject {
   Long_t    Value() const { return fValue; }
   Int_t     GetValues(Int_t level, Int_t vind[], Long_t val[] ) const;
 
+/*    Int_t      GetEntries() const  */
+/*      { if(fList) return fList->GetSize();         //!!! */
+/*        else return 0; } */
   Int_t      GetEntries() const 
-    { if(fList) return fList->GetEntries();
+    { if(fList) return fList->GetEntries();         //!!!
       else return 0; }
 
   void   SetName(const char *varlist);
