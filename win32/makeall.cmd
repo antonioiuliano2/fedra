@@ -57,6 +57,8 @@ GOTO END
 	cd workspace
 	CALL make.cmd	libEdb	%compilerver%
 	CALL make.cmd	libEmath	%compilerver%
+	CALL make.cmd	libVt++	%compilerver%
+	CALL make.cmd	libEphys	%compilerver%
 	CALL make.cmd	libEdr	%compilerver%
 	CALL make.cmd	libEdd	%compilerver%
 	CALL make.cmd	rwc2edb	%compilerver%
@@ -83,6 +85,10 @@ GOTO END
 	CALL %0 chktgt lib\libEdb.dll
 	CALL %0 chktgt lib\libEmath.lib
 	CALL %0 chktgt lib\libEmath.dll
+	CALL %0 chktgt lib\libVt++.lib
+	CALL %0 chktgt lib\libVt++.dll
+	CALL %0 chktgt lib\libEphys.lib
+	CALL %0 chktgt lib\libEphys.dll
 	CALL %0 chktgt lib\libEdr.lib
 	CALL %0 chktgt lib\libEdr.dll
 	CALL %0 chktgt lib\libEdd.lib
@@ -117,6 +123,7 @@ GOTO END
 ::----------------------------------------------------------------------
 :CLEAN
 	ECHO Deleting FEDRA binaries...
+	IF EXIST include RD /S/Q include 
 	IF EXIST bin RD /S/Q bin
 	IF EXIST lib RD /S/Q lib
 	IF EXIST workspace\obj RD /S/Q workspace\obj
