@@ -2219,6 +2219,91 @@ int EdbPVRec::ProbVertex4(float ProbMin)
     return nadd;
 }
 //______________________________________________________________________________
+int EdbPVRec::ProbVertexN(float ProbMin)
+{
+  EdbVertex *edbv1 = 0;
+  EdbVertex *edbv2 = 0;
+  EdbTrackP *tr = 0;
+  int zpos = 0;
+  int nvtx = eVTX->GetEntries();
+  int nadd = 0;
+  int ncombin = 0;
+  int ncombinv = 0;
+  bool wasadded = false;
+  bool already_used[10000];
+  for (int i1=0; i1<10000; i1++) already_used[i1] = false;
+  
+  printf("-----Merge 2-track vertex pairs to N-track vertexes-----\n");
+
+  for (int i1=0; (i1<nvtx); i1++)
+    {
+	wasadded = false;
+	if (already_used[i1]) continue;
+  	edbv1 = (EdbVertex *)(eVTX->At(i1));
+	if (!edbv1) continue;
+	    int nt1 = edbv1->N();
+	    for (int i2=i1+1; (i2<nvtx); i2++)
+	    {
+  		edbv2 = (EdbVertex *)(eVTX->At(i2));
+		if (!edbv2) continue;
+		if (edbv2->N() == 2)
+		{
+		    int nt2 = edbv2->N();
+		    int it1=0;
+		    int nomatch = 1;
+		    while ( (it1<nt1) && nomatch )
+		    {
+		      int it2=0;
+		      tr = edbv1->GetTrack(it1);
+		      while ( (it2<nt2) && nomatch)
+		      {
+			if (edbv2->GetTrack(it2) == tr)
+			{
+			    ncombin++;
+			    if      (it2 == 0) 
+			    {
+				tr = edbv2->GetTrack(1);
+				zpos = edbv2->Zpos(1);
+			    }
+			    else if (it2 == 1)
+			    {
+				tr = edbv2->GetTrack(0);
+				zpos = edbv2->Zpos(0);
+			    }
+			    bool exist = false;
+			    for (int icheck1=0; icheck1<edbv1->N(); icheck1++)
+			    {
+				if (tr == edbv1->GetTrack(icheck1)) exist = true;
+			    }
+			      if (!exist)			    
+			      {
+			        ncombinv++;
+				if(edbv1->AddTrack(tr, zpos, ProbMin))
+				{
+				    edbv1->SetTracksVertex();
+				    nomatch = 0;
+				    wasadded = true;
+				    already_used[i2] = true;
+				}
+			      }
+			} // if one of tracks vertex 2 equal some in vertex 1
+			it2++;
+		      } // tracks in vertex 2
+		      it1++;
+		    } // tracks in vertex 1
+		} // if vertex 2 has rank 2
+	    } // second vertex loop
+	    if (wasadded) nadd++;
+    }  // first vertex loop
+    printf("  %6d 2-track vertex pairs with common track\n",
+	      ncombin);
+    printf("  %6d pairs when common track not yet attached\n  %6d N-track vertexes with Prob > %f\n",
+	      ncombinv, nadd, ProbMin);
+    printf("--------------------------------------------------------\n");
+    return nadd;
+}
+
+//______________________________________________________________________________
 int EdbPVRec::MergeTracks1(int maxgap)
 {
   int imerged=0;

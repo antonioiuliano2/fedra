@@ -96,6 +96,7 @@ void EdbVertex::SetTracksVertex( )
     if ( !tr )
     {
 	printf("EdbVertex::SetTracksVertex - null pointer for track %d!\n", i);
+	printf("EdbVertex::SetTracksVertex - number of tracks %d!\n", eNtr);
 	return; 
     }
     if   (eZpos.At(i)) tr->SetVertexS(this);
@@ -112,7 +113,7 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
     eZpos.Set(eNtr+1);
     eZpos.AddAt(zpos, eNtr);
     eNtr++;
-    if (track->NF() <= 0) return result;
+    if (track->NF() <= 0) return false;
     EdbSegP *seg = 0;
     if   (zpos)
     {
@@ -179,6 +180,9 @@ bool EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 	}
 	else
 	{ 
+	    eEdbTracks.Remove(track);   //TODO: check removing (holes?)
+	    eNtr--;
+	    eZpos.Set(eNtr);
 	    delete t;
 	    t=0;
 	    result = false;
