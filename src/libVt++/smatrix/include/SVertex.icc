@@ -1,0 +1,1491 @@
+#ifndef __SVERTEX_ICC
+#define __SVERTEX_ICC
+// ********************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   06. Apr 2001
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: A fixed size Vertex class
+//
+// changes:
+// 06 Apr 2001 (TG) creation
+// 07 Apr 2001 (TG) mass() added
+// 12 Apr 2001 (TG) default CTOR initialization added, calc_mother(),
+//                  calc_mother_tr(), bigcov() added
+// 17 Apr 2001 (TG) calc_mother_cov() added
+// 18 Apr 2001 (TG) removed use_mom template parameter, moved all function
+//                  bodies into this file.
+// 24 Apr 2001 (TG) valid(), invalid() added, bug fix in findVertexVt()
+// 24 Apr 2001 (TG) renamed calc_mother() to calc_mother_tr() and
+//                  calc_mother_tr() to calc_mother_trtr(). Added new calc_mother().
+// 24 Apr 2001 (TG) added prob()
+// 30 Apr 2001 (TG) added pt() and xfabs()
+// 02 Mai 2001 (TG) phi(), theta(), eta() added
+// 03 Mai 2001 (TG) added read/write vposR(), added findVertexNe()
+// 03 Mai 2001 (TG) CTOR added
+// 08 Jun 2001 (TG) added massError (not finished)
+// 11 Jun 2001 (TG) calc_mother_cov() added call to smoothC()
+// 11 Jun 2001 (TG) added cov_tx(), cov_ty(), cov_p()
+// 28 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), removed xfabs()
+// 04 Jul 2001 (TG) moth_tr, moth_cov added
+// 05 Jul 2001 (TG) collect() added
+// 09 Jul 2001 (TG) added valid(), invalid(), isValid() from TrackIf, removed
+//                  valid(), invalid() from VertexIf, added ntracks()
+// 10 Jul 2001 (TG) operator==() added
+// 25 Jul 2001 (TG) removed inline from track() definitions
+// 21 Aug 2001 (TG) bug fix in calc_mother_tr: track x,y,z must be vertex pos!
+//                  (because cov. matrix of mother tr. is calculated for vertex
+//                  position)
+// 23 Aug 2001 (TG) added CTOR, added copy CTOR
+// 03 Sep 2001 (TG) added operator=()
+// 02 Okt 2001 (TG) set_vpos() added
+// 03 Jan 2002 (TG) isMotherTr(), isMotherCov() added, set valid_=false in
+//                  findVertexVt(), improved calc_mother(), added
+//                  validKalmanFit flag, changed return type of calcVertex2D
+// 04 Jan 2002 (TG) changed meaning of valid(), invalid() and isValid(): the
+//                  functions signals now whether the mother track is valid. In
+//                  case of the PrimaryVertex class isValid() does not try to
+//                  compute the mother track.
+// 04 Jan 2002 (TG) added meta_for_valid, calcVertex2D(), findVertex3D(),
+//                  findVertexVt(): check if tracks are valid
+// 04 Jan 2002 (TG) added isKalmanFit()
+// 09 Jan 2002 (TG) findVertexVt(): propagate all tracks to z=0 via meta_for_prop::f()
+// 10 Jan 2002 (TG) improved isValid(), improved calc_mother_tr()
+// 11 Jan 2002 (TG) added v_ndf member
+// 14 Jan 2002 (TG) added cinv_ computation to propagate()
+// 16 Jan 2002 (TG) added operator=(SVertex<NTR>), improved print()
+// 17 Jan 2002 (TG) bug fix in propagation of covariance matrix
+//
+// ********************************************************************
+#include <cmath>
+#include "smatrix/Prob.hh"
+
+//==============================================================================
+// Constructors
+//==============================================================================
+template <unsigned int NTR>
+SVertex<NTR>::SVertex() :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (0),
+  v_ndf          (0),
+  t_p            (0),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (false),
+  moth_cov       (false),
+  validity       (true)
+{}
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const SVertex<NTR>& rhs) :
+  vpos_          (rhs.vpos_),
+  v_bk13         (rhs.v_bk13),
+  v_CS           (rhs.v_CS),
+  v_CINV         (rhs.v_CINV),
+  v_chi2         (rhs.v_chi2),
+  v_ndf          (rhs.v_ndf),
+  t_p            (rhs.t_p),
+  validKalmanFit (rhs.validKalmanFit),
+  valid_         (rhs.valid_),
+  moth_tr        (rhs.moth_tr),
+  moth_cov       (rhs.moth_cov),
+  validity       (rhs.validity)
+{}
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const TrackIf& t) :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (t.chi2()),
+  v_ndf          (t.ndf()),
+  t_p            (SVector<double,6>(t.x(),t.y(),t.z(),t.tx(),t.ty(),t.p())),
+  cov_           (t.COV()),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (true),
+  moth_cov       ( (cov_ == 0) ? false : true),
+  validity       (true)
+{}
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2) :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (0),
+  v_ndf          (0),
+  t_p            (0),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (false),
+  moth_cov       (false),
+  validity       (true)
+{
+  tracks[0] = &t1; tracks[1] = &t2;
+}
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3) :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (0),
+  v_ndf          (0),
+  t_p            (0),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (false),
+  moth_cov       (false),
+  validity       (true)
+{
+  tracks[0] = &t1; tracks[1] = &t2; tracks[2] = &t3;
+}
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3,
+			      const TrackIf& t4) :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (0),
+  v_ndf          (0),
+  t_p            (0),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (false),
+  moth_cov       (false),
+  validity       (true)
+{
+  tracks[0] = &t1; tracks[1] = &t2; tracks[2] = &t3; tracks[3] = &t4;
+}
+
+
+template <unsigned int NTR>
+SVertex<NTR>::SVertex(const SVertex<NTR-1>& vtx, const TrackIf& t) :
+  vpos_          (0),
+  v_bk13         (0),
+  v_CS           (0),
+  v_CINV         (SMatrix<double,3>(1e-5,true)),
+  v_chi2         (0),
+  v_ndf          (0),
+  t_p            (0),
+  validKalmanFit (false),
+  valid_         (false),
+  moth_tr        (false),
+  moth_cov       (false),
+  validity       (true)
+{
+  unsigned int i=0;
+  for(; i<NTR-1; ++i) {
+    tracks[i] = vtx.track(i);
+  }
+  tracks[i] = &t;
+}
+
+template <unsigned int NTR>
+SVertex<NTR>& SVertex<NTR>::operator=(const SVertex<NTR>& rhs) {
+  if( this == &rhs ) return *this;
+
+  vpos_          = rhs.vpos_;
+  v_bk13         = rhs.v_bk13;
+  v_CS           = rhs.v_CS;
+  v_CINV         = rhs.v_CINV;
+  v_chi2         = rhs.v_chi2;
+  v_ndf          = rhs.v_ndf;
+  t_p            = rhs.t_p;
+  v_covn         = rhs.v_covn;
+  cov_           = rhs.cov_;
+  cinv_          = rhs.cinv_;
+  validKalmanFit = rhs.validKalmanFit;
+  valid_         = rhs.valid_;
+  moth_tr        = rhs.moth_tr;
+  moth_cov       = rhs.moth_cov;
+  validity       = rhs.validity;
+
+  for(unsigned int i=0; i<NTR; ++i) {
+    tracks[i]  = rhs.tracks[i];
+    kalman_[i] = rhs.kalman_[i];
+  }
+  return *this;
+}
+
+//==============================================================================
+// meta_for_tchrg: sum track charges
+//==============================================================================
+template <unsigned int I>
+struct meta_for_tchrg {
+  template <class A>
+  inline static int f(const A& v) {
+    return v.track(I)->charge() + meta_for_tchrg<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_tchrg
+//==============================================================================
+template <>
+struct meta_for_tchrg<0> {
+  template <class A>
+  inline static int f(const A& v) {
+    return v.track(0)->charge();
+  }
+};
+
+//==============================================================================
+// meta_for_valid: check whether tracks are valid
+//==============================================================================
+template <unsigned int I>
+struct meta_for_valid {
+  template <class A>
+  inline static bool f(const A& v) {
+    return v.track(I)->isValid() && meta_for_valid<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_valid
+//==============================================================================
+template <>
+struct meta_for_valid<0> {
+  template <class A>
+  inline static bool f(const A& v) {
+    return v.track(0)->isValid();
+  }
+};
+
+//==============================================================================
+// VertexIf access methods
+//==============================================================================
+template <unsigned int NTR>
+float SVertex<NTR>::vx()   const { return vpos_[0]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::vy()   const { return vpos_[1]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::vz()   const { return vpos_[2]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::chi2() const { return v_chi2; }
+
+template <unsigned int NTR>
+unsigned short int SVertex<NTR>::ndf()  const { return v_ndf; }
+
+template <unsigned int NTR>
+unsigned short int SVertex<NTR>::ntracks()  const { return NTR; }
+
+template <unsigned int NTR>
+const TrackIf* SVertex<NTR>::track(unsigned int i) const { return tracks[i]; }
+
+template <unsigned int NTR>
+const TrackIf*& SVertex<NTR>::track(unsigned int i) { return tracks[i]; }
+
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::vpos() const { return vpos_; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SVertex<NTR>::VCOV() const { return v_CS; }
+
+template <unsigned int NTR>
+inline float SVertex<NTR>::vtx_cov_x() const { return v_CS(0,0); }
+
+template <unsigned int NTR>
+inline float SVertex<NTR>::vtx_cov_y() const { return v_CS(1,1); }
+
+template <unsigned int NTR>
+inline float SVertex<NTR>::vtx_cov_z() const { return v_CS(2,2); }
+
+template <unsigned int NTR>
+inline const SVector<double,3>& SVertex<NTR>::vposR() const { return vpos_; }
+
+template <unsigned int NTR>
+inline SVector<double,3>& SVertex<NTR>::vposR() { return vpos_; }
+
+template <unsigned int NTR>
+inline void SVertex<NTR>::set_vpos(const SVector<double,3>& pos) { vpos_ = pos; }
+
+template <unsigned int NTR>
+inline void SVertex<NTR>::set_track(unsigned int i, const TrackIf& t) { tracks[i] = &t; }
+
+template <unsigned int NTR>
+inline const SKalman<NTR>& SVertex<NTR>::kalman(unsigned int i) const { return kalman_[i]; }
+
+template <unsigned int NTR>
+inline SKalman<NTR>& SVertex<NTR>::kalman(unsigned int i) { return kalman_[i]; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3>& SVertex<NTR>::VCINV() const { return v_CINV; }
+
+template <unsigned int NTR>
+inline const SVector<double,6>& SVertex<NTR>::mother() const { return t_p; }
+
+template <unsigned int NTR>
+inline const SMatrix<double,3*NTR+3>& SVertex<NTR>::covn() const { return v_covn; }
+
+//==============================================================================
+// TrackIf access methods
+//==============================================================================
+template <unsigned int NTR>
+float SVertex<NTR>::x()   const { return t_p[0]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::y()   const { return t_p[1]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::x(float z) const { return t_p[0] + t_p[3] * (z - t_p[2]); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::y(float z) const { return t_p[1] + t_p[4] * (z - t_p[2]); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::z()   const { return t_p[2]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::tx()  const { return t_p[3]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::ty()  const { return t_p[4]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::p()   const { return t_p[5]; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::pt()  const { return t_p[5]/sqrt(1.+1./(square(t_p[3])+square(t_p[4]))); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::pz()  const { return t_p[5]/sqrt(square(t_p[3])+square(t_p[4])+1.); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::phi()   const { return 180. + 57.29577957*atan2(t_p[4],t_p[3]); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::theta()   const { return acos(evec()[2]); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::eta()   const { return -log(tan(theta()/2.)); }
+
+template <unsigned int NTR>
+int SVertex<NTR>::charge()  const { return meta_for_tchrg<NTR-1>::f(*this); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::energy(double mass) const { return sqrt(square(mass) + square(t_p[5])); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::xf(double mass) const { return (pz() - energy(mass)*0.99898)/0.93827; }
+
+template <unsigned int NTR>
+float SVertex<NTR>::rap(double mass) const { return 0.5*log((energy(mass)+pz())/(energy(mass)-pz())); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::cov_x(double dz=0.)        const { 
+  return cov_(0,0) + 2.*dz*cov_(0,2) + dz*dz * cov_(2,2);
+}
+
+template <unsigned int NTR>
+float SVertex<NTR>::cov_y(double dz=0.)        const {
+  return cov_(1,1) + 2.*dz*cov_(1,3) + dz*dz * cov_(3,3);
+}
+
+template <unsigned int NTR>
+float SVertex<NTR>::cov_tx() const { return cov_(2,2); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::cov_ty() const { return cov_(3,3); }
+
+template <unsigned int NTR>
+float SVertex<NTR>::cov_p()  const { return cov_(4,4); }
+
+template <unsigned int NTR>
+const SMatrix<double,5>& SVertex<NTR>::COV()   const { return cov_; }
+
+template <unsigned int NTR>
+const SMatrix<double,5>& SVertex<NTR>::CINV()  const { return cinv_; }
+
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::xvec() const {
+  return SVector<double,3>(t_p[0],t_p[1],t_p[2]);
+}
+
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::tvec() const {
+  return SVector<double,3>(t_p[3],t_p[4],1);
+}
+
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::evec() const { 
+  return SVector<double,3>(1./mag(tvec()) * tvec());
+}
+
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::pvec() const {
+  return SVector<double,3>(t_p[5]/mag(tvec()) * tvec());
+}
+
+template <unsigned int NTR>
+bool SVertex<NTR>::isValid() const {
+
+#ifdef PRIMARYVERTEX_CODE
+  return validity;
+#else
+  if(validity == false ||
+     meta_for_valid<NTR-1>::f(*this) == false)
+    return false;
+  
+  
+  if(moth_tr == false) {
+    return const_cast<SVertex<NTR>*>(this)->calc_mother();
+  } else {
+    if(validKalmanFit == false) {
+      return true; // nothing to be done
+    } else {
+      if(moth_cov == false) {
+	return const_cast<SVertex<NTR>*>(this)->calc_mother_cov() &&
+	  const_cast<SVertex<NTR>*>(this)->propagate(0.);
+      } else {
+	return const_cast<SVertex<NTR>*>(this)->propagate(0.);
+      }
+    }
+  }
+  return true;
+#endif
+}
+
+template <unsigned int NTR>
+void SVertex<NTR>::invalid() { validity = false; }
+
+template <unsigned int NTR>
+void SVertex<NTR>::valid() { validity = true; }
+
+//==============================================================================
+// SVertex methods
+//==============================================================================
+template <unsigned int NTR>
+inline bool SVertex<NTR>::isMotherTr() const { return moth_tr; }
+
+template <unsigned int NTR>
+inline bool SVertex<NTR>::isMotherCov() const { return moth_cov; }
+
+template <unsigned int NTR>
+inline bool SVertex<NTR>::isKalmanFit() const { return validKalmanFit; }
+
+//==============================================================================
+// operator==
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::operator==( const TrackIf& rhs ) const {
+  return &rhs == this;
+}
+
+//==============================================================================
+// Other access methods
+//==============================================================================
+template <unsigned int NTR>
+float SVertex<NTR>::prob() const { return Prob(v_chi2,v_ndf); }
+
+//==============================================================================
+// print
+//==============================================================================
+template <unsigned int NTR>
+std::ostream& SVertex<NTR>::print( std::ostream& os ) const {
+  os.setf(ios::scientific,ios::floatfield);
+  if(valid_ == true) {
+    os << "SVertex:: " 
+       << " vx: " << setprecision(3) << vx()
+       << " vy: "                    << vy()
+       << " vz: "                    << vz();
+  } else {
+    os << "SVertex:: no vertex computed";
+  }
+
+  if(validKalmanFit == true) {
+    os << " chi2: " << setprecision(3) << chi2()
+       << " ndf: "                     << ndf()
+       << endl
+       << "Cov. Matrix: " << endl << setprecision(3) << VCOV()
+       << endl
+       << "Kalman Information: ";
+    for(unsigned int i=0; i<NTR; ++i)
+      cout << endl << kalman_[i];
+  }
+  if(moth_tr == true) {
+    os << endl << "Mother Track:" << setprecision(3) 
+       << " x: "  << t_p[0]
+       << " y: "  << t_p[1]
+       << " z: "  << t_p[2]
+       << " tx: " << t_p[3]
+       << " ty: " << t_p[4]
+       << " p: "  << t_p[5];
+  }
+  if(moth_cov == true) {
+    os << endl << "Mother Cov. Matrix: "  << endl << setprecision(3) << COV();
+  }
+  return os;
+}
+
+
+//==============================================================================
+// meta_for_fv2d
+//==============================================================================
+template <unsigned int I>
+struct meta_for_fv2d {
+  template <class A>
+  inline static SVector<double,6> f(const A& v) {
+    const TrackIf* const t = v.track(I);
+    return SVector<double,6>(t->tx(),
+			     t->ty(),
+			     t->x(0.),
+			     t->y(0.),
+			     t->tx() * t->x(0.) +
+			     t->ty() * t->y(0.),
+			     square(t->tx()) + square(t->ty()))
+      + meta_for_fv2d<I-1>::f(v);
+  }
+};
+
+
+//==============================================================================
+// meta_for_fv2d<0>
+//==============================================================================
+template <>
+struct meta_for_fv2d<0> {
+  template <class A>
+  inline static SVector<double,6> f(const A& v) {
+    const TrackIf* const t = v.track(0);
+    return SVector<double,6>(t->tx(),
+			     t->ty(),
+			     t->x(0.),
+			     t->y(0.),
+			     t->tx() * t->x(0.) +
+			     t->ty() * t->y(0.),
+			     square(t->tx()) + square(t->ty()));
+  }
+};
+
+
+//==============================================================================
+// findVertex2D
+//==============================================================================
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::findVertex2D() const {
+  // get cumulants (sumtx,sumty,sumrx,sumry,sumrt,sumtt)
+  const SVector<double,6> cum = meta_for_fv2d<NTR-1>::f(*this);
+
+  const double z = -(NTR*cum[4] - cum[2]*cum[0] - cum[3]*cum[1]) / 
+                    (NTR*cum[5] - square(cum[0]) - square(cum[1]));
+
+  return SVector<double,3>((cum[2]+z*cum[0])/static_cast<double>(NTR),
+			   (cum[3]+z*cum[1])/static_cast<double>(NTR),
+			   z);
+}
+
+//==============================================================================
+// calcVertex2D
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::calcVertex2D() {
+  validKalmanFit = moth_tr = moth_cov = false;
+  vpos_  = findVertex2D();
+  return (valid_ = true);
+}
+
+
+//==============================================================================
+// meta_for_fv3d
+//==============================================================================
+template <unsigned int I>
+struct meta_for_fv3d {
+  template <class A>
+  static SVector<double,3> f(const A& v, SMatrix<double,3>& m) {
+    const TrackIf* const t = v.track(I);
+    SMatrix<double,3> dt = 1./mag2(t->tvec()) * SMatrix<double,3>(t->tvec()) 
+      - SMatrix<double,3>(1,true);
+    m += dt;
+    return dt * t->xvec() + meta_for_fv3d<I-1>::f(v,m);
+  }
+};
+
+//==============================================================================
+// meta_for_fv3d
+//==============================================================================
+template <>
+struct meta_for_fv3d<0> {
+  template <class A>
+  static SVector<double,3> f(const A& v, SMatrix<double,3>& m) {
+    const TrackIf* const t = v.track(0);
+    SMatrix<double,3> dt = 1./mag2(t->tvec()) * SMatrix<double,3>(t->tvec()) 
+      - SMatrix<double,3>(1,true);
+    m += dt;
+    return dt * t->xvec();
+  }
+};
+
+//==============================================================================
+// findVertex3D
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::findVertex3D(SVector<double,3>& pos) const {
+
+  SMatrix<double,3> tt(0);
+  SVector<double,3> c = meta_for_fv3d<NTR-1>::f(*this,tt);
+
+  if(tt.invert() == false) { 
+    cerr << "findVertex3D: matrix inversion failed!" << endl;
+    return false;
+  }
+  
+  pos = tt * c;
+  return true;
+}
+
+//==============================================================================
+// meta_for_rmsd
+//==============================================================================
+template <unsigned int I>
+struct meta_for_rmsd {
+  template <class A>
+  inline static SVector<double,5> f(const A& v) {
+    const TrackIf* const t = v.track(I);
+    return SVector<double,5>(t->tx(),
+			     t->ty(),
+			     square(t->tx()),
+			     square(t->ty()),
+			     mag2(t->xvec() - v.vposR()) -
+			     square(dot(t->tvec(),
+					t->xvec() - v.vposR())) /
+			     mag2(t->tvec()))
+      + meta_for_rmsd<I-1>::f(v);
+  }
+};
+
+
+//==============================================================================
+// meta_for_rmsd
+//==============================================================================
+template <>
+struct meta_for_rmsd<0> {
+  template <class A>
+  inline static SVector<double,5> f(const A& v) {
+    const TrackIf* const t = v.track(0);
+    return SVector<double,5>(t->tx(),
+			     t->ty(),
+			     square(t->tx()),
+			     square(t->ty()),
+			     mag2(t->xvec() - v.vposR()) -
+			     square(dot(t->tvec(),
+					t->xvec() - v.vposR())) /
+			     mag2(t->tvec()));
+  }
+};
+
+
+//==============================================================================
+// rmsDistAngle return: (dist,angle)
+//==============================================================================
+template <unsigned int NTR>
+SVector<double,2> SVertex<NTR>::rmsDistAngle() const {
+  // get cumulants (sumtx,sumty,sumtx2,sumty2,sumvdist)
+  const SVector<double,5> cum = meta_for_rmsd<NTR-1>::f(*this);
+
+  return SVector<double,2>(sqrt(cum[4]/static_cast<double>(NTR-1)),
+			   sqrt((NTR*cum[2] - square(cum[0]) + 
+				 NTR*cum[3] - square(cum[1]))) / 
+				static_cast<double>(NTR));
+}
+
+//==============================================================================
+// meta_for_estm
+//==============================================================================
+template <unsigned int I>
+struct meta_for_estm {
+  template <class A>
+  inline static SVector<double,10> f(const A& v) {
+    const TrackIf* t = v.track(I);
+    const double xweight = 1./t->cov_x();
+    const double yweight = 1./t->cov_y();
+
+    return SVector<double,10>(t->tx() * xweight,
+			      t->x()  * xweight,
+			      xweight,
+			      t->x() * t->tx() * square(xweight),
+			      square(t->tx() * xweight),
+			      t->ty() * yweight,
+			      t->y()  * yweight,
+			      yweight,
+			      t->y() * t->ty() * square(yweight),
+			      square(t->ty() * yweight)) 
+      + meta_for_estm<I-1>::f(v);
+  }
+};
+
+
+//==============================================================================
+// meta_for_estm
+//==============================================================================
+template <>
+struct meta_for_estm<0> {
+  template <class A>
+  inline static SVector<double,10> f(const A& v) {
+    const TrackIf* t = v.track(0);
+    const double xweight = 1./t->cov_x();
+    const double yweight = 1./t->cov_y();
+    
+    return SVector<double,10>(t->tx() * xweight,
+			      t->x()  * xweight,
+			      xweight,
+			      t->x() * t->tx() * square(xweight),
+			      square(t->tx() * xweight),
+			      t->ty() * yweight,
+			      t->y()  * yweight,
+			      yweight,
+			      t->y() * t->ty() * square(yweight),
+			      square(t->ty() * yweight));
+  }
+};
+
+
+//==============================================================================
+// EstimateVertex
+//==============================================================================
+template <unsigned int NTR>
+SVector<double,3> SVertex<NTR>::EstimateVertex() const {
+  // get cumulants (txsum,xsum,xwsum,xtxsum,tx2sum,tysum,ysum,ywsum,ytysum,ty2sum)
+  const SVector<double,10> cum = meta_for_estm<NTR-1>::f(*this);
+
+  const double det = -cum[4] - cum[9] + 
+    square(cum[0])/cum[2] + square(cum[5])/cum[7];
+  
+  if(det == 0) { 
+    cerr << "EstimateVertex: cannot determine vertex" << endl;
+    return SVector<double,3>(9999,9999,9999);
+  }
+
+  const double z = (cum[3]+cum[8] - cum[0]*cum[1]/cum[2] -
+		    cum[5]*cum[6]/cum[7]) / det;
+  return SVector<double,3>( (cum[1] + cum[0]*z) / cum[2],
+			    (cum[6] + cum[5]*z) / cum[7],
+			    z);
+}
+
+
+//==============================================================================
+// meta_for_invm
+//==============================================================================
+template <unsigned int I>
+struct meta_for_invm {
+  template <class A, unsigned int NTR>
+  inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
+    const SKalman<NTR>& t = v.kalman(I);
+    return SVector<double,4>(sqrt(square(t.p()) + square(rm[I])), t.pvec())
+      + meta_for_invm<I-1>::f(v,rm);
+  }
+};
+
+
+//==============================================================================
+// meta_for_invm
+//==============================================================================
+template <>
+struct meta_for_invm<0> {
+  template <class A, unsigned int NTR>
+  inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
+    const SKalman<NTR>& t = v.kalman(0);
+    return SVector<double,4>(sqrt(square(t.p()) + square(rm[0])), t.pvec());
+  }
+};
+
+
+//==============================================================================
+// mass
+//==============================================================================
+template <unsigned int NTR>
+inline double SVertex<NTR>::mass(const SVector<double,NTR>& rm) const {
+  // compute sqrt(esum^2 - psum^2)
+  return Lmag(meta_for_invm<NTR-1>::f(*this,rm));
+}
+
+
+//==============================================================================
+// mass error (by momentum errors)
+//==============================================================================
+template <unsigned int NTR>
+double SVertex<NTR>::massError(const SVector<double,NTR>& rm) const {
+  const SVector<double,4> sum = meta_for_invm<NTR-1>::f(*this,rm);
+  const double mass = Lmag(sum);
+
+  double errsum = 0;
+  for(unsigned int i=0; i<NTR; ++i) {
+    const SKalman<NTR>& t = kalman(i);
+    const SVector<double,3> e = kalman(i).evec();
+    // error of refitted momentum:
+    const double Kperr2 = t.DS()(2,2);
+#ifdef XXX
+    const double perr2 = track(i)->COV()(4,4);
+    cout << "CINV: (p=" << track(i)->p() << " +/- " << sqrt(track(i)->cov_p()) << ")"
+	 << endl << track(i)->COV() << endl;
+    cout << "kperr2:" << Kperr2 << " perr2: " << perr2 << " perr: " << sqrt(perr2) << endl;
+#endif
+    const double Ei = sqrt(square(t.p())+square(rm[i]));
+    errsum += square(sum(0) * t.p()/Ei - sum(1)*e(0) - sum(2)*e(1) -
+		     sum(3)*e(2))*Kperr2;
+  }
+
+  return sqrt(errsum)/mass;
+}
+
+
+//==============================================================================
+// meta_for_invmtr
+//==============================================================================
+template <unsigned int I>
+struct meta_for_invmtr {
+  template <class A, unsigned int NTR>
+  inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
+    const TrackIf* t = v.track(I);
+    return SVector<double,4>(sqrt(square(t->p()) + square(rm[I])), t->pvec())
+      + meta_for_invmtr<I-1>::f(v,rm);
+  }
+};
+
+
+//==============================================================================
+// meta_for_invmtr
+//==============================================================================
+template <>
+struct meta_for_invmtr<0> {
+  template <class A, unsigned int NTR>
+  inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
+    const TrackIf* t = v.track(0);
+    return SVector<double,4>(sqrt(square(t->p()) + square(rm[0])), t->pvec());
+  }
+};
+
+
+//==============================================================================
+// mass_tr
+//==============================================================================
+template <unsigned int NTR>
+inline double SVertex<NTR>::mass_tr(const SVector<double,NTR>& rm) const {
+  // compute sqrt(esum^2 - psum^2)
+  return Lmag(meta_for_invmtr<NTR-1>::f(*this,rm));
+}
+
+
+
+//==============================================================================
+// meta_for_init
+//==============================================================================
+template <unsigned int I>
+struct meta_for_init {
+  template <unsigned int NTR>
+  inline static void f(SVertex<NTR>& v) {
+    v.kalman(I) = SKalman<NTR>(*v.track(I),v);
+    meta_for_init<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_init
+//==============================================================================
+template<>
+struct meta_for_init<0> {
+  template <unsigned int NTR>
+  inline static void f(SVertex<NTR>& v) {
+    v.kalman(0) = SKalman<NTR>(*v.track(0),v);
+  }
+};
+
+//==============================================================================
+// meta_for_prop
+//==============================================================================
+template <unsigned int I>
+struct meta_for_prop {
+  template <unsigned int NTR>
+  inline static void f(SVertex<NTR>& v) {
+    const_cast<TrackIf*>(v.track(I))->propagate(0.);
+    meta_for_prop<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_prop
+//==============================================================================
+template<>
+struct meta_for_prop<0> {
+  template <unsigned int NTR>
+  inline static void f(SVertex<NTR>& v) {
+    const_cast<TrackIf*>(v.track(0))->propagate(0.);
+  }
+};
+
+//==============================================================================
+// findVertexVt
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::findVertexVt() {
+
+  validKalmanFit = moth_tr = moth_cov = false;
+
+  // propagate all tracks to z=0.
+  //  meta_for_prop<NTR-1>::f(*this);
+  vpos_  = EstimateVertex();
+  valid_ = true;
+
+  return findVertexNe();
+}
+
+//==============================================================================
+// findVertexNe  (no estimate)
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::findVertexNe() {
+
+  // initialize Kalman objects
+  meta_for_init<NTR-1>::f(*this);
+
+  //  for(unsigned int i=0; i<NTR; ++i) cout << kalman_[i] << endl;
+
+  double prChi2 = 0.;
+  unsigned int iter = 0;
+  do {
+    // this is VtFit
+    if(filter() == false)
+      return valid_ = false;
+    else
+      smooth();
+    
+    const double chi2 = kalman_[0].chi2();
+    //    cout << "---------> dchi2: " << fabs(chi2 - prChi2) << endl;
+    if(fabs(chi2 - prChi2) > 1.) {
+      prChi2 = chi2;
+    }
+    else {
+      if(iter > 0) break; // force min. 2 iterations
+    }
+  } while(++iter < 20);
+
+  v_ndf = 2*NTR-3;
+
+  //  cout << "iterations: " << iter << endl;
+  return (iter<20) ? valid_ = validKalmanFit = true : valid_ = validKalmanFit = false;
+}
+
+
+//==============================================================================
+// meta_for_filt
+//==============================================================================
+template <unsigned int I>
+struct meta_for_filt {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(I).filter(I) && meta_for_filt<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_filt
+//==============================================================================
+template<>
+struct meta_for_filt<0> {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(0).filter(0);
+  }
+};
+
+//==============================================================================
+// filter
+//==============================================================================
+template <unsigned int NTR>
+inline bool SVertex<NTR>::filter() {
+  v_bk13 = vpos_[2];
+  return meta_for_filt<NTR-1>::f(*this);
+}
+
+
+//==============================================================================
+// meta_for_smoo
+//==============================================================================
+template <unsigned int I>
+struct meta_for_smoo {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(I).smooth() && meta_for_smoo<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_smoo
+//==============================================================================
+template<>
+struct meta_for_smoo<0> {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(0).smooth();
+  }
+};
+
+//==============================================================================
+// smooth
+//==============================================================================
+template <unsigned int NTR>
+inline bool SVertex<NTR>::smooth() {
+
+  // smooth X
+  vpos_  = kalman_[0].xv();
+  v_CS   = kalman_[0].KCOV();
+  v_chi2 = kalman_[0].chi2();
+
+  // smooth Q
+  return meta_for_smoo<NTR-1>::f(*this);
+}
+
+
+//==============================================================================
+// meta_for_smoC
+//==============================================================================
+template <unsigned int I>
+struct meta_for_smoC {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(I).smoothC() && meta_for_smoC<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_smoC
+//==============================================================================
+template<>
+struct meta_for_smoC<0> {
+  template <unsigned int NTR>
+  inline static bool f(SVertex<NTR>& v) {
+    return v.kalman(0).smoothC();
+  }
+};
+
+//==============================================================================
+// smoothC
+//==============================================================================
+template <unsigned int NTR>
+inline bool SVertex<NTR>::smoothC() {
+  // covariance matrix of smoothed parameters
+  return meta_for_smoC<NTR-1>::f(*this);
+}
+
+//==============================================================================
+// meta_for_cmot
+//==============================================================================
+template <unsigned int I>
+struct meta_for_cmot {
+  template <unsigned int NTR>
+  inline static SVector<double,3> f(SVertex<NTR>& v) {
+    return v.kalman(I).pvec() + meta_for_cmot<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_cmot
+//==============================================================================
+template<>
+struct meta_for_cmot<0> {
+  template <unsigned int NTR>
+  inline static SVector<double,3> f(SVertex<NTR>& v) {
+    return v.kalman(0).pvec();
+  }
+};
+
+//==============================================================================
+// meta_for_psum
+//==============================================================================
+template <unsigned int I>
+struct meta_for_psum {
+  template <unsigned int NTR>
+  inline static double f(SVertex<NTR>& v) {
+    return v.kalman(I).p() + meta_for_psum<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_psum
+//==============================================================================
+template<>
+struct meta_for_psum<0> {
+  template <unsigned int NTR>
+  inline static double f(SVertex<NTR>& v) {
+    return v.kalman(0).p();
+  }
+};
+
+//==============================================================================
+// calc_mother
+//==============================================================================
+template <unsigned int NTR>
+inline bool SVertex<NTR>::calc_mother() {
+  return (validKalmanFit == true) ? calc_mother_tr() && calc_mother_cov() && propagate(0.): 
+    (valid_ == false) ? calcVertex2D() && calc_mother_trtr() : calc_mother_trtr();
+}
+
+//==============================================================================
+// calc_mother_tr
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::calc_mother_tr() {
+  if(validKalmanFit == false) return calc_mother_trtr();
+  if(moth_tr == true)  return true;
+
+  // summed momentum vector
+  const SVector<double,3> psum = meta_for_cmot<NTR-1>::f(*this);
+  t_p[5] = meta_for_psum<NTR-1>::f(*this);
+
+  if(fabs(psum[2])<1e-20) return false;
+
+  t_p[3] = psum[0]/psum[2];              // tx
+  t_p[4] = psum[1]/psum[2];              // ty
+  t_p[0] = vpos_[0];                     // x is vertex x
+  t_p[1] = vpos_[1];                     // y is vertex y
+  t_p[2] = vpos_[2];                     // z is vertex z
+  return moth_tr = true;
+}
+
+
+
+//==============================================================================
+// meta_for_cmottr
+//==============================================================================
+template <unsigned int I>
+struct meta_for_cmottr {
+  template <unsigned int NTR>
+  inline static SVector<double,3> f(SVertex<NTR>& v) {
+    return v.track(I)->pvec() + meta_for_cmottr<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_cmottr
+//==============================================================================
+template<>
+struct meta_for_cmottr<0> {
+  template <unsigned int NTR>
+  inline static SVector<double,3> f(SVertex<NTR>& v) {
+    return v.track(0)->pvec();
+  }
+};
+
+//==============================================================================
+// meta_for_psumtr
+//==============================================================================
+template <unsigned int I>
+struct meta_for_psumtr {
+  template <unsigned int NTR>
+  inline static double f(SVertex<NTR>& v) {
+    return v.track(I)->p() + meta_for_psumtr<I-1>::f(v);
+  }
+};
+
+//==============================================================================
+// meta_for_psumtr
+//==============================================================================
+template<>
+struct meta_for_psumtr<0> {
+  template <unsigned int NTR>
+  inline static double f(SVertex<NTR>& v) {
+    return v.track(0)->p();
+  }
+};
+
+//==============================================================================
+// calc_mother_trtr
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::calc_mother_trtr() {
+  if(valid_ == false) return false;
+  if(moth_tr == true) return true;
+
+  // covariance matrix of smoothed parameters
+  const SVector<double,3> psum = meta_for_cmottr<NTR-1>::f(*this);
+  t_p[5] = meta_for_psumtr<NTR-1>::f(*this);
+
+  if(fabs(psum[2])<1e-20) return false;
+
+  t_p[3] = psum[0]/psum[2];              // tx
+  t_p[4] = psum[1]/psum[2];              // ty
+  t_p[0] = vpos_[0];                     // x is vertex x
+  t_p[1] = vpos_[1];                     // y is vertex y
+  t_p[2] = vpos_[2];                     // z is vertex z
+  return moth_tr = true;
+}
+
+
+//==============================================================================
+// meta_for_placeCC
+//==============================================================================
+template <unsigned int I>
+struct meta_for_placeCC {
+  template <unsigned int NTR>
+  inline static void f(const SVertex<NTR>& v, 
+		       SMatrix<double,3*NTR+3>& covn,
+		       const SMatrix<double,3>& ES,
+		       const unsigned int ipos) {
+    const SMatrix<double,3> CC = -ES*transpose(v.kalman(I).F());
+    covn.place_at(CC,ipos,3*I+3);
+    covn.place_at(transpose(CC),3*I+3,ipos);
+    meta_for_placeCC<I-1>::f(v, covn, ES, ipos);
+  }
+};
+
+//==============================================================================
+// meta_for_placeCC
+//==============================================================================
+template<>
+struct meta_for_placeCC<0> {
+  template <unsigned int NTR>
+  inline static void f(const SVertex<NTR>& v,
+		       SMatrix<double,3*NTR+3>& covn,
+		       const SMatrix<double,3>& ES,
+		       const unsigned int ipos) {
+    const SMatrix<double,3> CC = -ES*transpose(v.kalman(0).F());
+    covn.place_at(CC,ipos,3);
+    covn.place_at(transpose(CC),3,ipos);
+  }
+};
+
+//==============================================================================
+// meta_for_place
+//==============================================================================
+template <unsigned int I>
+struct meta_for_place {
+  template <unsigned int NTR>
+  inline static void f(const SVertex<NTR>& v, SMatrix<double,3*NTR+3>& covn) {
+    const SMatrix<double,3>& es = v.kalman(I).ES();
+    covn.place_at(es,3*I+3,0);
+    covn.place_at(transpose(es),0,3*I+3);
+    covn.place_at(v.kalman(I).DS(),3*I+3,3*I+3);
+    meta_for_placeCC<I-1>::f(v, covn, es, 3*I+3);
+    meta_for_place<I-1>::f(v, covn);
+  }
+};
+
+//==============================================================================
+// meta_for_place
+//==============================================================================
+template<>
+struct meta_for_place<0> {
+  template <unsigned int NTR>
+  inline static void f(const SVertex<NTR>& v, SMatrix<double,3*NTR+3>& covn) {
+    const SMatrix<double,3>& es = v.kalman(0).ES();
+    covn.place_at(es,3,0);
+    covn.place_at(transpose(es),0,3);
+    covn.place_at(v.kalman(0).DS(),3,3);
+  }
+};
+
+//==============================================================================
+// bigcov
+//
+// build up big cov. matrix (in Vt: covn)
+// covn consists of vertex + track parameter cov. matrices:
+//  vtx  tr1  tr2  tr3  ...
+//
+//  CS | ES | ES | ES | ...   CC = cor(q_k,q_l) = F_k*C_n*F_l^T
+//  ---+----+----+----+          = -ES_k * F_l
+//  ES | DS | CC | CC | ...
+//  ---+----+----+----+
+//  ES | CC | DS | CC | ...
+//  ---+----+----+----+
+//  ES | CC | CC | DS | ...
+//  ...
+//
+// Make sure smoothC() has been called before!!
+//
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::bigcov() {
+
+  v_covn.place_at(v_CS,0,0);
+  meta_for_place<NTR-1>::f(*this, v_covn);
+
+  return true;
+}
+
+
+//==============================================================================
+// meta_for_jac
+//==============================================================================
+template <unsigned int I>
+struct meta_for_jac {
+  template <unsigned int NTR>
+  static void f(const SVertex<NTR>& v,
+		SMatrix<double,3*NTR+3,5>& jac, 
+		const double fact3, 
+		const SVector<double,3>& e,
+		const SVector<double,3>& t) {
+    
+    const SVector<double,3> et = v.kalman(I).evec();
+    const double fact2 = v.kalman(I).pvec()[2]; // pz()
+    const double fact = fact2 * fact3;
+    const double vz   = v.vz();
+
+    const double eet0 = square(e[0]);
+    const double eet1 = square(e[1]);
+    const double eet2 = square(e[2]);
+
+    jac(3*I+3,2) = fact * (1 - square(et[0]) + t[0] * et[0] * et[2]);
+    jac(3*I+3,3) = fact * et[0] * (t[1] * et[2] - et[1]);
+    jac(3*I+3,0) = -vz * jac(3*I+3,2);
+    jac(3*I+3,1) = -vz * jac(3*I+3,3);
+
+    jac(3*I+3,4) = fact2 * (e[0]*(1-square(et[0])) - eet1*et[0] - eet2*et[0]);
+
+    jac(3*I+4,2) = fact*et[1]*(t[0]*et[2]-et[0]);
+    jac(3*I+4,3) = fact*(1. - square(et[1]) + t[1]*et[1]*et[2]);
+    jac(3*I+4,0) = -vz * jac(3*I+4,2);
+    jac(3*I+4,1) = -vz * jac(3*I+4,3);
+    
+    jac(3*I+4,4) = fact2 * (e[1]*(1.-square(et[1])) - eet0*et[1] - eet2*et[1]);
+
+    jac(3*I+5,2) = fact3 * (et[0] - t[0]*et[2]);
+    jac(3*I+5,3) = fact3 * (et[1] - t[1]*et[2]);
+    jac(3*I+5,0) = -vz * jac(3*I+5,2);
+    jac(3*I+5,1) = -vz * jac(3*I+5,3);
+
+    jac(3*I+5,4) = eet0 + eet1 + eet2;
+
+    meta_for_jac<I-1>::f(v, jac, fact3, e, t);
+  }
+};
+
+//==============================================================================
+// meta_for_jac
+//==============================================================================
+template<>
+struct meta_for_jac<0> {
+  template <unsigned int NTR>
+  static void f(const SVertex<NTR>& v,
+		SMatrix<double,3*NTR+3,5>& jac,
+		const double fact3, 
+		const SVector<double,3>& e,
+		const SVector<double,3>& t) {
+
+    const SVector<double,3> et = v.kalman(0).evec();
+    const double fact2 = v.kalman(0).pvec()[2]; // pz()
+    const double fact = fact2 * fact3;
+    const double vz   = v.vz();
+
+    const double eet0 = square(e[0]);
+    const double eet1 = square(e[1]);
+    const double eet2 = square(e[2]);
+
+    jac(3,2) = fact * (1 - square(et[0]) + t[0] * et[0] * et[2]);
+    jac(3,3) = fact * et[0] * (t[1] * et[2] - et[1]);
+    jac(3,0) = -vz * jac(3,2);
+    jac(3,1) = -vz * jac(3,3);
+
+    jac(3,4) = fact2 * (e[0]*(1-square(et[0])) - eet1*et[0] - eet2*et[0]);
+
+    jac(4,2) = fact*et[1]*(t[0]*et[2]-et[0]);
+    jac(4,3) = fact*(1. - square(et[1]) + t[1]*et[1]*et[2]);
+    jac(4,0) = -vz * jac(4,2);
+    jac(4,1) = -vz * jac(4,3);
+    
+    jac(4,4) = fact2 * (e[1]*(1.-square(et[1])) - eet0*et[1] - eet2*et[1]);
+
+    jac(5,2) = fact3 * (et[0] - t[0]*et[2]);
+    jac(5,3) = fact3 * (et[1] - t[1]*et[2]);
+    jac(5,0) = -vz * jac(5,2);
+    jac(5,1) = -vz * jac(5,3);
+
+    jac(5,4) = eet0 + eet1 + eet2;
+  }
+};
+
+//==============================================================================
+// calc_mother_cov: calc_mother() must be called before!
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::calc_mother_cov() {
+
+  if(validKalmanFit == false) return false;
+  if(moth_cov == true)  return true;
+  if(moth_tr  == false) calc_mother_tr();
+
+  smoothC(); // compute matrices relevant for bigcov()
+
+  bigcov();
+
+  SMatrix<double,3*NTR+3,5> jac;
+  const SVector<double,3> e = evec();
+  const SVector<double,3> t = tvec();
+
+  // vertex part:
+  jac(0,0) = jac(1,1) = 1.;
+  jac(2,0) = -t_p[3];  // tx
+  jac(2,1) = -t_p[4];  // ty
+
+  const double fact3 = 1./pvec()[2]; // 1/pz
+
+  meta_for_jac<NTR-1>::f(*this, jac, fact3, e, t);
+
+  //  cout << " jac: " << endl << jac << endl;
+
+  // store intermediate result to save time
+  const SMatrix<double,3*NTR+3,5> temp = v_covn * jac;
+  //    cinv_ = cov_ = transpose(jac) * v_covn * jac;
+  cinv_ = cov_ = transpose(jac) * temp;
+  return moth_cov = cinv_.sinvert();
+  //  return true;
+}
+
+//==============================================================================
+// collect
+//==============================================================================
+template <unsigned int NTR>
+void SVertex<NTR>::collect(vector<TrackIf*>& c) const {
+  c.push_back(const_cast<SVertex<NTR>*>(this));
+}
+
+//==============================================================================
+// propagate
+//==============================================================================
+template <unsigned int NTR>
+bool SVertex<NTR>::propagate(const double zz) {
+
+  const double dz = zz - t_p[2];
+  if(dz == 0.) return true;
+  
+  t_p[0] += dz * t_p[3];
+  t_p[1] += dz * t_p[4];
+  t_p[2]  = zz;
+
+  cov_(0,0)             += 2*dz*cov_(0,2) + square(dz) * cov_(2,2);
+  cov_(0,1) = cov_(1,0) += dz * (cov_(2,1) + cov_(0,3) + dz*cov_(3,2));
+  cov_(1,1)             += 2.*dz*cov_(3,1) + square(dz) * cov_(3,3);
+  cov_(0,2) = cov_(2,0) += dz * cov_(2,2);
+  cov_(1,2) = cov_(2,1) += dz * cov_(3,2);
+  cov_(0,3) = cov_(3,0) += dz * cov_(3,2);
+  cov_(1,3) = cov_(3,1) += dz * cov_(3,3);
+  cov_(0,4) = cov_(4,0) += dz * cov_(4,2);
+  cov_(1,4) = cov_(4,1) += dz * cov_(4,3);
+
+  // compute propagated inverse covariance matrix
+  cinv_ = cov_;
+  return moth_cov = cinv_.sinvert();
+}
+#endif
