@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -a[n] - plate to plate alignment (if n=2: rigid patterns) \n";
       cout<< "\t\t  -f[n] - fine alignment based on passed-throw tracks (if n=2: rigid patterns)\n";
       cout<< "\t\t  -t[n] - tracking (if n>1, holes isertion started - historical option - do not recommended!)\n";
-      cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle)\n";
+      cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle in [GeV])\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
       cout<<endl;
