@@ -16,8 +16,8 @@ EdbScanCond *scanCond=0;
 float back1_tetamax =  0.35; 
 float back2_tetamax =  0.25; 
 float back2_plim[2] = {0.5, 5.5};
-float fiducial_border = 10000.;
-float fiducial_border_z = 10000.;
+float fiducial_border = 20000.;
+float fiducial_border_z = 20000.;
 float vxyz[3] = {0., 0., 0.};   // simulated vertex position
 
 int local_coordinates = 1;
@@ -33,28 +33,44 @@ int eloss_flag = 1; // =0 - no energy losses, 1-average energy losses, 2-Landau 
 
 float momentumK=20.; // momentum of K-meson
 
-float dpp = 0.015;   // average dp/P 
+float dpp = 0.15;   // average dp/P 
 float seg_s[4]={.5, .5, 0.0015, 0.0015}; //sx,sy,stx,sty,sP
 float seg_zero[4]={.0,.0,.0,.0}; //no measurement errors
-float ProbGap = 0.10;
+float ProbGap = 0.10; //probability to have pattern hole
 float RightRatioMin = 0.5;
 
-//int maxgaps[6] = {1,2,1,1,1,1};
-int maxgaps[6] = {2,3,2,2,2,2};
-float AngleAcceptance = 0.4;
+int maxgaps[6] = {0,2,2,6,2,6};
+// -maxgap[0] <= PID[start] - PID[end]   <= maxgap[1] for starts-ends pairs
+// -maxgap[2] <= PID[start] - PID[start] <= maxgap[2] for starts-starts pairs
+// -maxgap[4] <= PID[end]   - PID[end]   <= maxgap[4] for ends-ends pairs
+// if maxgap[0]<0 - ignore start-end pairs
+// if maxgap[2]<0 - ignore start-start pairs
+// if maxgap[4]<0 - ignore end-end pairs
+// End-Start     z-vertex limits
+//  	    zvmin = Min(Z-End ,Z-Start)
+//	    zvmax = Max(Z-End ,Z-Start) + zBin
+//	    zvmin < z-vertex < zvmax
+// Start-Start   z-vertex limits
+//  	    zvmax = Min(Z-Start1 ,Z-Start2) + zBin
+//	    zvmin = zvmax - (maxgap[3]*zBin)
+//	    zvmin < z-vertex < zvmax
+// End-End       z-vertex limits
+//  	    zvmin = Max(Z-End1 ,Z-End2)
+//	    zvmax = zvmin + (maxgap[5]*zBin)
+//	    zvmin < z-vertex < zvmax
+float AngleAcceptance = 0.4;   // maximal track slope
 
-float ProbMinV  = 0.01;
-float ProbMinV3 = 0.01;
-float ProbMinV4 = 0.01;
-float ProbMinP  = 0.01;
-float ProbMinT  = 0.01;
+float ProbMinV  = 0.01; //minimal chi2-probability for 2-tracks vertexes
+float ProbMinVN = 0.01; //minimal chi2-probability for N-tracks vertexes
+float ProbMinP  = 0.01; //minimal chi2-probability for tracks merging 
+float ProbMinT  = 0.01; //minimal track chi2-probability for using in vertexing
 
 const unsigned long int PrintN = 100;
 
 
 TObjArray *genVtx;  //vertex array
 
-TH1F *hp[22] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+TH1F *hp[23] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 EdbVertex *vedb;
 
@@ -94,7 +110,7 @@ int charges[21] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 FILE *f=0;
 TFile *rf=0;
-TObjArray hlist, hld1, hld2, hld3;
+TObjArray hlist, hld1, hld2, hld3, hld4;
 
 int  nvg_tot = 0;
 int  ntrg_tot = 0;
@@ -234,6 +250,7 @@ void gv(int n=1, int nve=100, int nback1=0, int nback2=0)
   hld1.Clear();
   hld2.Clear();
   hld3.Clear();
+  hld4.Clear();
   BookHistsV(nve);
 
   if (ali)
@@ -681,7 +698,7 @@ void rec_vfind()
   int nadd = 0;
   int nprong = nuse + 1 - neutral_primary;
   
-  if ( nprong > 2 ) nadd = ali->ProbVertex3(ProbMinV3);
+  if ( nprong > 2 ) nadd = ali->ProbVertexN(ProbMinVN);
 
   int nvgood = 0;
   int nvgoodm = 0;
@@ -970,8 +987,7 @@ void rec_all()
   int nadd = 0;
   int nprong = nuse + 1 - neutral_primary;
   
-  if ( nprong == 3 ) nadd = ali->ProbVertex3(ProbMinV3);
-  if ( nprong == 4 ) nadd = ali->ProbVertex4(ProbMinV4);
+  if (nprong > 2) nadd = ali->ProbVertexN(ProbMinVN);
 
   nvgood = 0;
   nvgoodm = 0;
@@ -1069,6 +1085,7 @@ void BookHistsV(int nve)
   if (!hp[18]) hp[18] = new TH1F("Hist_Vt_AngleV","RMS track-track angle, mrad", 100, 0.,1000.);
   if (!hp[20]) hp[20] = new TH1F("Hist_Vt_Angle","Track angle, mrad", 100, 0.,1000.);
   if (!hp[21]) hp[21] = new TH1F("Hist_Vt_Momen","Track momentum, GeV/c", 100, 0.,20.);
+  if (!hp[22]) hp[22] = new TH1F("Hist_Vt_Ntracks","Number of tracks at vertex", 20, 0.,20.);
 
   hld1.Add(hp[0]);
   hld1.Add(hp[1]);
@@ -1095,6 +1112,8 @@ void BookHistsV(int nve)
   hld3.Add(hp[14]);
   hld3.Add(hp[18]);
 
+  hld4.Add(hp[22]);
+
   for (int i=0; i<22; i++)
     if (hp[i]) hlist.Add(hp[i]);
 }
@@ -1119,6 +1138,7 @@ void FillHistsV(Vertex &v)
   }
   hp[14]->Fill(v.rmsDistAngle());
   hp[18]->Fill(v.angle()*1000.);
+  hp[22]->Fill(v.ntracks());
 }
 ///-----------------------------------------------------------------------
 void FillHistsGen()
@@ -1314,6 +1334,56 @@ void DrawHistsV()
     cv3->cd(i+1);
     if (hld3.At(i)) hld3.At(i)->Draw();
   }
+
+  TCanvas *cv4 = new TCanvas("Vertex_reconstruction_4","Vertex reconstruction (ntracks)", 600, 760);
+  n = hld4.GetEntries();
+  if (n < 2)
+  {
+  }
+  else if (n < 3)
+  {
+    cv4->Divide(1,2);    
+  }
+  else if (n < 4)
+  {
+    cv4->Divide(1,3);    
+  }
+  else if (n < 5)
+  {
+    cv4->Divide(2,2);    
+  }
+  else if (n < 6)
+  {
+    cv4->Divide(2,3);    
+  }
+  else if (n < 7)
+  {
+    cv4->Divide(2,3);    
+  }
+  else if (n < 8)
+  {
+    cv4->Divide(2,4);    
+  }
+  else if (n < 9)
+  {
+    cv4->Divide(2,4);    
+  }
+  else if (n < 10)
+  {
+    cv4->Divide(3,3);    
+  }
+  else if (n < 11)
+  {
+    cv4->Divide(2,5);    
+  }
+  else
+  {
+    cv4->Divide(3,5);    
+  }
+  for(int i=0; i<n; i++) {
+    cv4->cd(i+1);
+    if (hld4.At(i)) hld4.At(i)->Draw();
+  }
 }
 ///------------------------------------------------------------
 void ClearHistsV()
@@ -1470,3 +1540,43 @@ TPolyMarker3D *seg_mark(EdbSegP *seg)
 }
 ///------------------------------------------------------------
 void d() { DrawHistsV();}
+//---------------------------------------------------------
+void dsv( float binx=6, float bint=10 )
+{
+  EdbSegP *seg=0;     // direction
+
+  TObjArray *arrV  = new TObjArray();  // vertexes
+  TObjArray *arr   = new TObjArray();  // segments
+  TObjArray *arrtr = new TObjArray();  // tracks
+
+  int ntrMin=3;
+  int nvtx = ali->eVTX->GetEntries();
+  EdbVertex *v = 0;
+  for(int iv=0; iv<nvtx; iv++)  {   
+    v = (EdbVertex *)(ali->eVTX->At(iv));
+    if(!v)            continue;
+    if(v->N()<ntrMin) continue;
+
+    arrV->Add(v);
+
+    int ntr = v->N();
+    printf("ntr=%d\n",ntr);
+    for(int i=0; i<ntr; i++) {
+      EdbTrackP *track = v->GetTrack(i);
+      //track->Print();
+      arrtr->Add(track);
+      ali->ExtractDataVolumeSeg( *track,*arr,binx,bint );
+    }
+
+  }
+
+  gStyle->SetPalette(1);
+  if(!ds)
+    ds=new EdbDisplay("display-t",-26000.,30000.,-56000.,52000.,0.,100000.);
+  
+  ds->SetArrSegP( arr );
+  ds->SetArrTr( arrtr );
+  ds->SetArrV( arrV );
+  ds->Draw();
+}
+
