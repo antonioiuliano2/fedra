@@ -37,6 +37,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t      eFlag;
   Float_t    eVolume;          // segment volume
   Float_t    eDZ;              // the length of segment along z-axis
+  Float_t    eDZem;            // the length of segment along z-axis in the emulsion
 
  public:
   EdbSegP();
@@ -62,6 +63,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   void     SetZ( float z )   { eZ=z; }
   void     SetDZ( float dz )   { eDZ=dz; }
+  void     SetDZem( float dz )   { eDZem=dz; }
   void     SetID( int id )   { eID=id; }
   void     SetPID( int pid ) { ePID=pid; }
   void     SetFlag( int flag ) { eFlag=flag; }
@@ -77,6 +79,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t  W()      const {return eW;}
   Float_t  Z()      const {return eZ;}
   Float_t  DZ()     const {return eDZ;}
+  Float_t  DZem()   const {return eDZem;}
   Float_t  Prob()   const {return eProb;}
   Float_t  Volume() const {return eVolume;}
 
@@ -103,7 +106,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void       Print( Option_t *opt="") const;
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
  
-  ClassDef(EdbSegP,4)  // segment
+  ClassDef(EdbSegP,5)  // segment
 };
 
 //______________________________________________________________________________
