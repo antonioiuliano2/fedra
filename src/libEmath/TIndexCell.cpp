@@ -29,8 +29,9 @@ TIndexCell::TIndexCell(const TIndexCell &c)
   // Copy constructor - do real copy of all objects
   fValue = c.Value();
   if(c.List()) {
-    fList = new TObjArray(c.GetEntries());
-    for(int i=0; i<c.GetEntries(); i++)  {
+    int ncc = c.GetEntries();
+    fList = new TObjArray(ncc);
+    for(int i=0; i<ncc; i++)  {
       fList->Add(new TIndexCell( *(c.At(i))));
       fList->SetName((c.List())->GetName());
     }
@@ -48,7 +49,8 @@ TIndexCell::~TIndexCell()
 void TIndexCell::Delete()
 { 
   if(fList) {
-    for(int i=0; i<GetEntries(); i++ )  {
+    int ncc = GetEntries();
+    for(int i=0; i<ncc; i++ )  {
       At(i)->Delete();
     }
     fList->Delete();
@@ -62,11 +64,12 @@ void TIndexCell::Shift( Int_t level, Long_t vshift[] )
 { 
   // Shift al values of level i on the vshift[i]
 
+  int ncc = GetEntries();
   if(level==1)  
-    for(int i=0;i<GetEntries();i++) At(i)->Shift(vshift[0]);
+    for(int i=0;i<ncc;i++) At(i)->Shift(vshift[0]);
   else if( level>1 ) {
     if(!fList)         return;
-    for(int i=0; i<GetEntries(); i++ )  {
+    for(int i=0; i<ncc; i++ )  {
       At(i)->Shift(vshift[0]); 
       At(i)->Shift(level-1,vshift+1);
     }
@@ -173,11 +176,12 @@ void TIndexCell::DropButFirst(int level)
   // drop all elements except of first one in all cells on the level
 
   if(!fList) return;
+  int ncc=GetEntries();
   if(level==0) {
-    if(GetEntries()<2) return;
-    for(int i=GetEntries()-1; i>0; i--)  Drop(i);
+    if(ncc<2) return;
+    for(int i=ncc-1; i>0; i--)  Drop(i);
   } else if(level>0) {
-    for(int i=0; i<GetEntries(); i++)  At(i)->DropButFirst(level-1);
+    for(int i=0; i<ncc; i++)  At(i)->DropButFirst(level-1);
   }
 }
 
@@ -187,11 +191,12 @@ void TIndexCell::DropButLast(int level)
   // drop all elements except of last one in all cells on the level
 
   if(!fList) return;
+  int ncc=GetEntries();
   if(level==0) {
-    if(GetEntries()<2) return;
-    for( int i=GetEntries()-2; i>=0; i-- )  Drop(i);
+    if(ncc<2) return;
+    for( int i=ncc-2; i>=0; i-- )  Drop(i);
   } else if(level>0) {
-    for(int i=0; i<GetEntries(); i++)  At(i)->DropButLast(level-1);
+    for(int i=0; i<ncc; i++)  At(i)->DropButLast(level-1);
   }
 }
 
@@ -201,11 +206,12 @@ int TIndexCell::DropCouples(int level)
   // drop all overoccupated cells on the level
   int count=0;
   if(!fList) return count;
+  int ncc=GetEntries();
   if(level==0) {
-    for(int i=GetEntries()-1; i>-1; i--)  
-      if(GetEntries()>1) { Drop(i); count++;}
+    for(int i=ncc-1; i>-1; i--)  
+      if(ncc>1) { Drop(i); count++;}
   } else if(level>0) {
-    for(int i=0; i<GetEntries(); i++)  count+=At(i)->DropCouples(level-1);
+    for(int i=0; i<ncc; i++)  count+=At(i)->DropCouples(level-1);
   }
   return count;
 }
@@ -276,8 +282,8 @@ void TIndexCell::Print(Option_t *opt ) const
   printf("%ld\n", fValue);
 
   if(!fList) return;
-
-  for(int i=0; i<fList->GetEntries(); i++) {
+  int ncc=GetEntries();
+  for(int i=0; i<ncc; i++) {
     printf(" %s = ",fList->GetName());
     ((TIndexCell*)fList->At(i))->Print("");
   }
@@ -312,7 +318,8 @@ Int_t TIndexCell::Nlevels() const
   int n=0,k=0;
   if(!fList) return 0;
   else {
-    for(int i=0; i<GetEntries(); i++)  {
+    int ncc = GetEntries();
+    for(int i=0; i<ncc; i++)  {
       k = At(i)->Nlevels();
       if(k>n) n=k;
     }
@@ -325,8 +332,9 @@ Int_t TIndexCell::N() const
 {
   // return total number of basic cells (last level where fList=0)
   int n=0;
+  int ncc = GetEntries();
   if(!fList) n++;
-  else for(int i=0; i<GetEntries(); i++)  n += At(i)->N();
+  else for(int i=0; i<ncc; i++)  n += At(i)->N();
   return n;
 }
 
@@ -336,9 +344,10 @@ Int_t TIndexCell::N( int level ) const
   // return total number of cells (nodes) on given level
   int n=0;
   if(!fList)         return 0;
-  if(level==1)       return GetEntries();
+  int ncc = GetEntries();
+  if(level==1)       return ncc;
   else if(level>1) {
-    for(int i=0; i<GetEntries(); i++)  n += At(i)->N(level-1);
+    for(int i=0; i<ncc; i++)  n += At(i)->N(level-1);
   }
   return n;
 }
@@ -360,7 +369,8 @@ Long_t TIndexCell::MinV( Int_t level, Int_t vind[] ) const
   Long_t   n=kMaxInt, k=kMaxInt;
   if(fList) {
     if(level>0) {
-      for(int i=0; i<GetEntries(); i++) {
+      int ncc = GetEntries();
+      for(int i=0; i<ncc; i++) {
 	k=At(i)->MinV(level-1,vind+1);
 	if(n > k) {
 	  n=k;
@@ -389,7 +399,8 @@ Long_t TIndexCell::MaxV( Int_t level, Int_t vind[]  ) const
   Long_t   n=-kMaxInt, k=-kMaxInt;
   if(fList) {
     if(level>0) {
-      for(int i=0; i<GetEntries(); i++) {
+      int ncc = GetEntries();
+      for(int i=0; i<ncc; i++) {
 	k=At(i)->MaxV(level-1,vind+1);
 	if(n < k) {
 	  n=k;
@@ -414,6 +425,8 @@ Int_t TIndexCell::MinN( Int_t level, Int_t vind[] ) const
 {
   // return population of the mimimal populated cell on the given level
   // and cell address
+
+  //TODO: check this routine
 
   if(level==0)  
     if(fList) return GetEntries();
@@ -445,6 +458,8 @@ Int_t TIndexCell::MaxN( Int_t level, Int_t vind[] ) const
 {
   // return population of the maximal populated cell on the given level 
   // and cell address
+
+  //TODO: check this routine
 
   if(level==0)
     if(fList) return GetEntries();
@@ -502,7 +517,8 @@ void TIndexCell::Sort(Int_t upto = kMaxInt)
 {
   if(fList) {
     fList->Sort();
-    for(int i=0; i<GetEntries(); i++) At(i)->Sort();
+    int ncc = GetEntries();
+    for(int i=0; i<ncc; i++) At(i)->Sort();
   }
 }
 
@@ -527,7 +543,8 @@ void TIndexCell::SetName(const char *varlist)
 
   if(!newvar) return;
 
-  for(int i=0; i<fList->GetEntries(); i++) 
+  int ncc = GetEntries();
+  for(int i=0; i<ncc; i++) 
     ((TIndexCell*)fList->At(i))->SetName(newvar);
 }
 
