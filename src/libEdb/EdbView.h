@@ -52,7 +52,7 @@ private:
   EdbAffine2D   eAff;    // affine transformation for the view 
                          // (make sence for SySal-converted data only)
 
-  TArrayF  *eZlevels;    //-> z of each taken view (frame)
+  TArrayF  *eZlevels;    //! z of each taken view (frame)
 
 public:
   EdbViewHeader();
@@ -108,7 +108,7 @@ public:
 
   void     Print() const;
 
-  ClassDef(EdbViewHeader,1)  // view identification
+  ClassDef(EdbViewHeader,2)  // view identification
 };
 
 //______________________________________________________________________________

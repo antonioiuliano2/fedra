@@ -40,6 +40,8 @@ public:
 
   int       GetID()     const { return eFrameID; }
   float     GetZ()      const { return eZframe;  }
+  int       GetNcl()    const { return eNcl;  }
+  int       GetNpix()   const { return eNpix;  }
   EdbImage *GetImage()  const { return eImage;   }
 
   void    Print( Option_t *opt="" ) const;
