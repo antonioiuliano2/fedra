@@ -196,7 +196,7 @@ void EdbPointsBox2D::Substruct( EdbPointsBox2D *b )
 }
 
 //_____________________________________________________________________________
-Float_t EdbPointsBox2D::Xmin()
+Float_t EdbPointsBox2D::Xmin() const
 {
   int n=N();
   if( n<1 )                 return 0;
@@ -206,7 +206,7 @@ Float_t EdbPointsBox2D::Xmin()
 }
 
 //_____________________________________________________________________________
-Float_t EdbPointsBox2D::Xmax()
+Float_t EdbPointsBox2D::Xmax() const
 {
   int n=N();
   if( n<1 )                 return 0;
@@ -216,7 +216,7 @@ Float_t EdbPointsBox2D::Xmax()
 }
 
 //_____________________________________________________________________________
-Float_t EdbPointsBox2D::Ymin()
+Float_t EdbPointsBox2D::Ymin() const
 {
   int n=N();
   if( n<1 )                 return 0;
@@ -226,7 +226,7 @@ Float_t EdbPointsBox2D::Ymin()
 }
 
 //_____________________________________________________________________________
-Float_t EdbPointsBox2D::Ymax()
+Float_t EdbPointsBox2D::Ymax() const
 {
   int n=N();
   if( n<1 )                 return 0;

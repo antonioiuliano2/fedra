@@ -21,7 +21,6 @@ class TIndexCell;
 class EdbVTA;
 class EdbVertex;
 
-
 //______________________________________________________________________________
 class EdbSegP : public TObject, public EdbTrack2D {
  
@@ -53,7 +52,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   TMatrixD   *eCOV;            // covariance matrix of the parameters (x,y,tx,ty,p)
 
  public:
-  EdbSegP();
+  EdbSegP() {Set0();}
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0)
     { Set(id,x,y,tx,ty,w,flag); eCOV=0; eZ=0; eTrack=-1; }
   EdbSegP(EdbSegP &s) { eCOV=0; Copy(s); }
@@ -65,6 +64,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
   bool       IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
 
+  void    Set0();
   void    Copy(const EdbSegP &s);
   void    Clear() { eCOV->Clear(); }
 
@@ -167,7 +167,6 @@ class EdbSegP : public TObject, public EdbTrack2D {
 };
 
 //______________________________________________________________________________
-
 class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
  
  private:
@@ -221,7 +220,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Float_t       Z()       const { return eZ; }
   float        DZ()       const {return eDZkeep;}
   Int_t         N()       const { return GetN(); }
-  EdbPoint     *At(int i)       { return (EdbPoint*)GetSegment(i); }
+  EdbPoint     *At(int i) const      { return (EdbPoint*)GetSegment(i); }
  
   // other finctions
   void   Print( Option_t *opt="") const;

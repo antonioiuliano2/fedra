@@ -26,14 +26,15 @@ ClassImp(EdbPatternsVolume)
 using namespace MATRIX;
 
 //______________________________________________________________________________
-EdbSegP::EdbSegP() 
+void EdbSegP::Set0() 
 {
   ePID=0;
   eID=0;
-  eVid[0]=0;
-  eVid[1]=0;
+  eVid[0]=eVid[1]=0;
+  eAid[0]=eAid[1]=0;
   eFlag=0;
   eTrack=-1;
+  eX=eY=eZ=eTX=eTY=eSZ=0;
   eProb=0;
   eW=0;
   eVolume=0;
@@ -112,7 +113,6 @@ void EdbSegP::Copy(const EdbSegP &s)
   SetTrack(s.Track());
   SetMC( s.MCEvt(), s.MCTrack() );
 }
-
 
 ///______________________________________________________________________________
 void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)

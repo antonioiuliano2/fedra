@@ -156,7 +156,7 @@ class EdbPointsBox2D : public EdbPoint3D {
   virtual void Print( Option_t *opt="") const;
 
   virtual Int_t        N()            const = 0;
-  virtual EdbPoint   *At( int i )          = 0;
+  virtual EdbPoint   *At( int i )     const     = 0;
 
   virtual Float_t    X()  const        {return 0;};
   virtual Float_t    Y()  const        {return 0;};
@@ -173,10 +173,10 @@ class EdbPointsBox2D : public EdbPoint3D {
   virtual void GetKeep( EdbAffine2D &aff );
   virtual void SetKeep(float a11,float a12,float a21,float a22,float b1,float b2);
 
-  virtual Float_t Xmin();
-  virtual Float_t Xmax();
-  virtual Float_t Ymin();
-  virtual Float_t Ymax();
+  virtual Float_t Xmin() const;
+  virtual Float_t Xmax() const;
+  virtual Float_t Ymin() const;
+  virtual Float_t Ymax() const;
 
   virtual Float_t DeltaX() { return Xmax()-Xmin(); }
   virtual Float_t DeltaY() { return Ymax()-Ymin(); }

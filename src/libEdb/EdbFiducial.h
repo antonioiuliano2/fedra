@@ -70,7 +70,7 @@ class EdbMarksBox : public TObject, public EdbPointsBox2D {
 
   // mandatory virtual functions:
   Int_t         N()       const { return GetN(); }
-  EdbPoint     *At(int i)       { return (EdbPoint*)GetMark(i); }
+  EdbPoint     *At(int i) const      { return (EdbPoint*)GetMark(i); }
 
   void  Draw(int style=23, int   col=4, float size=1., float tsiz=.03 );
 
