@@ -96,7 +96,7 @@ public:
 
   void       Print( Option_t *opt=0) const;
   
-  ClassDef(EdbSegment,2)  // segment of the track
+  ClassDef(EdbSegment,1)  // segment of the track
 };
 
 //______________________________________________________________________________
@@ -126,7 +126,7 @@ class EdbTrack : public EdbSeg3D {
 
   void       Print( Option_t *opt=0) const;
   
-  ClassDef(EdbTrack,2)  // Track linked from segments
+  ClassDef(EdbTrack,1)  // Track linked from segments
 };
 
 #endif /* ROOT_EdbSegment */
