@@ -6,11 +6,63 @@
 //                                                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TRandom.h"
 #include "EdbBrickGen.h"
 
 ClassImp(EdbBrickGen)
+ClassImp(EdbBeamGen)
 
 //____________________________________________________________________________________
+EdbBeamGen::EdbBeamGen()
+{
+  eLimits=0;
+  eMass=0.124;
+
+  eX0=0; eSigmaX=1;
+  eY0=0; eSigmaY=1;
+  eZ0=0; eSigmaZ=1;
+
+  eTX0=0; eSigmaTX=1;
+  eTY0=0; eSigmaTY=1;
+
+  eP0=4.; eSigmaP=1;
+}
+
+//____________________________________________________________________________________
+EdbTrackP *EdbBeamGen::NextTrack(int id)
+{
+  float x,y,tx,ty;
+  EdbTrackP *tr = new EdbTrackP();
+
+  int maxcycle=10000;
+  int i;
+  for(i=0; i<maxcycle; i++) {
+    gRandom->Rannor(x,y); 
+    x = eX0 + eSigmaX*x; 
+    y = eY0 + eSigmaY*y; 
+    if(!eLimits)               break;
+    if(eLimits->IsInside(x,y)) break;
+  }
+  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinit cycle\n");
+
+  for(i=0; i<maxcycle; i++) {
+    gRandom->Rannor(tx,ty); 
+    tx = eTX0 + eSigmaTX*tx; 
+    ty = eTY0 + eSigmaTY*ty; 
+    if(tx*tx+ty*ty<1.)    break;
+  }  
+  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinit cycle\n");
+
+  tr->Set(id, x, y, tx, ty, 1, 0);
+
+  tr->SetZ(eZ0);
+  tr->SetP(eP0);
+  tr->SetM(eMass);
+  return tr;
+}
+
+
+//====================================================================================
 EdbBrickGen::EdbBrickGen()
 {
   eBrick=0;

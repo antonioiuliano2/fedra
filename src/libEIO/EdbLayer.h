@@ -46,6 +46,7 @@ class EdbLayer : public TObject {
   float Ymax() const {return Y()+DY();}
   float Shr()  const {return eShr;}
   bool  IsInside(float x, float y, float z);
+  bool  IsInside(float x, float y);
 
   void SetXY(float x, float y )    { eX=x; eY=y; }
   void SetDXDY(float dx, float dy) { eDX=dx; eDY=dy; }

@@ -10,6 +10,9 @@ make $1
 cd ../libEdb
 make $1
 
+cd ../libEGA
+make $1
+
 cd ../libEdr
 make $1
 

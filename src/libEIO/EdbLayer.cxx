@@ -28,6 +28,16 @@ bool EdbLayer::IsInside(float x, float y, float z)
 }
 
 ///______________________________________________________________________________
+bool EdbLayer::IsInside(float x, float y)
+{
+  if( x<Xmin() )  return false;
+  if( x>Xmax() )  return false;
+  if( y<Ymin() )  return false;
+  if( y>Ymax() )  return false;
+  return true;
+}
+
+///______________________________________________________________________________
 void EdbLayer::Print()
 {
   printf("Layer:\t%d\n",eID);

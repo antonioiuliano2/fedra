@@ -45,6 +45,10 @@ class EdbDisplay: public EdbDisplayBase {
 	     Float_t z0, Float_t z1) : 
     EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
 
+  EdbDisplay(const char *title, EdbLayer &la) : 
+    EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
+		   la.Zmin(), la.Zmax())  { Set0(); };
+
   void Set0();
 
   void Refresh();

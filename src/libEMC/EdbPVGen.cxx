@@ -202,6 +202,11 @@ int EdbPVGen::TrackMC2( EdbTrackP   &tr,
 			int eloss_flag, float PGap)
 {
   // Segments generation for single MC track with taking into account MS and energy loss
+  // tr         - input-output track
+  // lim        - volume limits for segments generation
+  // eloss_flag - 0 - no energy loss
+  //              1 - average Pb energy loss
+  // PGap       - gap probability = (1-efficiency)
 
   int ic=0;
   EdbPatternsVolume *vol = GetVolume();
@@ -223,8 +228,7 @@ int EdbPVGen::TrackMC2( EdbTrackP   &tr,
 			    tr.M(), eloss_flag );
     
     if( gRandom->Rndm() < (double)PGap )            continue;
-    if( s.TX()>1.)                                  break;
-    if( s.TY()>1.)                                  break;
+    if( s.TX()*s.TX()+s.TY()*s.TY()>1.)             break;
 
     s.SetPID(pat->PID());
     tr.AddSegment( pat->AddSegment(s) );
@@ -258,34 +262,32 @@ float EdbPVGen::PropagateSegment( EdbSegP &s, float dz,
 
   float tx=s.TX(), ty=s.TY();
   float x =s.X(),   y=s.Y(), z=s.Z();
-  float dx=0., dy=0., dtx=0., dty=0.;
-  float cost  = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
-  float dzm   = dz*cost;
-  float dzPb  = dzm*1000./1300.;     //TODO
+  double dx=0., dy=0., dtx=0., dty=0.;
+  double cost  = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
+  double dzm   = dz*cost;
+  double dzPb  = dzm*1000./1300.;     //TODO
 
-  float p=s.P(), pa=s.P(), pn, de = 0.;
+  float p=s.P(), pa=s.P(), pn=0, de = 0.;
   Float_t e = TMath::Sqrt((double)p*(double)p+(double)m*(double)m);
 
-  if (eloss_flag == 1)    {
-    de = EdbPhysics::DeAveragePb(s.P(), m, TMath::Abs(dzPb));
-    if ( de < 0.) de = 0;
-    e  = e - de;
-    if (e < m) e = m;
-    pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
-    pa = 0.5*(p+pn);
-    p  = pn;
-  }
+  if     (eloss_flag == 1) de = EdbPhysics::DeAveragePb(s.P(), m, TMath::Abs(dzPb));
+  else if(eloss_flag == 2) de = EdbPhysics::DeLandauPb(p, m, TMath::Abs(dzPb));
+  else                     de = 0;
+  if(de<0)                 de = 0;
+  e  = e - de;
+  if (e < m) e = m;
+  pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+  pa = 0.5*(p+pn);
+  p  = pn;
 
   float r1,r2, teta0;
   if(doMS) {
     teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, X0);
     teta0 = TMath::Sqrt(teta0);
-    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    do  { r2 = gRandom->Gaus();} while (TMath::Abs(r2) > 50.);
+    do  { gRandom->Rannor(r1,r2);} while (TMath::Abs(r1) > 50. || TMath::Abs(r2) > 50.);
     dx = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
     dtx = r2*teta0;
-    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    do  { r2 = gRandom->Gaus();} while (TMath::Abs(r2) > 50.);
+    do  { gRandom->Rannor(r1,r2);} while (TMath::Abs(r1) > 50. || TMath::Abs(r2) > 50.);
     dy = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
     dty = r2*teta0;
   }
@@ -295,7 +297,7 @@ float EdbPVGen::PropagateSegment( EdbSegP &s, float dz,
   s.SetTX(tx + dtx );
   s.SetTY(ty + dty );
   s.SetZ(z+dz);
-  s.SetDZ(300.);
+  s.SetDZ(300.);                 //TODO
   s.SetP(p);
 
   return de;
@@ -325,10 +327,21 @@ void EdbPVGen::SmearSegment( EdbSegP &s, EdbScanCond &cond )
   vt.Rotate( phi );
   vx.Rotate( phi );
 
+  float sxd  = s.X()-vx.X();
+  float syd  = s.Y()-vx.Y();
+  float stxd = s.TX()-vt.X();
+  float styd = s.TY()-vt.Y();
+
   s.SetX(  vx.X() );
   s.SetY(  vx.Y() );
   s.SetTX( vt.X() );
   s.SetTY( vt.Y() );
+
+  //if (x_y_correlation)
+  s.SetErrorsCOV(sxd*sxd, syd*syd, 0., stxd*stxd, styd*styd, 0.);
+  //else
+  //s.SetErrors(sxd*sxd, syd*syd, 0., stxd*stxd, styd*styd, 0.);
+
 }
 
 //______________________________________________________________________________
