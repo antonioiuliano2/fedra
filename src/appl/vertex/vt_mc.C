@@ -84,7 +84,8 @@ void VertexMC()
       sz  = 0.;
       stx = scan->SigmaTX(seg->TX());
       sty = scan->SigmaTY(seg->TY());
-
+      seg->SetErrors(sx*sx,sy*sy,sz*sz,stx*stx,sty*sty,0.001);
+      
       x  = gRandom->Gaus(seg->X(),   sx);
       y  = gRandom->Gaus(seg->Y(),   sy);
       z  = gRandom->Gaus(seg->Z(),   sz);
@@ -108,12 +109,7 @@ void VertexMC()
            << endl;    */
 
       p = new VtVector( x,  y,  z,  tx,  ty, 1.);
-      c = new CMatrix();
-      c->set_x(sx*sx);   //Sx
-      c->set_y(sy*sy);   //Sy
-      c->set_tx(stx*stx);  //Stx
-      c->set_ty(sty*sty);  //Sty
-      c->set_p(0.1*0.1);   //Sp
+      c = new CMatrix(seg->COV());
       trlist[NTrack++] = new Track(*p,*c);
       delete p;
       p = 0;

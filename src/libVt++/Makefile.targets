@@ -29,9 +29,7 @@ alib: objdir_check depend $(libname).a
 $(libname).so: $(OBJS) $(cintdict).o
 	@echo "--------> Build $(project) shared library "
 	$(CXX) $(soflags) $^ $(CERNLIB) $(syslibpath) $(shell $(ROOTSYS)/bin/root-config --libs) -o $@
-	cd $(ldir)
-	ln -sf $(libbase).so libvt.so
-	cd $(PWD)
+	cd $(ldir); ln -sf $(libbase).so libvt.so; cd $(PWD)
 
 $(libname).a: $(OBJS) $(cintdict).o
 	@echo "--------> Build $(project) static library "

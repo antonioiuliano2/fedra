@@ -26,7 +26,7 @@ $(LIB_TGT): $(OBJ)
 
 EdrCint.cxx: $(EdrCint)
 	@echo "Generating dictionary $@..."
-	rootcint -f $@ -c -I$(INC_DIR) $^
+	rootcint   -f $@ -c -I$(INC_DIR) $^
 
 clean:
 	@rm -fr core *.bak *.o $(LIB_TGT) *.log *.out *Cint.cxx *Cint.h *~

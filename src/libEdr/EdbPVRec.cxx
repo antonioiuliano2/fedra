@@ -680,7 +680,7 @@ int EdbPatCouple::Align()
     CalculateAffXYZ(Zlink());
 
     Pat1()->Transform(GetAff());
-    if( Pat1()->DiffAff(GetAff()) < Cond()->SigmaX(0)/10. ) break;  // stop iterations
+    if( Pat1()->DiffAff(GetAff()) < Cond()->SigmaX(0)/20. ) break;  // stop iterations
   }
 
   vdiff[0]=vdiff[1]=vdiff[2]=vdiff[3]=1;
@@ -1455,7 +1455,11 @@ int EdbPVRec::MakeTracksTree()
 {
   EdbSegP *seg;
   EdbSegP *s0=0;
-  EdbSegP *tr = new EdbSegP();
+  EdbTrackP *track = new EdbTrackP();
+  EdbSegP *tr = (EdbSegP*)track;
+  track->AddSegment(*tr);
+  track->Clear();
+
   int nseg,trid,npl,n0;
   float xv=X();
   float yv=Y();
@@ -1463,7 +1467,7 @@ int EdbPVRec::MakeTracksTree()
   TFile fil("linked_tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
-  TClonesArray *segments=new TClonesArray("EdbSegP",100);
+  TClonesArray *segments=track->S()->GetSegments();
 
   tracks->Branch("trid",&trid,"trid/I");
   tracks->Branch("nseg",&nseg,"nseg/I");
@@ -1501,16 +1505,21 @@ int EdbPVRec::MakeTracksTree()
       seg->SetPID( Pid(vid) );
       if(seg->Flag()<0) n0++;
 
-      if(is==0)  tr = new EdbSegP(*seg);
-      else       {
-	s0 = new EdbSegP(*tr);
-	EdbSegP::LinkMT(s0,seg,tr);
-	delete s0;
-      }
-      new((*segments)[is])  EdbSegP( *seg );
+      track->AddSegment(*seg);
+      //      track->Fit();
+
+//        if(is==0)  tr = new EdbSegP(*seg);
+//        else       {
+//  	s0 = new EdbSegP(*tr);          
+//  	EdbSegP::LinkMT(s0,seg,tr);
+//  	delete s0;
+//        }
+//        new((*segments)[is])  EdbSegP( *seg );
     }
+
+    ((EdbSegP*)track)->Copy(*(track->GetSegment(0)));
     tracks->Fill();
-    segments->Clear();
+    track->Clear();
     ntr++;
   }
   tracks->Write();
@@ -1518,7 +1527,6 @@ int EdbPVRec::MakeTracksTree()
   printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
   return ntr; 
 }
-
 
 //______________________________________________________________________________
 int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff)

@@ -85,6 +85,8 @@ namespace VERTEX {
 //    Track(const TrackIf& rhs, double ms = 0., double msCC = 0.);
 #endif
     ///
+   void set( double x,double y,double z,double tx,double ty,double p, 
+	const MATRIX::CMatrix& c);
     Track& operator=(const Track& rhs);
 
     /**@name --- TrackIf access methods --- */

@@ -1754,13 +1754,15 @@ void EdbDataProc::LinkTracks( int alg )
     ali->Link();
   }
 
-  ali->FillTracksCell();
+  ali->FillTracksCell();  // TODO: very long operation - speedup
 
   TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
+  printf("5\n");
   ali->MakeTracksTree();
+  printf("6\n");
 }
 
 ///______________________________________________________________________________

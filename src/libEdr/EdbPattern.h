@@ -14,9 +14,10 @@
 #include "TArrayL.h"
 #include "EdbVirtual.h"
 #include "vt++/CMatrix.hh"
- 
+
 class EdbAffine2D;
 class TIndexCell;
+
 using namespace MATRIX;
 
 //______________________________________________________________________________
@@ -45,29 +46,38 @@ class EdbSegP : public TObject, public EdbTrack2D {
  public:
   EdbSegP();
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0)
-    { Set(id,x,y,tx,ty,w,flag); }
-  virtual ~EdbSegP(){ if(eCOV){delete eCOV; eCOV=0;} }
+    { Set(id,x,y,tx,ty,w,flag); eCOV=0; }
+  virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
+  EdbSegP(EdbSegP &s) { eCOV=0; Copy(s); }
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
   void MergeTo( EdbSegP &s );
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
 
+  void    Copy( EdbSegP &s);
+
   void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
 
-  void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2 )
+  void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=0 )
     { if(!eCOV) eCOV = new CMatrix();
       else eCOV->clear();
       eCOV->set_x(sx2); 
       eCOV->set_y(sy2); 
       eCOV->set_tx(stx2);
       eCOV->set_ty(sty2);
-      eCOV->set_p(0.);
+      eCOV->set_p(sp2);
       eSZ = sz2;
     }
 
-  void SetCOV( CMatrix &cov) { if(eCOV) delete eCOV; eCOV = new CMatrix(cov); }
+  void SetCOV( CMatrix &cov) { 
+    if(!(&cov)) return;
+    if(eCOV) delete eCOV; 
+    eCOV = new CMatrix(cov); }
+
+  CMatrix &COV() const {return *eCOV;}
+  void     SetSZ( float sz )   { eSZ=sz; }
 
   void     SetZ( float z )   { eZ=z; }
   void     SetDZ( float dz )   { eDZ=dz; }
@@ -76,6 +86,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void     SetPID( int pid ) { ePID=pid; }
   void     SetFlag( int flag ) { eFlag=flag; }
   void     SetW( float w )  { eW=w; }
+  void     SetP( float p )  { eP=p; }
+  void     SetProb( float prob )  { eProb=prob; }
   void     SetVolume( float w )  { eVolume=w; }
   void     SetVid(int vid, int sid) { eVid[0]=vid; eVid[1]=sid; }
   void     SetAid(int a,   int v)   { eAid[0]=a; eAid[1]=v; }
@@ -86,6 +98,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t    PID()    const {return ePID;}
   Int_t    Flag()   const {return eFlag;}
   Float_t  W()      const {return eW;}
+  Float_t  P()      const {return eP;}
   Float_t  Z()      const {return eZ;}
   Float_t  DZ()     const {return eDZ;}
   Float_t  DZem()   const {return eDZem;}
@@ -96,6 +109,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    SY()  const  { if(!eCOV) return 0; return eCOV->y(); }
   Float_t    STX() const  { if(!eCOV) return 0; return eCOV->tx(); }
   Float_t    STY() const  { if(!eCOV) return 0; return eCOV->ty(); }
+  Float_t    SP()  const  { if(!eCOV) return 0; return eCOV->p(); }
   Float_t    SZ()  const  { return eSZ; }
   Int_t      Vid(int i) const 
     {if(i<0) return -1; if(i>1) return -1; return eVid[i];}
@@ -137,8 +151,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   void       SetZ(float z) { eZ=z; }
 
  public:
-  EdbSegmentsBox();
-  EdbSegmentsBox(float x0, float y0, float z0);
+  EdbSegmentsBox(int nseg=0);
+  EdbSegmentsBox(float x0, float y0, float z0, int nseg=0);
   virtual ~EdbSegmentsBox();
  
   void   AddSegment(EdbSegP &s);
@@ -189,16 +203,16 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 class EdbTrackP : public EdbSegP {
  
  private:
-  EdbSegmentsBox  *eS;    // array of segments
+  EdbSegmentsBox  *eS;    //! array of segments
   TArrayL         *eVid;  //! volume-wide segments id's
 
  public:
-  EdbTrackP();
+  EdbTrackP(int nseg=0);
   virtual ~EdbTrackP();
 
   EdbSegmentsBox *S() const { return eS; }
 
-  void     AddSegment(EdbSegP &s)  { if(eS) eS->AddSegment(s); }
+  void     AddSegment(EdbSegP &s)  { if(!eS) eS = new EdbSegmentsBox(); eS->AddSegment(s); }
   EdbSegP *GetSegment(int i) const {if(eS) return eS->GetSegment(i); else return 0; }
   int      N() const  {if(eS)  return eS->N(); else return 0; }
   void     Reset()    { if(eS) eS->Reset(); }
@@ -209,6 +223,8 @@ class EdbTrackP : public EdbSegP {
 
   TArrayL  *GetVid() const { return eVid; }
   void SetVid(int n) {if(eVid) delete eVid; eVid = new TArrayL(n);}
+
+  void Clear() {eS->Reset();}
 
   ClassDef(EdbTrackP,2)  // track consists of segments
 };

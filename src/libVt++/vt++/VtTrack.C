@@ -123,6 +123,19 @@ namespace VERTEX {
   }
 #endif
 
+  void Track::set( double x,double y,double z,double tx,double ty,double p, 
+	      const MATRIX::CMatrix& c) {
+    t_p[0] = x;
+    t_p[1] = y;
+    t_p[2] = z;
+    t_p[3] = tx;
+    t_p[4] = ty;
+    t_p[5] = p;
+    t_V.copy(c);
+    propagate(0.);           // propagate track to z=0.
+    t_G = t_V.dsinv();
+    t_GM.copy(t_V.dsinv(4)); // inverse without momentum
+  }
   
   //============================================================================
   // Track::operator=

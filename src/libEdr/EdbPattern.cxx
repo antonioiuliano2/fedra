@@ -30,7 +30,26 @@ EdbSegP::EdbSegP()
   eW=0;
   eVolume=0;
   eDZ=0;
+  eCOV=0;
 }
+
+
+///______________________________________________________________________________
+void EdbSegP::Copy(EdbSegP &s)
+{
+      SetPID(s.PID());
+      Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
+      SetCOV(s.COV());
+      SetSZ(s.SZ());
+      SetVid(s.Vid(0),s.Vid(1));
+      SetAid(s.Aid(0),s.Aid(1));
+      SetProb(s.Prob());
+      SetVolume(s.Volume());
+      SetDZ(s.DZ());
+      SetDZem(s.DZem());
+      SetP(s.P());
+}
+
 
 ///______________________________________________________________________________
 void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
@@ -236,17 +255,18 @@ void EdbSegP::Print(Option_t *opt) const
 } 
 
 //______________________________________________________________________________
-EdbSegmentsBox::EdbSegmentsBox()
+EdbSegmentsBox::EdbSegmentsBox(int nseg)
 {
-  eSegments = new TClonesArray("EdbSegP");
+  if(nseg>0) eSegments = new TClonesArray("EdbSegP",nseg);
+  else       eSegments = new TClonesArray("EdbSegP");
   Set0();
-
 }
  
 //______________________________________________________________________________
-EdbSegmentsBox::EdbSegmentsBox(float x0, float y0, float z0)
+EdbSegmentsBox::EdbSegmentsBox(float x0, float y0, float z0, int nseg)
 {
-  eSegments = new TClonesArray("EdbSegP");
+  if(nseg>0) eSegments = new TClonesArray("EdbSegP",nseg);
+  else       eSegments = new TClonesArray("EdbSegP");
   eX=x0;  eY=y0;  eZ=z0;
   eDZkeep=0;
 }
@@ -314,6 +334,7 @@ float EdbSegmentsBox::Diff(EdbSegmentsBox &p)
 {
   // return the mean difference beteween pattern elements
   int nseg = TMath::Min( N(), p.N() );
+
   if(nseg<1) return 0;
 
   EdbSegP *s1=0, *s2=0;
@@ -457,10 +478,11 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 
 //______________________________________________________________________________
 //______________________________________________________________________________
-EdbTrackP::EdbTrackP()
+EdbTrackP::EdbTrackP(int nseg=0)
 {
   eS=0;
   eVid = 0;  
+  if(nseg>0) eS = new EdbSegmentsBox(nseg);
 }
  
 //______________________________________________________________________________
