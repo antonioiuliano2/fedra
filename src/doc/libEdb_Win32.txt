@@ -19,7 +19,8 @@ aces in the path (I suggest to extract files in c:\root
    ed Root). Then modify the PATH environmental variables adding ;%ROOTSYS%\bin
    after the previous list.
   
-At this point you could start ROOT by typing "root" at the command prompt (from any folder). ROOT should work well.
+At this point you could start ROOT by typing "root" at the command prompt 
+(from any folder). ROOT should work well.
 
 
 2. Compiling Edb
@@ -197,4 +198,4 @@ The library has be written to be used with ROOT v.3 and higher. Unfortunately, s
 ---------------------------------------
 Take care that the library which reads the files *.rwc is registered.
 
-
+regsvr32 *.dll
