@@ -3049,7 +3049,6 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
     tr = (EdbTrackP*)(eTracks->At(i));
     tr->SetID(i);
     tr->SetFlag(0);
-    tr->SetSegmentsTrack();
     tr->SetNpl();
     tr->SetN0(0);
     v[0]= -(tr->Npl());
@@ -3059,9 +3058,28 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
   }
   cn.Sort();
 
-  int nsegTot=0;
   TIndexCell *cp=0, *c=0;
   int nn=cn.GetEntries();
+  for(int i=nn-1; i>=0; i--) {
+    cp = cn.At(i);                              // tracks with fixed npl
+    int np = cp->GetEntries();
+    for(int ip=np-1; ip>=0; ip--) {
+      c = cp->At(ip);                           // tracks with fixed Npl & Prob
+      int nt = c->GetEntries();
+      for(int it=0; it<nt; it++) {
+	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
+
+	tr->SetSegmentsTrack();
+
+      }
+    }
+  }
+
+
+  int nsegTot=0;
+  cp=0; 
+  c=0;
+  nn=cn.GetEntries();
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
     if( -(cp->Value()) > nplmax )    continue;
@@ -3076,7 +3094,14 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
-	if(tr->Flag()==-10) continue; 
+  	//if(tr->CheckAliasSegments()>0)   tr->SetFlag(-10);
+
+  	if(tr->RemoveAliasSegments()>0){
+  	  if(tr->N()<2)                       tr->SetFlag(-10);
+  	  else if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
+  	}
+
+	if(tr->Flag()==-10) continue;
 
 	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
@@ -3143,10 +3168,18 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
     if(probmax<probMin)          goto GAP;
 
     trind= segmax->Track();
-    if( trind >= 0 && trind<ntr ) {
+    if(trind==tr.ID()) printf("TRACK LOOP: %d %d \n",trind, tr.ID());
+
+    if( trind >= 0 && trind<ntr )    {
       EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
-      if( ttt->N() > tr.N() )     goto GAP;
-      else 	ttt->SetFlag(-10);
+      if(!ttt)  printf("BAD TRACK POINTER: %d\n", trind); 
+      
+      if(ttt->Flag()>=0) {
+	if( ttt->N() > tr.N() )     goto GAP;
+	else if( segmax->Z() > (ttt->TrackZmin()->Z()+300.) && 
+		 segmax->Z() < (ttt->TrackZmax()->Z()-300.) )     goto GAP; // do not attach in-middle segments
+	else 	ttt->SetFlag(-10);
+      }
     }
 
     if( !EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) goto GAP;

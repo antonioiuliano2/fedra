@@ -129,6 +129,7 @@ class EdbVertex: public TObject {
   EdbVertex *GetConnectedVertex(int i);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
+  float MaxAperture();
 
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
 
@@ -146,19 +147,52 @@ class EdbVertex: public TObject {
 
 //_________________________________________________________________________
 class EdbVertexRec: public TObject {
+
  private:
-  TObjArray *eEdbTracks;
+
+  TList        eVTA;          // vertex-track associations
+
+ public:
+  TObjArray   *eEdbTracks;
+  TObjArray   *eVTX;          // array of vertex
+  
+  Float_t     eZbin;          // z- granularity (default is 100 microns)
+  Float_t     eDZmax;         // maximum z-gap in the track-vertex group
+  Float_t     eDAmax;         // maximum angular aperture of vertex products
+  Float_t     eProbMin;       // minimum acceptable probability for chi2-distance between tracks
+  Float_t     eImpMax;        // maximal acceptable impact parameter (preliminary check)
+  Bool_t      eUseMom;        // use or not track momentum for vertex calculations
 
  public:
   EdbVertexRec();
-  virtual ~EdbVertexRec()
-  {
-   if (eEdbTracks)
-   {
-    delete eEdbTracks;
-    eEdbTracks = 0;
-   }
+  virtual ~EdbVertexRec();
+
+  int FindVertex();
+
+  void FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends );
+
+  int LoopVertex( TIndexCell &list1, TIndexCell &list2, 
+		  int zpos1, int zpos2);
+
+  float CheckImpact( EdbSegP *s1,   EdbSegP *s2,
+		     int zpos1,     int zpos2 );
+
+  int ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
+		  int zpos1,     int zpos2 );
+
+  void AddVertex(EdbVertex *vtx) {
+    if(!eVTX) eVTX = new TObjArray();
+    eVTX->Add((TObject*)vtx);
   }
+
+  void AddVTA(EdbVTA *vta) {
+    eVTA.Add((TObject*)vta);
+  }
+
+  int  ProbVertexN(float ProbMin);
+
+
+
 
   TTree *init_tracks_tree(const char *file_name, EdbTrackP *track);
   int BuildTracksArr(const char *file_name="linked_tracks.root", int nsegMin=2 );

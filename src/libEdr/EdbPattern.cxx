@@ -662,6 +662,46 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
 }
 
 //______________________________________________________________________________
+int EdbTrackP::CheckAliasSegments()
+{
+  int nalias=0;
+  for(int i=0; i<N(); i++) 
+    if( GetSegment(i)->Track() != ID()) nalias++;
+  return nalias;
+}
+
+//______________________________________________________________________________
+int EdbTrackP::RemoveAliasSegments()
+{
+  int nalias=0;
+  EdbSegP *s=0;
+  for(int i=0; i<N(); i++) {
+    s = GetSegment(i);
+    if( s->Track() != ID()) { 
+      nalias++;
+      RemoveSegment(s);
+    }
+  }
+  return nalias;
+}
+
+//______________________________________________________________________________
+int EdbTrackP::CheckMaxGap()
+{
+  int ngap=0;
+  if(N()<2) return 0;
+  EdbSegP *s1=0, *s2=0;
+  int gap = 0;
+  for(int i=0; i<N()-1; i++) {
+    s1 = GetSegment(i);
+    s2 = GetSegment(i+1);
+    gap = TMath::Abs(s2->PID()-s1->PID());
+    if( gap > ngap) ngap = gap;
+  }
+  return ngap;
+}
+
+//______________________________________________________________________________
 int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 {
   int nseg = N();

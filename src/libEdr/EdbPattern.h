@@ -336,6 +336,7 @@ class EdbTrackP : public EdbSegP {
     { 
       if(!eS) return;
       eS->Remove(s);
+      s->SetTrack(-1);
       SetCounters();
     }
   void     AddSegmentF(EdbSegP *s)  
@@ -350,6 +351,9 @@ class EdbTrackP : public EdbSegP {
 
   void     Reset()    { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
+  int  RemoveAliasSegments();
+  int  CheckMaxGap();
+  int  CheckAliasSegments();
   void SetSegmentsTrack(int id) {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(id);}
   void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
   void Copy(const EdbTrackP &tr);
