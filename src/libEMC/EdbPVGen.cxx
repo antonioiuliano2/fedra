@@ -213,14 +213,15 @@ void EdbPVGen::SmearPatterns(float shift, float rot)
 
 }
 //______________________________________________________________________________
-void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4], 
+void EdbPVGen::TrackMC( float zlim[2], float lim[4], 
 			EdbTrackP &tr, int eloss_flag, float PGap)
 {
   // Segments generation for single MC track with taking into account MS and 
   //  XY errors correllation
 
   // Input parameters:
-  //                   zlim  - Z limits
+  //                   zlim  - Z limits ( if zlim[0] > zlim[1] then direction of
+  //			       tracking is opposit Z-axis )  
   //                   lim   - XY limits
   //		       sigma - measuring sigma (x,y,tx,ty)
   //                   tr    - segments generated according to track parameters
@@ -228,6 +229,8 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   // Output:  fill associated volume with segments
   //          tr - add generated segments to the tr
 
+  bool exact_angles = false;   // exact new angles calculation after MS  
+  bool x_y_correlation = true; // take into account x-y measurement correlation
   Float_t eTPb = 1000./1300.;
   Float_t x0  =tr.X();
   Float_t y0  =tr.Y();
@@ -236,7 +239,9 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   Float_t ty0 =tr.TY();
   Float_t p0  =tr.P();
   Float_t m   =tr.M();
-  Float_t sx=sigma[0], sy=sigma[1], stx=sigma[2], sty=sigma[3];
+  Float_t sx=eScanCond->SigmaX(0.), sy=eScanCond->SigmaY(0.);
+  Float_t stx=eScanCond->SigmaTX(0.), sty=eScanCond->SigmaTY(0.);
+  Float_t sxd=sx, syd=sy, stxd=stx, styd=sty;
   Float_t x,y,z,tx,ty, xs, ys, txs, tys;
   Float_t dz, dzm, cost, r1, r2, teta0, zold, dzPb;
   Float_t dx = 0., dy = 0., dtx = 0., dty = 0.;
@@ -260,15 +265,29 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
   tx = tx0;
   ty = ty0;
   zold = z0;
-  for (int k=0; k<ePVolume->Npatterns(); k++ ) {
-
+  int npat = ePVolume->Npatterns();
+  int k = 0, dir = 0;
+  for (int kc=0; kc<npat; kc++ ) {
+    if (zlim[0] > zlim[1])
+    {
+	k = npat - 1 - kc;
+	dir = -1;
+    }
+    else
+    {
+	k = kc;
+	dir = +1;
+    }
     pat = ePVolume->GetPattern(k);
     z = pat->Z();
     segnum = pat->N();
 
-    if ( z < zlim[0] ) { continue; }
-    if ( z > zlim[1] ) { continue; }
-    if ( z < zold    ) { continue; }
+    if ( dir > 0 ) if ( z < zlim[0] ) { continue; }
+    if ( dir > 0 ) if ( z > zlim[1] ) { continue; }
+    if ( dir < 0 ) if ( z > zlim[0] ) { continue; }
+    if ( dir < 0 ) if ( z < zlim[1] ) { continue; }
+    if ( dir > 0 ) if ( z < zold ) { continue; }
+    if ( dir < 0 ) if ( z >= zold ) { continue; }
     if ( gRandom->Rndm() < (double)PGap) { continue; }
 
     dz = z - zold;
@@ -278,8 +297,8 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     dzPb = eTPb*dzm;
     if (eloss_flag == 1)
     {
-	de = EdbPhysics::DeAveragePb(p, m, dzPb);
-	if ( de < 0.) de = e - m;
+	de = EdbPhysics::DeAveragePb(p, m, TMath::Abs(dzPb));
+	if ( de < 0.) de = 0;
 	e  = e - de;
 	if (e < m) e = m;
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
@@ -290,9 +309,8 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
     }
     else if (eloss_flag == 2)
     {
-	de = EdbPhysics::DeLandauPb(p, m, dzPb);
-	e  = e - de;
-	if ( de < 0.) de = e - m;
+	de = EdbPhysics::DeLandauPb(p, m, TMath::Abs(dzPb));
+	if ( de < 0.) de = 0;
 	e  = e - de;
 	if (e < m) e = m;
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
@@ -300,7 +318,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
 	p  = pn;
 	DE += de;
     }
-    if (k)
+    if (kc)
       {
 	teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, X0);
 	teta0 = TMath::Sqrt(teta0);
@@ -323,38 +341,64 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
       }
     x = x + tx*dz + dx;
     y = y + ty*dz + dy;
-    tx = tx + dtx;
-    ty = ty + dty;
+    if (exact_angles)
+    {
+	tx = TMath::Tan(TMath::ATan(tx) + dtx);
+	ty = TMath::Tan(TMath::ATan(ty) + dty);
+    }
+    else
+    {
+	tx = tx + dtx;
+	ty = ty + dty;
+    }
     zold = z;
     if ( x < lim[0] ) break; 
     if ( y < lim[1] ) break; 
     if ( x > lim[2] ) break; 
     if ( y > lim[3] ) break;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    dxs = sx*r1;
+    sxd = eScanCond->SigmaX(tx);
+    dxs = sxd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    dys = sy*r1;
+    if (!x_y_correlation) syd = eScanCond->SigmaY(ty);
+    else		  syd = sy;
+    dys = syd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    dtxs = stx*r1;
+    stxd = eScanCond->SigmaTX(tx);
+    dtxs = stxd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    dtys = sty*r1;
-    Phi = -TMath::ATan2(ty,tx);          // azimuthal angle of the track
-    CPhi = TMath::Cos(Phi);
-    SPhi = TMath::Sin(Phi);
-    xs = x + dxs*CPhi - dys*SPhi;        // smearing of track parameters with corellation 
-    ys = y + dxs*SPhi + dys*CPhi;        // along the track projection to XY plane 
-    txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
-    tys = ty + dtys*SPhi + dtys*CPhi;
+    if (!x_y_correlation) styd = eScanCond->SigmaTY(ty);
+    else		  styd = sty;
+    dtys = styd*r1;
+    if (x_y_correlation)
+    {
+	Phi = -TMath::ATan2(ty,tx);          // azimuthal angle of the track
+	CPhi = TMath::Cos(Phi);
+	SPhi = TMath::Sin(Phi);
+	xs = x + dxs*CPhi - dys*SPhi;        // smearing of track parameters with corellation 
+	ys = y + dxs*SPhi + dys*CPhi;        // along the track projection to XY plane 
+	txs = tx + dtxs*CPhi - dtys*SPhi;    // (regression line)
+	tys = ty + dtxs*SPhi + dtys*CPhi;
+    }
+    else
+    {
+	xs = x + dxs;        // smearing of track parameters with corellation 
+	ys = y + dys;        // along the track projection to XY plane 
+	txs = tx + dtxs;    // (regression line)
+	tys = ty + dtys;
+    }
     seg->Set(segnum++, xs, ys, txs, tys, 25., tr.ID());
     seg->SetP(pa);
     seg->SetZ(z);
-    seg->SetDZ(290.);
+    seg->SetDZ(300.);
     seg->SetPID(k);
-    seg->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
-//    seg->SetErrors(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
+    if (x_y_correlation)
+	seg->SetErrorsCOV(sxd*sxd, syd*syd, 0., stxd*stxd, styd*styd, 0.);
+    else
+	seg->SetErrors(sxd*sxd, syd*syd, 0., stxd*stxd, styd*styd, 0.);
 
     tr.AddSegment( pat->AddSegment(*seg) );
-    if (p <= 0.0) break;
+    if (p <= 0.050) break;
     if (teta0 >= 1.00) break;
   }
   tr.SetDE(DE);
@@ -364,19 +408,20 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4], float sigma[4],
 }
 //______________________________________________________________________________
 void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4],
-					    float sigma[4],
 					    float TetaMax, int flag )
 {
   // generation of uncorrelated segments background
 
   float x, y, z, tx, ty, costmin = TMath::Cos(TetaMax);
-  Float_t sx=sigma[0], sy=sigma[1], stx=sigma[2], sty=sigma[3];
   float cost, phi, ex, ey, ez, sint;
   int segnum = 0;
   EdbSegP *s=0;
   EdbPattern *pat = 0;
   EdbPatternsVolume *pv = GetVolume();
   s = new EdbSegP();
+
+  Float_t sx=eScanCond->SigmaX(0.), sy=eScanCond->SigmaY(0.);
+  Float_t stx=eScanCond->SigmaTX(0.), sty=eScanCond->SigmaTY(0.);
  
   for(int np=0; np<pv->Npatterns(); np++)
   {
@@ -401,6 +446,11 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4],
 	s->SetP(4.);
 	s->SetPID(np);
 	s->SetDZ(290.);
+	tx = TMath::Sqrt(tx*tx+ty*ty);
+	sx=eScanCond->SigmaX(tx);
+	sy=eScanCond->SigmaY(0.);
+	stx=eScanCond->SigmaTX(tx);
+	sty=eScanCond->SigmaTY(0.);
 	s->SetErrorsCOV(sx*sx, sy*sy, 0., stx*stx, sty*sty, 0.);
 
         pat->AddSegment( *s );
@@ -411,8 +461,7 @@ void EdbPVGen::GenerateUncorrelatedSegments(int nb, float lim[4],
 
 //------------------------------------------------------------
 void EdbPVGen::GenerateBackgroundTracks(int nb, float vlim[4], float lim[4],
-					float plim[2],
-					float sig[4], float TetaMax,
+					float plim[2], float TetaMax,
 					float ProbGap, int eloss_flag )
 {
   // event generation
@@ -453,7 +502,7 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float vlim[4], float lim[4],
 
 	// generation of background track segments
 
-	TrackMC( zlim, lim, sig, *trb, eloss_flag, ProbGap );
+	TrackMC( zlim, lim, *trb, eloss_flag, ProbGap );
 //	delete trb;
 	AddTrack(trb);
   }
@@ -463,9 +512,8 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float vlim[4], float lim[4],
 //______________________________________________________________________________
 void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 					 float vzlim[2],   float vlim[4],
-					 float lim[4],    float sig[4],
-					 float ProbGap,   int eloss_flag,
-					 int *charges )
+					 float lim[4],     float ProbGap,
+					 int eloss_flag,   int *charges )
 {
   // Phase Space event generation
   float x;
@@ -480,6 +528,8 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
   double pxs,pys,pzs,es, p2;
   float mp, pp;
 
+  if (eTracks) numt = eTracks->GetEntries();
+
   int nvmod = nv;
 
   for(int iv=0; iv<nvmod; iv++) {
@@ -489,7 +539,6 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     z = vzlim[0] + (vzlim[1] - vzlim[0])*gRandom->Rndm();
     vedb->SetXYZ(x, y, z);
 
-
     weight = pDecay->Generate();
 
     nt = pDecay->GetNt();
@@ -497,8 +546,8 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     pys = 0.;
     pzs = 0.;
     es = 0.;
-
     ntrgood = 0;
+
     for(int ip=0; ip<nt; ip++) {
 	pi = pDecay->GetDecay(ip);
 	pxs += pi->Px();
@@ -516,9 +565,17 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 
 	// generation of track segments for secondary particles
 
-	zlimt[0] = z - 1300.;
-	zlimt[1] = 200000.;
-	TrackMC( zlimt, lim, sig, *tr, eloss_flag, ProbGap);
+	if (pi->Pz() >= 0.)
+	{
+	    zlimt[0] = z;
+	    zlimt[1] = 200000.;
+	}
+	else
+	{
+	    zlimt[0] = z;
+	    zlimt[1] = -1000.;
+	}
+	TrackMC( zlimt, lim, *tr, eloss_flag, ProbGap);
 	if (tr->N() > 0)
 	{
 	    if (pi->Pz() < 0.)
@@ -535,6 +592,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	}
     }
 
+    // generate primary track
     if (z > 300. && charges[nt])
     {
 	p2 = pxs*pxs + pys*pys + pzs*pzs;
@@ -549,9 +607,9 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 
 	// generation of track segments for primary particle
 
-	zlimt[0] = 0.;
-	zlimt[1] = z;
-	TrackMC( zlimt, lim, sig, *tr, eloss_flag, ProbGap );
+	zlimt[0] = z;
+	zlimt[1] = -1000.;
+	TrackMC( zlimt, lim, *tr, 0, ProbGap );
 	if (tr->N() > 0)
 	{
 	    vedb->AddTrack(tr, 0);
@@ -564,6 +622,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	    tr = 0;
 	}
     }
+
     if (ntrgood == 0)
     {
 	delete vedb;
@@ -584,3 +643,48 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     }
   }
 }
+//______________________________________________________________________________
+int EdbPVGen::MakeTracksMC(int nsegments, TObjArray *tracks)
+{
+  // use MC data and form tracks array
+
+  if (!eTracks) return 0;
+  if (!tracks) return 0;
+  tracks->Delete();
+  tracks->Clear();
+
+  printf("make tracks from MC information...\n");
+
+  int         nseg, ntr=0, ntrg = 0, n0 = 0;
+  EdbSegP    *seg = 0;
+  EdbTrackP  *track = 0, *trackg = 0;
+
+  ntrg=eTracks->GetEntries();
+  for(int it=0; it<ntrg; it++) {
+
+    trackg = (EdbTrackP *)(eTracks->At(it));
+    if (!trackg) continue;
+    nseg = trackg->N();
+    if( nseg < nsegments ) continue;
+    track = new EdbTrackP(nseg);
+
+    track->SetNpl( TMath::Abs(trackg->GetSegmentLast()->PID() -
+			      trackg->GetSegmentFirst()->PID()) + 1 );
+
+    n0=0;
+    for(int is=0; is<nseg; is++) {
+      seg = trackg->GetSegment(is);
+      if(seg->Flag()<0) n0++;
+      track->AddSegment(seg);
+    }
+    track->SetN0(n0);
+    track->SetID(it);
+    tracks->Add(track);
+    ntr++;
+  }
+
+  printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
+  return ntr;
+}
+
+//______________________________________________________________________________
