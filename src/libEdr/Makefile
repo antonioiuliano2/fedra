@@ -178,7 +178,7 @@ EdbPVRec.o: /var/local/root/include/TMatrixUtils.h
 EdbPVRec.o: /var/local/root/include/TArrayF.h
 EdbPVRec.o: /var/local/root/include/TArray.h
 EdbPVRec.o: /var/local/root/include/TBenchmark.h
-EdbPVRec.o: /var/local/root/include/TStopwatch.h EdbPVRec.h EdbPattern.h
+EdbPVRec.o: /var/local/root/include/TStopwatch.h EdbVertex.h
 EdbPVRec.o: /var/local/root/include/TTree.h
 EdbPVRec.o: /var/local/root/include/TClonesArray.h
 EdbPVRec.o: /var/local/root/include/TAttLine.h
@@ -193,6 +193,14 @@ EdbPVRec.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbPVRec.o: /var/local/root/include/TClass.h
 EdbPVRec.o: /var/local/root/include/TDictionary.h
 EdbPVRec.o: /var/local/root/include/Property.h
+EdbPVRec.o: /var/local/root/include/TGraphErrors.h
+EdbPVRec.o: /var/local/root/include/TGraph.h /var/local/root/include/TH1.h
+EdbPVRec.o: /var/local/root/include/TVirtualHistPainter.h
+EdbPVRec.o: /var/local/root/include/TAxis.h
+EdbPVRec.o: /var/local/root/include/TAttAxis.h
+EdbPVRec.o: /var/local/root/include/TArrayC.h
+EdbPVRec.o: /var/local/root/include/TArrayS.h
+EdbPVRec.o: /var/local/root/include/Foption.h EdbPattern.h
 EdbPVRec.o: /var/local/root/include/TObjArray.h
 EdbPVRec.o: /var/local/root/include/TSeqCollection.h
 EdbPVRec.o: /var/local/root/include/TCollection.h
@@ -201,15 +209,7 @@ EdbPVRec.o: /var/local/root/include/TSortedList.h
 EdbPVRec.o: /var/local/root/include/TArrayL.h
 EdbPVRec.o: /var/local/root/include/TMatrixD.h
 EdbPVRec.o: /var/local/root/include/TVectorD.h
-EdbPVRec.o: /var/local/root/include/TMatrixDUtils.h EdbVertex.h
-EdbPVRec.o: /var/local/root/include/TGraphErrors.h
-EdbPVRec.o: /var/local/root/include/TGraph.h /var/local/root/include/TH1.h
-EdbPVRec.o: /var/local/root/include/TVirtualHistPainter.h
-EdbPVRec.o: /var/local/root/include/TAxis.h
-EdbPVRec.o: /var/local/root/include/TAttAxis.h
-EdbPVRec.o: /var/local/root/include/TArrayC.h
-EdbPVRec.o: /var/local/root/include/TArrayS.h
-EdbPVRec.o: /var/local/root/include/Foption.h
+EdbPVRec.o: /var/local/root/include/TMatrixDUtils.h EdbPVRec.h
 EdbPattern.o: /var/local/root/include/TPolyLine.h
 EdbPattern.o: /var/local/root/include/TString.h /usr/include/string.h
 EdbPattern.o: /usr/include/features.h /usr/include/sys/cdefs.h

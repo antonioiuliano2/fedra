@@ -2622,6 +2622,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
   // TODO: move gener logic out from EdbPVRec
 
   float X0 =  GetScanCond()->RadX0();
+  float pms = 0.;
   int nsegmatch = 0;
 
   EdbTrackP *tr = 0, *trg = 0;
@@ -2657,6 +2658,16 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
 	    {
     		tr->SetP(trg->P());
 	    }
+	}
+    }
+    else if (p == 0.)
+    {
+	if (tr->P() == 0.) 
+	{
+	    pms = tr->P_MS();
+	    if      (pms < 0.01) pms = 0.01;
+	    else if (pms > 30.0) pms = 30.;
+	    tr->SetP(pms);
 	}
     }
     if(mass>0) tr->SetM(mass);
