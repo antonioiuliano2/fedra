@@ -12,6 +12,7 @@ using namespace MATRIX;
 
 int main(void) {
 
+#ifdef XXX
   SVector<float,3> x(4,5,6);
   SVector<float,2> y(2,3);
   cout << "x: " << x << endl;
@@ -26,6 +27,7 @@ int main(void) {
   cout << "A: " << endl << A << endl;
 
   return 0;
+#endif
 
 #ifdef XXX
   SMatrix<double,3> A;
@@ -43,7 +45,7 @@ int main(void) {
   return 0;
 #endif
 
-#ifdef XXX
+#ifdef XXX1
   SMatrix<double,3> A;
   A(0,0) = A(0,1) = A(1,0) = 1;
   A(1,1) = A(2,2) = 2;
@@ -51,11 +53,11 @@ int main(void) {
   SMatrix<double,3> B = A; // save A in B
   cout << "A: " << endl << A << endl;
 
-  double det = 0.;
-  A.sdet(det);
-  cout << "Determinant: " << det << endl;
+//  double det = 0.;
+//  A.sdet(det);
+//  cout << "Determinant: " << det << endl;
   // WARNING: A has changed!!
-  cout << "A again: " << endl << A << endl;
+//  cout << "A again: " << endl << A << endl;
 
   A.sinvert();
   cout << "A^-1: " << endl << A << endl;

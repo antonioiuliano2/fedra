@@ -28,7 +28,7 @@ alib: objdir_check depend $(libname).a
 
 $(libname).so: $(OBJS) $(cintdict).o
 	@echo "--------> Build $(project) shared library "
-	$(CXX) $(soflags) $^ $(CERNLIB) $(syslibpath) $(shell $(ROOTSYS)/bin/root-config --libs) -o $@
+	$(CXX) $(soflags) $^ $(syslibpath) $(shell $(ROOTSYS)/bin/root-config --libs) -o $@
 	cd $(ldir); ln -sf $(libbase).so libvt.so; cd $(PWD)
 
 $(libname).a: $(OBJS) $(cintdict).o
@@ -139,8 +139,6 @@ check:
 	@echo " ALL_INCS   :" $(ALL_INCS)
 	@echo " CINT_INCS  :" $(CINT_INCS)
 	@echo " CINT_FLAGS :" $(CINT_FLAGS)
-	@echo " CERN_LIBS  :" $(CERN_LIBS)
-	@echo " CERNLIB    :" $(CERNLIB)
 	@echo " ROOTSYS    :" $(ROOTSYS)
 	@echo " ROOTOPT    :" $(ROOTOPT)
 	@echo " binary     :" $(binary)

@@ -20,7 +20,6 @@ HBSCRATCH=$(shell pwd)
 export HBSCRATCH
 ROOT=$(PWD)
 export ROOT
-export CERN_LIB=/cern/pro/lib
 
 ##########################################################
 # BEE project setup
@@ -45,11 +44,6 @@ MAKE := ${MAKE} $(MAKEOPT)
 ifndef ROOTSYS
 errora:
 	@echo "Please set ROOTSYS environment variable to specify ROOT location!"
-endif
-
-ifndef CERN_LIB
-errorb:
-	@echo "Please set CERN_LIB environment variable to specify CERNLIB location!"
 endif
 
 ##########################################################

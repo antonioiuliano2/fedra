@@ -27,13 +27,13 @@
 
 #include <iosfwd>
 #include <assert.h>
+#include <math.h>
 #include "VtMatrix.hh"
 
-extern "C" {
-  void dinv_(int *, double *, int *, double *, int *);
-  void dfact_(int *, double *, int *, double *, int *, double *, int *);
-}
-
+void Dfactir1(int *n, double *a, int *idim, int *ir, int *ifail, double *det, int *jfail);
+void Dfact1(int *n, double *a, int *idim, double *ir, int *ifail, double *det, int *jfail);
+void Dfinv1(int *n, double *a, int *idim, int *ir, int *ifail);
+void Dinv1(int *n, double *a, int *idim, double *ir, int *ifail);
 
 namespace MATRIX {
   class VtVector;

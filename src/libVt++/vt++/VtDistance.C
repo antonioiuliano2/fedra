@@ -31,12 +31,6 @@
 #include "vt++/VtTrack.hh"
 #include "vt++/VtDistance.hh"
 
-#if defined USE_ROOT
-//#include "clue/cluearte.hh"
-//#include "interfaces/VertexIf.hh"
-//#include "clue/RecoVertex.hh"
-#endif
-
 namespace VERTEX {
 
 

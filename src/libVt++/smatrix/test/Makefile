@@ -1,6 +1,6 @@
 CXX = g++
 #CXXFLAGS = -g -ggdb -Wall
-CXXFLAGS = -I../include -O2 -funroll-loops -finline-functions -Wall
+CXXFLAGS = -DXXX1 -I../include -I/var/local/root/include  -O2 -funroll-loops -finline-functions -Wall
 LD = g++
 
 %o: %.C

@@ -39,6 +39,147 @@
 #include <string.h> // for memcpy
 #include "vt++/VtSymMatrix.hh"
 #include "vt++/VtVector.hh"
+
+void Dsfact1(int *idim, double *a, int *n, int *ifail, double *det, int *jfail)
+{
+  /* Local variables */
+  static unsigned int i, j, l;
+  *ifail = 0;
+  *jfail = 0;
+  
+  /* Function Body */
+  if (*idim < *n || *n <= 0) {
+    *ifail= -1;
+    return;
+  }
+
+
+  /* Parameter adjustments */
+  a -= *idim + 1;
+
+  /* sfactd.inc */
+  *det = 1.;
+  for (j = 1; j <= (unsigned int)(*n); ++j) {
+    const unsigned int ji = j * (*idim);
+    const unsigned int jj = j + ji;
+
+    if (a[jj] <= 0.) {
+      *det = 0.;
+      *ifail = -1;
+      return;
+    }
+
+    const unsigned int jp1 = j + 1;
+    const unsigned int jpi = jp1 * (*idim);
+
+    (*det) *= a[jj];
+    a[jj] = 1. / a[jj];
+
+    for (l = jp1; l <= (unsigned int)(*n); ++l) {
+      a[j + l * (*idim)] = a[jj] * a[l + ji];
+
+      const unsigned int lj = l + jpi;
+
+      for (i = 1; i <= j; ++i) {
+	a[lj] -= a[l + i * (*idim)] * a[i + jpi];
+      } // for i
+    } // for l
+  } // for j
+
+  return;
+} // end of Dsfact1
+
+void Dsinv1(int *idim, double *a, int *n, int *ifail) {
+
+  /* Local variables */
+  static int i, j, k, l;
+  static double s31, s32;
+  static int jm1, jp1;
+  *ifail = 0;
+ 
+  /* Parameter adjustments */
+  a -= *idim + 1;
+
+  /* Function Body */
+  if (*idim < *n || *n <= 1) {
+    *ifail = -1;
+    return;
+  }
+
+  /* sfact.inc */
+  for (j = 1; j <= *n; ++j) {
+    const int ja  = j * (*idim);
+    const int jj  = j + ja;
+    const int ja1 = ja + (*idim);
+
+    if (a[jj] <= 0.) { *ifail = -1; return; }
+    a[jj] = 1. / a[jj];
+    if (j == *n) { break; }
+
+    for (l = j + 1; l <= *n; ++l) {
+      a[j + l * (*idim)] = a[jj] * a[l + ja];
+      const int lj = l + ja1;
+      for (i = 1; i <= j; ++i) {
+	a[lj] -= a[l + i * (*idim)] * a[i + ja1];
+      }
+    }
+  }
+
+  /* sfinv.inc */
+  // idim << 1 is equal to idim * 2
+  // compiler will compute the arguments!
+  a[(*idim << 1) + 1] = -a[(*idim << 1) + 1];
+  a[*idim + 2] = a[(*idim << 1) + 1] * a[(*idim << 1) + 2];
+
+  if(*n > 2) {
+
+    for (j = 3; j <= *n; ++j) {
+      const int jm2 = j - 2;
+      const int ja = j * (*idim);
+      const int jj = j + ja;
+      const int j1 = j - 1 + ja;
+
+      for (k = 1; k <= jm2; ++k) {
+	s31 = a[k + ja];
+
+	for (i = k; i <= jm2; ++i) {
+	  s31 += a[k + (i + 1) * (*idim)] * a[i + 1 + ja];
+	} // for i
+	a[k + ja] = -s31;
+	a[j + k * (*idim)] = -s31 * a[jj];
+      } // for k
+      a[j1] *= -1;
+      //      a[j1] = -a[j1];
+      a[jj - (*idim)] = a[j1] * a[jj];
+    } // for j
+  } // if (*n>2)
+
+  j = 1;
+  do {
+    const int jad = j * (*idim);
+    const int jj = j + jad;
+
+    jp1 = j + 1;
+    for (i = jp1; i <= *n; ++i) {
+      a[jj] += a[j + i * (*idim)] * a[i + jad];
+    } // for i
+
+    jm1 = j;
+    j = jp1;
+    const int ja = j * (*idim);
+
+    for (k = 1; k <= jm1; ++k) {
+      s32 = 0.;
+      for (i = j; i <= *n; ++i) {
+	s32 += a[k + i * (*idim)] * a[i + ja];
+      } // for i
+      a[k + ja] = a[j + k * (*idim)] = s32;
+    } // for k
+  } while(j < *n);
+
+  return;
+} // end of Dsinv1
+
 using namespace std;
 
 namespace MATRIX {
@@ -164,7 +305,7 @@ namespace MATRIX {
 
     int ifail = 0;
     int isize = nrow();
-    dsinv_(&dim, work, &isize, &ifail);
+    Dsinv1(&dim, work, &isize, &ifail);
     
     if(ifail != -1) {
       memcpy( m, work, msize );
@@ -193,7 +334,7 @@ namespace MATRIX {
 
     memcpy( work, m, size() * sizeof(double) );
 
-    dsfact_(&n, work, &n, &ifail, &det, &jfail);
+    Dsfact1(&n, work, &n, &ifail, &det, &jfail);
     if(jfail != 0) {
       det = 0;
 #ifdef VtDEBUG
@@ -371,15 +512,6 @@ namespace MATRIX {
     cout << "VtSymMatrix::operator+ called!" << endl;
 #endif
 
-//      const unsigned int nrow = rhs.nrow();
-//      VtSymMatrix tmp(nrow);
-
-//      for(unsigned int i=0; i<nrow; ++i) {
-//        for(unsigned int j=i; j<nrow; ++j) {
-//  	tmp(i,j) = tmp(j,i) = operator()(i,j) + rhs(i,j);
-//        }
-//      }
-
     VtSymMatrix tmp(*this);
     return tmp += rhs;
   }
@@ -428,15 +560,6 @@ namespace MATRIX {
 #ifdef VtDEBUG
     cout << "VtSymMatrix::operator- called!" << endl;
 #endif
-
-//      const unsigned int nrow = rhs.nrow();
-//      VtSymMatrix tmp(nrow);
-
-//      for(unsigned int i=0; i<nrow; ++i) {
-//        for(unsigned int j=i; j<nrow; ++j) {
-//  	tmp(i,j) = tmp(j,i) = operator()(i,j) - rhs(i,j);
-//        }
-//      }
 
     VtSymMatrix tmp(*this);
     return tmp -= rhs;

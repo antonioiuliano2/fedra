@@ -27,11 +27,6 @@
 //
 // *****************************************************************************
 
-#ifdef USE_ROOT
-//class RecoVertex;
-#endif
-//class VertexIf;
-
 namespace VERTEX {
   class Track;
   class Vertex;

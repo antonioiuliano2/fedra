@@ -31,10 +31,8 @@
 
 #include "VtSqMatrix.hh"
 
-extern "C" {
-  void dsinv_(int *, double *, int *, int *);
-  void dsfact_(int *, double *, int *, int *, double *, int *);
-}
+void Dsinv1(int *idim, double *a, int *n, int *ifail);
+void Dsfact1(int *idim, double *a, int *n, int *ifail, double *det, int *jfail);
 
 namespace MATRIX {
   class VtVector;

@@ -73,11 +73,6 @@
 
 ClassImp(VERTEX::Vertex);
 
-//extern "C" {
-  // from CERNLIB (libmathlib.a)
-//  float prob_(float* chi, int* ndf);
-//}
-// CERNLIB interface function
 static float CERN_prob(float X, int N) { return TMath::Prob((double)X, N); }
 
 using namespace MATRIX;
@@ -979,7 +974,7 @@ namespace VERTEX {
     
     int ifail = 0, ndim = 3;
     double work[3];
-    dinv_(&ndim, tt, &ndim, work, &ifail);
+    Dinv1(&ndim, tt, &ndim, work, &ifail);
     
     if(ifail) {
       cout << "findVertex: matrix inversion failed" << endl;

@@ -94,21 +94,6 @@ namespace VERTEX {
   Track::~Track() {}
 
 #if defined USE_ROOT
-//  Track::Track(const Track& rhs, double ms, double msCC) :
-//    t_Q      (rhs.charge()),
-//    t_rm     (ms),
-//    t_rmCC   (msCC),
-//    t_p      (MATRIX::VtVector(rhs.x(),
-//			       rhs.y(),
-//			       rhs.z(),
-//			       rhs.tx(),
-//			       rhs.ty(),
-//			       rhs.p())),
-//    t_V      (rhs.COV()) {
-//    propagate(0.);           // propagate track to z=0.
-//    t_G = t_V.dsinv();
-//    t_GM.copy(t_V.dsinv(4)); // inverse without momentum
-//  }
 
   Track::Track(const VtVector& v, const MATRIX::CMatrix& c) :
     t_Q      (1),
@@ -216,17 +201,6 @@ namespace VERTEX {
   }
 #endif
 
-#if defined USE_ROOT
-  //==============================================================================
-  // collect
-  //==============================================================================
-//  void Track::collect(vector<TrackIf*>& c) const {
-//    c.push_back(const_cast<Track*>(this));
-//  }
-
-#endif
-
-  
   const MATRIX::CMatrix&     Track::V()  const { return t_V; }
   const MATRIX::CMatrix&     Track::G()  const { return t_G; }
   const MATRIX::CMatrix&     Track::GM() const { return t_GM; }

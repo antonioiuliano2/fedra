@@ -37,9 +37,7 @@
 
 #include "VtSymMatrix.hh"
 
-//template <class T> class ArtePointer;
 #if defined USE_ROOT
-//#include "clue/cluefwd.hh"
 #ifndef __CINT__
 #include "smatrix/SMatrix.hh"
 #endif

@@ -61,6 +61,7 @@
 #include "VtTrack.hh"
 #include "VtMassC_list.hh"
 
+void Dinv1(int *n, double *a, int *idim, double *ir, int *ifail);
 
 namespace VERTEX {
   //
@@ -185,10 +186,6 @@ namespace VERTEX {
     /**@name --- Adding tracks --- */
     ///
     void push_back(Track& track);
-#if defined USE_ROOT
-    ///
-//    void push_back(TrackIf& track);
-#endif
 
     /**@name --- Misc functions --- */
 

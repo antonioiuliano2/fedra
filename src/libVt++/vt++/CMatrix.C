@@ -38,11 +38,6 @@
 #include "vt++/CMatrix.hh"
 #include "vt++/VtUtil.hh"
 
-#if defined USE_ROOT
-//#include "clue/cluearte.hh"
-//#include "clue/RecoTrack.hh"
-#endif
-
 using namespace VERTEX;
 
 namespace MATRIX {

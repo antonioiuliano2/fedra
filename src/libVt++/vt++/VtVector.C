@@ -31,10 +31,6 @@
 #include <string.h> // for memcpy
 #include "vt++/VtVector.hh"
 
-//  #include <pthread.h>
-//  extern pthread_mutex_t VTmutex;
-
-
 namespace MATRIX {
 
   //============================================================================

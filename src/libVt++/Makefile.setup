@@ -39,7 +39,7 @@ instproj = vt++ smatrix
 projects = vt++
 htmlproj = smatrix vt++
 libp  = ${FEDRA_ROOT}/lib
-libs  = -L$(libp)  $(CERNLIB) 
+libs  = -L$(libp) 
 
 ##########################################################
 # definitions of paths
@@ -67,7 +67,7 @@ LD_LIBRARY_PATH := ${FEDRA_ROOT}/lib:$(LD_LIBRARY_PATH)
 ##########################################################
 # definitions of flags
 ##########################################################
-FLAGS     += -DUSE_ROOT -I/cern/root/include
+FLAGS     += -DUSE_ROOT
 soflags    += -Wl,-soname,$(libbase).so -shared
 GXXFLAGS   += -fPIC -Wall -ansi -ftemplate-depth-40
 CFLAGS      = $(GXXFLAGS) $(FLAGS)
@@ -86,8 +86,6 @@ endif
 ALL_INCS   = ${FEDRA_ROOT}/include
 ALL_INCS  += $(ROOTSYS)/include
 CINT_INCS  = $(ALL_INCS)
-CERN_LIBS  = mathlib kernlib g2c
-CERNLIB    = -L${CERN_LIB} $(addprefix -l, $(CERN_LIBS))
 
 ##########################################################
 # Namespace
