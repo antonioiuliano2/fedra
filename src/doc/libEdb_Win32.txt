@@ -1,0 +1,200 @@
+How to use Edb in Windows                            Gabriele Sirri 04-06-2003
+-------------------------
+
+1. ROOT installation for Windows
+--------------------------------
+ a) Installation
+   You need ROOT v.3 or more in your PC. Take care that ROOT must be installed 
+   in a folder without sp
+aces in the path (I suggest to extract files in c:\root 
+   but NOT in "c:\Program Files\root"). I've tried the version of ROOT without 
+   the library MSVCRTD.DLL, but it could work anyway.
+ b) Environment Variables
+   You have to set environment variables as suggested on the root web site:
+   Right click on the "My Computer" or "Risorse del computer" icon in your
+   desktop, click on Properties, Select Advanced and click on Environment 
+   Variables. In the lower list box (system variables) add the following 
+   variables: TEMP (value: c:\temp), HOME (value: c:\your top directory), TMPDIR
+   (value:c:\temp), ROOTSYS  (value: c:\root or the directory where you install-
+   ed Root). Then modify the PATH environmental variables adding ;%ROOTSYS%\bin
+   after the previous list.
+  
+At this point you could start ROOT by typing "root" at the command prompt (from any folder). ROOT should work well.
+
+
+2. Compiling Edb
+----------------
+ a) Copying files
+  Copy the source files in a folder on your PC. I'm not sure but in order to
+  avoid problems caused by calling the library from the ROOT/CINT environment, 
+  I prefer to use a path name without spaces, es: c:\libEdb is good
+  This source is the same as linux except for the following changes:
+: in EdbRun.cxx  (L12)  #include "TUnixSystem.h" -----> #include "TWinNTSystem.h"
+: in EdbRun.cxx  (L256)   eHeader->SetCPU( TStopwatch::GetCPUTime() ); commented
+  and for the Makefile to be used (Makefile.w32.3)
+ b) Setting environment for MS Visual C++
+  In order to use the nmake.exe builder you must set environment variables for
+  Visual C++ tools: open a command files and call VC98\Bin\vcvars32.bat from the
+  installation directory of Visual Studio.
+ c) Building libEdb.dll and libEdb.lib
+  Build the libraries using the Makefile.w32.2: C:\libEdb>nmake /f Makefile.w32.3
+ d) Put libEdb.dll in a directory of the Path environment variable (or add 
+  c:\libEdb to the path as described in 1.b)
+
+This is the output of the compiler:
+
+Microsoft Windows XP [Versione 5.1.2600]
+(C) Copyright 1985-2001 Microsoft Corp.
+
+C:\>cd libEdb
+
+C:\libEdb>"c:\Programmi\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT"
+Setting environment for using Microsoft Visual C++ tools.
+
+C:\libEdb>nmake /f Makefile.w32.3
+
+Microsoft (R) Program Maintenance Utility   Version 6.00.8168.0
+Copyright (C) Microsoft Corp 1988-1998. All rights reserved.
+
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbCluster.cxx
+EdbCluster.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbView.cxx
+EdbView.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbRunHeader.cxx
+EdbRunHeader.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbRun.cxx
+EdbRun.cxx
+EdbRun.cxx(52) : warning C4273: 'gRUN' : inconsistent dll linkage.  dllexport as
+sumed.
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbImage.cxx
+EdbImage.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbFrame.cxx
+EdbFrame.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbSegment.cxx
+EdbSegment.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbStage.cxx
+EdbStage.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbAffine.cxx
+EdbAffine.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbFiducial.cxx
+EdbFiducial.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbVirtual.cxx
+EdbVirtual.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbOnline.cxx
+EdbOnline.cxx
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c EdbPrediction.cxx
+EdbPrediction.cxx
+"Generating dictionary Cint..."
+        rootcint -f Cint.cxx -c EdbCluster.h EdbView.h EdbRunHeader.h EdbRun.h E
+dbImage.h EdbFrame.h EdbSegment.h EdbStage.h EdbAffine.h EdbFiducial.h EdbVirtua
+l.h EdbOnline.h EdbPrediction.h EdbLinkDef.h
+        cl -DWIN32  -D_WIN32 -D_MT -D_DLL -MD -nologo  -G5 -GR -MD -DWIN32 -DVIS
+UAL_CPLUSPLUS -D_WINDOWS -Ic:\root/include -c Cint.cxx
+Cint.cxx
+        BINDEXPLIB  libEdb EdbCluster.obj EdbView.obj EdbRunHeader.obj EdbRun.ob
+j EdbImage.obj EdbFrame.obj EdbSegment.obj EdbStage.obj EdbAffine.obj EdbFiducia
+l.obj EdbVirtual.obj EdbOnline.obj EdbPrediction.obj Cint.obj > libEdb.def
+        lib /nologo /MACHINE:IX86 EdbCluster.obj EdbView.obj EdbRunHeader.obj Ed
+bRun.obj EdbImage.obj EdbFrame.obj EdbSegment.obj EdbStage.obj EdbAffine.obj Edb
+Fiducial.obj EdbVirtual.obj EdbOnline.obj EdbPrediction.obj Cint.obj /def:libEdb
+.def      -out:libEdb.lib
+   Creating library libEdb.lib and object libEdb.exp
+        link  /NODEFAULTLIB /INCREMENTAL:NO /PDB:NONE /RELEASE /NOLOGO -entry:_D
+llMainCRTStartup@12 -dll EdbCluster.obj EdbView.obj EdbRunHeader.obj EdbRun.obj
+EdbImage.obj EdbFrame.obj EdbSegment.obj EdbStage.obj EdbAffine.obj EdbFiducial.
+obj EdbVirtual.obj EdbOnline.obj EdbPrediction.obj Cint.obj libEdb.exp c:\root/l
+ib/libCore.lib  c:\root/lib/libCint.lib c:\root/lib/libHist.lib  c:\root/lib/lib
+Graf.lib c:\root/lib/libGraf3d.lib  c:\root/lib/libGpad.lib c:\root/lib/libTree.
+lib  c:\root/lib/libRint.lib c:\root/lib/libPostscript.lib  c:\root/lib/libMatri
+x.lib c:\root/lib/libPhysics.lib msvcrt.lib oldnames.lib kernel32.lib  ws2_32.li
+b mswsock.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib MSVCIR
+T.LIB -out:libEdb.dll
+LINK : warning LNK4049: locally defined symbol ""class EdbRun * gRUN" (?gRUN@@3P
+AVEdbRun@@A)" imported
+
+C:\libEdb>
+
+
+
+3. Using Edb inside root
+------------------------
+root[0] gSystem->Load("c:\\LibEdb\\libEdb.dll")
+root [1] run = new EdbRun("d:\\gabriele\\prova.root");
+
+root[2] br = new TBrowser()
+root[3] tv__tree = (TTree *) gROOT->FindObject("Views");
+root[4] tv__tree->Draw("tracks.eTy:track.eTx","","hist",1,0)
+root[5] run->Close()
+
+
+
+4. Using Edb inside Visual C++
+------------------------------
+Add libEdb.lib to the Project and be sure that libEdb.dll is in a PATH directory
+Add the libEdb path and the ROOT include path in Tools->Options->Directories->Include files
+
+#include <EdbRun.h>
+#include <EdbView.h>
+#include <EdbCluster.h>	// Clusters
+#include <EdbSegment.h> // Segment and Tracks
+
+int main()
+{
+	//Edb variables
+	EdbRun *outrun;
+	EdbRunHeader *Header;
+	outrun =new EdbRun("x.root","CREATE");
+	Header =  outrun->GetHeader();
+	Header->SetCCD(1024,1024,10,10,"Dalsa  ","Bologna");
+	Header->SetObjective(50,0.302,0,0,-0.302,0,0,"Nikon Oil"," 50x");
+	Header->SetPlate(6,50,200,50,1.1,1.1,"Piatto test","Plate");
+	//int nplan=MAX_FRAMES;
+	//Header->SetArea(8,125.,125.,nplan,nplan);
+	outrun->SetTitle("first acq");
+	outrun->SetComment("First");
+	EdbView       *View;
+	View= outrun->GetView();
+  	//View->SetHeader(0,0,0,0,0,50,250,300,nplan,nplan);
+	EdbTrack	*edbTrack = new EdbTrack(0,0,0,0,0,0);
+			int nlinked = 10;
+			for (int j = 0; j < nlinked; j++)
+			{
+		//	View->AddCluster(0.302*blob[i][t].center_of_gravity_x,0.302*blob[i][t].center_of_gravity_y,z_coord[i],blob[i][t].area,1.5,i,0);
+		//	View->AddTrack(edbTrack) ;
+				printf("%d\n", j);
+			}
+	outrun->AddView(View);
+	outrun->Close();
+	return 0;
+}
+
+
+
+5. Root version dependency
+--------------------------
+The library has be written to be used with ROOT v.3 and higher. Unfortunately, some ROOT versions can give errors in compiling or in run-time. Tests on several versions are following:
+
+   ROOT_v30307.exe: 	GOOD
+
+[to be updated]
+
+
+
+6. Small note about how Compile RWC2EDB
+---------------------------------------
+Take care that the library which reads the files *.rwc is registered.
+
+
