@@ -157,7 +157,7 @@ bool EdbMath::LinFitDiag( int n, float *x, float *y, float *e, float p[2], float
 }
 
 //-------------------------------------------------------------------------------------
-bool EdbMath::LinFitCOV( int n, float *x, float *y, float *c, float p[2], float d[2][2], float *chi2)
+bool EdbMath::LinFitCOV( int n, float *x, float *y, double *c, float *p, float *d, float *chi2)
 {
   // linear fit by YP with using full covariance matrix of measurements :  
   //                  y = p[0] + p[1]*x , d[2][2] is error matrix for p[2]
@@ -206,16 +206,16 @@ bool EdbMath::LinFitCOV( int n, float *x, float *y, float *c, float p[2], float 
     
     for (i=0; i<2; i++)
     {
-	p[i] = (float)P(i);
+	*(p+i) = (float)P(i);
 	for (j=0; j<2; j++)
 	{
-	    d[i][j] = (float)DP(i,j);
+	    *(d+i*2+j) = (float)DP(i,j);
 	}
     }
     
     for (i=0; i<n; i++)
     {
-	dy = (double)(y[i] - p[0] - p[1]*x[i]);
+	dy = (double)(y[i] - *p - (*(p+1))*x[i]);
 	DY(i) = dy;
     }
     TVectorD DY1 = DY;
