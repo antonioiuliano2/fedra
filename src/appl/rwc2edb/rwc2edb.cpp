@@ -28,13 +28,17 @@ int main(int argc, char *argv[])
 	if (argc < 3)
 	{
 		cout<< "usage: rwc2edb <input file (.rwc)> <output file (.root)>"<<endl<<"or"<<endl;
+		cout<< "usage: rwc2edb <input file (.rwd)> <output file (.root)> <input file (.txt)>"<<endl<<"or"<<endl;
 		cout<< "usage: rwc2edb <input file (.rwc)> <output file (.root)> <input file (.tlg)> "<<endl;
 		return 0;
 	};
 	char* rwcname = argv[1];
 	char* edbname = argv[2];
 	char* tlgname = argv[3];
-
+	bool testrun = FALSE;
+	FILE* grfile;
+	
+//	if(argc==4) Nfrags=atoi(tlgname); //Not the name, but number of fragments to convert
 // ISySalDataIO variables
    ISySalDataIO *iIO = 0;
    CoInitialize(NULL);
@@ -43,8 +47,23 @@ int main(int argc, char *argv[])
 	IO_VS_Fragment *pFrag = 0;
 	Track* rwdTrack;
 	UINT ExtErrorInfo;
+    if(rwcname[strlen(rwcname)-1]=='d') testrun=TRUE; //if we have .rwd first
 //try {
+
+	if(testrun) {
+		printf("Testrun!\n");
+	 IO_VS_Catalog Cat;
+	 pCat=&Cat;
+     pCat->Hdr.ID.Part[0]=0;
+     pCat->Hdr.ID.Part[1]=0;
+     pCat->Hdr.ID.Part[2]=0;
+     pCat->Hdr.ID.Part[3]=0;
+	 pCat->Area.Fragments=1;
+	 if(tlgname) grfile=fopen(tlgname,"r");
+	}
+	else 
 	if (iIO->Read(NULL, (BYTE *)&pCat, &ExtErrorInfo, (UCHAR *)rwcname) != S_OK) throw 0;
+	
 	cout<<"Hdr.ID :"<<pCat->Hdr.ID.Part[0]<<"\t"<<pCat->Hdr.ID.Part[1]<<"\t"
 						 <<pCat->Hdr.ID.Part[1]<<"\t"<<pCat->Hdr.ID.Part[3]<<endl;
 	cout<<endl<<"Fragments: "<<pCat->Area.Fragments<<endl;
@@ -103,6 +122,9 @@ int main(int argc, char *argv[])
 	int ntracks =0;
 	int nclusters=0; 
 	int nviews=0;
+//	printf("Fragments to process %d\n",Nfrags);
+//	if(Nfrags>0) tlgname=0;
+//	if(Nfrags<=0) Nfrags=pCat->Area.Fragments;
 	for (f = 0; f < pCat->Area.Fragments; f++)
 	{
 		int tracks    = 0   ; // number of tracks
@@ -213,8 +235,50 @@ int main(int argc, char *argv[])
 	if (pCat) CoTaskMemFree(pCat);
 	if (pFrag) CoTaskMemFree(pFrag);
 
-if(tlgname)
-	{
+	int gs,gf,gTot,gn; //grains: view side frame Total index size
+	float gX,gY,gZ,ga,gv;
+
+	if(tlgname) if(testrun){ //read .txt grains dump file
+		char instr[128];
+		EdbView *View;
+		View=outrun->GetView();
+		View->Clear();
+		float curv=0;
+		int curs=1;
+		int ngr=0;
+		if(fgets(instr,128,grfile)!=NULL){ //get initial side and viewID
+		  sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
+		}
+		curs=gs;
+		curv=gv;
+		fseek(grfile,0,0);
+        printf("Reading grains from %s..\n",tlgname);
+		printf("Filling view %d side %d..",int(curv),curs);
+		while(fgets(instr,128,grfile)!=NULL){
+		  sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
+		  if((gv!=curv)||(gs!=curs)){ //new view found
+            View->GetHeader()->SetViewID(curv);
+			View->GetHeader()->SetNframes(curs,1-curs);
+			View->GetHeader()->SetNclusters(ngr);
+			View->GetHeader()->SetNsegments(-1); //grain view
+
+            outrun->AddView(View);
+			View->Clear();
+			curv=gv;
+			curs=gs;
+			printf("%d clusters.\nFilling view %d side %d..",ngr,int(curv),curs);
+			ngr=0;
+		  }
+          View->AddCluster(gX,gY,gZ,ga,gv,gf,gs,-2);
+		  ngr++;
+		}
+        outrun->AddView(View); //the last view
+		printf("%d clusters.\n",ngr);
+		fclose(grfile);
+
+	}
+	else
+	{ //read .tlg file
 		// ISySalDataIO variables
 		IO_Data *pTracks = 0;
 
