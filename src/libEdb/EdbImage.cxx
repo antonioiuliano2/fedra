@@ -8,13 +8,13 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include <fstream.h>   //created problems under Windows
 #include "TH1.h"
 #include "TH2.h"
 
 #ifndef ROOT_EdbImage
 #include "EdbImage.h"
 #endif
+#include <fstream>   //created problems under Windows
 using namespace std;
  
 ClassImp(EdbImage)
