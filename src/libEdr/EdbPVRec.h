@@ -120,8 +120,9 @@ class EdbSegCouple : public TObject {
   Int_t   eN1, eN2;         // n1,n2 - is rating of the segment (starting from 1)
   Int_t   eN1tot, eN2tot;   // total number of entries for the segment
 
+ public:
   EdbSegP  *eS;   //!  the result of the fit
-
+ private:
   static int egSortFlag; //! 0: chi2p only; 1: N1()*10000+N2()*10000000 + CHI2()/100
 
  public:
@@ -245,10 +246,13 @@ class EdbPatCouple : public TObject {
 			    Long_t vdiff[4]);
 
   void         SetCHI2mode(int m) { eCHI2mode=m; }
+  int          CHI2mode() const { return eCHI2mode; }
   float        Chi2Pz0(EdbSegCouple *scp);
   float        Chi2Pn(EdbSegCouple *scp);
   float        Chi2A(EdbSegCouple *scp, int iprob=1);
   float        Chi2A(EdbSegP *s1, EdbSegP *s2, int iprob=1);
+  float        Chi2KF(EdbSegCouple *scp);
+
   int          FillCHI2();
   int          FillCHI2P();
 

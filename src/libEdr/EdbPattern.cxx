@@ -325,14 +325,47 @@ void EdbSegP::MergeTo( EdbSegP &s )
   eFlag = s.Flag();
 }
 
-//______________________________________________________________________________
+///______________________________________________________________________________
 void EdbSegP::Print(Option_t *opt) const
 {
-  printf("EdbSegP: %d  %f %f %f  %f %f  %f  %d\n", ID(),X(),Y(),Z(),TX(),TY(),W(),Flag() );
-  printf("P= %f \t Prob = %f \t Chi2 = %f \n", P(),Prob(),Chi2() );
+  printf("EdbSegP: %d  PID = %d  Vid = %d  %d \t Aid = %d %d\n", 
+	 ID(),PID(),eVid[0],eVid[1],eAid[0],eAid[1] );
+  printf("x,y,tx,ty,w,flag = %f %f %f  %f %f  %f  %d\n", 
+	 X(),Y(),Z(),TX(),TY(),W(),Flag() );
+  printf("P= %f \t Prob = %f \t Chi2 = %f \t Track = %d \n", 
+	 P(),Prob(),Chi2(), Track() );
+	
   if(eCOV) eCOV->Print();
 } 
 
+///______________________________________________________________________________
+Bool_t EdbSegP::IsEqual(const TObject *obj) const
+{
+  const EdbSegP *s=(EdbSegP*)obj;
+  if(s->ID()  != ID())  return false;
+  if(s->PID() != PID()) return false;
+  if(s->Z()   != Z())   return false;
+  return true;
+}
+
+///______________________________________________________________________________
+int EdbSegP::Compare( const TObject *obj ) const
+{
+  const EdbSegP *s=(EdbSegP*)obj;
+  double f1=0, f2=0;
+
+  f1 = Z();
+  f2 = s->Z();
+
+  if (f1>f2)
+    return 1;
+  else if (f1<f2)
+    return -1;
+  else
+    return 0;
+}
+
+//______________________________________________________________________________
 //______________________________________________________________________________
 EdbSegmentsBox::EdbSegmentsBox(int nseg)
 {
@@ -571,8 +604,8 @@ EdbTrackP::EdbTrackP(int nseg=0)
   eS=0;
   eSF=0;
   eM=0;
-  if(nseg>0) eS  = new TObjArray(nseg);
-  if(nseg>0) { eSF = new TObjArray(nseg);    eSF->SetOwner(); }
+  if(nseg>0) eS  = new TSortedList();
+  if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
  
 //______________________________________________________________________________
@@ -597,18 +630,19 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
     AddSegment(new EdbSegP(*tr.GetSegment(i)));
   for(int i=0; i<nseg; i++)
     AddSegmentF(new EdbSegP(*tr.GetSegmentF(i)));
-  eS->SetOwner(); 
-  eSF->SetOwner(); 
+  eS->SetOwner();
+  eSF->SetOwner();
 }
 
 //______________________________________________________________________________
 void EdbTrackP::AddTrack(const EdbTrackP &tr)
 {
   int nseg=tr.N();
+  int nsegf=tr.NF();
   for(int i=0; i<nseg; i++)
     AddSegment(tr.GetSegment(i));
-  for(int i=0; i<nseg; i++)
-    AddSegmentF(new EdbSegP(*(tr.GetSegmentF(i))));   //TODO keep in mind!
+  for(int i=0; i<nsegf; i++)
+    AddSegmentF(new EdbSegP(*(tr.GetSegmentF(i))));
 }
 
 //______________________________________________________________________________
@@ -804,11 +838,11 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 
 
   if(!N()) return 0;
-  if(!eSF) eSF = new TObjArray(N());
-  else {
-    SF()->Clear();
-    SF()->Expand(N());
+  if(NF()) {
+    eSF->Clear();
   }
+
+  //printf("%d segments to fit\n",N());
 
   float dPb;
   double teta0sq;
@@ -861,6 +895,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   }
 
   seg0 = GetSegment(istart);
+
   par[istart] = new VtVector(  (double)(seg0->X()), 
 			       (double)(seg0->Y()),  
 			       (double)(seg0->TX()), 
@@ -979,7 +1014,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   segf.SetP( P() );
   segf.SetPID( GetSegment(iend)->PID() );
 
-  AddSegmentF(iend,new EdbSegP(segf));
+  AddSegmentF(new EdbSegP(segf));
 
   i=iend; 
   double chi2p=0; 
@@ -1004,7 +1039,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 	segf.SetW( (float)nseg );
 	segf.SetP( P() );
 	segf.SetPID( GetSegment(i)->PID() );
-	AddSegmentF(i,new EdbSegP(segf));
+	AddSegmentF(new EdbSegP(segf));
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,nseg*4));
@@ -1105,6 +1140,26 @@ float EdbTrackP::CHI2F()
   }
   chi2  /= nseg;
   return chi2;
+}
+
+//______________________________________________________________________________
+void EdbTrackP::Print() 
+{
+  int nseg=0, nsegf=0;
+  nseg = N();
+  nsegf = NF();
+
+  printf("EdbTrackP with %d segments and %d fitted segments\n", nseg, nsegf );
+  printf("particle mass = %f\n", M() );
+  ((EdbSegP*)this)->Print(); 
+
+  if(nseg) 
+    for(int i=0; i<nseg; i++)
+      ((EdbSegP*)(eS->At(i)))->Print(); 
+
+//    if(nsegf) 
+//      for(int i=0; i<nsegf; i++) 
+//        ((EdbSegP*)(eSF->At(i)))->Print();
 }
 
 //______________________________________________________________________________

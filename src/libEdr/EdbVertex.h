@@ -94,6 +94,7 @@ class EdbVertexRec: public TObject {
 			  const float X0=5810. );
   static double ProbeSeg( const EdbSegP& s1, EdbSegP& s2, 
 			  const float X0=5810., const float mass=0.1396 );
+  static float  Chi2Seg( EdbSegP *s1, EdbSegP *s2);
 
   static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
 			  const float X0, const float ProbMin, float &prob );

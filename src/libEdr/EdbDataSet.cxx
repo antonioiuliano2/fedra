@@ -1626,6 +1626,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
   }
 
   // **** fill tree with found couples ****
+  //  if(patc->CHI2mode()!=3)   
   s = new EdbSegP();
 
   int nip=al->Ncouples();
@@ -1640,20 +1641,25 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
 
+      if(patc->CHI2mode()!=3) {
+	s->Set( ic,
+		(s1->X()+s2->X())/2.,
+		(s1->Y()+s2->Y())/2.,
+		(s1->X()-s2->X())/(s1->Z()-s2->Z()),
+		(s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
+		s1->W()+s2->W()
+		);
+	s->SetZ( (s2->Z()+s1->Z())/2 );
+      } else {
+	s = cp->eS;
+	//s->Print();
+	tree->SetBranchAddress("s."  ,&s );
+      }
 
-      s->Set( ic,
-	      (s1->X()+s2->X())/2.,
-	      (s1->Y()+s2->Y())/2.,
-              (s1->X()-s2->X())/(s1->Z()-s2->Z()),
-              (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
-              s1->W()+s2->W()
-	      );
-      s->SetZ( (s2->Z()+s1->Z())/2 );
       s->SetDZ( s2->Z()-s1->Z() );
-      
-
-      //EdbSegP::LinkMT(s1,s2,s);
       s->SetVolume( s1->Volume()+s2->Volume() );
+      
+      //EdbSegP::LinkMT(s1,s2,s);
 
       tree->Fill();
     }

@@ -11,6 +11,7 @@
 
 #include "TTree.h"
 #include "TObjArray.h"
+#include "TSortedList.h"
 #include "TArrayL.h"
 #include "TMatrixD.h"
 #include "EdbVirtual.h"
@@ -147,6 +148,11 @@ class EdbSegP : public TObject, public EdbTrack2D {
  //other functions
  
   void       Print( Option_t *opt="") const;
+
+  Bool_t  IsEqual(const TObject *obj) const;
+  Bool_t  IsSortable() const { return kTRUE; }
+  Int_t   Compare(const TObject *obj) const;
+
  
   ClassDef(EdbSegP,14)  // segment
 };
@@ -231,8 +237,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 class EdbTrackP : public EdbSegP {
  
  private:
-  TObjArray  *eS;     // array of segments
-  TObjArray  *eSF;    // array of fitted segments
+  TSortedList  *eS;     // array of segments
+  TSortedList  *eSF;    // array of fitted segments
 
   Int_t      eNpl;        // number of plates passed throw
   Int_t      eN0;         // number of holes (if any)
@@ -255,59 +261,39 @@ class EdbTrackP : public EdbSegP {
   void     SetNpl()  { if(eS) eNpl = TMath::Abs(GetSegment(0)->PID() - GetSegment(N()-1)->PID()); }
   Int_t    Npl()      const   {return eNpl;}
 
-  TObjArray *S()  const { return eS; }
-  TObjArray *SF() const { return eSF; }
+  //  TList *S()  const { return eS; }
+  //  TList *SF() const { return eSF; }
 
-  const EdbSegP  *TrackZmin() const 
-    { 
-      if(!eSF)  return 0; 
-      if(GetSegmentF(0)->Z() < GetSegmentF(N()-1)->Z())  return GetSegmentF(0);
-      else return GetSegmentF(N()-1);
-    }
-  const EdbSegP  *TrackZmax() const
-    { 
-      if(!eSF)  return 0; 
-      if(GetSegmentF(0)->Z() >= GetSegmentF(N()-1)->Z())  return GetSegmentF(0);
-      else return GetSegmentF(N()-1);
-    }
+  //int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
+
+  int      N()  const  { return (eS)?  eS->GetSize()  : 0; }
+  int      NF() const  { return (eSF)? eSF->GetSize() : 0; }
+
+  EdbSegP *GetSegmentFirst()   const { return (eS) ? (EdbSegP*)(eS->First())  : 0; }
+  EdbSegP *GetSegmentLast()    const { return (eS) ? (EdbSegP*)(eS->Last())   : 0; }
+
+  EdbSegP *GetSegmentFFirst()   const { return (eSF) ? (EdbSegP*)(eSF->First())  : 0; }
+  EdbSegP *GetSegmentFLast()    const { return (eSF) ? (EdbSegP*)(eSF->Last())   : 0; }
+
+  EdbSegP *GetSegment(int i)   const { return (eS) ? (EdbSegP*)(eS->At(i)) : 0; }
+  EdbSegP *GetSegmentF(int i)  const { return (eSF) ? (EdbSegP*)(eSF->At(i)) : 0; }
+
+  const EdbSegP  *TrackZmin() const { return GetSegmentFFirst(); }
+  const EdbSegP  *TrackZmax() const { return GetSegmentFLast();  }
 
   void     AddTrack(const EdbTrackP &tr);
   
   void   AddSegment(EdbSegP *s)
     { 
-      if(!eS) eS = new TObjArray();
+      if(!eS) eS = new TSortedList();
       eS->Add(s);
     }
   void     AddSegmentF(EdbSegP *s)  
     { 
-      if(!eSF) eSF = new TObjArray(N());
+      if(!eSF) eSF = new TSortedList();
       eSF->Add(s);
     }
-  void     AddSegmentLast( EdbSegP *s)  
-    { 
-      if(!eS) { eS = new TObjArray(N()); }
-      int n = eS->GetEntries();                           // TODO fast?
-      eS->Expand( n+1 );
-      (*eS)[n]=s;
-     }
-  void     AddSegmentFirst( EdbSegP *s)  
-    { 
-      if(!eS) { eS = new TObjArray(N()); }
-      int n = eS->GetEntries();                           // TODO fast?
-      eS->Expand( n+1 );
-      for(int i=n; i>0; i--) (*eS)[i] = (*eS)[i-1];
-      (*eS)[0]=s;
-    }
-  void     AddSegmentF(int i, EdbSegP *s)  
-    { 
-      if(!eSF) {eSF = new TObjArray(N()); eSF->SetOwner(); }
-      (*eSF)[i] = s;
-    }
 
-  EdbSegP *GetSegment(int i)   const { return (eS) ? (EdbSegP*)(eS->At(i))  : 0; }
-  EdbSegP *GetSegmentF(int i)  const { return (eS) ? (EdbSegP*)(eSF->At(i)) : 0; }
-
-  int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
   void     Reset()    { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
   void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
@@ -323,13 +309,7 @@ class EdbTrackP : public EdbSegP {
 
   void Clear() { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
-  void Print() 
-    { 
-      printf("EdbTrackP with %d segments \n", N() );
-      printf("particle mass = %f\n", M() );
-      ((EdbSegP*)this)->Print(); 
-      //if(eS) eS->Print(); 
-    }
+  void Print();
 
   ClassDef(EdbTrackP,5)  // track consists of segments
 };

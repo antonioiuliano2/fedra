@@ -363,6 +363,7 @@ int EdbPatCouple::FillCHI2P()
 
     if     (eCHI2mode==1) chi2 = Chi2Pn(scp);
     else if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
+    else if(eCHI2mode==3) chi2 = Chi2KF(scp);
     else                  chi2 = Chi2A(scp);
 
     scp->SetCHI2P(chi2);
@@ -386,6 +387,32 @@ int EdbPatCouple::FillCHI2()
   return Ncouples();
 }
 
+///______________________________________________________________________________
+float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
+{
+  // exact estimation of chi2 with Kalman filtering procedure
+  // application: up/down linking, alignment (offset search)
+  //
+  // All calculation are done with full corellation matrix for both segments
+  // (dependency on the polar angle (phi))
+
+  EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
+  EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
+
+  float sx   = eCond->SigmaX(0);
+  float sy   = eCond->SigmaY(0);
+  float stx   = eCond->SigmaTX(0);
+  float sty   = eCond->SigmaTY(0);
+
+  float sx2 = sx*sx, sy2 = sy*sy, sz2 = 0., stx2 = stx*stx, sty2= sty*sty;
+
+  s1->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
+  s2->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
+
+  if(scp->eS) delete (scp->eS);
+  scp->eS=new EdbSegP(*s2);
+  return EdbVertexRec::Chi2Seg(scp->eS, s1);
+}
 
 ///______________________________________________________________________________
 float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
@@ -975,6 +1002,7 @@ void EdbPVRec::SetCouples()
     pc->SetPat2( GetPattern(pc->ID2()) );
 
     if( TMath::Abs(pc->Pat2()->Z() - pc->Pat1()->Z()) < 40. )  pc->SetCHI2mode(2); 
+    //pc->SetCHI2mode(3);  /// debug
   }
 }
 
@@ -1982,6 +2010,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
   for(int i=0; i<eTracks->GetEntriesFast(); i++) {
     tr = (EdbTrackP*)(eTracks->At(i));
     tr->SetID(i);
+    tr->SetFlag(0);
     tr->SetSegmentsTrack();
     v[0]= -(tr->Npl());
     v[1]= (Long_t)(tr->Prob()*100);
@@ -2007,13 +2036,20 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
-	printf("track: %d with %d segments\n",tr->ID(),tr->N());
+	if(tr->Flag()==-10) continue; 
+
+	printf("propagate track: %d with %d segments ",tr->ID(),tr->N());
 
 	nseg = PropagateTrack(*tr, true);
   	nsegTot += nseg;
-	if(tr->Npl()>nplmax)  continue;
+	printf("\t %d after true ",tr->N());
+
+	if(tr->Npl()>nplmax)  { printf("\n"); continue;}
+	if(tr->Flag()==-10)   { printf("\n"); continue;}
+
   	nseg = PropagateTrack(*tr, false);
   	nsegTot += nseg;
+	printf("\t %d after false \n",tr->N());
 
       }
     }
@@ -2043,7 +2079,9 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
   EdbPattern *pat  = 0;
   int nseg =0, nsegTot=0;
 
-  //printf("pstart, pend, step: %d %d %d \n",pstart,pend,step);
+  int ntr = eTracks->GetEntriesFast();
+
+  //printf("pstart, pend, step: %d %d %d \t ntr =%d\n",pstart,pend,step,ntr);
 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
@@ -2069,9 +2107,14 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
     if(!segmax) continue;
 
     int trind= segmax->Track();
-    printf(" trind = %d \n", trind);
-    if( trind >= 0 && trind<eTracks->GetEntriesFast() ) 
-      if( ((EdbTrackP*)eTracks->At(trind))->Npl() > tr.Npl() ) continue;
+    //printf(" trind = %d \n", trind);
+    if( trind >= 0 && trind<ntr ) {
+      EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
+      if( ttt->N() > tr.N() ) {
+	tr.SetFlag(-10);
+	continue;
+      } else ttt->SetFlag(-10);
+    }
 
     if(probmax>probMin) {
       if( EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) {
@@ -2085,12 +2128,12 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
       }
     }
 
-//      printf("i = %d    nseg = %d  nsegTot = %d  entries= %d \t probmax= %f\n", 
-//  	   i, nseg, nsegTot, tr.S()->GetEntries(), probmax);
+    //printf("i = %d    nseg = %d  nsegTot = %d  entries= %d \t probmax= %f\n", 
+    //   i, nseg, nsegTot, tr.N(), probmax);
 
   }
 
-  printf("%d segments are attached \n",nsegTot);
+  //printf("%d segments are attached \n",nsegTot);
   return nsegTot;
 }
 

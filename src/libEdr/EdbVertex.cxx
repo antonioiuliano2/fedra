@@ -342,7 +342,6 @@ bool EdbVertexRec::AttachSeg( EdbTrackP& tr, EdbSegP *s,
 
   prob = (float)TMath::Prob(chi2,4);
 
-  int dpid;
   if (prob >= ProbMin)
   {
     tr.Set(tr.ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr.P());
@@ -352,15 +351,83 @@ bool EdbVertexRec::AttachSeg( EdbTrackP& tr, EdbSegP *s,
     tr.SetZ(s->Z());
     tr.SetW(tr.N()+1);
 
-    dpid = 
-      ( tr.GetSegment(tr.N()-1)->PID() - tr.GetSegment(0)->PID()) *
-      ( s->PID() - tr.GetSegment(0)->PID() );
-    if( dpid>0 )      	tr.AddSegmentLast(s);
-    else                tr.AddSegmentFirst(s);
+    tr.AddSegment(s);
 
     return true;
   }
   return false;
+}
+
+//________________________________________________________________________
+float EdbVertexRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
+{
+  // Return value:        Prob: is Chi2 probability (area of the tail of Chi2-distribution)
+  //                      If we accept couples with Prob >= ProbMin then ProbMin is the 
+  //                      probability to reject the good couple
+  //
+  // The mass and momentum of the tr are used for multiple scattering estimation
+
+  double dz;
+  float prob;
+
+  VtVector par( (double)(tr->X()), 
+		(double)(tr->Y()),  
+		(double)(tr->TX()), 
+		(double)(tr->TY()) );
+
+  VtSymMatrix cov(4);             // covariance matrix for seg0 (measurements errors)
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) cov(k,l) = (tr->COV())(k,l);
+
+  Double_t chi2=0.; 
+
+
+  dz = s->Z()-tr->Z();
+
+  VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
+  pred.clear();
+
+  pred(0,0) = 1.;
+  pred(1,1) = 1.;
+  pred(2,2) = 1.;
+  pred(3,3) = 1.;
+  pred(0,2) = dz;
+  pred(1,3) = dz;
+
+  VtVector parpred(4);            // prediction from seg0 to seg
+  parpred = pred*par;
+  
+  VtSymMatrix covpred(4);         // covariance matrix for prediction
+  covpred = pred*(cov*pred.T());
+
+  VtSymMatrix dmeas(4);           // original covariance  matrix for seg2
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) dmeas(k,l) = (s->COV())(k,l);
+  
+  covpred = covpred.dsinv();
+  dmeas   = dmeas.dsinv();
+  cov = covpred + dmeas;
+  cov = cov.dsinv();
+  
+  VtVector meas( (double)(s->X()), 
+		 (double)(s->Y()),  
+		 (double)(s->TX()), 
+		 (double)(s->TY()) );
+
+  par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
+
+  chi2 = (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
+
+  prob = (float)TMath::Prob(chi2,4);
+
+  tr->Set(tr->ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr->P());
+  tr->SetCOV( cov.array(), 4 );
+  tr->SetChi2((float)chi2);
+  tr->SetProb(prob);
+  tr->SetZ(s->Z());
+  tr->SetW(tr->W()+s->W());
+
+  return TMath::Sqrt(chi2/4.);
 }
 
 //______________________________________________________________________________
