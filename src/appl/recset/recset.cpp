@@ -1,5 +1,7 @@
-#include "iostream.h"
+#include <iostream>
 #include "EdbDataSet.h"
+
+using namespace std;
 
 int main(int argc, char* argv[])
 {

@@ -140,9 +140,11 @@ Int_t TIndexCell::ComparePatterns( Int_t level, Long_t vdiff[],
 //____________________________________________________________________________
 Int_t TIndexCell::ComparePatterns( Int_t level, TIndexCell *cin, Int_t strip )
 { 
-  Long_t vdiff[level];
+  Long_t *vdiff = new Long_t[level];
   for( int i=0; i<level; i++ ) vdiff[i]=0;
-  return ComparePatterns( level, vdiff, cin, strip );
+  Int_t cp =  ComparePatterns( level, vdiff, cin, strip );
+  delete[] vdiff;
+  return cp;
 }
 
 //____________________________________________________________________________
@@ -357,8 +359,10 @@ Int_t TIndexCell::N( int level ) const
 Long_t TIndexCell::MinV( Int_t level ) const
 {
   // return mimimal value on the given level
-  Int_t vind[level];
-  return MinV(level,vind);
+  Int_t *vind = new Int_t[level];
+  Long_t min = MinV(level,vind);
+  delete[] vind;
+  return min;
 }
 
 //____________________________________________________________________________
@@ -387,8 +391,10 @@ Long_t TIndexCell::MinV( Int_t level, Int_t vind[] ) const
 Long_t TIndexCell::MaxV( Int_t level  ) const
 {
   // return maximal value on the given level
-  Int_t vind[level];
-  return MaxV(level,vind);
+  Int_t *vind = new Int_t[level];
+  Long_t max = MaxV(level,vind);
+  delete[] vind;
+  return max;
 }
 
 //____________________________________________________________________________
@@ -417,8 +423,10 @@ Long_t TIndexCell::MaxV( Int_t level, Int_t vind[]  ) const
 Int_t TIndexCell::MinN( Int_t level ) const
 {
   // return population of the mimimal populated cell on the given level
-  Int_t vind[level];
-  return MinN(level,vind);
+  Int_t *vind = new Int_t[level];
+  Int_t min = MinN(level,vind);
+  delete[] vind;
+  return min;
 }
 
 //____________________________________________________________________________
@@ -451,8 +459,10 @@ Int_t TIndexCell::MinN( Int_t level, Int_t vind[] ) const
 Int_t TIndexCell::MaxN( Int_t level ) const
 {
   // return population of the maximal populated cell on the given level
-  Int_t vind[level];
-  return MaxN(level,vind);
+  Int_t *vind = new Int_t[level];
+  Int_t max = MaxN(level,vind);
+  delete[] vind;
+  return max;
 }
 
 //____________________________________________________________________________
@@ -536,8 +546,8 @@ void TIndexCell::SetName(const char *varlist)
   if (nch <= 1) return;
 
   const char *newvar=0;
-
-  for (int i=1;i<nch;i++) {
+  int i;
+  for (i=1;i<nch;i++) {
     if (varlist[i] == ':') {
       if(i+1<nch)  newvar=&varlist[i+1];
       break;
@@ -547,7 +557,7 @@ void TIndexCell::SetName(const char *varlist)
   if(!newvar) return;
 
   int ncc = GetEntries();
-  for(int i=0; i<ncc; i++) 
+  for(i=0; i<ncc; i++) 
     ((TIndexCell*)fList->At(i))->SetName(newvar);
 }
 
