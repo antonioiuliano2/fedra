@@ -1,0 +1,8 @@
+
+VT: 30/05/2003
+ Framework for Emulsions Data Reconstruction and Analysis
+ First tarball
+ Main modules are:
+ libEdb      - emulsion data storage
+ libEdr      - reconstruction
+ libEmath    - general algorithms

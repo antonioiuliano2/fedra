@@ -1,0 +1,57 @@
+Terminology convention:
+~~~~~~~~~~~~~~~~~~~~~~~
+Frame - one CCD image
+
+View - consists of many Frames with different Z,  XY size of View = Frame
+
+Area  - consists of many Views
+
+Run   - one session of scanning. Different runs could have different
+        system tuning & calibration parameters. For each run results are stored
+	in the correspondent root file.
+
+
+General structure of Run file:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- RunHeader    - single object:  stored at run starting
+- SysPar       - single object:  stored at run starting
+- TransPar     - single object:  stored at run starting
+- Predictions  - array of prediction tracks: stored at run starting
+- Views	       - Root tree of View objects: stored per each view
+
+
+Classes list: (Edb is prefics for all Emulsion DataBase classes)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* EdbRun	  -  main run class contained all objects
+* EdbRunHeader	  -  RunID, PlateID, DateTime, Comment
+*  -> EdbCamera      -  CCD camera specification
+*  -> EdbPlate       -  emulsion plate specification
+*  -> EdbPlateSet    -  emulsion settings specific for current run
+
+  EdbSysPar	  - Scanning system configuration parameters (config.sys) 
+  EdbTransPar	  - Coordinate transformation parameters ($a $b)
+
+* EdbImage	  - Container for 1 image in bitmap format
+* EdbFrame	  - Image + additional (positional) information
+
+* EdbCluster	  - single cluster
+  EdbSegment	  - track segment (can keep pointer on array od clusters)
+  EdbTrack	  - single track  (can keep pointer on array of segments)
+
+* EdbView	  - array of Frames
+		    array of clusters
+		    array of segments
+		    array of tracks
+* EdbViewHeader	  - view specific information
+
+
+  EdbPredTrack	  - Predicted track (probably the same as Track)
+
+
+Coding convention:
+~~~~~~~~~~~~~~~~~~
+Class: prefix Edb              ( EdbClass )
+Class data member: prefix e    ( eMember )  - to distinguish it from Root system members
+Access member functions: prefix Get (GetMember)
+

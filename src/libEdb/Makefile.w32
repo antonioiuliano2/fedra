@@ -1,0 +1,57 @@
+ObjSuf        = obj
+SrcSuf        = cxx
+ExeSuf        = .exe
+DllSuf        = dll
+OutPutOpt     = /out:
+
+# Win32 system with Microsoft Visual C/C++
+!include <win32.mak>
+CC            = $(cc)
+CXX           = $(cc)
+CXXFLAGS      = $(cvarsdll) /O2 /G5 /MD -DWIN32 -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
+CXXDEBUG      = /Zi -Fd$*.pdb
+ 
+LD            = $(link)
+LDFLAGS       = $(conlflags)
+SOFLAGS       = $(dlllflags:/PDB:NONE=)
+LDDEBUG       = -DEBUG -PDB:$*.pdb
+ROOTLIBS      = $(ROOTSYS)/lib/*.lib
+LIBS          = $(ROOTLIBS) $(guilibsdll) MSVCIRT.LIB
+LIBSALL       = $(ROOTLIBS)
+ 
+#------------------------------------------------------------------------------
+
+headers       = EdbCluster.h EdbView.h EdbRunHeader.h EdbRun.h EdbImage.h EdbFrame.h EdbSegment.h EdbStage.h EdbAffine.h EdbFiducial.h EdbVirtual.h EdbOnline.h EdbPrediction.h
+
+
+Cint	        = $(headers) LinkDef.h
+
+EDBS          = EdbCluster.cxx EdbView.cxx EdbRunHeader.cxx EdbRun.cxx EdbImage.cxx EdbFrame.cxx EdbSegment.cxx EdbStage.cxx EdbAffine.cxx EdbFiducial.cxx EdbVirtual.cxx EdbOnline.cxx EdbPrediction.cxx Cint.cxx
+
+OBJ           = EdbCluster.obj EdbView.obj EdbRunHeader.obj EdbRun.obj EdbImage.obj EdbFrame.obj EdbSegment.obj EdbStage.obj EdbAffine.obj EdbFiducial.obj EdbVirtual.obj EdbOnline.obj EdbPrediction.obj Cint.obj
+
+
+EDBSO         = libEdb.$(DllSuf)
+EDBLIB	  = libEdb.lib
+
+#------------------------------------------------------------------------------
+
+$(EDBSO): $(OBJ)
+		BINDEXPLIB  $* $(OBJ) > $*.def
+		lib /nologo /MACHINE:IX86 $(OBJ) /def:$*.def      $(OutPutOpt)$(EDBLIB)
+		$(LD) $(LDDEBUG) $(SOFLAGS) $(OBJ) $*.exp $(LIBS) $(OutPutOpt)$(EDBSO)
+
+Cint.cxx: $(Cint)
+		@echo "Generating dictionary Cint..."
+			rootcint -f Cint.cxx -c $(Cint)
+
+clean:
+		@del /q $(OBJ) Cint.$(SrcSuf) Cint.h
+
+depend:
+		@makedepend -I$(INCLUDE) *.cxx >& /dev/null
+
+.SUFFIXES: .$(SrcSuf)
+
+.$(SrcSuf).$(ObjSuf):
+		$(CXX) $(CXXFLAGS) -c $<

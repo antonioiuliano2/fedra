@@ -1,0 +1,254 @@
+Todo:
+      - to make portable Sfscanf
+
+      - modify data scheme: 
+	       - header information should be easely updatable: not one header 
+	           objects but many separate objects in the header's directory
+	       - frames branch should be in the separate tree
+	       - In Views tree should be clusters and segments only
+	         in local view coordinates
+	       - tracks should be the separate tree in global coordinates,
+	         where 1 track is 1 entry, in separate file
+
+
+14.07.2000
+	EdbOnline updated and modified to support automatic run numbering
+	and incrementation scheme.
+
+	2 system environment variables are required: 
+
+	 $SCAN_ONLINE - path for online-specific files:
+		      scan.par - input parameters - edited by user
+		      scan.mem - scanning system service file
+		      runs.log - list of runs with short info
+
+         $SCAN_DATA   - directory for data output files
+
+	 currentry working examples: appl/toedb.cxx, appl/t.cxx
+
+06.07.2000
+
+	EdbOnline::ReadParameters() function introduces. So parameters 
+	could be readed from file.par with format:
+
+	CCD        512 512 22. 19.                  VWFT121       CCD_camera_installed_on_MTS
+	OBJECTIVE  50. 0.293  0. 0. -0.293  0. 0.   TIYODA220601  Objective_arrived_22.06.00
+	AREA       9  125 125 16 16
+	PLATE	   6  55 185 55  1.1  1.1           W2P6R         Welded_brick2_plate_6_Fomos
+	PREDICTIONS    ../../run1/dc
+	FIDUCIALS      ../../run1/$a01
+
+27.06.2000
+*******************************************************************
+	Edb_jun27 is ported to WNT
+*******************************************************************
+
+	Portability notes: 
+	- Linux warnings concerns "const parameters" on VC++
+	  becomes errors, so "const" are removed from *::Transform
+
+	- the for-cycle variable is visible out of cycle on VC++ so
+	  correspondent changes done in code
+
+	- function vsscanf do not exist in VC++ so customized read 
+	  function Sfscanf of Edb was disabled
+
+        - strange error on the TAttText.h file - so everithing concernes  
+          text graphics was commented out vie #ifndef WIN32 
+
+	- TODO: investigate warnings concernes the destructor of virtually 
+          inhereted classes 
+
+27.06.2000
+	Test routine appl/toedb.cxx to simulate the data asquisition
+	and database filling is finished.
+
+	EdbOnline - new class inhereted from TROOT is created for online
+	            data taking. Only one object of this class coul be 
+		    in the system.
+
+21.06.2000
+	Fixed big memory leak in EdbRun::GetEntry()
+
+	Changed the philosophy of EdbView and Run data access: 
+	- no more static members in EdbView so any number of different 
+	  views are permitted
+	- each EdbRun has his own view as the container to fill and
+	  access data. 
+
+	Correct sequence to fill run is: 
+
+	EdbRun run(...);
+	EdbView *view = run.GetView();      // get interface view of "run"
+	... fill view ...
+	run.AddView(view);                  // parameter is keeped for 
+					    // backword compatibility
+        it still will work even if you 
+	add new view to the run, but less efficient
+
+	Correct sequence to access run's data is: 
+
+	EdbView  *view = 0;
+
+        for( int i=0; i<run.GetEntries(); i++ ) {
+	  view = run->GetEntry(i);
+	  ....
+	}
+
+	do not delete this view!
+
+20.06.2000
+	EdbAffine::Rotate is implemented, 
+	spiral.C - spiral algorithm 
+	rot()    - animation rotation "pippa del anno"
+
+19.06.2000
+	New members of EdbRun:
+	~~~~~~~~~~~~~~~~~~~~~~
+	ePredictions - collection of the predictions a-la $c
+	eMarks       - set of fiducial marks
+
+	to fill it : 
+	  run->GetPredictions()->ReadDC("run/$c01");
+	  run->GetMarks()->ReadDA("run/$a01");
+
+	data seems to be backward compatible with Edb_jun06
+
+17.06.2000
+	New classes and header files: 
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	EdbAffine2D - 2-dim affine transformation		"EdbAffine.h"
+
+	EdbBasic    - some general purpose functions		"EdbBasic.h"
+
+	EdbMark      - single fiducial mark			"EdbFiducial.h"
+	EdbMarksBox  - collection of marks
+	EdbMarksSet  - $a file (2 boxes)
+
+	EdbPredictionDC    - single prediction a-la $c		"EdbPrediction.h" 
+	EdbPredictionsBox  - collection of predictions
+
+
+	EdbPoint           - virtual point			"EdbVirtual.h"
+	EdbAngle2D         - virtual angle as 2 tangents 
+	EdbPoint2D         - virtual 2-dim point 
+	EdbPoint3D         - virtual 3-dim point
+	EdbTrack2D         - virtual track as point2D+angle2D
+	EdbPointsBox2D     - virtual box with 2-dim points
+	EdbPointsBox3D     - virtual box with 3-dim points
+
+
+12.06.2000
+	Changed the default Run open mode from "" to "READ",  because by "" 
+	default root beahviour: if file didn't found - create it, but it is 
+	dangerous because sometimes root works incorrectly with unix links or  
+	with ~/.... Today one file was lost due to this fact.
+
+	Small fix in LoadPGM by Rosario
+
+6.06.2000
+	Implemented AutoSave option, so the data saved into file each 1Mb, so 
+	it is possible to read file after interrupt.
+
+1.06.2000
+	New classes are implemented: 
+	    EdbStage
+	    EdbCCD
+	    EdbObjective
+	    EdbAffine2D
+	    EdbAffine3D
+
+26.05.2000
+	Run StartTime and Run FinishTime are stored in the Run header now
+
+	In EdbViewHeader eTime member added - time of the view production in msec
+
+25.05.2000
+	Run Title and Run Comment supported
+
+24.05.2000
+	Created EdbTrack class inhereting from EdbSeg3D
+	Added "tracks" branch to the Views tree
+	New test function EdbView::GenerateClustersTrack( *track, n0, sigma )
+	  to create segments and clusters according to "track".
+
+23.05.2000
+	EdbSegments is modified: now it's inhereted from the new class EdbSeg3D
+	New members are added: 
+  Float_t    eDz;         // length of the segment along Z with sign
+  Int_t      eSide;       // side of the segment location (0-up, 1-down)
+  Int_t      eID;         // segment identifier
+	Applied appropriate changements in constructor and access functions
+	
+	EdbCluster is modified: added new member: 
+  Int_t      eSegment; // segment id to be attached (-1 if no segment)
+        Appropriatly changed constructor and access functions
+	
+	Added new function to EdbView:
+  TObjArray     *GetSegmentsClusters() const;
+        to get array of segments with clusters attached to segments
+
+	Modified EdbView::Draw() 
+	Modified test routines test.C and a.C
+
+19.05.2000
+	Removed inheritance of EdbViewHeader from TNamed because in the split mode
+	Name and Title are saved incorrectly. If will be decided usefull to have 
+	special comment/view it should be done in the special branch with split=0
+
+6.05.2000
+	EdbView::Draw() function added
+
+5.05.2000
+	The segments branch was introduced in the Views tree.
+	New functions introduced:
+	void         EdbView::AddSegment(EdbSegment *s)
+	Int_t        EdbView::Nsegments()
+	EdbSegment  *EdbView::GetSegment(int i)
+
+	Routine wRan() in test.C should be used as the example
+
+4.05.2000 
+        To avoid possible memory leak problem in filling EdbView with clusters and 
+	to speedup executuion, new function 
+        EdbView::AddCluster( float x,  float y,  float z,  float a,  float v, int  f, int s )
+	was added. So now to add clusters just do: 
+
+	view->AddCluster(x,y,z, ar, vol, ifr, side);
+
+	I tested generation of many views:
+	10000 views with 46.000.000 clusters inside were written in a root file of
+	570 Mbyte in 16 minutes. The top usage of memory was 11% on opera3.
+ 	This test can be repeated by the command sequince:
+	root> .L test.C
+	root> wRan(2,10000)
+
+	All files are in .../dev/Edb...
+
+24.04.2000
+	EdbView: memory leak bug in generators is fixed
+	
+	Generation was tested with 10000 views being written in compressed root 
+	file of 500Mb in 20 min approximately. 46x10^6 clusters are written.
+
+21.04.2000
+
+  EdbView: new access functions 
+	Nclusters()       - return number of clusters in the cluster array of the view
+	GetCluster(int i) - return i-th cluster
+
+	test.C::get_clusters_fast() is changed appropriately
+
+  EdbView: new functions to generate clusters:
+        GenerateClustersFog( float density, float x1=0, float x2=120, 
+			                    float y1=0, float y2=150 );
+	       generate  clusters with given density N/(10x10x10) microns^-3
+
+	GenerateClustersSegment(EdbSegment *s, int n0=25, int sigma=1.) -
+	                             generate clusters along the segment's path
+
+20.04.2000
+
+        EdbViewHeader: inhereted from TNamed, so functions
+	SetTitle, SetName, GetTitle, GetName are available now
+
