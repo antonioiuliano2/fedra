@@ -343,14 +343,93 @@ bool EdbVertexRec::AttachSeg( EdbTrackP& tr, EdbSegP *s,
 
   if (prob >= ProbMin)
   {
-    tr.Set(tr.ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr.W(),tr.Flag());
+    tr.Set(tr.ID(),(float)par(0),(float)par(1),
+                   (float)par(2),(float)par(3),tr.NF()+1.,tr.Flag());
     tr.SetCOV( cov.array(), 4 );
-    tr.SetChi2((float)chi2);
-    tr.SetProb(prob);
+    tr.SetChi2(tr.Chi2()+(float)chi2);
+    tr.SetProb((float)TMath::Prob((double)tr.Chi2(),tr.NF()+4));
     tr.SetZ(s->Z());
-    tr.SetW(tr.N()+1);
+
+    EdbSegP segf;
+    segf.Set(tr.ID(),(float)par(0),(float)par(1),
+	             (float)par(2),(float)par(3),tr.NF()+1.,tr.Flag());
+    segf.SetCOV( cov.array(), 4 );
+    segf.SetChi2((float)chi2);
+    segf.SetProb( (float)prob);
+    segf.SetZ(s->Z());
+    segf.SetPID(s->PID());
+
+    int nseg = tr.NF();
+    EdbSegP *sf=0;
+    for(int is=0; is<nseg; is++) {
+	sf = tr.GetSegmentF(is);
+
+	par(0) = (double)(s->X()); 
+	par(1) = (double)(s->Y());  
+	par(2) = (double)(s->TX()); 
+	par(3) = (double)(s->TY());
+
+	for(int k=0; k<4; k++) 
+	    for(int l=0; l<4; l++) cov(k,l) = (s->COV())(k,l);
+
+	chi2=0.; 
+
+	dms.clear();
+
+	dz = sf->Z()-s->Z();
+	ds = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of media in microns
+	teta0sq = EdbPhysics::ThetaMS2( tr.P(), tr.M(), ds, X0 );
+
+	dms(0,0) = teta0sq*dz*dz/3.;
+	dms(1,1) = dms(0,0);
+	dms(2,2) = teta0sq;
+	dms(3,3) = dms(2,2);
+	dms(2,0) = teta0sq*dz/2.;
+	dms(3,1) = dms(2,0);
+	dms(0,2) = dms(2,0);
+	dms(1,3) = dms(2,0);
+
+	pred.clear();
+
+	pred(0,0) = 1.;
+	pred(1,1) = 1.;
+	pred(2,2) = 1.;
+	pred(3,3) = 1.;
+	pred(0,2) = dz;
+	pred(1,3) = dz;
+
+	parpred = pred*par;
+  
+	covpred = pred*(cov*pred.T())+dms;
+
+	for(int k=0; k<4; k++) 
+	    for(int l=0; l<4; l++) dmeas(k,l) = (sf->COV())(k,l);
+  
+	covpred = covpred.dsinv();
+	dmeas   = dmeas.dsinv();
+	cov = covpred + dmeas;
+	cov = cov.dsinv();
+  
+	meas(0) = (double)(sf->X()); 
+	meas(1) = (double)(sf->Y());  
+	meas(2) = (double)(sf->TX()); 
+	meas(3) = (double)(sf->TY());
+
+	par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
+
+	chi2 = (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
+
+	prob = (float)TMath::Prob(chi2,4);
+
+	sf->Set(tr.ID(),(float)par(0),(float)par(1),
+			(float)par(2),(float)par(3),tr.NF()+1.,tr.Flag());
+	sf->SetCOV( cov.array(), 4 );
+	sf->SetChi2((float)chi2);
+	sf->SetProb( (float)prob);
+    }
 
     tr.AddSegment(s);
+    tr.AddSegmentF(new EdbSegP(segf));
 
     return true;
   }

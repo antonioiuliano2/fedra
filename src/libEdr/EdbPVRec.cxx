@@ -2167,7 +2167,7 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ )
 	segmax->SetTrack(tr.ID());
 	tr.SetNpl();
 
-	tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
+//	tr.FitTrackKFS(followZ,X0);           // TODO remove refit?
 	tr.SetSegmentsTrack();
 
 	tr.MakeSelector(ss,followZ);
