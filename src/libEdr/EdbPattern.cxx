@@ -603,6 +603,7 @@ EdbTrackP::EdbTrackP(int nseg)
   eS=0;
   eSF=0;
   eM=0;
+  eDE=0;
   if(nseg>0) eS  = new TSortedList();
   if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
@@ -623,6 +624,7 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   SetM(tr.M());
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
+  SetDE(tr.DE());
 
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
@@ -631,6 +633,15 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
     AddSegmentF(new EdbSegP(*tr.GetSegmentF(i)));
   eS->SetOwner();
   eSF->SetOwner();
+}
+
+//______________________________________________________________________________
+float EdbTrackP::Wgrains() const
+{
+  float w=0.;
+  int nseg=N();
+  for(int i=0; i<nseg; i++)    w+=GetSegment(i)->W();
+  return w;
 }
 
 //______________________________________________________________________________

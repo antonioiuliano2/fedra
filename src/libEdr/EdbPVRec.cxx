@@ -1800,13 +1800,15 @@ int EdbPVRec::MakeTracksTree()
   int   nseg,trid,npl,n0;
   float xv=X();
   float yv=Y();
- 
+  float w=0.;
+
   tracks->Branch("trid",&trid,"trid/I");
   tracks->Branch("nseg",&nseg,"nseg/I");
   tracks->Branch("npl",&npl,"npl/I");
   tracks->Branch("n0",&n0,"n0/I");
   tracks->Branch("xv",&xv,"xv/F");
   tracks->Branch("yv",&yv,"yv/F");
+  tracks->Branch("w",&w,"w/F");
   tracks->Branch("t.","EdbSegP",&tr,32000,99);
   tracks->Branch("s", &segments);
   tracks->Branch("sf",&segmentsf);
@@ -1824,7 +1826,8 @@ int EdbPVRec::MakeTracksTree()
 
     segments->Clear("C");
     segmentsf->Clear("C");
-    int nseg = track->N();
+    nseg = track->N();
+    w    = track->Wgrains();
     EdbSegP *s=0,*sf=0;
     for(int is=0; is<nseg; is++) {
       s = track->GetSegment(is);

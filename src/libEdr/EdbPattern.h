@@ -244,6 +244,7 @@ class EdbTrackP : public EdbSegP {
   Int_t      eN0;         // number of holes (if any)
 
   Float_t    eM;          // invariant mass of the particle
+  Float_t    eDE;         // total energy loss of the particle between first and last segments
 
  public:
   EdbTrackP(int nseg=0);
@@ -257,6 +258,9 @@ class EdbTrackP : public EdbSegP {
   void     SetN0( int n0 )  { eN0=n0; }
   Int_t    N0()      const  {return eN0;}
 
+  void     SetDE( float de )  { eDE=de; }
+  Float_t  DE()      const  {return eDE;}
+
   void     SetNpl( int npl )  { eNpl=npl; }
   void     SetNpl()  
     { if(eS) eNpl = 1+TMath::Abs(GetSegment(0)->PID() - GetSegment(N()-1)->PID()); }
@@ -269,6 +273,8 @@ class EdbTrackP : public EdbSegP {
 
   int      N()  const  { return (eS)?  eS->GetSize()  : 0; }
   int      NF() const  { return (eSF)? eSF->GetSize() : 0; }
+
+  float    Wgrains() const;
 
   EdbSegP *GetSegmentFirst()   const { return (eS) ? (EdbSegP*)(eS->First())  : 0; }
   EdbSegP *GetSegmentLast()    const { return (eS) ? (EdbSegP*)(eS->Last())   : 0; }
