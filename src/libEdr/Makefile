@@ -3,7 +3,7 @@ include ../config/ProjectDef.mk
 include ../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS += -lEmath -lEdb
+PROJECT_LIBS += -lvt -lEmath -lEdb
 
 LIB_TGT       = $(LIB_DIR)/libEdr.so
 

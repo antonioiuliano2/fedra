@@ -224,9 +224,9 @@ namespace VERTEX {
 
     /** @name --- Operators --- */
     ///
-    bool operator< (const Track& rhs);
+   //bool operator< (const Track& rhs);
     ///
-    int  operator==(const Track& rhs);
+   //int  operator==(const Track& rhs);
 
   private:
     short int           t_Q;      // charge

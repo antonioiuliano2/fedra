@@ -52,10 +52,10 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
     s->SetZ(s1->Z());
     s->SetID(s1->ID());
       
-    q1 = s1->SX()*s1->SX();
-    q2 = s2->SX()*s2->SX();
-    w1 = s1->STX()*s1->STX();
-    w2 = s2->STX()*s2->STX();
+    q1 = s1->SX();
+    q2 = s2->SX();
+    w1 = s1->STX();
+    w2 = s2->STX();
     
     sx0 = q1*q2/(q1+q2);
     q = (s1->X()/q1+s2->X()/q2)*sx0;
@@ -64,10 +64,10 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
     q = (s1->TX()/w1+s2->TX()/w2)*stx0;
     s->SetTX(q);
  
-    q1 = s1->SY()*s1->SY();
-    q2 = s2->SY()*s2->SY();
-    w1 = s1->STY()*s1->STY();
-    w2 = s2->STY()*s2->STY();
+    q1 = s1->SY();
+    q2 = s2->SY();
+    w1 = s1->STY();
+    w2 = s2->STY();
  
     sy0 = q1*q2/(q1+q2);
     q = (s1->Y()/q1+s2->Y()/q2)*sy0;
@@ -76,7 +76,7 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
     q = (s1->TY()/w1+s2->TY()/w2)*sty0;
     s->SetTY(q);
  
-    s->SetErrors(TMath::Sqrt(sx0),TMath::Sqrt(sy0),0.0,TMath::Sqrt(stx0),TMath::Sqrt(sty0));
+    s->SetErrors(sx0,sy0,0.0,stx0,sty0);
     s->SetW( s1->W()+s2->W() );
     return;
   }
@@ -87,10 +87,10 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   s->SetZ(q);
   s->SetID(s1->ID());
  
-  q1 = s1->SX()*s1->SX();
-  q2 = s2->SX()*s2->SX();
-  w1 = s1->STX()*s1->STX();
-  w2 = s2->STX()*s2->STX();
+  q1 = s1->SX();
+  q2 = s2->SX();
+  w1 = s1->STX();
+  w2 = s2->STX();
  
   q = dz2*w2+q2;
   d1 = 1.0/(q+q1);
@@ -116,13 +116,13 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   s->SetX(q);
   q = (xm2-xm1)*dzr;
   s->SetTX(q);
-  sx0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
-  stx0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
+  sx0  = dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2;
+  stx0 = dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2;
  
-  q1 = s1->SY()*s1->SY();
-  q2 = s2->SY()*s2->SY();
-  w1 = s1->STY()*s1->STY();
-  w2 = s2->STY()*s2->STY();
+  q1 = s1->SY();
+  q2 = s2->SY();
+  w1 = s1->STY();
+  w2 = s2->STY();
  
   q = dz2*w2+q2;
   d1 = 1.0/(q+q1);
@@ -147,8 +147,8 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   s->SetY(q);
   q = (xm2-xm1)*dzr;
   s->SetTY(q);
-  sy0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
-  sty0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
+  sy0  = dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2;
+  sty0 = dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2;
  
   s->SetErrors(sx0,sy0,0.0,stx0,sty0);
   s->SetW( s1->W()+s2->W() );
@@ -163,8 +163,8 @@ void EdbSegP::PropagateTo( float z )
   eX  = X() + TX()*dz;
   eY  = Y() + TY()*dz;
   eZ  = z;
-  eSX = TMath::Sqrt( SX()*SX() + STX()*dz*STX()*dz );
-  eSY = TMath::Sqrt( SY()*SY() + STY()*dz*STY()*dz );
+  eCOV->set_x( SX() + STX()*dz*dz );
+  eCOV->set_y( SY() + STY()*dz*dz );
 }
 
 //______________________________________________________________________________
@@ -178,13 +178,13 @@ float EdbSegP::ProbLink( EdbSegP &s1, EdbSegP &s2 )
   double tx = (s2.X() - s1.X()) / dz;
   double ty = (s2.Y() - s1.Y()) / dz;
 
-  double dtx1 = (s1.TX()-tx)/s1.STX();
-  double dty1 = (s1.TY()-ty)/s1.STY();
-  double dtx2 = (s2.TX()-tx)/s2.STX();
-  double dty2 = (s2.TY()-ty)/s2.STY();
+  double dtx1 = (s1.TX()-tx)*(s1.TX()-tx)/s1.STX();
+  double dty1 = (s1.TY()-ty)*(s1.TY()-ty)/s1.STY();
+  double dtx2 = (s2.TX()-tx)*(s2.TX()-tx)/s2.STX();
+  double dty2 = (s2.TY()-ty)*(s2.TY()-ty)/s2.STY();
 
-  double chi2 = TMath::Sqrt(dtx1*dtx1 + dty1*dty1 + dtx2*dtx2 + dty2*dty2);
-  double p3 = TMath::Prob(chi2,4);
+  double chi2 = TMath::Sqrt(dtx1 + dty1 + dtx2 + dty2);
+  double p3   = TMath::Prob(chi2*chi2,4);
 
   return s1.Prob()*s2.Prob()*p3;
 }
@@ -200,27 +200,27 @@ void EdbSegP::MergeTo( EdbSegP &s )
   float wx1,wx2, wy1,wy2;
   float wtx1,wtx2, wty1,wty2;
 
-  wx1 = 1/SX()/SX();
-  wx2 = 1/s.SX()/s.SX();
-  wy1 = 1/SY()/SY();
-  wy2 = 1/s.SY()/s.SY();
-  wtx1 = 1/STX()/STX();
-  wtx2 = 1/s.STX()/s.STX();
-  wty1 = 1/STY()/STY();
-  wty2 = 1/s.STY()/s.STY();
+  wx1 = 1/SX();
+  wx2 = 1/s.SX();
+  wy1 = 1/SY();
+  wy2 = 1/s.SY();
+  wtx1 = 1/STX();
+  wtx2 = 1/s.STX();
+  wty1 = 1/STY();
+  wty2 = 1/s.STY();
 
   eX = (X()*wx1 + s.X()*wx2)/(wx1+wx2);
   eY = (Y()*wy1 + s.Y()*wy2)/(wy1+wy2);
-  eSX = TMath::Sqrt( 1./(wx1+wx2) );
-  eSY = TMath::Sqrt( 1./(wy1+wy2) );
+  eCOV->set_x( 1./(wx1+wx2) );
+  eCOV->set_x( 1./(wy1+wy2) );
 
   eTX = (TX()*wtx1 + s.TX()*wtx2)/(wtx1+wtx2);
   eTY = (TY()*wty1 + s.TY()*wty2)/(wty1+wty2);
-  eSTX = TMath::Sqrt( 1./(wtx1+wtx2) );
-  eSTY = TMath::Sqrt( 1./(wty1+wty2) );
+  eCOV->set_tx( 1./(wtx1+wtx2) );
+  eCOV->set_ty( 1./(wty1+wty2) );
 
   eZ = s.Z();
-  eSZ = TMath::Sqrt(( SZ()*SZ() + s.SZ()*s.SZ())/2);
+  eSZ = TMath::Sqrt(( SZ() + s.SZ())/2);
 
   eW = W()+s.W();
 
@@ -459,21 +459,22 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 //______________________________________________________________________________
 EdbTrackP::EdbTrackP()
 {
-  eID = 0;
-  eVid = 0;
+  eS=0;
+  eVid = 0;  
 }
  
 //______________________________________________________________________________
 EdbTrackP::~EdbTrackP()
 {
-
+  if(eS)   { delete eS; eS=0; }
+  if(eVid) { delete eVid; eVid=0; }
 }
 
 //______________________________________________________________________________
 void EdbTrackP::Copy(EdbTrackP &tr)
 {
   Reset();
-  eID = tr.ID();
+  SetID(tr.ID());
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
     AddSegment(*tr.GetSegment(i));
@@ -500,20 +501,20 @@ void EdbTrackP::FitTrack()
   tx /= nseg;
   ty /= nseg;
   w  /= nseg;
-  eTrack.Set(eID,x,y,tx,ty,w);
-  eTrack.SetZ(z);
+  Set(ID(),x,y,tx,ty,w);
+  SetZ(z);
 }
 
 //______________________________________________________________________________
 float EdbTrackP::CHI2()
 {
-  int    nseg=N();
   double dtx=0,dty=0,chi2=0;
   EdbSegP *seg=0;
+  int    nseg=N();
   for(int i=0; i<nseg; i++) {
     seg = GetSegment(i);
-    dtx = seg->TX()-eTrack.TX();
-    dty = seg->TY()-eTrack.TY();
+    dtx = seg->TX()-TX();
+    dty = seg->TY()-TY();
     chi2 += TMath::Sqrt( dtx*dtx/seg->STX()/seg->STX() + 
 			 dty*dty/seg->STY()/seg->STY() );
   }

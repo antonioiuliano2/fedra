@@ -2,9 +2,9 @@
  include ../../config/ProjectDef.mk
  include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdr -lEdb -lEmath
+PROJECT_LIBS = -L$(LIB_DIR) -lEdr -lEdb -lEmath -lvt
 
-CXXFLAGS  += -I$(INC_DIR)
+CXXFLAGS  += -I$(INC_DIR) 
 CPPFLAGS  += $(CXXFLAGS)
 
 recset : recset.o

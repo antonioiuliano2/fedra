@@ -1,6 +1,13 @@
 {
  // project lib path should be setted in LD_LIBRARY_PATH
 
+  if (!TClassTable::GetDict("CMatrix")) { 
+    if(gSystem->Load("libvt.so")==0)
+      printf("libvt.so \tloaded \n");
+    else 
+      printf("libvt.so do NOT loaded!\n");
+  }
+
   if (!TClassTable::GetDict("TIndexCell")) { 
     if(gSystem->Load("libEmath.so")==0)
       printf("libEmath.so \tloaded \n");

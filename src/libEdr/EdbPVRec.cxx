@@ -1005,14 +1005,13 @@ void EdbPVRec::SetSegmentErrors( EdbSegP &seg )
   // Puls height is represents segments probablility (not accuracy) and should 
   // be taken into account separately
 
-  seg.SetErrors(
-		GetScanCond()->SigmaX( seg.TX() ),
-		GetScanCond()->SigmaY( seg.TY() ),
-		GetScanCond()->SigmaZ( seg.TX(), seg.TY() ),
-		GetScanCond()->SigmaTX( seg.TX() ),
-		GetScanCond()->SigmaTY( seg.TY() ) 
-		);
+  float sx = GetScanCond()->SigmaX( seg.TX() );
+  float sy = GetScanCond()->SigmaY( seg.TY() );
+  float sz = GetScanCond()->SigmaZ( seg.TX(), seg.TY() );
+  float stx = GetScanCond()->SigmaTX( seg.TX() );
+  float sty = GetScanCond()->SigmaTY( seg.TY() );
 
+  seg.SetErrors(sx*sx,sy*sy,sz*sz,stx*stx,sty*sty);
 }
 
 //______________________________________________________________________________
