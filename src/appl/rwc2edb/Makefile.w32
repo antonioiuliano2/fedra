@@ -1,0 +1,24 @@
+#------------------------------------------------------------------------------
+include ../../config/RootDef.w32.mk
+include ../../config/ProjectDef.w32.mk
+#------------------------------------------------------------------------------
+
+PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  ole32.lib
+
+CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR) -D_USESYSAL 
+
+targets = rwc2edb.exe edb2rwc.exe rwdread.exe rwcread.exe
+
+$(targets): libDataConversion.obj $(@B).obj
+	$(LD) $** $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+
+#------------------------------------------------------------------------------
+
+clean:
+    @del /q *.obj
+    @cd  "$(BIN_DIR)"
+    @del /q $(targets)
+
+
+libDataConversion.obj: dataIO/dataIO.h
+libDataConversion.obj: dataIO/dataIO.cpp

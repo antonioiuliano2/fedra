@@ -1,10 +1,18 @@
-// libIOConverter.h and libIOConverter.cpp
+// libDataConversion.h and libIOConverter.cpp
 // ---------------------------------------
 // library for win32 which converts data from the DAQ files to root using libEdb
 // (was rwc2edb.cpp up to 1.7)
 // author : Gabriele Sirri
 //          AddGrainsTXT by Igor Kreslo
+//          porting to Linux: Igor Kreslo and Nikolay Savvinov (October 15, 2004)
+//
 // ----------------------------------------
+//
+// Revision 2.0
+// -> integration of windows and linux versions in the same source code
+//    the op.sys. differences are implemented through preprocessor directives
+//    and saved in the dataIO/dataIO.h and dataIO/dataIO.cpp
+// -> AddRWD() option "NOCL" do not convert clusters
 //
 // Revision 1.2 May 11, 2004
 // -> compiler warning C4244 fixed (implicit conversions to smaller types
@@ -13,8 +21,13 @@
 // Revision 1.1 Jul 08, 2003
 // -> Initial revision (adapted from rwc2edb.cpp 1.7)
 //
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
 
 #include "libDataConversion.h"
+
+#include "dataIO/dataIO.cpp"
 
 //______________________________________________________________________________
 // FindConfig: search for a Name and an Item inside the configurations (rwc) and
@@ -25,7 +38,7 @@ double FindConfig(IO_VS_Catalog* pCat, char* ConfigName, char* ConfigItem)
 	int CountOfConfigs = pCat->Config.CountOfConfigs;
 	VS_Config* pConfigs =pCat->Config.pConfigs;
 
-	double dbl;
+	double dbl=0;
 	for (int j=0;j<CountOfConfigs;j++)
 	{
 		if(! strcmp(pConfigs[j].Config.Name, ConfigName) ) 
@@ -43,20 +56,11 @@ double FindConfig(IO_VS_Catalog* pCat, char* ConfigName, char* ConfigItem)
 }
 
 //______________________________________________________________________________
-int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
+int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 {
-	ISySalDataIO*  iIO;
-   ISySalDataIO2* iIO2;
-   CoInitialize(NULL);
-   CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
-		              IID_ISySalDataIO, (void **)&iIO);
-	iIO->QueryInterface(IID_ISySalDataIO2, (void**)&iIO2);
-	UINT ExtErrorInfo;
-	
-	IO_VS_Catalog* pCat = 0;
+   IO_VS_Catalog* pCat = 0;
 
-	if (iIO2->Read2(NULL, (BYTE*)&pCat, &ExtErrorInfo, (UCHAR*)rwcname) != S_OK) 
-		throw 0;
+   if( ReadCatalog((void**)&pCat, (char*)rwcname) != 1) return false; 
 
 	int nFragments = pCat->Area.Fragments;
 	cout<<"Hdr.ID :"
@@ -78,12 +82,11 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 	Header->SetLimits(pCat->Area.XMin,pCat->Area.XMax,
 		               pCat->Area.YMin,pCat->Area.YMax);
 	// fiducial coordinates
+	int lys;
+	lys=(int)FindConfig(pCat,"Vertigo Scan","VLayers");
 	Header->SetArea(pCat->Area.XViews*pCat->Area.YViews, 
-						 pCat->Area.XStep,pCat->Area.YStep, 
-						 (int) FindConfig(pCat,"Vertigo Scan","VLayers"),
-						 (int) FindConfig(pCat,"Vertigo Scan","VLayers"),
-						 0);
-
+						 pCat->Area.XStep,pCat->Area.YStep, lys,lys,
+						 0); 
 	Header->SetNareas(pCat->Area.Fragments);
 	Header->SetCCD((int) FindConfig(pCat,"Objective","Width"),
 						(int) FindConfig(pCat,"Objective","Height"),
@@ -99,8 +102,8 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 				    fabs((float)FindConfig(pCat,"Objective","PixelToMicronY")),
 				0,0,
 				"",					// es. "Nikon CFI - oil"
-				"");				// es, "50x"
-	Header->SetPlate(-999,			// plate ID
+				"");				   // es, "50x"
+	Header->SetPlate(-999,		// plate ID
 				(float)FindConfig(pCat,"Vertigo Scan","VStep")*
 				       (float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
 				(float)FindConfig(pCat,"Vertigo Scan","BaseThickness"),
@@ -111,51 +114,55 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 				"",					// es. "Test Plate"
 				"");				//
 
-	if (pCat) CoTaskMemFree(pCat);
-	pCat=0;
-	iIO2->Release();
-	iIO->Release();
-	CoUninitialize();
+// Store the catalog file "as it is" in the comment field of the run header
+/*
+   TString str ;
+   int  i, ch;
+   FILE *stream;
+   if( (stream = fopen( rwcname, "rb" )) == NULL ) exit( 0 );
+   ch = fgetc( stream );
+   for( i=0; (i < 250000 ) && ( feof( stream ) == 0 ); i++ )
+   {
+      str.Append( ch ); 
+      ch = fgetc( stream );
+   }
+   fclose( stream );
+   Header->SetComment(str) ;
+*/
 
-// loop on rwd files
+   FreeMemory((void**)pCat);
+	delete pCat;
+
+	// loop on rwd files
 	if(bAddRWD)
 	{
 		for (int f = 1; f < nFragments+1; f++)
 		{
 			// build rwd name 
-			char* rwdname=new char[strlen(rwcname)+9];
-			strcpy( rwdname,rwcname );
-			strncpy( rwdname + strlen(rwdname)-1, "d", 1 );
-			sprintf(rwdname,"%s.%08X", rwdname, f);
-
+	      char rwdname[256], temp[256];
+			sprintf(temp, "%s", rwcname);
+			sprintf(temp+strlen(temp)-1, "d");
+			sprintf(rwdname, "%s.%08X", temp, f);
 			cout <<"(tot. fragm.:"<<nFragments<<")  ";
-			if (! AddRWD(run, rwdname,f) ) break;
-			delete[] rwdname;
+			if (! AddRWD(run, rwdname,f,options) ) break;
 		}; //end of fragments (f)
 		cout <<endl;
 	}
-	return TRUE;
+	return true;
 }
 
 //______________________________________________________________________________
-int AddRWD(EdbRun* run, char* rwdname, int fragID)
+int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 {
+	Bool_t addcl(true);
+	// OPTIONS
+	if (strstr(options,"NOCL") ) addcl=false; // do not add clusters
+
 	EdbView*    edbView = run->GetView();
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
 
-	// ISySalDataIO variables
-	ISySalDataIO*  iIO;
-	ISySalDataIO2* iIO2;
-	CoInitialize(NULL);
-	CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
-		              IID_ISySalDataIO, (void **)&iIO);
-	iIO->QueryInterface(IID_ISySalDataIO2, (void**)&iIO2);
-	UINT ExtErrorInfo;
-	
 	IO_VS_Fragment2* pFrag = 0;
-	
-	if (iIO2->Read2(NULL, (BYTE*)&pFrag, &ExtErrorInfo, (UCHAR*)rwdname) 
-		!= S_OK)	return FALSE;
+ 	if (ReadFragment((void**)&pFrag, (char*)rwdname) != 1)	return false;
 
 	int v, s, t, p;  // v=view, s=side, t=track, p=point
 	int tracks;		// number of tracks in the fragment
@@ -163,7 +170,6 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 	int vclusters;	// number of clusters in the view
 	float dz	;		// z-length of the track segment
 	int tr_clusters;		// number of cluster of the track
-
 
 	Track2* rwdTrack;
 	VS_View2* rwdView;
@@ -214,14 +220,16 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 									 rwdTrack->Slope.Y, 
 									 dz, s , tr_clusters, t);
 				edbSegment->SetSigma(rwdTrack->Sigma,-999);
-
-				for ( p=0; p<tr_clusters;p++)
-				{
-					edbView->AddCluster(rwdTrack->pGrains[p].X,
-										     rwdTrack->pGrains[p].Y,
-											  rwdTrack->pGrains[p].Z,
-											  rwdTrack->pGrains[p].Area,
-											  0,0,s,t);										
+				
+				// Add clusters 
+				if (addcl)
+					for ( p=0; p<tr_clusters;p++)
+					{
+						edbView->AddCluster(rwdTrack->pGrains[p].X,
+													rwdTrack->pGrains[p].Y,
+													rwdTrack->pGrains[p].Z,
+													rwdTrack->pGrains[p].Area,
+													0,0,s,t);										
 					}
 					
 				edbViewHeader->SetNclusters(vclusters);
@@ -236,30 +244,18 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID)
 	cout<<"Fragment:"<<fragID<<"\tmicrotracks: "
 		 <<tracks<<"\tclusters: "<<fclusters<<endl;
 	cout << flush;
-
-	CoTaskMemFree(pFrag);
-	pFrag = 0;	
-	iIO2->Release();
-	iIO->Release();
-	CoUninitialize();
-	return TRUE;
+   
+   FreeMemory((void**)pFrag);
+   delete pFrag;
+	return true;
 }
 
 //______________________________________________________________________________
 int AddMAP(EdbRun* run, char* mapname)
 {
-	// ISySalDataIO variables
-	ISySalDataIO*  iIO;
-   ISySalDataIO2* iIO2;
-   CoInitialize(NULL);
-   CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
-		              IID_ISySalDataIO, (void **)&iIO);
-	iIO->QueryInterface(IID_ISySalDataIO2, (void**)&iIO2);
-	UINT ExtErrorInfo;
-	
-	IO_Data *pMarks = 0;
-	if( iIO->Read(0, (BYTE*)&pMarks,  &ExtErrorInfo,  (UCHAR*) mapname ) ) 
-		throw 3;
+#ifdef _USESYSAL	
+	IO_Data* pMarks = 0;
+ 	if (ReadMap((void**)&pMarks, (char*)mapname ) != 1)	return false;
 
 	EdbMarksBox* stage = run->GetMarks()->GetStage() ;
 	EdbMarksBox* abs   = run->GetMarks()->GetAbsolute();
@@ -274,13 +270,13 @@ int AddMAP(EdbRun* run, char* mapname)
 		float StageY = pMarks->MkMap.Map.pMarks[i].Stage.Y;
 		stage->AddMark(i,StageX,StageY);
 	}
-
-	CoTaskMemFree(pMarks);
-	pMarks=0;
-	iIO2->Release();
-	iIO->Release();
-	CoUninitialize();
-	return TRUE;
+   FreeMemory((void**)pMarks);
+   delete pMarks ;
+   return true;
+#else
+   cout << "IO_Data class not implemented for this op. sys. " << endl;
+   return false;
+#endif 
 }
 
 //______________________________________________________________________________
@@ -339,10 +335,11 @@ int AddGrainsTXT(EdbRun* run, char* txtname)
 		printf("%d clusters.\n",ngr);
 		fclose(grfile);
 
-	return TRUE;
+	return true;
 }
 
 //______________________________________________________________________________
+/*
 int AddTLG(EdbRun* run, char* tlgname)
 {
 	ISySalDataIO*  iIO;
@@ -384,9 +381,8 @@ int AddTLG(EdbRun* run, char* tlgname)
 	iIO2->Release();
 	iIO->Release();
 	CoUninitialize();
-	return TRUE;
+	return true;
 	return 0;
 }
+*/
 
-
-#include "SySalDataIO_i.c"

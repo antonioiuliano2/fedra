@@ -1,7 +1,14 @@
 // rwc2edb.cpp
 // convert rwc, rwd and grains dump files to root using the libEdb library
 // author: Gabriele Sirri
+// porting to Linux: Igor Kreslo and Nikolay Savvinov (October 15, 2004)
+//  
 //______________________________________________________________________________
+//
+// Revision 2.0 
+// -> integration of windows and linux versions in the same source code
+//    (see libDataConversion.cpp)
+// -> add the possibility to not convert clusters (-nocl option)
 //
 // Revision 1.9 May 11, 2004
 // -> conversion TXT (Test & Configure grains) -> ROOT  without RWD was added
@@ -51,23 +58,39 @@
 //______________________________________________________________________________
 int main(int argc, char* argv[])
 {
-	
-	if (argc < 3)
-	{
-		cout<< "usage:\nrwc2edb <input file (.rwc)> <output file (.root)>"<<endl;
-		cout<< "rwc2edb <input file (.rwc)> <output file (.root)> <marks file (.map)>"<<endl;
-		cout<< "rwc2edb <input file (.rwd)> <output file (.root)> <grains text file (.txt)>"<<endl;
-		cout<< "rwc2edb <grains text file (.txt)> <output file (.root)> "<<endl;
+  char rwcname[256], edbname[256], mapname[256], grsname[256];
+  char options[256];
+  bool addmap(false),addgrs(false);
 
+  bool printusage=(argc<3)?true:false;
+  for (int i = 1; i < argc; i++)  {  // Skip argv[0] (program name)
+	if (!strcmp(argv[i], "-map")) { // Process optional arguments
+	  if (i + 1 <= argc - 1) { sprintf(mapname,argv[++i]); addmap=true; }
+	  else printusage=true; 
+	}
+	else if (!strcmp(argv[i], "-grs")) { // Process optional arguments
+	  if (i + 1 <= argc - 1) { sprintf(grsname,argv[++i]); addgrs=true; }
+	  else printusage=true; 
+	}
+	else if (!strcmp(argv[i], "-nocl")) strcat(options,"NOCL") ;
+	else  { // Process non-optional arguments here
+      sprintf(rwcname,argv[i++]);
+      sprintf(edbname,argv[i]);
+	}
+  }
+  if(printusage) { 
+		cout<< "usage: rwc2edb <input file (.rwc|.rwd|.txt)> <output file (.root)> [options] "<<endl;
+		cout << "\n options: -nocl          = do not add the clusters" << endl;
+		cout <<   "          -map filename  = add the fiducial marks file (.map) (only mswindows)" << endl;
+		cout <<   "          -grs filename  = convert both raw data (.rwd) and grains (.txt) " << endl;
+      cout <<   "                           (to convert only grains use: rwc2edb fname.txt fname.root)" << endl;
 		return 0;
 	};
-	char* rwcname = argv[1];
-	char* edbname = argv[2];
-	char* auxname = argv[3];
-	bool testrun = FALSE;
-	bool txtrun = FALSE ;
-	if(rwcname[strlen(rwcname)-1]=='d') testrun=TRUE; //if we have .rwd first 
-	if(rwcname[strlen(rwcname)-1]=='t') txtrun =TRUE;  //if we have .txt first 
+
+   bool testrun = false;
+	bool txtrun = false ;
+	if(rwcname[strlen(rwcname)-1]=='d') testrun=true;  //if we have .rwd first 
+	if(rwcname[strlen(rwcname)-1]=='t') txtrun =true;  //if we have .txt first 
 
    EdbRun* outrun;
 	outrun = new EdbRun(edbname,"CREATE");
@@ -77,19 +100,18 @@ int main(int argc, char* argv[])
 		// Add RWD 
 		cout<<"TestRun"<<endl;
 		int fragID = 0;
-		AddRWD(outrun, rwcname, fragID);
+		AddRWD(outrun, rwcname, fragID, options);
 
-		if (auxname)  // Add Clusters file (TXT) ....
+		if (addgrs)  // Add Clusters file (TXT) ....
 		{
-			char* grsname;
-			grsname = _strdup(rwcname);
-			strncpy( grsname + strlen(rwcname)-3, "grs", 3);
-			sprintf(grsname,"%s.root",grsname);
+			char grsoutname[256];
+			strncpy( grsoutname + strlen(rwcname)-3, "grs", 3);
+			sprintf( grsoutname,"%s.root",grsoutname);
 
 			EdbRun* outrun2;
-			outrun2 = new EdbRun(grsname,"CREATE");
+			outrun2 = new EdbRun(grsoutname,"CREATE");
 
-			AddGrainsTXT(outrun2,auxname);
+			AddGrainsTXT(outrun2,grsname);
 			outrun2->Print();
 			outrun2->Close();
 		}
@@ -102,8 +124,8 @@ int main(int argc, char* argv[])
 	else 
 	{
 		// Add RWC and all RWDs
-		AddRWC(outrun, rwcname, TRUE);
-		if (auxname) AddMAP(outrun, auxname);
+		AddRWC(outrun, rwcname, true,options);
+		if (addmap) AddMAP(outrun, mapname);
 	}
 	outrun->Print();
 	outrun->Close();
