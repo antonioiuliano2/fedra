@@ -27,7 +27,7 @@ protected:
 //	long cySize;
 //	long cbyteSize;					// size in Byte!
 
-	unsigned char *mas;
+	unsigned char *mas;              //!
 //	unsigned char *cmas;
 
 	const unsigned char *GetPointer(void) {return mas;}
