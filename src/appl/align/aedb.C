@@ -1,15 +1,4 @@
-//**:  /home/pistillo/data03010111.root
-// peak1    = "eX0>-44.8&&eX0<-44.2&&eY0>139.2&&eY0<139.8";
-// notpeak1 = "((eX0<-44.8||eX0>-44.2)&&(eY0<139.2||eY0>139.8))";
-// peak2    = "eX0>120.6&&eX0<121.2&&eY0>-163.8&&eY0<-163.2";
-// notpeak2 = "((eX0<120.6||eX0>121.2)&&(eY0<-163.8||eY0>-163.2))";
-
-TIndexCell  *tracks=0;
-TTree       *tree=0;   //couples tree
 EdbPVRec    *ali=0;
-EdbRun      *edbRun =0;
-EdbScanCond *scanCond =0;
-
 
 //------------------------------------------------------------
 void aedb()
@@ -17,19 +6,20 @@ void aedb()
   gROOT->LoadMacro("ScanCond.C");
   gROOT->LoadMacro("IO.C");
 
+  EdbRun *edbRun =  new EdbRun(
+    "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_01010109.root"
+    ,"READ");
 
-  edbRun = new EdbRun("/home/valeri/luillo/acq27_prova000007D3000000050000001B00000672.root","READ"); //shr =1
-  float  shrU  = 1.45;       //
-  float  shrD  = 1.4;       //
-  float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-  float  dOff[2] = {0.,0.0};   // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
+  float  shrU  = 1./1.2;       //
+  float  shrD  = 1./1.2;       //
+  float  uOff[2] = {0.,0.};    // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
+  float  dOff[2] = {0.,0.};    // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
+  TTree *tree = inittree("couples",
+			 "aedb.root",
+			 "RECREATE");  // "RECREATE" "NEW" or "UPDATE" open modes
 
-  TFile *f = new TFile("aedb.root","RECREATE");
-  tree = new TTree("couples","couples");
-  inittree(tree);
-
-  scanCond = new EdbScanCond();
+  EdbScanCond *scanCond = new EdbScanCond();
   Set_Prototype_OPERA_microtrack( scanCond );
   EdbPatternsVolume *pvol = (EdbPatternsVolume *)ali;
 
@@ -52,7 +42,6 @@ void aedb()
     filltree(tree, ali);
     delete pvol;
     delete ali;
-    f->Purge();
   }
 
 }
@@ -80,3 +69,9 @@ void aedb()
 //    float  shrD  = 0.98;       //
 //    float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
 //    float  dOff[2] = {0.,0.010};   // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
+
+//    edbRun = new EdbRun("/home/valeri/luillo/acq27_prova000007D3000000050000001B00000672.root","READ"); //shr =1
+//    float  shrU  = 1.45;       //
+//    float  shrD  = 1.4;       //
+//    float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
+//    float  dOff[2] = {0.,0.0};   // s2.eTX-s.eTX, -(s2.eTY-s.eTY)

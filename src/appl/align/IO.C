@@ -42,15 +42,14 @@ void getDataEdb( EdbRun *edbRun,
 
       seg = view->GetSegment(j);
 
+//        if( seg->GetX0()>-44.8&&seg->GetX0()<-44.2&&
+//  	  seg->GetY0()>139.2&&seg->GetY0()<139.8 ) continue;
 
-      if( seg->GetX0()>-44.8&&seg->GetX0()<-44.2&&
-	  seg->GetY0()>139.2&&seg->GetY0()<139.8 ) continue;
+//        if( seg->GetX0()>120.6&&seg->GetX0()<121.2&&
+//  	  seg->GetY0()>-163.8&&seg->GetY0()<-163.2 ) continue;
 
-      if( seg->GetX0()>120.6&&seg->GetX0()<121.2&&
-	  seg->GetY0()>-163.8&&seg->GetY0()<-163.2 ) continue;
-
-      //if( seg->GetTx() > -0.05) continue;
-      //if( TMath::Abs(seg->GetTy()) > 0.3) continue;
+      if( (TMath::Abs(seg->GetTy())<0.003) && 
+	  (TMath::Abs(seg->GetTx())<0.003) ) continue;
 
       //segP->SetDZ( seg->GetDz() );
 
@@ -301,21 +300,37 @@ void getDataTree( const char *file,
 }
 
 ///------------------------------------------------------------
-void inittree( TTree *tree )
+TTree *inittree( char *tree_name="couples", 
+		 char *file_name="aedb.root", 
+		 char *mode="RECREATE" )
 {
-  int pid1,pid2;
-  EdbSegCouple *cp=0;
-  EdbSegP      *s1=0;
-  EdbSegP      *s2=0;
-  EdbSegP      *s=0;
+  TTree *tree;
 
-  //  tree = new TTree("couples","couples");
-  tree->Branch("pid1",&pid1,"pid1/I");
-  tree->Branch("pid2",&pid2,"pid2/I");
-  tree->Branch("cp","EdbSegCouple",&cp,32000,99);
-  tree->Branch("s1.","EdbSegP",&s1,32000,99);
-  tree->Branch("s2.","EdbSegP",&s2,32000,99);
-  tree->Branch("s." ,"EdbSegP",&s,32000,99);
+   tree = (TTree*)gROOT->FindObject(tree_name);
+   if (!tree) {
+      TFile *f = new TFile(file_name,mode);
+      if (f)  tree = (TTree*)f->Get(tree_name);
+      if(!tree) {
+
+	tree = new TTree(tree_name,tree_name);
+
+	int pid1,pid2;
+	EdbSegCouple *cp=0;
+	EdbSegP      *s1=0;
+	EdbSegP      *s2=0;
+	EdbSegP      *s=0;
+	
+	tree->Branch("pid1",&pid1,"pid1/I");
+	tree->Branch("pid2",&pid2,"pid2/I");
+	tree->Branch("cp","EdbSegCouple",&cp,32000,99);
+	tree->Branch("s1.","EdbSegP",&s1,32000,99);
+	tree->Branch("s2.","EdbSegP",&s2,32000,99);
+	tree->Branch("s." ,"EdbSegP",&s,32000,99);
+
+      }
+   }
+
+   return tree;
 }
 
 
@@ -378,5 +393,5 @@ void filltree( TTree *tree, EdbPVRec *al, int fillraw=0 )
   }
 
   tree->Write();
-
+  gDirectory->Purge();
 }
