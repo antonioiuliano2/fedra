@@ -52,7 +52,7 @@ void EdbAffine2D::Reset()
 //}
  
 //______________________________________________________________________________
-void EdbAffine2D::Transform(  EdbAffine2D *a  ) 
+void EdbAffine2D::Transform( const EdbAffine2D *a  ) 
 {
   Set( 
       a->A11()*A11() + a->A12()*A21(), a->A11()*A12() + a->A12()*A22(),

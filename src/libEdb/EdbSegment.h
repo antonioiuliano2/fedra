@@ -46,7 +46,7 @@ public:
 
   virtual void       Set(float x,  float y,  float z,  float tx,  float ty, float dz=0);
 
-  virtual void       Transform( EdbAffine2D *aff );
+  virtual void       Transform( const EdbAffine2D *aff );
 
   //  virtual void       Print( Option_t *opt=0) const;
   

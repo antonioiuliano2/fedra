@@ -31,9 +31,10 @@ void EdbSeg3D::Set(float x,  float y,  float z,  float tx,  float ty, float dz)
   eDz = dz;
 }
 
-void EdbSeg3D::Transform( EdbAffine2D *a )
+//______________________________________________________________________________
+void EdbSeg3D::Transform( const EdbAffine2D *a )
 {
-  eTx =  a->A11()*eTx + a->A12()*eTy;
+  eTx =  a->A11()*eTx + a->A12()*eTy;       // rotate angles
   eTy =  a->A21()*eTx + a->A22()*eTy;
 
   eX0 =  a->A11()*eX0 + a->A12()*eY0 + a->B1();

@@ -133,7 +133,7 @@ public:
 
   void Clear();
 
-  void   Transform( EdbAffine2D *aff );
+  void   Transform( const EdbAffine2D *aff );
 
   void GenerateClustersFog( float density );
   void GenerateClustersSegment( EdbSegment *segment, int n0=25, float sigma=.1 );

@@ -40,8 +40,8 @@ class EdbPoint {
   virtual void    SetY( float y )       = 0;
   virtual void    SetZ( float z )       = 0;
 
-  virtual void Transform( EdbAffine2D *a ) {}
-  virtual void Transform( EdbAffine3D *a ) {}
+  virtual void Transform( const EdbAffine2D *a ) {}
+  virtual void Transform( const EdbAffine3D *a ) {}
 
   virtual void Substruct( EdbPoint *p ) = 0;
 
@@ -62,9 +62,9 @@ class EdbAngle2D {
   virtual void    SetTX( float x )       = 0;
   virtual void    SetTY( float y )       = 0;
  
-  virtual void Transform( EdbAffine2D *a );
+  virtual void Transform( const EdbAffine2D *a );
 
-  virtual void Substruct( EdbAngle2D *a );
+  virtual void Substruct( const EdbAngle2D *a );
 
   virtual void Test() const { printf("EdbAngle2D::Test \n"); }
 
@@ -84,7 +84,7 @@ class EdbPoint2D : public EdbPoint {
   virtual void    SetY( float y )       = 0;
   virtual void    SetZ( float z )       {}
 
-  virtual void Transform( EdbAffine2D *a );
+  virtual void Transform( const EdbAffine2D *a );
 
   virtual void Substruct( EdbPoint *p );
 
@@ -104,7 +104,7 @@ class EdbPoint3D : public EdbPoint2D {
   virtual Float_t    Z()          const = 0;
   virtual void    SetZ( float z )       = 0;
 
-  virtual void Transform( EdbAffine3D *a );
+  virtual void Transform( const EdbAffine3D *a );
 
   virtual void Substruct( EdbPoint *p );
 
@@ -124,7 +124,7 @@ class EdbTrack2D : public EdbPoint2D, public EdbAngle2D {
 
  public:
 
-  virtual void Transform( EdbAffine2D *a );
+  virtual void Transform( const EdbAffine2D *a );
 
   virtual void Substruct( EdbTrack2D *t );
 
@@ -164,7 +164,7 @@ class EdbPointsBox2D : public EdbPoint3D {
   virtual void    SetY( float y ) {};
   virtual void    SetZ( float z ) {};
 
-  virtual void Transform( EdbAffine2D *a );
+  virtual void Transform( const EdbAffine2D *a );
   virtual void Substruct( EdbPointsBox2D *b );
   virtual void Retransform();
 

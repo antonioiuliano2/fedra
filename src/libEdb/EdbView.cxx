@@ -73,7 +73,7 @@ void EdbView::Clear()
 
 
 //______________________________________________________________________________
-void EdbView::Transform( EdbAffine2D *aff )
+void EdbView::Transform( const EdbAffine2D *aff )
 {
   if(eClusters) {
     int ncl=Nclusters();

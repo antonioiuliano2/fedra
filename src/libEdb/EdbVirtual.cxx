@@ -45,7 +45,7 @@ void EdbTrack2D::Print( Option_t *opt ) const
 }
 
 //_____________________________________________________________________________
-void EdbTrack2D::Transform( EdbAffine2D *a )
+void EdbTrack2D::Transform( const EdbAffine2D *a )
 {
   EdbPoint2D::Transform(a);
   EdbAngle2D::Transform(a);
@@ -65,7 +65,7 @@ void EdbAngle2D::Print( Option_t *opt ) const
 }
 
 //_____________________________________________________________________________
-void EdbAngle2D::Transform( EdbAffine2D *a )
+void EdbAngle2D::Transform( const EdbAffine2D *a )
 {
   Float_t tx =  a->A11()*TX() + a->A12()*TY();
   Float_t ty =  a->A21()*TX() + a->A22()*TY();
@@ -74,7 +74,7 @@ void EdbAngle2D::Transform( EdbAffine2D *a )
 }
 
 //_____________________________________________________________________________
-void EdbAngle2D::Substruct( EdbAngle2D *p )
+void EdbAngle2D::Substruct( const EdbAngle2D *p )
 {
   Float_t tx =  TX() - p->TX();
   Float_t ty =  TY() - p->TY();
@@ -89,7 +89,7 @@ void EdbPoint3D::Print( Option_t *opt ) const
 }
 
 //_____________________________________________________________________________
-void EdbPoint3D::Transform( EdbAffine3D *a )
+void EdbPoint3D::Transform( const EdbAffine3D *a )
 {
   Float_t x =  a->A11()*X() + a->A12()*Y() + a->A13()*Z() + a->B1();
   Float_t y =  a->A21()*X() + a->A22()*Y() + a->A23()*Z() + a->B2();
@@ -117,7 +117,7 @@ void EdbPoint2D::Print( Option_t *opt ) const
 }
 
 //_____________________________________________________________________________
-void EdbPoint2D::Transform( EdbAffine2D *a )
+void EdbPoint2D::Transform( const EdbAffine2D *a )
 {
   Float_t x =  a->A11()*X() + a->A12()*Y() + a->B1();
   Float_t y =  a->A21()*X() + a->A22()*Y() + a->B2();
@@ -159,7 +159,7 @@ void EdbPointsBox2D::GetKeep( EdbAffine2D &a )
 }
 
 //_____________________________________________________________________________
-void EdbPointsBox2D::Transform( EdbAffine2D *a )
+void EdbPointsBox2D::Transform( const EdbAffine2D *a )
 {
   int n=N();
   for( int i=0; i<n; i++ )  At(i)->Transform(a);
