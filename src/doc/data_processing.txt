@@ -1,0 +1,27 @@
+The data coming from SySal scanning:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Axis Z direction is from bottom to top on the stage.
+-  fiducial marks are on the ? surface
+
+in the data coming after convertor:
+
+- top views segments and clusters has higher Z
+- segments.eSide is "0" for top, "1" for bottom
+- eNframesTop=0 for bottom side
+  eNframesBot=0 for top    side
+
+  to select top/bottom views used eNframesTop/Bot values (from the view header)
+
+
+During the linking:
+
+       - up    side data is read first as pattern 1, and segments go to s1.
+       - down  side data is read next  as pattern 2, and segments go to s2.
+
+
+       Shrinkage correction:
+
+       shrinkage = (exposure thickness) / (measured on stage thickness),  so:
+
+       angle_exposured = angle_found/shrinkage
