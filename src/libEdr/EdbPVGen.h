@@ -8,6 +8,7 @@
 //  collection of agorithms                                             //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TGenPhaseSpace.h"
 #include "EdbPVRec.h"
 
 //______________________________________________________________________________
@@ -20,7 +21,12 @@ class EdbPVGen : public TObject {
   EdbScanCond *eScanCond;
 
  public:
-  EdbPVGen(){}
+  TObjArray   *eTracks;
+  TObjArray   *eVTX;          //
+
+ public:
+  EdbPVGen();
+  ~EdbPVGen();
 
   void SetVolume( EdbPatternsVolume *pv) {ePVolume=pv;}
   void SetScanCond( EdbScanCond *scan) {eScanCond=scan;}
@@ -34,6 +40,32 @@ class EdbPVGen : public TObject {
 
   void GeneratePulsPoisson( float mean, float amp=1., float wmin=0, float wmax=0., int flag=0 );
   void GeneratePulsGaus( float amp, float mean, float sigma, float wmin=0, float wmax=0., int flag=0 );
+
+  void AddTrack(EdbTrackP *track) {
+    if(!eTracks) eTracks = new TObjArray();
+    eTracks->Add(track);
+  }
+
+  void AddVertex(EdbVertex *vtx) {
+    if(!eVTX) eVTX = new TObjArray();
+    eVTX->Add((TObject*)vtx);
+  }
+
+
+  void TrackMC( float zlim[2],
+		float lim[4], float sigma[4], 
+		EdbTrackP &tr, int eloss_flag = 0, float PGap = 0. );
+
+  void GenerateUncorrelatedSegments(int nb, float lim[4], float TetaMax, int flag );
+
+  void GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
+				float sig[4], float TetaMax,
+				float ProbGap, int eloss_flag );
+
+  void GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float zlim[2],
+				 float lim[4],    float sig[4],
+				 float ProbGap,   int eloss_flag,
+				 int prim_charge );
 
   ClassDef(EdbPVGen,1)  // PatternsVolume Generator
 };

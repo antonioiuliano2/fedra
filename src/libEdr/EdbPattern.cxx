@@ -8,6 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TIndexCell.h"
+#include "TPolyLine.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
 #include "EdbPhys.h"
@@ -623,8 +624,11 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   // do the physical copy of segments
   Reset();
   ((EdbSegP*)(this))->Copy( *((EdbSegP*)(&tr)) );
-
-  SetID(tr.ID());
+  //Set(tr.ID(),tr.X(),tr.Y(),tr.TX(),tr.TY(),tr.W(),tr.Flag());
+  //SetPID(tr.PID());
+  //SetZ(tr.Z());
+  //SetP(tr.P());
+  //SetID(tr.ID());
   SetM(tr.M());
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
@@ -635,12 +639,43 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
     AddSegment(new EdbSegP(*tr.GetSegment(i)));
+  nseg=tr.NF();
   for(int i=0; i<nseg; i++)
     AddSegmentF(new EdbSegP(*tr.GetSegmentF(i)));
-  eS->SetOwner();
-  eSF->SetOwner();
+  if (eS) eS->SetOwner();
+  if (eSF) eSF->SetOwner();
 }
 
+//______________________________________________________________________________
+int EdbTrackP::GetSegmentsFlag() const
+{
+  int nseg = N();
+  if (nseg < 2) return -1;
+  if (nseg > 100) nseg = 100;
+  int count[100];
+  int i, f = 0;
+  for(i=0; i<nseg; i++)
+  {
+    count[i] = 0;
+    f = GetSegment(i)->Flag();
+    if (f < 0) continue;
+    for (int j=0; j<nseg; j++)
+    {
+	if ( f == GetSegment(j)->Flag()) count[i]++;
+    }
+  }
+  int cmax = 0;
+  int flagmax = -1;
+  for(i=0; i<nseg; i++)
+  {
+	if (count[i] > cmax)
+	{
+	    cmax = count[i];
+	    flagmax = GetSegment(i)->Flag();
+	}
+  }
+  return flagmax;
+}
 //______________________________________________________________________________
 float EdbTrackP::Wgrains() const
 {
@@ -1023,6 +1058,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 	   (float)(*pars[iend])(2),(float)(*pars[iend])(3),1.,Flag());
   segf.SetZ(GetSegment(iend)->Z());
   segf.SetCOV( (*covs[iend]).array(), 4 );
+  segf.SetErrorP ( SP() );
   segf.SetChi2((float)chi2);
   segf.SetProb( (float)TMath::Prob(chi2,4));
   segf.SetW( (float)nseg );
@@ -1052,6 +1088,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 		 (float)(*pars[i])(2),(float)(*pars[i])(3),1.,Flag());
 	segf.SetZ(GetSegment(i)->Z());
 	segf.SetCOV( (*covs[i]).array(), 4 );
+	segf.SetErrorP ( SP() );
 	segf.SetChi2((float)chi2p);
 	segf.SetProb( (float)TMath::Prob(chi2p,4));
 	segf.SetW( (float)nseg );
@@ -1185,6 +1222,112 @@ void EdbTrackP::Print()
 }
 
 //______________________________________________________________________________
+float  EdbTrackP::P_MS( float X0, bool draw)
+{
+  // momentum estimation by multiple scattering
+
+  int    nms[60];
+  double xms[60];
+  double yms[60];
+  double sxms[60];
+  double syms[60];
+  for(int i=0; i<60; i++) {
+    nms[i]=0;
+    xms[i]=0;
+    yms[i]=0;
+    sxms[i]=0;
+    syms[i]=0;
+  }
+
+  EdbSegP *s1=0,*s2=0;
+
+  double dx,dy,dz,ds;
+  double dtx,dty,dts;
+
+  int nseg=N();
+  for(int ist=1; ist<nseg; ist++) {     // step size
+
+    int ii=0;
+    while(ist*(ii+1)<nseg) {            // steps
+
+      //for(int i1=0; i1<ist; i1++) {     // for each step and each segment
+      for(int i1=0; i1<1; i1++) {       // for each step just once
+	int istart = ii*ist+i1;
+	int iend   = istart+ist;
+	if(iend >= nseg-1)            break;
+	s1 = GetSegment(istart);
+	s2 = GetSegment(iend);
+
+	dx = s2->X()-s1->X();
+	dy = s2->Y()-s1->Y();
+	dz = s2->Z()-s1->Z();
+	ds = (TMath::Sqrt(dx*dx+dy*dy+dz*dz));
+
+	dtx = s2->TX()-s1->TX();
+	dty = s2->TY()-s1->TY();
+	dts = TMath::Sqrt(dtx*dtx+dty*dty);
+
+	xms[ist-1] += TMath::Sqrt(ds);
+	yms[ist-1] += dts;
+	nms[ist-1]++;
+      }
+      ii++;
+    }
+  }
+
+  double K=0,W=0,w=0;
+  int ist=0;
+  //while( nms[ist]>ist ) {
+  while( nms[ist]>0 ) {
+    xms[ist] /=nms[ist];
+    yms[ist] /=nms[ist];
+    w = TMath::Sqrt((double)nms[ist]);
+    float expected = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), xms[ist]*xms[ist]));
+    syms[ist] = expected/w;
+    //syms[ist] = yms[ist]/w;
+    //printf("%d %d \t %f \t %f\n",ist,nms[ist],xms[ist],yms[ist] );
+    K += w*yms[ist]/xms[ist];
+    W += w;
+    ist++;
+  }
+  K /= W;
+  printf("K = %f\n",K);
+
+  if(draw) {
+    TGraphErrors *gr = new TGraphErrors(ist,xms,yms,sxms,syms);
+    gr->Draw("ALP");
+    gr->Fit("pol1");
+
+    double *x = new double[ist];
+    double *y = new double[ist];
+
+    for(int i=0; i<ist; i++) {
+      x[i] = xms[i];
+      y[i] = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), x[i]*x[i]));
+    }
+    TPolyLine *line = new TPolyLine(ist,x,y);
+    line->SetFillColor(38);
+    line->SetLineColor(2);
+    line->SetLineWidth(2);
+    line->Draw("f");
+    line->Draw();
+
+    float Kteor=(y[ist]-y[0])/(x[ist]-x[0]);
+    printf("Kteor = %f  k = %f\n",Kteor,Kteor*P());
+  }
+
+
+  //TODO: tune coefficients !
+
+  double p=0;
+  double k = 1.4/X0;
+
+  //double m2 = M()*M();
+  //p = (k+TMath::Sqrt(k*k+4.*K*k*m2))/K;
+
+  p = k/K;
+  return p;
+}
 //______________________________________________________________________________
 EdbPattern::EdbPattern()
 {

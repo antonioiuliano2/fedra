@@ -13,6 +13,7 @@
 #include "EdbPattern.h"
 #include "TIndexCell.h"
 #include "EdbAffine.h"
+//#include "EdbPVGen.h"
 
 class EdbAffine2D;
 class TIndexCell;
@@ -309,6 +310,7 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbScanCond *eScanCond;     // scanning conditions (sigma, puls, etc)
 
   TIndexCell  *eTracksCell;
+
  public:
   TObjArray   *eTracks;
   TObjArray   *eVTX;          //
@@ -318,11 +320,15 @@ class EdbPVRec : public EdbPatternsVolume {
   ~EdbPVRec();
 
   void    FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends,
-			     float zFrom, float zTo, float zBin);
-  int     ProbVertex(int maxgap, float dMax=100.);
-  int     ProbVertex( TIndexCell &list1, float dZ1,
-		      TIndexCell &list2, float dZ2,
-		      float dA, float sA, float zBin );
+			     float zFrom, float zTo, float zBin,
+			     float ProbMinT, int Nsegmin);
+
+  int     ProbVertex(int maxgap[6], float dA, float ProbMin,
+		     float ProbMinT=0.05, int Nsegmin=3);
+  int     ProbVertex(TIndexCell &list1, TIndexCell &list2,
+		     int BinDifMin,     int BinDifMax,
+		     float dA,          float ProbMin,   float zBin);
+  int	  ProbVertex3(float ProbMin);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);
   void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
@@ -353,7 +359,7 @@ class EdbPVRec : public EdbPatternsVolume {
   int   MergeTracks(int maxgap=2);
   int   MergeTracks1(int maxgap);
   int   MakeTracks(int nsegments=2);
-  void  FitTracks(float p=10., float mass=0.139 );
+  void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0);
   int   MakeTracksTree();
 
   int    LinkSlow();
@@ -363,6 +369,7 @@ class EdbPVRec : public EdbPatternsVolume {
   int    LinkTracks();
   void   FillTracksCellFast();
   void   AddCouplesToTracks(EdbPatCouple *pc, TIndex2 &itracks );
+  void   AddCouplesToTracksM(EdbPatCouple *pc, TIndex2 &itracks );
   void   FillTracksCell2();
   void   FillTracksCell1();
   void   FillTracksCell();
@@ -396,8 +403,8 @@ class EdbPVRec : public EdbPatternsVolume {
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
 
-  int PropagateTracks(int nplmax, int nplmin);
-  int PropagateTrack( EdbTrackP &tr, bool followZ );
+  int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05 );
+  int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05 );
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };

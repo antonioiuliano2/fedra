@@ -248,7 +248,7 @@ class EdbTrackP : public EdbSegP {
   Float_t    eDE;         // total energy loss of the particle between first and last segments
 
   EdbVertex  *eVertexS;    //! vertex track start is attached to
-  EdbVertex  *eVertexE;    //! vertex track start is attached to
+  EdbVertex  *eVertexE;    //! vertex track end is attached to
 
  public:
   EdbTrackP(int nseg=0);
@@ -287,6 +287,7 @@ class EdbTrackP : public EdbSegP {
   int      NF() const  { return (eSF)? eSF->GetSize() : 0; }
 
   float    Wgrains() const;
+  int	   GetSegmentsFlag() const;
 
   EdbSegP *GetSegmentFirst()   const { return (eS) ? (EdbSegP*)(eS->First())  : 0; }
   EdbSegP *GetSegmentLast()    const { return (eS) ? (EdbSegP*)(eS->Last())   : 0; }
@@ -326,6 +327,8 @@ class EdbTrackP : public EdbSegP {
 
   float CHI2();
   float CHI2F();
+
+  float P_MS( float X0 = 5810., bool draw = false );
 
   void Clear() { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
