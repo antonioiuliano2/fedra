@@ -344,116 +344,182 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
 ///______________________________________________________________________________
 int EdbPatCouple::FillCHI2P()
 {
-  if     (eCHI2mode==1) return FillCHI2Pn();
-  else if(eCHI2mode==2) return FillCHI2Pz0();
-  else return FillCHI2Pold();
-}
+  //  fast chi2 calculation used for couples selection
 
-///______________________________________________________________________________
-int EdbPatCouple::FillCHI2Pold()
-{
   EdbSegCouple *scp=0;
   float       chi2;
   int ncp = Ncouples();
+
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
-    chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2Aprob( *(Pat2()->GetSegment(scp->ID2())) );
+
+    if     (eCHI2mode==1) chi2 = Chi2Pn(scp);
+    else if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
+    else                  chi2 = Chi2A(scp);
+
     scp->SetCHI2P(chi2);
   }
-  //printf("Chi2P filled:  %d \n",Ncouples());
-  return Ncouples();
-}
-
-///______________________________________________________________________________
-int EdbPatCouple::FillCHI2Pn()
-{
-  EdbSegP *s1=0, *s2=0;
-  float sx=.5, sy=.5, sz=3., dz=44.;
-  float sa;
-  float chi2, a1,a2;
-  float tx,ty;
-
-  TVector3 v1,v2,v;
-
-  EdbSegCouple *scp=0;
-  int ncp = Ncouples();
-  for( int i=0; i<ncp; i++ ) {
-    scp=GetSegCouple(i);
-    s1 = Pat1()->GetSegment(scp->ID1());
-    s2 = Pat2()->GetSegment(scp->ID2());
-
-    tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
-    ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
-
-    v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
-    v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
-    v.SetXYZ(  -( s2->X() - s1->X() )/sx , 
-	       -( s2->Y() - s1->Y() )/sy , 
-	       -( s2->Z() - s1->Z() )/sz   );
-    a1 = v.Angle(v1);
-    a2 = v.Angle(v2);
-    sa = sz/dz*TMath::Cos(v.Theta());
-
-    chi2 = TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
-      eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
-    scp->SetCHI2P(chi2);
-  }
-
-  return Ncouples();
-}
-
-///______________________________________________________________________________
-int EdbPatCouple::FillCHI2Pz0()
-{
-  EdbSegP *s1=0, *s2=0;
-  float sx=.5, sy=.5, sz=3., dz=44.;
-  float sa;
-  float chi2, a1,a2;
-  float tx,ty;
-
-  TVector3 v1,v2,v;
-
-  EdbSegCouple *scp=0;
-  int ncp = Ncouples();
-  for( int i=0; i<ncp; i++ ) {
-    scp=GetSegCouple(i);
-    s1 = Pat1()->GetSegment(scp->ID1());
-    s2 = Pat2()->GetSegment(scp->ID2());
-
-    tx = (s1->TX()+s2->TX())/2.;
-    ty = (s1->TY()+s2->TY())/2.;
-
-    v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
-    v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
-
-    v = v1+v2;
-    v *= .5;
-
-    a1 = v.Angle(v1);
-    a2 = v.Angle(v2);
-
-    sa = sz/dz*TMath::Cos(v.Theta());
-
-    chi2 = TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
-      eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
-    scp->SetCHI2P(chi2);
-  }
-
   return Ncouples();
 }
 
 ///______________________________________________________________________________
 int EdbPatCouple::FillCHI2()
 {
+  // final chi2 calculation based on the linked track
+
   EdbSegCouple *scp=0;
   float       chi2;
   int ncp = Ncouples();
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
-    chi2 = (Pat1()->GetSegment(scp->ID1()))->Chi2A( *(Pat2()->GetSegment(scp->ID2())) );
+    chi2 = Chi2A(scp,0);
     scp->SetCHI2(chi2);
   }
   return Ncouples();
+}
+
+
+///______________________________________________________________________________
+float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
+{
+  EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
+  EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
+  return Chi2A(s1,s2, iprob);
+}
+
+/*
+///______________________________________________________________________________
+float EdbPatCouple::Chi2Aold(EdbSegP *s1, EdbSegP *s2, int iprob)
+{
+  // fast estimation of chi2 in the special case when the position 
+  // errors of segments are negligible in respect to angular errors: 
+  // sigmaXY/dz << sigmaTXY
+  // application: up/down linking, alignment (offset search)
+  //
+  // badness: generate combinatorical peaks in 4 quadrants
+  //
+  float dz  = s2->Z() - s1->Z();
+  float tx  = (s2->X() - s1->X())/dz;
+  float ty  = (s2->Y() - s1->Y())/dz;
+  float stx   = eCond->SigmaTX(tx);
+  float sty   = eCond->SigmaTY(ty);
+  float prob1=1., prob2=1.;
+  if(iprob) {
+    prob1 = eCond->ProbSeg(tx,ty,s1->W());
+    prob2 = eCond->ProbSeg(tx,ty,s2->W());
+  }
+  float dtx1 = (s1->TX()-tx)*(s1->TX()-tx)/stx/stx/prob1;
+  float dty1 = (s1->TY()-ty)*(s1->TY()-ty)/sty/sty/prob1;
+  float dtx2 = (s2->TX()-tx)*(s2->TX()-tx)/stx/stx/prob2;
+  float dty2 = (s2->TY()-ty)*(s2->TY()-ty)/sty/sty/prob2;
+  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+}
+*/
+
+///______________________________________________________________________________
+float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
+{
+  // fast estimation of chi2 in the special case when the position 
+  // errors of segments are negligible in respect to angular errors: 
+  // sigmaXY/dz << sigmaTXY
+  // application: up/down linking, alignment (offset search)
+  //
+  // All calculation are done in the track plane which remove the 
+  // dependancy of the polar angle (phi)
+
+  float tx,ty;
+
+  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
+  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
+
+  TVector3 v1,v2,v;
+  v1.SetXYZ( s1->TX(), s1->TY() , -1. );
+  v2.SetXYZ( s2->TX(), s2->TY() , -1. );
+  v.SetXYZ(  -( s2->X() - s1->X() ),
+	     -( s2->Y() - s1->Y() ),
+	     -( s2->Z() - s1->Z() ) );
+
+  float phi = v.Phi();
+  v.RotateZ(  -phi );
+  v1.RotateZ( -phi );
+  v2.RotateZ( -phi );
+
+  float dz  = v.Z();
+  tx  = v.X()/dz;
+  ty  = v.Y()/dz;
+  float stx   = eCond->SigmaTX(tx);
+  float sty   = eCond->SigmaTY(ty);
+  float prob1=1., prob2=1.;
+  if(iprob) {
+    prob1 = eCond->ProbSeg(tx,ty,s1->W());
+    prob2 = eCond->ProbSeg(tx,ty,s2->W());
+  }
+  float dtx1 = (v1.X()-tx)*(v1.X()-tx)/stx/stx/prob1;
+  float dty1 = (v1.Y()-ty)*(v1.Y()-ty)/sty/sty/prob1;
+  float dtx2 = (v2.X()-tx)*(v2.X()-tx)/stx/stx/prob2;
+  float dty2 = (v2.Y()-ty)*(v2.Y()-ty)/sty/sty/prob2;
+  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+}
+
+///______________________________________________________________________________
+float EdbPatCouple::Chi2Pn( EdbSegCouple *scp )
+{
+  EdbSegP *s1=0, *s2=0;
+  float sx=.5, sy=.5, sz=3., dz=44.;
+  float sa;
+  float a1,a2;
+  float tx,ty;
+
+  TVector3 v1,v2,v;
+
+  s1 = Pat1()->GetSegment(scp->ID1());
+  s2 = Pat2()->GetSegment(scp->ID2());
+
+  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
+  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
+
+  v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
+  v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
+  v.SetXYZ(  -( s2->X() - s1->X() )/sx , 
+	     -( s2->Y() - s1->Y() )/sy , 
+	     -( s2->Z() - s1->Z() )/sz   );
+  a1 = v.Angle(v1);
+  a2 = v.Angle(v2);
+  sa = sz/dz*TMath::Cos(v.Theta());
+  
+  return TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
+    eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
+}
+
+///______________________________________________________________________________
+float EdbPatCouple::Chi2Pz0(EdbSegCouple *scp)
+{
+  float sx=.5, sy=.5, sz=3., dz=44.;
+  float sa;
+  float a1,a2;
+  float tx,ty;
+
+  TVector3 v1,v2,v;
+
+  EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
+  EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
+
+  tx = (s1->TX()+s2->TX())/2.;
+  ty = (s1->TY()+s2->TY())/2.;
+
+  v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
+  v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
+
+  v = v1+v2;
+  v *= .5;
+
+  a1 = v.Angle(v1);
+  a2 = v.Angle(v2);
+
+  sa = sz/dz*TMath::Cos(v.Theta());
+
+  return TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
+    eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
 }
 
 ///______________________________________________________________________________
@@ -495,7 +561,7 @@ int EdbPatCouple::SelectIsolated()
 }
 
 ///______________________________________________________________________________
-int EdbPatCouple::SortByCHI2()
+int EdbPatCouple::SortByCHI2P()
 {
   int   npat=0;
 
@@ -570,7 +636,7 @@ int EdbPatCouple::Align()
 
   npat = DiffPat( Pat1(), Pat2(), vdiff );
   FillCHI2P();
-  SortByCHI2();
+  SortByCHI2P();
   CutCHI2P(1.5);
   SelectIsolated();
   CalculateAffXYZ(Zlink());
@@ -612,7 +678,7 @@ int EdbPatCouple::LinkSlow( float chi2max )
   for( int i1=0; i1<n1; i1++ ) {
     n2 = pat2->N();
     for( int i2=0; i2<n2; i2++ ) {
-      chi2 = (pat1->GetSegment(i1))->Chi2Aprob( *(pat2->GetSegment(i2)) );
+      chi2 = Chi2A( pat1->GetSegment(i1), pat2->GetSegment(i2) );
       if( chi2 > chi2max )        continue;
       c=AddSegCouple(i1,i2);
       c->SetCHI2P(chi2);
@@ -642,7 +708,7 @@ int EdbPatCouple::LinkFast()
   npat = DiffPat( Pat1(), Pat2(), vdiff );
 
   FillCHI2P();
-  FillCHI2();
+  //  FillCHI2();
 
   return npat;
 }
@@ -747,7 +813,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
       }
     }
   }
-  //printf("npat = %d   ncouples = %d\n", npat,ncouples);
+
   return npat;
 }
 
@@ -797,19 +863,6 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
   //cell->SetName("x:y:tx:ty:entry");
 }
 
-//______________________________________________________________________________
-double EdbPatCouple::Chi2z( EdbSegP &s1,  EdbSegP &s2 ) const
-{
-  EdbSegP s(s1);
-  s += s2;         // mean segment
-
-  double d1 = s.Chi2(s1);
-  double d2 = s.Chi2(s2);
-
-  return TMath::Sqrt( (d1*d1 + d2*d2)/2. );
-}
-
-
 ///=============================================================================
 ///=============================================================================
 
@@ -857,7 +910,6 @@ void EdbPVRec::SetCouples()
   int ncp=Ncouples();
   for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
-    //printf("SetCouples: %d(%d) %d %d \n",i,Ncouples(), pc->ID1(),pc->ID2());
     pc->SetPat1( GetPattern(pc->ID1()) );
     pc->SetPat2( GetPattern(pc->ID2()) );
 
@@ -960,7 +1012,7 @@ int EdbPVRec::LinkSlow()
   for(int i=0; i<ncp; i++ ) {
     pc = GetCouple(i);
     pc->LinkSlow( Chi2Max() );
-    npat = pc->SortByCHI2();
+    npat = pc->SortByCHI2P();
   }
   printf(" EdbPVRec::LinkSlow: npat= %d \n",npat);
   return npat;
@@ -980,7 +1032,7 @@ int EdbPVRec::Link()
     pc = GetCouple(i);
     pc->LinkFast();
     pc->CutCHI2P(eChi2Max);
-    pc->SortByCHI2();
+    pc->SortByCHI2P();
     npat += pc->Ncouples();
   }
   //printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
@@ -999,7 +1051,7 @@ int EdbPVRec::LinkTracks()
     pc = GetCouple(i);
     pc->LinkFast();
     pc->CutCHI2P(1.5);
-    pc->SortByCHI2();
+    pc->SortByCHI2P();
     pc->SelectIsolated();
   }
   FillTracksCell();
@@ -1288,15 +1340,18 @@ int EdbPVRec::CollectSegment1( TIndexCell *ct, THashList *cross)
 }
 
 //______________________________________________________________________________
-int EdbPVRec::InsertHoles()
+int EdbPVRec::MakeHoles(int ort)
 {
+  // holes attached only from the one side corresponding to ort
+
   TIndexCell *ct;
-  Long_t     vn=0,v0=0,v=0;
+  Long_t     vn=0,v0=0,v1=0,v2=0;
   int        nholes=0;
 
   int id=0,pid=0;
   EdbSegP   *s1=0, *s2=0;
   int n=0;
+
   int ntc=eTracksCell->N(1);
   for(int it=0; it<ntc; it++) {
 
@@ -1307,24 +1362,24 @@ int EdbPVRec::InsertHoles()
     v0 = ct->At(0)->Value();
     if( Pid(vn)-Pid(v0) < n-1 )  continue;  // track is not isolated
 
-    if( Pid(v0) > 0 )  {
-      v = ct->At(1)->Value();
-      s1 = GetPattern( Pid(v0) )->GetSegment( Sid(v0) );
-      s2 = GetPattern( Pid(v)  )->GetSegment( Sid(v) );
+    if(ort<0)    {              // attach at the beginnning of the track
+      if( Pid(v0) < 1 )    continue; 
+      v2=v0;
+      v1 = ct->At(1)->Value();
       pid =  Pid(v0)-1;
-      id = InsertHole( s2,s1, pid); 
-      ct->Add( Vid( pid, id) );
-      nholes++;
+    } else if(ort>0) {          // attach at the end of the track
+      if( Pid(vn) > Npatterns()-2 )    continue; 
+      v2=vn;
+      v1 = ct->At(n-2)->Value();
+      pid =  Pid(vn)+1;
     }
-    if( Pid(vn) < Npatterns()-1 )  {
-      v = ct->At(n-2)->Value();
-      s1 = GetPattern( Pid(v)  )->GetSegment( Sid(v)  );
-      s2 = GetPattern( Pid(vn) )->GetSegment( Sid(vn) );
-      pid = Pid(vn)+1;
-      id = InsertHole( s1,s2, pid );
-      ct->Add( Vid( pid, id) );
-      nholes++;
-    }
+
+    s1 = GetPattern( Pid(v1) )->GetSegment( Sid(v1) );
+    s2 = GetPattern( Pid(v2) )->GetSegment( Sid(v2) );
+
+    id = InsertHole( s1,s2, pid); 
+    ct->Add( Vid( pid, id) );
+    nholes++;
   }
   return nholes;
 }
@@ -1335,27 +1390,17 @@ int EdbPVRec::InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid )
   EdbSegP s;
   EdbSegP::LinkMT(s1,s2,&s);
   s.SetFlag(-1);
+  s.SetW( (s1->W()+s2->W())/2 );
   EdbPattern *pat = GetPattern(pid);
+  //s.SetProbability( pat->Cond()->ProbSeg( s.TX(),s.TY(),s.W() );
   s.PropagateTo(pat->Z());
   pat->AddSegment(s);
   return pat->N()-1;
 }
 
 //______________________________________________________________________________
-int EdbPVRec::MakeHoles()
-{
-  int nholes =0;
-  FillTracksCell1();
-  nholes = InsertHoles();
-  eTracksCell->Sort();
-  printf( "nholes= %d\n" , nholes );
-  return nholes;
-}
-
-//______________________________________________________________________________
 int EdbPVRec::MakeTracksTree()
 {
-
   EdbSegP *seg;
   EdbSegP *s0=0;
   EdbSegP *tr = new EdbSegP();

@@ -23,7 +23,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
  private:
   Int_t      ePID;             // plate id
   Int_t      eID;              // segment id (unique in plate)
-  Int_t      eVid[2];          // [0]-view id in the input tree, [1]-sedment id in the view
+  Int_t      eVid[2];          // [0]-view entry in the input tree, [1]-segment entry in the view
+  Int_t      eAid[2];          // [0]-AreaID, [1]-ViewID
 
   Float_t    eX , eY, eZ;      // coordinates
   Float_t    eTX, eTY;         // angles
@@ -45,16 +46,10 @@ class EdbSegP : public TObject, public EdbTrack2D {
     eID(id), eX(x), eY(y), eTX(tx), eTY(ty), eW(w), eFlag(flag) {}
   virtual ~EdbSegP(){}
 
-  EdbSegP&       operator += (EdbSegP const & seg);
-  double Chi2( EdbSegP &s ) const;
-  float  Chi2A( EdbSegP &s ) const;
-  float  Chi2Aprob( EdbSegP &s ) const;
-
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
   void MergeTo( EdbSegP &s );
 
-  //void    Set( EdbSegP &s );
   void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
 
@@ -70,6 +65,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void     SetW( float w )  { eW=w; }
   void     SetVolume( float w )  { eVolume=w; }
   void     SetVid(int vid, int sid) { eVid[0]=vid; eVid[1]=sid; }
+  void     SetAid(int a,   int v)   { eAid[0]=a; eAid[1]=v; }
 
   void     SetProbability( float p ) { eProb=p; }
 
@@ -90,6 +86,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    SZ()  const  {return eSZ;}
   Int_t      Vid(int i) const 
     {if(i<0) return -1; if(i>1) return -1; return eVid[i];}
+  Int_t      Aid(int i) const 
+    {if(i<0) return -1; if(i>1) return -1; return eAid[i];}
 
   // mandatory virtual functions:
   Float_t    X()  const  { return eX; }
@@ -106,7 +104,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void       Print( Option_t *opt="") const;
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
  
-  ClassDef(EdbSegP,5)  // segment
+  ClassDef(EdbSegP,6)  // segment
 };
 
 //______________________________________________________________________________

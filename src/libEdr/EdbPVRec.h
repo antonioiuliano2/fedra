@@ -99,8 +99,8 @@ class EdbSegCouple : public TObject {
 
  private:
   Int_t   eID1, eID2;
-  Float_t eCHI2;      // no puls height info used
-  Float_t eCHI2P;     // used puls information (for sort)
+  Float_t eCHI2;      // final chi2 calculation based on the linked track
+  Float_t eCHI2P;     // fast chi2 estimation used for couples selection
   Int_t   eN1, eN2;         // n1,n2 - is rating of the segment (starting from 1)
   Int_t   eN1tot, eN2tot;   // total number of entries for the segment
 
@@ -154,6 +154,8 @@ class EdbPatCouple : public TObject {
  private:
 
   Int_t  eID[2];           // id-s of patterns in volume
+
+  int eCoupleType;         // 1 - up/down link; 0 - plate-to-plate
 
   EdbPattern *ePat1;
   EdbPattern *ePat2;
@@ -227,15 +229,16 @@ class EdbPatCouple : public TObject {
 			    Long_t vdiff[4]);
 
   void         SetCHI2mode(int m) { eCHI2mode=m; }
-  int          FillCHI2Pn();
-  int          FillCHI2Pz0();
+  float        Chi2Pz0(EdbSegCouple *scp);
+  float        Chi2Pn(EdbSegCouple *scp);
+  float        Chi2A(EdbSegCouple *scp, int iprob=1);
+  float        Chi2A(EdbSegP *s1, EdbSegP *s2, int iprob=1);
   int          FillCHI2();
   int          FillCHI2P();
-  int          FillCHI2Pold();
 
   int          SelectIsolated();
   int          CutCHI2P(float chimax);
-  int          SortByCHI2();
+  int          SortByCHI2P();
   void         PrintCouples();
   
   int    Align();
@@ -251,8 +254,6 @@ class EdbPatCouple : public TObject {
   void FillCell_XYaXaY( EdbScanCond *cond, float zlink, int id=0 );
   void FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz, 
 		   float stepx, float stepy );
-
-  double       Chi2z( EdbSegP &s1,  EdbSegP &s2 ) const;
 
   int   ID1() const { return eID[0]; }
   int   ID2() const { return eID[1]; }
@@ -313,7 +314,6 @@ class EdbPVRec : public EdbPatternsVolume {
 
   TIndexCell *GetTracksCell() const { return eTracksCell; }
   int   MakeTracksTree();
-  int   MakeHoles();
 
   int    LinkSlow();
   int    Link();
@@ -323,8 +323,8 @@ class EdbPVRec : public EdbPatternsVolume {
   void   FillTracksCell2();
   void   FillTracksCell1();
   void   FillTracksCell();
+  int    MakeHoles(int ort);
   int    InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid );
-  int    InsertHoles();
   int    CollectSegment(TIndexCell *ct, TIndexCell *cross);
   int    CollectSegment1(TIndexCell *ct, THashList *cross);
   int    SelectLongTracks(int nsegments);

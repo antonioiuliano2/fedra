@@ -122,6 +122,9 @@ class EdbDataPiece : public TNamed {
   TObjArray   *eCuts[3];        // array of cuts
   Float_t      eCutCP[6];       //
 
+ public: 
+  TIndexCell  *eCouplesInd;     //
+
   EdbRun      *eRun;            //!
   TTree       *eCouplesTree;    //!
 
@@ -131,6 +134,8 @@ class EdbDataPiece : public TNamed {
   virtual ~EdbDataPiece();
 
   void Set0();
+  int  InitCouplesInd();
+  int  GetLinkedSegEntr(int side, int aid, int vid, int sid, TArrayI &entr) const;
   void SetVolume0( float x0, float y0, float z0, float tx=0, float ty=0 );
   void SetVolumeA( float dx, float dy ) { GetLayer(0)->SetDXDY( dx, dy); }
   void AddRunFile( const char *name );
@@ -184,6 +189,9 @@ class EdbDataPiece : public TNamed {
   int  GetCPData(EdbPVRec *ali);
   int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);
 
+  int   InitCouplesTree( const char *mode="READ" );
+  static TTree *InitCouplesTree( const char *file, const char *mode );
+
   ClassDef(EdbDataPiece,1)  // Edb raw data unit (scanned plate) associated with run file
 };
 
@@ -219,6 +227,7 @@ class EdbDataSet : public TNamed {
   void WriteRunList();
 
   EdbDataPiece *FindPiece(const char *name);
+  void Print();
 
   ClassDef(EdbDataSet,1)  // OPERA emulsion data set
 };
@@ -253,8 +262,6 @@ class EdbDataProc : public TObject {
   void   FineAlignment();
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
-
-  TTree *InitCouplesTree( const char *file, const char *mode="READ" );
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };

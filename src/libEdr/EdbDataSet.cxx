@@ -130,6 +130,8 @@ EdbDataPiece::~EdbDataPiece()
   for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
   for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
   for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
+  if(   eCouplesInd)                   delete eCouplesInd;
+
 }
 
 ///______________________________________________________________________________
@@ -152,6 +154,56 @@ void EdbDataPiece::Set0()
 
   eRun    = 0;
   eCouplesTree=0;
+  eCouplesInd=0;
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::InitCouplesInd()
+{
+  if(eCouplesInd) delete eCouplesInd;
+  eCouplesInd = new TIndexCell();
+
+  if(!eCouplesTree) if(!InitCouplesTree("READ")) return 0;
+  EdbSegP         *s1  = 0;
+  EdbSegP         *s2  = 0;
+  eCouplesTree->SetBranchAddress("s1."  , &s1  );
+  eCouplesTree->SetBranchAddress("s2."  , &s2  );
+
+  Long_t v[5]; // side:aid:vid:sid:entry
+
+  int nentr = (int)(eCouplesTree->GetEntries());
+
+  for(int i=0; i<nentr; i++) {
+    eCouplesTree->GetEntry(i);
+    v[0] = 1;
+    v[1] = s1->Aid(0);
+    v[2] = s1->Aid(1);
+    v[3] = s1->Vid(1);
+    v[4] = i;
+    eCouplesInd->Add(5,v);
+    v[0] = 2;
+    v[1] = s2->Aid(0);
+    v[2] = s2->Aid(1);
+    v[3] = s2->Vid(1);
+    v[4] = i;
+    eCouplesInd->Add(5,v);
+  }
+  eCouplesInd->Sort();
+  return eCouplesInd->N();
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::GetLinkedSegEntr(int side, int aid, int vid, int sid, TArrayI &entr) const
+{
+  if(!eCouplesInd) return 0;
+  Long_t v[4];
+  v[0]=side;  v[1]=aid;  v[2]=vid;  v[3]=sid;
+  TIndexCell *c = eCouplesInd->Find(4,v);
+  if(!c) return 0;
+  int n = c->N();
+  entr.Set(n);
+  for(int i=0; i<n; i++) entr.AddAt( (int)(c->At(i)->Value()), i);
+  return n;
 }
 
 ///______________________________________________________________________________
@@ -583,6 +635,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
   segP.Set( seg->GetID(),x,y,txx,tyy);
   segP.SetZ( z );
+  segP.SetDZ( seg->GetDz() );
   segP.SetW( puls );
   float pix = GetRawSegmentPix(seg,view);
   segP.SetVolume( pix );
@@ -900,6 +953,7 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
       }
       nseg++;
       segP.SetVid(iv,j);
+      segP.SetAid(view->GetAreaID(),view->GetViewID());
 
       if(side==1) pat1->AddSegment( segP );
       else if(side==2) pat2->AddSegment( segP );
@@ -942,6 +996,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
       }
       nseg++;
       segP.SetVid(entry,j);
+      segP.SetAid(view->GetAreaID(),view->GetViewID());
       pat->AddSegment( segP);
     }
   }
@@ -1006,6 +1061,50 @@ int EdbDataPiece::AcceptViewHeader(const EdbViewHeader *head)
   if( p.Y() >  GetLayer(0)->DY() )    return 0;
   return 1;
 }
+
+///______________________________________________________________________________
+int EdbDataPiece::InitCouplesTree(const char *mode)
+{
+  if( (eCouplesTree=InitCouplesTree(eFileNameCP,mode ))) return 1;
+  return 0;
+}
+
+///______________________________________________________________________________
+TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
+{
+  const char *tree_name="couples";
+  TTree *tree=0;
+
+  if (!tree) {
+    TFile *f = new TFile(file_name,mode);
+    if (f)  tree = (TTree*)f->Get(tree_name);
+    if(!tree) {
+
+      f->cd();
+      tree = new TTree(tree_name,tree_name);
+      
+      int pid1,pid2;
+      float xv,yv;
+      EdbSegCouple *cp=0;
+      EdbSegP      *s1=0;
+      EdbSegP      *s2=0;
+      EdbSegP      *s=0;
+      
+      tree->Branch("pid1",&pid1,"pid1/I");
+      tree->Branch("pid2",&pid2,"pid2/I");
+      tree->Branch("xv",&xv,"xv/F");
+      tree->Branch("yv",&yv,"yv/F");
+      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
+      tree->Branch("s1.","EdbSegP",&s1,32000,99);
+      tree->Branch("s2.","EdbSegP",&s2,32000,99);
+      tree->Branch("s." ,"EdbSegP",&s,32000,99);
+      tree->Write();
+      tree->SetAutoSave(2000000);
+    }
+  }
+  return tree;
+}
+
 
 ///______________________________________________________________________________
 int EdbDataPiece::MakeLinkListCoord(int irun)
@@ -1200,6 +1299,17 @@ void EdbDataSet::PrintRunList()
 }
 
 ///______________________________________________________________________________
+void EdbDataSet::Print()
+{
+  EdbDataPiece *p=0;
+  printf("EdbDataSet with %d pieces:\n",N());
+  for(int i=0; i<N(); i++){
+    p = ((EdbDataPiece*)ePieces.At(i));
+    printf("%s %s\n",p->GetName(), p->GetRunFile(0));
+  }
+}
+
+///______________________________________________________________________________
 void EdbDataSet::WriteRunList()
 {
   if(!eDBFile) eDBFile = new TFile(eDBFileName.Data(),"UPDATE");
@@ -1313,42 +1423,6 @@ int EdbDataProc::Link()
 }
 
 ///______________________________________________________________________________
-TTree *EdbDataProc::InitCouplesTree(const char *file_name, const char *mode)
-{
-  const char *tree_name="couples";
-  TTree *tree=0;
-
-  if (!tree) {
-    TFile *f = new TFile(file_name,mode);
-    if (f)  tree = (TTree*)f->Get(tree_name);
-    if(!tree) {
-
-      f->cd();
-      tree = new TTree(tree_name,tree_name);
-      
-      int pid1,pid2;
-      float xv,yv;
-      EdbSegCouple *cp=0;
-      EdbSegP      *s1=0;
-      EdbSegP      *s2=0;
-      EdbSegP      *s=0;
-      
-      tree->Branch("pid1",&pid1,"pid1/I");
-      tree->Branch("pid2",&pid2,"pid2/I");
-      tree->Branch("xv",&xv,"xv/F");
-      tree->Branch("yv",&yv,"yv/F");
-      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
-      tree->Branch("s1.","EdbSegP",&s1,32000,99);
-      tree->Branch("s2.","EdbSegP",&s2,32000,99);
-      tree->Branch("s." ,"EdbSegP",&s,32000,99);
-      tree->Write();
-      tree->SetAutoSave(2000000);
-    }
-  }
-  return tree;
-}
-
-///______________________________________________________________________________
 void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 {
   tree->GetDirectory()->cd();
@@ -1404,17 +1478,22 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
 
-      /*
-      s->Set( ic, s1->X(), s1->Y(),
+      
+      s->Set( ic, 
+	      s1->X(), 
+	      s1->Y(),
               (s1->X()-s2->X())/(s1->Z()-s2->Z()),
               (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
-              s1->W()+s2->W());
-      s->SetZ( s1->Z() );
-      */
+              s1->W()+s2->W()
+	      );
+      s->SetZ( (s2->Z()+s1->Z())/2 );
+      s->SetDZ( s2->Z()-s1->Z() );
+      
 
-      EdbSegP::LinkMT(s1,s2,s);
+      //EdbSegP::LinkMT(s1,s2,s);
       s->SetVolume( s1->Volume()+s2->Volume() );
 
+      //s->Print();
       tree->Fill();
     }
   }
@@ -1477,7 +1556,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   EdbPVRec  *ali;
 
   const char *file_name=piece.GetNameCP();
-  TTree *cptree=InitCouplesTree(file_name,"RECREATE");
+  TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
   EdbScanCond *cond = piece.GetCond(1);
 
   int ntot=0, nareas=0;
@@ -1542,7 +1621,7 @@ void EdbDataProc::CorrectAngles()
   for(int i=0; i<npieces; i++ ) {
     piece = eDataSet->GetPiece(i);
     printf("piece: %s\n",piece->GetNameCP());
-    cptree=InitCouplesTree(piece->GetNameCP());
+    cptree=EdbDataPiece::InitCouplesTree(piece->GetNameCP(),"READ");
     if( !cptree )  printf("no tree %d\n",i);
     piece->CorrectAngles(cptree);
   }
@@ -1602,7 +1681,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
   for(i=0; i<npieces; i++ ) {
     printf("\n");
     piece = eDataSet->GetPiece(i);
-    cptree=InitCouplesTree(piece->GetNameCP());
+    cptree=EdbDataPiece::InitCouplesTree(piece->GetNameCP(),"READ");
     if( !cptree )  printf("no tree %d\n",i);
     piece->SetCouplesTree(cptree);
     piece->GetCPData(ali);
@@ -1655,13 +1734,20 @@ void EdbDataProc::LinkTracks( int alg )
   printf("link ok\n");
 
   if(alg==1) {
-    ali->MakeHoles();
-    ali->Link();
-    printf("link ok\n");
-  } else
+    int nhol;
     ali->FillTracksCell();
+    nhol = ali->MakeHoles(1);
+    //    printf("inserted %d holes forward\n",nhol);
+    ali->Link();
+    ali->FillTracksCell();
+    nhol = ali->MakeHoles(-1);
+    //    printf("inserted %d holes backward\n",nhol);
+    ali->Link();
+  }
 
-  TTree *cptree=InitCouplesTree("linked_couples.root","RECREATE");
+  ali->FillTracksCell();
+
+  TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
@@ -1676,14 +1762,15 @@ void EdbDataProc::LinkRawTracks( int alg )
   ali->Link();
   printf("link ok\n");
 
-  if(alg==1) {
-    ali->MakeHoles();
-    ali->Link();
-    printf("link ok\n");
-  } else
-    ali->FillTracksCell();
+//    if(alg==1) {
+//      ali->MakeHoles();
+//      ali->Link();
+//      printf("link ok\n");
+//    }
 
-  TTree *cptree=InitCouplesTree("linked_couples.root","RECREATE");
+  ali->FillTracksCell();
+
+  TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
@@ -1786,14 +1873,15 @@ void EdbDataProc::AlignLinkTracks(int alg)
   ali->Link();
   printf("link ok\n");
 
-  if(alg==1) {
-    ali->MakeHoles();
-    ali->Link();
-    printf("link ok\n");
-  } else
-    ali->FillTracksCell();
+//    if(alg==1) {
+//      ali->MakeHoles();
+//      ali->Link();
+//      printf("link ok\n");
+//    } 
 
-  TTree *cptree=InitCouplesTree("linked_couples.root","RECREATE");
+  ali->FillTracksCell();
+
+  TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 

@@ -32,68 +32,12 @@ EdbSegP::EdbSegP()
   eDZ=0;
 }
 
-//______________________________________________________________________________
-EdbSegP& EdbSegP::operator += (EdbSegP const& s) 
-{
- 
-  float dz = s.Z() - Z();
-
-  float tx,ty;
-  float w1,w2;
-  float x1,y1,x2,y2;
-  float xa,ya,sxa,sya,xb,yb,sxb,syb;
-
-  // project to one side (a):
-
-  x1 = X();
-  w1 = 1./(SX()*SX());
-  x2 = s.X() - s.TX()*dz;
-  w2 = 1./(s.SX()*s.SX() + s.STX()*dz*s.STX()*dz); 
-  xa = (x1*w1+x2*w2)/(w1+w2);
-  sxa = TMath::Sqrt(1./(w1+w2));
-
-  y1 = Y();
-  w1 = 1./(SY()*SY());
-  y2 = s.Y() - s.TY()*dz;
-  w2 = 1./(s.SY()*s.SY() + s.STY()*dz*s.STY()*dz); 
-  ya = (y1*w1+y2*w2)/(w1+w2);
-  sya = TMath::Sqrt(1./(w1+w2));
-
-  // project to another side (b):
-
-  x1 = s.X();
-  w1 = 1./(s.SX()*s.SX());
-  x2 = X() + TX()*dz;
-  w2 = 1./(SX()*SX() + STX()*dz*STX()*dz); 
-  xb = (x1*w1+x2*w2)/(w1+w2);
-  sxb = TMath::Sqrt(1./(w1+w2));
-  
-  y1 = s.Y();
-  w1 = 1./(s.SY()*s.SY());
-  y2 = Y() + TY()*dz;
-  w2 = 1./(SY()*SY() + STY()*dz*STY()*dz); 
-  yb = (y1*w1+y2*w2)/(w1+w2);
-  syb = TMath::Sqrt(1./(w1+w2));
-
-  float z  = (Z()+s.Z())/2.;
-  tx = (xb-xa)/dz;
-  ty = (yb-ya)/dz;
-  float x  = (xb+xa)/2.;
-  float y  = (yb+ya)/2.;
-
-  Set(s.ID(),x,y,tx,ty,W()+s.W(),s.Flag());
-  SetZ(z);
-  //SetErrors(sx,sy,sz,stx,sty);
-
-  return *this;
-}
-
 ///______________________________________________________________________________
 void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
 {
   /// Segments fit by Andrey Aleksandrov (Jul-2003)
 
-  register Double_t dz = s2->Z() - s1->Z();
+  Double_t dz = s2->Z() - s1->Z();
   Double_t dz2 = dz*dz;
  
   Double_t q1,q2,w1,w2;
@@ -102,7 +46,7 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   Double_t dxx01,dxx02,dxt01,dxt02;
   Double_t xm1,xm2,sx0,sy0,stx0,sty0;
  
-  register Double_t q;
+  Double_t q;
 
   if(dz==0.0) {
     s->SetZ(s1->Z());
@@ -138,7 +82,7 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   }
 
   q = 0.5*(s1->Z()+s2->Z());
-  register Double_t dzr = 1.0/dz;
+  Double_t dzr = 1.0/dz;
  
   s->SetZ(q);
   s->SetID(s1->ID());
@@ -209,64 +153,6 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
   s->SetErrors(sx0,sy0,0.0,stx0,sty0);
   s->SetW( s1->W()+s2->W() );
   s->SetDZ(dz);
-}
-
-//______________________________________________________________________________
-double EdbSegP::Chi2( EdbSegP &s ) const
-{
-  //calculated at the s.Z();
-
-  double dz = s.Z()-Z();
-  double x1  = X() + dz * TX();
-  double y1  = Y() + dz * TY();
-
-  double sx = TMath::Sqrt( SX()*SX() + dz*STX()*dz*STX() );
-  double sy = TMath::Sqrt( SY()*SY() + dz*STY()*dz*STY() );
-
-  double stx = TMath::Sqrt( STX()*STX() + s.STX()*s.STX() );
-  double sty = TMath::Sqrt( STY()*STY() + s.STY()*s.STY() );
-
-  double dx  = (s.X()-x1)/sx;
-  double dy  = (s.Y()-y1)/sy;
-  double dtx = (s.TX()-TX())/stx;
-  double dty = (s.TY()-TY())/sty;
-
-  return TMath::Sqrt(dx*dx + dy*dy + dtx*dtx + dty*dty)/2.;
-}
-
-//______________________________________________________________________________
-float EdbSegP::Chi2A( EdbSegP &s ) const
-{
-  // ignore the position errors here;
-
-  float dz  = s.Z()-Z();
-  float tx  = (s.X()-X())/dz;
-  float ty  = (s.Y()-Y())/dz;
-
-  float dtx1 = (TX()-tx)*(TX()-tx)/STX()/STX();
-  float dty1 = (TY()-ty)*(TY()-ty)/STY()/STY();
-  float dtx2 = (s.TX()-tx)*(s.TX()-tx)/s.STX()/s.STX();
-  float dty2 = (s.TY()-ty)*(s.TY()-ty)/s.STY()/s.STY();
-
-  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
-}
-
-//______________________________________________________________________________
-float EdbSegP::Chi2Aprob( EdbSegP &s ) const
-{
-  // ignore the position errors here;
-  // use segments probablility information
-
-  float dz  = s.Z()-Z();
-  float tx  = (s.X()-X())/dz;
-  float ty  = (s.Y()-Y())/dz;
-
-  float dtx1 = (TX()-tx)*(TX()-tx)/STX()/STX()/Prob();
-  float dty1 = (TY()-ty)*(TY()-ty)/STY()/STY()/Prob();
-  float dtx2 = (s.TX()-tx)*(s.TX()-tx)/s.STX()/s.STX()/s.Prob();
-  float dty2 = (s.TY()-ty)*(s.TY()-ty)/s.STY()/s.STY()/s.Prob();
-
-  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
 }
 
 //______________________________________________________________________________
