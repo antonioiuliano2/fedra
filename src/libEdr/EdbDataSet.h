@@ -196,8 +196,6 @@ class EdbDataProc : public TObject {
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
-  void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);  // to be displaced
-
   int  InitVolume(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
   int  Link();
