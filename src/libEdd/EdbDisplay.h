@@ -64,14 +64,14 @@ class EdbTrackG : public TPolyMarker3D {
 class EdbSegG : public TPolyLine3D {
  private:
 
-  EdbSegP *eSeg;
+  const EdbSegP *eSeg;
 
  public:
   EdbSegG() {eSeg=0;}
   EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0;}
   virtual ~EdbSegG(){}
 
-  void SetSeg(EdbSegP *s) {eSeg=s;}
+  void SetSeg(const EdbSegP *s) {eSeg=s;}
 
   //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
   //virtual void          InspectParticle(); // *MENU*
@@ -98,8 +98,9 @@ private:
   Float_t cutW,cutCHI2low,cutCHI2high,cutN1,cutN2;
 
   EdbPVRec *ePVR;
-  TObjArray *eArrSegP; //array of segments to be drawn
-  TObjArray *eArrTr;   //array of tracks to be drawn
+  TObjArray *eArrSegP;     // array of segments to be drawn
+  TObjArray *eArrTr;       // array of tracks to be drawn
+  Int_t      eDrawTracks;  // tracks drawing option
 
   TArrayI* colors;
   TArrayF* DZs;
@@ -153,10 +154,12 @@ Bool_t MaxChi;
     void SetPVR(EdbPVRec *pvr) {ePVR=pvr;}
     void SetArrSegP(TObjArray *arr) {eArrSegP=arr;}
     void SetArrTr(TObjArray *arr) {eArrTr=arr;}
+    void SetDrawTracks(int opt) {eDrawTracks=opt;}
+
     EdbPVRec *PVR() const {return ePVR;}
     void PatternDraw(EdbPattern &pat);
     void TrackDraw(EdbTrackP *tr);
-    EdbSegG *SegLine(EdbSegP *seg);
+    EdbSegG *SegLine(const EdbSegP *seg);
     
     virtual void ExecuteEvent(Int_t event, Int_t px, Int_t py);
 	 ~EdbDisplay(){};

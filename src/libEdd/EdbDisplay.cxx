@@ -577,36 +577,48 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   TPolyLine3D *line=0;
   const EdbSegP *seg=0;
 
-  EdbTrackG *pms = new EdbTrackG(1);
-  pms->SetTrack( tr );
-  pms->SetMarkerStyle(24);
-  seg = tr->TrackZmin();
-  pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
-  pms->SetMarkerColor(kWhite);
-  pms->Draw();
-
-  EdbTrackG *pme = new EdbTrackG(1);
-  pme->SetTrack( tr );
-  pme->SetMarkerStyle(24);
-  seg = tr->TrackZmax();
-  pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
-  pme->SetMarkerColor(kRed);
-  pme->Draw();
-
-
-  line = new TPolyLine3D(tr->N());
-  for(int is=0; is<tr->NF(); is++) {
-    seg = tr->GetSegmentF(is);
-    if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+  if(eDrawTracks>0) {
+    EdbTrackG *pms = new EdbTrackG(1);
+    pms->SetTrack( tr );
+    pms->SetMarkerStyle(24);
+    seg = tr->TrackZmin();
+    pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+    pms->SetMarkerColor(kWhite);
+    pms->Draw();
   }
-  line->SetLineColor(kWhite);
-  line->SetLineWidth(1);
-  line->SetLineStyle(3);
-  line->Draw();
+  if(eDrawTracks>1) {
+    EdbTrackG *pme = new EdbTrackG(1);
+    pme->SetTrack( tr );
+    pme->SetMarkerStyle(24);
+    seg = tr->TrackZmax();
+    pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+    pme->SetMarkerColor(kRed);
+    pme->Draw();
+  }
+
+  if(eDrawTracks>2) {
+    line = new TPolyLine3D(tr->N());
+    for(int is=0; is<tr->NF(); is++) {
+      seg = tr->GetSegmentF(is);
+      if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+    }
+    line->SetLineColor(kWhite);
+    line->SetLineWidth(1);
+    line->SetLineStyle(3);
+    line->Draw();
+  }
+
+  if(eDrawTracks>3) {
+    for(int is=0; is<tr->N(); is++) {
+      seg = tr->GetSegment(is);
+      SegLine(seg)->Draw();
+    }
+  }
+
 }
 
 ///------------------------------------------------------------
-EdbSegG *EdbDisplay::SegLine(EdbSegP *seg)
+EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
 {
   EdbSegG *line = new EdbSegG(2);
   line->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
