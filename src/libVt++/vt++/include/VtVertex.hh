@@ -62,13 +62,6 @@
 #include "VtMassC_list.hh"
 
 
-#if defined USE_ROOT
-//class TrackIf;
-//#include "clue/cluefwd.hh"
-//#include "arte/artefwd.hh"
-//#include "interfaces/VertexIf.hh"
-#endif // USE_ROOT
-
 namespace VERTEX {
   //
   // Some Declarations
@@ -87,9 +80,6 @@ namespace VERTEX {
   // Class Vertex
   //============================================================================
   class Vertex: public Track
-#if defined USE_ROOT && !defined CINTOBJECT
-//    , public VertexIf
-#endif
  {
   public:
     
@@ -120,12 +110,6 @@ namespace VERTEX {
     unsigned short int ndf() const;
     /// no of tracks in vertex $n$
     unsigned short int ntracks() const;
-#if defined USE_ROOT
-    /// dummy function: always return 0
-//    const TrackIf* track(unsigned int i) const;
-    /// dummy function
-//    const TrackIf*& track(unsigned int i);
-#endif
 
 #if defined USE_ROOT && !defined __CINT__
     /// $\vec{x} = (x,y,z)$
@@ -306,6 +290,9 @@ namespace VERTEX {
     MATRIX::VtSymMatrix* v_covn;          // (3*n+3)x(3*n+3) big cov. matrix
     Track_v    tracks;                    // tracks owned by vertex
     MassC_v    xmass;                     // vector of mass constraint pointer
+
+    ClassDef(Vertex, 1);
+
   }; // class Vertex
 
 

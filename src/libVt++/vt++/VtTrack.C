@@ -44,11 +44,10 @@
 #include "vt++/VtRelation.hh"
 
 #if defined USE_ROOT
-//#include "clue/cluearte.hh"
-//#include "interfaces/TrackIf.hh"
 #include "smatrix/SMatrix.hh"
-//#include "clue/RecoTrack.hh"
 #endif
+
+ClassImp(VERTEX::Track);
 
 using namespace MATRIX;
 

@@ -23,17 +23,17 @@
 // 12 Apr 2001 (TG) p(), tvec(), evec(), pvec(), F(), ES(), DS() added
 // 18 Apr 2001 (TG) doc++ comments added, removed use_mom template parameter
 // 24 Apr 2001 (TG) tx(), ty() added
-// 04 Mai 2001 (TG) added TrackIf inheritance, some functions are dummy
+// 04 Mai 2001 (TG) added Track inheritance, some functions are dummy
 // 11 Jun 2001 (TG) added COV(), cov_tx(), cov_ty(), cov_p()
 // 29 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), xfabs() removed
 // 05 Jul 2001 (TG) collect() added
-// 09 Jul 2001 (TG) added isValid(), valid(), invalid() from TrackIf
+// 09 Jul 2001 (TG) added isValid(), valid(), invalid() from Track
 // 10 Jul 2001 (TG) operator==() added
 // 09 Jan 2002 (TG) changed return type of propagate() to bool
 //
 // ********************************************************************
 #include <iosfwd>
-#include "interfaces/TrackIf.hh"
+#include "vt++/VtTrack.hh"
 
 template <unsigned int NTR> class SVertex;
 
@@ -45,15 +45,15 @@ template <unsigned int NTR> class SVertex;
 // SKalman
 //==============================================================================
 template <unsigned int NTR>
-class SKalman : public TrackIf {
+class SKalman : public Track {
 public:
   /** @name --- Constructors --- */
   ///
   SKalman();
   ///
-  SKalman(const TrackIf& t, const SVertex<NTR>& v);
+  SKalman(const Track& t, const SVertex<NTR>& v);
 
-  /** @name --- TrackIf methods --- */
+  /** @name --- Track methods --- */
   /// refitted Track $x$ position (= vertex $x$ position)
   float x()   const;
   /// refitted Track $y$ position (= vertex $y$ position)
@@ -103,9 +103,9 @@ public:
   SVector<double,3> pvec() const;
 
   /// collect pointers
-  void collect(vector<TrackIf*>& c) const;
+  void collect(vector<Track*>& c) const;
 
-  /** @name --- Dummy TrackIf functions --- */
+  /** @name --- Dummy Track functions --- */
   /// returns always true
   bool isValid() const;
   /// does nothing
@@ -132,8 +132,8 @@ public:
   float cov_p()                    const;
 
   /** @name --- Operators --- */
-  /// compare TrackIf pointers
-  bool operator==(const TrackIf& rhs) const;
+  /// compare Track pointers
+  bool operator==(const Track& rhs) const;
 
   /** @name --- Access methods --- */
   ///
@@ -160,7 +160,7 @@ public:
   std::ostream& print( std::ostream& ) const;
   
 private:
-  const TrackIf*      track_;
+  const Track*      track_;
   const SVertex<NTR>* vtx_;
   double k_tx;
   double k_ty;

@@ -40,8 +40,8 @@
 // 28 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), removed xfabs()
 // 04 Jul 2001 (TG) moth_tr, moth_cov added
 // 05 Jul 2001 (TG) collect() added
-// 09 Jul 2001 (TG) added valid(), invalid(), isValid() from TrackIf, removed
-//                  valid(), invalid() from VertexIf, added ntracks()
+// 09 Jul 2001 (TG) added valid(), invalid(), isValid() from Track, removed
+//                  valid(), invalid() from Vertex, added ntracks()
 // 10 Jul 2001 (TG) operator==() added
 // 25 Jul 2001 (TG) removed inline from track() definitions
 // 21 Aug 2001 (TG) bug fix in calc_mother_tr: track x,y,z must be vertex pos!
@@ -107,7 +107,7 @@ SVertex<NTR>::SVertex(const SVertex<NTR>& rhs) :
 {}
 
 template <unsigned int NTR>
-SVertex<NTR>::SVertex(const TrackIf& t) :
+SVertex<NTR>::SVertex(const Track& t) :
   vpos_          (0),
   v_bk13         (0),
   v_CS           (0),
@@ -124,7 +124,7 @@ SVertex<NTR>::SVertex(const TrackIf& t) :
 {}
 
 template <unsigned int NTR>
-SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2) :
+SVertex<NTR>::SVertex(const Track& t1, const Track& t2) :
   vpos_          (0),
   v_bk13         (0),
   v_CS           (0),
@@ -142,7 +142,7 @@ SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2) :
 }
 
 template <unsigned int NTR>
-SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3) :
+SVertex<NTR>::SVertex(const Track& t1, const Track& t2, const Track& t3) :
   vpos_          (0),
   v_bk13         (0),
   v_CS           (0),
@@ -160,8 +160,8 @@ SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3) :
 }
 
 template <unsigned int NTR>
-SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3,
-			      const TrackIf& t4) :
+SVertex<NTR>::SVertex(const Track& t1, const Track& t2, const Track& t3,
+			      const Track& t4) :
   vpos_          (0),
   v_bk13         (0),
   v_CS           (0),
@@ -180,7 +180,7 @@ SVertex<NTR>::SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3,
 
 
 template <unsigned int NTR>
-SVertex<NTR>::SVertex(const SVertex<NTR-1>& vtx, const TrackIf& t) :
+SVertex<NTR>::SVertex(const SVertex<NTR-1>& vtx, const Track& t) :
   vpos_          (0),
   v_bk13         (0),
   v_CS           (0),
@@ -273,7 +273,7 @@ struct meta_for_valid<0> {
 };
 
 //==============================================================================
-// VertexIf access methods
+// Vertex access methods
 //==============================================================================
 template <unsigned int NTR>
 float SVertex<NTR>::vx()   const { return vpos_[0]; }
@@ -294,10 +294,10 @@ template <unsigned int NTR>
 unsigned short int SVertex<NTR>::ntracks()  const { return NTR; }
 
 template <unsigned int NTR>
-const TrackIf* SVertex<NTR>::track(unsigned int i) const { return tracks[i]; }
+const Track* SVertex<NTR>::track(unsigned int i) const { return tracks[i]; }
 
 template <unsigned int NTR>
-const TrackIf*& SVertex<NTR>::track(unsigned int i) { return tracks[i]; }
+const Track*& SVertex<NTR>::track(unsigned int i) { return tracks[i]; }
 
 template <unsigned int NTR>
 SVector<double,3> SVertex<NTR>::vpos() const { return vpos_; }
@@ -324,7 +324,7 @@ template <unsigned int NTR>
 inline void SVertex<NTR>::set_vpos(const SVector<double,3>& pos) { vpos_ = pos; }
 
 template <unsigned int NTR>
-inline void SVertex<NTR>::set_track(unsigned int i, const TrackIf& t) { tracks[i] = &t; }
+inline void SVertex<NTR>::set_track(unsigned int i, const Track& t) { tracks[i] = &t; }
 
 template <unsigned int NTR>
 inline const SKalman<NTR>& SVertex<NTR>::kalman(unsigned int i) const { return kalman_[i]; }
@@ -342,7 +342,7 @@ template <unsigned int NTR>
 inline const SMatrix<double,3*NTR+3>& SVertex<NTR>::covn() const { return v_covn; }
 
 //==============================================================================
-// TrackIf access methods
+// Track access methods
 //==============================================================================
 template <unsigned int NTR>
 float SVertex<NTR>::x()   const { return t_p[0]; }
@@ -491,7 +491,7 @@ inline bool SVertex<NTR>::isKalmanFit() const { return validKalmanFit; }
 // operator==
 //==============================================================================
 template <unsigned int NTR>
-bool SVertex<NTR>::operator==( const TrackIf& rhs ) const {
+bool SVertex<NTR>::operator==( const Track& rhs ) const {
   return &rhs == this;
 }
 
@@ -549,7 +549,7 @@ template <unsigned int I>
 struct meta_for_fv2d {
   template <class A>
   inline static SVector<double,6> f(const A& v) {
-    const TrackIf* const t = v.track(I);
+    const Track* const t = v.track(I);
     return SVector<double,6>(t->tx(),
 			     t->ty(),
 			     t->x(0.),
@@ -569,7 +569,7 @@ template <>
 struct meta_for_fv2d<0> {
   template <class A>
   inline static SVector<double,6> f(const A& v) {
-    const TrackIf* const t = v.track(0);
+    const Track* const t = v.track(0);
     return SVector<double,6>(t->tx(),
 			     t->ty(),
 			     t->x(0.),
@@ -615,7 +615,7 @@ template <unsigned int I>
 struct meta_for_fv3d {
   template <class A>
   static SVector<double,3> f(const A& v, SMatrix<double,3>& m) {
-    const TrackIf* const t = v.track(I);
+    const Track* const t = v.track(I);
     SMatrix<double,3> dt = 1./mag2(t->tvec()) * SMatrix<double,3>(t->tvec()) 
       - SMatrix<double,3>(1,true);
     m += dt;
@@ -630,7 +630,7 @@ template <>
 struct meta_for_fv3d<0> {
   template <class A>
   static SVector<double,3> f(const A& v, SMatrix<double,3>& m) {
-    const TrackIf* const t = v.track(0);
+    const Track* const t = v.track(0);
     SMatrix<double,3> dt = 1./mag2(t->tvec()) * SMatrix<double,3>(t->tvec()) 
       - SMatrix<double,3>(1,true);
     m += dt;
@@ -663,7 +663,7 @@ template <unsigned int I>
 struct meta_for_rmsd {
   template <class A>
   inline static SVector<double,5> f(const A& v) {
-    const TrackIf* const t = v.track(I);
+    const Track* const t = v.track(I);
     return SVector<double,5>(t->tx(),
 			     t->ty(),
 			     square(t->tx()),
@@ -684,7 +684,7 @@ template <>
 struct meta_for_rmsd<0> {
   template <class A>
   inline static SVector<double,5> f(const A& v) {
-    const TrackIf* const t = v.track(0);
+    const Track* const t = v.track(0);
     return SVector<double,5>(t->tx(),
 			     t->ty(),
 			     square(t->tx()),
@@ -718,7 +718,7 @@ template <unsigned int I>
 struct meta_for_estm {
   template <class A>
   inline static SVector<double,10> f(const A& v) {
-    const TrackIf* t = v.track(I);
+    const Track* t = v.track(I);
     const double xweight = 1./t->cov_x();
     const double yweight = 1./t->cov_y();
 
@@ -744,7 +744,7 @@ template <>
 struct meta_for_estm<0> {
   template <class A>
   inline static SVector<double,10> f(const A& v) {
-    const TrackIf* t = v.track(0);
+    const Track* t = v.track(0);
     const double xweight = 1./t->cov_x();
     const double yweight = 1./t->cov_y();
     
@@ -859,7 +859,7 @@ template <unsigned int I>
 struct meta_for_invmtr {
   template <class A, unsigned int NTR>
   inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
-    const TrackIf* t = v.track(I);
+    const Track* t = v.track(I);
     return SVector<double,4>(sqrt(square(t->p()) + square(rm[I])), t->pvec())
       + meta_for_invmtr<I-1>::f(v,rm);
   }
@@ -873,7 +873,7 @@ template <>
 struct meta_for_invmtr<0> {
   template <class A, unsigned int NTR>
   inline static SVector<double,4> f(const A& v, const SVector<double,NTR>& rm) {
-    const TrackIf* t = v.track(0);
+    const Track* t = v.track(0);
     return SVector<double,4>(sqrt(square(t->p()) + square(rm[0])), t->pvec());
   }
 };
@@ -920,7 +920,7 @@ template <unsigned int I>
 struct meta_for_prop {
   template <unsigned int NTR>
   inline static void f(SVertex<NTR>& v) {
-    const_cast<TrackIf*>(v.track(I))->propagate(0.);
+    const_cast<Track*>(v.track(I))->propagate(0.);
     meta_for_prop<I-1>::f(v);
   }
 };
@@ -932,7 +932,7 @@ template<>
 struct meta_for_prop<0> {
   template <unsigned int NTR>
   inline static void f(SVertex<NTR>& v) {
-    const_cast<TrackIf*>(v.track(0))->propagate(0.);
+    const_cast<Track*>(v.track(0))->propagate(0.);
   }
 };
 
@@ -1457,7 +1457,7 @@ bool SVertex<NTR>::calc_mother_cov() {
 // collect
 //==============================================================================
 template <unsigned int NTR>
-void SVertex<NTR>::collect(vector<TrackIf*>& c) const {
+void SVertex<NTR>::collect(vector<Track*>& c) const {
   c.push_back(const_cast<SVertex<NTR>*>(this));
 }
 

@@ -43,12 +43,9 @@
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
 #include "vt++/VtRelationList.hh"
+#include "TObject.h"
 
 #if defined USE_ROOT
-//#include "arte/artefwd.hh"
-//#include "clue/cluefwd.hh"
-//#include "interfaces/TrackIf.hh"
-
 #ifndef __CINT__
 #include "smatrix/SMatrix.hh"
 #include "smatrix/SVector.hh"
@@ -63,10 +60,7 @@ namespace VERTEX {
   //============================================================================
   // Class Track
   //============================================================================
-  class Track: public RelationList
-#if defined USE_ROOT && !defined CINTOBJECT
-//    , public TrackIf
-#endif
+  class Track: public RelationList, public TObject
  {
   public:
     /**@name --- Constructors --- */
@@ -80,12 +74,8 @@ namespace VERTEX {
     Track(const MATRIX::VtVector& v, const MATRIX::CMatrix& c);
     ///
     virtual ~Track();
-#if defined USE_ROOT
     ///
-//    Track(const TrackIf& rhs, double ms = 0., double msCC = 0.);
-#endif
-    ///
-   void set( double x,double y,double z,double tx,double ty,double p, 
+    void set( double x,double y,double z,double tx,double ty,double p, 
 	const MATRIX::CMatrix& c);
     Track& operator=(const Track& rhs);
 
@@ -240,6 +230,9 @@ namespace VERTEX {
     MATRIX::CMatrix     t_V;      // 5x5 covariance matrix of Track
     MATRIX::CMatrix     t_G;      // inverse of t_cov (5x5)
     MATRIX::CMatrix     t_GM;     // inverse of t_cov (4x4, without momentum)
+
+  ClassDef(Track,1);
+
  }; // class Track
 
 

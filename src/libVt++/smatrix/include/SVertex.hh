@@ -25,7 +25,7 @@
 //                  added
 // 12 Apr 2001 (TG) set_track, track(), calc_mother(), calc_mother_tr(),
 //                  bigcov(), mother() added 
-// 17 Apr 2001 (TG) TrackIf inheritance added, calc_mother_cov() added
+// 17 Apr 2001 (TG) Track inheritance added, calc_mother_cov() added
 // 18 Apr 2001 (TG) removed use_mom template parameter, added mass_tr
 // 24 Apr 2001 (TG) valid_, valid(), invalid() added
 // 24 Apr 2001 (TG) renamed calc_mother() to calc_mother_tr() and
@@ -40,8 +40,8 @@
 // 28 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), removed xfabs()
 // 04 Jul 2001 (TG) moth_tr, moth_cov added
 // 05 Jul 2001 (TG) collect() added
-// 09 Jul 2001 (TG) added valid(), invalid(), isValid() from TrackIf, removed
-//                  valid(), invalid() from VertexIf, added ntracks()
+// 09 Jul 2001 (TG) added valid(), invalid(), isValid() from Track, removed
+//                  valid(), invalid() from Vertex, added ntracks()
 // 10 Jul 2001 (TG) operator==() added
 // 23 Aug 2001 (TG) added CTOR, added copy CTOR
 // 03 Sep 2001 (TG) added operator=()
@@ -56,8 +56,8 @@
 //
 // ********************************************************************
 #include <iosfwd>
-#include "interfaces/VertexIf.hh"
-#include "interfaces/TrackIf.hh"
+#include "vt++/VtVertex.hh"
+#include "vt++/VtTrack.hh"
 #include "smatrix/SVector.hh"
 #include "smatrix/SKalman.hh"
 
@@ -69,7 +69,7 @@
 // SVertex
 //==============================================================================
 template <unsigned int NTR>
-class SVertex : public VertexIf, public TrackIf {
+class SVertex : public Vertex, public Track {
 public:
   /** @name --- Constructors --- */
   ///
@@ -77,16 +77,16 @@ public:
   ///
   SVertex(const SVertex<NTR>& rhs);
   /// create Vertex object \& set mother track by $t$
-  SVertex(const TrackIf& t);
+  SVertex(const Track& t);
   ///
-  SVertex(const TrackIf& t1, const TrackIf& t2);
+  SVertex(const Track& t1, const Track& t2);
   ///
-  SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3);
+  SVertex(const Track& t1, const Track& t2, const Track& t3);
   ///
-  SVertex(const TrackIf& t1, const TrackIf& t2, const TrackIf& t3,
-	  const TrackIf& t4);
+  SVertex(const Track& t1, const Track& t2, const Track& t3,
+	  const Track& t4);
   /// add a track
-  SVertex(const SVertex<NTR-1>& vtx, const TrackIf& t);
+  SVertex(const SVertex<NTR-1>& vtx, const Track& t);
 
   ///
   SVertex<NTR>& operator=(const SVertex<NTR>& rhs);
@@ -95,7 +95,7 @@ public:
   ///
   static const unsigned int size = NTR;
 
-  /** @name --- VertexIf Access methods --- */
+  /** @name --- Vertex Access methods --- */
   /// vertex $x$ position $v_x$
   float vx()   const;
   /// vertex $y$ position $v_y$
@@ -111,9 +111,9 @@ public:
   /// no of tracks in vertex
   unsigned short int ntracks() const;
   /// read only track access
-  const TrackIf* track(unsigned int i) const;
+  const Track* track(unsigned int i) const;
   /// read/write track access
-  const TrackIf*& track(unsigned int i);
+  const Track*& track(unsigned int i);
   
   /// vertex position $\vec{v} = (v_x,v_y,v_z)$
   SVector<double,3> vpos() const;
@@ -136,7 +136,7 @@ public:
   void set_vpos(const SVector<double,3>& pos);
   
   /// set track list
-  void set_track(unsigned int i, const TrackIf& t);
+  void set_track(unsigned int i, const Track& t);
   /// read only access to Kalman objects
   const SKalman<NTR>& kalman(unsigned int i) const;
   /// read/write access to Kalman objects
@@ -170,7 +170,7 @@ public:
   /// compute invariant mass using measured track momenta
   double mass_tr(const SVector<double,NTR>& rm) const;
 
-  /** @name --- TrackIf Access methods ---\\
+  /** @name --- Track Access methods ---\\
    The following functions apply only to the mother track and give only
    useful results in case you reconstructed the mother track (see section of
    expert methods). */
@@ -247,15 +247,15 @@ public:
   const SMatrix<double,5>& CINV()  const;
 
   /// collect pointers
-  void collect(vector<TrackIf*>& c) const;
+  void collect(vector<Track*>& c) const;
   /// propagate reconsructed track to $z$
   bool propagate(const double z);
   /// used by operator<<()
   std::ostream& print( std::ostream& ) const;
 
   /** @name --- Operators --- */
-  /// compare TrackIf pointers
-  bool operator==(const TrackIf& rhs) const;
+  /// compare Track pointers
+  bool operator==(const Track& rhs) const;
 
   /** @name --- SVertex methods --- */
   /// is mother track calculated?
@@ -287,7 +287,7 @@ public:
 private:
   SVector<double,3>    vpos_;          // vertex position
   double               v_bk13;         // vtx-z before kalman filter could be vz?
-  const TrackIf*       tracks[NTR];    // track pointers
+  const Track*       tracks[NTR];    // track pointers
   SKalman<NTR>         kalman_[NTR];   // kalman objects
   SMatrix<double,3>    v_CS;           // vertex cov. matrix
   SMatrix<double,3>    v_CINV;         // inverse vertex cov. matrix

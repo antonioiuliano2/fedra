@@ -23,7 +23,7 @@
 // 04 Mai 2001 (TG) Tdistance() added
 // 06 Jul 2001 (TG) corrected Tdistance()
 // 27 Jul 2001 (TG) added Sdistance(SVector,SVector)
-// 15 Aug 2001 (TG) added Sdistance(VertexIf,VertexIf)
+// 15 Aug 2001 (TG) added Sdistance(Vertex,Vertex)
 // 28 Sep 2001 (TG) declared TDistance() and SGNdistance() inline, renamed all
 //                  distance() functions which calculate spatial distances to Sdistance()
 // 02 Okt 2001 (TG) added SGNVVdistance()
@@ -33,7 +33,6 @@
 #include "smatrix/Functions.hh"
 #include "smatrix/SVertex.hh"
 #include "smatrix/BinaryOperators.hh"
-#include "clue/Wire.hh"
 
 /** Spatial distance between two space points.
     \begin{displaymath}
@@ -47,27 +46,27 @@ inline double Sdistance(const SVector<double,3>& x1, const SVector<double,3>& x2
   return mag(x1 - x2);
 }
 
-/** Spatial distance between two VertexIf objects.
+/** Spatial distance between two Vertex objects.
     \begin{displaymath}
     d = |\vec{v}_1 - \vec{v}_2|
     \end{displaymath}
 */
 //============================================================================
-// distance: spatial distance between VertexIf objects
+// distance: spatial distance between Vertex objects
 //============================================================================
-inline double Sdistance(const VertexIf& v1, const VertexIf& v2) {
+inline double Sdistance(const Vertex& v1, const Vertex& v2) {
   return mag(v1.vpos() - v2.vpos());
 }
 
-/** Signed spatial distance between two VertexIf objects.
+/** Signed spatial distance between two Vertex objects.
     \begin{displaymath}
     d = |\vec{v}_1 - \vec{v}_2|\times\texttt{sgn}(v_{z,1} - v_{z,2})
     \end{displaymath}
 */
 //============================================================================
-// distance: spatial distance between VertexIf objects
+// distance: spatial distance between Vertex objects
 //============================================================================
-inline double SGNVVdistance(const VertexIf& v1, const VertexIf& v2) {
+inline double SGNVVdistance(const Vertex& v1, const Vertex& v2) {
   return mag(v1.vpos() - v2.vpos()) * sign(v1.vpos()[2] - v2.vpos()[2]);
 }
 
@@ -77,9 +76,9 @@ inline double SGNVVdistance(const VertexIf& v1, const VertexIf& v2) {
     \end{displaymath}
 */
 //============================================================================
-// distance: spatial distance between VertexIf and SpacePoint
+// distance: spatial distance between Vertex and SpacePoint
 //============================================================================
-inline double Sdistance(const VertexIf& v, const SVector<double,3>& x) {
+inline double Sdistance(const Vertex& v, const SVector<double,3>& x) {
   return mag(v.vpos() - x);
 }
 
@@ -91,9 +90,9 @@ inline double Sdistance(const VertexIf& v, const SVector<double,3>& x) {
     $\vec{x}_v$: vertex position
 */
 //============================================================================
-// distance: spatial distance between TrackIf and VertexIf
+// distance: spatial distance between Track and Vertex
 //============================================================================
-inline double TVdistance(const TrackIf& t, const VertexIf& v) {
+inline double TVdistance(const Track& t, const Vertex& v) {
   return mag(cross(t.xvec()-v.vpos(), t.evec()));
 }
 
@@ -111,9 +110,9 @@ inline double TVdistance(const TrackIf& t, const VertexIf& v) {
     $g: \vec{x}_2 + m'\cdot\vec{t}_2$ track definition 2nd track\\
 */
 //============================================================================
-// distance: spatial distance between TrackIf and TrackIf
+// distance: spatial distance between Track and Track
 //============================================================================
-inline double Tdistance(const TrackIf& t1, const TrackIf& t2) {
+inline double Tdistance(const Track& t1, const Track& t2) {
   const double a  = t1.tx();
   const double b  = t1.ty();
   const double c  = 1;
@@ -140,12 +139,12 @@ inline double Tdistance(const TrackIf& t1, const TrackIf& t2) {
     $w: \vec{x}_w + m'\cdot\vec{t}_w$ wire definition
 */
 //============================================================================
-// distance: spatial distance between TrackIf and Wire
+// distance: spatial distance between Track and Wire
 //============================================================================
-inline double Sdistance(const TrackIf& t, const Wire& w) {
-  const SVector<double,3> cr = cross(w.dvec(),t.tvec());
-  return dot(cr, t.xvec() - w.xvec())/mag2(cr);
-}
+//inline double Sdistance(const Track& t, const Wire& w) {
+//  const SVector<double,3> cr = cross(w.dvec(),t.tvec());
+//  return dot(cr, t.xvec() - w.xvec())/mag2(cr);
+//}
 
 
 /** Signed closest distance between Track and Vertex object.
@@ -165,9 +164,9 @@ inline double Sdistance(const TrackIf& t, const Wire& w) {
     $\vec{x}_t - \rho\cdot\vec{t}$: point of track closest to vertex
 */
 //============================================================================
-// SGNdistance: signed spatial distance between TrackIf and VertexIf
+// SGNdistance: signed spatial distance between Track and Vertex
 //============================================================================
-inline double SGNdistance(const TrackIf& t, const VertexIf& v) {
+inline double SGNdistance(const Track& t, const Vertex& v) {
   // dx = point of track closest to vertex - vertex position
   const SVector<double,3> dx = 
     t.xvec() - t.tvec() * dot(t.evec(), t.xvec()-v.vpos()) - v.vpos();
@@ -180,7 +179,7 @@ inline double SGNdistance(const TrackIf& t, const VertexIf& v) {
 //============================================================================
 // Chi2distance: chi2 distance between two tracks
 //============================================================================
-inline double Chi2distance(const TrackIf& t1, const TrackIf& t2) {
+inline double Chi2distance(const Track& t1, const Track& t2) {
   SVertex<2> vtx(t1,t2);
   if(vtx.findVertexVt() == true)
     return vtx.chi2();

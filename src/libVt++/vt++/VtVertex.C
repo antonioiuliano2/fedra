@@ -78,6 +78,9 @@
 //#include "interfaces/TrackIf.hh"
 #endif // USE_ROOT
 
+
+ClassImp(VERTEX::Vertex);
+
 extern "C" {
   // from CERNLIB (libmathlib.a)
   float prob_(float* chi, int* ndf);

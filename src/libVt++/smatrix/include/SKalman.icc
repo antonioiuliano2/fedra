@@ -23,11 +23,11 @@
 // 18 Apr 2001 (TG) removed use_mom template parameter, moved all function
 //                  bodies into this file
 // 24 Apr 2001 (TG) tx(), ty() added
-// 04 Mai 2001 (TG) added TrackIf inheritance, some functions are dummy
+// 04 Mai 2001 (TG) added Track inheritance, some functions are dummy
 // 11 Jun 2001 (TG) added COV(), cov_tx(), cov_ty(), cov_p()
 // 29 Jun 2001 (TG) added charge(), pz(), energy(), xf(), rap(), xfabs() removed
 // 05 Jul 2001 (TG) collect() added
-// 09 Jul 2001 (TG) added isValid(), valid(), invalid() from TrackIf
+// 09 Jul 2001 (TG) added isValid(), valid(), invalid() from Track
 // 10 Jul 2001 (TG) operator==() added
 // 09 Jan 2002 (TG) changed return type of propagate() to bool
 // 16 Jan 2002 (TG) simplified print() output
@@ -63,7 +63,7 @@ SKalman<NTR>::SKalman() :
 {}
 
 template <unsigned int NTR>
-SKalman<NTR>::SKalman(const TrackIf& t, const SVertex<NTR>& v) : 
+SKalman<NTR>::SKalman(const Track& t, const SVertex<NTR>& v) : 
   track_(&t),
   vtx_  (&v),
   k_tx  (t.tx()),
@@ -84,7 +84,7 @@ SKalman<NTR>::SKalman(const TrackIf& t, const SVertex<NTR>& v) :
 
 
 //==============================================================================
-// TrackIf methods
+// Track methods
 //==============================================================================
 template <unsigned int NTR>
 float SKalman<NTR>::x() const { return vtx_->vx(); }
@@ -214,7 +214,7 @@ void SKalman<NTR>::invalid() { ; }
 // collect
 //==============================================================================
 template <unsigned int NTR>
-void SKalman<NTR>::collect(vector<TrackIf*>& c) const {
+void SKalman<NTR>::collect(vector<Track*>& c) const {
   c.push_back(const_cast<SKalman<NTR>*>(this));
 }
 
@@ -225,7 +225,7 @@ bool SKalman<NTR>::propagate(const double zz) { return true; }
 // operator==
 //==============================================================================
 template <unsigned int NTR>
-bool SKalman<NTR>::operator==( const TrackIf& rhs ) const {
+bool SKalman<NTR>::operator==( const Track& rhs ) const {
   return &rhs == track_;
 }
 
