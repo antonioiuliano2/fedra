@@ -783,15 +783,28 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
   EdbSegP         *s2 = 0;
   EdbSegP         *s  = 0;
 
-  tree->SetBranchAddress("cp"  , &cp  );
-  if(pat)  tree->SetBranchAddress("s."   , &s   );
-  if(p1)   tree->SetBranchAddress("s1."  , &s1  );
-  if(p2)   tree->SetBranchAddress("s2."  , &s2  );
+  TBranch *b_cp=0, *b_s=0, *b_s1=0, *b_s2=0;                        // !!!
+  b_cp = tree->GetBranch("cp");                   // !!!
+  b_s  = tree->GetBranch("s.");                   // !!!
+  b_s1 = tree->GetBranch("s1.");                  // !!!
+  b_s2 = tree->GetBranch("s2.");                  // !!!
+
+  b_cp->SetAddress( &cp  );
+  b_s->SetAddress(  &s   );
+  b_s1->SetAddress( &s1  );
+  b_s2->SetAddress( &s2  );
+
+//    tree->SetBranchAddress("cp"  , &cp  );
+//    if(pat)  tree->SetBranchAddress("s."   , &s   );
+//    if(p1)   tree->SetBranchAddress("s1."  , &s1  );
+//    if(p2)   tree->SetBranchAddress("s2."  , &s2  );
 
   int nseg = 0;
   int nentr = (int)(tree->GetEntries());
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
+    b_cp->GetEntry(i);                             // !!!
+    b_s->GetEntry(i);                             // !!!
     if( !TakeCPSegment(*cp,*s) )      continue;
     if(pat) {
       s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
@@ -802,12 +815,14 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
       nseg++;
     }
     if(p1)  { 
+      b_s1->GetEntry(i);                             // !!!
       s1->SetZ( s1->Z() + pat->Z() );
       //s1->SetPID( ePlate*10 +1 );    /// TO CHECK !!!
       p1->AddSegment(  *s1 ); 
       nseg++; 
     }
     if(p2)  { 
+      b_s2->GetEntry(i);                             // !!!
       s2->SetZ( s2->Z() + pat->Z() );
       //s2->SetPID( ePlate*10 + 2 );   /// TO CHECK !!!
       p2->AddSegment(  *s2 ); 
@@ -2126,9 +2141,11 @@ void EdbDataProc::LinkTracks( int alg, float p )
 
   ali->FillTracksCell();  // TODO: very long operation - speedup
 
-  //TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
-  //FillCouplesTree(cptree, ali,0);
-  //CloseCouplesTree(cptree);
+  if(alg==-1) {
+    TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
+    FillCouplesTree(cptree, ali,0);
+    CloseCouplesTree(cptree);
+  }
 
   ali->MakeTracks();
 
