@@ -302,6 +302,7 @@ Int_t TIndex2::Find(Int_t major, Int_t minor)
 //-------------------------------------------------------------------------------------
 Int_t TIndex2::FindIndex(Int_t major)
 {
+  // return the value of minor (this make sence in the case when major is unique)
   if (fN<1) return -1;
   Double_t value = (Double_t)major;
   Int_t i = TMath::BinarySearch( fN, GetArray(), value);
@@ -312,4 +313,36 @@ Int_t TIndex2::FindIndex(Int_t major)
   if(i>fN-1) return -1;
   if (TMath::Abs((*this)[i] - value) > .5) return -1;
   return (Int_t)( ((*this)[i]-value+1e-10)*1e+9 );
+}
+
+//-------------------------------------------------------------------------------------
+Int_t TIndex2::FindIndexArr(Int_t major, TArrayI &mina )
+{
+  // return the number of found events with given major
+  // Output: mina - array of minors - should be big enough
+
+  if (fN<1) return -1;
+  Double_t value = (Double_t)major;
+  Int_t i = TMath::BinarySearch( fN, GetArray(), value);
+  if (i < -1) return -1;
+  if (i == -1) i++;
+  if(i>fN-1) return -1;
+  if( (*this)[i]<major ) i++; 
+  if(i>fN-1) return -1;
+  if (TMath::Abs((*this)[i] - value) > .5) return -1;
+
+  int na=mina.fN;
+  int ia=0;
+  for(ia=0; ia<na; ia++) {
+    if( (*this)[i+ia] > value+1-1e-10 ) break;
+    mina[ia] = (Int_t)( ((*this)[i+ia]-value+1e-10)*1e+9 );
+  }
+  return ia;
+}
+
+//---------------------------------------------------------------------------
+void TIndex2::Print()
+{
+  for(int i=0; i<fN; i++)
+    printf("%d \t:  %d  %d\n",i,Major(i),Minor(i));
 }

@@ -9,6 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TObject.h"
+#include "TArrayI.h"
 #include "TArrayD.h"
 
 //______________________________________________________________________________
@@ -46,9 +47,15 @@ class TIndex2 : public TArrayD {
   virtual ~TIndex2(){}
   
   static Double_t BuildValue( Int_t major, Int_t minor ) {return major+minor*1e-9;}
+  void   SetMinor(int i, Int_t minor) { (*this)[i] = BuildValue( Major(i), minor ); }
+
+  Int_t  Major(int i) { return (Int_t)((*this)[i]); }
+  Int_t  Minor(int i) { return (Int_t)(((*this)[i]- (Double_t)Major(i)+1e-10)*1e+9 ); }
   void   BuildIndex( int n, double *w );
-  Int_t  Find(Int_t major, Int_t minor); 
+  Int_t  Find(Int_t major, Int_t minor);
   Int_t  FindIndex(Int_t major);
+  Int_t  FindIndexArr(Int_t major, TArrayI &mina );
+  void   Print();
 
   ClassDef(TIndex2,1)  // simple index class for fast search in linear cases
 };
