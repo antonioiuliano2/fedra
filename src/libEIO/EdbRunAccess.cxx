@@ -8,8 +8,11 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "EdbRunAccess.h"
 #include "TSystem.h"
+#include "EdbMath.h"
+#include "EdbSegment.h"
+#include "EdbCluster.h"
+#include "EdbRunAccess.h"
 
 ClassImp(EdbRunAccess)
 
@@ -46,6 +49,7 @@ void EdbRunAccess::Set0()
   eFirstArea = 9999999;
   eLastArea  = 0;
   eNareas=0;
+  eXmin=eXmax=eYmin=eYmax=0;
 }
 
 ///_________________________________________________________________________
@@ -64,16 +68,15 @@ bool EdbRunAccess::InitRun()
   
   PrintStat();
 
-  eXstep=350;  //TODO
-  eYstep=350;
+  eXstep=400;  //TODO
+  eYstep=400;
   return true;
 }
 
 ///______________________________________________________________________________
 EdbLayer *EdbRunAccess::GetMakeLayer(int id)
 {
-  if(id<0) return 0;
-  if(id>2) return 0;
+  if(id<0) return 0;  if(id>2) return 0;
   if(!GetLayer(id))  eLayers[id] = new EdbLayer();
   return GetLayer(id);
 }
@@ -87,11 +90,19 @@ int EdbRunAccess::GetViewsXY(int ud, TArrayI &entr, float x, float y)
 ///_________________________________________________________________________
 int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 {
-  int maxA=5000;            //TODO
+  //
+
+  int maxA=2000;            //TODO
   TArrayI entr1(maxA);
-  int n1 = GetViewsArea( 1, entr1, area );
+  float xmin,xmax,ymin,ymax;
+  int n1 = GetViewsArea( 1, entr1, area, xmin,xmax,ymin,ymax);
   TArrayI entr2(maxA);
-  int n2 = GetViewsAreaMarg( 2, entr2, area, eXstep+eXstep/5.,eYstep+eYstep/5. );
+  xmin -= eXstep+eXstep/10.;
+  xmax += eXstep+eXstep/10.;
+  ymin -= eYstep+eYstep/10.;
+  ymax += eYstep+eYstep/10.;
+  int n2 = GetViewsArea( 2, entr2, xmin,xmax,ymin,ymax );
+  //  int n2 = GetViewsAreaMarg( 2, entr2, area, eXstep+eXstep/10.,eYstep+eYstep/10. );
 
   //printf("n1=%d n2=%d\n",n1,n2);
 
@@ -108,8 +119,8 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
   int nrej=-1;
   int nseg = GetVolumeData(vol, ic, srt, nrej);
 
-  printf("Area:%3d (%3d\%%)  views:%4d    %6d +%6d segments are accepted; %6d - rejected\n",
-  	 area, 100*area/eNareas, ic, 
+  printf("Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+  	 area, 100*area/eNareas, n1,n2, 
 	 vol.GetPattern(0)->N(),
 	 vol.GetPattern(1)->N(),
 	 nrej );
@@ -169,19 +180,52 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
 }
 
 ///_________________________________________________________________________
-int EdbRunAccess::GetViewsArea(int ud, TArrayI &entr, int area)
+int EdbRunAccess::GetViewsArea(int ud, TArrayI &entr, int area,
+			       float &xmin, float &xmax, float &ymin, float &ymax )
 {
-  // ud: 0-base, 1-down, 2-up         //TODO - to check this convention!
+  // get all views of "area" for the side "ud"; fill entr with the entries, 
+  // calculate area limits
 
   int nv=0;
-  if(ud>-1) 
-    if(ud<3) {
-      EdbPattern *pat=GetVP(ud);
-      if(pat) 
-	for( int i=0; i<pat->N(); i++ ) 
-	  if( pat->GetSegment(i)->Aid(0) == area ) 
-	    entr[nv++]=pat->GetSegment(i)->ID();
-    }
+  if(ud<0) return nv;  if(ud>2) return nv;
+
+  EdbPattern *pat=GetVP(ud);
+  if(!pat)                             return nv;
+  xmin=eXmax;  xmax=eXmin;
+  ymin=eYmax;  ymax=eYmin;
+  EdbSegP *seg=0;
+  for( int i=0; i<pat->N(); i++ ) {
+    seg = pat->GetSegment(i);
+    if( seg->Aid(0) != area ) continue;
+    if(xmin>seg->X()) xmin=seg->X();
+    if(xmax<seg->X()) xmax=seg->X();
+    if(ymin>seg->Y()) ymin=seg->Y();
+    if(ymax<seg->Y()) ymax=seg->Y();
+    entr[nv++]=seg->ID();
+  }  
+  return nv;
+}
+
+///_________________________________________________________________________
+int EdbRunAccess::GetViewsArea(int ud, TArrayI &entr, 
+			       float xmin, float xmax, float ymin, float ymax )
+{
+  // get all views in a given limits
+
+  int nv=0;
+  if(ud<0) return nv;  if(ud>2) return nv;
+
+  EdbPattern *pat=GetVP(ud);
+  if(!pat)                             return nv;
+  EdbSegP *seg=0;
+  for( int i=0; i<pat->N(); i++ ) {
+    seg = pat->GetSegment(i);
+    if(seg->X()<xmin)     continue;
+    if(seg->X()>xmax)     continue;
+    if(seg->Y()<ymin)     continue;
+    if(seg->Y()>ymax)     continue;
+    entr[nv++]=seg->ID();
+  }
   return nv;
 }
 
@@ -306,5 +350,141 @@ int EdbRunAccess::FillVP()
   eVP[1]->Transform(eLayers[1]->GetAffineXY());  //TODO a nujno-li eto zdes'?
   eVP[2]->Transform(eLayers[2]->GetAffineXY());
 
+  eXmin = eVP[1]->Xmin();
+  eXmax = eVP[1]->Xmax();
+  eYmin = eVP[1]->Ymin();
+  eYmax = eVP[1]->Ymax();
+
   return nentr;
 }
+
+///______________________________________________________________________________
+bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
+{
+  EdbSegment *seg = view->GetSegment(id);
+
+  if( !PassCuts(side,*seg) )     return false;
+
+  float pix, chi2;
+  if(eCLUST) {
+    pix = GetRawSegmentPix(seg);
+    segP.SetVolume( pix );
+    chi2 = CalculateSegmentChi2( seg,
+				 GetCond(1)->SigmaXgr(),  //TODO: side logic
+				 GetCond(1)->SigmaYgr(), 
+				 GetCond(1)->SigmaZgr());
+    if(chi2>GetCutGR())  return false;
+    segP.SetChi2( chi2 );
+  }
+
+  EdbLayer  *layer=GetLayer(side);
+  if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
+
+  float x,y,z,tx,ty,puls;
+  tx   = seg->GetTx()/layer->Shr();
+  ty   = seg->GetTy()/layer->Shr();
+  x    = seg->GetX0() + layer->Zmin()*tx;
+  y    = seg->GetY0() + layer->Zmin()*ty;
+  z    = layer->Z() + layer->Zmin();
+  if(eAFID==0) {
+    x+=view->GetXview();
+    y+=view->GetYview();
+  }
+  puls = seg->GetPuls();
+
+  EdbAffine2D *aff = layer->GetAffineTXTY();
+  float txx = aff->A11()*tx+aff->A12()*ty+aff->B1();
+  float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
+  segP.Set( seg->GetID(),x,y,txx,tyy,puls,0);
+  segP.SetZ( z );
+  segP.SetDZ( seg->GetDz()*layer->Shr() );
+  segP.SetW( puls );
+
+  return true;
+}
+
+///______________________________________________________________________________
+bool  EdbRunAccess::PassCuts(int id, EdbSegment &seg)
+{
+  float var[5];
+  var[0] = seg.GetX0();
+  var[1] = seg.GetY0();
+  var[2] = seg.GetTx();
+  var[3] = seg.GetTy();
+  var[4] = seg.GetPuls();
+
+  int nc = NCuts(id);
+  for(int i=0; i<nc; i++)
+    if( !(GetCut(id,i)->PassCut(var)) )  return false;
+  return true;
+}
+
+///______________________________________________________________________________
+float  EdbRunAccess::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz )
+{
+  //assumed that clusters are attached to segments
+  double chi2=0;
+  EdbCluster *cl=0;
+  TObjArray *clusters = seg->GetElements();
+  if(!clusters) return 0;
+  int ncl = clusters->GetLast()+1;
+  if(ncl<=0)     return 0;
+
+  float xyz1[3], xyz2[3];             // segment line parametrized as 2 points
+  float xyz[3];
+  bool inside=true;
+
+  xyz1[0] = seg->GetX0() /sx;
+  xyz1[1] = seg->GetY0() /sy;
+  xyz1[2] = seg->GetZ0() /sz;
+  xyz2[0] = (seg->GetX0() + seg->GetDz()*seg->GetTx()) /sx;
+  xyz2[1] = (seg->GetY0() + seg->GetDz()*seg->GetTy()) /sy;
+  xyz2[2] = (seg->GetZ0() + seg->GetDz())              /sz;
+
+  double d;
+  for(int i=0; i<ncl; i++ ) {
+    cl = (EdbCluster*)clusters->At(i);
+    xyz[0] = cl->GetX()/sx;
+    xyz[1] = cl->GetY()/sy;
+    xyz[2] = cl->GetZ()/sz;
+    d = EdbMath::DistancePointLine3(xyz,xyz1,xyz2, inside);
+    chi2 += d*d;
+  }
+
+  return TMath::Sqrt(chi2/ncl);
+}
+
+///______________________________________________________________________________
+float  EdbRunAccess::GetRawSegmentPix( EdbSegment *seg )
+{
+  //assumed that clusters are attached to segments
+  float pix=0;
+  EdbCluster *cl=0;
+  TObjArray *clusters = seg->GetElements();
+  if(!clusters) return 0;
+  int ncl = clusters->GetLast()+1;
+  for(int i=0; i<ncl; i++ ) {
+    cl = (EdbCluster*)clusters->At(i);
+    pix += cl->GetArea();
+  }
+  return pix;
+}
+
+///______________________________________________________________________________
+void EdbRunAccess::AddSegmentCut(int layer, int xi, float var[10])
+{
+  if(!eCuts[layer])  eCuts[layer] = new TObjArray();
+  eCuts[layer]->Add( new EdbSegmentCut(xi,var) );
+}
+
+///______________________________________________________________________________
+void EdbRunAccess::AddSegmentCut(int layer, int xi, float min[5], float max[5])
+{
+  if(!eCuts[layer])  eCuts[layer] = new TObjArray();
+  EdbSegmentCut *cut=new EdbSegmentCut();
+  cut->SetXI(xi);
+  cut->SetMin(min);
+  cut->SetMax(max);
+  eCuts[layer]->Add( cut );
+}
+

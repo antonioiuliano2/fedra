@@ -14,75 +14,9 @@
 #include "EdbCluster.h"
 #include "EdbMath.h"
 
-ClassImp(EdbSegmentCut)
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
 ClassImp(EdbDataProc)
-
-///______________________________________________________________________________
-EdbSegmentCut::EdbSegmentCut(int xi, float var[10])
-{
-  eXI=xi; 
-  for(int i=0;i<5;i++) {
-    eMin[i]=var[i*2]; 
-    eMax[i]=var[i*2+1];
-  }
-}
-
-///______________________________________________________________________________
-int EdbSegmentCut::PassCut(float var[5])
-{
-  if     (eXI==0)  return PassCutX(var);
-  else if(eXI==1)  return PassCutI(var);
-  return 0;
-}
-
-///______________________________________________________________________________
-int EdbSegmentCut::PassCutX(float var[5])
-{
-  // exclusive cut: if var is inside cut volume - return 0
-
-  for(int i=0; i<5; i++) {
-    if(var[i]<eMin[i])  return 1;
-    if(var[i]>eMax[i])  return 1;
-  }
-  return 0;
-}
-
-///______________________________________________________________________________
-const char *EdbSegmentCut::CutLine(char *str, int i, int j) const
-{
-  if(eXI==0) {
-
-    sprintf(str,
-	  "  TCut x%1d%2.2d = \"!(eX0>%f&&eX0<%f && eY0>%f&&eY0<%f && eTx>%f&&eTx<%f && eTy>%f&&eTy<%f && ePuls>%f&&ePuls<%f)\";\n"
-	  ,i,j,eMin[0],eMax[0], eMin[1],eMax[1], eMin[2],eMax[2], eMin[3],eMax[3], eMin[4],eMax[4]);
-
-  } else if(eXI==1) {
-
-    sprintf(str,
-	  "  TCut i%1d%2.2d = \"(eX0>%f&&eX0<%f && eY0>%f&&eY0<%f && eTx>%f&&eTx<%f && eTy>%f&&eTy<%f && ePuls>%f&&ePuls<%f)\";\n"
-	  ,i,j,eMin[0],eMax[0],eMin[1],eMax[1],eMin[2],eMax[2],eMin[3],eMax[3],eMin[4],eMax[4]);
-  }
-  return str;
-}
-
-///______________________________________________________________________________
-int EdbSegmentCut::PassCutI(float var[5])
-{
-  // inclusive cut: if var is inside cut volume - return 1
-
-  for(int i=0; i<5; i++) {
-    if(var[i]<eMin[i])  return 0;
-    if(var[i]>eMax[i])  return 0;
-  }
-  return 1;
-}
-
-///______________________________________________________________________________
-void EdbSegmentCut::Print()
-{
-}
 
 ///==============================================================================
 EdbDataPiece::EdbDataPiece()
@@ -647,6 +581,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 
   EdbLayer  *layer=GetLayer(side);
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
+  //  seg->Print();
 
   float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
@@ -1545,7 +1480,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   int ntot=0, nareas=0;
 
   float  shr1=1,shr2=1;
-  double shrtot1=0, shrtot2=0;
+  double shrtot1=0., shrtot2=0.;
   int    nshr=0,nshrtot=0;
 
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
@@ -1571,9 +1506,11 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 	shr1 = 1;
 	shr2 = 1;
 	nshr = CheckShrinkage( ali,0, shr1, shr2 );
-	nshrtot += nshr;
-	shrtot1 += nshr*shr1;
-	shrtot2 += nshr*shr2;
+	if(nshr) {
+	  nshrtot += nshr;
+	  shrtot1 += nshr*shr1;
+	  shrtot2 += nshr*shr2;
+	}
       }
 
       FillCouplesTree(cptree, ali,piece.GetOUTPUT());  //!!! 0
@@ -1581,13 +1518,16 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       delete ali;
     }
     ntot+=nareas;
-    shrtot1 = shrtot1/nshrtot;
-    shrtot2 = shrtot2/nshrtot;
-    printf("Shrinkage correction: %f %f\n", (float)shrtot1,(float)shrtot2);
-    piece.CorrectShrinkage( 1, (float)shrtot1 );
-    piece.CorrectShrinkage( 2, (float)shrtot2 );
-    if(!NoUpdate())   piece.UpdateShrPar(1);
-    if(!NoUpdate())   piece.UpdateShrPar(2);
+    if(nshrtot>3) {
+      shrtot1 = shrtot1/nshrtot;
+      shrtot2 = shrtot2/nshrtot;
+      if(nshrtot<20) printf("WARNING: unreliable shrinkage correction - low statistics\n");
+      printf("Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
+      piece.CorrectShrinkage( 1, (float)shrtot1 );
+      piece.CorrectShrinkage( 2, (float)shrtot2 );
+      if(!NoUpdate())   piece.UpdateShrPar(1);
+      if(!NoUpdate())   piece.UpdateShrPar(2);
+    }
   }
   CloseCouplesTree(cptree);
 
@@ -1722,7 +1662,7 @@ int EdbDataProc::CheckShrinkage(EdbPVRec *ali, int couple, float &shr1, float &s
     sumt2 += t2/t;
   }
 
-  if(nsum<10)  return 0;
+  if(nsum<1)  return 0;
 
   shr1 = sumt1/nsum;
   shr2 = sumt2/nsum;
@@ -2280,7 +2220,14 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali)
   if(!ali) return 0;
   TObjArray *trarr = ali->eTracks;
   if(!trarr) return 0;
+  float xv=ali->X();
+  float yv=ali->Y();
+  return MakeTracksTree(*trarr,xv,yv);
+}
 
+//______________________________________________________________________________
+int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv)
+{
   char *file="linked_tracks.root";
   printf("write tracks into %s ... \n",file);
   TFile fil(file,"RECREATE");
@@ -2292,8 +2239,6 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali)
   TClonesArray *segmentsf = new TClonesArray("EdbSegP");
 
   int   nseg,trid,npl,n0;
-  float xv=ali->X();
-  float yv=ali->Y();
   float w=0.;
 
   tracks->Branch("trid",&trid,"trid/I");
@@ -2307,9 +2252,9 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali)
   tracks->Branch("s", &segments);
   tracks->Branch("sf",&segmentsf);
 
-  int ntr = trarr->GetEntriesFast();
+  int ntr = trarr.GetEntriesFast();
   for(int itr=0; itr<ntr; itr++) {
-    track = (EdbTrackP*)(trarr->At(itr));
+    track = (EdbTrackP*)(trarr.At(itr));
 
     trid = track->ID();
     nseg = track->N();
