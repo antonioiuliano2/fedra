@@ -278,14 +278,89 @@ INFOHEADER ihdr;
  return N;
 }
 
-//===============================================================================
+//====================================================================================
+const Float_t *EdbFIRF::eg3x3A = new Float_t[9] = {  
+  1,  1, 1,   
+  1, -8, 1,  
+  1,  1, 1  };
+const Float_t *EdbFIRF::egHP1 = new Float_t[9] = {  
+  1,  1, 1,   
+  1, -9, 1,  
+  1,  1, 1  };
+const Float_t *EdbFIRF::egHP2 = new Float_t[9] = {  
+  0,  1, 0,   
+  1, -5, 1,  
+  0,  1, 0  };
+const Float_t *EdbFIRF::egHP3 = new Float_t[9] = { 
+  -1,  2, -1, 
+   2, -5,  2, 
+  -1,  2, -1  };
+const Float_t *EdbFIRF::eg5x5A = new Float_t[25] = { 
+  4,  4,  4,  4,  4,
+  4, -7, -7, -7,  4,
+  4, -7, -7, -7,  4,
+  4, -7, -7, -7,  4,
+  4,  4,  4,  4,  4  };
+const Float_t *EdbFIRF::eg5x5B = new Float_t[25] = { 
+  4,  4,  4,  4,  4,
+  4, -7, -7, -7,  4,
+  4, -7, -8, -7,  4,
+  4, -7, -7, -7,  4,
+  4,  4,  4,  4,  4  };
+const Float_t *EdbFIRF::eg6x6A = new Float_t[36] = { 
+  4,  4,  4,  4,  4,  4,
+  4, -5, -5, -5, -5,  4,
+  4, -5, -5, -5, -5,  4,
+  4, -5, -5, -5, -5,  4,
+  4, -5, -5, -5, -5,  4,
+  4,  4,  4,  4,  4,  4  };
+
+
+//____________________________________________________________________________________
 EdbFIRF::EdbFIRF(int cols, int rows)
 {
- eArr = new TArrayC();
- eArr->Adopt(cols*rows, new char[cols*rows]);
+ eArr = new TArrayF();
+ eArr->Adopt(cols*rows, new float[cols*rows]);
  eColumns=cols;
  eRows=rows;
  eArr->Reset();
+}
+
+//===============================================================================
+EdbFIRF::EdbFIRF( const char *firf )
+{
+  SetName(firf);
+  eArr = new TArrayF();
+  if( !strcmp(firf,"HP1") ) {
+    eColumns=3;
+    eRows=3;
+    eArr->Set(eColumns*eRows,egHP1);
+  } else if( !strcmp(firf,"HP2") ) {
+    eColumns=3;
+    eRows=3;
+    eArr->Set(eColumns*eRows,egHP2);
+  } else if( !strcmp(firf,"HP3") ) {
+    eColumns=3;
+    eRows=3;
+    eArr->Set(eColumns*eRows,egHP3);
+  } else if( !strcmp(firf,"3x3A") ) {
+    eColumns=3;
+    eRows=3;
+    eArr->Set(eColumns*eRows,eg3x3A);
+  } else if( !strcmp(firf,"5x5A") ) {
+    eColumns=5;
+    eRows=5;
+    eArr->Set(eColumns*eRows,eg5x5A);
+  } else if( !strcmp(firf,"5x5B") ) {
+    eColumns=5;
+    eRows=5;
+    eArr->Set(eColumns*eRows,eg5x5B);
+  } else if( !strcmp(firf,"6x6A") ) {
+    eColumns=6;
+    eRows=6;
+    eArr->Set(eColumns*eRows,eg6x6A);
+  }
+  Print();
 }
 
 //______________________________________________________________________________
@@ -313,15 +388,24 @@ void    EdbFIRF::Reflect4()
 //______________________________________________________________________________
 void EdbFIRF::Print()
 {
-  int sum=0;
+  printf("FIR filter: %s\n",GetName());
+ float sum=0;
  for(int i=0;i<eRows;i++){
    for(int j=0;j<eColumns;j++){
-     printf("%d\t",Cell(j,i));
+     printf("%3.1f\t",Cell(j,i));
      sum+=Cell(j,i);
    }
    printf("\n");
  }
- printf("\nSum = %d\n",sum);
+ printf("\nSum = %f\n",sum);
+}
+
+//______________________________________________________________________________
+void EdbFIRF::PrintList()
+{
+  printf("known 3x3 filtres: \n\t3x3A \n\tHP1 \n\tHP2 \n\tHP3 \n");
+  printf("known 5x5 filtres: \n\t5x5A \n\t5x5B \n");
+  printf("known 6x6 filtres: \n\t6x6A \n");
 }
 
 //__________________________________________________________________________________
@@ -331,7 +415,7 @@ TH2F* EdbFIRF::ApplyTo(EdbImage* img)
   int y0=eRows/2+1;
   int x1=img->Width()-x0-1;
   int y1=img->Height()-y0-1; //margins
-  Int_t S;
+  Float_t S;
 
   TH2F* buf=new TH2F("img","Filtered image",
 		     img->Width(),0,img->Width(),img->Height(),0,img->Height());

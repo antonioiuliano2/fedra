@@ -12,13 +12,10 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_TObject
 #include "TObject.h"
-#endif
-
-#ifndef ROOT_TArrayC
+#include "TNamed.h"
+#include "TArrayF.h"
 #include "TArrayC.h"
-#endif
 
 class TH2F;
 class TH1F;
@@ -60,24 +57,35 @@ public:
 };
 
 //______________________________________________________________________________
-class EdbFIRF : public TObject {
+class EdbFIRF : public TNamed {
 
 private:
    
-   TArrayC     *eArr;
+   TArrayF     *eArr;
    Int_t       eColumns;          // number of columns of the matrix (1 row length)
    Int_t       eRows;             // number of rows of the matrix
+
+   static const Float_t *eg3x3A;   //!
+   static const Float_t *egHP1;    //!
+   static const Float_t *egHP2;    //!
+   static const Float_t *egHP3;    //!
+   static const Float_t *eg5x5A;   //!
+   static const Float_t *eg5x5B;   //!
+   static const Float_t *eg6x6A;   //!
 
 public:
            EdbFIRF(){};
            EdbFIRF(int cols, int rows);
+	   EdbFIRF( const char *firf );
    virtual ~EdbFIRF();
 
-   char   Cell(int x, int y) { return eArr->At(eColumns*y + x); }
-   char  *GetBuffer()         const { return eArr->GetArray(); }
-   void   SetAt(int x,int y, char a) { (eArr->GetArray())[eColumns*y + x]=a; }
+   float  Cell(int x, int y) { return eArr->At(eColumns*y + x); }
+   float  *GetBuffer()         const { return eArr->GetArray(); }
+   void   SetArr(int n, float *arr){}
+   void   SetAt(int x,int y, float a) { (eArr->GetArray())[eColumns*y + x]=a; }
    void   Reflect4(); // Copy left top corner to other quadrants with reflection
    void   Print();
+   static void   PrintList();
    TH2F*  ApplyTo(EdbImage* img);
 
   ClassDef(EdbFIRF,1)  // FIR filter
