@@ -15,7 +15,6 @@
 #include "EdbVertex.h"
 
 ClassImp(EdbPVGen)
-ClassImp(EdbPhysics)
 
 //______________________________________________________________________________________
 EdbPVGen::EdbPVGen()
