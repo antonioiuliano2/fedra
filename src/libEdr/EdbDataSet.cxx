@@ -107,12 +107,14 @@ EdbLayer::EdbLayer()
 ///==============================================================================
 EdbDataPiece::EdbDataPiece()
 {
+  for(int i=0; i<3; i++) eLayers[i]=0;
   Set0();
 }
 
 ///______________________________________________________________________________
 EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
 {
+  for(int i=0; i<3; i++) eLayers[i]=0;
   Set0();
   ePlate=plate;
   ePiece=piece;
@@ -649,7 +651,7 @@ int EdbDataPiece::GetCPData(EdbPVRec *ali)
     tree->GetEntry(i);
     if( !TakeCPSegment(*cp,*s) )      continue;
     s->SetZ(pat->Z());
-    s->SetVid(i,0);
+    s->SetVid(ePlate*1000+ePiece,i);
     pat->AddSegment( *s );
     nseg++;
   }
