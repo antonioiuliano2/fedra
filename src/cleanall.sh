@@ -16,4 +16,7 @@ make clean
 cd ../libTest
 make clean
 
+cd ../libVt++
+make clean
+
 cd ..

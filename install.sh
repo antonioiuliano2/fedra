@@ -28,6 +28,7 @@ listEdd=`ls $installdir/src/libEdd/*.h`
 listEdb=`ls $installdir/src/libEdb/*.h`
 listEmath=`ls $installdir/src/libEmath/*.h`
 listTest=`ls $installdir/src/libTest/*.h`
+listVt=`ls $installdir/src/libVt++/vt++/include/*.hh`
 
 for hname in ${listEdr} ; do
  ln -fs $PROJECT_SRC/libEdr/${hname##*/} $PROJECT_INC/${hname##*/}
@@ -43,6 +44,9 @@ for hname in ${listEmath} ; do
 done
 for hname in ${listTest} ; do
  ln -fs $PROJECT_SRC/libTest/${hname##*/} $PROJECT_INC/${hname##*/}
+done
+for hname in ${listVt} ; do
+ ln -fs $PROJECT_SRC/libVt++/vt++/include/${hname##*/} $PROJECT_INC/${hname##*/}
 done
 
 # create ProjectDef.mk in ./config-directory
