@@ -635,7 +635,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
   segP.Set( seg->GetID(),x,y,txx,tyy);
   segP.SetZ( z );
-  segP.SetDZ( seg->GetDz() );
+  segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
   float pix = GetRawSegmentPix(seg,view);
   segP.SetVolume( pix );
