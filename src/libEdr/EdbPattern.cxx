@@ -11,8 +11,8 @@
 #include "TPolyLine.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
-#include "EdbPhys.h"
 #include "EdbVertex.h"
+#include "EdbPhys.h"
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
 
@@ -605,8 +605,8 @@ EdbTrackP::EdbTrackP(int nseg)
   eSF=0;
   eM=0;
   eDE=0;
-  eVertexS = 0;
-  eVertexE = 0;
+  eVTAS = 0;
+  eVTAE = 0;
   if(nseg>0) eS  = new TSortedList();
   if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
@@ -616,6 +616,13 @@ EdbTrackP::~EdbTrackP()
 {
   if(eS)    { eS->Clear();  delete eS;  eS=0;  }
   if(eSF)   { eSF->Clear(); delete eSF; eSF=0; }
+}
+
+//______________________________________________________________________________
+void EdbTrackP::AddVTA(EdbVTA *vta)
+{
+  if(vta->Zpos()==0)      eVTAE=vta;
+  else if(vta->Zpos()==1) eVTAS=vta;
 }
 
 //______________________________________________________________________________
@@ -633,8 +640,8 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
   SetDE(tr.DE());
-  SetVertexS(tr.VertexS());
-  SetVertexE(tr.VertexE());
+  AddVTA(tr.VTAS());
+  AddVTA(tr.VTAE());
 
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
@@ -1292,30 +1299,30 @@ float  EdbTrackP::P_MS( float X0, bool draw)
     ist++;
   }
   K /= W;
-  printf("K = %f\n",K);
+//  printf("K = %f\n",K);
 
-  if(draw) {
-    TGraphErrors *gr = new TGraphErrors(ist,xms,yms,sxms,syms);
-    gr->Draw("ALP");
-    gr->Fit("pol1");
-
-    double *x = new double[ist];
-    double *y = new double[ist];
-
-    for(int i=0; i<ist; i++) {
-      x[i] = xms[i];
-      y[i] = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), x[i]*x[i]));
-    }
-    TPolyLine *line = new TPolyLine(ist,x,y);
-    line->SetFillColor(38);
-    line->SetLineColor(2);
-    line->SetLineWidth(2);
-    line->Draw("f");
-    line->Draw();
-
-    float Kteor=(y[ist]-y[0])/(x[ist]-x[0]);
-    printf("Kteor = %f  k = %f\n",Kteor,Kteor*P());
-  }
+//  if(draw) {
+//    TGraphErrors *gr = new TGraphErrors(ist,xms,yms,sxms,syms);
+//    gr->Draw("ALP");
+//    gr->Fit("pol1");
+//
+//    double *x = new double[ist];
+//    double *y = new double[ist];
+//
+//    for(int i=0; i<ist; i++) {
+//      x[i] = xms[i];
+//      y[i] = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), x[i]*x[i]));
+//    }
+//    TPolyLine *line = new TPolyLine(ist,x,y);
+//    line->SetFillColor(38);
+//    line->SetLineColor(2);
+//    line->SetLineWidth(2);
+//    line->Draw("f");
+//    line->Draw();
+//
+//    float Kteor=(y[ist]-y[0])/(x[ist]-x[0]);
+//    printf("Kteor = %f  k = %f\n",Kteor,Kteor*P());
+//  }
 
 
   //TODO: tune coefficients !
@@ -1328,6 +1335,18 @@ float  EdbTrackP::P_MS( float X0, bool draw)
 
   p = k/K;
   return p;
+}
+//______________________________________________________________________________
+EdbVertex  *EdbTrackP::VertexS()
+{
+    if(eVTAS) return eVTAS->GetVertex();
+    return 0;
+}
+//______________________________________________________________________________
+EdbVertex  *EdbTrackP::VertexE()
+{
+    if(eVTAE) return eVTAE->GetVertex();
+    return 0;
 }
 //______________________________________________________________________________
 EdbPattern::EdbPattern() : EdbSegmentsBox()

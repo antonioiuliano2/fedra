@@ -17,20 +17,66 @@
 #include "vt++/VtVertex.hh"
 
 //_________________________________________________________________________
+class EdbVTA: public TObject {
+
+ private:
+
+  EdbTrackP *eTrack;          // pointer to track (or segment)
+  EdbVertex *eVertex; 	      // pointer to vertex
+
+  Int_t     eZpos;            // 1-track start, 0-track end connect to the vertex
+  Int_t	    eFlag;            // 0-neighbooring track;
+		              // 1-neighbooring segment;
+			      // 2-direct (attached) track connection
+  Float_t   eImp;             // impact parameter
+  Float_t   eDist;            // distance from vertex to the nearest track point
+  
+ public:
+  EdbVTA();
+  EdbVTA(EdbTrackP *tr, EdbVertex *v );
+  virtual ~EdbVTA() {};
+
+  void Set0();
+  void SetZpos(int zpos)   {eZpos=zpos;}
+  void SetFlag(int flag)   {eFlag=flag;}
+  void SetImp(float imp)   {eImp=imp;}
+  void SetDist(float dist) {eDist=dist;}
+
+  int   Zpos() const  {return eZpos;}
+  int   Flag() const  {return eFlag;}
+  float Imp()  const  {return eImp;}
+  float Dist() const  {return eDist;}
+
+  void  SetTrack(EdbTrackP *tr)   {eTrack=tr;}
+  void  SetVertex(EdbVertex *v)   {eVertex=v;}
+
+  EdbTrackP *GetTrack()    const  {return eTrack;}
+  EdbVertex *GetVertex()   const  {return eVertex;}
+
+  void AddVandT();
+
+  ClassDef(EdbVTA,1)  // vertex-track association
+};
+
+//_________________________________________________________________________
 class EdbVertex: public TObject {
  private:
 
-  TObjArray eEdbTracks;       // pointers to data tracks
-  TArrayI   eZpos;            // 1-track start, 0-track end connect to the vertex
-  Int_t     eNtr;
+  TList       eVTn;      // vertex neighborhood tracks and segments
+  TList       eVTa;      // attached tracks
 
-  Float_t eX;          // for generated vertexes - the real vertex position 
-  Float_t eY;          // for reconstructed tracks - average point used as  
-  Float_t eZ;          // local coordiantes origin (0,0,0) to avoid accuracy problem
+  Float_t eX;            // for generated vertexes - the real vertex position 
+  Float_t eY;            // for reconstructed ones - average of track connection  
+  Float_t eZ;            // points, used as local coordiantes origin (0,0,0) 
+			 // to avoid accuracy problem
 
-  Int_t	    eFlag;
+  Int_t	    eFlag;	 // 0 - neutral (tracks starts attached only)
+			 // 1 - charge (tracks ends&starts attached)
+			 // 2 - back charge (tracks ends attached only)
+  Int_t	    eID;
+  Float_t   eQuality;	 // Probability/(vsigmax**2+vsigmay**2)
 
-  VERTEX::Vertex *eV;
+  VERTEX::Vertex *eV;    // pointer to VtVertex object
   
  public:
   EdbVertex();
@@ -41,36 +87,48 @@ class EdbVertex: public TObject {
 
   VERTEX::Vertex *V() const {return eV;}
   void Clear();
-//  int N() const {return eEdbTracks.GetEntries();}
-  int N() const {return eNtr;}
+
+  int N()  const {return eVTa.GetSize();}
+  int Nn() const {return eVTn.GetSize();}
+  int Nv();
+
   Float_t X() const { return eX;}
   Float_t Y() const { return eY;}
   Float_t Z() const { return eZ;}
   void SetXYZ( float x, float y, float z) { eX=x; eY=y; eZ=z;} 
+
   void SetFlag( int flag = 0 ) { eFlag = flag; }
   Int_t Flag() { return eFlag; }
 
-  bool AddTrack(EdbTrackP *track, int zmin, float ProbMin = 0.);
+  void SetQuality( float q = 0 ) { eQuality = q; }
+  Float_t Quality() { return eQuality; }
 
-  TObjArray &GetEdbTracks() {return eEdbTracks;}
-  EdbTrackP *GetTrack(int i) const { return (EdbTrackP *)(eEdbTracks.At(i)); }
-  Int_t	     Zpos(int i) const { return eZpos.At(i); }
-  void       SetTracksVertex();
+  void SetID( int ID = 0 ) { eID = ID; }
+  Int_t ID() { return eID; }
+
+//  TList VTa() { return eVTa; }
+//  TList VTn() { return eVTn; } 
+  EdbVTA *GetVTa(int i) { return (EdbVTA*)(eVTa.At(i)); }
+  EdbVTA *GetVTn(int i) { return (EdbVTA*)(eVTn.At(i)); }
+  void AddVTA(EdbVTA *vta);
+
+  EdbVTA *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
+  EdbTrackP *GetTrack(int i) { return GetVTa(i)->GetTrack(); }
+  Int_t      Zpos(int i)     { return GetVTa(i)->Zpos(); }
+  EdbVertex *GetConnectedVertex(int i);
+  EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
+
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
 
   bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t );
   bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
 
-  void Print() const 
-    {
-      printf("%d edbtracks:\n",N());
-      EdbSegP *tr=0;
-      for(int i=0; i<N(); i++) {
-	tr = GetTrack(i);
-	if(tr)  tr->Print();
-      }
-    }
+  void Print();
 
+  Int_t Compare(const TObject *o) const;
+  Bool_t IsSortable() const { /*printf("Inside issortable\n");*/ return kTRUE;}
+  Bool_t IsEqual(const TObject *o) const;
+  ULong_t Hash() const { /*printf("Inside hash\n");*/ return eID; }
   ClassDef(EdbVertex,2)  // vertex class for OPERA emulsion data
 };
 

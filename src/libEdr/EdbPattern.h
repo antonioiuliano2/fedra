@@ -18,6 +18,7 @@
 
 class EdbAffine2D;
 class TIndexCell;
+class EdbVTA;
 class EdbVertex;
 
 
@@ -248,8 +249,8 @@ class EdbTrackP : public EdbSegP {
   Float_t    eM;          // invariant mass of the particle
   Float_t    eDE;         // total energy loss of the particle between first and last segments
 
-  EdbVertex  *eVertexS;    //! vertex track start is attached to
-  EdbVertex  *eVertexE;    //! vertex track end is attached to
+  EdbVTA  *eVTAS;    //! vertex track start is attached to
+  EdbVTA  *eVTAE;    //! vertex track end is attached to
 
  public:
   EdbTrackP(int nseg=0);
@@ -257,10 +258,12 @@ class EdbTrackP : public EdbSegP {
     { Copy(track); }
   virtual ~EdbTrackP();
 
-  void  SetVertexS(EdbVertex *v) {eVertexS=v;}
-  void  SetVertexE(EdbVertex *v) {eVertexE=v;}
-  EdbVertex  *VertexS() const {return eVertexS;}
-  EdbVertex  *VertexE() const {return eVertexE;}
+  void  AddVTA(EdbVTA *vta);
+
+  EdbVTA *VTAS() const { return eVTAS;}
+  EdbVTA *VTAE() const { return eVTAE;}
+  EdbVertex  *VertexS();
+  EdbVertex  *VertexE();
 
   void     SetM( float m )  { eM=m; }
   Float_t  M()      const {return eM;}

@@ -17,6 +17,7 @@
 class EdbAffine2D;
 class TIndexCell;
 class EdbVertex;
+class EdbVTA;
 class TIndex2;
 
 //______________________________________________________________________________
@@ -312,6 +313,7 @@ class EdbPVRec : public EdbPatternsVolume {
  public:
   TObjArray   *eTracks;
   TObjArray   *eVTX;          //
+  TList        eVTA;          // vertex-track associations
 
  public:
   EdbPVRec();
@@ -327,6 +329,9 @@ class EdbPVRec : public EdbPatternsVolume {
 		     int BinDifMin,     int BinDifMax,
 		     float dA,          float ProbMin,   float zBin, bool usemom);
   int	  ProbVertexN(float ProbMin);
+  int	  LinkedVertexes();
+  int	  VertexNeighboor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
+  int	  SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);
   void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
@@ -397,6 +402,10 @@ class EdbPVRec : public EdbPatternsVolume {
   void AddVertex(EdbVertex *vtx) {
     if(!eVTX) eVTX = new TObjArray();
     eVTX->Add((TObject*)vtx);
+  }
+
+  void AddVTA(EdbVTA *vta) {
+    eVTA.Add((TObject*)vta);
   }
 
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
