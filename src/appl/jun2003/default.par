@@ -1,4 +1,4 @@
-AFID    1   # 1-use fiducial marks, 0-do not
+AFID    0   # 1-use fiducial marks, 0-do not
 
 ZLAYER  2 	0. -40. 0.
 SHRINK  2 	.82
@@ -30,8 +30,9 @@ DEGRAD   0       5.
 BINS     0       3   3   3  3
 RAMP0    0       15  15
 RAMP04   0       15  15
-CHI2MAX  0	 3.5
-CHI2PMAX 0	 3.5
+CHI2MAX  0	 3.
+CHI2PMAX 0	 3.
+OFFSET   0       10. 10.
 
 
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
