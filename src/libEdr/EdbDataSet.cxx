@@ -797,8 +797,9 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
       s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
       //s->SetPID( ePlate*10 );       /// TO CHECK !!!
       s->SetVid(ePlate*1000+ePiece,i);
-      pat->AddSegment( *s  ); 
-      nseg++; 
+      s->SetChi2(cp->CHI2P());
+      pat->AddSegment( *s  );
+      nseg++;
     }
     if(p1)  { 
       s1->SetZ( s1->Z() + pat->Z() );
@@ -1193,8 +1194,8 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
       tree = new TTree(tree_name,tree_name);
       tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
 
-      int pid1,pid2;
-      float xv,yv;
+      int pid1=0,pid2=0;
+      float xv=0,yv=0;
       EdbSegCouple *cp=0;
       EdbSegP      *s1=0;
       EdbSegP      *s2=0;
@@ -1239,7 +1240,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
   Long_t xx=0, yy=0;
   float cx = 2000., cy = 2000.;  // 2x2 mm cells
   float dx = 400. , dy = 400.;   // 400 microns margins
-  float xv,yv;
+  float xv=0,yv=0;
   int mx[9] = {0, 0, 0,-1,  1, -1,-1, 1, 1};
   int my[9] = {0,-1, 1, 0,  0, -1, 1,-1, 1};
 
