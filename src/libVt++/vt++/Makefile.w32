@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
-include ../../config/RootDef.w32.mk
-include ../../config/ProjectDef.w32.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
 LIB_NAME      = libVt++
@@ -64,6 +64,5 @@ depend:
 # create hardlinks
 $(LIB_DIR)/$(LIB_NAME2).lib $(LIB_DIR)/$(LIB_NAME2).dll  :$(LIB_TGT) 
     if exist "$(LIB_DIR)"\$(LIB_NAME2).lib del "$(LIB_DIR)"\$(LIB_NAME2).*
-    $(FEDRA_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).lib  "$(LIB_TGT:.dll=.lib)"
-    $(FEDRA_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).dll  "$(LIB_TGT)"
-
+    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).lib  "$(LIB_TGT:.dll=.lib)"
+    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).dll  "$(LIB_TGT)"
