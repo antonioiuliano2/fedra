@@ -219,7 +219,7 @@ void getPatternEdb( EdbRun *edbRun,
 //------------------------------------------------------------------------
 void getDataCouples( const char *file_name, 
 		     const char *tree_name="couples",
-		     EdbPattern *pat )
+		     EdbPattern *pat, Bool_t MaxCHI2=kFALSE )
 {
   TTree *tree;
   EdbSegCouple    *cp = 0;
@@ -237,7 +237,7 @@ void getDataCouples( const char *file_name,
   //tree->SetBranchStatus("*"  ,0 );
   //tree->SetBranchStatus("s.*"  ,1 );
 
-  //tree->SetBranchAddress("cp"  , &cp );
+  tree->SetBranchAddress("cp"  , &cp );
   //tree->SetBranchAddress("s1." , &s1 );
   //tree->SetBranchAddress("s2." , &s2 );
   tree->SetBranchAddress("s."  , &s  );
@@ -247,6 +247,8 @@ void getDataCouples( const char *file_name,
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
     if( !cut_seg_cp( s->X(),s->Y(),s->TX(),s->TY(),s->W()) )  continue;
+    if((cp->N1()>1) && MaxCHI2 ) continue;
+    if((cp->N2()>1) && MaxCHI2 ) continue;
     s->SetZ(pat->Z());
     pat->AddSegment( *s );
     nseg++;
