@@ -7,6 +7,9 @@ make clean
 cd ../libEdr
 make clean
 
+cd ../libEdd
+make clean
+
 # cd ../libMarilisa
 # make clean
 

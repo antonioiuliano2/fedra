@@ -313,12 +313,15 @@ void    EdbFIRF::Reflect4()
 //______________________________________________________________________________
 void EdbFIRF::Print()
 {
+  int sum=0;
  for(int i=0;i<eRows;i++){
    for(int j=0;j<eColumns;j++){
      printf("%d\t",Cell(j,i));
+     sum+=Cell(j,i);
    }
    printf("\n");
  }
+ printf("\nSum = %d\n",sum);
 }
 
 //__________________________________________________________________________________

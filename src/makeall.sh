@@ -13,6 +13,11 @@ make clean
 make depend
 make
 
+cd ../libEdd
+make clean
+make depend
+make
+
 # cd ../libMarilisa
 # make clean
 # make depend

@@ -188,7 +188,12 @@ EdbFrame.o: /var/local/root/include/TAttFill.h
 EdbFrame.o: /var/local/root/include/TAttMarker.h
 EdbFrame.o: /var/local/root/include/TArrayS.h
 EdbFrame.o: /var/local/root/include/TArrayF.h
-EdbImage.o: EdbImage.h /var/local/root/include/TObject.h
+EdbImage.o: /var/local/root/include/TH1.h
+EdbImage.o: /var/local/root/include/TVirtualHistPainter.h
+EdbImage.o: /var/local/root/include/TClass.h
+EdbImage.o: /var/local/root/include/TDictionary.h
+EdbImage.o: /var/local/root/include/TNamed.h
+EdbImage.o: /var/local/root/include/TObject.h
 EdbImage.o: /var/local/root/include/Varargs.h
 EdbImage.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
 EdbImage.o: /var/local/root/include/TStorage.h
@@ -197,8 +202,12 @@ EdbImage.o: /var/local/root/include/TBuffer.h /var/local/root/include/Bytes.h
 EdbImage.o: /usr/include/string.h /usr/include/features.h
 EdbImage.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
 EdbImage.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
-EdbImage.o: /var/local/root/include/TArrayC.h
-EdbImage.o: /var/local/root/include/TArray.h /var/local/root/include/Htypes.h
+EdbImage.o: /var/local/root/include/TList.h
+EdbImage.o: /var/local/root/include/TSeqCollection.h
+EdbImage.o: /var/local/root/include/TCollection.h
+EdbImage.o: /var/local/root/include/TIterator.h
+EdbImage.o: /var/local/root/include/Property.h
+EdbImage.o: /var/local/root/include/TString.h /var/local/root/include/TMath.h
 EdbImage.o: /var/local/root/include/Rtypes.h
 EdbImage.o: /var/local/root/include/RConfig.h
 EdbImage.o: /var/local/root/include/RVersion.h
@@ -211,27 +220,19 @@ EdbImage.o: /usr/include/libio.h /usr/include/_G_config.h
 EdbImage.o: /usr/include/wchar.h /usr/include/bits/wchar.h
 EdbImage.o: /usr/include/gconv.h /usr/include/bits/stdio_lim.h
 EdbImage.o: /var/local/root/include/TGenericClassInfo.h
-EdbImage.o: /var/local/root/include/TH2.h /var/local/root/include/TH1.h
-EdbImage.o: /var/local/root/include/TVirtualHistPainter.h
-EdbImage.o: /var/local/root/include/TClass.h
-EdbImage.o: /var/local/root/include/TDictionary.h
-EdbImage.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
-EdbImage.o: /var/local/root/include/TSeqCollection.h
-EdbImage.o: /var/local/root/include/TCollection.h
-EdbImage.o: /var/local/root/include/TIterator.h
-EdbImage.o: /var/local/root/include/Property.h
-EdbImage.o: /var/local/root/include/TString.h /var/local/root/include/TMath.h
 EdbImage.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbImage.o: /var/local/root/include/TRefCnt.h /var/local/root/include/TAxis.h
 EdbImage.o: /var/local/root/include/TAttAxis.h
-EdbImage.o: /var/local/root/include/Gtypes.h
+EdbImage.o: /var/local/root/include/Gtypes.h /var/local/root/include/Htypes.h
 EdbImage.o: /var/local/root/include/TArrayD.h
 EdbImage.o: /var/local/root/include/THashList.h
 EdbImage.o: /var/local/root/include/TAttLine.h
 EdbImage.o: /var/local/root/include/TAttFill.h
 EdbImage.o: /var/local/root/include/TAttMarker.h
 EdbImage.o: /var/local/root/include/TArrayS.h
-EdbImage.o: /var/local/root/include/TArrayF.h
+EdbImage.o: /var/local/root/include/TArrayF.h /var/local/root/include/TH2.h
+EdbImage.o: EdbImage.h /var/local/root/include/TArrayC.h
+EdbImage.o: /var/local/root/include/TArray.h
 EdbOnline.o: /usr/include/string.h /usr/include/features.h
 EdbOnline.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
 EdbOnline.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
@@ -617,9 +618,9 @@ EdbView.o: /var/local/root/include/X3DBuffer.h EdbCluster.h
 EdbView.o: /var/local/root/include/TClonesArray.h
 EdbView.o: /var/local/root/include/TObjArray.h EdbVirtual.h EdbFrame.h
 EdbView.o: EdbImage.h /var/local/root/include/TArrayC.h
-EdbView.o: /var/local/root/include/TArray.h /var/local/root/include/TH2.h
-EdbView.o: EdbView.h /var/local/root/include/TPolyMarker3D.h EdbAffine.h
-EdbView.o: EdbSegment.h /var/local/root/include/TArrayI.h EdbRun.h
+EdbView.o: /var/local/root/include/TArray.h EdbView.h
+EdbView.o: /var/local/root/include/TPolyMarker3D.h EdbAffine.h EdbSegment.h
+EdbView.o: /var/local/root/include/TArrayI.h EdbRun.h
 EdbView.o: /var/local/root/include/TFile.h /var/local/root/include/TCache.h
 EdbView.o: /var/local/root/include/TTree.h /var/local/root/include/TBranch.h
 EdbView.o: /var/local/root/include/TStringLong.h
