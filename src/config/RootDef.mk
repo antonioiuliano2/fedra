@@ -10,7 +10,7 @@ ROOTGLIBS     = $(shell root-config --glibs)
 
 # Linux with egcs
 CXX           = g++
-CXXFLAGS      = -g -O -Wall -fPIC
+CXXFLAGS      = -g -O -Wall -fPIC -DUSE_ROOT
 LD            = g++
 LDFLAGS       = -g
 SOFLAGS       = -shared

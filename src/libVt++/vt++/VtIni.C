@@ -21,9 +21,11 @@
 //
 /**********************************************************************/
 
-#include <iostream>
+
 #include "vt++/CVStag.vt++"
 #include "vt++/VtIni.hh"
+#include <iostream>
+using namespace std;
 
 namespace VERTEX {
 

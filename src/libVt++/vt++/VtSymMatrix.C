@@ -39,6 +39,7 @@
 #include <string.h> // for memcpy
 #include "vt++/VtSymMatrix.hh"
 #include "vt++/VtVector.hh"
+using namespace std;
 
 namespace MATRIX {
   //============================================================================

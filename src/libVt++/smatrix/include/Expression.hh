@@ -36,6 +36,9 @@
 //==============================================================================
 // Expr: class representing SVector expressions
 //==============================================================================
+#include <iostream>
+using namespace std;
+
 template <class ExprType, class T, unsigned int D, unsigned int D2 = 0>
 class Expr {
 public:
@@ -60,7 +63,7 @@ public:
 
   /// used by operator<<()
   std::ostream& print(std::ostream& os) const {
-    os.setf(ios::right,ios::adjustfield);
+    os.setf(ios::right, ios::adjustfield) ;
 
     if(D2 == 0) {
       unsigned int i=0;

@@ -33,8 +33,8 @@ namespace VERTEX {
   inline double Track::ez()     const { return 1./sqrt(1. + tx()*tx() + ty()*ty()); }
   
   
-  inline double Track::xerr(double dz = 0)   const { return sqrt(t_V.x_prop(dz)); }
-  inline double Track::yerr(double dz = 0)   const { return sqrt(t_V.y_prop(dz)); }
+  inline double Track::xerr(double dz )   const { return sqrt(t_V.x_prop(dz)); }
+  inline double Track::yerr(double dz )   const { return sqrt(t_V.y_prop(dz)); }
   inline double Track::txerr()               const { return sqrt(t_V(2,2)); }
   inline double Track::tyerr()               const { return sqrt(t_V(3,3)); }
   inline double Track::perr()                const { return sqrt(t_V.p()); }

@@ -3,11 +3,11 @@ include ../config/ProjectDef.mk
 include ../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS += -lvt -lEmath -lEdb -lEdv
+PROJECT_LIBS += -lvt -lEmath -lEdb -lEphys
 
 LIB_TGT       = $(LIB_DIR)/libEdr.so
 
-headers       = EdbPattern.h EdbPVGen.h EdbPVRec.h EdbGA.h EdbDataSet.h EdbIP.h
+headers       = EdbPattern.h EdbPVGen.h EdbPVRec.h EdbGA.h EdbDataSet.h EdbIP.h EdbVertex.h
 
 classes	      = $(headers:.h=.$(SrcSuf))
 EdrCint	      = $(headers) EdrLinkDef.h
@@ -20,9 +20,6 @@ CXXFLAGS += -I$(INC_DIR)
 
 $(LIB_TGT): $(OBJ)
 	$(CXX) -O -shared $(LIBS) -o $(LIB_TGT) $(OBJ)
-
-#EdrCint.cxx: $(EdrCint)
-#	rootcint -f EdrCint.cxx -c $(INCLUDE) -I$(INC_DIR) $(EdrCint)
 
 EdrCint.cxx: $(EdrCint)
 	@echo "Generating dictionary $@..."
@@ -279,12 +276,20 @@ EdbPVRec.o: /var/local/root/include/TObjArray.h
 EdbPVRec.o: /var/local/root/include/TArrayL.h
 EdbPVRec.o: /var/local/root/include/TMatrixD.h
 EdbPVRec.o: /var/local/root/include/TVectorD.h
-EdbPVRec.o: /var/local/root/include/TMatrixDUtils.h
-EdbPVRec.o: /var/local/root/include/TBenchmark.h
-EdbPVRec.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
+EdbPVRec.o: /var/local/root/include/TMatrixDUtils.h EdbVertex.h
+EdbPVRec.o: /var/local/root/include/TGraphErrors.h
+EdbPVRec.o: /var/local/root/include/TGraph.h /var/local/root/include/TNamed.h
+EdbPVRec.o: /var/local/root/include/TList.h
 EdbPVRec.o: /var/local/root/include/TSeqCollection.h
 EdbPVRec.o: /var/local/root/include/TCollection.h
-EdbPVRec.o: /var/local/root/include/TIterator.h
+EdbPVRec.o: /var/local/root/include/TIterator.h /var/local/root/include/TH1.h
+EdbPVRec.o: /var/local/root/include/TVirtualHistPainter.h
+EdbPVRec.o: /var/local/root/include/TAxis.h
+EdbPVRec.o: /var/local/root/include/TAttAxis.h
+EdbPVRec.o: /var/local/root/include/TArrayC.h
+EdbPVRec.o: /var/local/root/include/TArrayS.h
+EdbPVRec.o: /var/local/root/include/Foption.h EdbPVGen.h
+EdbPVRec.o: /var/local/root/include/TBenchmark.h
 EdbPVRec.o: /var/local/root/include/TStopwatch.h
 EdbPattern.o: EdbPattern.h /var/local/root/include/TTree.h
 EdbPattern.o: /var/local/root/include/TClonesArray.h
@@ -309,4 +314,119 @@ EdbPattern.o: /var/local/root/include/TArrayL.h
 EdbPattern.o: /var/local/root/include/TMatrixD.h
 EdbPattern.o: /var/local/root/include/TVectorD.h
 EdbPattern.o: /var/local/root/include/TError.h
-EdbPattern.o: /var/local/root/include/TMatrixDUtils.h
+EdbPattern.o: /var/local/root/include/TMatrixDUtils.h EdbVertex.h
+EdbPattern.o: /var/local/root/include/TObject.h
+EdbPattern.o: /var/local/root/include/Rtypes.h
+EdbPattern.o: /var/local/root/include/RConfig.h
+EdbPattern.o: /var/local/root/include/RVersion.h
+EdbPattern.o: /var/local/root/include/DllImport.h
+EdbPattern.o: /var/local/root/include/Rtypeinfo.h
+EdbPattern.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+EdbPattern.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+EdbPattern.o: /usr/include/stdio.h /usr/include/bits/types.h
+EdbPattern.o: /usr/include/libio.h /usr/include/_G_config.h
+EdbPattern.o: /usr/include/wchar.h /usr/include/bits/wchar.h
+EdbPattern.o: /usr/include/gconv.h
+EdbPattern.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+EdbPattern.o: /usr/include/bits/stdio_lim.h
+EdbPattern.o: /var/local/root/include/TGenericClassInfo.h
+EdbPattern.o: /var/local/root/include/Varargs.h
+EdbPattern.o: /var/local/root/include/TStorage.h
+EdbPattern.o: /var/local/root/include/Riosfwd.h
+EdbPattern.o: /var/local/root/include/TBuffer.h
+EdbPattern.o: /var/local/root/include/Bytes.h
+EdbPattern.o: /var/local/root/include/TVector3.h
+EdbPattern.o: /var/local/root/include/TMath.h
+EdbPattern.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbPattern.o: /var/local/root/include/TVector2.h
+EdbPattern.o: /var/local/root/include/TMatrix.h
+EdbPattern.o: /var/local/root/include/TVector.h
+EdbPattern.o: /var/local/root/include/TString.h
+EdbPattern.o: /var/local/root/include/TRefCnt.h
+EdbPattern.o: /var/local/root/include/TMatrixUtils.h
+EdbPattern.o: /var/local/root/include/TGraphErrors.h
+EdbPattern.o: /var/local/root/include/TGraph.h
+EdbPattern.o: /var/local/root/include/TNamed.h
+EdbPattern.o: /var/local/root/include/TList.h
+EdbPattern.o: /var/local/root/include/TSeqCollection.h
+EdbPattern.o: /var/local/root/include/TCollection.h
+EdbPattern.o: /var/local/root/include/TIterator.h
+EdbPattern.o: /var/local/root/include/TH1.h
+EdbPattern.o: /var/local/root/include/TVirtualHistPainter.h
+EdbPattern.o: /var/local/root/include/TAxis.h
+EdbPattern.o: /var/local/root/include/TAttAxis.h
+EdbPattern.o: /var/local/root/include/THashList.h
+EdbPattern.o: /var/local/root/include/TArrayC.h
+EdbPattern.o: /var/local/root/include/TArrayS.h
+EdbPattern.o: /var/local/root/include/TArrayF.h
+EdbPattern.o: /var/local/root/include/Foption.h EdbPVGen.h EdbPVRec.h
+EdbVertex.o: /var/local/root/include/TFile.h /var/local/root/include/TCache.h
+EdbVertex.o: /var/local/root/include/THashList.h
+EdbVertex.o: /var/local/root/include/TRandom.h
+EdbVertex.o: /var/local/root/include/TNamed.h
+EdbVertex.o: /var/local/root/include/TObject.h
+EdbVertex.o: /var/local/root/include/Rtypes.h
+EdbVertex.o: /var/local/root/include/RConfig.h
+EdbVertex.o: /var/local/root/include/RVersion.h
+EdbVertex.o: /var/local/root/include/DllImport.h
+EdbVertex.o: /var/local/root/include/Rtypeinfo.h
+EdbVertex.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
+EdbVertex.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
+EdbVertex.o: /usr/include/stdio.h /usr/include/features.h
+EdbVertex.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbVertex.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
+EdbVertex.o: /usr/include/bits/types.h /usr/include/libio.h
+EdbVertex.o: /usr/include/_G_config.h /usr/include/wchar.h
+EdbVertex.o: /usr/include/bits/wchar.h /usr/include/gconv.h
+EdbVertex.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stdarg.h
+EdbVertex.o: /usr/include/bits/stdio_lim.h
+EdbVertex.o: /var/local/root/include/TGenericClassInfo.h
+EdbVertex.o: /var/local/root/include/Varargs.h
+EdbVertex.o: /var/local/root/include/TStorage.h
+EdbVertex.o: /var/local/root/include/Riosfwd.h
+EdbVertex.o: /var/local/root/include/TBuffer.h
+EdbVertex.o: /var/local/root/include/Bytes.h /usr/include/string.h
+EdbVertex.o: /var/local/root/include/TList.h
+EdbVertex.o: /var/local/root/include/TSeqCollection.h
+EdbVertex.o: /var/local/root/include/TCollection.h
+EdbVertex.o: /var/local/root/include/TIterator.h
+EdbVertex.o: /var/local/root/include/TString.h
+EdbVertex.o: /var/local/root/include/TMath.h
+EdbVertex.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbVertex.o: /var/local/root/include/TRefCnt.h
+EdbVertex.o: /var/local/root/include/TPolyLine.h
+EdbVertex.o: /var/local/root/include/TAttLine.h
+EdbVertex.o: /var/local/root/include/Gtypes.h
+EdbVertex.o: /var/local/root/include/TAttFill.h EdbVertex.h
+EdbVertex.o: /var/local/root/include/TTree.h
+EdbVertex.o: /var/local/root/include/TClonesArray.h
+EdbVertex.o: /var/local/root/include/TAttMarker.h
+EdbVertex.o: /var/local/root/include/TBranch.h
+EdbVertex.o: /var/local/root/include/TStringLong.h
+EdbVertex.o: /var/local/root/include/TArrayD.h
+EdbVertex.o: /var/local/root/include/TArray.h
+EdbVertex.o: /var/local/root/include/TArrayI.h
+EdbVertex.o: /var/local/root/include/TVirtualTreePlayer.h
+EdbVertex.o: /var/local/root/include/TClass.h
+EdbVertex.o: /var/local/root/include/TDictionary.h
+EdbVertex.o: /var/local/root/include/Property.h
+EdbVertex.o: /var/local/root/include/TVector3.h
+EdbVertex.o: /var/local/root/include/TError.h
+EdbVertex.o: /var/local/root/include/TVector2.h
+EdbVertex.o: /var/local/root/include/TMatrix.h
+EdbVertex.o: /var/local/root/include/TVector.h
+EdbVertex.o: /var/local/root/include/TMatrixUtils.h
+EdbVertex.o: /var/local/root/include/TGraphErrors.h
+EdbVertex.o: /var/local/root/include/TGraph.h /var/local/root/include/TH1.h
+EdbVertex.o: /var/local/root/include/TVirtualHistPainter.h
+EdbVertex.o: /var/local/root/include/TAxis.h
+EdbVertex.o: /var/local/root/include/TAttAxis.h
+EdbVertex.o: /var/local/root/include/TArrayC.h
+EdbVertex.o: /var/local/root/include/TArrayS.h
+EdbVertex.o: /var/local/root/include/TArrayF.h
+EdbVertex.o: /var/local/root/include/Foption.h EdbPattern.h
+EdbVertex.o: /var/local/root/include/TObjArray.h
+EdbVertex.o: /var/local/root/include/TArrayL.h
+EdbVertex.o: /var/local/root/include/TMatrixD.h
+EdbVertex.o: /var/local/root/include/TVectorD.h
+EdbVertex.o: /var/local/root/include/TMatrixDUtils.h EdbPVGen.h EdbPVRec.h

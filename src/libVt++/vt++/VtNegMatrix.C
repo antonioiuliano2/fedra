@@ -25,6 +25,7 @@
 #include <string.h> // for memcpy
 #include "vt++/VtNegMatrix.hh"
 #include "vt++/VtVector.hh"
+using namespace std;
 
 namespace MATRIX {
 

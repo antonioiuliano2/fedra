@@ -195,11 +195,11 @@ namespace VERTEX {
   const SMatrix<double,5>& Track::CINV() const { return COV_; }
 #endif
 
-  float Track::cov_x(double dz=0.) const {
+  float Track::cov_x(double dz) const {
     return t_V.x_prop(dz);
   }
 
-  float Track::cov_y(double dz=0.) const {
+  float Track::cov_y(double dz) const {
     return t_V.y_prop(dz);
   }
 

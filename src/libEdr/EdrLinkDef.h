@@ -29,4 +29,7 @@
 #pragma link C++ class EdbDataSet;
 #pragma link C++ class EdbDataProc;
 
+#pragma link C++ class EdbVertex;
+#pragma link C++ class EdbVertexRec;
+
 #endif

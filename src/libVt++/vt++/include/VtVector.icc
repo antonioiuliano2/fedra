@@ -23,7 +23,7 @@
 //
 // *****************************************************************************
 
-#include <cmath>
+#include <math.h>
 
 //============================================================================
 // Operators
@@ -43,7 +43,7 @@ inline double VtVector::mag() const {return sqrt(mag2()); }
 //==============================================================================
 // operator <<
 //==============================================================================
-inline std::ostream& operator<< ( std::ostream& os, const VtVector& t ) {
+inline std::ostream& operator<<( std::ostream& os, const VtVector& t ) {
   t.print(os);
   return os;
 }

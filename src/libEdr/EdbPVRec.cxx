@@ -1570,7 +1570,7 @@ int EdbPVRec::MergeTracks1(int maxgap)
 		 s2->TX()-s1->TX(), s2->TY()-s1->TY(),
 		 tre->N(),trs->N() );
 
-	  printf( "prob = %15.13f\n", EdbVertexRec::ProbSameTrack(*s1,*s2) );
+	  printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(*s1,*s2, 5810., tre->M()) );
 
 	  tre->AddTrack(*trs);
 	  tre->FitTrackKFS(true);
@@ -1982,9 +1982,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
   for(int i=0; i<eTracks->GetEntriesFast(); i++) {
     tr = (EdbTrackP*)(eTracks->At(i));
     tr->SetID(i);
-    nseg = tr->N();
-    for(int is=0; is<nseg; is++) tr->GetSegment(is)->SetTrack(i);
-
+    tr->SetSegmentsTrack();
     v[0]= -(tr->Npl());
     v[1]= (Long_t)(tr->Prob()*100);
     v[2]= i;
@@ -2009,11 +2007,13 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin)
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
-	nseg = PropagateTrack(*tr, true);
-	nsegTot += nseg;
+	printf("track: %d with %d segments\n",tr->ID(),tr->N());
 
-	nseg = PropagateTrack(*tr, false);
-	nsegTot += nseg;
+	nseg = PropagateTrack(*tr, true);
+  	nsegTot += nseg;
+	if(tr->Npl()>nplmax)  continue;
+  	nseg = PropagateTrack(*tr, false);
+  	nsegTot += nseg;
 
       }
     }

@@ -18,21 +18,11 @@ make clean
 make depend
 make
 
-# cd ../libMarilisa
-# make clean
-# make depend
-# make
-
-cd ../libTest
-make clean
-make depend
-make
-
 cd ../libVt++
 make clean
 make
 
-cd ../libEdv
+cd ../libEphys
 make clean
 make depend
 make

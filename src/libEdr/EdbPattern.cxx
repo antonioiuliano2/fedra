@@ -11,6 +11,7 @@
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
+#include "EdbPhys.h"
 #include "EdbVertex.h"
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
@@ -796,7 +797,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   // Note: SetP() for track must be setted before!
   // Note: SetErrorP() for track should be setted - necessary for vertex fit with momenta
   //
-  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = (nseg-1)*4
+  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = nseg*4
   //                Prob: is Chi2 probability (area of the tail of Chi2-distribution)
   //                      If we accept events with Prob >= ProbMin then ProbMin is the 
   //                      probability to reject the good event
@@ -956,7 +957,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   SetCOV( (*cov[iend]).array(), 4 );
 
   //SetChi2((float)chi2);
-  //SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+  //SetProb( (float)TMath::Prob(chi2,nseg*4));
 
 // Smoothing
 
@@ -1006,7 +1007,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 	AddSegmentF(i,new EdbSegP(segf));
   }
   SetChi2((float)chi2);
-  SetProb((float)TMath::Prob(chi2,(nseg-1)*4));
+  SetProb((float)TMath::Prob(chi2,nseg*4));
   SetW( (float)nseg );
 
 // Delete matrixes and vectors
