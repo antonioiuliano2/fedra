@@ -1,4 +1,4 @@
-//-- Author :  Valeri Tioukov   9.06.2003
+///-- Author :  Valeri Tioukov   9.06.2003
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
@@ -152,6 +152,13 @@ void EdbDataPiece::Set0()
 
   eRun    = 0;
   eCouplesTree=0;
+}
+
+///______________________________________________________________________________
+void EdbDataPiece::CloseRun()
+{
+  if(eRun) delete eRun;
+  eRun=0;
 }
 
 ///______________________________________________________________________________
@@ -723,6 +730,8 @@ int EdbDataPiece::CheckCCD(int maxentr)
   EdbView    *view = eRun->GetView();
   EdbSegment *seg;
 
+  int npeak=0;
+  
   int matr[1000][1000];
   int ix,iy;
 
@@ -751,7 +760,6 @@ int EdbDataPiece::CheckCCD(int maxentr)
   }
 
   printf("ncheck=%d\n",ncheck);
-  int npeak=0;
   for(i=0; i<50; i++ ) {           //eliminate upto 50 CCD defects
     if(!RemoveCCDPeak(matr)) break;
     npeak++;
@@ -857,7 +865,7 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
 {
   //TODO: irun logic
 
-  if (eRun ) delete eRun;
+  CloseRun();
   eRun =  new EdbRun( GetRunFile(0),"READ" );
   if(!eRun) return 0;
 
@@ -1282,6 +1290,7 @@ int EdbDataProc::CheckCCD()
     ndef = piece->CheckCCD();
     printf("piece %s: eliminated defects: %d\n",piece->GetName(),ndef); 
     piece->WriteCuts();
+    piece->CloseRun();
   }
   return np;
 }
@@ -1298,6 +1307,7 @@ int EdbDataProc::Link()
     piece->Print();
     piece->WriteCuts();
     if(piece->Flag()==1)    Link(*piece);
+    piece->CloseRun();
   }
   return np;
 }

@@ -134,6 +134,7 @@ class EdbDataPiece : public TNamed {
   void SetVolume0( float x0, float y0, float z0, float tx=0, float ty=0 );
   void SetVolumeA( float dx, float dy ) { GetLayer(0)->SetDXDY( dx, dy); }
   void AddRunFile( const char *name );
+  void CloseRun();
   const char *GetRunFile(int i) const;
   const char *MakeName();
   const char *MakeNameCP(const char *dir);
