@@ -40,6 +40,8 @@ class EdbScanCond : public TNamed {
   Float_t eChi2Max;           //
   Float_t eChi2PMax;          //
 
+  Float_t eOffX, eOffY;       // maximal offsets in x and y
+
  public:
   EdbScanCond();
   virtual ~EdbScanCond(){}
@@ -51,6 +53,9 @@ class EdbScanCond : public TNamed {
   void SetBins(float bx, float by, float btx, float bty) 
     { eBinX=bx; eBinY=by; eBinTX=btx; eBinTY=bty; }
 
+  void SetOffset( float x, float y ) {eOffX=x; eOffY=y;}
+  float OffX() const {return eOffX;}
+  float OffY() const {return eOffY;}
   void SetDegrad( float d ) {eDegrad=d;}
   void SetSigmaZ0( float z ) {eSigmaZ0=z;}
 

@@ -69,6 +69,9 @@ class EdbLayer : public TObject {
   void SetAffTXTY(float a11,float a12,float a21,float a22,float b1,float b2) 
     {eAffTXTY.Set(a11,a12,a21,a22,b1,b2);}
 
+  EdbAffine2D *GetAffineXY()   {return &eAffXY;}
+  EdbAffine2D *GetAffineTXTY() {return &eAffTXTY;}
+
   void Print();
 
   ClassDef(EdbLayer,1)  // shrinked layer
@@ -82,6 +85,7 @@ class EdbDataPiece : public TNamed {
   Int_t        ePiece;          // piece id in this plate
   Int_t        eFlag;           // 0-do nothing, 1-link only, 2-align also
   TString      eFileNameRaw;    // name of the raw data file (run)
+  TString      eFileNameCP;     // name of the couples data file
   Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
 
   EdbLayer    *eLayers[3];      // base(0),up(1),down(2)  layers
@@ -100,6 +104,7 @@ class EdbDataPiece : public TNamed {
   void Set0();
   const char *GetFileNameRaw() const { return eFileNameRaw.Data(); }
   const char *MakeName();
+  const char *MakeNameCP(const char *dir);
   void Print();
 
   int       Flag() const {return eFlag;}
@@ -110,8 +115,7 @@ class EdbDataPiece : public TNamed {
   EdbScanCond *GetCond(int id)
     { if(eCond[id]) return (EdbScanCond *)eCond[id]; else return 0; }
 
-
-  TTree *InitCouplesTree( const char *dir, const char *mode="READ" );
+  TTree *InitCouplesTree( const char *mode="READ" );
 
   void           AddSegmentCut(int layer, int xi, float var[5]);
   int            NCuts(int layer);
@@ -125,6 +129,9 @@ class EdbDataPiece : public TNamed {
   int  GetAreaData(EdbPVRec *ali, int const area, int const side);
   int  TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side);
   int  PassCuts(int id, float var[5]);
+
+  int  GetCPData(EdbPVRec *ali);
+  int  TakeCPSegment(EdbSegP &segP);
 
   ClassDef(EdbDataPiece,1)  // Edb raw data unit (scanned plate) associated with run file
 };
@@ -175,8 +182,11 @@ class EdbDataProc : public TObject {
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
-  int Process();
-  int Link(EdbDataPiece &piece);
+  int  Process();
+  int  Link(EdbDataPiece &piece);
+  void Align();
+  int  InitVolume(EdbPVRec *ali);
+  void LinkTracks();
 
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );

@@ -42,6 +42,11 @@ void EdbScanCond::SetDefault()
   ePuls0[1]     = 10;    // at 0 angle
   ePuls04[0]    =  5;    // microtrack puls height (grains)
   ePuls04[1]    =  9;    // at 0.4 rad angle
+
+  eChi2Max  = 3.5;
+  eChi2PMax = 3.5;
+  eOffX=0;
+  eOffY=0;
 }
 
 //______________________________________________________________________________
@@ -959,11 +964,14 @@ int EdbPVRec::Align()
 //______________________________________________________________________________
 void EdbPVRec::FillTracksCell()
 {
+  // TODO: speed-up this algorithm
+
   // fill tracks cell "vid1:vid2"
   // second segment is considered as leading one
   Long_t vid1,vid2,vtr[2];
 
   TIndexCell *tracksCell = eTracksCell;  // "vid1:vid2"
+  TIndexCell *cc=0;
 
   if(tracksCell) tracksCell->Drop();
 
@@ -981,13 +989,10 @@ void EdbPVRec::FillTracksCell()
       vid1 = Vid( pc->ID1(),sc->ID1() );
       vid2 = Vid( pc->ID2(),sc->ID2() );
 
-      if(!tracksCell->Find(vid1))	{    // new track
-	vtr[0]=vid1;  vtr[1]=vid1;
-	tracksCell->Add(2,vtr);
-      }
-      vtr[0]=vid1;  vtr[1]=vid2;
-      tracksCell->Add(2,vtr);
-      (tracksCell->Find(vid1))->SetValue(vid2);
+      cc=tracksCell->FindAdd(vid1);
+      if(!cc->N(1)) cc->Add(vid1);
+      cc->Add(vid2);
+      cc->SetValue(vid2);
     }
   }
   tracksCell->Sort();
@@ -1005,7 +1010,7 @@ int EdbPVRec::MakeTracksTree()
   TFile fil("tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
-  TClonesArray *segments=new TClonesArray("EdbSegP");
+  TClonesArray *segments=new TClonesArray("EdbSegP",100);
 
   tracks->Branch("trid",&trid,"trid/I");
   tracks->Branch("nseg",&nseg,"nseg/I");
@@ -1040,7 +1045,6 @@ int EdbPVRec::MakeTracksTree()
     segments->Clear();
     ntr++;
   }
-
   tracks->Write();
   fil.Close();
   printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);

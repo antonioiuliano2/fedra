@@ -140,6 +140,14 @@ const char *EdbDataPiece::MakeName()
   return GetName();
 }
 
+///______________________________________________________________________________
+const char *EdbDataPiece::MakeNameCP(const char *dir)
+{
+  eFileNameCP=dir;
+  eFileNameCP+=MakeName();
+  eFileNameCP+=".cp.root";
+  return eFileNameCP.Data();
+}
 
 ///______________________________________________________________________________
 EdbLayer *EdbDataPiece::GetMakeLayer(int id)
@@ -174,16 +182,11 @@ EdbScanCond *EdbDataPiece::GetMakeCond(int id)
 }
 
 ///______________________________________________________________________________
-TTree *EdbDataPiece::InitCouplesTree(const char *dir, const char *mode)
+TTree *EdbDataPiece::InitCouplesTree(const char *mode)
 {
-  TString name=dir;
-  if(!GetName()) name+="link";
-  else name+=GetName();
-  name+=".cp.root";
-  
-  const char *file_name=name.Data();
+  const char *file_name=eFileNameCP.Data();
   const char *tree_name="couples";
-  TTree *tree=eCouplesTree;
+  TTree *tree=0;
 
   if (!tree) {
     TFile *f = new TFile(file_name,mode);
@@ -205,11 +208,11 @@ TTree *EdbDataPiece::InitCouplesTree(const char *dir, const char *mode)
       tree->Branch("s1.","EdbSegP",&s1,32000,99);
       tree->Branch("s2.","EdbSegP",&s2,32000,99);
       tree->Branch("s." ,"EdbSegP",&s,32000,99);
+      tree->Write();
+      tree->SetAutoSave(2000000);
     }
   }
-  tree->Write();
-  tree->SetAutoSave(2000000);
-
+  eCouplesTree=tree;
   return tree;
 }
 
@@ -312,6 +315,11 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	sscanf(buf+strlen(key),"%d %f",&id,&x1);
 	GetMakeCond(id)->SetChi2PMax(x1);
       }
+    else if ( !strcmp(key,"OFFSET")  )
+      {
+	sscanf(buf+strlen(key),"%d %f %f",&id,&x1,&x2);
+	GetMakeCond(id)->SetOffset(x1,x2);
+      }
     else if ( !strcmp(key,"XCUT")  )
       {
 	sscanf(buf+strlen(key),"%d %f %f %f %f %f %f %f %f %f %f",&id,
@@ -381,6 +389,52 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetW( puls );
 
   return 1;
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::TakeCPSegment(EdbSegP &seg)
+{
+  float var[5];
+  var[0] = seg.X();
+  var[1] = seg.Y();
+  var[2] = seg.TX();
+  var[3] = seg.TY();
+  var[4] = seg.W();
+
+  if( !PassCuts(0,var) )     return 0;
+
+  return 1;
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::GetCPData(EdbPVRec *ali)
+{
+  printf("z = %f \n", GetLayer(0)->Z());
+  EdbPattern *pat = new EdbPattern( 0.,0., GetLayer(0)->Z() );
+  pat->SetID(0);
+  EdbSegP    segP;
+
+  TTree *tree=eCouplesTree;
+  //EdbSegCouple    *cp = 0;
+  //EdbSegP         *s1 = 0;
+  //EdbSegP         *s2 = 0;
+  EdbSegP         *s  = 0;
+
+  tree->SetBranchAddress("s."  , &s  );
+  int nentr = (int)(tree->GetEntries());
+  int nseg = 0;
+
+  printf("nentr = %d\n",nentr);
+  for(int i=0; i<nentr; i++ ) {
+    tree->GetEntry(i);
+    if( !TakeCPSegment(*s) )      continue;
+    s->SetZ(pat->Z());
+    pat->AddSegment( *s );
+    nseg++;
+  }
+  printf("%d (of %d) segments are readed\n", nseg,nentr );
+  ali->AddPattern(pat);
+  return nseg;
 }
 
 ///______________________________________________________________________________
@@ -625,7 +679,6 @@ int EdbDataSet::ReadDataSetDef(const char *file)
       {
 	sscanf(buf+strlen(key),"%s",name);
 	eInputList=name;
-	GetRunList(name);
       }
    else if ( !strcmp(key,"PARAMETERS_DIR")   )
       {
@@ -639,6 +692,7 @@ int EdbDataSet::ReadDataSetDef(const char *file)
       }
   }
   fclose(fp);
+  GetRunList(eInputList.Data());
   return 0;
 }
 
@@ -684,8 +738,12 @@ int EdbDataSet::GetRunList(const char *file)
   while( fgets(buf,256,fp)!=NULL ) {
     ntok = sscanf(buf,"%d %d %s %d",&plateID,&pieceID,filename,&flag);
     if(ntok!=4) break;
+    if(flag<=0) continue;
     nrun++;
     piece = new EdbDataPiece(plateID,pieceID,filename,flag);
+    piece->MakeName();
+    piece->MakeNameCP(GetAnaDir());
+    piece->TakePiecePar(GetParDir());
     ePieces.Add(piece);
   }
   fclose(fp);
@@ -806,7 +864,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 {
   EdbPVRec  *ali;
 
-  TTree *cptree=piece.InitCouplesTree(eDataSet->GetAnaDir(),"RECREATE");
+  TTree *cptree=piece.InitCouplesTree("RECREATE");
   
   EdbScanCond *cond = piece.GetCond(1);
 
@@ -816,7 +874,6 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     ali      = new EdbPVRec();
     ali->SetScanCond( cond );
 
-    printf("\n");
     piece.GetAreaData(ali,i,1);
     piece.GetAreaData(ali,i,2);
 
@@ -833,4 +890,54 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   CloseCouplesTree(cptree);
 
   return nareas;
+}
+
+///______________________________________________________________________________
+int EdbDataProc::InitVolume(EdbPVRec    *ali)
+{
+  EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
+  ali->SetScanCond( cond );
+  
+  EdbDataPiece *piece;
+  int npieces = eDataSet->N();
+  printf("npieces = %d\n",npieces);
+  if(!npieces) return 0;
+
+  for(int i=0; i<npieces; i++ ) {
+    printf("\n");
+    piece = eDataSet->GetPiece(i);
+    if( !piece->InitCouplesTree())  printf("no tree %d\n",i);
+    piece->GetCPData(ali);
+  }
+  ali->Centralize();
+  for(int i=0; i<npieces; i++ ) 
+    ali->GetPattern(i)->Transform( eDataSet->GetPiece(i)->GetLayer(0)->GetAffineXY() );
+  ali->SetPatternsID();
+  ali->Print();
+  ali->GetScanCond()->Print();
+  ali->SetSegmentsErrors();
+
+  ali->SetCouplesAll();
+  ali->SetChi2Max(cond->Chi2PMax());
+  ali->SetOffsetsMax(cond->OffX(),cond->OffY());
+  return npieces;
+}
+
+///______________________________________________________________________________
+void EdbDataProc::Align()
+{
+  EdbPVRec    *ali  = new EdbPVRec();
+  InitVolume(ali);
+  ali->Align();
+  ali->PrintAff();
+}
+
+///______________________________________________________________________________
+void EdbDataProc::LinkTracks()
+{
+  EdbPVRec    *ali  = new EdbPVRec();
+  InitVolume(ali);
+  ali->Link();
+  printf("link ok\n");
+  ali->MakeTracksTree();
 }
