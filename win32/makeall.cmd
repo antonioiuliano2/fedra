@@ -7,6 +7,7 @@
 	IF /I '%1'=='clean'	GOTO CLEAN
 	IF /I '%1'=='chktgt'	GOTO CHECKTARGET
 	IF /I '%1'=='archive'	GOTO ARCHIVE
+	IF /I '%1'=='setvars'	GOTO SETVCVARS
 	IF NOT '%1'=='' IF NOT '%1'=='-vc7' IF NOT '%1'=='-novars' IF NOT '%1'=='clean' IF NOT '%1'=='chktgt' IF NOT '%1'=='archive'  GOTO HELP
 	GOTO MAKEALL
 GOTO END
@@ -16,6 +17,7 @@ GOTO END
 	SETLOCAL
 	IF '%1'=='-vc7'    SET compilerver=-vc7
 	IF '%1'=='-novars' SET compilerver=-novars
+	call %0 setvars
 	SET CURRENTDIR=%CD%
 
 	:: Suggest using vc7
@@ -204,4 +206,21 @@ GOTO END
 	ECHO.
 	GOTO END
 ::----------------------------------------------------------------------
+:SETVCVARS
+	SET ERR=0
+	IF '%compilerver%'=='-novars' GOTO END
+	IF NOT '%compilerver%'=='-vc7' IF DEFINED MSCOMPILER call "%MSCOMPILER%\bin\vcvars32.bat"
+	IF NOT '%compilerver%'=='-vc7' IF NOT DEFINED MSCOMPILER IF DEFINED MSDevDir call "%MSDevDir%\..\..\VC98\bin\vcvars32.bat"
+	IF NOT '%compilerver%'=='-vc7' IF NOT DEFINED MSCOMPILER IF NOT DEFINED MSDevDir call "%ProgramFiles%\Microsoft Visual Studio\VC98\bin\vcvars32.bat"
+
+	IF '%compilerver%'=='-vc7' IF DEFINED VS71COMNTOOLS call "%VS71COMNTOOLS%"\vsvars32.bat
+	IF '%compilerver%'=='-vc7' IF NOT DEFINED VS71COMNTOOLS IF DEFINED VSCOMNTOOLS call %VSCOMNTOOLS%\vsvars32.bat
+	IF '%compilerver%'=='-vc7' IF NOT DEFINED VS71COMNTOOLS IF NOT DEFINED VSCOMNTOOLS SET ERR=-7
+
+	IF '%ERR%'=='-7'  ECHO Visual C++ 7 not found !
+
+::	IF EXIST "%MSVCDir%"\lib\MSVCIRT.LIB (SET MAKECFG=+msvcirt) ELSE (SET MAKECFG=)
+	GOTO END
+::---------------------------------------------------------------------
+
 :END
