@@ -200,6 +200,10 @@ namespace VERTEX {
     const bool remove_last();
     /// remove track with biggest $\chi^2$ contribution, do inverse Kalman filter
     void remove_worst();
+    /// get track $\chi^2$ contribution
+    double track_chi2(int i);
+    /// get track with biggest $\chi^2$ contribution
+    int track_worst();
     /// set for all tracks whether momentum should be used or not
     void  use_momentum(const bool use);
     /// use refitted track parameters or not

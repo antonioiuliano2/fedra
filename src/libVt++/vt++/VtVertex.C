@@ -743,6 +743,51 @@ namespace VERTEX {
   }
 
   //==============================================================================
+  // track_worst
+  //==============================================================================
+  int Vertex::track_worst() {
+    double prchi2 = 0.;
+    double maxchi2 = 0.;
+
+    // a sorted list would be better here
+    const iterator last = end();
+    int num = -1, ntr = 0;
+    for(iterator it=begin(); it!=last; ++it) {
+      const Kalman& k = it->kalman;
+      double dchi2 = k.chi2() - prchi2;
+      prchi2 = k.chi2();
+
+      if(dchi2 > maxchi2){
+	maxchi2 = dchi2;
+	num = ntr;
+      }
+      ntr++;
+    }
+    
+    return num;
+  }
+
+  //==============================================================================
+  // track_chi2
+  //==============================================================================
+  double Vertex::track_chi2( int i ) {
+    double prchi2 = 0.;
+    double dchi2  = 0.;
+    // a sorted list would be better here
+    const iterator last = end();
+    int ntr = 0;
+    for(iterator it=begin(); it!=last; ++it) {
+      const Kalman& k = it->kalman;
+      dchi2 = k.chi2() - prchi2;
+      if (ntr == i) return dchi2;
+      prchi2 = k.chi2();
+      ntr++;
+    }
+    
+    return dchi2;
+  }
+
+  //==============================================================================
   // distance: Chi2 distance to space point
   //==============================================================================
   double Vertex::distance(double xx, double yy, double zz) const {
