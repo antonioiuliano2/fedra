@@ -81,7 +81,9 @@ void getPatternEdb( EdbRun *edbRun,
 
       seg = view->GetSegment(j);
 
-      if( !cut_seg(seg->GetX0(),seg->GetY0()) ) continue;
+      if( !cut_seg(seg->GetX0(), seg->GetY0(),
+		   seg->GetTx(), seg->GetTy(), 
+		   seg->GetPuls() )  )          continue;
 
       nseg++;
       //segP->SetDZ( seg->GetDz() );

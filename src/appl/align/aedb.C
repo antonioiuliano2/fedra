@@ -1,13 +1,14 @@
 EdbPVRec    *ali=0;
 
 //------------------------------------------------------------
-int cut_seg(float x0, float y0, float tx0=0, float ty0=0, float puls=0)
+int cut_seg(float x0, float y0, float tx0, float ty0, float puls )
 {
   // this function is called by GetDataEdb() to reject bad segments
 
-  if( TMath::Abs(y0- 139.70)<1.35 && TMath::Abs(x0+  64.45)<1.4)   return 0;
-  if( TMath::Abs(y0+ 158.2 )<1.3  && TMath::Abs(x0+ 108.55)<1.3)   return 0;
-  if( TMath::Abs(y0- 139.38)<1.5  && TMath::Abs(x0+  44.95)<1.5)   return 0;
+  if( puls < 3 ) return 0;
+  if( TMath::Abs(y0- 139.70)<1.35 && TMath::Abs(x0+  64.45)<1.4 )  return 0;
+  if( TMath::Abs(y0+ 158.2 )<1.3  && TMath::Abs(x0+ 108.55)<1.3 )  return 0;
+  if( TMath::Abs(y0- 139.38)<1.5  && TMath::Abs(x0+  44.95)<1.5 )  return 0;
   if( TMath::Abs(y0+ 121.30)<1.35 && TMath::Abs(x0- 104.45)<1.35)  return 0;
   if( TMath::Abs(y0+  13.90)<1.45 && TMath::Abs(x0- 118.50)<1.35)  return 0;
   if( TMath::Abs(y0+ 143.75)<1.35 && TMath::Abs(x0- 133.25)<1.35)  return 0;
@@ -21,13 +22,12 @@ void aedb()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-			       //    "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_01010109.root"
-     "/mnt/operalabdb_e/data/rawr/b1_sep2002/PL03/Sept2002_pl3_1.root"
+     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_02010109.root"
     ,"READ");
 
-  float  plate[3] = {44,215,44}; // we do not rely yet on values coming after convertor
-  float  shrD  = 1.02;           //
-  float  shrU  = 0.93;           //
+  float  plate[3] = {42,214,42}; // we do not rely yet on values coming after convertor
+  float  shrD  = 0.93;           //lh-rd (uvelichili)
+  float  shrU  = 0.85;           //
   float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
   float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
@@ -42,8 +42,6 @@ void aedb()
   TIndexCell uplist;
   TIndexCell downlist;
   make_views_map(edbRun,uplist,downlist);
-  uplist->PrintStat();
-  downlist->PrintStat();
 
   TIndexCell *up=0;
   TIndexCell *down=0;
@@ -77,32 +75,10 @@ void aedb()
 
 //-------------------------------------------------------------------------------
 
-//    edbRun = new EdbRun("/scratch/opera/Jul2002/04010301.root","READ"); //shr =1
-//    float  shrU  = 1.30;       //
-//    float  shrD  = 1.25;       //
-//    float  uOff[2] = {0.005,-0.001};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-//    float  dOff[2] = {0.013,0.011};   // s2.eTX-s.eTX, s2.eTY-s.eTY
+//    "/mnt/operalabdb_e/data/rawr/b1_sep2002/PL03/Sept2002_pl3_1.root"
+//    float  plate[3] = {44,215,44}; // we do not rely yet on values coming after convertor
+//    float  shrD  = 1.02;           //
+//    float  shrU  = 0.93;           //
+//    float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
+//    float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
-
-
-  //edbRun = new EdbRun("/scratch/gabriele/acq24_00000003000000030000000300000003.root","READ");
-  //edbRun = new EdbRun("/scratch/gabriele/acq25_00000002000000020000000200000002.root","READ");
-  //edbRun = new EdbRun("/scratch/gabriele/acq26_00000001000000010000000100000001.root","READ");
-  //edbRun = new EdbRun("/scratch/gabriele/acq27_00000004000000040000000400000004.root","READ");
-//float  shrU  = 1.1;         //
-//float  shrD  = 1.15;         //
-//float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-//float  dOff[2] = {0.,0.};  // s2.eTX-s.eTX, s2.eTY-s.eTY
-
-
-//    edbRun = new EdbRun("/scratch/opera/Jul2002/data_BO_plate11.root","READ"); //shr =1
-//    float  shrU  = 1.11;       //
-//    float  shrD  = 0.98;       //
-//    float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-//    float  dOff[2] = {0.,0.010};   // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
-
-//    edbRun = new EdbRun("/home/valeri/luillo/acq27_prova000007D3000000050000001B00000672.root","READ"); //shr =1
-//    float  shrU  = 1.45;       //
-//    float  shrD  = 1.4;       //
-//    float  uOff[2] = {0.,0.};  // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-//    float  dOff[2] = {0.,0.0};   // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
