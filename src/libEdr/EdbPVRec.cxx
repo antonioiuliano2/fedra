@@ -1455,6 +1455,8 @@ int EdbPVRec::MakeTracksTree()
   EdbSegP *seg;
   EdbTrackP *track = new EdbTrackP(8);
   EdbSegP *tr = (EdbSegP*)track;
+  const EdbSegP *tmin = track->TrackZmin();
+  const EdbSegP *tmax = track->TrackZmax();
 
   int nseg,trid,npl,n0;
   float mass_pi = 0.139;
@@ -1472,8 +1474,11 @@ int EdbPVRec::MakeTracksTree()
   tracks->Branch("n0",&n0,"n0/I");
   tracks->Branch("xv",&xv,"xv/F");
   tracks->Branch("yv",&yv,"yv/F");
-  tracks->Branch("t","EdbSegP",&tr,32000,99);
+  tracks->Branch("tmin.","EdbSegP",&tmin,32000,99);
+  tracks->Branch("tmax.","EdbSegP",&tmax,32000,99);
+  tracks->Branch("t.","EdbSegP",&tr,32000,99);
   tracks->Branch("s",&segments);
+
 
   int ntr=0;
   int nsegments = 2;
@@ -1508,7 +1513,11 @@ int EdbPVRec::MakeTracksTree()
       seg->SetErrors(sx2,sy2,sz2,stx2,sty2,sp2);
       track->AddSegment(*seg);
     }
-    track->FitTrackKF(mass_pi, false);
+
+    track->SetID(it);
+    track->SetP(4.);
+    track->FitTrackKFS(mass_pi, false);
+
     tracks->Fill();
     track->Clear();
     ntr++;

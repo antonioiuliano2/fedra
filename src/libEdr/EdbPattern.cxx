@@ -36,12 +36,14 @@ EdbSegP::EdbSegP()
   eW=0;
   eVolume=0;
   eDZ=0;
+  eP=-999.;
+  eChi2=0;
   eCOV=0;
 }
 
 
 ///______________________________________________________________________________
-void EdbSegP::Copy(EdbSegP &s)
+void EdbSegP::Copy(const EdbSegP &s)
 {
       SetPID(s.PID());
       Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
@@ -55,6 +57,7 @@ void EdbSegP::Copy(EdbSegP &s)
       SetDZ(s.DZ());
       SetDZem(s.DZem());
       SetP(s.P());
+      SetChi2(s.Chi2());
 }
 
 
@@ -259,6 +262,8 @@ void EdbSegP::MergeTo( EdbSegP &s )
 void EdbSegP::Print(Option_t *opt) const
 {
   printf("EdbSegP: %d  %f %f %f  %f %f  %f  %d\n", ID(),X(),Y(),Z(),TX(),TY(),W(),Flag() );
+  printf("P= %f \t Prob = %f \t Chi2 = %f \n", P(),Prob(),Chi2() );
+  if(eCOV) eCOV->Print();
 } 
 
 //______________________________________________________________________________
@@ -492,8 +497,6 @@ EdbTrackP::EdbTrackP(int nseg=0)
   eS=0;
   eVid = 0;  
   if(nseg>0) eS = new EdbSegmentsBox(nseg);
-  //mCOV.ResizeTo(5,5);
-  //eCOV=&mCOV;
 }
  
 //______________________________________________________________________________
@@ -504,11 +507,13 @@ EdbTrackP::~EdbTrackP()
 }
 
 //______________________________________________________________________________
-void EdbTrackP::Copy(EdbTrackP &tr)
+void EdbTrackP::Copy(const EdbTrackP &tr)
 {
   Reset();
   SetID(tr.ID());
   int nseg=tr.N();
+  eSegZmin.Copy(*tr.TrackZmin());
+  eSegZmax.Copy(*tr.TrackZmax());
   for(int i=0; i<nseg; i++)
     AddSegment(*tr.GetSegment(i));
 }
@@ -533,7 +538,6 @@ void EdbTrackP::FitTrack()
   z  /= nseg;
   tx /= nseg;
   ty /= nseg;
-  w  /= nseg;
   Set(ID(),x,y,tx,ty,w);
   SetZ(z);
 }
@@ -555,7 +559,7 @@ double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
 int  EdbTrackP::FitTrackKF(float ma, bool zmax)
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
-  // if (zmax==false) track parameters are calculated at segment woth min Z
+  // if (zmax==false) track parameters are calculated at segment with min Z
 
   float dPb;
   double teta0sq;
@@ -676,6 +680,13 @@ int  EdbTrackP::FitTrackKF(float ma, bool zmax)
   SetCOV( cov.array(), 4 );
   SetChi2((float)chi2);
   SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+  SetW( (float)nseg );
+
+  if(zmax) {
+    eSegZmax.Copy( *((EdbSegP*)this) );
+  } else {
+    eSegZmin.Copy( *((EdbSegP*)this) );
+  }
 
   return 0;
 }
@@ -684,7 +695,7 @@ int  EdbTrackP::FitTrackKF(float ma, bool zmax)
 int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
-  // if (zmax==false) track parameters are calculated at segment woth min Z
+  // if (zmax==false) track parameters are calculated at segment with min Z
 
   float dPb;
   double teta0sq;
@@ -830,9 +841,8 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
 	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.);
   SetZ(GetSegment(iend)->Z());
   SetCOV( (*cov[iend]).array(), 4 );
-  SetErrorP(P()*0.1);
-  SetChi2((float)chi2);
-  SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+  //SetChi2((float)chi2);
+  //SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
 
 // Smoothing
 
@@ -856,6 +866,34 @@ int  EdbTrackP::FitTrackKFS(float ma, bool zmax)
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,(nseg-1)*4));
+  SetW( (float)nseg );
+
+  int imi, ima;
+  if(zmax) {
+    imi=istart;
+    ima=iend;
+  }else{
+    imi=iend;
+    ima=istart;
+  }
+
+  eSegZmax.Set(ID(),(float)(*pars[ima])(0),(float)(*pars[ima])(1),
+		(float)(*pars[ima])(2),(float)(*pars[ima])(3),1.);
+  eSegZmax.SetZ(GetSegment(ima)->Z());
+  eSegZmax.SetCOV( (*covs[ima]).array(), 4 );
+  eSegZmax.SetChi2((float)chi2);
+  eSegZmax.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+  eSegZmax.SetW( (float)nseg );
+  eSegZmax.SetP( P() );
+
+  eSegZmin.Set(ID(),(float)(*pars[imi])(0),(float)(*pars[imi])(1),
+		(float)(*pars[imi])(2),(float)(*pars[imi])(3),1.);
+  eSegZmin.SetZ(GetSegment(imi)->Z());
+  eSegZmin.SetCOV( (*covs[imi]).array(), 4 );
+  eSegZmin.SetChi2((float)chi2);
+  eSegZmin.SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
+  eSegZmin.SetW( (float)nseg );
+  eSegZmin.SetP( P() );
 
 // Delete matrixes and vectors
 

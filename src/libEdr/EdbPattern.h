@@ -14,7 +14,6 @@
 #include "TArrayL.h"
 #include "TMatrixD.h"
 #include "EdbVirtual.h"
-//#include "vt++/CMatrix.hh"
 
 class EdbAffine2D;
 class TIndexCell;
@@ -44,8 +43,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    eP;               // momentum of the particle
 
  protected: 
-  TMatrixD   *eCOV;          //
-    //CMatrix   *eCOV;             // covariant matrix of the parameters (x,y,tx,ty,p)
+  TMatrixD   *eCOV;            // covariant matrix of the parameters (x,y,tx,ty,p)
 
  public:
   EdbSegP();
@@ -59,7 +57,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void MergeTo( EdbSegP &s );
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
 
-  void    Copy( EdbSegP &s);
+  void    Copy(const EdbSegP &s);
 
   void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
@@ -237,32 +235,43 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 class EdbTrackP : public EdbSegP {
  
  private:
+  EdbSegP  eSegZmin;
+  EdbSegP  eSegZmax;
+
   EdbSegmentsBox  *eS;    //! array of segments
   TArrayL         *eVid;  //! volume-wide segments id's
-
-  //TMatrixD  mCOV;
 
  public:
   EdbTrackP(int nseg=0);
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) )
     {
       eS = new EdbSegmentsBox(*(track.S()));
+      eSegZmin.Copy(*track.TrackZmin());
+      eSegZmax.Copy(*track.TrackZmax());
     }
   virtual ~EdbTrackP();
 
   EdbSegmentsBox *S() const { return eS; }
 
-  void     AddSegment(EdbSegP &s)  { if(!eS) eS = new EdbSegmentsBox(); eS->AddSegment(s); }
+  const EdbSegP  *TrackZmin() const {return &eSegZmin;}
+  const EdbSegP  *TrackZmax() const {return &eSegZmax;}
+
+  void     AddSegment(EdbSegP &s)  
+    { 
+      if(!eS) eS = new EdbSegmentsBox();
+      eS->AddSegment(s);
+    }
+
   EdbSegP *GetSegment(int i) const {if(eS) return eS->GetSegment(i); else return 0; }
   int      N() const  {if(eS)  return eS->N(); else return 0; }
   void     Reset()    { if(eS) eS->Reset(); }
 
-  void Copy(EdbTrackP &tr);
+  void Copy(const EdbTrackP &tr);
   void FitTrack();
   int FitTrackKF( float mass, bool zmax=false );
   int FitTrackKFS( float mass, bool zmax=false );
 
-  double ThetaPb2( float p, float dPath, float mass);
+  static double ThetaPb2( float p, float dPath, float mass);
 
   float CHI2();
 
