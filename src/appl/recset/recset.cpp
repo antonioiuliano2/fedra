@@ -22,9 +22,13 @@ int main(int argc, char* argv[])
   } else if(!strcmp(key,"a")) {
     proc.Align();
   } else if(!strcmp(key,"t")) {
-    proc.LinkTracks();
+    proc.LinkTracks(0);
+  } else if(!strcmp(key,"t1")) {
+    proc.LinkTracks(1);
   } else if(!strcmp(key,"at")) {
-    proc.AlignLinkTracks();
+    proc.AlignLinkTracks(0);
+  } else if(!strcmp(key,"at1")) {
+    proc.AlignLinkTracks(1);
   }
   return 0;
 }

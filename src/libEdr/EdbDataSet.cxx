@@ -337,7 +337,6 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	sscanf(buf+strlen(key),"%d",&id);
 	eAFID=id;
       }
-
   }
 
   fclose(fp);
@@ -873,126 +872,6 @@ int EdbDataProc::Link()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
-{
-  /// Segments fit by Andrey Aleksandrov (Jul-2003)
-
-  register Double_t dz = s2->Z() - s1->Z();
-  Double_t dz2 = dz*dz;
- 
-  Double_t q1,q2,w1,w2;
-  Double_t d1,d2,dxx11,dxx22;
-  Double_t dtt01,dtt02,dtx01,dtx02;
-  Double_t dxx01,dxx02,dxt01,dxt02;
-  Double_t xm1,xm2,sx0,sy0,stx0,sty0;
- 
-  register Double_t q;
-
-  if(dz==0.0) {
-    s->SetZ(s1->Z());
-    s->SetID(s1->ID());
-      
-    q1 = s1->SX()*s1->SX();
-    q2 = s2->SX()*s2->SX();
-    w1 = s1->STX()*s1->STX();
-    w2 = s2->STX()*s2->STX();
-    
-    sx0 = q1*q2/(q1+q2);
-    q = (s1->X()/q1+s2->X()/q2)*sx0;
-    s->SetX(q);
-    stx0 = w1*w2/(w1+w2);
-    q = (s1->TX()/w1+s2->TX()/w2)*stx0;
-    s->SetTX(q);
- 
-    q1 = s1->SY()*s1->SY();
-    q2 = s2->SY()*s2->SY();
-    w1 = s1->STY()*s1->STY();
-    w2 = s2->STY()*s2->STY();
- 
-    sy0 = q1*q2/(q1+q2);
-    q = (s1->Y()/q1+s2->Y()/q2)*sy0;
-    s->SetY(q);
-    sty0 = w1*w2/(w1+w2);
-    q = (s1->TY()/w1+s2->TY()/w2)*sty0;
-    s->SetTY(q);
- 
-    s->SetErrors(TMath::Sqrt(sx0),TMath::Sqrt(sy0),0.0,TMath::Sqrt(stx0),TMath::Sqrt(sty0));
-    return;
-  }
-
-  q = 0.5*(s1->Z()+s2->Z());
-  register Double_t dzr = 1.0/dz;
- 
-  s->SetZ(q);
-  s->SetID(s1->ID());
- 
-  q1 = s1->SX()*s1->SX();
-  q2 = s2->SX()*s2->SX();
-  w1 = s1->STX()*s1->STX();
-  w2 = s2->STX()*s2->STX();
- 
-  q = dz2*w2+q2;
-  d1 = 1.0/(q+q1);
-  xm1 = (q*s1->X()+(s2->X()-dz*s2->TX())*q1)*d1;
- 
-  q = dz2*w1+q1;
-  d2 = 1.0/(q+q2);
-  xm2 = (q*s2->X()+(s1->X()+dz*s1->TX())*q2)*d2;
-
-
-  dtt01 = q2*d2;
-  dtt02 = q1*d1;
-  dxx11 = 1.0-dtt02;
-  dxx22 = 1.0-dtt01;
-  dxx01 = 0.5*(dxx11+dtt01);
-  dxx02 = 0.5*(dxx22+dtt02);
-  dxt01 = 0.5*dz*dtt01;
-  dxt02 = -0.5*dz*dtt02;
-  dtx01 = dzr*(dtt01-dxx11);
-  dtx02 = dzr*(dxx22-dtt02);
- 
-  q = (xm1+xm2)*0.5;
-  s->SetX(q);
-  q = (xm2-xm1)*dzr;
-  s->SetTX(q);
-  sx0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
-  stx0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
- 
-  q1 = s1->SY()*s1->SY();
-  q2 = s2->SY()*s2->SY();
-  w1 = s1->STY()*s1->STY();
-  w2 = s2->STY()*s2->STY();
- 
-  q = dz2*w2+q2;
-  d1 = 1.0/(q+q1);
-  xm1 = (q*s1->Y()+(s2->Y()-dz*s2->TY())*q1)*d1;
- 
-  q = dz2*w1+q1;
-  d2 = 1.0/(q+q2);
-  xm2 = (q*s2->Y()+(s1->Y()+dz*s1->TY())*q2)*d2;
-
-  dtt01 = q2*d2;
-  dtt02 = q1*d1;
-  dxx11 = 1.0-dtt02;
-  dxx22 = 1.0-dtt01;
-  dxx01 = 0.5*(dxx11+dtt01);
-  dxx02 = 0.5*(dxx22+dtt02);
-  dxt01 = 0.5*dz*dtt01;
-  dxt02 = -0.5*dz*dtt02;
-  dtx01 = dzr*(dtt01-dxx11);
-  dtx02 = dzr*(dxx22-dtt02);
- 
-  q = (xm1+xm2)*0.5;
-  s->SetY(q);
-  q = (xm2-xm1)*dzr;
-  s->SetTY(q);
-  sy0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
-  sty0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
- 
-  s->SetErrors(sx0,sy0,0.0,stx0,sty0);
-}
-
-///______________________________________________________________________________
 TTree *EdbDataProc::InitCouplesTree(const char *file_name, const char *mode)
 {
   const char *tree_name="couples";
@@ -1085,7 +964,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
       s->SetZ( s1->Z() );
       */
 
-      LinkMT(s1,s2,s);
+      EdbSegP::LinkMT(s1,s2,s);
 
       tree->Fill();
 
@@ -1136,7 +1015,7 @@ int EdbDataProc::CheckShrinkage(EdbPVRec *ali, int couple, float &shr1, float &s
     sumt2 += t2/t;
   }
 
-  if(nsum<10)  return nsum;
+  if(nsum<10)  return 0;
 
   shr1 = sumt1/nsum;
   shr2 = sumt2/nsum;
@@ -1160,8 +1039,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   int    nshr=0,nshrtot=0;
 
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
-    //    nareas = piece.MakeLinkListCoord(irun);
-    nareas = piece.MakeLinkListArea(irun);
+    nareas = piece.MakeLinkListCoord(irun);
+    //nareas = piece.MakeLinkListArea(irun);
     for(int i=0; i<nareas; i++ ) {
 
       ali      = new EdbPVRec();
@@ -1252,14 +1131,21 @@ void EdbDataProc::Align()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::LinkTracks()
+void EdbDataProc::LinkTracks( int alg )
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
   ali->Link();
   printf("link ok\n");
 
-  TTree *cptree=InitCouplesTree("linked_couples","RECREATE");
+  if(alg==1) {
+    ali->MakeHoles();
+    ali->Link();
+    printf("link ok\n");
+  } else
+    ali->FillTracksCell();
+
+  TTree *cptree=InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 
@@ -1267,7 +1153,7 @@ void EdbDataProc::LinkTracks()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::AlignLinkTracks()
+void EdbDataProc::AlignLinkTracks(int alg)
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
@@ -1282,7 +1168,15 @@ void EdbDataProc::AlignLinkTracks()
 
   ali->Link();
   printf("link ok\n");
-  TTree *cptree=InitCouplesTree("linked_couples","RECREATE");
+
+  if(alg==1) {
+    ali->MakeHoles();
+    ali->Link();
+    printf("link ok\n");
+  } else
+    ali->FillTracksCell();
+
+  TTree *cptree=InitCouplesTree("linked_couples.root","RECREATE");
   FillCouplesTree(cptree, ali,0);
   CloseCouplesTree(cptree);
 

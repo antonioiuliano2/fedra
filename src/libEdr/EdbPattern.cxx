@@ -19,8 +19,21 @@ ClassImp(EdbPattern)
 ClassImp(EdbPatternsVolume)
 
 //______________________________________________________________________________
+EdbSegP::EdbSegP() 
+{
+  ePID=0;
+  eID=0;
+  eVid[0]=0;
+  eVid[1]=0;
+  eFlag=0;
+  eProb=0;
+  eW=0;
+}
+
+//______________________________________________________________________________
 EdbSegP& EdbSegP::operator += (EdbSegP const& s) 
 {
+ 
   float dz = s.Z() - Z();
 
   float tx,ty;
@@ -73,71 +86,128 @@ EdbSegP& EdbSegP::operator += (EdbSegP const& s)
   return *this;
 }
 
-//______________________________________________________________________________
-/*
-EdbSegP& EdbSegP::operator += (EdbSegP const& s) 
+///______________________________________________________________________________
+void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
 {
-  float dz = s.Z() - Z();
+  /// Segments fit by Andrey Aleksandrov (Jul-2003)
 
-  float tx,ty,stx,sty;   //base angle
-  float w,w1,w2;
+  register Double_t dz = s2->Z() - s1->Z();
+  Double_t dz2 = dz*dz;
+ 
+  Double_t q1,q2,w1,w2;
+  Double_t d1,d2,dxx11,dxx22;
+  Double_t dtt01,dtt02,dtx01,dtx02;
+  Double_t dxx01,dxx02,dxt01,dxt02;
+  Double_t xm1,xm2,sx0,sy0,stx0,sty0;
+ 
+  register Double_t q;
 
-  if (dz == 0 ) {                     // base vector is mean of angles
-    w1 = 1./STX()/STX();
-    w2 = 1./s.STX()/s.STX();
-    tx = (w1*TX()+ w2*s.TX())/(w1+w2);
-    stx = TMath::Sqrt(1./(w1+w2));
-
-    w1 = 1./(STY()*STY());
-    w2 = 1./(s.STY()*s.STY());
-    ty = (w1*TY()+ w2*s.TY())/(w1+w2);
-    sty = TMath::Sqrt(1./(w1+w2));
-
-  } else {        // base vector as 2-points vector
-
-    tx = (s.X() - X()) / dz;
-    ty = (s.Y() - Y()) / dz;
-    stx = TMath::Sqrt( (SX()*SX() + s.SX()*s.SX())/(dz*dz) );
-    sty = TMath::Sqrt( (SY()*SY() + s.SY()*s.SY())/(dz*dz) );
-
-    if(stx>0&&sty>0) {              // correction of base angle to segments angles
-      w  = 1./(stx*stx);
-      w1 = 1./(STX()*STX());
-      w2 = 1./(s.STX()*s.STX());
-      tx = (tx*w + TX()*w1 + s.TX()*w2)/(w+w1+w2);
-      stx = TMath::Sqrt(1./(w+w1+w2));
-
-      w  = 1./(sty*sty);
-      w1 = 1./(STY()*STY());
-      w2 = 1./(s.STY()*s.STY());
-      ty = (ty*w + TY()*w1 + s.TY()*w2)/(w+w1+w2);
-      sty = TMath::Sqrt(1./(w+w1+w2));
-    }
+  if(dz==0.0) {
+    s->SetZ(s1->Z());
+    s->SetID(s1->ID());
+      
+    q1 = s1->SX()*s1->SX();
+    q2 = s2->SX()*s2->SX();
+    w1 = s1->STX()*s1->STX();
+    w2 = s2->STX()*s2->STX();
+    
+    sx0 = q1*q2/(q1+q2);
+    q = (s1->X()/q1+s2->X()/q2)*sx0;
+    s->SetX(q);
+    stx0 = w1*w2/(w1+w2);
+    q = (s1->TX()/w1+s2->TX()/w2)*stx0;
+    s->SetTX(q);
+ 
+    q1 = s1->SY()*s1->SY();
+    q2 = s2->SY()*s2->SY();
+    w1 = s1->STY()*s1->STY();
+    w2 = s2->STY()*s2->STY();
+ 
+    sy0 = q1*q2/(q1+q2);
+    q = (s1->Y()/q1+s2->Y()/q2)*sy0;
+    s->SetY(q);
+    sty0 = w1*w2/(w1+w2);
+    q = (s1->TY()/w1+s2->TY()/w2)*sty0;
+    s->SetTY(q);
+ 
+    s->SetErrors(TMath::Sqrt(sx0),TMath::Sqrt(sy0),0.0,TMath::Sqrt(stx0),TMath::Sqrt(sty0));
+    s->SetW( s1->W()+s2->W() );
+    return;
   }
 
-  // extrapolate s1 to s2->Z() and calculate mean x,y
+  q = 0.5*(s1->Z()+s2->Z());
+  register Double_t dzr = 1.0/dz;
+ 
+  s->SetZ(q);
+  s->SetID(s1->ID());
+ 
+  q1 = s1->SX()*s1->SX();
+  q2 = s2->SX()*s2->SX();
+  w1 = s1->STX()*s1->STX();
+  w2 = s2->STX()*s2->STX();
+ 
+  q = dz2*w2+q2;
+  d1 = 1.0/(q+q1);
+  xm1 = (q*s1->X()+(s2->X()-dz*s2->TX())*q1)*d1;
+ 
+  q = dz2*w1+q1;
+  d2 = 1.0/(q+q2);
+  xm2 = (q*s2->X()+(s1->X()+dz*s1->TX())*q2)*d2;
 
-  float x1  = X() + dz*tx;
-  float y1  = Y() + dz*ty;
-  float wx1 = 1./( SX()*SX() + stx*dz*stx*dz );
-  float wy1 = 1./( SY()*SY() + sty*dz*sty*dz );
 
-  float wx2 = 1./s.SX()/s.SX();
-  float wy2 = 1./s.SY()/s.SY();
+  dtt01 = q2*d2;
+  dtt02 = q1*d1;
+  dxx11 = 1.0-dtt02;
+  dxx22 = 1.0-dtt01;
+  dxx01 = 0.5*(dxx11+dtt01);
+  dxx02 = 0.5*(dxx22+dtt02);
+  dxt01 = 0.5*dz*dtt01;
+  dxt02 = -0.5*dz*dtt02;
+  dtx01 = dzr*(dtt01-dxx11);
+  dtx02 = dzr*(dxx22-dtt02);
+ 
+  q = (xm1+xm2)*0.5;
+  s->SetX(q);
+  q = (xm2-xm1)*dzr;
+  s->SetTX(q);
+  sx0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
+  stx0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
+ 
+  q1 = s1->SY()*s1->SY();
+  q2 = s2->SY()*s2->SY();
+  w1 = s1->STY()*s1->STY();
+  w2 = s2->STY()*s2->STY();
+ 
+  q = dz2*w2+q2;
+  d1 = 1.0/(q+q1);
+  xm1 = (q*s1->Y()+(s2->Y()-dz*s2->TY())*q1)*d1;
+ 
+  q = dz2*w1+q1;
+  d2 = 1.0/(q+q2);
+  xm2 = (q*s2->Y()+(s1->Y()+dz*s1->TY())*q2)*d2;
 
-  float x = (x1*wx1 + s.X()*wx2)/(wx1+wx2);
-  float y = (y1*wy1 + s.Y()*wy2)/(wy1+wy2);
-  float sx = TMath::Sqrt(1./(wx1+wx2));
-  float sy = TMath::Sqrt(1./(wy1+wy2));
-  float sz = s.SZ();
-
-  Set(s.ID(),x,y,tx,ty,W()+s.W(),s.Flag());
-  SetZ(s.Z());
-  SetErrors(sx,sy,sz,stx,sty);
-
-  return *this;
+  dtt01 = q2*d2;
+  dtt02 = q1*d1;
+  dxx11 = 1.0-dtt02;
+  dxx22 = 1.0-dtt01;
+  dxx01 = 0.5*(dxx11+dtt01);
+  dxx02 = 0.5*(dxx22+dtt02);
+  dxt01 = 0.5*dz*dtt01;
+  dxt02 = -0.5*dz*dtt02;
+  dtx01 = dzr*(dtt01-dxx11);
+  dtx02 = dzr*(dxx22-dtt02);
+ 
+  q = (xm1+xm2)*0.5;
+  s->SetY(q);
+  q = (xm2-xm1)*dzr;
+  s->SetTY(q);
+  sy0 = TMath::Sqrt(dxx01*dxx01*q1+dxx02*dxx02*q2+dxt01*dxt01*w1+dxt02*dxt02*w2);
+  sty0 = TMath::Sqrt(dtx01*dtx01*q1+dtx02*dtx02*q2+dtt01*dtt01*w1+dtt02*dtt02*w2);
+ 
+  s->SetErrors(sx0,sy0,0.0,stx0,sty0);
+  s->SetW( s1->W()+s2->W() );
 }
-*/
+
 //______________________________________________________________________________
 double EdbSegP::Chi2( EdbSegP &s ) const
 {

@@ -203,8 +203,8 @@ class EdbDataProc : public TObject {
   int  Link();
   int  Link(EdbDataPiece &piece);
   void Align();
-  void LinkTracks();
-  void AlignLinkTracks();
+  void LinkTracks(int alg=0);
+  void AlignLinkTracks(int alg=0);
 
   int    ShrinkCorr() {return 1;}
   int    CheckShrinkage( EdbPVRec *ali, int couple, float &shr1, float &shr2 );

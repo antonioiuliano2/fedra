@@ -300,13 +300,18 @@ class EdbPVRec : public EdbPatternsVolume {
 
   TIndexCell *GetTracksCell() const { return eTracksCell; }
   int   MakeTracksTree();
+  int   MakeHoles();
 
   int    LinkSlow();
   int    Link();
   int    Align();
   int    AlignA();
   int    LinkTracks();
+  void   FillTracksCell1();
   void   FillTracksCell();
+  int    InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid );
+  int    InsertHoles();
+  int    CollectSegment(TIndexCell *ct, TIndexCell *cross);
   int    SelectLongTracks(int nsegments, TIndexCell *tracksCell);
 
   void SetOffsetsMax(float ox, float oy);

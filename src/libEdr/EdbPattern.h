@@ -37,7 +37,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t      eFlag;
 
  public:
-  EdbSegP(){}
+  EdbSegP();
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0): 
     eID(id), eX(x), eY(y), eTX(tx), eTY(ty), eW(w), eFlag(flag) {}
   virtual ~EdbSegP(){}
@@ -47,6 +47,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   float  Chi2A( EdbSegP &s ) const;
   float  Chi2Aprob( EdbSegP &s ) const;
 
+  static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
   void MergeTo( EdbSegP &s );
 

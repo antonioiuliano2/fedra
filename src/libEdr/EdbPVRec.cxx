@@ -1000,12 +1000,162 @@ void EdbPVRec::FillTracksCell()
 }
 
 //______________________________________________________________________________
+void EdbPVRec::FillTracksCell1()
+{
+  // TODO: speed-up this algorithm
+
+  // fill tracks cell "vid1:vid2"
+  // second segment is considered as leading one
+  Long_t vid1,vid2;
+
+  TIndexCell *tracks = eTracksCell;  // "vid1:vid2"
+  TIndexCell *cc=0;
+  TIndexCell *cross = new TIndexCell();
+
+  if(tracks) tracks->Drop();
+
+  EdbPatCouple *pc = 0;
+  EdbSegCouple *sc = 0;
+
+  int ncp = Ncouples();
+  int ncpp;
+  for(int iv=0; iv<ncp; iv++ ) {
+    pc = GetCouple(iv);
+    ncpp = pc->Ncouples();
+    printf("cross: %d %d\n",iv,ncpp);
+    for(int ip=0; ip<ncpp; ip++) {
+      sc = pc->GetSegCouple(ip);
+
+      vid1 = Vid( pc->ID1(),sc->ID1() );
+      vid2 = Vid( pc->ID2(),sc->ID2() );
+
+      cc=cross->FindAdd(vid1);
+      //      cc->FindAdd(vid1);
+      cc->FindAdd(vid2);
+
+      cc=cross->FindAdd(vid2);
+      cc->FindAdd(vid1);
+      //      cc->FindAdd(vid2);
+
+    }
+  }
+  cross->Sort();
+  cross->PrintPopulation(1);
+
+  TIndexCell *ct=0;
+  int ncross = cross->N(1);
+  printf("ncross = %d\n",ncross);
+  int ncc=0;
+
+  for(int i=0; i<ncross; i++) {
+    cc = cross->At(i);
+    ncc = cc->N(1); 
+    if(!ncc)     continue;
+
+    ct = tracks->FindAdd(cc->Value());
+    ct->FindAdd(cc->Value());
+
+    CollectSegment(ct,cross);
+  }
+
+  tracks->Sort();
+  tracks->PrintPopulation(1);
+}
+
+//______________________________________________________________________________
+int EdbPVRec::CollectSegment( TIndexCell *ct, TIndexCell *cross)
+{
+  TIndexCell *cc =0;
+  int ncc =0;
+  int nct = ct->N(1);
+  int flag=0;
+  for(int j=0; j<nct; j++) {
+    cc  =  cross->Find( ct->At(j)->Value() );
+    ncc = cc->N(1);
+    if(!ncc) continue;
+    flag++;
+    for(int icc=0; icc<ncc; icc++) {
+      ct->FindAdd(cc->At(icc)->Value());
+    }
+    cc->List()->Delete();
+    if(!CollectSegment(ct,cross)) return 0;
+  }
+  return flag;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::InsertHoles()
+{
+  TIndexCell *ct;
+  Long_t     vn=0,v0=0,v=0;
+  int        nholes=0;
+
+  int id=0,pid=0;
+  EdbSegP   *s1=0, *s2=0;
+  int n=0;
+  int ntc=eTracksCell->N(1);
+  for(int it=0; it<ntc; it++) {
+
+    ct = eTracksCell->At(it);
+    n = ct->N(1);
+    if( n >= Npatterns() )       continue;  // too many segments
+    vn = ct->At(n-1)->Value();
+    v0 = ct->At(0)->Value();
+    if( Pid(vn)-Pid(v0) < n-1 )  continue;  // track is not isolated
+
+    if( Pid(v0) > 0 )  {
+      v = ct->At(1)->Value();
+      s1 = GetPattern( Pid(v0) )->GetSegment( Sid(v0) );
+      s2 = GetPattern( Pid(v)  )->GetSegment( Sid(v) );
+      pid =  Pid(v0)-1;
+      id = InsertHole( s2,s1, pid); 
+      ct->Add( Vid( pid, id) );
+      nholes++;
+    }
+    if( Pid(vn) < Npatterns()-1 )  {
+      v = ct->At(n-2)->Value();
+      s1 = GetPattern( Pid(v)  )->GetSegment( Sid(v)  );
+      s2 = GetPattern( Pid(vn) )->GetSegment( Sid(vn) );
+      pid = Pid(vn)+1;
+      id = InsertHole( s1,s2, pid );
+      ct->Add( Vid( pid, id) );
+      nholes++;
+    }
+  }
+  return nholes;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid )
+{
+  EdbSegP s;
+  EdbSegP::LinkMT(s1,s2,&s);
+  s.SetFlag(-1);
+  EdbPattern *pat = GetPattern(pid);
+  s.PropagateTo(pat->Z());
+  pat->AddSegment(s);
+  return pat->N()-1;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::MakeHoles()
+{
+  int nholes =0;
+  FillTracksCell1();
+  nholes = InsertHoles();
+  eTracksCell->Sort();
+  printf( "nholes= %d\n" , nholes );
+  return nholes;
+}
+
+//______________________________________________________________________________
 int EdbPVRec::MakeTracksTree()
 {
-  FillTracksCell();
 
   EdbSegP *seg;
-  int nseg,trid;
+  EdbSegP *s0=0;
+  EdbSegP *tr = new EdbSegP();
+  int nseg,trid,npl,n0;
  
   TFile fil("linked_tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
@@ -1014,7 +1164,10 @@ int EdbPVRec::MakeTracksTree()
 
   tracks->Branch("trid",&trid,"trid/I");
   tracks->Branch("nseg",&nseg,"nseg/I");
-  tracks->Branch("segments",&segments);
+  tracks->Branch("npl",&npl,"npl/I");
+  tracks->Branch("n0",&n0,"n0/I");
+  tracks->Branch("t","EdbSegP",&tr,32000,99);
+  tracks->Branch("s",&segments);
 
   int ntr=0;
   int nsegments = 2;
@@ -1033,14 +1186,26 @@ int EdbPVRec::MakeTracksTree()
 
     trid = ct->At(0)->Value();
     nseg = ct->GetEntries();
+    npl = Pid(ct->At(nseg-1)->Value()) - Pid(ct->At(0)->Value()) +1;
+
+    n0=0;
     for(int is=0; is<nseg; is++) {
       vid = ct->At(is)->Value();
       pat = GetPattern( Pid(vid) );
       seg = pat->GetSegment( Sid(vid) );
       seg->SetPID( Pid(vid) );
+      if(seg->Flag()<0) n0++;
+
+      if(is==0)  tr = new EdbSegP(*seg);
+      else       {
+	s0 = new EdbSegP(*tr);
+	EdbSegP::LinkMT(s0,seg,tr);
+	delete s0;
+      }
       new((*segments)[is])  EdbSegP( *seg );
     }
-    tracks->SetBranchAddress("segments",&segments);
+    //    tracks->SetBranchAddress("s",&segments);
+    //    tracks->SetBranchAddress("t.",&tr);
     tracks->Fill();
     segments->Clear();
     ntr++;

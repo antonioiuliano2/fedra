@@ -69,7 +69,8 @@ XCUT 2	   -109. -108.	-159.  -156.	-.06   .06	-.06   .06	10.  17.
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
 
 # XCUT 0	-100000. 100000. -100000. 100000.	-.6     .6	  -.6    .6	0.  33.
-
+ICUT 0	-65000. -55000. 50000. 60000.	-.9     .9	  -.9    .9	0.  33.
+# ICUT 0	-65000. -60000. 50000. 55000.	-.9     .9	  -.9    .9	0.  33.
 
 # CUTCP can be used before alignment and linking
 # Max for:  	N1  	N1tot	N2 	N2tot	Chi2	Chi2P
