@@ -22,7 +22,7 @@
 // 05 Sep 2000 (TG) include <string.h> added
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <string.h> // for memcpy
 #include "vt++/VtSqMatrix.hh"
 #include "vt++/VtVector.hh"

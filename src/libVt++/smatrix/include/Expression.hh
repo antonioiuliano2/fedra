@@ -36,7 +36,7 @@
 //==============================================================================
 // Expr: class representing SVector expressions
 //==============================================================================
-#include <iostream>
+#include "Riostream.h"
 using namespace std;
 
 template <class ExprType, class T, unsigned int D, unsigned int D2 = 0>

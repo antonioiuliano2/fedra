@@ -23,7 +23,7 @@
 // 23 Okt 2000 (TG) code for place_at(VtVector,...) added
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <assert.h>
 #include <string.h> // for memcpy
 #include "vt++/VtMatrix.hh"

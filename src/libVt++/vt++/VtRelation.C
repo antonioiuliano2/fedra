@@ -20,7 +20,7 @@
 // 21 Aug 2000 (TG) creation
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include "vt++/VtRelation.hh"
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"

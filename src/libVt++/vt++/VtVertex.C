@@ -59,7 +59,7 @@
 // 29 Okt 2001 (TG) bug fix in findVertex3D()
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <iomanip>
 #include <algorithm>
 #include "vt++/VtVertex.hh"
@@ -69,24 +69,16 @@
 #include "vt++/VtNegMatrix.hh"
 #include "vt++/VtMassC.hh"
 
-#if defined USE_ROOT
-//#include "clue/cluearte.hh"
-//#include "geometry/Point3D.hh" // for RecoSegment.hh
-//#include "clue/RecoTrack.hh"
-//#include "clue/RecoVertex.hh"
-#include "smatrix/SVector.hh"
-//#include "interfaces/TrackIf.hh"
-#endif // USE_ROOT
-
+#include "TMath.h"
 
 ClassImp(VERTEX::Vertex);
 
-extern "C" {
+//extern "C" {
   // from CERNLIB (libmathlib.a)
-  float prob_(float* chi, int* ndf);
-}
+//  float prob_(float* chi, int* ndf);
+//}
 // CERNLIB interface function
-static float CERN_prob(float X, int N) { return prob_(&X, &N); }
+static float CERN_prob(float X, int N) { return TMath::Prob((double)X, N); }
 
 using namespace MATRIX;
 

@@ -23,7 +23,7 @@
 // 16 Jan 2002 (TG) changed print() return type
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"
 #include "vt++/VtKalman.hh"

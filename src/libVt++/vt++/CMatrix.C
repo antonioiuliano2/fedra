@@ -33,7 +33,7 @@
 //
 // *****************************************************************************
 
-#include <iostream>
+#include "Riostream.h"
 #include <assert.h>
 #include "vt++/CMatrix.hh"
 #include "vt++/VtUtil.hh"

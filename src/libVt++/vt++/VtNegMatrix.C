@@ -20,7 +20,7 @@
 // 21 Aug 2000 (TG) creation
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <assert.h>
 #include <string.h> // for memcpy
 #include "vt++/VtNegMatrix.hh"

@@ -30,7 +30,7 @@
 // 14 Jan 2002 (TG) added more operator==(), operator!=(), operator>(), operator<()
 //
 // ********************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <iomanip>
 #include <assert.h>
 #include "Dsinv.hh"

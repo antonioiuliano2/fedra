@@ -24,7 +24,7 @@
 // 17 Okt 2001 (TG) added/improved #defines for ARTE
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 
 #include "vt++/VtUtil.hh"
 #include "vt++/VtVertex.hh"

@@ -33,7 +33,7 @@
 // 16 Jan 2002 (TG) simplified print() output
 //
 // ********************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <iomanip>
 #include <cmath>
 

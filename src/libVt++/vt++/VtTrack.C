@@ -35,7 +35,7 @@
 // 09 Jan 2002 (TG) changed return type of propagate() to bool
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include <iomanip>
 #include <cmath>
 

@@ -24,7 +24,7 @@
 // 09 Jul 2001 (TG) added clear()
 //
 // *****************************************************************************
-#include <iostream>
+#include "Riostream.h"
 #include "vt++/VtVertex.hh"
 #include "vt++/VtTrack.hh"
 #include "vt++/VtRelation.hh"

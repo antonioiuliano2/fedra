@@ -24,7 +24,7 @@
 
 #include "vt++/CVStag.vt++"
 #include "vt++/VtIni.hh"
-#include <iostream>
+#include "Riostream.h"
 using namespace std;
 
 namespace VERTEX {

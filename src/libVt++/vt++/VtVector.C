@@ -26,7 +26,7 @@
 //
 // *****************************************************************************
 
-#include <iostream>
+#include "Riostream.h"
 #include <assert.h>
 #include <string.h> // for memcpy
 #include "vt++/VtVector.hh"
