@@ -1,0 +1,69 @@
+#------------------------------------------------------------------------------
+include ../../config/RootDef.w32.mk
+include ../../config/ProjectDef.w32.mk
+#------------------------------------------------------------------------------
+
+LIB_NAME      = libVt++
+LIB_NAME2     = libvt
+CINT_NAME     = vtCint
+LINKDEF_NAME  = cintdict\LinkDef.hh
+
+LIB_TGT       = $(LIB_DIR)/$(LIB_NAME).dll
+
+#------------------------------------------------------------------------------
+headers =  CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
+           VtMatrix.hh VtNegMatrix.hh VtRelation.hh VtRelationList.hh \
+           VtSqMatrix.hh VtSymMatrix.hh VtTrack.hh VtVector.hh VtVertex.hh
+
+SrcSuf    = C
+  
+classes   = $(headers:.hh=.c)
+CINT    =  include\CMatrix.hh        include\VtDistance.hh \
+           include\VtIni.hh          include\VtKalman.hh   \
+           include\VtMassC.hh        include\VtMatrix.hh   \
+           include\VtNegMatrix.hh    include\VtRelation.hh \
+           include\VtRelationList.hh include\VtSqMatrix.hh \
+           include\VtSymMatrix.hh    include\VtTrack.hh    \
+           include\VtVector.hh       include\VtVertex.hh cintdict\LinkDef.hh
+SRC       = $(classes) $(CINT_NAME).cxx
+OBJ       = $(SRC:.cxx=.obj)
+OBJ       = $(OBJ:.c=.obj)
+
+CXXFLAGS = $(CXXFLAGS) -I$(INC_DIR)
+#------------------------------------------------------------------------------
+
+all: $(LIB_TGT) $(LIB_DIR)/libvt.lib $(LIB_DIR)/libvt.dll  
+
+#includes: $(headers)
+#	cp $(headers) $(INC_DIR)
+
+$(LIB_TGT): $(OBJ)
+    BINDEXPLIB  $* $(OBJ) > $*.def
+    lib /nologo /MACHINE:IX86 $(OBJ) /def:$*.def      $(OutPutOpt)$(LIB_TGT:.dll=.lib)
+    $(LD) $(DLLFLAGS) $(LDDEBUG) $(PROJECT_LIBS) $(OBJ) $*.exp $(LIBS) $(OutPutOpt)$(LIB_TGT) 
+
+$(CINT_NAME).cxx: $(CINT)
+    @echo "Generating dictionary Cint..."
+    rootcint -f $(CINT_NAME).cxx -c -I$(INC_DIR) $(CINT)
+
+$(CINT_NAME).obj: $(CINT_NAME).cxx
+    $(CXX) $(CXXFLAGS) -DCINTOBJECT -c $(CINT_NAME).cxx
+
+clean:
+    del /q $(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).* "$(LIB_DIR)"\$(LIB_NAME2).*
+
+depend:
+        @makedepend -I$(INCLUDE) *.cxx >& /dev/null
+
+.SUFFIXES: .$(SrcSuf)
+
+.$(SrcSuf).$(ObjSuf):
+    $(CXX) $(CXXFLAGS) -c $<
+
+#------------------------------------------------------------------------------
+# create hardlinks
+$(LIB_DIR)/$(LIB_NAME2).lib $(LIB_DIR)/$(LIB_NAME2).dll  :$(LIB_TGT) 
+    if exist "$(LIB_DIR)"\$(LIB_NAME2).lib del "$(LIB_DIR)"\$(LIB_NAME2).*
+    $(FEDRA_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).lib  "$(LIB_TGT:.dll=.lib)"
+    $(FEDRA_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).dll  "$(LIB_TGT)"
+

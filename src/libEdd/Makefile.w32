@@ -3,16 +3,15 @@ include ../config/RootDef.w32.mk
 include ../config/ProjectDef.w32.mk
 #------------------------------------------------------------------------------
 
-LIB_NAME      = libEdb
-CINT_NAME     = EdbCint
-LINKDEF_NAME  = EdbLinkDef
+LIB_NAME      = libEdd
+CINT_NAME     = EddCint
+LINKDEF_NAME  = EddLinkDef
+
+PROJECT_LIBS  = $(PROJECT_LIBS) libEmath.lib libEdb.lib libvt.lib libEdr.lib
 
 LIB_TGT       = $(LIB_DIR)/$(LIB_NAME).dll
 
-headers   = EdbCluster.h EdbView.h EdbRunHeader.h EdbRun.h \
-            EdbImage.h EdbFrame.h EdbSegment.h EdbStage.h \
-            EdbAffine.h EdbFiducial.h EdbVirtual.h EdbPrediction.h \
-            EdbOnline.h
+headers       = EdbDisplayBase.h  EdbDisplay.h
 
 classes   = $(headers:.h=.cxx)
 CINT      = $(headers) $(LINKDEF_NAME).h
