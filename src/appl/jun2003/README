@@ -32,8 +32,12 @@ plateID	pieceID		/data/file/name/run.root  Flag
 default.par  - default parameters for data piece (see comments inside the file)
 
 ./par  - the parameters directory.
-	Here should be created (manually for the moment) parameter 
-	files per each data piece: see ./par/09_001.par as example.
+	 Here should be created parameter files per each data 
+	 piece: see ./par/09_001.par as an example.
+	 To create a group of *.par files one could use script makepar.C as:
+	 > root makepar.C
+	 Of cause the script should be preliminary castomised according to 
+	 your dataset.
 
 Data processing scheme (assuming that the data are converted by rwc2edb):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,12 +69,24 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	should be updated by the data of consequtive plates at the top.
 
 3) create the parameters files per each data piece in the directory ./par 
+   (use script makepar.C)
    as it is done in jun2003/par. All common settings could be combined together 
    into dedicated file(s) - default.par in our example.
    For all parameters used the last setting.
    All cuts will be applied one by one in the same sequence as them setted.
 
-4) Linking: 
+4) CCD spots elimination:
+	> recset ccd XXXX_data_set.def 
+	This procedure will update par/*.par files with the XCUT lines removing 
+	the CCD defects. Each line remove all segments on the 1x1 micron area in 
+	view coordinates.
+	
+	Note that at each execution recset write in the par/ directory 
+	also the files named like 09_001.par.C containing the applied cuts 
+	in root script format. So one can check the cuts from the interactive 
+	root session
+
+5) Linking: 
       >	recset l XXXX_data_set.def
 	
 	With this instruction for all pieces listed in runs.lst with flag 1
@@ -78,12 +94,17 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	trees go to the ./data directory. Them could be used to check the 
 	quality of the procedure and for the individual tuning of parameters, 
 	especially the SHRINK.
-	After corrections linking should be repeated for pieces with 
-	modified parameters.
 
-	If data do not linked correctly tune SHRINK parameter.
+	After linking the SHRINK parameters in par/*.par  will be 
+	AUTOMATICALLY UPDATED
 
-	If them do not linked at all the  most probable reason is that:
+	If shrinkage correction (printed on the screen) is significantly 
+	different from 1 it is better to repeate 
+	recset l ...
+	so the corrected parameters will be used for next iteration
+
+
+	If data do not linked at all the  most probable reason is that:
 	ZLAYER 1 0   0 0
 	ZLAYER 2 214 0 0 
 
@@ -92,13 +113,22 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	ZLAYER 2 0   0 0
 	ZLAYER 1 214 0 0 
 	
+
+5a) Angular offset correction (optional):
+	recset ang XXXX_data_set.def
+
+	This function will read data/* file and based on linked tracks 
+	will try to correct microtrack-basetrack angular offsets (if any).
+	It could be usefull for havy distorted emulsions.
+	Cards 	"AFFTXTY 1 .."  and "AFFTXTY 2 .." will be updated in par/*.par files
 	
-5) Alingment:
+6) Alingment:
 	> recset a XXXX_data_set.def
 
 	this procedure will search plate to plate offset in the limits 
 	defined by OFFSET parameter and then calculate the affine 
-	transformation.
+	transformation and UPDATE the par/*.par files with new cards
+	AFFXY 0 ...
 
 	Note that alingment is an expensive procedure especially if the 
 	possible offset is big (for example >~ 500 micron). It is not 
@@ -128,7 +158,7 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	reset stage coordinate on the angle of the plate and then use 
 	AFID 0  in default.par
 
-6) Track linking:
+7) Tracking:
 	> recset t XXXX_data_set.def
 
 	ones the affine transformations are defined for N plates - for 
@@ -136,12 +166,22 @@ Data processing scheme (assuming that the data are converted by rwc2edb):
 	up/down linking and done for all couples of neibour plates, output 
 	is written to linked_tracks.root
 
+8) Fine alignment:
+	recset f XXXX_data_set.def
+
+	This instruction will try to do the additional corrections 
+	based on straight passed-throw tracks. The par/*.par files will be updated 
+	with the following cards:
+	AFFXY   0
+	ZLAYER  0
+	AFFTXTY 0
+
+	Note that if this procedure change significantly efficiency of 
+	tracking and/or some parameters is could be a good reason to check 
+	the initial settings and may be repeate the full chain of processing
+	with the correct ones. 
+
 --------------------------------------------------
 VT: 22-Sep-2003
+updated: 16-Oct-2003
 --------------------------------------------------
-
-TODO list:
-	- to fix const/file memory leak in link procedure
-ok	- to apply Andrew's routine for s par
-	- to provide correct track linking with recalculation of 
-	  track parameters

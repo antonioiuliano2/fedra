@@ -3,7 +3,7 @@ void check_raw()
   check_z();
   check_view();
   check_surf();
-  check_seg();
+  check_ang();
   check_puls();
 }
 
@@ -80,7 +80,7 @@ void check_puls()
 }
 
 //-------------------------------------------------------
-void check_seg()
+void check_ang()
 {
   TCanvas *c = new TCanvas("cseg","check segments angle");
   c->Clear();
@@ -88,11 +88,11 @@ void check_seg()
   gStyle->SetPalette(1);
   cseg_1->cd();       Views->Draw("segments.eTx");
   cseg_2->cd();       Views->Draw("segments.eTy");
-  cseg_3->cd();       Views->Draw("eTy:eTx","eNframesTop==0&&((abs(eTy)>.006||abs(eTx)>.006)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
-  cseg_4->cd();       Views->Draw("eTy:eTx","eNframesBot==0&&((abs(eTy)>.006||abs(eTx)>.006)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
+  cseg_3->cd();       Views->Draw("eTy:eTx","eNframesTop==0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
+  cseg_4->cd();       Views->Draw("eTy:eTx","eNframesBot==0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
 
 
-  c->SaveAs("seg.gif");
+  c->SaveAs("ang.gif");
 }
 
 //-------------------------------------------------------

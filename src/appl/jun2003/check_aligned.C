@@ -1,12 +1,8 @@
 void check_aligned()
 {
-  check_corr();
-  //  check_shrinkage();
+  check_diff();
 }
-//couples->Draw("s2.eX-(s1.eX+(s2.eZ-s1.eZ)*s.eTX):s1.eX","pid1==0");
 
-//tracks->Draw("eTX[0]-(eX[1]-eX[0])/(eZ[1]-eZ[0]):(eX[1]-eX[0])/(eZ[1]-eZ[0])","nseg==4");
-//tracks->Draw("eTX[1]-(eX[1]-eX[0])/(eZ[1]-eZ[0]):eTX[0]-(eX[1]-eX[0])/(eZ[1]-eZ[0])","nseg==4");
 
 //-----------------------------------------------------------------
 void check_diff()
