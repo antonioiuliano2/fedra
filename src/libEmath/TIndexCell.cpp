@@ -130,7 +130,7 @@ Int_t TIndexCell::ComparePatterns( Int_t level, Long_t vdiff[],
   }
 
   if(strip) {
-    fList->Compress();
+    //    fList->Compress();
     Sort();
   }
 
@@ -307,7 +307,7 @@ void TIndexCell::Purge(int level)
   }
   if(GetEntries()<1)   Drop();
   if(fList) {
-    fList->Compress();
+    //    fList->Compress();
     Sort();
   }
 }
@@ -607,20 +607,10 @@ TIndexCell *TIndexCell::Find( Int_t narg, Long_t varg[] ) const
 TIndexCell *TIndexCell::Find( Long_t p1 ) const
 {
   if(!fList) return 0;
-  if(fList->IsSorted())       return FindBinary(p1);
-  TIndexCell *a= new TIndexCell(p1);
-  TIndexCell *b= (TIndexCell*)(fList->FindObject(a));
-  delete a;
-  return b;
-}
-
-//____________________________________________________________________________
-TIndexCell *TIndexCell::FindBinary( Long_t p1 ) const
-{
-  if(!fList) return 0;
-  TIndexCell *a= new TIndexCell(p1);
-  Int_t i = fList->BinarySearch(a);
-  delete a;
+  TIndexCell a(p1);
+  if(!fList->IsSorted())
+    return (TIndexCell*)(fList->FindObject(&a));
+  Int_t i = fList->BinarySearch(&a);
   if(i>=0) return At(i);
   return 0;
 }
@@ -654,7 +644,7 @@ TIndexCell const *TIndexCellIter::Next()
 
   if( fLevel != fLevel0 )   return 0;
 
-  int nent = fCell->At(fLevel,fVind)->List()->GetEntries();
+  int nent = fCell->At(fLevel,fVind)->GetEntries();
   //printf("Next: nent= %d  fPass= %d\n",nent,fPass);
 
   if( fVind[fLevel] < nent-1 ) {
@@ -673,7 +663,7 @@ int TIndexCellIter::LevelDown()
   if(fLevel<1) return 0;
   fVind[fLevel] = 0;
   fLevel--;
-  int nent = fCell->At(fLevel,fVind)->List()->GetEntries();
+  int nent = fCell->At(fLevel,fVind)->GetEntries();
   //printf("LevelDown: level = %d, nent= %d  fVind= %d\n",fLevel, nent,fVind[fLevel]);
   if( fVind[fLevel] < nent-1 ) {
     fVind[fLevel]++;
@@ -782,7 +772,7 @@ TIndexCell const *TIndexCellIterV::NextAll()
 
   if( fLevel != fLevel0 )   return 0;
 
-  int nent = fCell->At(fLevel-1,fVind)->List()->GetEntries();
+  int nent = fCell->At(fLevel-1,fVind)->GetEntries();
   //printf("Next: nent= %d  fPass= %d\n",nent,fPass);
 
   if( fVind[fLevel-1] < nent-1 ) {
@@ -801,7 +791,7 @@ int TIndexCellIterV::LevelDown()
   if(fLevel<2) return 0;
   fLevel--;
   fVind[fLevel] = 0;
-  int nent = fCell->At(fLevel-1,fVind)->List()->GetEntries();
+  int nent = fCell->At(fLevel-1,fVind)->GetEntries();
   //printf("LevelDown: level = %d, nent= %d  fVind= %d\n",fLevel, nent,fVind[fLevel-1]);
   if( fVind[fLevel-1] < nent-1 ) {
     fVind[fLevel-1]++;
