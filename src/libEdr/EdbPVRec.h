@@ -13,7 +13,6 @@
 #include "EdbPattern.h"
 #include "TIndexCell.h"
 #include "EdbAffine.h"
-//#include "EdbPVGen.h"
 
 class EdbAffine2D;
 class TIndexCell;

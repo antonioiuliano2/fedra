@@ -1325,8 +1325,11 @@ void EdbPVRec::FillTracksCellFast()
 
   for( int iv=0; iv<ncp; iv++ ) {
     pc = GetCouple(iv);
-    AddCouplesToTracks( pc , itracks );
+    AddCouplesToTracksM( pc , itracks );
   }
+
+
+  //TODO: split&analyse tracks
 
   int nsegmax=100, nfound=0;
   TArrayI segtab(nsegmax);
@@ -1412,21 +1415,20 @@ void EdbPVRec::AddCouplesToTracksM(EdbPatCouple *pc, TIndex2 &itracks )
     for(int i=0; i<ncpp; i++) {
       maj = itracks.Major(i);
       if( maj0<maj ) {
-        track = new EdbTrackP();
-        AddTrack( track );
-        track->SetID(eTracks->GetLast());
-        maj0=maj;
+	track = new EdbTrackP();
+	AddTrack( track );
+	track->SetID(eTracks->GetLast());
+	maj0=maj;
       }
       itracks.SetMinor( i, eTracks->GetLast() );
     }
   }
 
-
   // make I12
 
   for(int ip=0; ip<ncpp; ip++) {
     sc = pc->GetSegCouple(ip);
-    track=0;
+    track=0; 
 
     ind = itracks.FindIndex( sc->ID1() );
 
