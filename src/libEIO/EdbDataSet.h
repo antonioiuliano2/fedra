@@ -10,6 +10,7 @@
 //////////////////////////////////////////////////////////////////////////
 #include "TObjArray.h"
 #include "TFile.h"
+#include "TCut.h"
 #include "EdbAffine.h"
 #include "EdbRun.h"
 #include "EdbPVRec.h"
@@ -38,6 +39,8 @@ class EdbDataPiece : public TNamed {
   Float_t      eCutCP[6];       //
   Float_t      eCutGR;          // grain cut (chi)
   Int_t        eOUTPUT;         //
+
+  TCut        *eRCuts[3];       //! root-style text cuts
 
  public: 
   TIndexCell  *eCouplesInd;     //
@@ -89,6 +92,9 @@ class EdbDataPiece : public TNamed {
   EdbSegmentCut *GetCut(int layer, int i)
     { return (EdbSegmentCut *)(eCuts[layer]->UncheckedAt(i)); }
 
+  void           AddRCut(int layer, TCut &cut);
+  TCut           *GetRCut(int layer)  { return eRCuts[layer]; }
+
   float           GetCutGR() const {return eCutGR;}
   int             GetOUTPUT() const {return eOUTPUT;}
 
@@ -114,6 +120,7 @@ class EdbDataPiece : public TNamed {
 
   int  GetRawData(EdbPVRec *ali);
   int  GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0 );
+  int  GetCPData_new( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0 );
   int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);
 
   int   InitCouplesTree( const char *mode="READ" );

@@ -8,6 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TEventList.h"
 #include "TMatrix.h"
 #include "EdbDataSet.h"
 #include "EdbSegment.h"
@@ -60,13 +61,15 @@ void EdbDataPiece::Set0()
   eCutCP[0]=-1;
   int i;
   for(i=0; i<3; i++) { 
-    if(eLayers[i]) delete eLayers[i]; 
+    if(eLayers[i]) delete eLayers[i];
     eLayers[i]=new EdbLayer();
   }
   for(i=0; i<3; i++) eCond[i]=0;
   for(i=0; i<3; i++) eAreas[i]=0;
   for(i=0; i<3; i++) eCuts[i]=0;
 
+  for(i=0; i<3; i++) eRCuts[i]=0;
+  
   eRun    = 0;
   eCouplesTree=0;
   eCouplesInd=0;
@@ -210,6 +213,16 @@ void EdbDataPiece::AddSegmentCut(int layer, int xi, float min[5], float max[5])
   cut->SetMin(min);
   cut->SetMax(max);
   eCuts[layer]->Add( cut );
+}
+
+///______________________________________________________________________________
+void EdbDataPiece::AddRCut(int layer, TCut &cut)
+{
+  if(layer<0) return;
+  if(layer>2) return;
+  
+  if(!eRCuts[layer]) eRCuts[layer] = new TCut(cut); 
+  else (*(eRCuts[layer]))+=cut;
 }
 
 ///______________________________________________________________________________
@@ -366,6 +379,13 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	sscanf(buf+strlen(key),"%d %f %f %f %f %f %f %f %f %f %f",&id,
 	       var,var+1,var+2,var+3,var+4,var+5,var+6,var+7,var+8,var+9);
 	AddSegmentCut(id,1,var);
+      }
+    else if ( !strcmp(key,"RCUT")  )
+      {
+	char rcut[256];
+	sscanf(buf+strlen(key),"%d %s",&id, rcut );
+	TCut cut(rcut);
+	AddRCut(id,cut);
       }
     else if ( !strcmp(key,"CUTCP")  )
       {
@@ -735,6 +755,77 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
     }
     if(p2)  { 
       b_s2->GetEntry(i);                             // !!!
+      s2->SetZ( s2->Z() + pat->Z() );
+      //s2->SetPID( ePlate*10 + 2 );   /// TO CHECK !!!
+      p2->AddSegment(  *s2 ); 
+      nseg++; 
+    }
+  }
+
+  printf("%d (of %d) segments are readed\n", nseg,nentr );
+
+  return nseg;
+}
+
+///______________________________________________________________________________
+int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
+{
+  printf("z = %f \n", GetLayer(0)->Z());
+  pat->SetID(0);
+  EdbSegP    segP;
+
+  TTree *tree=eCouplesTree;
+  EdbSegCouple    *cp = 0;
+  EdbSegP         *s1 = 0;
+  EdbSegP         *s2 = 0;
+  EdbSegP         *s  = 0;
+
+  TBranch *b_cp=0, *b_s=0, *b_s1=0, *b_s2=0;                        // !!!
+  b_cp = tree->GetBranch("cp");                   // !!!
+  b_s  = tree->GetBranch("s.");                   // !!!
+  b_s1 = tree->GetBranch("s1.");                  // !!!
+  b_s2 = tree->GetBranch("s2.");                  // !!!
+
+  b_cp->SetAddress( &cp  );
+  b_s->SetAddress(  &s   );
+  b_s1->SetAddress( &s1  );
+  b_s2->SetAddress( &s2  );
+
+  int nseg = 0;
+  int nentr = (int)(tree->GetEntries());
+
+  TCut *cut = GetRCut(0);
+  TEventList *lst =0;
+  if(cut)       tree->Draw(">>lst", *cut );
+  else          tree->Draw(">>lst", "" );
+  lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
+  int nlst = 0;
+  if(lst) nlst=lst->GetN();
+  printf("select %d of %d segments by cut %s\n",nlst, nentr, cut->GetTitle() );
+
+  int entr=0;
+  for(int i=0; i<nlst; i++ ) {
+    entr = lst->GetEntry(i);
+    b_cp->GetEntry(entr);                            // !!!
+    b_s->GetEntry(entr);                             // !!!
+    if( !TakeCPSegment(*cp,*s) )      continue;
+    if(pat) {
+      s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
+      //s->SetPID( ePlate*10 );       /// TO CHECK !!!
+      s->SetVid(ePlate*1000+ePiece,entr);
+      s->SetChi2(cp->CHI2P());
+      pat->AddSegment( *s  );
+      nseg++;
+    }
+    if(p1)  { 
+      b_s1->GetEntry(entr);                             // !!!
+      s1->SetZ( s1->Z() + pat->Z() );
+      //s1->SetPID( ePlate*10 +1 );    /// TO CHECK !!!
+      p1->AddSegment(  *s1 ); 
+      nseg++; 
+    }
+    if(p2)  { 
+      b_s2->GetEntry(entr);                             // !!!
       s2->SetZ( s2->Z() + pat->Z() );
       //s2->SetPID( ePlate*10 + 2 );   /// TO CHECK !!!
       p2->AddSegment(  *s2 ); 
@@ -1986,7 +2077,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
       p2->SetPID(i);
     }
 
-    piece->GetCPData( pat,p1,p2 );
+    piece->GetCPData_new( pat,p1,p2 );
 
     ali->AddPattern( pat );
     if(datatype>0) {
