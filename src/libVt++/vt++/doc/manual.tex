@@ -1,0 +1,3345 @@
+\documentclass{article}
+\usepackage{bookman}
+\usepackage{docxx}
+\begin{document}
+\pagebreak
+\sloppy
+\cxxAuthor{
+T. Glebe\strut}
+\cxxTitle{}
+        {Vt++}
+        {}
+        {A C++ library for vertex fitting and matrix calculation in HERA-B.
+\\
+For further documentation see file \URL{vt++.ps}.
+}
+        {}
+\begin{cxxContents}
+\cxxContentsEntry{1}{VERTEX}{The vertexing classes}
+\begin{cxxContents}
+\cxxContentsEntry{1.1}{Track}{Track representation class}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.2}{Vertex}{Vertex class }
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.3}{Kalman}{Kalman filter class}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.4}{Relation}{for internal use only}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.5}{RelationList}{Relation container class }
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{1.6}{MassC}{Mass Constraint class }
+\begin{cxxContents}
+\end{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2}{MATRIX}{A general purpose matrix computation package}
+\begin{cxxContents}
+\cxxContentsEntry{2.1}{VtVector}{Vector class }
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2.2}{VtMatrix}{Simple Matrix computation base class}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2.3}{VtSqMatrix}{Class for quadratic matrices}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2.4}{VtSymMatrix}{Class for symmetric matrices}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2.5}{VtNegMatrix}{Negative matrix class}
+\begin{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{2.6}{CMatrix}{HERA-B Track covariance matrix class}
+\begin{cxxContents}
+\end{cxxContents}
+\end{cxxContents}
+\cxxContentsEntry{}{Class Graph}{}\end{cxxContents}
+\clearpage\pagebreak
+\begin{cxxentry}
+{}
+        {VERTEX}
+        {}
+        {The vertexing classes}
+        {1}
+\begin{cxxnames}
+\cxxitem{extern\ \ const\ \ PkgIni\ }
+        {VtSteer}
+        {}
+        { Global Vt++ object which holds XCVS information.}
+        {}
+\label{cxx.1.7}
+\cxxitem{\ class\ }
+        {Track}
+        {:\ public\ RelationList\ if\ defined\ NO\_ARTE\ defined\ USE\_ROOT\ defined\ CINTOBJECT,\ public\ TrackIf\ endif}
+        {Track representation class}
+        {1.1}
+\cxxitem{\ class\ }
+        {Vertex}
+        {:\ public\ Track\ if\ defined\ NO\_ARTE\ defined\ USE\_ROOT,\ public\ VertexIf\ endif}
+        {Vertex class }
+        {1.2}
+\cxxitem{\ class\ }
+        {Kalman}
+        {}
+        {Kalman filter class}
+        {1.3}
+\cxxitem{\ class\ }
+        {Relation}
+        {}
+        {for internal use only}
+        {1.4}
+\cxxitem{\ class\ }
+        {RelationList}
+        {}
+        {Relation container class }
+        {1.5}
+\cxxitem{\ class\ }
+        {MassC}
+        {}
+        {Mass Constraint class }
+        {1.6}
+\cxxitem{}
+        {--- Global utility functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.8}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ T\ }
+        {sqr}
+        {(const\ T\&\ x)}
+        { compute the square of a number: $x*x$}
+        {}
+\label{cxx.1.9}
+\cxxitem{template\ \<class\ T\>\ \ \ inline\ \ const\ \ short\ \ int\ }
+        {sgn}
+        {(const\ T\&\ x)}
+        { compute the sign of a number}
+        {}
+\label{cxx.1.10}
+\cxxitem{}
+        {--- Distance functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.11}
+\cxxitem{double\ }
+        {distance}
+        {(const\ ArtePointer\<RVER\>\&\ rver,\ const\ ArtePointer\<MVER\>\&\ mver)}
+        { spatial distance betw. RVER \& MVER}
+        {}
+\label{cxx.1.12}
+\cxxitem{double\ }
+        {distance}
+        {(const\ ArtePointer\<RVER\>\&\ rver,\ const\ ArtePointer\<GTAR\>\&\ gtar)}
+        { spatial distance between RVER and GTAR}
+        {}
+\label{cxx.1.13}
+\cxxitem{double\ }
+        {distance}
+        {(const\ Vertex\&\ rver,\ const\ ArtePointer\<GTAR\>\&\ gtar)}
+        { spatial distance between Vertex and GTAR}
+        {}
+\label{cxx.1.14}
+\cxxitem{double\ }
+        {distance}
+        {(const\ Track\&\ t,\ const\ ArtePointer\<GTAR\>\&\ gtar)}
+        { spatial distance of track to wire}
+        {}
+\label{cxx.1.15}
+\cxxitem{double\ }
+        {distanceChi2}
+        {(Track\&\ t1,\ Track\&\ t2)}
+        { $\chi^2$ distance track - track, $ndf = 1$}
+        {}
+\label{cxx.1.16}
+\cxxitem{double\ }
+        {distance}
+        {(const\ Track\&\ t,\ const\ Vertex\&\ v)}
+        { spatial distance track - vertex}
+        {}
+\label{cxx.1.17}
+\cxxitem{double\ }
+        {SGNdistance}
+        {(const\ Track\&\ t,\ const\ Vertex\&\ v)}
+        { signed spatial distance track - vertex}
+        {}
+\label{cxx.1.18}
+\cxxitem{double\ }
+        {SGNdistance}
+        {(const\ Track\&\ t,\ double\ xv,\ double\ yv,\ double\ zv)}
+        { signed spatial distance track - space point}
+        {}
+\label{cxx.1.19}
+\cxxitem{double\ }
+        {distanceChi2}
+        {(const\ Vertex\&\ v1,\ const\ Vertex\&\ v2)}
+        { $\chi^2$ distance between two vertices, $ndf = 3$}
+        {}
+\label{cxx.1.20}
+\cxxitem{double\ }
+        {distanceChi2}
+        {(const\ Vertex\&\ v,\ double\ x,\ double\ y,\ double\ z)}
+        { $\chi2$ distance vertex - space point, $ndf = 3$}
+        {}
+\label{cxx.1.21}
+\cxxitem{double\ }
+        {SGNdistance}
+        {(const\ Track\&\ t,\ const\ ArtePointer\<RecoVertex\>\&\ ap)}
+        { signed spatial distance track - RecoVertex}
+        {}
+\label{cxx.1.22}
+\cxxitem{double\ }
+        {SGNdistance}
+        {(const\ Track\&\ t,\ const\ VertexIf\&\ ap)}
+        { signed spatial distance track - VertexIf}
+        {}
+\label{cxx.1.23}
+\end{cxxnames}
+\begin{cxxclass}
+{\ class\ }
+        {Track}
+        {:\ public\ RelationList\ if\ defined\ NO\_ARTE\ defined\ USE\_ROOT\ defined\ CINTOBJECT,\ public\ TrackIf\ endif}
+        {Track representation class}
+        {1.1}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{}{endif}{\cxxPubleft}
+\cxxInheritanceEntry{}{}{TrackIf}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{CINTOBJECT}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{USE\_ROOT}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{NO\_ARTE}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{if}{\cxxPubLeft}
+\cxxInheritanceEntry{}{1.5}{RelationList}{\cxxLastPubLeft}
+\cxxInheritanceEntry[x]{\cxxNone}{1.1}{Track}{}
+\cxxInheritanceEntry{\cxxNone\cxxLinkPubright}{1.2}{Vertex}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.1}
+\cxxitem{}
+        {Track}
+        {()}
+        {}
+        {}
+\label{cxx.1.1.2}
+\cxxitem{}
+        {Track}
+        {(const\ Track*\ const\ track)}
+        {}
+        {}
+\label{cxx.1.1.3}
+\cxxitem{}
+        {Track}
+        {(const\ Track\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.4}
+\cxxitem{virtual\ }
+        {\cxxtilde Track}
+        {()}
+        {}
+        {}
+\label{cxx.1.1.5}
+\cxxitem{}
+        {Track}
+        {(const\ RecoSegment\&\ r,\ double\ ms\ =\ 0.,\ double\ msCC\ =\ 0.)}
+        {}
+        {}
+\label{cxx.1.1.6}
+\cxxitem{}
+        {Track}
+        {(const\ RecoTrack\&\ r,\ double\ ms\ =\ 0.,\ double\ msCC\ =\ 0.)}
+        {}
+        {}
+\label{cxx.1.1.7}
+\cxxitem{}
+        {Track}
+        {(const\ ArtePointer\<RecoTrack\>\&\ r,\ double\ ms\ =\ 0.,\ double\ msCC\ =\ 0.)}
+        {}
+        {}
+\label{cxx.1.1.8}
+\cxxitem{}
+        {Track}
+        {(const\ TrackIf\&\ rhs,\ double\ ms\ =\ 0.,\ double\ msCC\ =\ 0.)}
+        {}
+        {}
+\label{cxx.1.1.9}
+\cxxitem{}
+        {Track}
+        {(const\ ArtePointer\<RTRA\>\&\ rtra)}
+        {}
+        {}
+\label{cxx.1.1.10}
+\cxxitem{}
+        {Track}
+        {(const\ ArtePointer\<RSEG\>\&\ rseg)}
+        {}
+        {}
+\label{cxx.1.1.11}
+\cxxitem{}
+        {Track}
+        {(const\ ArtePointer\<MTRA\>\&\ mtra)}
+        {}
+        {}
+\label{cxx.1.1.12}
+\cxxitem{}
+        {--- TrackIf access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.13}
+\cxxitem{float\ }
+        {x}
+        {()\ const\ }
+        { x at z=0 (in Vt: p(3,..))}
+        {}
+\label{cxx.1.1.14}
+\cxxitem{float\ }
+        {y}
+        {()\ const\ }
+        {  y at z=0 (in Vt: p(4,..))}
+        {}
+\label{cxx.1.1.15}
+\cxxitem{float\ }
+        {x}
+        {(float\ z)\ const\ }
+        { Track $x$ position at $z$}
+        {}
+\label{cxx.1.1.16}
+\cxxitem{float\ }
+        {y}
+        {(float\ z)\ const\ }
+        { Track $y$ position at $z$}
+        {}
+\label{cxx.1.1.17}
+\cxxitem{float\ }
+        {z}
+        {()\ const\ }
+        { z = 0  in Vt}
+        {}
+\label{cxx.1.1.18}
+\cxxitem{float\ }
+        {tx}
+        {()\ const\ }
+        {  slope    (in Vt: p(1,..))}
+        {}
+\label{cxx.1.1.19}
+\cxxitem{float\ }
+        {ty}
+        {()\ const\ }
+        {  slope    (in Vt: p(2,..))}
+        {}
+\label{cxx.1.1.20}
+\cxxitem{float\ }
+        {p}
+        {()\ const\ }
+        { momentum (in Vt: p(5,..))}
+        {}
+\label{cxx.1.1.21}
+\cxxitem{float\ }
+        {pt}
+        {()\ const\ }
+        { transv. momentum $\sqrt{p_x^2 + p_y^2}$}
+        {}
+\label{cxx.1.1.22}
+\cxxitem{float\ }
+        {pz}
+        {()\ const\ }
+        { $p \cdot e_z$}
+        {}
+\label{cxx.1.1.23}
+\cxxitem{float\ }
+        {chi2}
+        {()\ const\ }
+        { dummy function: always return 0}
+        {}
+\label{cxx.1.1.24}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ndf}
+        {()\ const\ }
+        { dummy function: always return 0}
+        {}
+\label{cxx.1.1.25}
+\cxxitem{float\ }
+        {phi}
+        {()\ const\ }
+        { azimuthal angle $\phi$}
+        {}
+\label{cxx.1.1.26}
+\cxxitem{float\ }
+        {theta}
+        {()\ const\ }
+        { polar angle $\theta = \cos^{-1}(e_z)$}
+        {}
+\label{cxx.1.1.27}
+\cxxitem{float\ }
+        {eta}
+        {()\ const\ }
+        { rapidity $-\log\tan(\theta/2.)$}
+        {}
+\label{cxx.1.1.28}
+\cxxitem{int\ }
+        {charge}
+        {()\ const\ }
+        { charge}
+        {}
+\label{cxx.1.1.29}
+\cxxitem{float\ }
+        {energy}
+        {(double\ rm\ =\ 0.)\ const\ }
+        { Energy with given rest-mass (in GeV) $E = \sqrt{p^2 + m^2}$}
+        {}
+\label{cxx.1.1.30}
+\cxxitem{float\ }
+        {xf}
+        {(double\ rm\ =\ 0.)\ const\ }
+        { Feynman Variable $x_F = \frac{E+p_z}{(E+p_z)_{max}}$}
+        {}
+\label{cxx.1.1.31}
+\cxxitem{float\ }
+        {rap}
+        {(double\ rm\ =\ 0.)\ const\ }
+        { Rapidity $y = \frac{1}{2}\ln(\frac{E+p_z}{E-p_z})$}
+        {}
+\label{cxx.1.1.32}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {xvec}
+        {()\ const\ }
+        { $\vec{v} = (x,y,z)$}
+        {}
+\label{cxx.1.1.33}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {tvec}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,1.)$ refitted slope vector}
+        {}
+\label{cxx.1.1.34}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {evec}
+        {()\ const\ }
+        { $\vec{v} = (e_x,e_y,e_z)$ unit vector along refitted track}
+        {}
+\label{cxx.1.1.35}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {pvec}
+        {()\ const\ }
+        { $\vec{v} = (p_x,p_y,p_z)$ refitted mom. vector}
+        {}
+\label{cxx.1.1.36}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {COV}
+        {()\ const\ }
+        { dummy function: return 0 matrix}
+        {}
+\label{cxx.1.1.37}
+\cxxitem{const\ \ SMatrix\ \<double,5\>\ \&\ }
+        {CINV}
+        {()\ const\ }
+        { dummy function: return 0 matrix}
+        {}
+\label{cxx.1.1.38}
+\cxxitem{inline\ \ MATRIX::VtVector\ }
+        {evec}
+        {()\ const\ }
+        { $\vec{v} = (e_x,e_y,e_z)$ unit vector along refitted track}
+        {}
+\label{cxx.1.1.39}
+\cxxitem{inline\ \ MATRIX::VtVector\ }
+        {tvec}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,1.)$ refitted slope vector}
+        {}
+\label{cxx.1.1.40}
+\cxxitem{inline\ \ MATRIX::VtVector\ }
+        {pvec}
+        {()\ const\ }
+        { $\vec{v} = (p_x,p_y,p_z)$ refitted mom. vector}
+        {}
+\label{cxx.1.1.41}
+\cxxitem{float\ }
+        {cov\_x}
+        {(double\ dz=0.)\ const\ }
+        { get $\sigma_x^2|_{z+dz}$}
+        {}
+\label{cxx.1.1.42}
+\cxxitem{float\ }
+        {cov\_y}
+        {(double\ dz=0.)\ const\ }
+        { get $\sigma_y^2|_{z+dz}$}
+        {}
+\label{cxx.1.1.43}
+\cxxitem{float\ }
+        {cov\_tx}
+        {()\ const\ }
+        { get $\sigma_{t_x}^2$}
+        {}
+\label{cxx.1.1.44}
+\cxxitem{float\ }
+        {cov\_ty}
+        {()\ const\ }
+        { get $\sigma_{t_y}^2$}
+        {}
+\label{cxx.1.1.45}
+\cxxitem{float\ }
+        {cov\_p}
+        {()\ const\ }
+        { get $\sigma_p^2$}
+        {}
+\label{cxx.1.1.46}
+\cxxitem{bool\ }
+        {isValid}
+        {()\ const\ }
+        { dummy function: always return true}
+        {}
+\label{cxx.1.1.47}
+\cxxitem{void\ }
+        {valid}
+        {()}
+        { dummy function: do nothing}
+        {}
+\label{cxx.1.1.48}
+\cxxitem{void\ }
+        {invalid}
+        {()}
+        { dummy function: do nothing}
+        {}
+\label{cxx.1.1.49}
+\cxxitem{bool\ }
+        {operator==}
+        {(const\ TrackIf\&\ rhs)\ const\ }
+        { comparison between Track objects}
+        {}
+\label{cxx.1.1.50}
+\cxxitem{void\ }
+        {collect}
+        {(vector\<TrackIf*\>\&\ c)\ const\ }
+        { collect TrackIf pointers}
+        {}
+\label{cxx.1.1.51}
+\cxxitem{bool\ }
+        {propagate}
+        {(const\ double\ zz)}
+        { propagate track to $z$}
+        {}
+\label{cxx.1.1.52}
+\cxxitem{}
+        {--- Other access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.53}
+\cxxitem{double\ }
+        {px}
+        {()\ const\ }
+        { $p \cdot e_x$}
+        {}
+\label{cxx.1.1.54}
+\cxxitem{double\ }
+        {py}
+        {()\ const\ }
+        { $p \cdot e_y$}
+        {}
+\label{cxx.1.1.55}
+\cxxitem{double\ }
+        {ex}
+        {()\ const\ }
+        { $t_x \cdot e_z$}
+        {}
+\label{cxx.1.1.56}
+\cxxitem{double\ }
+        {ey}
+        {()\ const\ }
+        { $t_y \cdot e_z$}
+        {}
+\label{cxx.1.1.57}
+\cxxitem{double\ }
+        {ez}
+        {()\ const\ }
+        { $1/\sqrt{1+t_x^2+t_y^2}$}
+        {}
+\label{cxx.1.1.58}
+\cxxitem{bool\ }
+        {IsRecoTrack}
+        {()\ const\ }
+        { is Track constructed from RecoTrack object?}
+        {}
+\label{cxx.1.1.59}
+\cxxitem{bool\ }
+        {IsRTRA}
+        {()\ const\ }
+        { is Track constructed from RTRA object? (n.a. in ROOT)}
+        {}
+\label{cxx.1.1.60}
+\cxxitem{double\ }
+        {xerr}
+        {(double\ dz\ =\ 0)\ const\ }
+        { $\sqrt{\sigma_x^2(z+dz)}$}
+        {}
+\label{cxx.1.1.61}
+\cxxitem{double\ }
+        {yerr}
+        {(double\ dz\ =\ 0)\ const\ }
+        { $\sqrt{\sigma_y^2(z+dz)}$}
+        {}
+\label{cxx.1.1.62}
+\cxxitem{double\ }
+        {txerr}
+        {()\ const\ }
+        { $\sqrt{\sigma^2_{tx}}$}
+        {}
+\label{cxx.1.1.63}
+\cxxitem{double\ }
+        {tyerr}
+        {()\ const\ }
+        { $\sqrt{\sigma^2_{ty}}$}
+        {}
+\label{cxx.1.1.64}
+\cxxitem{double\ }
+        {perr}
+        {()\ const\ }
+        { $\sqrt{\sigma^2_p}$}
+        {}
+\label{cxx.1.1.65}
+\cxxitem{ArtePointer\ \<RSEG\>\ \ }
+        {rseg}
+        {()\ const\ }
+        { return RSEG pointer}
+        {}
+\label{cxx.1.1.66}
+\cxxitem{ArtePointer\ \<RTRA\>\ \ }
+        {rtra}
+        {()\ const\ }
+        { return RTRA pointer}
+        {}
+\label{cxx.1.1.67}
+\cxxitem{ArtePointer\ \<MTRA\>\ \ }
+        {mtra}
+        {()\ const\ }
+        { return MTRA pointer}
+        {}
+\label{cxx.1.1.68}
+\cxxitem{ArtePointer\ \<RecoTrack\>\ \ }
+        {recotrack}
+        {()\ const\ }
+        { return RecoTrack pointer}
+        {}
+\label{cxx.1.1.69}
+\cxxitem{const\ \ MATRIX::CMatrix\&\ }
+        {V}
+        {()\ const\ }
+        { covariance matrix}
+        {}
+\label{cxx.1.1.70}
+\cxxitem{const\ \ MATRIX::CMatrix\&\ }
+        {G}
+        {()\ const\ }
+        { inverse $5\times5$ covariance matrix}
+        {}
+\label{cxx.1.1.71}
+\cxxitem{const\ \ MATRIX::CMatrix\&\ }
+        {GM}
+        {()\ const\ }
+        { inverse $4\times4$ covariance matrix, without momentum}
+        {}
+\label{cxx.1.1.72}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.73}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(\ std::ostream\&\ os\ )\ const\ }
+        { called by cout}
+        {}
+\label{cxx.1.1.74}
+\cxxitem{double\ }
+        {rm}
+        {()\ const\ }
+        { rest-mass}
+        {}
+\label{cxx.1.1.75}
+\cxxitem{void\ }
+        {rm}
+        {(const\ double\ mass)}
+        { set rest-mass (needed for mass constrained fits)}
+        {}
+\label{cxx.1.1.76}
+\cxxitem{double\ }
+        {rmCC}
+        {()\ const\ }
+        { conjugated rest-mass}
+        {}
+\label{cxx.1.1.77}
+\cxxitem{void\ }
+        {rmCC}
+        {(const\ double\ mass)}
+        { set conjugated rest-mass }
+        {}
+\label{cxx.1.1.78}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.1.1.79}
+\cxxitem{bool\ }
+        {operator\<\ }
+        {(const\ Track\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.80}
+\cxxitem{int\ }
+        {operator==}
+        {(const\ Track\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.1.81}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {Vertex}
+        {:\ public\ Track\ if\ defined\ NO\_ARTE\ defined\ USE\_ROOT,\ public\ VertexIf\ endif}
+        {Vertex class }
+        {1.2}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{\cxxNone}{}{endif}{\cxxPubleft}
+\cxxInheritanceEntry{\cxxNone}{}{VertexIf}{\cxxPubLeft}
+\cxxInheritanceEntry{\cxxNone}{}{USE\_ROOT}{\cxxPubLeft}
+\cxxInheritanceEntry{\cxxNone}{}{defined}{\cxxPubLeft}
+\cxxInheritanceEntry{\cxxNone}{}{NO\_ARTE}{\cxxPubLeft}
+\cxxInheritanceEntry{\cxxNone}{}{defined}{\cxxPubLeft}
+\cxxInheritanceEntry{\cxxNone}{}{if}{\cxxPubLeft}
+\cxxInheritanceEntry{}{}{endif}{\cxxPubleft\cxxLong}
+\cxxInheritanceEntry{}{}{TrackIf}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{CINTOBJECT}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{USE\_ROOT}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{NO\_ARTE}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{defined}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{}{if}{\cxxPubLeft\cxxLong}
+\cxxInheritanceEntry{}{1.5}{RelationList}{\cxxLastPubLeft\cxxLong}
+\cxxInheritanceEntry{\cxxNone}{1.1}{Track}{\cxxLastPubLeft}
+\cxxInheritanceEntry[x]{\cxxNone\cxxNone}{1.2}{Vertex}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.1}
+\cxxitem{}
+        {Vertex}
+        {()}
+        {}
+        {}
+\label{cxx.1.2.2}
+\cxxitem{}
+        {Vertex}
+        {(const\ Vertex\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.3}
+\cxxitem{}
+        {Vertex}
+        {(const\ Track\_v\&\ v)}
+        {}
+        {}
+\label{cxx.1.2.4}
+\cxxitem{}
+        {Vertex}
+        {(Track\&\ t1,\ Track\&\ t2)}
+        {}
+        {}
+\label{cxx.1.2.5}
+\cxxitem{}
+        {\cxxtilde Vertex}
+        {()}
+        {}
+        {}
+\label{cxx.1.2.6}
+\cxxitem{}
+        {Vertex}
+        {(const\ ArtePointer\<RVER\>\&\ v)}
+        {}
+        {}
+\label{cxx.1.2.7}
+\cxxitem{}
+        {Vertex}
+        {(const\ ArtePointer\<RTRA\>\&\ r1,\ const\ ArtePointer\<RTRA\>\&\ r2)}
+        {}
+        {}
+\label{cxx.1.2.8}
+\cxxitem{}
+        {Vertex}
+        {(const\ ArtePointer\<RSEG\>\&\ r1,\ const\ ArtePointer\<RSEG\>\&\ r2)}
+        {}
+        {}
+\label{cxx.1.2.9}
+\cxxitem{}
+        {Vertex}
+        {(const\ ArtePointer\<MTRA\>\&\ m1,\ const\ ArtePointer\<MTRA\>\&\ m2)}
+        {}
+        {}
+\label{cxx.1.2.10}
+\cxxitem{}
+        {Vertex}
+        {(const\ RecoSegment\&\ r1,\ const\ RecoSegment\&\ r2)}
+        {}
+        {}
+\label{cxx.1.2.11}
+\cxxitem{}
+        {Vertex}
+        {(const\ RecoTrack\&\ r1,\ const\ RecoTrack\&\ r2)}
+        {}
+        {}
+\label{cxx.1.2.12}
+\cxxitem{}
+        {Vertex}
+        {(const\ ArtePointer\<RecoTrack\>\&\ r1,\ const\ ArtePointer\<RecoTrack\>\&\ r2)}
+        {}
+        {}
+\label{cxx.1.2.13}
+\cxxitem{}
+        {--- VertexIf access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.14}
+\cxxitem{float\ }
+        {vx}
+        {()\ const\ }
+        { $x$ of vertex}
+        {}
+\label{cxx.1.2.15}
+\cxxitem{float\ }
+        {vy}
+        {()\ const\ }
+        { $y$ of vertex}
+        {}
+\label{cxx.1.2.16}
+\cxxitem{float\ }
+        {vz}
+        {()\ const\ }
+        { $z$ of vertex}
+        {}
+\label{cxx.1.2.17}
+\cxxitem{float\ }
+        {chi2}
+        {()\ const\ }
+        { $\chi^2$ of vertex fit}
+        {}
+\label{cxx.1.2.18}
+\cxxitem{float\ }
+        {prob}
+        {()\ const\ }
+        { upper tail $\chi^2$ probability}
+        {}
+\label{cxx.1.2.19}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ndf}
+        {()\ const\ }
+        { degrees of freedom of vertex fit}
+        {}
+\label{cxx.1.2.20}
+\cxxitem{unsigned\ \ short\ \ int\ }
+        {ntracks}
+        {()\ const\ }
+        { no of tracks in vertex $n$}
+        {}
+\label{cxx.1.2.21}
+\cxxitem{const\ \ TrackIf*\ }
+        {track}
+        {(unsigned\ int\ i)\ const\ }
+        { dummy function: always return 0}
+        {}
+\label{cxx.1.2.22}
+\cxxitem{const\ \ TrackIf*\&\ }
+        {track}
+        {(unsigned\ int\ i)}
+        { dummy function}
+        {}
+\label{cxx.1.2.23}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {vpos}
+        {()\ const\ }
+        { $\vec{x} = (x,y,z)$}
+        {}
+\label{cxx.1.2.24}
+\cxxitem{const\ \ SMatrix\ \<double,3\>\ \&\ }
+        {VCOV}
+        {()\ const\ }
+        { vertex cov. matrix}
+        {}
+\label{cxx.1.2.25}
+\cxxitem{float\ }
+        {vtx\_cov\_x}
+        {()\ const\ }
+        { $\sigma_x^2$ of vertex}
+        {}
+\label{cxx.1.2.26}
+\cxxitem{float\ }
+        {vtx\_cov\_y}
+        {()\ const\ }
+        { $\sigma_y^2$ of vertex}
+        {}
+\label{cxx.1.2.27}
+\cxxitem{float\ }
+        {vtx\_cov\_z}
+        {()\ const\ }
+        { $\sigma_z^2$ of vertex}
+        {}
+\label{cxx.1.2.28}
+\cxxitem{}
+        {-- Other access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.29}
+\cxxitem{double\ }
+        {angle}
+        {()\ const\ }
+        {$\sqrt{n\cdot\sum_it_{x,i}^2 - (\sum_i t_{x,i})^2 + n\cdot\sum_i t_{y,i}^2 -
+(\sum_i t_{y,i})^2} / n$ }
+        {}
+\label{cxx.1.2.30}
+\cxxitem{double\ }
+        {dist}
+        {()\ const\ }
+        { available after call to rmsDistAngle()}
+        {}
+\label{cxx.1.2.31}
+\cxxitem{double\ }
+        {vxerr}
+        {()\ const\ }
+        { $\sqrt{\sigma_{vx}^2}$ vertex $x$-error}
+        {}
+\label{cxx.1.2.32}
+\cxxitem{double\ }
+        {vyerr}
+        {()\ const\ }
+        { $\sqrt{\sigma_{vy}^2}$ vertex $y$-error}
+        {}
+\label{cxx.1.2.33}
+\cxxitem{double\ }
+        {vzerr}
+        {()\ const\ }
+        { $\sqrt{\sigma_{vz}^2}$ vertex $z$-error}
+        {}
+\label{cxx.1.2.34}
+\cxxitem{double\ }
+        {pmaxfrac}
+        {()\ const\ }
+        { $\max|p_i/p_j|$ max. momentum fraction}
+        {}
+\label{cxx.1.2.35}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {CS}
+        {()\ const\ }
+        { $3\times3$ Vertex covariance matrix}
+        {}
+\label{cxx.1.2.36}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {covn}
+        {()\ const\ }
+        { $(3\cdot n+3)\times(3\cdot n+3)$ general covariance matrix}
+        {}
+\label{cxx.1.2.37}
+\cxxitem{bool\ }
+        {valid}
+        {()\ const\ }
+        { is vertex valid?}
+        {}
+\label{cxx.1.2.38}
+\cxxitem{void\ }
+        {set\_invalid}
+        {()}
+        { mark vertex as invalid}
+        {}
+\label{cxx.1.2.39}
+\cxxitem{}
+        {--- Mass calculation routines ---}
+        {}
+        {$m = \sqrt{\sum_i p_i^2 + m_i^2 - \sum_i \vec{p}_i^2}$}
+        {}
+\label{cxx.1.2.40}
+\cxxitem{double\ }
+        {mass}
+        {(const\ bool\ use\ =\ false)\ const\ }
+        { rest-mass 0 or track rest mass}
+        {}
+\label{cxx.1.2.41}
+\cxxitem{double\ }
+        {massCC}
+        {(const\ bool\ use\ =\ false)\ const\ }
+        { rest-mass 0 or conjugated track rest mass}
+        {}
+\label{cxx.1.2.42}
+\cxxitem{double\ }
+        {mass}
+        {(double\ m1)\ const\ }
+        { single rest-mass calc.,}
+        {}
+\label{cxx.1.2.43}
+\cxxitem{double\ }
+        {mass}
+        {(double\ m1,\ double\ m2)\ const\ }
+        { 2-track mass with particle rest-masses}
+        {}
+\label{cxx.1.2.44}
+\cxxitem{double\ }
+        {mass}
+        {(double\ m1,\ double\ m2,\ double\ m3)\ const\ }
+        { 3-track mass with rest-masses}
+        {}
+\label{cxx.1.2.45}
+\cxxitem{double\ }
+        {mass}
+        {(double\ m1,\ double\ m2,\ double\ m3,\ double\ m4)\ const\ }
+        { 4-track mass with rest-masses}
+        {}
+\label{cxx.1.2.46}
+\cxxitem{double\ }
+        {mass}
+        {(const\ Vector\_d\&\ m02,\ bool\ use\ =\ false,\ bool\ CC\ =\ false)\ const\ }
+        { specify $n$ rest masses}
+        {}
+\label{cxx.1.2.47}
+\cxxitem{}
+        {--- Vertexing routines --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.48}
+\cxxitem{const\ \ bool\ }
+        {findVertex2D}
+        {(void)}
+        { unweighted 2-D min. dist.}
+        {}
+\label{cxx.1.2.49}
+\cxxitem{const\ \ bool\ }
+        {findVertex3D}
+        {(void)}
+        { unweighted 3-D min. dist.}
+        {}
+\label{cxx.1.2.50}
+\cxxitem{const\ \ bool\ }
+        {findVertexVt}
+        {()}
+        { Vt Kalman-filter}
+        {}
+\label{cxx.1.2.51}
+\cxxitem{const\ \ bool\ }
+        {VtEstimateVertex}
+        {()}
+        { weighted 2-D min. dist.}
+        {}
+\label{cxx.1.2.52}
+\cxxitem{const\ \ bool\ }
+        {VtEstimateVertexMath}
+        {(double\&\ x,\ double\&\ y,\ double\&\ z)}
+        { estimate Vertex without changing Vertex object}
+        {}
+\label{cxx.1.2.53}
+\cxxitem{const\ \ bool\ }
+        {VtMass}
+        {()}
+        { Kalman filter with mass constraints}
+        {}
+\label{cxx.1.2.54}
+\cxxitem{}
+        {--- Adding tracks --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.55}
+\cxxitem{void\ }
+        {push\_back}
+        {(Track\&\ track)}
+        {}
+        {}
+\label{cxx.1.2.56}
+\cxxitem{void\ }
+        {push\_back}
+        {(TrackIf\&\ track)}
+        {}
+        {}
+\label{cxx.1.2.57}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ ArtePointer\<RTRA\>\&\ rtra)}
+        {}
+        {}
+\label{cxx.1.2.58}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ ArtePointer\<RSEG\>\&\ rseg)}
+        {}
+        {}
+\label{cxx.1.2.59}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ ArtePointer\<MTRA\>\&\ mtra)}
+        {}
+        {}
+\label{cxx.1.2.60}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ RecoSegment\&\ r)}
+        {}
+        {}
+\label{cxx.1.2.61}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ RecoTrack\&\ r)}
+        {}
+        {}
+\label{cxx.1.2.62}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ RecoTrack\&\ r,\ double\ restmass)}
+        { add track with rest-mass assigned}
+        {}
+\label{cxx.1.2.63}
+\cxxitem{void\ }
+        {push\_back}
+        {(const\ ArtePointer\<RecoTrack\>\&\ r)}
+        {}
+        {}
+\label{cxx.1.2.64}
+\cxxitem{}
+        {--- Misc functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.65}
+\cxxitem{const\ \ ArtePointer\ \<RVER\>\ \ }
+        {createRVER}
+        {(void)\ const\ }
+        { write to RVER table}
+        {}
+\label{cxx.1.2.66}
+\cxxitem{const\ \ ArtePointer\ \<RecoVertex\>\ \ }
+        {createRecoVertex}
+        {(void)\ const\ }
+        { write to RecoVertex table}
+        {}
+\label{cxx.1.2.67}
+\cxxitem{double\ }
+        {rmsDistAngle}
+        {()\ const\ }
+        { calc rms dist and rms angle}
+        {}
+\label{cxx.1.2.68}
+\cxxitem{bool\ }
+        {calc\_mother}
+        {(bool\ use\_kalman\ =\ true)}
+        { calc track params of mother particle}
+        {}
+\label{cxx.1.2.69}
+\cxxitem{bool\ }
+        {calc\_mother\_cov}
+        {()}
+        { calc cov. matrix of mother particle}
+        {}
+\label{cxx.1.2.70}
+\cxxitem{const\ \ bool\ }
+        {remove\_last}
+        {()}
+        { remove last track from vertex, do inverse Kalman filter}
+        {}
+\label{cxx.1.2.71}
+\cxxitem{void\ }
+        {remove\_worst}
+        {()}
+        { remove track with biggest $\chi^2$ contribution, do inverse Kalman filter}
+        {}
+\label{cxx.1.2.72}
+\cxxitem{void\ }
+        {use\_momentum}
+        {(const\ bool\ use)}
+        { set for all tracks whether momentum should be used or not}
+        {}
+\label{cxx.1.2.73}
+\cxxitem{void\ }
+        {use\_kalman}
+        {(const\ bool\ use)}
+        { use refitted track parameters or not}
+        {}
+\label{cxx.1.2.74}
+\cxxitem{bool\ }
+        {use\_kalman}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.2.75}
+\cxxitem{double\ }
+        {distance}
+        {(double\ x,\ double\ y,\ double\ z)\ const\ }
+        { $\chi^2$ distance to space point, $ndf = 3$}
+        {}
+\label{cxx.1.2.76}
+\cxxitem{double\ }
+        {distance}
+        {(Track\&\ t)\ const\ }
+        { $\chi^2$ distance to track, $ndf = 2$}
+        {}
+\label{cxx.1.2.77}
+\cxxitem{double\ }
+        {distance}
+        {(const\ Vertex\&\ rhs)\ const\ }
+        { $\chi^2$ distance to vertex, $ndf = 3$}
+        {}
+\label{cxx.1.2.78}
+\cxxitem{}
+        {--- Expert routines --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.79}
+\cxxitem{void\ }
+        {clear}
+        {()}
+        { clear all track-vertex relations, makes vertex invalid}
+        {}
+\label{cxx.1.2.80}
+\cxxitem{const\ \ bool\ }
+        {VtFilter}
+        {()}
+        {}
+        {}
+\label{cxx.1.2.81}
+\cxxitem{const\ \ bool\ }
+        {VtInverseFilter}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.2.82}
+\cxxitem{void\ }
+        {VtSmoothX}
+        {()}
+        { smooth vertex position}
+        {}
+\label{cxx.1.2.83}
+\cxxitem{void\ }
+        {VtSmoothQ}
+        {()}
+        { smooth momenta}
+        {}
+\label{cxx.1.2.84}
+\cxxitem{const\ \ bool\ }
+        {VtRemoveTrack}
+        {(Relation\&\ track)}
+        { remove track using inverse Kalman filter}
+        {}
+\label{cxx.1.2.85}
+\cxxitem{const\ \ bool\ }
+        {VtFit}
+        {()}
+        { Kalman filter + smoother}
+        {}
+\label{cxx.1.2.86}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {xv}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.2.87}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {xvs}
+        {()\ const\ }
+        { vector of vertex-positions}
+        {}
+\label{cxx.1.2.88}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { called by operator\<\<()}
+        {}
+\label{cxx.1.2.89}
+\cxxitem{double\ }
+        {chi2n}
+        {()\ const\ }
+        { $\chi^2$ after last filter step}
+        {}
+\label{cxx.1.2.90}
+\cxxitem{double\ }
+        {chi2l}
+        {()\ const\ }
+        { $\chi^2$ contribution of last filter step}
+        {}
+\label{cxx.1.2.91}
+\cxxitem{virtual\ \ void\ }
+        {remove}
+        {(Relation*\ r)}
+        { unbook relation}
+        {}
+\label{cxx.1.2.92}
+\cxxitem{virtual\ \ const\ \ iterator\ }
+        {erase}
+        {(const\ iterator\&\ pos)}
+        { erase a relation without refit}
+        {}
+\label{cxx.1.2.93}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {bigcov}
+        {()}
+        { compute general $(3\cdot n+3) \times (3\cdot n+3)$ covariance matrix }
+        {}
+\label{cxx.1.2.94}
+\cxxitem{}
+        {--- Mass Constraint routines --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.95}
+\cxxitem{void\ }
+        {MassConstr}
+        {(double\ m)}
+        { add a mass constraint for all tracks, $m$ = mass of mother particle}
+        {}
+\label{cxx.1.2.96}
+\cxxitem{MassC\&\ }
+        {addMassConstr}
+        {(double\ m=0.)}
+        { add a mass constraint}
+        {}
+\label{cxx.1.2.97}
+\cxxitem{void\ }
+        {clearMassConstr}
+        {()}
+        { delete the mass constraints}
+        {}
+\label{cxx.1.2.98}
+\cxxitem{unsigned\ \ int\ }
+        {nMassConstr}
+        {()\ const\ }
+        { number of mass constraints}
+        {}
+\label{cxx.1.2.99}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.1.2.100}
+\cxxitem{const\ \ Vertex\&\ }
+        {operator=\ }
+        {(const\ Vertex\&\ rhs)}
+        {}
+        {}
+\label{cxx.1.2.101}
+\cxxitem{const\ \ bool\ }
+        {operator==}
+        {(const\ Vertex\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.1.2.102}
+\cxxitem{const\ \ double\ }
+        {operator-\ }
+        {(const\ Vertex\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.1.2.103}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {Kalman}
+        {}
+        {Kalman filter class}
+        {1.3}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.3.1}
+\cxxitem{}
+        {Kalman}
+        {(const\ Relation*\ const\ relation)}
+        {}
+        {}
+\label{cxx.1.3.2}
+\cxxitem{}
+        {\cxxtilde Kalman}
+        {()}
+        {}
+        {}
+\label{cxx.1.3.3}
+\cxxitem{}
+        {--- Access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.1.3.4}
+\cxxitem{double\ }
+        {chi2}
+        {()\ const\ }
+        { $\chi^2$ contribution of track}
+        {}
+\label{cxx.1.3.5}
+\cxxitem{double\ }
+        {chi2s}
+        {()\ const\ }
+        { smoothed $\chi^2$}
+        {}
+\label{cxx.1.3.6}
+\cxxitem{double\ }
+        {tx}
+        {()\ const\ }
+        { refitted $t_x$}
+        {}
+\label{cxx.1.3.7}
+\cxxitem{double\ }
+        {ty}
+        {()\ const\ }
+        { refitted $t_y$}
+        {}
+\label{cxx.1.3.8}
+\cxxitem{double\ }
+        {p}
+        {()\ const\ }
+        { refitted $p$}
+        {}
+\label{cxx.1.3.9}
+\cxxitem{double\ }
+        {px}
+        {()\ const\ }
+        { refitted $p_x$}
+        {}
+\label{cxx.1.3.10}
+\cxxitem{double\ }
+        {py}
+        {()\ const\ }
+        { refitted $p_y$}
+        {}
+\label{cxx.1.3.11}
+\cxxitem{double\ }
+        {pz}
+        {()\ const\ }
+        { refitted $p_z$}
+        {}
+\label{cxx.1.3.12}
+\cxxitem{double\ }
+        {ex}
+        {()\ const\ }
+        { refitted $e_x$}
+        {}
+\label{cxx.1.3.13}
+\cxxitem{double\ }
+        {ey}
+        {()\ const\ }
+        { refitted $e_y$}
+        {}
+\label{cxx.1.3.14}
+\cxxitem{double\ }
+        {ez}
+        {()\ const\ }
+        { refitted $e_z$}
+        {}
+\label{cxx.1.3.15}
+\cxxitem{double\ }
+        {E}
+        {(double\ rm\ =\ 0.)\ const\ }
+        { refitted Energy $E = \sqrt{p^2 + m^2}$}
+        {}
+\label{cxx.1.3.16}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {tvec}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,1.)$ refitted slope vector}
+        {}
+\label{cxx.1.3.17}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {evec}
+        {()\ const\ }
+        { $\vec{v} = (e_x,e_y,e_z)$ unit vector along refitted track}
+        {}
+\label{cxx.1.3.18}
+\cxxitem{SVector\ \<double,3\>\ \ }
+        {pvec}
+        {()\ const\ }
+        { $\vec{v} = (p_x,p_y,p_z)$ refitted mom. vector}
+        {}
+\label{cxx.1.3.19}
+\cxxitem{MATRIX::VtVector\ }
+        {evec}
+        {()\ const\ }
+        { $\vec{v} = (e_x,e_y,e_z)$ unit vector along refitted track}
+        {}
+\label{cxx.1.3.20}
+\cxxitem{MATRIX::VtVector\ }
+        {tvec}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,1.)$ refitted slope vector}
+        {}
+\label{cxx.1.3.21}
+\cxxitem{MATRIX::VtVector\ }
+        {pvec}
+        {()\ const\ }
+        { $\vec{v} = (p_x,p_y,p_z)$ refitted mom. vector}
+        {}
+\label{cxx.1.3.22}
+\cxxitem{}
+        {--- Cov. matrices for internal use --- }
+        {}
+        {}
+        {}
+\label{cxx.1.3.23}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {W}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.24}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {C}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.25}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {CINV}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.26}
+\cxxitem{const\ \ MATRIX::VtSqMatrix\&\ }
+        {F}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.27}
+\cxxitem{const\ \ MATRIX::VtSqMatrix\&\ }
+        {ES}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.28}
+\cxxitem{const\ \ MATRIX::VtSymMatrix\&\ }
+        {DS}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.29}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {xv}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.30}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {xnk}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.31}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {qvs}
+        {()\ const\ }
+        { $\vec{v} = (t_x,t_y,p)$}
+        {}
+\label{cxx.1.3.32}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.3.33}
+\cxxitem{void\ }
+        {use\_momentum}
+        {(const\ bool\ use)}
+        { set if track momentum should be used in fit}
+        {}
+\label{cxx.1.3.34}
+\cxxitem{bool\ }
+        {use\_momentum}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.3.35}
+\cxxitem{double\ }
+        {set\_chi2}
+        {(const\ double\ chi2)}
+        {}
+        {}
+\label{cxx.1.3.36}
+\cxxitem{void\ }
+        {init}
+        {()}
+        { initialize the kalman structure}
+        {}
+\label{cxx.1.3.37}
+\cxxitem{std::ostream\&\ }
+        {print}
+        {(\ std::ostream\&\ os\ )\ const\ }
+        { called by operator\<\<()}
+        {}
+\label{cxx.1.3.38}
+\cxxitem{bool\ }
+        {filter}
+        {(double\ z,\ const\ MATRIX::VtSymMatrix\&\ prCINV,\ const\ MATRIX::VtVector\&\ prkal\_xv)}
+        {}
+        {}
+\label{cxx.1.3.39}
+\cxxitem{double\ }
+        {filter\_chi2}
+        {(double\ z,\ double\ prChi2,\ const\ MATRIX::VtSymMatrix\&\ prCINV,\ const\ MATRIX::VtVector\&\ prkal\_xv)}
+        {}
+        {}
+\label{cxx.1.3.40}
+\cxxitem{bool\ }
+        {inverse\_filter}
+        {(double\ z,\ const\ MATRIX::VtSymMatrix\&\ CINVn,\ const\ MATRIX::VtSymMatrix\&\ prCINV,\ const\ MATRIX::VtVector\&\ kal\_xvn)}
+        {}
+        {}
+\label{cxx.1.3.41}
+\cxxitem{void\ }
+        {smooth}
+        {(double\ z,\ const\ MATRIX::VtVector\&\ xvs,\ const\ MATRIX::VtSymMatrix\&\ Cn)}
+        {}
+        {}
+\label{cxx.1.3.42}
+\cxxitem{const\ \ MATRIX::VtVector\ }
+        {calc\_dp}
+        {(double\ z,\ const\ MATRIX::VtVector\&\ xk,\ const\ MATRIX::VtVector\&\ qk)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.43}
+\cxxitem{const\ \ MATRIX::VtVector\ }
+        {calc\_pcAx}
+        {(const\ MATRIX::VtVector\&\ xk)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.44}
+\cxxitem{const\ \ MATRIX::VtVector\ }
+        {calc\_AGpc}
+        {(void)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.45}
+\cxxitem{const\ \ MATRIX::VtVector\ }
+        {calc\_qk}
+        {(const\ MATRIX::VtVector\&\ xk)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.46}
+\cxxitem{void\ }
+        {calc\_qvs}
+        {(const\ MATRIX::VtVector\&\ xvs)}
+        {}
+        {}
+\label{cxx.1.3.47}
+\cxxitem{double\ }
+        {calc\_dchi2}
+        {(double\ z,\ const\ MATRIX::VtSymMatrix\&\ prCINV,\ const\ MATRIX::VtVector\&\ xk,\ const\ MATRIX::VtVector\&\ prxk,\ const\ MATRIX::VtVector\&\ qk)\ const\ }
+        {}
+        {}
+\label{cxx.1.3.48}
+\cxxitem{void\ }
+        {calc\_pc}
+        {(double\ z)}
+        {}
+        {}
+\label{cxx.1.3.49}
+\cxxitem{}
+        {--- Mass constraint fit functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.3.50}
+\cxxitem{void\ }
+        {alpc\_init}
+        {(void)}
+        { fill $\vec{\alpha}_c^{(0)}$}
+        {}
+\label{cxx.1.3.51}
+\cxxitem{void\ }
+        {alp\_init}
+        {(void)}
+        { fill $\vec{\alpha}^{(0)}$}
+        {}
+\label{cxx.1.3.52}
+\cxxitem{void\ }
+        {calc\_ealpc}
+        {(void)}
+        { calculate unit vector $\vec{\alpha}_c/|\vec{\alpha}_c|$, energy from alpc}
+        {}
+\label{cxx.1.3.53}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {alpc}
+        {()\ const\ }
+        { state vector $\vec{\alpha_c}=(t_x,t_y,p)$}
+        {}
+\label{cxx.1.3.54}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {alp}
+        {()\ const\ }
+        { state vector $\vec{\alpha}=(t_x,t_y,p)$}
+        {}
+\label{cxx.1.3.55}
+\cxxitem{double\ }
+        {xn}
+        {()\ const\ }
+        { $n_x = t_x * e_z$}
+        {}
+\label{cxx.1.3.56}
+\cxxitem{double\ }
+        {yn}
+        {()\ const\ }
+        { $n_y = t_y * e_z$}
+        {}
+\label{cxx.1.3.57}
+\cxxitem{double\ }
+        {zn}
+        {()\ const\ }
+        { $n_z = 1/\sqrt{1 + t_x^2 + t_y^2}$}
+        {}
+\label{cxx.1.3.58}
+\cxxitem{double\ }
+        {erg}
+        {()\ const\ }
+        { $E_i=\sqrt{m^2 + p^2}$, $m$ = track rest-mass}
+        {}
+\label{cxx.1.3.59}
+\cxxitem{const\ \ MATRIX::VtVector\&\ }
+        {nalpc}
+        {()\ const\ }
+        { $\vec{n} = (n_x,n_y,n_z)$}
+        {}
+\label{cxx.1.3.60}
+\cxxitem{MATRIX::VtVector\&\ }
+        {qvs\_nc}
+        {()}
+        { return non-const reference to qvs}
+        {}
+\label{cxx.1.3.61}
+\end{cxxpublic}
+\begin{cxxdoc}
+This class contains the Vt Kalman filter matrices and vectors. Most
+of the member functions are for internal use only.
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {Relation}
+        {}
+        {for internal use only}
+        {1.4}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.4.1}
+\cxxitem{}
+        {Relation}
+        {(Track\&\ ttrack,\ Vertex\&\ vvertex)}
+        {}
+        {}
+\label{cxx.1.4.2}
+\cxxitem{}
+        {\cxxtilde Relation}
+        {()}
+        {}
+        {}
+\label{cxx.1.4.3}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.4.4}
+\cxxitem{void\ }
+        {print}
+        {(\ std::ostream\&\ os\ )\ const\ }
+        {}
+        {}
+\label{cxx.1.4.5}
+\cxxitem{inline\ \ Track\&\ }
+        {getTrack}
+        {()}
+        {}
+        {}
+\label{cxx.1.4.6}
+\cxxitem{inline\ \ Vertex\&\ }
+        {getVertex}
+        {()}
+        {}
+        {}
+\label{cxx.1.4.7}
+\cxxitem{inline\ \ Kalman\&\ }
+        {getKalman}
+        {()}
+        {}
+        {}
+\label{cxx.1.4.8}
+\end{cxxpublic}
+\begin{cxxdoc}
+Class for Track-Vertex-Kalman object relations.
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {RelationList}
+        {}
+        {Relation container class }
+        {1.5}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry[x]{}{1.5}{RelationList}{}
+\cxxInheritanceEntry{\cxxLinkPubright}{1.1}{Track}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.5.1}
+\cxxitem{}
+        {RelationList}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.2}
+\cxxitem{virtual\ }
+        {\cxxtilde RelationList}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.3}
+\cxxitem{}
+        {--- Access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.5.4}
+\cxxitem{virtual\ \ void\ }
+        {clear}
+        {()}
+        { clear all relations}
+        {}
+\label{cxx.1.5.5}
+\cxxitem{inline\ \ void\ }
+        {push\_\_back}
+        {(Relation*\ rel)}
+        { add a relation}
+        {}
+\label{cxx.1.5.6}
+\cxxitem{Relation*\ }
+        {back}
+        {()\ const\ }
+        { return last relation}
+        {}
+\label{cxx.1.5.7}
+\cxxitem{inline\ \ unsigned\ \ int\ }
+        {size}
+        {()\ const\ }
+        { return no of relations}
+        {}
+\label{cxx.1.5.8}
+\cxxitem{virtual\ \ const\ \ iterator\ }
+        {erase}
+        {(const\ iterator\&\ pos)}
+        { Erase an element}
+        {}
+\label{cxx.1.5.9}
+\cxxitem{}
+        {--- Iterator methods --- }
+        {}
+        {}
+        {}
+\label{cxx.1.5.10}
+\cxxitem{inline\ \ iterator\ }
+        {begin}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.11}
+\cxxitem{inline\ \ iterator\ }
+        {end}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.12}
+\cxxitem{inline\ \ const\_iterator\ }
+        {begin}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.5.13}
+\cxxitem{inline\ \ const\_iterator\ }
+        {end}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.5.14}
+\cxxitem{inline\ \ reverse\_iterator\ }
+        {rbegin}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.15}
+\cxxitem{inline\ \ reverse\_iterator\ }
+        {rend}
+        {()}
+        {}
+        {}
+\label{cxx.1.5.16}
+\cxxitem{inline\ \ const\_reverse\_iterator\ }
+        {rbegin}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.5.17}
+\cxxitem{inline\ \ const\_reverse\_iterator\ }
+        {rend}
+        {()\ const\ }
+        {}
+        {}
+\label{cxx.1.5.18}
+\cxxitem{Relation*\ \ const\ }
+        {operator[]}
+        {(unsigned\ int\ i)\ const\ }
+        { direct access}
+        {}
+\label{cxx.1.5.19}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.5.20}
+\cxxitem{void\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        {}
+        {}
+\label{cxx.1.5.21}
+\cxxitem{inline\ \ void\ }
+        {unbook}
+        {(Relation*\ const\ rel)}
+        { get rid of relation pointer}
+        {}
+\label{cxx.1.5.22}
+\cxxitem{virtual\ \ void\ }
+        {remove}
+        {(Relation*\ const\ rel)}
+        { remove a relation}
+        {}
+\label{cxx.1.5.23}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {MassC}
+        {}
+        {Mass Constraint class }
+        {1.6}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.1.6.1}
+\cxxitem{}
+        {MassC}
+        {()}
+        {}
+        {}
+\label{cxx.1.6.2}
+\cxxitem{}
+        {MassC}
+        {(double\ m)}
+        { construct from mass of mother particle}
+        {}
+\label{cxx.1.6.3}
+\cxxitem{}
+        {\cxxtilde MassC}
+        {()}
+        {}
+        {}
+\label{cxx.1.6.4}
+\cxxitem{}
+        {--- Access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.6.5}
+\cxxitem{inline\ \ void\ }
+        {push\_back}
+        {(Relation\&\ r)}
+        { add Track to mass constraint}
+        {}
+\label{cxx.1.6.6}
+\cxxitem{void\ }
+        {push\_back}
+        {(Relation*\ r)}
+        { add Track to mass contraint}
+        {}
+\label{cxx.1.6.7}
+\cxxitem{inline\ \ double\ }
+        {mass}
+        {()\ const\ }
+        { get mass constraint}
+        {}
+\label{cxx.1.6.8}
+\cxxitem{inline\ \ void\ }
+        {mass}
+        {(double\ m)}
+        { set mass constraint}
+        {}
+\label{cxx.1.6.9}
+\cxxitem{inline\ \ double\ }
+        {galp}
+        {()\ const\ }
+        { constraint $\vec{g}(\vec{\alpha}^{(0)})$}
+        {}
+\label{cxx.1.6.10}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.1.6.11}
+\cxxitem{void\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { called by operator\<\<()}
+        {}
+\label{cxx.1.6.12}
+\cxxitem{void\ }
+        {calc\_Sl}
+        {()}
+        { compute mass constraint $\vec{g}(\vec{\alpha}^{(0)})$}
+        {}
+\label{cxx.1.6.13}
+\cxxitem{const\ \ bool\ }
+        {check\_kinematic}
+        {()\ const\ }
+        { check kinematic boundary}
+        {}
+\label{cxx.1.6.14}
+\cxxitem{const\ \ MATRIX::VtVector\ }
+        {gam}
+        {(const\ Relation\&)\ const\ }
+        { return $\Gamma_{li}$}
+        {}
+\label{cxx.1.6.15}
+\end{cxxpublic}
+\end{cxxclass}
+\end{cxxentry}
+\begin{cxxentry}
+{}
+        {MATRIX}
+        {}
+        {A general purpose matrix computation package}
+        {2}
+\begin{cxxnames}
+\cxxitem{\ class\ }
+        {VtVector}
+        {}
+        {Vector class }
+        {2.1}
+\cxxitem{\ class\ }
+        {VtMatrix}
+        {}
+        {Simple Matrix computation base class}
+        {2.2}
+\cxxitem{\ class\ }
+        {VtSqMatrix}
+        {:\ public\ VtMatrix}
+        {Class for quadratic matrices}
+        {2.3}
+\cxxitem{\ class\ }
+        {VtSymMatrix}
+        {:\ public\ VtSqMatrix}
+        {Class for symmetric matrices}
+        {2.4}
+\cxxitem{\ class\ }
+        {VtNegMatrix}
+        {:\ public\ VtMatrix}
+        {Negative matrix class}
+        {2.5}
+\cxxitem{\ class\ }
+        {CMatrix}
+        {:\ public\ VtSymMatrix}
+        {HERA-B Track covariance matrix class}
+        {2.6}
+\end{cxxnames}
+\begin{cxxclass}
+{\ class\ }
+        {VtVector}
+        {}
+        {Vector class }
+        {2.1}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.1}
+\cxxitem{}
+        {VtVector}
+        {(const\ unsigned\ int\ size)}
+        {}
+        {}
+\label{cxx.2.1.2}
+\cxxitem{}
+        {VtVector}
+        {(double\ v1,\ double\ v2)}
+        {}
+        {}
+\label{cxx.2.1.3}
+\cxxitem{}
+        {VtVector}
+        {(double\ v1,\ double\ v2,\ double\ v3)}
+        {}
+        {}
+\label{cxx.2.1.4}
+\cxxitem{}
+        {VtVector}
+        {(double\ v1,\ double\ v2,\ double\ v3,\ double\ v4)}
+        {}
+        {}
+\label{cxx.2.1.5}
+\cxxitem{}
+        {VtVector}
+        {(double\ v1,\ double\ v2,\ double\ v3,\ double\ v4,\ double\ v5)}
+        {}
+        {}
+\label{cxx.2.1.6}
+\cxxitem{}
+        {VtVector}
+        {(double\ v1,\ double\ v2,\ double\ v3,\ double\ v4,\ double\ v5,\ double\ v6)}
+        {}
+        {}
+\label{cxx.2.1.7}
+\cxxitem{}
+        {VtVector}
+        {(const\ VtVector\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.1.8}
+\cxxitem{}
+        {\cxxtilde VtVector}
+        {()}
+        {}
+        {}
+\label{cxx.2.1.9}
+\cxxitem{}
+        {--- Operators --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.10}
+\cxxitem{double\ }
+        {operator[]}
+        {(unsigned\ int\ row)\ const\ }
+        {}
+        {}
+\label{cxx.2.1.11}
+\cxxitem{double\&\ }
+        {operator[]}
+        {(const\ unsigned\ int\ row)}
+        {}
+        {}
+\label{cxx.2.1.12}
+\cxxitem{double\ }
+        {operator)}
+        {(unsigned\ int\ row)\ const\ }
+        {}
+        {}
+\label{cxx.2.1.13}
+\cxxitem{double\&\ }
+        {operator)}
+        {(const\ unsigned\ int\ row)}
+        {}
+        {}
+\label{cxx.2.1.14}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator=\ }
+        {(const\ VtVector\&\ rhs)}
+        { $\vec{v} = \vec{w}$}
+        {}
+\label{cxx.2.1.15}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator+=}
+        {(const\ double\ rhs)}
+        { $\vec{v} = (v_\mu + \alpha)$}
+        {}
+\label{cxx.2.1.16}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator-=}
+        {(const\ double\ rhs)}
+        { $\vec{v} = (v_\mu - \alpha)$}
+        {}
+\label{cxx.2.1.17}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator*=}
+        {(const\ double\ rhs)}
+        { $\vec{v} = (v_\mu \cdot \alpha)$}
+        {}
+\label{cxx.2.1.18}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator/=}
+        {(const\ double\ rhs)}
+        { $\vec{v} = (v_\mu / \alpha)$}
+        {}
+\label{cxx.2.1.19}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator+=}
+        {(const\ VtVector\&\ rhs)}
+        { $\vec{v} = (v_\mu + w_\mu)$}
+        {}
+\label{cxx.2.1.20}
+\cxxitem{const\ \ VtVector\&\ }
+        {operator-=}
+        {(const\ VtVector\&\ rhs)}
+        { $\vec{v} = (v_\mu - w_\mu)$}
+        {}
+\label{cxx.2.1.21}
+\cxxitem{const\ \ VtVector\ }
+        {operator+\ }
+        {(const\ VtVector\&\ rhs)\ const\ }
+        { $\vec{v} + \vec{w}$}
+        {}
+\label{cxx.2.1.22}
+\cxxitem{const\ \ VtVector\ }
+        {operator-\ }
+        {(const\ VtVector\&\ rhs)\ const\ }
+        { $\vec{v} - \vec{w}$}
+        {}
+\label{cxx.2.1.23}
+\cxxitem{const\ \ double\ }
+        {operator*\ }
+        {(const\ VtVector\&\ rhs)\ const\ }
+        { $\vec{v} * \vec{w} = \sum_\mu v_\mu \cdot w_\mu$}
+        {}
+\label{cxx.2.1.24}
+\cxxitem{VtVector\ }
+        {operator*}
+        {(const\ double\ rhs)\ const\ }
+        { $\vec{v} = (v_\mu \cdot \alpha)$}
+        {}
+\label{cxx.2.1.25}
+\cxxitem{}
+        {--- Access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.26}
+\cxxitem{unsigned\ \ int\ }
+        {size}
+        {()\ const\ }
+        { vector dimension}
+        {}
+\label{cxx.2.1.27}
+\cxxitem{unsigned\ \ int\ }
+        {nrow}
+        {()\ const\ }
+        { vector dimension}
+        {}
+\label{cxx.2.1.28}
+\cxxitem{double\ }
+        {mag2}
+        {()\ const\ }
+        { $\sum_i v_i^2$}
+        {}
+\label{cxx.2.1.29}
+\cxxitem{double\ }
+        {mag}
+        {()\ const\ }
+        { $\sqrt{\sum_i v_i^2}$ vector length}
+        {}
+\label{cxx.2.1.30}
+\cxxitem{VtVector\ }
+        {unit}
+        {()\ const\ }
+        { return a unit vector}
+        {}
+\label{cxx.2.1.31}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.2.1.32}
+\cxxitem{void\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        { called by cout}
+        {}
+\label{cxx.2.1.33}
+\cxxitem{void\ }
+        {place\_at}
+        {(const\ VtVector\&\ rhs,\ const\ unsigned\ int\ row)}
+        { copy a smaller vector at a certain place}
+        {}
+\label{cxx.2.1.34}
+\cxxitem{void\ }
+        {copy}
+        {(const\ VtVector\&\ rhs,\ const\ unsigned\ int\ offset)}
+        { to be used if vector dimensions differ}
+        {}
+\label{cxx.2.1.35}
+\cxxitem{void\ }
+        {clear}
+        {(void)}
+        { set vector elements to 0}
+        {}
+\label{cxx.2.1.36}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {VtMatrix}
+        {}
+        {Simple Matrix computation base class}
+        {2.2}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry[x]{}{2.2}{VtMatrix}{}
+\cxxInheritanceEntry{\cxxLinkPubRight}{2.3}{VtSqMatrix}{}
+\cxxInheritanceEntry{\cxxLinkPubright}{2.5}{VtNegMatrix}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.1}
+\cxxitem{}
+        {VtMatrix}
+        {(const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        {}
+        {}
+\label{cxx.2.2.2}
+\cxxitem{}
+        {VtMatrix}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.2.3}
+\cxxitem{virtual\ }
+        {\cxxtilde VtMatrix}
+        {()}
+        {}
+        {}
+\label{cxx.2.2.4}
+\cxxitem{}
+        {--- Access functions --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.5}
+\cxxitem{inline\ \ unsigned\ \ int\ }
+        {nrow}
+        {()\ const\ }
+        { no of rows $n$}
+        {}
+\label{cxx.2.2.6}
+\cxxitem{inline\ \ unsigned\ \ int\ }
+        {ncol}
+        {()\ const\ }
+        { no of columns $m$}
+        {}
+\label{cxx.2.2.7}
+\cxxitem{inline\ \ int\ }
+        {size}
+        {()\ const\ }
+        { $m\times n$}
+        {}
+\label{cxx.2.2.8}
+\cxxitem{}
+        {--- Matrix operations --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.9}
+\cxxitem{void\ }
+        {VtT}
+        {(void)}
+        { transform into transpose matrix}
+        {}
+\label{cxx.2.2.10}
+\cxxitem{const\ \ VtMatrix\ }
+        {T}
+        {(void)\ const\ }
+        { return transpose}
+        {}
+\label{cxx.2.2.11}
+\cxxitem{virtual\ \ void\ }
+        {place\_at}
+        {(const\ VtMatrix\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { copy a smaller matrix at a certain place}
+        {}
+\label{cxx.2.2.12}
+\cxxitem{virtual\ \ void\ }
+        {place\_at}
+        {(const\ VtVector\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { copy a vector at a certain place}
+        {}
+\label{cxx.2.2.13}
+\cxxitem{void\ }
+        {copy}
+        {(const\ VtMatrix\&\ rhs)}
+        { to be used if matrix dimensions are not equal}
+        {}
+\label{cxx.2.2.14}
+\cxxitem{void\ }
+        {clear}
+        {(void)}
+        { set matrix elements to 0}
+        {}
+\label{cxx.2.2.15}
+\cxxitem{const\ \ VtMatrix\&\ }
+        {operator=\ }
+        {(const\ VtMatrix\&\ rhs)}
+        { $\textbf{A} = \textbf{B}$}
+        {}
+\label{cxx.2.2.16}
+\cxxitem{const\ \ VtMatrix\&\ }
+        {operator=\ }
+        {(const\ VtNegMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.2.17}
+\cxxitem{virtual\ \ const\ \ VtMatrix\&\ }
+        {operator+=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} + \alpha)$}
+        {}
+\label{cxx.2.2.18}
+\cxxitem{virtual\ \ const\ \ VtMatrix\&\ }
+        {operator-=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} - \alpha)$}
+        {}
+\label{cxx.2.2.19}
+\cxxitem{virtual\ \ const\ \ VtMatrix\&\ }
+        {operator*=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} \cdot\alpha)$}
+        {}
+\label{cxx.2.2.20}
+\cxxitem{virtual\ \ const\ \ VtMatrix\&\ }
+        {operator/=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} / \alpha)$}
+        {}
+\label{cxx.2.2.21}
+\cxxitem{const\ \ VtMatrix\&\ }
+        {operator+=}
+        {(const\ VtMatrix\&\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} + b_{\mu\nu})$}
+        {}
+\label{cxx.2.2.22}
+\cxxitem{const\ \ VtMatrix\&\ }
+        {operator-=}
+        {(const\ VtMatrix\&\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} - b_{\mu\nu})$}
+        {}
+\label{cxx.2.2.23}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator+\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        { $\textbf{A} + \textbf{B}$}
+        {}
+\label{cxx.2.2.24}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator+\ }
+        {(const\ VtNegMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.2.25}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator-\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        { $\textbf{A} - \textbf{B}$}
+        {}
+\label{cxx.2.2.26}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator-\ }
+        {(const\ VtNegMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.2.27}
+\cxxitem{const\ \ VtNegMatrix\ }
+        {operator-\ }
+        {(void)\ const\ }
+        { $-\textbf{A}$}
+        {}
+\label{cxx.2.2.28}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator*\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        { $\textbf{A}\cdot\textbf{B} = \sum_{\nu=1}^n a_{\mu\nu}b_{\nu\lambda}$}
+        {}
+\label{cxx.2.2.29}
+\cxxitem{const\ \ VtVector\ }
+        {operator*\ }
+        {(const\ VtVector\&\ rhs)\ const\ }
+        { $\textbf{A}\cdot\vec{v} = (\sum_{\nu=1}^n a_{\mu\nu}v_{\nu})$}
+        {}
+\label{cxx.2.2.30}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.2.2.31}
+\cxxitem{inline\ \ double*\ }
+        {array}
+        {()\ const\ }
+        { return pointer to internal array}
+        {}
+\label{cxx.2.2.32}
+\cxxitem{virtual\ \ void\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        {}
+        {}
+\label{cxx.2.2.33}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {VtSqMatrix}
+        {:\ public\ VtMatrix}
+        {Class for quadratic matrices}
+        {2.3}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{2.2}{VtMatrix}{\cxxLastPubleft}
+\cxxInheritanceEntry[x]{\cxxNone}{2.3}{VtSqMatrix}{}
+\cxxInheritanceEntry{\cxxNone\cxxLinkPubright}{2.4}{VtSymMatrix}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.3.1}
+\cxxitem{}
+        {VtSqMatrix}
+        {(const\ int\ row)}
+        {}
+        {}
+\label{cxx.2.3.2}
+\cxxitem{}
+        {VtSqMatrix}
+        {(const\ VtSqMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.3.3}
+\cxxitem{}
+        {VtSqMatrix}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.3.4}
+\cxxitem{virtual\ }
+        {\cxxtilde VtSqMatrix}
+        {()}
+        {}
+        {}
+\label{cxx.2.3.5}
+\cxxitem{}
+        {--- Matrix operations --- }
+        {}
+        {}
+        {}
+\label{cxx.2.3.6}
+\cxxitem{bool\ }
+        {VtDinv}
+        {(int\ dim\ =\ 0)}
+        { transform to inverse}
+        {}
+\label{cxx.2.3.7}
+\cxxitem{const\ \ VtSqMatrix\ }
+        {dinv}
+        {(int\ dim\ =\ 0)\ const\ }
+        { return inverse}
+        {}
+\label{cxx.2.3.8}
+\cxxitem{virtual\ \ double\ }
+        {det}
+        {()\ const\ }
+        { return determinant}
+        {}
+\label{cxx.2.3.9}
+\cxxitem{const\ \ VtVector\ }
+        {operator*}
+        {(const\ VtVector\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.3.10}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {VtSymMatrix}
+        {:\ public\ VtSqMatrix}
+        {Class for symmetric matrices}
+        {2.4}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{2.2}{VtMatrix}{\cxxLastPubleft\cxxNone}
+\cxxInheritanceEntry{\cxxNone}{2.3}{VtSqMatrix}{\cxxLastPubleft}
+\cxxInheritanceEntry[x]{\cxxNone\cxxNone}{2.4}{VtSymMatrix}{}
+\cxxInheritanceEntry{\cxxNone\cxxNone\cxxLinkPubright}{2.6}{CMatrix}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.4.1}
+\cxxitem{}
+        {VtSymMatrix}
+        {(const\ unsigned\ int\ dim)}
+        {}
+        {}
+\label{cxx.2.4.2}
+\cxxitem{}
+        {VtSymMatrix}
+        {(const\ unsigned\ int\ dim,\ double\ diag)}
+        { initalize diagonal elements}
+        {}
+\label{cxx.2.4.3}
+\cxxitem{}
+        {VtSymMatrix}
+        {(const\ VtSymMatrix\&\ rhs)}
+        { copy constructor}
+        {}
+\label{cxx.2.4.4}
+\cxxitem{}
+        {VtSymMatrix}
+        {(const\ VtSqMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.4.5}
+\cxxitem{}
+        {VtSymMatrix}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.4.6}
+\cxxitem{}
+        {--- Matrix operations --- }
+        {}
+        {}
+        {}
+\label{cxx.2.4.7}
+\cxxitem{bool\ }
+        {invert}
+        {(const\ bool\ use\_momentum)}
+        { calc inverse using momentum or not}
+        {}
+\label{cxx.2.4.8}
+\cxxitem{bool\ }
+        {VtDsinv}
+        {(int\ dim\ =\ 0)}
+        { transform to inverse}
+        {}
+\label{cxx.2.4.9}
+\cxxitem{const\ \ VtSymMatrix\ }
+        {dsinv}
+        {(int\ dim\ =\ 0)\ const\ }
+        { return inverse}
+        {}
+\label{cxx.2.4.10}
+\cxxitem{virtual\ \ double\ }
+        {det}
+        {()\ const\ }
+        { compute determinant via CERNLIB dsfact()}
+        {}
+\label{cxx.2.4.11}
+\cxxitem{double\ }
+        {product}
+        {(const\ VtVector\&\ rhs,\ unsigned\ int\ dim\ =\ 0)\ const\ }
+        { compute $v^t*A*v$}
+        {}
+\label{cxx.2.4.12}
+\cxxitem{const\ \ VtSymMatrix\ }
+        {product}
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        { compute $B^t*A*B$}
+        {}
+\label{cxx.2.4.13}
+\cxxitem{virtual\ \ void\ }
+        {place\_at}
+        {(const\ VtMatrix\&\ rhs,\ const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        { copy a smaller matrix at a certain place}
+        {}
+\label{cxx.2.4.14}
+\cxxitem{void\ }
+        {copy}
+        {(const\ VtSymMatrix\&\ rhs)}
+        { in case matrix dimensions differ}
+        {}
+\label{cxx.2.4.15}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator=}
+        {(const\ VtSymMatrix\&\ rhs)}
+        { copy }
+        {}
+\label{cxx.2.4.16}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator+=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} + \alpha)$}
+        {}
+\label{cxx.2.4.17}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator-=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} - \alpha)$}
+        {}
+\label{cxx.2.4.18}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator*=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} \cdot\alpha)$}
+        {}
+\label{cxx.2.4.19}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator/=}
+        {(const\ double\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} / \alpha)$}
+        {}
+\label{cxx.2.4.20}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator+=}
+        {(const\ VtSymMatrix\&\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} + b_{\mu\nu})$}
+        {}
+\label{cxx.2.4.21}
+\cxxitem{const\ \ VtSymMatrix\&\ }
+        {operator-=}
+        {(const\ VtSymMatrix\&\ rhs)}
+        { $\textbf{A} = (a_{\mu\nu} - b_{\mu\nu})$}
+        {}
+\label{cxx.2.4.22}
+\cxxitem{const\ \ VtSymMatrix\ }
+        {operator+}
+        {(const\ VtSymMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.23}
+\cxxitem{const\ \ VtSqMatrix\ }
+        {operator+}
+        {(const\ VtSqMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.24}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator+}
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.25}
+\cxxitem{const\ \ VtSymMatrix\ }
+        {operator-}
+        {(const\ VtSymMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.26}
+\cxxitem{const\ \ VtSymMatrix\ }
+        {operator-}
+        {(void)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.27}
+\cxxitem{const\ \ VtSqMatrix\ }
+        {operator-}
+        {(const\ VtSqMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.28}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator-}
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.29}
+\cxxitem{const\ \ VtSqMatrix\ }
+        {operator*}
+        {(const\ VtSymMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.30}
+\cxxitem{const\ \ VtSqMatrix\ }
+        {operator*}
+        {(const\ VtSqMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.31}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator*}
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.32}
+\cxxitem{const\ \ VtVector\ }
+        {operator*}
+        {(const\ VtVector\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.33}
+\cxxitem{}
+        {--- Expert functions --- }
+        {}
+        {}
+        {}
+\label{cxx.2.4.34}
+\cxxitem{virtual\ \ void\ }
+        {print}
+        {(std::ostream\&\ os)\ const\ }
+        {}
+        {}
+\label{cxx.2.4.35}
+\end{cxxpublic}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {VtNegMatrix}
+        {:\ public\ VtMatrix}
+        {Negative matrix class}
+        {2.5}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{2.2}{VtMatrix}{\cxxLastPubleft}
+\cxxInheritanceEntry[x]{\cxxNone}{2.5}{VtNegMatrix}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.5.1}
+\cxxitem{}
+        {VtNegMatrix}
+        {(const\ unsigned\ int\ row,\ const\ unsigned\ int\ col)}
+        {}
+        {}
+\label{cxx.2.5.2}
+\cxxitem{}
+        {VtNegMatrix}
+        {(const\ VtNegMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.3}
+\cxxitem{}
+        {VtNegMatrix}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.4}
+\cxxitem{}
+        {\cxxtilde VtNegMatrix}
+        {()}
+        {}
+        {}
+\label{cxx.2.5.5}
+\cxxitem{}
+        {--- Matrix operations --- }
+        {}
+        {}
+        {}
+\label{cxx.2.5.6}
+\cxxitem{const\ \ VtNegMatrix\ }
+        {T}
+        {(void)\ const\ }
+        { return transposed matrix}
+        {}
+\label{cxx.2.5.7}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator+=}
+        {(const\ double\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.8}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator-=}
+        {(const\ double\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.9}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator*=}
+        {(const\ double\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.10}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator/=}
+        {(const\ double\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.11}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator+=}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.12}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator+=}
+        {(const\ VtNegMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.13}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator-=}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.14}
+\cxxitem{const\ \ VtNegMatrix\&\ }
+        {operator-=}
+        {(const\ VtNegMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.5.15}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator+\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.16}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator+\ }
+        {(const\ VtNegMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.17}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator-\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.18}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator-\ }
+        {(void)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.19}
+\cxxitem{const\ \ VtMatrix\ }
+        {operator*\ }
+        {(const\ VtMatrix\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.20}
+\cxxitem{const\ \ VtVector\ }
+        {operator*\ }
+        {(const\ VtVector\&\ rhs)\ const\ }
+        {}
+        {}
+\label{cxx.2.5.21}
+\end{cxxpublic}
+\begin{cxxdoc}
+A class for negative matrices to optimize expressions like
+$C = -A * B$. For internal use only!
+
+\end{cxxdoc}
+\end{cxxclass}
+\begin{cxxclass}
+{\ class\ }
+        {CMatrix}
+        {:\ public\ VtSymMatrix}
+        {HERA-B Track covariance matrix class}
+        {2.6}
+\begin{cxxInheritance}
+\paragraph{Inheritance}\strut\smallskip\strut\\
+\cxxInheritanceEntry{}{2.2}{VtMatrix}{\cxxLastPubleft\cxxNone\cxxNone}
+\cxxInheritanceEntry{\cxxNone}{2.3}{VtSqMatrix}{\cxxLastPubleft\cxxNone}
+\cxxInheritanceEntry{\cxxNone\cxxNone}{2.4}{VtSymMatrix}{\cxxLastPubleft}
+\cxxInheritanceEntry[x]{\cxxNone\cxxNone\cxxNone}{2.6}{CMatrix}{}
+\end{cxxInheritance}
+\begin{cxxpublic}
+\cxxitem{}
+        {--- Constructors --- }
+        {}
+        {}
+        {}
+\label{cxx.2.6.1}
+\cxxitem{}
+        {CMatrix}
+        {()}
+        {}
+        {}
+\label{cxx.2.6.2}
+\cxxitem{}
+        {CMatrix}
+        {(const\ CMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.6.3}
+\cxxitem{}
+        {CMatrix}
+        {(const\ VtSymMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.6.4}
+\cxxitem{}
+        {CMatrix}
+        {(const\ VtSqMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.6.5}
+\cxxitem{}
+        {CMatrix}
+        {(const\ VtMatrix\&\ rhs)}
+        {}
+        {}
+\label{cxx.2.6.6}
+\cxxitem{}
+        {CMatrix}
+        {(const\ SMatrix\<double,\ 5\>\&\ rhs)}
+        { not available in CINT}
+        {}
+\label{cxx.2.6.7}
+\cxxitem{}
+        {CMatrix}
+        {(const\ ArtePointer\<RTRA\>\&\ rtra)}
+        {}
+        {}
+\label{cxx.2.6.8}
+\cxxitem{}
+        {CMatrix}
+        {(const\ ArtePointer\<RSEG\>\&\ rseg)}
+        {}
+        {}
+\label{cxx.2.6.9}
+\cxxitem{}
+        {CMatrix}
+        {(const\ ArtePointer\<MTRA\>\&\ mtra)}
+        {}
+        {}
+\label{cxx.2.6.10}
+\cxxitem{}
+        {CMatrix}
+        {(const\ RecoSegment\&\ r)}
+        {}
+        {}
+\label{cxx.2.6.11}
+\cxxitem{}
+        {CMatrix}
+        {(const\ ArtePointer\<RecoTrack\>\&\ r)}
+        {}
+        {}
+\label{cxx.2.6.12}
+\cxxitem{}
+        {--- Access methods --- }
+        {}
+        {}
+        {}
+\label{cxx.2.6.13}
+\cxxitem{double\ }
+        {x}
+        {()\ const\ }
+        { rtra-\>cvf[0]}
+        {}
+\label{cxx.2.6.14}
+\cxxitem{double\ }
+        {x\_y}
+        {()\ const\ }
+        { rtra-\>cvf[1]}
+        {}
+\label{cxx.2.6.15}
+\cxxitem{double\ }
+        {x\_tx}
+        {()\ const\ }
+        { rtra-\>cvf[3]}
+        {}
+\label{cxx.2.6.16}
+\cxxitem{double\ }
+        {x\_ty}
+        {()\ const\ }
+        { rtra-\>cvf[6]}
+        {}
+\label{cxx.2.6.17}
+\cxxitem{double\ }
+        {x\_p}
+        {()\ const\ }
+        { rtra-\>cvf[10] $* Q * -p^2$}
+        {}
+\label{cxx.2.6.18}
+\cxxitem{double\ }
+        {y}
+        {()\ const\ }
+        { rtra-\>cvf[2]}
+        {}
+\label{cxx.2.6.19}
+\cxxitem{double\ }
+        {y\_tx}
+        {()\ const\ }
+        { rtra-\>cvf[4]}
+        {}
+\label{cxx.2.6.20}
+\cxxitem{double\ }
+        {y\_ty}
+        {()\ const\ }
+        { rtra-\>cvf[7]}
+        {}
+\label{cxx.2.6.21}
+\cxxitem{double\ }
+        {y\_p}
+        {()\ const\ }
+        { rtra-\>cvf[11] $* Q * -p^2$}
+        {}
+\label{cxx.2.6.22}
+\cxxitem{double\ }
+        {tx}
+        {()\ const\ }
+        { rtra-\>cvf[5]}
+        {}
+\label{cxx.2.6.23}
+\cxxitem{double\ }
+        {tx\_ty}
+        {()\ const\ }
+        { rtra-\>cvf[8]}
+        {}
+\label{cxx.2.6.24}
+\cxxitem{double\ }
+        {tx\_p}
+        {()\ const\ }
+        { rtra-\>cvf[12] $* Q * -p^2$}
+        {}
+\label{cxx.2.6.25}
+\cxxitem{double\ }
+        {ty}
+        {()\ const\ }
+        { rtra-\>cvf[9]}
+        {}
+\label{cxx.2.6.26}
+\cxxitem{double\ }
+        {ty\_p}
+        {()\ const\ }
+        { rtra-\>cvf[13] $* Q * -p^2$}
+        {}
+\label{cxx.2.6.27}
+\cxxitem{double\ }
+        {p}
+        {()\ const\ }
+        { rtra-\>cvf[14] $* p^4$}
+        {}
+\label{cxx.2.6.28}
+\cxxitem{}
+        {--- Modification of matrix elements --- }
+        {}
+        {}
+        {}
+\label{cxx.2.6.29}
+\cxxitem{void\ }
+        {set\_x}
+        {(const\ double\ x)}
+        {}
+        {}
+\label{cxx.2.6.30}
+\cxxitem{void\ }
+        {set\_x\_y}
+        {(const\ double\ xy)}
+        {										   }
+        {}
+\label{cxx.2.6.31}
+\cxxitem{void\ }
+        {set\_x\_tx}
+        {(const\ double\ xtx)}
+        {										   }
+        {}
+\label{cxx.2.6.32}
+\cxxitem{void\ }
+        {set\_x\_ty}
+        {(const\ double\ xty)}
+        {										   }
+        {}
+\label{cxx.2.6.33}
+\cxxitem{void\ }
+        {set\_x\_p}
+        {(const\ double\ xp)}
+        {										   }
+        {}
+\label{cxx.2.6.34}
+\cxxitem{void\ }
+        {set\_y}
+        {(const\ double\ y)}
+        {										   }
+        {}
+\label{cxx.2.6.35}
+\cxxitem{void\ }
+        {set\_y\_tx}
+        {(const\ double\ ytx)}
+        {										   }
+        {}
+\label{cxx.2.6.36}
+\cxxitem{void\ }
+        {set\_y\_ty}
+        {(const\ double\ yty)}
+        {										   }
+        {}
+\label{cxx.2.6.37}
+\cxxitem{void\ }
+        {set\_y\_p}
+        {(const\ double\ yp)}
+        {										   }
+        {}
+\label{cxx.2.6.38}
+\cxxitem{void\ }
+        {set\_tx}
+        {(const\ double\ tx)}
+        {										   }
+        {}
+\label{cxx.2.6.39}
+\cxxitem{void\ }
+        {set\_tx\_ty}
+        {(const\ double\ txty)}
+        {										   }
+        {}
+\label{cxx.2.6.40}
+\cxxitem{void\ }
+        {set\_tx\_p}
+        {(const\ double\ txp)}
+        {										   }
+        {}
+\label{cxx.2.6.41}
+\cxxitem{void\ }
+        {set\_ty}
+        {(const\ double\ ty)}
+        {										   }
+        {}
+\label{cxx.2.6.42}
+\cxxitem{void\ }
+        {set\_ty\_p}
+        {(const\ double\ typ)}
+        {										   }
+        {}
+\label{cxx.2.6.43}
+\cxxitem{void\ }
+        {set\_p}
+        {(const\ double\ p)}
+        {										   }
+        {}
+\label{cxx.2.6.44}
+\cxxitem{}
+        {--- Error propagation --- }
+        {}
+        {}
+        {}
+\label{cxx.2.6.45}
+\cxxitem{double\ }
+        {x\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.46}
+\cxxitem{double\ }
+        {x\_y\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.47}
+\cxxitem{double\ }
+        {x\_tx\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.48}
+\cxxitem{double\ }
+        {x\_ty\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.49}
+\cxxitem{double\ }
+        {x\_p\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.50}
+\cxxitem{double\ }
+        {y\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.51}
+\cxxitem{double\ }
+        {y\_tx\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.52}
+\cxxitem{double\ }
+        {y\_ty\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.53}
+\cxxitem{double\ }
+        {y\_p\_prop}
+        {(double\ dz)\ const\ }
+        {}
+        {}
+\label{cxx.2.6.54}
+\cxxitem{void\ }
+        {propagate}
+        {(const\ double\ dz)}
+        { propagate all matrix elements}
+        {}
+\label{cxx.2.6.55}
+\end{cxxpublic}
+\end{cxxclass}
+\end{cxxentry}
+\begin{cxxClassGraph}
+\label{cxx.}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.3}{Kalman}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.4}{Relation}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.5}{RelationList}{}
+\cxxClassGraphEntry{\cxxLinkPubright}{1.1}{Track}{}
+\cxxClassGraphEntry{\cxxNone\cxxLinkPubright}{1.2}{Vertex}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{1.6}{MassC}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{2.1}{VtVector}{}
+\strut\\[5pt]\goodbreak
+\cxxClassGraphEntry{}{2.2}{VtMatrix}{}
+\cxxClassGraphEntry{\cxxLinkPubRight}{2.3}{VtSqMatrix}{}
+\cxxClassGraphEntry{\cxxLong\cxxLinkPubright}{2.4}{VtSymMatrix}{}
+\cxxClassGraphEntry{\cxxLong\cxxNone\cxxLinkPubright}{2.6}{CMatrix}{}
+\cxxClassGraphEntry{\cxxLinkPubright}{2.5}{VtNegMatrix}{}
+\end{cxxClassGraph}
+\end{document}

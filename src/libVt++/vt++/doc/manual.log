@@ -1,0 +1,275 @@
+This is TeX, Version 3.14159 (Web2C 7.3.7) (format=latex 2003.2.13)  14 FEB 2003 13:52
+**/data/data1/WORK/BEE-1-5/vt++/doc/manual.tex
+(/data/data1/WORK/BEE-1-5/vt++/doc/manual.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/article.cls
+Document Class: article 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/psnfss/bookman.sty
+Package: bookman 2001/06/04 PSNFSS-v8.2 (SPQR) 
+) (/home/gradl/.TeX/docxx.sty
+\cxxcodewidth=\dimen103
+\cxxIdWidth=\dimen104
+\cxxTypeWidth=\dimen105
+\cxxProtoWidth=\dimen106
+\cxxMemoWidth=\dimen107
+\cxxPageWidth=\dimen108
+\cxxProtoMemoWidth=\dimen109
+\cxxtypestart=\dimen110
+\cxxnamestart=\dimen111
+\cxxargsstart=\dimen112
+\cxxargswidth=\dimen113
+\cxxmemostart=\dimen114
+\cxxBoxLen=\skip43
+\cxxBoxHt=\skip44
+\cxxBoxDp=\skip45
+\cxxSideHt=\skip46
+\cxxSideLen=\skip47
+\cxxTitleLen=\skip48
+\cxxHeadName=\box26
+\c@cxxContentsDepth=\count87
+\cxxContentsLengthIncr=\dimen115
+\cxxContentsLength=\dimen116
+\cxxClassGraphShift=\dimen117
+\cxxClassGraphLength=\dimen118
+\cxxClassGraphHeight=\dimen119
+\cxxClassGraphDepth=\dimen120
+\cxxClassGraphTotV=\dimen121
+LaTeX Font Info:    Try loading font information for OT1+pbk on input line 519.
+
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pbk.fd
+File: ot1pbk.fd 2001/06/04 font definitions for OT1/pbk.
+)
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 519.
+LaTeX Font Info:    Try loading font information for OT1+pag on input line 519.
+
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pag.fd
+File: ot1pag.fd 2001/06/04 font definitions for OT1/pag.
+)
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 519.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <9> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 519.
+\cxxgenericstart=\dimen122
+\cxxgenericwidth=\dimen123
+\c@cxxDepth=\count88
+\cxxSize=\skip49
+) (./manual.aux)
+\openout1 = `manual.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 4.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 16.
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 16.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <24.88> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 16.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 16.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <14.4> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 16.
+LaTeX Font Info:    Font shape `OT1/pbk/m/it' in size <14.4> not available
+(Font)              Font shape `OT1/pbk/l/it' tried instead on input line 16.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 16.
+
+(/usr/share/texmf/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+) [1
+
+]
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 17.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <10> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 17.
+LaTeX Font Info:    Font shape `OT1/pbk/bx/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/b/it' tried instead on input line 18.
+LaTeX Font Info:    Font shape `OT1/pbk/b/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/db/it' tried instead on input line 18.
+LaTeX Font Info:    Font shape `OT1/pbk/m/it' in size <10> not available
+(Font)              Font shape `OT1/pbk/l/it' tried instead on input line 20.
+LaTeX Font Info:    Font shape `OT1/pbk/m/n' in size <5> not available
+(Font)              Font shape `OT1/pbk/l/n' tried instead on input line 61.
+LaTeX Font Info:    Try loading font information for OMS+pag on input line 61.
+
+(/usr/share/texmf/tex/latex/psnfss/omspag.fd
+File: omspag.fd 
+)
+LaTeX Font Info:    Font shape `OMS/pag/m/n' in size <5> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 61.
+ [2]
+LaTeX Font Info:    Font shape `OT1/pbk/bx/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/b/n' tried instead on input line 67.
+LaTeX Font Info:    Font shape `OT1/pbk/b/n' in size <12> not available
+(Font)              Font shape `OT1/pbk/db/n' tried instead on input line 67.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 115.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 115.
+
+Underfull \hbox (badness 10000) in paragraph at lines 139--139
+[]\OT1/pbk/l/it/10 spatial dis-tance be-tween
+ []
+
+
+Underfull \hbox (badness 3930) in paragraph at lines 187--187
+[]$\OML/cmm/m/it/10 ^^_\OT1/cmr/m/n/10 2$ \OT1/pbk/l/it/10 dis-tance ver-tex - 
+space
+ []
+
+[3
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+|\OT1/pbk/l/n/12 : pub-lic Re-la-tion-List if de-fined
+ []
+
+[4] [5]
+Underfull \hbox (badness 1024) in paragraph at lines 402--402
+[]\OT1/pbk/l/it/10 Energy with given rest-mass
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 408--408
+[]\OT1/pbk/l/it/10 Feynman Vari-able $\OML/cmm/m/it/10 x[] \OT1/cmr/m/n/10 =
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 582--582
+[]\OT1/pbk/l/it/10 is Track con-structed from
+ []
+
+[6] [7] [8] [9] [10]
+Overfull \hbox (89.44867pt too wide) in paragraph at lines 920--920
+[]$[]\OML/cmm/m/it/10 =n$
+ []
+
+
+Underfull \hbox (badness 1264) in paragraph at lines 950--950
+[]$[] \OMS/cmsy/m/n/10 j\OML/cmm/m/it/10 p[]=p[]\OMS/cmsy/m/n/10 j$ \OT1/pbk/l/
+it/10 max. mo-men-tum
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 992--992
+[]\OT1/pbk/l/it/10 rest-mass 0 or con-ju-gated
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1172--1172
+[]\OT1/pbk/l/it/10 remove track with biggest
+ []
+
+
+Underfull \hbox (badness 1681) in paragraph at lines 1172--1172
+\OML/cmm/m/it/10 ^^_[]$ \OT1/pbk/l/it/10 con-tri-bu-tion,  do in-verse
+ []
+
+
+Underfull \hbox (badness 2698) in paragraph at lines 1196--1196
+[]$\OML/cmm/m/it/10 ^^_[]$ \OT1/pbk/l/it/10 dis-tance to space point,
+ []
+
+
+Underfull \hbox (badness 4995) in paragraph at lines 1250--1250
+[]\OT1/pbk/l/it/10 remove track us-ing in-verse
+ []
+
+[11] [12] [13] [14] [15] [16]
+Underfull \hbox (badness 2245) in paragraph at lines 1685--1685
+[]\OT1/pbk/l/it/10 calculate unit vec-tor $[]\OML/cmm/m/it/10 =\OMS/cmsy/m/n/10
+ j[]j$\OT1/pbk/l/it/10 ,
+ []
+
+[17] [18] [19] [20] [21] [22]
+Underfull \hbox (badness 10000) in paragraph at lines 2038--2038
+[]\OT1/pbk/l/it/10 compute mass con-straint
+ []
+
+[23] [24]
+Underfull \hbox (badness 10000) in paragraph at lines 2071--2071
+[]\OT1/pbk/l/it/10 Simple Ma-trix com-pu-ta-tion
+ []
+
+[25
+
+] [26] [27] [28] [29] [30]
+Underfull \hbox (badness 10000) in paragraph at lines 2684--2684
+[]\OT1/pbk/l/it/10 compute de-ter-mi-nant via
+ []
+
+[31] [32] [33] [34] [35] [36] [37] [38]
+Underfull \hbox (badness 10000) in paragraph at lines 3326--3326
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3328--3328
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3330--3330
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3334--3334
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3336--3336
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3338--3338
+
+ []
+
+[39
+
+] [40] (./manual.aux) ) 
+Here is how much of TeX's memory you used:
+ 1096 strings out of 25847
+ 12981 string characters out of 195960
+ 76848 words of memory out of 384000
+ 4084 multiletter control sequences out of 10000+15000
+ 12083 words of font info for 33 fonts, out of 400000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 29i,13n,24p,214b,543s stack positions out of 300i,100n,500p,50000b,4000s
+
+Output written on manual.dvi (40 pages, 92976 bytes).

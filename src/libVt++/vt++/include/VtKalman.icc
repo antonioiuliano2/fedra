@@ -1,0 +1,89 @@
+#ifndef __VTKALMAN_ICC
+#define __VTKALMAN_ICC
+// *****************************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   21. Aug 2000
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: Kalman filter class
+//
+// changes:
+// 16 Jan 2002 (TG) creation
+//
+// *****************************************************************************
+
+#include "vt++/VtUtil.hh"
+#include <cmath>
+
+namespace VERTEX {
+
+  inline double Kalman::chi2()  const { return k_chi2; }
+  inline double Kalman::chi2s() const { return k_chi2s; }
+  inline double Kalman::tx()    const { return k_qvs[0]; }
+  inline double Kalman::ty()    const { return k_qvs[1]; }
+  inline double Kalman::p()     const { return k_qvs[2]; }
+  inline double Kalman::px()    const { return p()  * ex(); }
+  inline double Kalman::py()    const { return p()  * ey(); }
+  inline double Kalman::pz()    const { return p()  * ez(); }
+  inline double Kalman::ex()    const { return tx() * ez(); }
+  inline double Kalman::ey()    const { return ty() * ez(); }
+  inline double Kalman::ez()    const { return 1./sqrt(1. + sqr(tx()) + sqr(ty())); }
+  inline double Kalman::E(double rm) const { return sqrt(sqr(p()) + sqr(rm)); }
+  
+#if defined USE_ROOT && !defined CINTOBJECT
+  inline SVector<double,3> Kalman::tvec() const { return SVector<double,3>(k_qvs[0],k_qvs[1],1); }
+  inline SVector<double,3> Kalman::evec() const { return SVector<double,3>(1./mag(tvec()) * tvec()); }
+  inline SVector<double,3> Kalman::pvec() const {
+    return SVector<double,3>(k_qvs[2]/mag(tvec()) * tvec());
+  }
+#else
+  inline MATRIX::VtVector Kalman::evec() const { return MATRIX::VtVector(ex(),ey(),ez()); }
+  inline MATRIX::VtVector Kalman::tvec() const { return MATRIX::VtVector(tx(),ty(),1.); }
+  inline MATRIX::VtVector Kalman::pvec() const { return MATRIX::VtVector(px(),py(),pz()); }
+#endif
+  
+  inline const MATRIX::VtSymMatrix& Kalman::    W() const { return k_W; }
+  inline const MATRIX::VtSymMatrix& Kalman::    C() const { return k_C; }
+  inline const MATRIX::VtSymMatrix& Kalman:: CINV() const { return k_CINV; }
+  inline const MATRIX::VtSqMatrix&  Kalman::    F() const { return k_F; }
+  inline const MATRIX::VtSqMatrix&  Kalman::   ES() const { return k_ES; }
+  inline const MATRIX::VtSymMatrix& Kalman::   DS() const { return k_DS; }
+  inline const MATRIX::VtVector&    Kalman::   xv() const { return k_xv; }
+  inline const MATRIX::VtVector&    Kalman::  xnk() const { return k_xnk; }
+  inline const MATRIX::VtVector&    Kalman::  qvs() const { return k_qvs; }
+  
+  inline bool   Kalman::use_momentum() const { return k_use_momentum; }
+  inline double Kalman::set_chi2(const double chi2) { return k_chi2 = chi2; }
+  
+  inline void Kalman::alpc_init(void) { k_alpc = k_qvs; }
+  inline void Kalman::alp_init(void)  { k_alp  = k_qvs; }
+  inline const MATRIX::VtVector& Kalman::alpc() const { return k_alpc; }
+  inline const MATRIX::VtVector& Kalman::alp()  const { return k_alp; }
+  inline double Kalman::xn()  const { return k_nalpc[0]; }
+  inline double Kalman::yn()  const { return k_nalpc[1]; }
+  inline double Kalman::zn()  const { return k_nalpc[2]; }
+  inline double Kalman::erg() const { return k_erg; }
+  inline const MATRIX::VtVector& Kalman::nalpc() const { return k_nalpc; }
+  inline MATRIX::VtVector& Kalman::qvs_nc() { return k_qvs; }
+
+  //==============================================================================
+  // operator <<
+  //==============================================================================
+  inline std::ostream& operator<< ( std::ostream& os, const Kalman& k ) {
+    return k.print(os);
+  }
+  
+} // end of namespace VERTEX
+
+#endif

@@ -1,0 +1,51 @@
+#ifndef __VTVECTOR_ICC
+#define __VTVECTOR_ICC
+// *****************************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   08. Jan 2002
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: vector class, inline functions
+//
+// changes:
+// 02 Jan 2002 (TG) creation
+//
+// *****************************************************************************
+
+#include <cmath>
+
+//============================================================================
+// Operators
+//============================================================================
+inline double  VtVector::operator[](unsigned int row) const { return *(v + row); }
+inline double& VtVector::operator[](const unsigned int row) { return *(v + row); }
+inline double  VtVector::operator()(unsigned int row) const { return *(v + row); }
+inline double& VtVector::operator()(const unsigned int row) { return *(v + row); }
+
+//============================================================================
+// Access Methods
+//============================================================================
+inline unsigned int VtVector::size() const { return v_size; }
+inline unsigned int VtVector::nrow() const { return v_size; }
+inline double VtVector::mag() const {return sqrt(mag2()); }
+
+//==============================================================================
+// operator <<
+//==============================================================================
+inline std::ostream& operator<< ( std::ostream& os, const VtVector& t ) {
+  t.print(os);
+  return os;
+}
+
+#endif

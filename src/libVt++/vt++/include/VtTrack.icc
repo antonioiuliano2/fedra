@@ -1,0 +1,48 @@
+#ifndef __VTTRACK_ICC
+#define __VTTRACK_ICC
+// *****************************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   04. Sep 2001
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: Track class
+//
+// changes:
+// 04 Sep 2001 (TG) creation
+//
+// *****************************************************************************
+#include "vt++/VtUtil.hh"
+
+namespace VERTEX {
+
+  inline double Track::px()     const { return p()  * ex(); }
+  inline double Track::py()     const { return p()  * ey(); }
+  inline double Track::ex()     const { return tx() * ez(); }
+  inline double Track::ey()     const { return ty() * ez(); }
+  inline double Track::ez()     const { return 1./sqrt(1. + tx()*tx() + ty()*ty()); }
+  
+  
+  inline double Track::xerr(double dz = 0)   const { return sqrt(t_V.x_prop(dz)); }
+  inline double Track::yerr(double dz = 0)   const { return sqrt(t_V.y_prop(dz)); }
+  inline double Track::txerr()               const { return sqrt(t_V(2,2)); }
+  inline double Track::tyerr()               const { return sqrt(t_V(3,3)); }
+  inline double Track::perr()                const { return sqrt(t_V.p()); }
+
+  inline double Track::rm() const { return t_rm; }
+  inline void   Track::rm(const double mass) { t_rm = mass; }
+  inline double Track::rmCC() const { return t_rmCC; }
+  inline void   Track::rmCC(const double mass) { t_rmCC = mass; }
+
+} // end of namespace VERTEX
+#endif

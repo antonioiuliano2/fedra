@@ -1,0 +1,47 @@
+#ifndef __VTVERTEX_ICC
+#define __VTVERTEX_ICC
+// *****************************************************************************
+//
+// source:
+//
+// type:      source code
+//
+// created:   04. Sep 2001
+//
+// author:    Thorsten Glebe
+//            HERA-B Collaboration
+//            Max-Planck-Institut fuer Kernphysik
+//            Saupfercheckweg 1
+//            69117 Heidelberg
+//            Germany
+//            E-mail: T.Glebe@mpi-hd.mpg.de
+//
+// Description: Vertex class
+//
+// changes:
+// 04 Sep 2001 (TG) creation
+//
+// *****************************************************************************
+
+namespace VERTEX {
+
+  inline double Vertex::angle()   const { if(v_angdist==false) rmsDistAngle(); return v_angle; }
+  inline double Vertex::dist()    const { if(v_angdist==false) rmsDistAngle(); return v_dist;  } 
+  inline double Vertex::vxerr()   const { return sqrt(v_CS(0,0)); }
+  inline double Vertex::vyerr()   const { return sqrt(v_CS(1,1)); }
+  inline double Vertex::vzerr()   const { return sqrt(v_CS(2,2)); }
+  inline const MATRIX::VtSymMatrix&  Vertex::CS()   const { return v_CS; }
+  inline const MATRIX::VtSymMatrix&  Vertex::covn() const { return *v_covn; }
+  inline bool Vertex::valid() const { return v_valid; }
+  inline void Vertex::set_invalid() { v_valid = false; }
+
+  inline void Vertex::use_kalman(const bool use) { v_use_kalman = use; }
+  inline bool Vertex::use_kalman() const { return v_use_kalman; }
+
+  inline const MATRIX::VtVector& Vertex::xv()  const { return kal_xv; }
+  inline const MATRIX::VtVector& Vertex::xvs() const { return kal_xvs; }
+
+  inline unsigned int Vertex::nMassConstr() const { return xmass.size(); }
+  inline const unsigned int Vertex::bigdim() const { return 3 * ntracks() + 3; }
+} // end of namespace VERTEX
+#endif

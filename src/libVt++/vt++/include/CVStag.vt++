@@ -1,0 +1,60 @@
+#ifndef __CVSTAG_vt_H
+#define __CVSTAG_vt_H
+#ifdef __cplusplus
+extern "C" {
+#endif 
+/*TIME/-1011364434//1-34VersionMSPRIV/1-35+*/
+#define xcvsMODULE_vt  "vt++" 
+#define xcvsVERSION_vt "/1-35" 
+#define xcvsDAYTIME_vt "Fri Jan 18 14:33:54 2002" 
+/*"CVSROOT=/afs/desy.de/user/h/hbxxcus/BEE"*/
+/* list of files in module vt++ 
+>./doc/Makefile
+>./doc/Vt.dxx
+>./doc/banner.txt
+>./doc/vt++.tex
+>./doc/vtxpull_vt0813.epsi
+>./CMatrix.C
+>./Makefile
+>./VtDistance.C
+>./VtIni.C
+>./VtKalman.C
+>./VtMassC.C
+>./VtMatrix.C
+>./VtNegMatrix.C
+>./VtRelation.C
+>./VtRelationList.C
+>./VtSqMatrix.C
+>./VtSymMatrix.C
+>./VtTrack.C
+>./VtVector.C
+>./VtVertex.C
+>./cintdict/CINT_VT.hh
+>./cintdict/LinkDef.hh
+>./cintdict/LinkDef_ns.hh
+>./include/CMatrix.hh
+>./include/Vt++.hh
+>./include/VtDistance.hh
+>./include/VtIni.hh
+>./include/VtKalman.hh
+>./include/VtKalman.icc
+>./include/VtMassC.hh
+>./include/VtMassC_list.hh
+>./include/VtMatrix.hh
+>./include/VtNegMatrix.hh
+>./include/VtRelation.hh
+>./include/VtRelationList.hh
+>./include/VtSqMatrix.hh
+>./include/VtSymMatrix.hh
+>./include/VtTrack.hh
+>./include/VtTrack.icc
+>./include/VtUtil.hh
+>./include/VtVector.hh
+>./include/VtVector.icc
+>./include/VtVertex.hh
+>./include/VtVertex.icc
+*/
+#ifdef __cplusplus
+}
+#endif
+#endif

@@ -1,0 +1,35 @@
+/**@name Vt++
+
+   @memo A C++ library for vertex fitting and matrix calculation in HERA-B.
+	 \\
+	 For further documentation see file \URL{vt++.ps}.
+   @author T. Glebe
+*/
+//@{
+/**@name VERTEX
+   @memo The vertexing classes
+*/
+//@{
+//@Include:     ../include/VtIni.hh
+//@Include:     ../include/VtTrack.hh
+//@Include:     ../include/VtVertex.hh
+//@Include:     ../include/VtKalman.hh
+//@Include:     ../include/VtRelation.hh
+//@Include:     ../include/VtRelationList.hh
+//@Include:     ../include/VtMassC.hh
+//@Include:     ../include/VtUtil.hh
+//@Include:     ../include/VtDistance.hh
+//@}
+
+/** @name MATRIX
+    @memo A general purpose matrix computation package
+*/
+//@{
+//@Include:     ../include/VtVector.hh
+//@Include:     ../include/VtMatrix.hh
+//@Include:     ../include/VtSqMatrix.hh
+//@Include:     ../include/VtSymMatrix.hh
+//@Include:     ../include/VtNegMatrix.hh
+//@Include:     ../include/CMatrix.hh
+//@}
+//@}
