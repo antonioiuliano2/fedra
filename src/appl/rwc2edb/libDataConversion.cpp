@@ -110,7 +110,7 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 		for (int f = 1; f < nFragments+1; f++)
 		{
 			// build rwd name 
-			char* rwdname=new char[strlen(rwcname)+16];
+			char* rwdname=new char[strlen(rwcname)+9];
 			strcpy( rwdname,rwcname );
 			strncpy( rwdname + strlen(rwdname)-1, "d", 1 );
 			sprintf(rwdname,"%s.%08X", rwdname, f);
