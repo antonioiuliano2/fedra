@@ -280,35 +280,35 @@ INFOHEADER ihdr;
 }
 
 //====================================================================================
-const Float_t *EdbFIRF::eg3x3A = new Float_t[9] = {  
+const Float_t EdbFIRF::eg3x3A[]  = {
   1,  1, 1,   
   1, -8, 1,  
   1,  1, 1  };
-const Float_t *EdbFIRF::egHP1 = new Float_t[9] = {  
+const Float_t EdbFIRF::egHP1[] = {  
   1,  1, 1,   
   1, -9, 1,  
   1,  1, 1  };
-const Float_t *EdbFIRF::egHP2 = new Float_t[9] = {  
+const Float_t EdbFIRF::egHP2[] = {  
   0,  1, 0,   
   1, -5, 1,  
   0,  1, 0  };
-const Float_t *EdbFIRF::egHP3 = new Float_t[9] = { 
+const Float_t EdbFIRF::egHP3[] = { 
   -1,  2, -1, 
    2, -5,  2, 
   -1,  2, -1  };
-const Float_t *EdbFIRF::eg5x5A = new Float_t[25] = { 
+const Float_t EdbFIRF::eg5x5A[] = { 
   4,  4,  4,  4,  4,
   4, -7, -7, -7,  4,
   4, -7, -7, -7,  4,
   4, -7, -7, -7,  4,
   4,  4,  4,  4,  4  };
-const Float_t *EdbFIRF::eg5x5B = new Float_t[25] = { 
+const Float_t EdbFIRF::eg5x5B[] = { 
   4,  4,  4,  4,  4,
   4, -7, -7, -7,  4,
   4, -7, -8, -7,  4,
   4, -7, -7, -7,  4,
   4,  4,  4,  4,  4  };
-const Float_t *EdbFIRF::eg6x6A = new Float_t[36] = { 
+const Float_t EdbFIRF::eg6x6A[] = { 
   4,  4,  4,  4,  4,  4,
   4, -5, -5, -5, -5,  4,
   4, -5, -5, -5, -5,  4,

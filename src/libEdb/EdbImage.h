@@ -65,13 +65,13 @@ private:
    Int_t       eColumns;          // number of columns of the matrix (1 row length)
    Int_t       eRows;             // number of rows of the matrix
 
-   static const Float_t *eg3x3A;   //!
-   static const Float_t *egHP1;    //!
-   static const Float_t *egHP2;    //!
-   static const Float_t *egHP3;    //!
-   static const Float_t *eg5x5A;   //!
-   static const Float_t *eg5x5B;   //!
-   static const Float_t *eg6x6A;   //!
+   static const Float_t eg3x3A[];   //!
+   static const Float_t egHP1[];    //!
+   static const Float_t egHP2[];    //!
+   static const Float_t egHP3[];    //!
+   static const Float_t eg5x5A[];   //!
+   static const Float_t eg5x5B[];   //!
+   static const Float_t eg6x6A[];   //!
 
 public:
            EdbFIRF(){};
