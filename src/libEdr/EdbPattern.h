@@ -152,8 +152,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   int CalculateXY(  EdbSegmentsBox *p , EdbAffine2D *aff  );
   int CalculateAXAY(EdbSegmentsBox *p , EdbAffine2D *affA );
 
-  void TransformA( EdbAffine2D *affA );
-  void TransformARot( EdbAffine2D *affA );
+  void TransformA( const EdbAffine2D *affA );
+  void TransformARot( const EdbAffine2D *affA );
 
   float DiffAff( EdbAffine2D *aff );
   float Diff( EdbSegmentsBox &p );
@@ -238,7 +238,7 @@ class EdbPatternsVolume : public TObject {
   void Set0();
   void SetPatternsID();
 
-  void Transform( EdbAffine2D *aff );
+  void Transform( const EdbAffine2D *aff );
   void Shift(float x, float y);
   void Centralize();
   void SetXYZ( float x, float y, float z ) { eX=x; eY=y; eZ=z; }

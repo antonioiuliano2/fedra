@@ -428,7 +428,7 @@ int EdbSegmentsBox::CalculateAXAY( EdbSegmentsBox *pat, EdbAffine2D *aff )
 }
 
 //______________________________________________________________________________
-void EdbSegmentsBox::TransformA( EdbAffine2D *aff )
+void EdbSegmentsBox::TransformA( const EdbAffine2D *aff )
 {
   EdbSegP *p;
   float tx,ty;
@@ -445,7 +445,7 @@ void EdbSegmentsBox::TransformA( EdbAffine2D *aff )
 }
 
 //______________________________________________________________________________
-void EdbSegmentsBox::TransformARot( EdbAffine2D *aff )
+void EdbSegmentsBox::TransformARot( const EdbAffine2D *aff )
 {
   // apply to the angles only rotation members of transformation
 
@@ -602,7 +602,7 @@ void EdbPatternsVolume::SetPatternsID()
 }
  
 //______________________________________________________________________________
-void EdbPatternsVolume::Transform( EdbAffine2D *aff )
+void EdbPatternsVolume::Transform( const EdbAffine2D *aff )
 {
   int npat = Npatterns();
   for(int i=0; i<npat; i++ )  {

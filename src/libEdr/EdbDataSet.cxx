@@ -91,7 +91,7 @@ EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
   Set0();
   ePlate=plate;
   ePiece=piece;
-  eFileName=file;
+  eFileNameRaw=file;
   eFlag=flag;
 }
 
@@ -108,20 +108,22 @@ void EdbDataPiece::Set0()
 {
   ePlate=0;
   ePiece=0;
-  eFileName="";
+  eFileNameRaw="";
   eFlag=0;
+  eAFID=0;
 
   for(int i=0; i<3; i++) eLayers[i]=0;
   for(int i=0; i<3; i++) eAreas[i]=0;
   for(int i=0; i<3; i++) eCond[i]=0;
   eRun    = 0;
+  eCouplesTree=0;
 }
 
 ///______________________________________________________________________________
 void EdbDataPiece::Print()
 {
   printf("Piece: %s\n",GetName());
-  printf("%d %d %s %d\n", ePlate,ePiece,eFileName.Data(),eFlag);
+  printf("%d %d %s %d\n", ePlate,ePiece, GetFileNameRaw(),eFlag);
   for(int i=0; i<3; i++)  if(eLayers[i])  eLayers[i]->Print();
   for(int i=0; i<3; i++)  if(eCond[i])    eCond[i]->Print();
   for(int i=0; i<3; i++)  
@@ -169,6 +171,46 @@ EdbScanCond *EdbDataPiece::GetMakeCond(int id)
   if(id>2) return 0;
   if(!GetCond(id))  eCond[id] = new EdbScanCond();
   return GetCond(id);
+}
+
+///______________________________________________________________________________
+TTree *EdbDataPiece::InitCouplesTree(const char *dir, const char *mode)
+{
+  TString name=dir;
+  if(!GetName()) name+="link";
+  else name+=GetName();
+  name+=".cp.root";
+  
+  const char *file_name=name.Data();
+  const char *tree_name="couples";
+  TTree *tree=eCouplesTree;
+
+  if (!tree) {
+    TFile *f = new TFile(file_name,mode);
+    if (f)  tree = (TTree*)f->Get(tree_name);
+    if(!tree) {
+
+      f->cd();
+      tree = new TTree(tree_name,tree_name);
+      
+      int pid1,pid2;
+      EdbSegCouple *cp=0;
+      EdbSegP      *s1=0;
+      EdbSegP      *s2=0;
+      EdbSegP      *s=0;
+      
+      tree->Branch("pid1",&pid1,"pid1/I");
+      tree->Branch("pid2",&pid2,"pid2/I");
+      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
+      tree->Branch("s1.","EdbSegP",&s1,32000,99);
+      tree->Branch("s2.","EdbSegP",&s2,32000,99);
+      tree->Branch("s." ,"EdbSegP",&s,32000,99);
+    }
+  }
+  tree->Write();
+  tree->SetAutoSave(2000000);
+
+  return tree;
 }
 
 ///______________________________________________________________________________
@@ -282,6 +324,11 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	       var,var+1,var+2,var+3,var+4,var+5,var+6,var+7,var+8,var+9);
 	AddSegmentCut(id,1,var);
       }
+    else if ( !strcmp(key,"AFID")  )
+      {
+	sscanf(buf+strlen(key),"%d",&id);
+	eAFID=id;
+      }
 
   }
 
@@ -302,6 +349,8 @@ int EdbDataPiece::PassCuts(int id, float var[5])
 ///______________________________________________________________________________
 int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 {
+  //TODO: add transformations
+
   EdbSegment *seg = view->GetSegment(id);
 
   float var[5];
@@ -314,12 +363,17 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   if( !PassCuts(side,var) )     return 0;
 
   EdbLayer  *layer=GetLayer(side);
-  float x,y,tx,ty,puls;
+  if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
 
+  float x,y,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
   ty   = seg->GetTy()/layer->Shr();
-  x    = (seg->GetX0()+view->GetXview()); // + dz*tx;
-  y    = (seg->GetY0()+view->GetYview()); // + dz*ty;
+  x    = seg->GetX0(); // + dz*tx;
+  y    = seg->GetY0(); // + dz*ty;
+  if(eAFID==0) {
+    x+=view->GetXview();
+    y+=view->GetYview();
+  }
   puls = seg->GetPuls();
 
   segP.Set( seg->GetID(),x,y,tx,ty);
@@ -371,7 +425,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
 ///______________________________________________________________________________
 int EdbDataPiece::MakeLinkListArea()
 {
-  if(!eRun)  eRun =  new EdbRun( eFileName.Data(),"READ" );
+  if(!eRun)  eRun =  new EdbRun( GetFileNameRaw(),"READ" );
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -405,7 +459,7 @@ int EdbDataPiece::MakeLinkListArea()
 ///______________________________________________________________________________
 int EdbDataPiece::MakeLinkListCoord()
 {
-  if(!eRun)  eRun =  new EdbRun( eFileName.Data(),"READ" );
+  if(!eRun)  eRun =  new EdbRun( GetFileNameRaw(),"READ" );
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -514,7 +568,7 @@ EdbDataSet::EdbDataSet()
   Set0();
 }
 
-///-------------------------------------------------------------------------------
+///------------------------------------------------------------------------------
 EdbDataSet::EdbDataSet(const char *file)
 {
   Set0();
@@ -666,41 +720,6 @@ int EdbDataProc::Process()
   return np;
 }
 
-///==============================================================================
-TTree *EdbDataProc::InitCouplesTree(const char *tree_name,
-				    const char *file_name,
-				    const char *mode)
-{
-  TTree *tree=0;
-
-  //tree = (TTree*)gROOT->FindObject(tree_name);
-   if (!tree) {
-      TFile *f = new TFile(file_name,mode);
-      //if (f)  tree = (TTree*)f->Get(tree_name);
-      if(!tree) {
-
-	f->cd();
-        tree = new TTree(tree_name,tree_name);
-
-        int pid1,pid2;
-        EdbSegCouple *cp=0;
-        EdbSegP      *s1=0;
-        EdbSegP      *s2=0;
-        EdbSegP      *s=0;
-
-        tree->Branch("pid1",&pid1,"pid1/I");
-        tree->Branch("pid2",&pid2,"pid2/I");
-        tree->Branch("cp","EdbSegCouple",&cp,32000,99);
-        tree->Branch("s1.","EdbSegP",&s1,32000,99);
-        tree->Branch("s2.","EdbSegP",&s2,32000,99);
-        tree->Branch("s." ,"EdbSegP",&s,32000,99);
-      }
-   }
-   tree->Write();
-   tree->SetAutoSave(2000000);
-   return tree;
-}
-
 ///______________________________________________________________________________
 void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 )
 {
@@ -787,14 +806,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 {
   EdbPVRec  *ali;
 
-  TString name=eDataSet->GetAnaDir();
-  if(!piece.GetName()) name+="link";
-  else name+=piece.GetName();
-  name+=".root";
-  TTree *cptree = InitCouplesTree("couples",
-  				  name.Data(),
-  				  "RECREATE");  // "RECREATE" "NEW" or "UPDATE" open modes
-
+  TTree *cptree=piece.InitCouplesTree(eDataSet->GetAnaDir(),"RECREATE");
+  
   EdbScanCond *cond = piece.GetCond(1);
 
   int nareas = piece.MakeLinkListCoord();

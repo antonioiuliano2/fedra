@@ -80,14 +80,17 @@ class EdbDataPiece : public TNamed {
  private:
   Int_t        ePlate;          // plate id
   Int_t        ePiece;          // piece id in this plate
-  TString      eFileName;       // name of the data file
-  Int_t        eFlag; 
+  Int_t        eFlag;           // 0-do nothing, 1-link only, 2-align also
+  TString      eFileNameRaw;    // name of the raw data file (run)
+  Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
+
   EdbLayer    *eLayers[3];      // base(0),up(1),down(2)  layers
   EdbScanCond *eCond[3];        //
+  TIndexCell  *eAreas[3];       // base/up/down  surface areas list
+  TObjArray   *eCuts[3];        // array of cuts
 
-  EdbRun     *eRun;           //!
-  TIndexCell *eAreas[3];      //! base/up/down  surface areas list
-  TObjArray  *eCuts[3];       //! array of cuts
+  EdbRun      *eRun;            //!
+  TTree       *eCouplesTree;    //!
 
  public:
   EdbDataPiece();
@@ -95,8 +98,8 @@ class EdbDataPiece : public TNamed {
   virtual ~EdbDataPiece();
 
   void Set0();
-  const char *GetFileName() const { return eFileName.Data(); }
-  const char *MakeName(); 
+  const char *GetFileNameRaw() const { return eFileNameRaw.Data(); }
+  const char *MakeName();
   void Print();
 
   int       Flag() const {return eFlag;}
@@ -106,6 +109,9 @@ class EdbDataPiece : public TNamed {
   EdbScanCond *GetMakeCond(int id);
   EdbScanCond *GetCond(int id)
     { if(eCond[id]) return (EdbScanCond *)eCond[id]; else return 0; }
+
+
+  TTree *InitCouplesTree( const char *dir, const char *mode="READ" );
 
   void           AddSegmentCut(int layer, int xi, float var[5]);
   int            NCuts(int layer);
@@ -172,13 +178,8 @@ class EdbDataProc : public TObject {
   int Process();
   int Link(EdbDataPiece &piece);
 
-  TTree *InitCouplesTree( const char *tree_name="couples",
-			  const char *file_name="cp.root",
-			  const char *mode="RECREATE" );
-
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
-
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };
