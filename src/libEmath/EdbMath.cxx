@@ -13,6 +13,8 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
+#include "EmathVer.h"
+
 ClassImp(EdbMath)
 ClassImp(TIndex2)
 
