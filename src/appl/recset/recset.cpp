@@ -17,8 +17,8 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -ang  - correct up/down angles offset and rotations\n";
       cout<< "\t\t  -a    - plate to plate alignment\n";
       cout<< "\t\t  -f    - fine alignment based on passed-throw tracks\n";
-      cout<< "\t\t  -t[n] - tracking \n";
-      cout<< "\t\t  -p[P] - tracks propagation (P is the momentum of the particle)\n";
+      cout<< "\t\t  -t[n] - tracking (if n>1, holes isertion started - historical option - do not recommended!)\n";
+      cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle)\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
       cout<<endl;

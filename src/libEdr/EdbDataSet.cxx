@@ -1,4 +1,4 @@
-///-- Author :  Valeri Tioukov   9.06.2003
+//-- Author :  Valeri Tioukov   9.06.2003
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
@@ -1105,7 +1105,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
     }
   }
 
-  printf("Area: %d ( %d%%)  %d \t viwes: %d \t nseg: %d \t rejected: %d\n", 
+  printf("Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
 	 aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
   pat->SetSegmentsZ();
   ali->AddPattern(pat);
