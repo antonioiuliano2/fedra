@@ -8,14 +8,14 @@ if /I '%1'=='clean' goto CLEAN
 
 ::----------------------------------------------------------------------
 :BUILD
-
 	SET CURRENTDIR=%CD%
+
 :: Check if ROOT is well installed
 	if not defined ROOTSYS goto ROOTSYS_NOT_DEFINED
 	if not exist %ROOTSYS%\bin\root.exe goto ROOT_DONT_EXIST
 
 :: Archive old FEDRA binaries
-	if not exist bin\recset.exe goto NOTARCHIVE
+	if not exist lib\*.* goto NOTARCHIVE
 	
    :LOOP
 	SET Choice=
@@ -47,6 +47,8 @@ if /I '%1'=='clean' goto CLEAN
 	echo.
 
 :NOTARCHIVE
+	::if exist lib\*.* del /q lib\*.*	
+	::if exist bin\*.* del /q bin\*.*
 
 ECHO Remove old FEDRA environment variables
 	cd tools
@@ -55,9 +57,10 @@ ECHO Remove old FEDRA environment variables
 
 ECHO Build FEDRA
 	cd workspace
-	call libEdb.mak.cmd
-	call libEmath.mak.cmd
-	call libEdr.mak.cmd
+	call libxxx.mak.cmd	libEdb
+	call libxxx.mak.cmd	libEmath
+	call libxxx.mak.cmd	libEdr
+	call libxxx.mak.cmd	libEdd
 	call rwc2edb.mak.cmd
 	call recset.mak.cmd
 	ECHO Copying convertall.cmd ...
@@ -75,6 +78,40 @@ ECHO Set the environment variables
 	ECHO Other users should set their own variables using setfedra utility.
 	ECHO.
 
+ECHO Check Target:
+ECHO -------------
+SET CHKFILE=lib\libEdb.lib
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEdb.dll
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEmath.lib
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEmath.dll
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEdr.lib
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEdr.dll
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEdd.lib
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=lib\libEdd.dll
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=bin\rwc2edb.exe
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+SET CHKFILE=bin\recset.exe
+        IF EXIST %CHKFILE% ECHO     %CHKFILE%...ok!
+        IF NOT EXIST %CHKFILE% ECHO     %CHKFILE%...ERROR
+
+	ECHO.
 	ECHO NOTES:
 	ECHO Example: load libEdb library in ROOT/CINT:
 	ECHO          Root[0] gSystem.Load("%%FEDRA%%\\lib\\libEdb.dll");
@@ -82,6 +119,8 @@ ECHO Set the environment variables
 	
 	pause
 	goto STOP
+
+
 ::----------------------------------------------------------------------
 :ROOTSYS_NOT_DEFINED
 	ECHO.
