@@ -123,10 +123,11 @@ EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
 ///______________________________________________________________________________
 EdbDataPiece::~EdbDataPiece()
 {
-  for(int i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
-  for(int i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
-  for(int i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
-  for(int i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
+  int i;
+  for(i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
+  for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
+  for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
+  for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
 }
 
 ///______________________________________________________________________________
@@ -138,14 +139,14 @@ void EdbDataPiece::Set0()
   eAFID=0;
   eCLUST=0;
   eCutCP[0]=-1;
-
-  for(int i=0; i<3; i++) { 
+  int i;
+  for(i=0; i<3; i++) { 
     if(eLayers[i]) delete eLayers[i]; 
     eLayers[i]=new EdbLayer();
   }
-  for(int i=0; i<3; i++) eCond[i]=0;
-  for(int i=0; i<3; i++) eAreas[i]=0;
-  for(int i=0; i<3; i++) eCuts[i]=0;
+  for(i=0; i<3; i++) eCond[i]=0;
+  for(i=0; i<3; i++) eAreas[i]=0;
+  for(i=0; i<3; i++) eCuts[i]=0;
 
   eRun    = 0;
   eCouplesTree=0;
@@ -156,11 +157,12 @@ void EdbDataPiece::Print()
 {
   printf("Piece: %s\n",GetName());
   printf("%d %d \n", ePlate,ePiece);
-  for(int i=0; i<eRunFiles.GetEntries(); i++)
+  int i;
+  for(i=0; i<eRunFiles.GetEntries(); i++)
     printf("%s\n",GetRunFile(i));
-  for(int i=0; i<3; i++)  if(eLayers[i])  eLayers[i]->Print();
-  for(int i=0; i<3; i++)  if(eCond[i])    eCond[i]->Print();
-  for(int i=0; i<3; i++)
+  for(i=0; i<3; i++)  if(eLayers[i])  eLayers[i]->Print();
+  for(i=0; i<3; i++)  if(eCond[i])    eCond[i]->Print();
+  for(i=0; i<3; i++)
     if(eCuts[i])
       for(int j=0; j<NCuts(i); j++)  GetCut(i,j)->Print();
 }
@@ -670,12 +672,12 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   EdbAffine2D *aff = new EdbAffine2D();
 
   int nentr = (int)(tree->GetEntries());
-  float x[nentr];
-  float y[nentr];
-  float x1[nentr];
-  float y1[nentr];
-  float x2[nentr];
-  float y2[nentr];
+  float *x  = new float[nentr];
+  float *y  = new float[nentr];
+  float *x1 = new float[nentr];
+  float *y1 = new float[nentr];
+  float *x2 = new float[nentr];
+  float *y2 = new float[nentr];
 
   int nseg = 0;
   printf("nentr = %d\n",nentr);
@@ -700,6 +702,13 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   aff->CalculateTurn( nseg,x2,y2,x,y );
   UpdateAffTPar(2,*aff);
 
+  delete[] x;
+  delete[] y;
+  delete[] x1;
+  delete[] y1;
+  delete[] x2;
+  delete[] y2;
+
   return nseg;
 }
 
@@ -714,17 +723,18 @@ int EdbDataPiece::CheckCCD(int maxentr)
   int matr[1000][1000];
   int ix,iy;
 
-  for(int i=0; i<1000; i++) 
-    for(int j=0; j<1000; j++)
+  int i,j;
+  for(i=0; i<1000; i++) 
+    for(j=0; j<1000; j++)
       matr[i][j]=0;
 
   int ncheck=0;
   int nentr = TMath::Min(maxentr,eRun->GetEntries());
   printf("nentr=%d\n",nentr);
-  for (int i=0; i<nentr; i++) {
+  for (i=0; i<nentr; i++) {
     view = eRun->GetEntry(i);
     int nseg=view->Nsegments();
-    for (int j=0; j<nseg; j++) {
+    for (j=0; j<nseg; j++) {
       seg = view->GetSegment(j);
       if( seg->GetTx() >  .05 )   continue;
       if( seg->GetTx() < -.05 )   continue;
@@ -739,7 +749,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 
   printf("ncheck=%d\n",ncheck);
   int npeak=0;
-  for(int i=0; i<50; i++ ) {           //eliminate upto 50 CCD defects
+  for(i=0; i<50; i++ ) {           //eliminate upto 50 CCD defects
     if(!RemoveCCDPeak(matr)) break;
     npeak++;
   }
@@ -1029,13 +1039,14 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
     }
     else if(head->GetNframesTop()==0) {         // fill down views
       downc.Add(3,v);                           // add center
-      for( int im=1; im<5; im++ ) {             // add sides margins
+      int im;
+      for( im=1; im<5; im++ ) {             // add sides margins
         v[0] = (Long_t)(( xv+dx*mx[im] ) / cx);
         v[1] = (Long_t)(( yv+dy*my[im] ) / cy);
         if( (v[0] != xx) || (v[1] != yy) )
             downc.Add(3,v);
       }
-      for( int im=5; im<9; im++ ) {             // add angles margins
+      for( im=5; im<9; im++ ) {             // add angles margins
         v[0] = (Long_t)(( xv+dx*mx[im] ) / cx);
         v[1] = (Long_t)(( yv+dy*my[im] ) / cy);
         if( (v[0] != xx) && (v[1] != yy) )
@@ -1066,7 +1077,8 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
       areac++;
 
       nie = cly->N(1);
-      for(int ie=0; ie<nie; ie++) {
+      int ie;
+      for(ie=0; ie<nie; ie++) {
         v[0]=areac;
         v[1]  = cly->At(ie)->Value();
         eAreas[1]->Add(2,v);
@@ -1074,7 +1086,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
 
       cly = downc.Find(xx)->Find(yy);
       nie=cly->N(1);
-      for(int ie=0; ie<nie; ie++) {
+      for(ie=0; ie<nie; ie++) {
         v[0] = areac;
         v[1] = cly->At(ie)->Value();
         eAreas[2]->Add(2,v);
@@ -1573,7 +1585,8 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
   if(!npieces) return 0;
 
   TTree *cptree=0;
-  for(int i=0; i<npieces; i++ ) {
+  int i;
+  for(i=0; i<npieces; i++ ) {
     printf("\n");
     piece = eDataSet->GetPiece(i);
     cptree=InitCouplesTree(piece->GetNameCP());
@@ -1587,7 +1600,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
   //ali->Centralize();
   ali->Centralize(x0,y0);
 
-  for(int i=0; i<npieces; i++ ) {
+  for(i=0; i<npieces; i++ ) {
     ali->GetPattern(i)->SetSegmentsZ();
     ali->GetPattern(i)->Transform(    eDataSet->GetPiece(i)->GetLayer(0)->GetAffineXY()   );
     ali->GetPattern(i)->TransformA(   eDataSet->GetPiece(i)->GetLayer(0)->GetAffineTXTY() );
@@ -1678,20 +1691,21 @@ void EdbDataProc::FineAlignment()
   int fctr=0;
   int fcMin = 49;
 
+  int i;
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
-  for( int i=0; i<ali.Npatterns(); i++ ) {
+  for( i=0; i<ali.Npatterns(); i++ ) {
     fctr = ali.FineCorrXY(i,aff);
   }
 
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
-  for( int i=0; i<ali.Npatterns(); i++ ) {
+  for( i=0; i<ali.Npatterns(); i++ ) {
     fctr = ali.FineCorrXY(i,aff);
   }
 
   if(fctr>fcMin) {
-    for(int i=0; i<ali.Npatterns(); i++) {
+    for( i=0; i<ali.Npatterns(); i++) {
       ali.GetPattern(i)->GetKeep(aff);
       eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
     }
@@ -1701,7 +1715,7 @@ void EdbDataProc::FineAlignment()
   ali.MakeSummaryTracks();
   float dz=0;
   float z = ali.GetPattern(ali.Npatterns()-1)->Z();
-  for( int i=ali.Npatterns()-2; i>=0; i-- ) {
+  for( i=ali.Npatterns()-2; i>=0; i-- ) {
     fctr = ali.FineCorrZ(i,dz);
     if(fctr<=fcMin) break;
     z -= dz;
@@ -1711,7 +1725,7 @@ void EdbDataProc::FineAlignment()
 
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
-  for( int i=0; i<ali.Npatterns(); i++ ) {
+  for( i=0; i<ali.Npatterns(); i++ ) {
     fctr = ali.FineCorrTXTY(i,aff);
     if(fctr<=fcMin) break;
     aff.Print();
@@ -1722,7 +1736,7 @@ void EdbDataProc::FineAlignment()
   ali.MakeSummaryTracks();
   dz=0;
   z = ali.GetPattern(ali.Npatterns()-1)->Z();
-  for( int i=ali.Npatterns()-2; i>=0; i-- ) {
+  for( i=ali.Npatterns()-2; i>=0; i-- ) {
     fctr = ali.FineCorrZ(i,dz);
     if(fctr<=fcMin) break;
     z -= dz;
@@ -1733,7 +1747,7 @@ void EdbDataProc::FineAlignment()
   ali.SelectLongTracks(ali.Npatterns());
   ali.MakeSummaryTracks();
   float shr=0;
-  for( int i=0; i<ali.Npatterns(); i++ ) {
+  for( i=0; i<ali.Npatterns(); i++ ) {
     fctr = ali.FineCorrShr(i,shr);
     if(fctr<=fcMin) break;
     eDataSet->GetPiece(i)->CorrectShrinkage(0,shr);

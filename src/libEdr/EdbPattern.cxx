@@ -28,6 +28,8 @@ EdbSegP::EdbSegP()
   eFlag=0;
   eProb=0;
   eW=0;
+  eVolume=0;
+  eDZ=0;
 }
 
 //______________________________________________________________________________
@@ -206,6 +208,7 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
  
   s->SetErrors(sx0,sy0,0.0,stx0,sty0);
   s->SetW( s1->W()+s2->W() );
+  s->SetDZ(dz);
 }
 
 //______________________________________________________________________________
@@ -798,7 +801,8 @@ void EdbPatternsVolume::PrintStat( Option_t *opt) const
   float dx,dy;
   EdbPattern *pat=0;
   printf("pat# \t segments \t dX \t\tdY \t meanDist \n");
-  for(int i=0; i<npat; i++ ) {
+  int i;
+  for(i=0; i<npat; i++ ) {
     pat = GetPattern(i);
     dx = pat->Xmax() - pat->Xmin();
     dy = pat->Ymax()- pat->Ymin();
@@ -807,7 +811,7 @@ void EdbPatternsVolume::PrintStat( Option_t *opt) const
   }
 
   npat=Npatterns();
-  for(int i=0; i<npat; i++ ) {
+  for(i=0; i<npat; i++ ) {
     pat = GetPattern(i);
     pat->Cell()->PrintStat();
   }

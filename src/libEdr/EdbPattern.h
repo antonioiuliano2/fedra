@@ -29,13 +29,14 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    eTX, eTY;         // angles
 
   Float_t    eSX , eSY, eSZ;   // coordinate erorrs
-  Float_t    eSTX, eSTY;       //
+  Float_t    eSTX, eSTY;       // angular erorrs
 
   Float_t    eProb;            // probability
 
-  Float_t    eW;              // weight
+  Float_t    eW;               // weight
   Int_t      eFlag;
-  Float_t    eVolume;         // segment volume
+  Float_t    eVolume;          // segment volume
+  Float_t    eDZ;              // the length of segment along z-axis
 
  public:
   EdbSegP();
@@ -60,6 +61,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
     { eSX=sx; eSY=sy; eSZ=sz; eSTX=stx; eSTY=sty; }
 
   void     SetZ( float z )   { eZ=z; }
+  void     SetDZ( float dz )   { eDZ=dz; }
   void     SetID( int id )   { eID=id; }
   void     SetPID( int pid ) { ePID=pid; }
   void     SetFlag( int flag ) { eFlag=flag; }
@@ -74,16 +76,15 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t    Flag()   const {return eFlag;}
   Float_t  W()      const {return eW;}
   Float_t  Z()      const {return eZ;}
-  Float_t  SZ()     const {return eSZ;}
+  Float_t  DZ()     const {return eDZ;}
   Float_t  Prob()   const {return eProb;}
   Float_t  Volume() const {return eVolume;}
-
-  Float_t  ProbLink( EdbSegP &s1, EdbSegP &s2 );
 
   Float_t    SX()  const  { return eSX; }
   Float_t    SY()  const  { return eSY; }
   Float_t    STX() const  { return eSTX; }
   Float_t    STY() const  { return eSTY; }
+  Float_t    SZ()  const  {return eSZ;}
 
   // mandatory virtual functions:
   Float_t    X()  const  { return eX; }
@@ -98,8 +99,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
  //other functions
  
   void       Print( Option_t *opt="") const;
+  Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
  
-  ClassDef(EdbSegP,3)  // segment
+  ClassDef(EdbSegP,4)  // segment
 };
 
 //______________________________________________________________________________

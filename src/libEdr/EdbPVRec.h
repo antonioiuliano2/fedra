@@ -104,14 +104,17 @@ class EdbSegCouple : public TObject {
   Int_t   eN1, eN2;         // n1,n2 - is rating of the segment (starting from 1)
   Int_t   eN1tot, eN2tot;   // total number of entries for the segment
 
+  EdbSegP  *eS;   //!  the result of the fit
+
   static int egSortFlag; //! 0: chi2p only; 1: N1()*10000+N2()*10000000 + CHI2()/100
 
  public:
-  EdbSegCouple(){}
+  EdbSegCouple();
   EdbSegCouple( int id1, int id2 )
-    { eID1=id1;eID2=id2; eCHI2=0; eCHI2P=0; eN1=0; eN2=0; }
-  ~EdbSegCouple(){}
+    { Set0();eID1=id1;eID2=id2; eCHI2=0; eCHI2P=0; eN1=0; eN2=0; }
+  ~EdbSegCouple();
 
+  void Set0();
   void SetN1(int n1)  {eN1=n1;}
   void SetN2(int n2)  {eN2=n2;}
   void SetN1tot(int n)  {eN1tot=n;}
@@ -119,6 +122,7 @@ class EdbSegCouple : public TObject {
   void SetCHI2(float chi2)  {eCHI2=chi2;}
   void SetCHI2P(float chi2)  {eCHI2P=chi2;}
 
+  //  void CalculateS // TODO
   void Print();
 
   static void SetSortFlag(int s=0);
