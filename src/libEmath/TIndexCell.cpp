@@ -726,8 +726,8 @@ TIndexCellIterV::TIndexCellIterV( const TIndexCell *cell,
    fLevel = fLevel0 = level;
 
    if(fLevel0 >= 0) {
-     fVind = new Int_t[  fLevel0 ];
-     fVval = new Long_t[ fLevel0 ];
+     fVind  = new Int_t[  fLevel0 ];
+     fVval  = new Long_t[ fLevel0 ];
      Reset();
    }
 
@@ -757,6 +757,8 @@ TIndexCell const *TIndexCellIterV::Next()
 {
   // Return next object in the defined volume. 
   // Returns 0 when no more objects in the cell.
+
+  // TODO: inefficient cycle ! put here find...
 
   TIndexCell const *b=0;
 

@@ -54,7 +54,6 @@ class TIndexCell : public TObject {
   Int_t  N() const;
   Int_t  N(Int_t level) const;
 
-
   Int_t  MinN(Int_t level, Int_t vind[]) const;
   Int_t  MaxN(Int_t level, Int_t vind[]) const;
   Long_t MinV(Int_t level, Int_t vind[]) const;
@@ -80,11 +79,8 @@ class TIndexCell : public TObject {
   Long_t    Value() const { return fValue; }
   Int_t     GetValues(Int_t level, Int_t vind[], Long_t val[] ) const;
 
-/*    Int_t      GetEntries() const  */
-/*      { if(fList) return fList->GetSize();         //!!! */
-/*        else return 0; } */
   Int_t      GetEntries() const 
-    { if(fList) return fList->GetEntries();         //!!!
+    { if(fList) return fList->GetEntriesFast();
       else return 0; }
 
   void   SetName(const char *varlist);
