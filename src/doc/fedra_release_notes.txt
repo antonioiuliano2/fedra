@@ -1,3 +1,43 @@
+Date: Wed, 17 Dec 2003 18:18:30 +0100 (CET)
+From: Valeri Tioukov 
+Subject: Fedra release 17-Dec-2003
+
+Dear friends,
+
+The new release of Fedra 17-Dec-2003 containe some important 
+modifications and bug fixes:
+
+- up/down linking: in last 2 releases was used improved algorithm for 
+  calculation of basetrack parameters. Unfortunately this algorithm 
+  (being mathematically correct) appeared to be more sensible to eventual
+  distortions effects in the emulsion and to reconstruction parameters tuning.
+  That's why it was changed back to the simple up/down base points link.
+
+- CHI2P calculation: slightly improved the purity of couples selection
+
+The last efficiency&purity numbers presented by Napoli/Bologna/Bern on the December
+R&D meeting was obtained with use of this version of code.
+The examples of Napoli-scanned data set is in 
+http://ntslab01.na.infn.it/public
+
+- thanks to Luillo is fixed bug affected to the final value of affine 
+  transformation parameters (no effect on efficiency&purity)
+
+- bmp images loading works now also on Windows (fixed by Stas)
+
+- event viewer is substituted now by Igor to the adopted version of
+  Ali/Op Root - like display. This version is much more fetured and 
+  convenient to use - see examples of usage in Igor's talk. (Linux-only)
+
+- new traceback&indexing possibilities for the fast search of raw segment 
+  for a given basetrack and vice-versa
+
+- fedra building under Windows is updated to be both VC++6 and VC++7 compliant (Gabriele)
+
+- some updates in documentation in fedra/src/doc (far to be complete yet)
+
+Cheers,
+Valeri
 
 -------------------------------------------------------------------------------
 Date: Fri, 21 Nov 2003 19:49:04 +0100 (MET)
