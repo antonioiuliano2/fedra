@@ -18,17 +18,18 @@
 //  it's defined by fiducial_border and fiducial_border_z parameters
 //------------------------------------------------------------------
 
+bool  mc_make_tracks  = true;	     // build tracks from MC information
 bool  use_mc_momentum = true;        // use or not MC track momentum
 bool  use_mc_mass = false;           // use MC particle mass - or pion mass
 int   primary_vertex_ntracks_min = 2;     // min generated vertex multiplicity
 int   rec_primary_vertex_ntracks_min = 2; // min reconstructed vertex multiplicity
-bool  read_from_file = true;         // read events from file
+bool  read_from_file = false;         // read events from file
 bool  regenerate_vertex_xyz = true;  // vertex coordinates regeneration
 				     // (when readevents from file)
 bool  select_neighborhood = false;   // call vertexes neighborhood procedure
 float back1_tetamax =  0.35;         // angular range for BG segments
 float back2_tetamax =  0.25;         // angular range for cosmics
-float back2_plim[2] = {0.5, 5.5};    // momentum range for cosmics
+float back2_plim[2] = {1., 1.};    // momentum range for cosmics
 
 float fiducial_border = 50000.;      // Working brick area is:
 float fiducial_border_z = 12000.;    // xmin = brick.xmin + fiducial_border
@@ -78,14 +79,19 @@ int maxgaps[6] = {0,3,3,6,3,6};  // track edges criteria cuts (2-track vertexes)
 //	    zvmax = zvmin + (maxgap[5]*zBin)
 //	    zvmin < z-vertex < zvmax
 
-float AngleAcceptance = 1.5;   // maximal difference between track slopes
+float AngleAcceptance = 2.0;   // maximal difference between track slopes
 
 float ProbMinV  = 0.01; //minimal chi2-probability for 2-tracks vertexes
 float ProbMinVN = 0.01; //minimal chi2-probability for N-tracks vertexes
 float ProbMinP  = 0.01; //minimal chi2-probability for tracks merging 
 float ProbMinT  = 0.01; //minimal track chi2-probability for using in vertexing
 
-
+int eloss_flag = 0; // =0 - no energy losses, 1-average energy losses, 2-Landau energy losses
+int design = +0; // -1 - take into account energy losses in Kalman filter,
+		 //      assuming particle direction opposit Z-axis
+		 // +1 - take into account energy losses in Kalman filter,
+		 //      assuming particle direction along Z-axis
+		 //  0 - don't take into account energy losses in Kalman filter
 struct BRICK {
   int   plates;                       // plates to be simulated
   float z0;                           // start from here
@@ -178,8 +184,6 @@ int  nprongmaxg = 0;  // maximal generated vertex maultiplicity
 int  evcount = 0; // event count for reading from file
 bool fmc1steof = true;
 
-int eloss_flag = 0; // =0 - no energy losses, 1-average energy losses, 2-Landau energy losses
-
 TGenPhaseSpace *pDecay = 0;
 
 //-------------------------------------------------------------------
@@ -209,12 +213,12 @@ void Set_Prototype_OPERA_basetrack( EdbScanCond *cond )
 {
   // sigma0 "x, y, tx, ty" at zero angle
   cond->SetSigma0( seg_s[0], seg_s[1], seg_s[2], seg_s[3] );
-  cond->SetDegrad( 0.1 );          // sigma(tx) = sigma0*(1+degrad*tx)
-  cond->SetBins(10, 10, 8, 8);     // bins in [sigma] for checks
-  cond->SetPulsRamp0(  1., 1. );   // in range (Pmin:Pmax) Signal/All is nearly linear
-  cond->SetPulsRamp04( 1., 1. );
-  cond->SetChi2Max( 4. );
-  cond->SetChi2PMax( 4. );
+  cond->SetDegrad( 0.2 );          // sigma(tx) = sigma0*(1+degrad*tx)
+  cond->SetBins(20, 20, 10, 10);     // bins in [sigma] for checks
+  cond->SetPulsRamp0(  15., 15. );   // in range (Pmin:Pmax) Signal/All is nearly linear
+  cond->SetPulsRamp04( 15., 15. );
+  cond->SetChi2Max( 3.5 );
+  cond->SetChi2PMax( 3.5 );
   cond->SetRadX0( brick.X0 );
 
   cond->SetName("Prototype_OPERA_basetrack");
@@ -243,7 +247,9 @@ void gv(int n=1, int nve=100, float back1=0., float back2=0.)
   }
   else
   {
-    ntall = nve*(nuse+1-neutral_primary)+nback2;
+    float area = (brick.lim[2]-brick.lim[0]-2.*fiducial_border)*
+		 (brick.lim[3]-brick.lim[1]-2.*fiducial_border)/1000000.;
+    ntall = nve*(nuse+1-neutral_primary)+back2*area;
   }
 
   // log MC conditions on stdout and logfile
@@ -443,7 +449,11 @@ void print_results()
   }
   printf("------------------------------------------------------------\n");
   fprintf(f, "------------------------------------------------------------\n");
-  if (!read_from_file) n2gv = (nprong*(nprong-1)/2)*nvg_tot;
+  if (!read_from_file)
+  {
+    int nprong = nuse + 1 - neutral_primary;
+    n2gv = (nprong*(nprong-1)/2)*nvg_tot;
+  }
   printf("Maximal generated vertex multiplicity %d tracks\n", nprongmaxg);
   fprintf(f, "Maximal generated vertex multiplicity %d tracks\n", nprongmaxg);
   printf("Maximal reconstructed vertex multiplicity %d tracks\n", nprongmax);
@@ -616,10 +626,18 @@ int read_events_from_file(int ne, float *fractbkg, float vlim[4], float vzlim[2]
 	    tr->SetZ(VTz);
 	    tr->SetP(Pt);
 	    tr->SetM(TMath::Abs(TMass));
-	    zlimt[0] = VTz - brick.dz;
-	    zlimt[1] = 100000.;
+	    if (TMass >= 0.)
+	    {
+		zlimt[0] = VTz;
+		zlimt[1] = 100000.;
+	    }
+	    else
+	    {
+		zlimt[0] = VTz;
+		zlimt[1] = -1000.;
+	    }
 	    // generate segments
-	    gener->TrackMC( zlimt, brick.lim, seg_s, *tr, eloss_flag, ProbGap);
+	    gener->TrackMC( zlimt, brick.lim, *tr, eloss_flag, ProbGap);
 	    // reject tracks with one segment only
 	    if (tr->N() >= 2)
 	    {
@@ -732,22 +750,21 @@ int g1(int ne=1, float b1=0., float b2=0.)
   }
   else if (ne)
   { 
-	gener->GeneratePhaseSpaceEvents( ne, pDecay,       vzlim,      vlim,
-				         brick.lim,        seg_s,
-				         ProbGap,          eloss_flag,
-				         charges);
+	gener->GeneratePhaseSpaceEvents( ne, pDecay,       vzlim,    vlim,
+				         brick.lim,        ProbGap,  eloss_flag,
+					 charges);
 	neg_tot+=ne;
-	nvgm_tot[nprong] += ne;
+	nvgm_tot[nuse + 1 - neutral_primary] += ne;
   }
   int nb1f, nb2f;
 // generate uncorrelated segments
   if ((nb1f = (int)(nb1*fractbkg))) 
-	gener->GenerateUncorrelatedSegments(nb1f, brick.lim, seg_s,
+	gener->GenerateUncorrelatedSegments(nb1f, brick.lim, 
 					    back1_tetamax, 0 );
 // generate cosmictracks
   if ((nb2f = (int)(nb2*fractbkg)))
 	gener->GenerateBackgroundTracks(nb2f,       vlim,      brick.lim,
-					back2_plim, seg_s,     back2_tetamax,
+					back2_plim, back2_tetamax,
 				        ProbGap,    eloss_flag );
   ntrgb  += nb2f;
 // fill hists with generated track parameters
@@ -804,7 +821,13 @@ void rec_all()
   fprintf(f,"  %6d generated tracks\n", ntrg);
 
   // make track candidates
-  ali->MakeTracks();
+  if (mc_make_tracks)
+  {
+    ali->eTracks = new TObjArray();
+    gener->MakeTracksMC(2,ali->eTracks);
+  }
+  else
+    ali->MakeTracks();
 
   int itrg = 0;
   int nsegmatch = 0;
@@ -845,7 +868,7 @@ void rec_all()
   else
     mpar = 0.;
   // fit tracks
-  ali->FitTracks(0., mpar, gener->eTracks);
+  ali->FitTracks(0., mpar, gener->eTracks, design);
   ali->FillCell(50,50,0.015,0.015);
 
   // merge tracks
@@ -970,7 +993,8 @@ void rec_all()
 	hp[19]->Fill(DE_FIT-DE_MC);
 	// fill hist with relative difference between MS-estimated and
 	// generated  track momentum
-	hp[23]->Fill((tr->P_MS() - trg->P())/trg->P()*100.);
+//	hp[23]->Fill((tr->P_MS(brick.X0,trg->M(),true) - trg->P())/trg->P()*100.);
+	hp[23]->Fill((1./tr->P_MS(brick.X0,trg->M(),false) - 1./trg->P())*trg->P()*100.);
     }
   }
 
@@ -1227,7 +1251,8 @@ void FillHistsV(EdbVertex &edbv, Vertex &v)
   // fill histy with vertex multiplicity
   hp[22]->Fill(v.ntracks());
   // fill hist with impact parameters
-  for (int j=0; j<edbv.N(); j++)
+  int n = edbv.N();
+  for (int j=0; j<n; j++)
     if (hp[14]) hp[14]->Fill(edbv.Impact(j));
 }
 ///-----------------------------------------------------------------------
@@ -1465,7 +1490,7 @@ void dsv( int numv = -1, int ntrMin=0, float binx=6, float bint=10 )
     v = (EdbVertex *)(ali->eVTX->At(iv));
     if(!v)            continue;
     if(v->N()<ntrMin) continue;
-
+    if(v->Flag() == -10) continue;
     arrv->Add(v);
 
     int ntr = v->N();
