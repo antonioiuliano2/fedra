@@ -23,12 +23,16 @@ fi
 PROJECT_INC=$installdir/include
 PROJECT_SRC=$installdir/src
 
+listEdv=`ls $installdir/src/libEdv/*.h`
 listEdr=`ls $installdir/src/libEdr/*.h`
 listEdd=`ls $installdir/src/libEdd/*.h`
 listEdb=`ls $installdir/src/libEdb/*.h`
 listEmath=`ls $installdir/src/libEmath/*.h`
 listTest=`ls $installdir/src/libTest/*.h`
 
+for hname in ${listEdv} ; do
+ ln -fs $PROJECT_SRC/libEdv/${hname##*/} $PROJECT_INC/${hname##*/}
+done
 for hname in ${listEdr} ; do
  ln -fs $PROJECT_SRC/libEdr/${hname##*/} $PROJECT_INC/${hname##*/}
 done
