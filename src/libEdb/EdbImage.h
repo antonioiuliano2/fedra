@@ -34,12 +34,16 @@ private:
 public:
   EdbImage();
   EdbImage( char *file, char *format="PGM" );
-  EdbImage( int columns, int rows, char *image );
+  EdbImage( int columns, int rows, char *image, int col=256 );
   virtual ~EdbImage();
+
 
   virtual void   Set0();
   virtual void   Print( Option_t *opt="" ) const;
 
+  void AdoptImage(int columns, int rows, char *image, int col=256);
+
+  void SetColors(int col) {eColors=col;}
   char   *GetBuffer()         const { return eBuffer->GetArray(); }
   int    Pixel(int c, int r) const 
     { if(r<0) return 0; if(r>eRows)    return 0;

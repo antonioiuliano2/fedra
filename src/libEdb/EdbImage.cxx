@@ -54,18 +54,19 @@ void EdbImage::Set0()
   eRows    = 0;
   eColumns = 0;
   eBuffer  = 0;
-  eBytes  = 0;
+  eBytes   = 0;
+  eColors  = 0;
 }
 
 //______________________________________________________________________________
-EdbImage::EdbImage( int columns, int rows, char *image )
+EdbImage::EdbImage( int columns, int rows, char *image, int col )
 {
+  eColors  = col;
   eColumns = columns;
   eRows    = rows;
-  eBytes  = rows*columns;
+  eBytes   = rows*columns;
 
-  int save = 320;                        // 32 bytes safety margin
-
+  int save = 32;                        // 32 bytes safety margin
   int s = eBytes + save;
   char *buffer = new char[s];
 
@@ -73,9 +74,21 @@ EdbImage::EdbImage( int columns, int rows, char *image )
 
   int size = (int)strlen(image);     printf("strlen(image) = %d\n",size);
 
-  strncpy(buffer,image,eBytes);
+  memcpy((void *)buffer,(const void *)image,eBytes);
+  //strncpy(buffer,image,eBytes);                // problems in case of '\0'
 
   eBuffer->Adopt(s,buffer);
+}
+
+//______________________________________________________________________________
+void EdbImage::AdoptImage(int columns, int rows, char *image, int col)
+{
+  eColors  = col;
+  eColumns = columns;
+  eRows    = rows;
+  eBytes   = rows*columns;
+  if(!eBuffer) eBuffer = new TArrayC();
+  eBuffer->Adopt(eBytes,image);
 }
 
 //______________________________________________________________________________
@@ -117,7 +130,7 @@ TH2F *EdbImage::GetHist2(int flip) const
     for (int ir=0; ir<eRows; ir++) {
       i = ir*eColumns + icl;
       pix = (int)(buf[i]);
-      if(flip) pix = eColors-pix;
+      if(flip) pix = eColors-1-pix;
       hist->Fill( icl, ir, pix );
     }
   }
