@@ -18,4 +18,6 @@
 
 #pragma link C++ class EdbPVGen;
 
+#pragma link C++ class EdbGA;
+
 #endif
