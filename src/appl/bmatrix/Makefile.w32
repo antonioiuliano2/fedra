@@ -4,8 +4,8 @@ include ../../config/ProjectDef.w32.mk
 #------------------------------------------------------------------------------
 
 LIB_NAME      = bmatrix
-CINT_NAME     = bitmatrixCint
-LINKDEF_NAME  = BitMatrixLinkDef
+CINT_NAME     = bmatrixCint
+LINKDEF_NAME  = bmatrixLinkDef
 
 PROJECT_LIBS  = $(PROJECT_LIBS) libEdb.lib 
 
