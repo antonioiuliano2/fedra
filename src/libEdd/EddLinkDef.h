@@ -8,5 +8,6 @@
 #pragma link C++ class EdbDisplay;
 #pragma link C++ class EdbSegG;
 #pragma link C++ class EdbTrackG;
+#pragma link C++ class EdbVertexG;
 
 #endif

@@ -10,6 +10,27 @@
 //////////////////////////////////////////////////////////////////////////
 #include "EdbDisplayBase.h"
 #include "EdbPVRec.h"
+#include "EdbVertex.h"
+
+//_________________________________________________________________________
+class EdbVertexG : public TPolyMarker3D {
+ private:
+
+  EdbVertex *eV;
+
+ public:
+  EdbVertexG():TPolyMarker3D(1) {eV=0;}
+  virtual ~EdbVertexG(){}
+
+  void SetVertex(EdbVertex *v) {eV=v;}
+
+  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
+  //virtual void          InspectParticle(); // *MENU*
+  virtual void          DumpVertex();    // *MENU*
+  virtual void          InspectVertex(); // *MENU*
+
+ ClassDef(EdbVertexG,1)  //EdbTrack graphics
+};
 
 //_________________________________________________________________________
 class EdbTrackG : public TPolyMarker3D {
@@ -62,6 +83,8 @@ class EdbDisplay: public EdbDisplayBase {
   TObjArray *eArrTr;       // array of tracks to be drawn
   Int_t      eDrawTracks;  // tracks drawing option
 
+  TObjArray *eArrV;        // array of vertexes to be drawn
+
   TArrayI* eColors;
   TArrayF* eDZs;
 
@@ -88,6 +111,9 @@ class EdbDisplay: public EdbDisplayBase {
   //void PatternDraw(EdbPattern &pat);
   void TrackDraw(EdbTrackP *tr);
   EdbSegG *SegLine(const EdbSegP *seg);
+
+  void SetArrV(TObjArray *arrv) {eArrV=arrv;}
+  void VertexDraw(EdbVertex *v);
 
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };

@@ -13,6 +13,19 @@
 ClassImp(EdbDisplay);
 ClassImp(EdbSegG);
 ClassImp(EdbTrackG);
+ClassImp(EdbVertexG);
+
+//_____________________________________________________________________________
+void EdbVertexG::DumpVertex()
+{
+  if (eV) eV->Print();
+}
+
+//_____________________________________________________________________________
+void EdbVertexG::InspectVertex()
+{
+  if (eV) eV->Inspect();
+}
 
 //_____________________________________________________________________________
 void EdbTrackG::DumpTrack()
@@ -71,6 +84,15 @@ void EdbDisplay::Refresh()
     }
   }
 
+  EdbVertex *v=0;
+  if( eArrV ) {
+    int nv = eArrV->GetEntries();
+    for(int j=0;j<nv;j++) {
+      v = (EdbVertex*)(eArrV->At(j));
+      VertexDraw(v);
+    }
+  }
+
   /*
   for(int j=0;j<PVR()->Npatterns();j++) {
     PatternDraw(*(PVR()->GetPattern(j)));
@@ -86,6 +108,34 @@ void EdbDisplay::Refresh()
     }
   }
   */
+}
+
+//________________________________________________________________________
+void EdbDisplay::VertexDraw(EdbVertex *vv)
+{
+  EdbVertexG *v = new EdbVertexG();
+  v->SetVertex( vv );
+
+  v->SetPoint(0, 
+	       vv->X(), 
+	       vv->Y(), 
+	       vv->Z() );
+  v->SetMarkerStyle(21);
+  v->SetMarkerColor(kBlue);
+  v->Draw();
+
+
+  v = new EdbVertexG();
+  v->SetVertex( vv );
+
+  v->SetPoint(0, 
+	      vv->V()->vx() + vv->X(), 
+	      vv->V()->vy() + vv->Y(), 
+	      vv->V()->vz() + vv->Z() );
+  v->SetMarkerStyle(21);
+  v->SetMarkerColor(kWhite);
+  v->Draw();
+
 }
 
 //________________________________________________________________________
