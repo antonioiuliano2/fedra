@@ -1,5 +1,5 @@
-@:: makeall.cmd 	Build FEDRA for WindowsNT/2000/XP 
-@:: Gabriele Sirri (31-10-2003)
+@:: makeall.cmd 	Build FEDRA for WindowsNT/2000/XP/2003 
+@:: Gabriele Sirri (20-11-2003)
 
 @ECHO OFF
 setlocal
@@ -8,6 +8,7 @@ if /I '%1'=='clean' goto CLEAN
 if /I '%1'=='chktgt' goto CHECKTARGET
 if /I '%1'=='archive' goto ARCHIVE
 
+IF '%1'=='-7' SET compilerver=-7
 ::----------------------------------------------------------------------
 :START
 	SET CURRENTDIR=%CD%
@@ -21,9 +22,9 @@ ECHO Check if ROOT is installed
 	ECHO ok!
 
 ECHO Check the version of ROOT
-       IF NOT EXIST workspace\rootcompare.txt GOTO ROOTISCHANGED
-       dir %ROOTSYS%\bin |find "." > rootcompare.temp
-       fc workspace\rootcompare.txt rootcompare.temp > temp.temp
+       IF NOT EXIST workspace\obj\rootver.txt GOTO ROOTISCHANGED
+       dir %ROOTSYS%\bin |find "." > rootver.temp
+       fc workspace\obj\rootver.txt rootver.temp > temp.temp
        if %ERRORLEVEL%==0 GOTO ROOTISNOTCHANGED
 
 	:ROOTISCHANGED
@@ -34,10 +35,11 @@ ECHO Check the version of ROOT
 		ECHO ok!
 	:ROOTCHECKEND
 		if exist temp.temp del temp.temp
-		if exist rootcompare.temp del rootcompare.temp
+		if exist rootver.temp del rootver.temp
 ::-----------------------------------------------------------------------------
 :BUILDFEDRA
-	dir %ROOTSYS%\bin |find "." > workspace\rootcompare.txt
+	if not exist workspace\obj mkdir workspace\obj 
+	dir %ROOTSYS%\bin |find "." > workspace\obj\rootver.txt
 
 ECHO Remove old FEDRA environment variables
 	cd tools
@@ -46,14 +48,13 @@ ECHO Remove old FEDRA environment variables
 
 ECHO Build FEDRA
 	cd workspace
-	call libxxx.mak.cmd	libEdb
-	call libxxx.mak.cmd	libEmath
-	call libxxx.mak.cmd	libEdr
-	call libxxx.mak.cmd	libEdd
-	call rwc2edb.mak.cmd
-	call recset.mak.cmd
-	ECHO Copying convertall.cmd ...
-	copy convertall.cmd ..\bin
+	call make.cmd	libEdb	%compilerver%
+	call make.cmd	libEmath	%compilerver%
+	call make.cmd	libEdr	%compilerver%
+	call make.cmd	libEdd	%compilerver%
+	call make.cmd	rwc2edb	%compilerver%
+	call make.cmd	recset	%compilerver%
+	echo FOR %%1 %%%%F IN (*.rwc) DO rwc2edb %%%%f %%%%f.root > ..\bin\convertall.cmd
 	cd %CURRENTDIR%
 
 	ECHO.
@@ -69,8 +70,8 @@ ECHO Set the environment variables
 	ECHO Other users should set their own variables using setfedra utility.
 	ECHO.
 
-ECHO Check Target:
-ECHO -------------
+ECHO Check Targets:
+ECHO --------------
 call %0 chktgt lib\libEdb.lib
 call %0 chktgt lib\libEdb.dll
 call %0 chktgt lib\libEmath.lib
@@ -103,7 +104,7 @@ call %0 chktgt bin\recset.exe
 ::----------------------------------------------------------------------
 :ROOT_DONT_EXIST 
 	ECHO.
-        ECHO ERROR: root.exe not exist in %%ROOTSYS%%\bin\root.exe
+        ECHO ERROR: root.exe doesn't exist in %%ROOTSYS%%\bin\root.exe
 	ECHO. 
 	goto STOP
 ::----------------------------------------------------------------------
@@ -123,7 +124,8 @@ call %0 chktgt bin\recset.exe
 ::----------------------------------------------------------------------
 :ARCHIVE
    :LOOP
-	SET Choice	SET /P Choice=Previous FEDRA binaries exist, do you want to archive them (Y/N)? 
+	SET Choice=
+	SET /P Choice=Previous FEDRA binaries exist, do you want to archive these files (Y/N)? 
 	IF NOT '%Choice%'=='' SET Choice=%Choice:~0,1%
 	ECHO.
 	IF /I '%Choice%'=='Y' GOTO SAVEARCHIVE
@@ -133,7 +135,8 @@ call %0 chktgt bin\recset.exe
    :SAVEARCHIVE
    ECHO.
    ECHO The files will be saved in %cd%\old\"folder"
-	SET Choice	SET /P Choice=Insert the folder name:
+	SET Choice=
+	SET /P Choice=Insert the folder name:
 	ECHO.
 	mkdir old
 	mkdir old\%Choice%
@@ -152,4 +155,3 @@ call %0 chktgt bin\recset.exe
 ::----------------------------------------------------------------------
 :STOP
 endlocal
-)
