@@ -45,9 +45,8 @@ OFFSET   0       100. 100.		# maximal offset for alignment search (dX dY)
 RADX0    0       286000.                # radiation length for the ECC media [microns]
 
 #	   	  x0	  	 y0		z0	tx  ty
-VOLUME0		-62000.		58000.		0.	0.  0.
-VOLUMEA	  	 3000.	 	3000.
-
+#VOLUME0		-62000.		58000.		0.	0.  0.
+#VOLUMEA	  	 3000.	 	3000.
 
 #
 # Cuts for segments (view coord - same as in run files) used for up/down linking
@@ -59,15 +58,25 @@ ICUT 1    -500.  500.   -500.   500.    -.9    .9	-.2    .2        0.  17.
 ICUT 2	   -500. 500.	-500.   500.	-.9    .9 	-.2    .2 	 0.  17.
 
 #
+# Cuts for basetracks (applied while reading from couples tree 
+#                    before alignment and tracking operations)
+# No blank space are permitted in the RCUT string!
+#
+
+RCUT 0  eN1==1&&eN2==1&&eCHI2P<3.5
+RCUT 0	abs(s.eTX)<.3&&abs(s.eTY)<.3
+RCUT 0	abs(s.eX+70000)<5000&&abs(s.eY-40000)<5000
+
+
+# OBSOLETE:  "ICUT 0" and "XCUT 0" are still available but it's functionality is overloaded by RCUT; 
+# RCUT 0 is much faster - it is the recommended option
+#
 # Cuts for basetrack (coord - same as in couples tree) used for alingment search
 # and plate-to-plate linking
 #
 #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
-
 #ICUT 0	-65000. -55000. 50000. 60000.	-.9     .9	  -.9    .9	0.  33.
 #ICUT 0	-65000. -60000. 50000. 55000.	-.9     .9	  -.9    .9	0.  33.
-
 # CUTCP can be used before alignment and basetracks<->basetrack linking
 # Max for:  	N1  	N1tot	N2 	N2tot	Chi2	Chi2P
-
-CUTCP 0		1	10	1	10	3.5	3.5
+#CUTCP 0		1	10	1	10	3.5	3.5
