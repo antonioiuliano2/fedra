@@ -1,0 +1,16 @@
+#------------------------------------------------------------------------------
+include ../../config/RootDef.w32.mk
+include ../../config/ProjectDef.w32.mk
+#------------------------------------------------------------------------------
+
+PROJECT_LIBS = $(PROJECT_LIBS)  libEdb.lib  libEdd.lib libEdr.lib libEdr.lib \
+                       libEmath.lib libEphys.lib libvt.lib libEIO.lib
+
+CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
+
+recset.exe : recset.obj
+	$(LD) $**  $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+
+#------------------------------------------------------------------------------
+clean:
+    @del /q recset.obj "$(BIN_DIR)"\recset.exe

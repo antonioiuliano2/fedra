@@ -1,0 +1,16 @@
+#------------------------------------------------------------------------------
+!include $(FEDRA_ROOT)/src/config/RootDef.w32.mk
+!include $(FEDRA_ROOT)/src/config/ProjectDef.w32.mk
+#------------------------------------------------------------------------------
+
+PROJECT_LIBS = $(PROJECT_LIBS)  libEdb.lib  libEdd.lib libEdr.lib libEdr.lib \
+                       libEmath.lib libEphys.lib libvt++.lib libEIO.lib
+
+CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
+
+cp2edb.exe: cp2edb.obj
+      $(LD) $**  $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+
+#------------------------------------------------------------------------------
+clean:
+    @del /q cp2edb.obj "$(BIN_DIR)"\cp2edb.exe
