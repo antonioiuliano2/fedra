@@ -7,6 +7,7 @@
    #include "vscan_ds.linux.h"  
 #endif
 
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
