@@ -4,6 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class EdbSegG;
+#pragma link C++ class EdbTrackG;
 #pragma link C++ class EdbDisplay;
 
 #endif

@@ -14,10 +14,11 @@
 #include "TSlider.h"
 #include "TView.h"
 #include "TPolyLine3D.h"
+#include "TPolyMarker3D.h"
 #include "TClonesArray.h"
 #include "TArrayF.h"
 #include "TArrayI.h"
-#include "EdbPattern.h"
+#include "EdbPVRec.h"
 #include "TButton.h"
 #include "EdbAffine.h"
 
@@ -37,36 +38,75 @@
 #include <TGaxis.h>
 #include <TVirtualX.h>
 #include <TMath.h>
-/*
 
-class TCanvas;
-class TPad;
-class TList;
-class TSlider;
-class TButton;
-class TArc;
-*/
+//_________________________________________________________________________
+class EdbTrackG : public TPolyMarker3D {
+ private:
+
+  EdbTrackP *eTr;
+
+ public:
+  EdbTrackG() {eTr=0;}
+  EdbTrackG(Int_t nhits):TPolyMarker3D(nhits) {eTr=0;}
+  virtual ~EdbTrackG(){}
+
+  void SetTrack(EdbTrackP *tr) {eTr=tr;}
+
+  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
+  //virtual void          InspectParticle(); // *MENU*
+  virtual void          DumpTrack();    // *MENU*
+  virtual void          InspectTrack(); // *MENU*
+
+ ClassDef(EdbTrackG,1)  //EdbTrack graphics
+};
+
+//_________________________________________________________________________
+class EdbSegG : public TPolyLine3D {
+ private:
+
+  EdbSegP *eSeg;
+
+ public:
+  EdbSegG() {eSeg=0;}
+  EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0;}
+  virtual ~EdbSegG(){}
+
+  void SetSeg(EdbSegP *s) {eSeg=s;}
+
+  //virtual void          ExecuteEvent(Int_t event, Int_t px, Int_t py);
+  //virtual void          InspectParticle(); // *MENU*
+  virtual void          DumpSegment(); // *MENU*
+  virtual void          InspectSegment(); // *MENU*
+
+ ClassDef(EdbSegG,1) //
+};
+
 //_________________________________________________________________________
 class EdbDisplay: public TObject {
 private:
-         TCanvas* fCanvas;
-	 TButton* fPickButton;
-	 TPad* fCutpad;
-	 TPad* fImagepad;
-         EdbAffine2D* fAff;
-	 TView*   fView;
-	 TPolyLine3D* pl;
-	 TSlider  *fXSlider,*fYSlider,*fTXSlider,*fTYSlider;
-	 Float_t cutX0,cutX1,cutY0,cutY1;
-	 Float_t cutTX0,cutTX1,cutTY0,cutTY1;
-	 Float_t cutW,cutCHI2low,cutCHI2high,cutN1,cutN2;
-	 TClonesArray* pats;
-	 TArrayI* colors;
-	 TArrayF* DZs;
-	 Int_t Npats;
-	 Float_t vx0,vy0,vz0,vx1,vy1,vz1;
-	 Int_t eNsegmax,eNsegmin,eNpieces;
-	 Bool_t eTr_Co; // Tracks/Couples switch
+  TCanvas* fCanvas;
+  TButton* fPickButton;
+  TPad* fCutpad;
+  TPad* fImagepad;
+  EdbAffine2D* fAff;
+  TView*   fView;
+  TPolyLine3D* pl;
+  TSlider  *fXSlider,*fYSlider,*fTXSlider,*fTYSlider;
+
+  Float_t cutX0,cutX1,cutY0,cutY1;
+  Float_t cutTX0,cutTX1,cutTY0,cutTY1;
+  Float_t cutW,cutCHI2low,cutCHI2high,cutN1,cutN2;
+
+  EdbPVRec *ePVR;
+  TObjArray *eArrSegP; //array of segments to be drawn
+  TObjArray *eArrTr;   //array of tracks to be drawn
+
+  TArrayI* colors;
+  TArrayF* DZs;
+
+  Float_t vx0,vy0,vz0,vx1,vy1,vz1;
+  Int_t eNsegmax,eNsegmin,eNpieces;
+  Bool_t eTr_Co; // Tracks/Couples switch
 protected:
    Int_t             fZoomMode;             //=1 if in zoom mode
    Bool_t            fDrawAllViews;         //Flag True if AllViews selected
@@ -108,13 +148,16 @@ Bool_t MaxChi;
     void SetShowTracks(){eTr_Co=kTRUE;};
     void SetShowCouples(){eTr_Co=kFALSE;};
     void SetCuts(Float_t x0, Float_t x1 , Float_t y0, Float_t y1){cutX0=x0;cutX1=x1;cutY0=y0;cutY1=y1;}
-    void SetAffine(Float_t a1, Float_t a2, Float_t a3, Float_t a4, Float_t ax, Float_t ay);
-    void AddPattern(EdbPattern* pat, Int_t color);
-    void AddPatternsVolume(EdbPatternsVolume* pat, Int_t colorU, Int_t colorD);
-    void AddCouplesTree(TTree* tree,Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
-    void AddTracksTree(TTree* tree, Float_t Zoffs=0, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.);
-//    void AddLinkedCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs=0, );
+
     void Refresh();
+    void SetPVR(EdbPVRec *pvr) {ePVR=pvr;}
+    void SetArrSegP(TObjArray *arr) {eArrSegP=arr;}
+    void SetArrTr(TObjArray *arr) {eArrTr=arr;}
+    EdbPVRec *PVR() const {return ePVR;}
+    void PatternDraw(EdbPattern &pat);
+    void TrackDraw(EdbTrackP *tr);
+    EdbSegG *SegLine(EdbSegP *seg);
+    
     virtual void ExecuteEvent(Int_t event, Int_t px, Int_t py);
 	 ~EdbDisplay(){};
    virtual void      DisplayButtons();
@@ -128,7 +171,7 @@ Bool_t MaxChi;
    virtual void      SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, Float_t z0, Float_t z1);
    virtual void      SetZoomMode();
    virtual void      UnZoom(); // *MENU*
-      virtual void      Draw(Option_t *option="");
+   virtual void      Draw(Option_t *option="");
    virtual Int_t     DistancetoPrimitive(Int_t px, Int_t py);
 
 

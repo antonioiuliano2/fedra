@@ -95,6 +95,7 @@ EdbDisplay.o: /var/local/root/include/TView.h
 EdbDisplay.o: /var/local/root/include/TPolyLine3D.h
 EdbDisplay.o: /var/local/root/include/TAtt3D.h
 EdbDisplay.o: /var/local/root/include/X3DBuffer.h
+EdbDisplay.o: /var/local/root/include/TPolyMarker3D.h
 EdbDisplay.o: /var/local/root/include/TClonesArray.h
 EdbDisplay.o: /var/local/root/include/TObjArray.h
 EdbDisplay.o: /var/local/root/include/TArrayF.h
@@ -107,7 +108,7 @@ EdbDisplay.o: /var/local/root/include/TGFrame.h
 EdbDisplay.o: /var/local/root/include/TGWindow.h
 EdbDisplay.o: /var/local/root/include/TGObject.h
 EdbDisplay.o: /var/local/root/include/TGDimension.h
-EdbDisplay.o: /var/local/root/include/TGGC.h
+EdbDisplay.o: /var/local/root/include/TGGC.h /var/local/root/include/TGFont.h
 EdbDisplay.o: /var/local/root/include/TGLayout.h
 EdbDisplay.o: /var/local/root/include/TGString.h
 EdbDisplay.o: /var/local/root/include/TGWidget.h
@@ -115,7 +116,6 @@ EdbDisplay.o: /var/local/root/include/WidgetMessageTypes.h
 EdbDisplay.o: /var/local/root/include/TTree.h
 EdbDisplay.o: /var/local/root/include/TBranch.h
 EdbDisplay.o: /var/local/root/include/TStringLong.h
-EdbDisplay.o: /var/local/root/include/TCut.h
 EdbDisplay.o: /var/local/root/include/TArrayD.h
 EdbDisplay.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbDisplay.o: /var/local/root/include/TPaveLabel.h
