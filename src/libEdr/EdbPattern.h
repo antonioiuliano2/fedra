@@ -46,6 +46,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t    eDZem;            // the length of segment along z-axis in the emulsion
   Float_t    eP;               // momentum of the particle
 
+  Int_t      eMCTrack;         // MC track number
+  Int_t      eMCEvt;           // MC event number
+
  protected: 
   TMatrixD   *eCOV;            // covariance matrix of the parameters (x,y,tx,ty,p)
 
@@ -113,6 +116,10 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   void     SetProbability( float p ) { eProb=p; }
 
+  void     SetMC( int mEvt, int mTrack ) { eMCEvt=mEvt; eMCTrack=mTrack; }
+  Int_t    MCEvt()   const {return eMCEvt;}
+  Int_t    MCTrack() const {return eMCTrack;}
+
   Int_t    ID()     const {return eID;}
   Int_t    PID()    const {return ePID;}
   Int_t    Flag()   const {return eFlag;}
@@ -156,7 +163,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t   Compare(const TObject *obj) const;
 
  
-  ClassDef(EdbSegP,14)  // segment
+  ClassDef(EdbSegP,15)  // segment
 };
 
 //______________________________________________________________________________
@@ -248,6 +255,7 @@ class EdbTrackP : public EdbSegP {
 
   Float_t    eM;          // invariant mass of the particle
   Float_t    eDE;         // total energy loss of the particle between first and last segments
+  Int_t      ePDG;        // particle ID from PDG
 
   EdbVTA  *eVTAS;    //! vertex track start is attached to
   EdbVTA  *eVTAE;    //! vertex track end is attached to
@@ -265,6 +273,9 @@ class EdbTrackP : public EdbSegP {
   EdbVTA *VTAE() const { return eVTAE;}
   EdbVertex  *VertexS();
   EdbVertex  *VertexE();
+
+  void     SetPDG( int pdg )  { ePDG=pdg; }
+  Int_t    PDG()      const {return ePDG;}
 
   void     SetM( float m )  { eM=m; }
   Float_t  M()      const {return eM;}
@@ -352,7 +363,7 @@ class EdbTrackP : public EdbSegP {
 
   void Print();
 
-  ClassDef(EdbTrackP,5)  // track consists of segments
+  ClassDef(EdbTrackP,6)  // track consists of segments
 };
 
 //______________________________________________________________________________

@@ -41,6 +41,8 @@ EdbSegP::EdbSegP()
   eP=-999.;
   eChi2=0;
   eCOV=0;
+  eMCTrack=-999;
+  eMCEvt=-999;
 }
 
 //______________________________________________________________________________
@@ -94,20 +96,21 @@ void EdbSegP::SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float s
 ///______________________________________________________________________________
 void EdbSegP::Copy(const EdbSegP &s)
 {
-      SetPID(s.PID());
-      Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
-      SetZ(s.Z());
-      SetCOV(s.COV());
-      SetSZ(s.SZ());
-      SetVid(s.Vid(0),s.Vid(1));
-      SetAid(s.Aid(0),s.Aid(1));
-      SetProb(s.Prob());
-      SetVolume(s.Volume());
-      SetDZ(s.DZ());
-      SetDZem(s.DZem());
-      SetP(s.P());
-      SetChi2(s.Chi2());
-      SetTrack(s.Track());
+  SetPID(s.PID());
+  Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
+  SetZ(s.Z());
+  SetCOV(s.COV());
+  SetSZ(s.SZ());
+  SetVid(s.Vid(0),s.Vid(1));
+  SetAid(s.Aid(0),s.Aid(1));
+  SetProb(s.Prob());
+  SetVolume(s.Volume());
+  SetDZ(s.DZ());
+  SetDZem(s.DZem());
+  SetP(s.P());
+  SetChi2(s.Chi2());
+  SetTrack(s.Track());
+  SetMC( s.MCEvt(), s.MCTrack() );
 }
 
 
@@ -639,12 +642,8 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   // do the physical copy of segments
   Reset();
   ((EdbSegP*)(this))->Copy( *((EdbSegP*)(&tr)) );
-  //Set(tr.ID(),tr.X(),tr.Y(),tr.TX(),tr.TY(),tr.W(),tr.Flag());
-  //SetPID(tr.PID());
-  //SetZ(tr.Z());
-  //SetP(tr.P());
-  //SetID(tr.ID());
   SetM(tr.M());
+  SetPDG(tr.PDG());
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
   SetDE(tr.DE());
