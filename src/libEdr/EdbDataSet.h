@@ -9,10 +9,12 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TObjArray.h"
-#include "EdbAffine.h"
 #include "TFile.h"
+#include "EdbAffine.h"
 #include "EdbRun.h"
 #include "EdbPVRec.h"
+
+class TMatrix;
 
 //______________________________________________________________________________
 class EdbSegmentCut : public TObject {
@@ -150,8 +152,8 @@ class EdbDataPiece : public TNamed {
   const char *GetNameCP() const {return eFileNameCP.Data();}
   void  Print();
   void  WriteCuts();
-  int   CheckCCD(int maxentr=1000);
-  int   RemoveCCDPeak(int matr[1000][1000]);
+  int   CheckCCD(int maxentr=2000);
+  int   RemoveCCDPeak(TMatrix &matr);
   int   UpdateSegmentCut(EdbSegmentCut cut);
 
   void SetCouplesTree(TTree *tree) {eCouplesTree=tree;}

@@ -8,7 +8,9 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TROOT.h"
+//#include "TROOT.h"
+#include "TMatrix.h"
+
 #include "EdbDataSet.h"
 #include "EdbSegment.h"
 #include "EdbCluster.h"
@@ -885,7 +887,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 
   int npeak=0;
   
-  int matr[1000][1000];
+  TMatrix matr(1000,1000);
   int ix,iy;
 
   int i,j;
@@ -921,14 +923,16 @@ int EdbDataPiece::CheckCCD(int maxentr)
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::RemoveCCDPeak(int matr[1000][1000])
+int EdbDataPiece::RemoveCCDPeak(TMatrix &matr)
 {
   double mean=0;
   int filled=0;
-  int max=0;
+  float max=0;
   int ix=0, iy=0;
-  for(int i=0; i<1000; i++) 
-    for(int j=0; j<1000; j++) {
+  int nc = matr.GetNcols();
+  int nr = matr.GetNrows();
+  for(int i=0; i<nc; i++) 
+    for(int j=0; j<nr; j++) {
       if(matr[i][j]<=0) continue;
       filled++;
       mean+=matr[i][j];
@@ -939,7 +943,7 @@ int EdbDataPiece::RemoveCCDPeak(int matr[1000][1000])
       }
     }
   mean/=filled;
-  printf("mean = %f \t max[%d,%d]=%d\n",mean,ix,iy,max);
+  printf("mean = %f \t max[%d,%d]=%d\n",mean,ix,iy,(int)max);
 
   float vmin[5],vmax[5];
   EdbSegmentCut cut;
