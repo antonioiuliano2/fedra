@@ -7,27 +7,28 @@
 	IF /I '%1'=='clean'	GOTO CLEAN
 	IF /I '%1'=='chktgt'	GOTO CHECKTARGET
 	IF /I '%1'=='archive'	GOTO ARCHIVE
-	IF /I '%1'=='setvars'	GOTO SETVCVARS
-	IF NOT '%1'=='' IF NOT '%1'=='-vc7' IF NOT '%1'=='-novars' IF NOT '%1'=='clean' IF NOT '%1'=='chktgt' IF NOT '%1'=='archive'  GOTO HELP
+	IF NOT '%1'=='' IF NOT '%1'=='-vc7' IF NOT '%1'=='-novars' GOTO HELP
 	GOTO MAKEALL
 GOTO END
 
 ::----------------------------------------------------------------------
 :MAKEALL
 	SETLOCAL
+	:: Set MSVC Environmental variables
 	IF '%1'=='-vc7'    SET compilerver=-vc7
 	IF '%1'=='-novars' SET compilerver=-novars
-	call %0 setvars
+	CALL workspace\make SETVCVARS
+
 	SET CURRENTDIR=%CD%
 
-	:: Suggest using vc7
-	IF NOT '%compilerver%'=='-vc7' ECHO   The current version of libVt++ can be compiled only with Visual C++ 7,
-	IF NOT '%compilerver%'=='-vc7' ECHO   however libEdb.dll and rwc2edb.exe can be built anyway.
-	IF NOT '%compilerver%'=='-vc7' ECHO   If you have installed MS Visual Studio .NET or MS Visual Studio .NET 2003,
-	IF NOT '%compilerver%'=='-vc7' ECHO   you should use makeall with the "-vc7" option (es. makeall -vc7).
+	:: Suggest to use vc7
+	IF NOT '%compilerver%'=='-vc7' ECHO WARNING (!)
+	IF NOT '%compilerver%'=='-vc7' ECHO This version of FEDRA cannot be compiled with MS Visual Studio 6.0.
+	IF NOT '%compilerver%'=='-vc7' ECHO Only LIBEDB.DLL and RWC2EDB.EXE can be compiled with this old version.
+	IF NOT '%compilerver%'=='-vc7' ECHO If you want to compile full FEDRA, you should install MS Visual Studio .NET or
+	IF NOT '%compilerver%'=='-vc7' ECHO MS Visual Studio .NET 2003, and use "makeall -vc7". 
 	IF NOT '%compilerver%'=='-vc7' pause 
 	
-
 	:: Archive old fedra binaries
 	IF EXIST lib\*.* CALL %0 ARCHIVE
 
@@ -65,14 +66,15 @@ GOTO END
 	ECHO Build FEDRA
 	ECHO -----------
 	cd workspace
-	CALL make.cmd	libEdb	%compilerver%
-	CALL make.cmd	libEmath	%compilerver%
-	CALL make.cmd	libVt++	%compilerver%
-	CALL make.cmd	libEphys	%compilerver%
-	CALL make.cmd	libEdr	%compilerver%
-	CALL make.cmd	libEdd	%compilerver%
-	CALL make.cmd	rwc2edb	%compilerver%
-	CALL make.cmd	recset	%compilerver%
+	CALL make.cmd	libEdb	-novars
+	CALL make.cmd	libEmath	-novars
+	CALL make.cmd	libVt++	-novars
+	CALL make.cmd	libEphys	-novars
+	CALL make.cmd	libEdr	-novars
+	CALL make.cmd	libEdd	-novars
+	CALL make.cmd	libEMC	-novars
+	CALL make.cmd	rwc2edb	-novars
+	CALL make.cmd	recset	-novars
 	echo FOR %%1 %%%%F IN (*.rwc) DO rwc2edb %%%%F %%%%F.root > ..\bin\convertall.cmd
 	cd %CURRENTDIR%
 	ECHO.
@@ -103,6 +105,8 @@ GOTO END
 	CALL %0 chktgt lib\libEdr.dll
 	CALL %0 chktgt lib\libEdd.lib
 	CALL %0 chktgt lib\libEdd.dll
+	CALL %0 chktgt lib\libEMC.lib
+	CALL %0 chktgt lib\libEMC.dll
 	CALL %0 chktgt bin\rwc2edb.exe
 	CALL %0 chktgt bin\recset.exe
 
@@ -195,7 +199,7 @@ GOTO END
 	ECHO.	
 	ECHO Build FEDRA for WindowsNT/2000/XP/2003 with MS Visual Studio 6 /.NET/.NET 2003.
 	ECHO The script automatically cleans the files when ROOT version has been changed. 
-	ECHO N.B. Clean the files by yourself if you want to change the compiler version. 
+	ECHO N.B. Call makeall clean before compiling with a different compiler version. 
 	ECHO. 
 	ECHO examples: makeall            build (MS Visual Studio 6)
 	ECHO           makeall -vc7       build using MS Visual Studio .NET (2003)
@@ -206,21 +210,5 @@ GOTO END
 	ECHO.
 	GOTO END
 ::----------------------------------------------------------------------
-:SETVCVARS
-	SET ERR=0
-	IF '%compilerver%'=='-novars' GOTO END
-	IF NOT '%compilerver%'=='-vc7' IF DEFINED MSCOMPILER call "%MSCOMPILER%\bin\vcvars32.bat"
-	IF NOT '%compilerver%'=='-vc7' IF NOT DEFINED MSCOMPILER IF DEFINED MSDevDir call "%MSDevDir%\..\..\VC98\bin\vcvars32.bat"
-	IF NOT '%compilerver%'=='-vc7' IF NOT DEFINED MSCOMPILER IF NOT DEFINED MSDevDir call "%ProgramFiles%\Microsoft Visual Studio\VC98\bin\vcvars32.bat"
-
-	IF '%compilerver%'=='-vc7' IF DEFINED VS71COMNTOOLS call "%VS71COMNTOOLS%"\vsvars32.bat
-	IF '%compilerver%'=='-vc7' IF NOT DEFINED VS71COMNTOOLS IF DEFINED VSCOMNTOOLS call %VSCOMNTOOLS%\vsvars32.bat
-	IF '%compilerver%'=='-vc7' IF NOT DEFINED VS71COMNTOOLS IF NOT DEFINED VSCOMNTOOLS SET ERR=-7
-
-	IF '%ERR%'=='-7'  ECHO Visual C++ 7 not found !
-
-::	IF EXIST "%MSVCDir%"\lib\MSVCIRT.LIB (SET MAKECFG=+msvcirt) ELSE (SET MAKECFG=)
-	GOTO END
-::---------------------------------------------------------------------
 
 :END
