@@ -7,7 +7,6 @@
 // Segments pattern                                                     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-#include <iostream.h>
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
@@ -599,7 +598,7 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 
 //______________________________________________________________________________
 //______________________________________________________________________________
-EdbTrackP::EdbTrackP(int nseg=0)
+EdbTrackP::EdbTrackP(int nseg)
 {
   eS=0;
   eSF=0;

@@ -203,6 +203,7 @@ class EdbDataPiece : public TNamed {
 
   int   InitCouplesTree( const char *mode="READ" );
   static TTree *InitCouplesTree( const char *file, const char *mode );
+  void CloseCPData();
 
   ClassDef(EdbDataPiece,1)  // Edb raw data unit (scanned plate) associated with run file
 };

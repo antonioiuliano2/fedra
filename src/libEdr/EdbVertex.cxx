@@ -8,8 +8,6 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include <iostream.h>
-
 #include "TFile.h"
 #include "TRandom.h"
 #include "TPolyLine.h"

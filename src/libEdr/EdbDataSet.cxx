@@ -160,6 +160,16 @@ void EdbDataPiece::Set0()
 }
 
 ///______________________________________________________________________________
+void EdbDataPiece::CloseCPData()
+{
+  if(eCouplesTree) {
+    TFile *f = 0;
+    f = eCouplesTree->GetDirectory()->GetFile();
+    if(f) f->Close();
+  }
+}
+
+///______________________________________________________________________________
 int EdbDataPiece::InitCouplesInd()
 {
   if(eCouplesInd) delete eCouplesInd;
@@ -1677,8 +1687,9 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 void EdbDataProc::CloseCouplesTree(TTree *tree)
 {
   tree->AutoSave();
-  tree->GetCurrentFile()->Close();
-  //if(tree) delete tree;
+  TFile *f=0;
+  f = tree->GetCurrentFile();
+  if(f) f->Close();
 }
 
 ///______________________________________________________________________________
@@ -1984,6 +1995,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
       ali->AddPattern( p2 );
     }
 
+    CloseCouplesTree(cptree);
   }
 
 
