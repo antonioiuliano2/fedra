@@ -19,4 +19,7 @@ make clean
 cd ../libVt++
 make clean
 
+cd ../libEdv
+make clean
+
 cd ..

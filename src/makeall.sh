@@ -32,4 +32,9 @@ cd ../libVt++
 make clean
 make
 
+
+cd ../libEdv
+make clean
+make
+
 cd ..
