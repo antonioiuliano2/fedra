@@ -29,22 +29,23 @@ void getDataEdb( EdbRun *edbRun,
 		 float shrU, float shrD,
                  float uoff[2], float doff[2], float plate[3] )
 {
-  //  float dzd = edbRun->GetHeader()->GetPlate()->GetDown() * shrD/2.;
   float base=plate[1];
-  float dzd = plate[0];
-  EdbPattern *patD = new EdbPattern(0.,0., dzd );
-  patD->SetID(1);
-
-  getPatternEdb(edbRun,patD,down,shrD,doff,dzd);
-  pvol->AddPattern(patD);
 
   //  float dzu = edbRun->GetHeader()->GetPlate()->GetUp()   * shrU/2.;
-  float dzu = plate[2];
-  EdbPattern *patU = new EdbPattern(0.,0., -base-dzu);
-  patU->SetID(2);
+  float dzu = plate[2]/2.;
+  EdbPattern *patU = new EdbPattern(0.,0., base+dzu);
+  patU->SetID(1);
 
-  getPatternEdb(edbRun,patU,up,shrU,uoff,-dzu);
+  getPatternEdb(edbRun,patU,up,shrU,uoff,dzu);
   pvol->AddPattern(patU);
+
+  //  float dzd = edbRun->GetHeader()->GetPlate()->GetDown() * shrD/2.;
+  float dzd = plate[0]/2.;
+  EdbPattern *patD = new EdbPattern(0.,0., -dzd );
+  patD->SetID(2);
+
+  getPatternEdb(edbRun,patD,down,shrD,doff,-dzd);
+  pvol->AddPattern(patD);
 }
 
 //--------------------------------------------------------------
@@ -101,62 +102,44 @@ void getPatternEdb( EdbRun *edbRun,
     }
     printf("\t nseg = %d  ( %d rejected ) \n", nseg, view->Nsegments()-nseg );
   }
-
 }
 
 
-//--------------------------------------------------------------
-void getDatafromSysalFile( const char *file, 
-			   EdbPatternsVolume *pvol,
-			   float zpat)
+//------------------------------------------------------------------------
+void getDataCouples( const char *file_name, 
+		     const char *tree_name="couples",
+		     EdbPattern *pat )
 {
-  char str[256];
+  TTree *tree;
+  EdbSegCouple    *cp = 0;
+  EdbSegP         *s1 = 0;
+  EdbSegP         *s2 = 0;
+  EdbSegP         *s  = 0;
 
-  EdbPattern *pat = new EdbPattern();
-  EdbSegP    *seg = new EdbSegP();
+  TFile *f = new TFile( file_name );
+  if (f)  tree = (TTree*)f->Get(tree_name);
 
-  FILE *ff = fopen( file, "r");
-  int id, pts, Tid, Tpts, Bid, Bpts; // T = top B = Bottom (refered to track segments)
-  float x, y, z, ax, ay, sigma, Tx, Ty, Bx, By;
+  int nentr = tree->GetEntries();
 
-  fgets(str,255,ff); //skip 1-st string
-  printf("%s\n",str);
+  //tree->SetBranchStatus("*"  ,0 );
+  //tree->SetBranchStatus("s.*"  ,1 );
 
-  bool cut1,cut2,cut3;
+  //tree->SetBranchAddress("cp"  , &cp );
+  //tree->SetBranchAddress("s1." , &s1 );
+  //tree->SetBranchAddress("s2." , &s2 );
+  tree->SetBranchAddress("s."  , &s  );
 
-  while( 8 == fscanf(ff,"%d %d %f %f %f %f %f %f"
-		     , &id, &pts, &x, &y, &z, &ax, &ay, &sigma) ) {
+  int nseg = 0;
 
-    fscanf(ff," %d %d %f %f %d %d %f %f",
-	   &Tid, &Tpts, &Tx, &Ty,&Bid, &Bpts, &Bx, &By );
-
-    if( TMath::Abs(ay)>.1      ) continue;
-    //if( ax > 0.05 ) continue;
-    //if( TMath::Abs(ax+.22) > 0.05 ) continue;
-
-    //cut1 = (TMath::Sqrt(ax**2+ay**2)<=0.1)&&(pts<=20);
-    //if(cut1) continue;
-    //cut2 = (TMath::Sqrt(ax**2+ay**2)>0.1)&&(TMath::Sqrt(ax**2+ay**2)<=0.2)&&(pts<=16);
-    //cut3 = (TMath::Sqrt(ax**2+ay**2)>0.2)&&(pts>20);
-    //if(cut2) continue;
-
-    //if( !(ax<peakCut && ax>-peakCut && ay<peakCut && ay>-peakCut) ) {
-    //if( ax<0.&&ay<.05&&ay>-.05 ) {
-      seg->Set(id, x, y, ax, ay);
-      seg->SetZ(zpat);
-      seg->SetW(pts);
-      pat->AddSegment( *seg );
-      //}
+  for(int i=0; i<nentr; i++ ) {
+    tree->GetEntry(i);
+    if( !cut_seg_cp( s->X(),s->Y(),s->TX(),s->TY(),s->W()) )  continue;
+    s->SetZ(pat->Z());
+    pat->AddSegment( *s );
+    nseg++;
   }
-
-  printf("%d segments read from file %s\n", pat->N(),file);
-  fclose(ff);
-
-  pat->SetZ(zpat);
-  pvol->AddPattern(pat);
-
-  pvol->SetPatternsID();
-  pvol->FillTree(pat,pat,0);
+  printf("%d (of %d) segments readed from file %s\n", nseg,nentr,file_name );
+  f->Close();
 }
 
 //--------------------------------------------------------------
@@ -397,15 +380,22 @@ void filltree( TTree *tree, EdbPVRec *al, int fillraw=0 )
       cp = patc->GetSegCouple(ic);
       s1 = patc->Pat1()->GetSegment(cp->ID1());
       s2 = patc->Pat2()->GetSegment(cp->ID2());
-//        s = new EdbSegP(*s1);
-//        *s += *s2;
-      s->Set( ic, s1->X(), s1->Y(),
-	      (s1->X()-s2->X())/(s1->Z()-s2->Z()),
-	      (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
-	      s1->W()+s2->W());
+      //s = new EdbSegP(*s1);
+      //*s += *s2;
+        s->Set( ic, s1->X(), s1->Y(),
+      	      (s1->X()-s2->X())/(s1->Z()-s2->Z()),
+      	      (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
+      	      s1->W()+s2->W());
+        s->SetZ( s1->Z() );
+
+//        s->Set( ic, (s1->X()+s2->X())/2., (s1->Y()+s2->Y())/2.,
+//  	      (s1->TX()+s2->TX())/2., (s1->TY()+s2->TY())/2.,
+//        	      s1->W()+s2->W());
+
+//        s->SetZ( (s1->Z()+s2->Z())/2. );
 
       tree->Fill();
-      //      delete s;
+      //delete s;
     }
   }
 

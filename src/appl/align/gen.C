@@ -1,8 +1,8 @@
-EdbPVRec *ali=0;
-EdbPVGen *gener = 0;
+EdbPVRec    *ali=0;
+EdbPVGen    *gener = 0;
 EdbScanCond *scanCond=0;
-TIndexCell *tracks=0;
-
+EdbScanCond *scanCond_mc=0;
+TIndexCell  *tracks=0;
 
 void gen()
 {
@@ -10,28 +10,42 @@ void gen()
  gROOT->LoadMacro("IO.C");
 
   TFile *f = new TFile("gen.root","RECREATE");
-  tree = new TTree("couples","couples");
-  inittree(tree);
+
+  TTree *tree = inittree("couples",
+                         "gen.root",
+                         "RECREATE");
 
   ali      = new EdbPVRec();
   scanCond = new EdbScanCond();
-  Set_Prototype_OPERA_microtrack( scanCond );
+  Set_Prototype_OPERA_basetrack( scanCond );
   ali->SetScanCond(scanCond);
 
-  genMC((EdbPatternsVolume*)ali, 2000,120000);
+  genMC((EdbPatternsVolume*)ali, 1000,0);
+
+  ali->PrintAff();
 
   ali->GetScanCond()->Print();
   ali->SetSegmentsErrors();
 
   ali->SetCouplesAll();
-  //ali->SetChi2Max(5.);
-  //ali->SetOffsetsMax(50,50);
-  //ali->Align();
+  ali->SetChi2Max(15);
+  ali->SetOffsetsMax(60,60);
+  ali->Align();
+  ali->PrintAff();
   ali->Link();
 
-  //ali->PrintAff();
-
   filltree(tree,ali,1);
+}
+
+///------------------------------------------------------------
+void Set_Prototype_OPERA_basetrack_mc( EdbScanCond *cond )
+{
+  cond->SetSigma0( 5., 5.,.004,.004 );   // sigma0 "x,y,tx,ty" at 0 angle
+  cond->SetDegrad( 5. );                 // sigma(tx) = sigma0*(1+degrad*tx)
+  cond->SetBins(5,5,5,5);                // bins in [sigma] for checks
+  cond->SetPulsRamp0(  15.,15. );        // in range (Pmin:Pmax) Signal/All is nearly linear
+  cond->SetPulsRamp04( 15.,15. );        //
+  cond->SetName("Prototype_OPERA_basetrack");
 }
 
 ///------------------------------------------------------------
@@ -39,10 +53,12 @@ void genMC(EdbPatternsVolume *pv, int nsg, int nbg)
 {
   gener = new EdbPVGen();
   gener->SetVolume(pv);
-  gener->SetScanCond(scanCond);
+  scanCond_mc = new EdbScanCond();
+  Set_Prototype_OPERA_basetrack_mc(scanCond_mc);
+  gener->SetScanCond(scanCond_mc);
 
-  makeVolumeOPERAud(pv);
-  //makeVolumeOPERAn(pv,6);
+  //makeVolumeOPERAud(pv);
+  makeVolumeOPERAn(pv,5);
 
   genPVBeam(gener,nsg);
   genPVbg(gener,nbg);
@@ -50,20 +66,9 @@ void genMC(EdbPatternsVolume *pv, int nsg, int nbg)
 
   gener->SmearSegments();
   
-  //gener->SmearPatterns(10.,.01);
+  gener->SmearPatterns(20.,.001);
 
   pv->SetPatternsID();
-}
-
-///------------------------------------------------------------
-void Set_MC_microtrack( EdbScanCond *cond )
-{
-  cond->SetSigma0( 1., 1.,.025,.025 );  // sigma0 "x,y,tx,ty" at 0 angle
-  cond->SetDegrad( 5. );                // sigma(tx) = sigma0*(1+degrad*tx)
-  cond->SetBins(5,5,5,5);               // bins in [sigma] for checks
-  cond->SetPulsRamp0(  4.,5. );         // in range (Pmin:Pmax) Signal/All is nearly linear
-  cond->SetPulsRamp04( 3.,4. );         //
-  cond->SetName("MC_microtrack");
 }
 
 ///-------------------------------------------------------------------
@@ -94,9 +99,9 @@ void makeVolumeOPERAn( EdbPatternsVolume *v, int npat, float z0=0 )
 ///------------------------------------------------------------
 void genPVBeam( EdbPVGen *gener, int npart=100 )
 {
-  float xx[4] ={0,0,0,-0.05};                      // starting point, starting angle
-  float sxx[4]={60000,60000,0.003,0.003};      // beam dispersions
-  float lim[4]={-60000,-60000,60000.,60000.};      // xmin,ymin,xmax,ymax at z0
+  float xx[4] ={0,0,0,-0.05};                   // starting point, starting angle
+  float sxx[4]={60000,60000,0.003,0.003};       // beam dispersions
+  float lim[4]={-60000,-60000,60000.,60000.};   // xmin,ymin,xmax,ymax at z0
 
   float z0 = -1000.;
   int flag = 1;     //beam particles
@@ -114,61 +119,6 @@ void genPVbg( EdbPVGen *gener, int npart=100 )
   gener->GenerateBackground(npart,xmin,xmax,flag);
   gener->GeneratePulsPoisson(5.,1.,8,16,2);
 }
-
-///------------------------------------------------------------
-void maketree( EdbPVRec *al )
-{
-  EdbPatCouple *patc=0;
-
-  int pid1,pid2;
-  EdbSegCouple *cp=0;
-  EdbSegP      *s1=0;
-  EdbSegP      *s2=0;
-  EdbSegP      *s=0;
-
-  treeCP = new TTree("couples","couples");
-  treeCP->Branch("pid1",&pid1,"pid1/I");
-  treeCP->Branch("pid2",&pid2,"pid2/I");
-  treeCP->Branch("cp","EdbSegCouple",&cp,32000,99);
-  treeCP->Branch("s1.","EdbSegP",&s1,32000,99);
-  treeCP->Branch("s2.","EdbSegP",&s2,32000,99);
-  treeCP->Branch("s." ,"EdbSegP",&s,32000,99);
-
-  // **** fill tree with raw segments ****
-  EdbPattern *pat=0;
-  for( int ip=0; ip<al->Npatterns(); ip++ ) { 
-    pat  = al->GetPattern(ip);
-    pid1 = pat->ID();
-    pid2 = -1;
-
-    for( int ic=0; ic<pat->N(); ic++ ) {
-      s1 = pat->GetSegment(ic);
-      treeCP->Fill();
-    }
-  }
-
-  // **** fill tree with couples ****
-  for( int ip=0; ip<al->Ncouples(); ip++ ) {
-    patc = al->GetCouple(ip);
-    pid1 = patc->Pat1()->ID();
-    pid2 = patc->Pat2()->ID();
-
-    for( int ic=0; ic<patc->Ncouples(); ic++ ) {
-      //      printf("%d %d\n",ip,ic);
-      cp = patc->GetSegCouple(ic);
-      s1 = patc->Pat1()->GetSegment(cp->ID1());
-      s2 = patc->Pat2()->GetSegment(cp->ID2());
-      s = new EdbSegP(*s1);
-      *s += *s2;
-      treeCP->Fill();
-      delete s;
-    }
-  }
-
-  treeCP->Write();
-
-}
-
 
 ///------------------------------------------------------------
 void genPVBeam_6picchi( EdbPVGen *gener, int npart=100 )

@@ -5,6 +5,7 @@ int cut_seg(float x0, float y0, float tx0, float ty0, float puls )
 {
   // this function is called by GetDataEdb() to reject bad segments
 
+  //  if( TMath::Abs(ty0)>.15 ) return 0;
   if( puls < 3 ) return 0;
   if( TMath::Abs(y0- 139.70)<1.35 && TMath::Abs(x0+  64.45)<1.4 )  return 0;
   if( TMath::Abs(y0+ 158.2 )<1.3  && TMath::Abs(x0+ 108.55)<1.3 )  return 0;
@@ -22,12 +23,15 @@ void aedb()
   gROOT->LoadMacro("IO.C");
 
   EdbRun *edbRun =  new EdbRun(
-     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_02010109.root"
+     "/mnt/operalabdb_e/data/rawr/b1_jun2003/pl09/raw_Jun2003_03010109_nc.root"
     ,"READ");
 
-  float  plate[3] = {42,214,42}; // we do not rely yet on values coming after convertor
-  float  shrD  = 0.93;           //lh-rd (uvelichili)
-  float  shrU  = 0.85;           //
+  //                up base down  - nominal values during exposure (will be used for projection only)
+  float  plate[3] = {40, 214, 40}; // we do not rely yet on values coming after convertor
+
+  float  shrU  = 0.93;              //  (exposure thickness) / (measured on stage thickness):
+  float  shrD  = 0.73;              //  tx_exp = tx_stage/shr
+
   float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
   float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
@@ -47,7 +51,7 @@ void aedb()
   TIndexCell *down=0;
 
   int nareas= edbRun->GetHeader()->GetNareas();
-  for(int aid=0; aid<nareas; aid++) {
+  for(int aid=0; aid<10; aid++) {
 
     up   = uplist.Find(aid);
     down = downlist.Find(aid);

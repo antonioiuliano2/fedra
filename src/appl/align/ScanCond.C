@@ -42,10 +42,21 @@ void Set_Prototype_OPERA_basetrack( EdbScanCond *cond )
 {
   cond->SetSigma0( 9., 10.,.005,.006 );  // sigma0 "x,y,tx,ty" at 0 angle
   cond->SetDegrad( 5. );                 // sigma(tx) = sigma0*(1+degrad*tx)
-  cond->SetBins(5,5,5,5);                // bins in [sigma] for checks
+  cond->SetBins(3,3,3,3);                // bins in [sigma] for checks
   cond->SetPulsRamp0(  15.,15. );        // in range (Pmin:Pmax) Signal/All is nearly linear
   cond->SetPulsRamp04( 15.,15. );        //
   cond->SetName("Prototype_OPERA_basetrack");
+}
+
+///------------------------------------------------------------
+void Set_Prototype_OPERA_basetrack_300( EdbScanCond *cond )
+{
+  cond->SetSigma0( 3., 3.,.005,.006 );  // sigma0 "x,y,tx,ty" at 0 angle
+  cond->SetDegrad( 5. );                 // sigma(tx) = sigma0*(1+degrad*tx)
+  cond->SetBins(5,5,3,3);                // bins in [sigma] for checks
+  cond->SetPulsRamp0(  13.,13. );        // in range (Pmin:Pmax) Signal/All is nearly linear
+  cond->SetPulsRamp04( 13.,13. );        //
+  cond->SetName("Prototype_OPERA_basetrack_300");
 }
 
 ///------------------------------------------------------------
