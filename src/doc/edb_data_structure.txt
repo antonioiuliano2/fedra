@@ -1,0 +1,78 @@
+The contents of the Views tree (raw data):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One entry into the tree is the one microscope view with 
+the full information available from the scanning system for this view:
+
+It has the following branches:
+
+ headers   - view header contained general information about this view
+ clusters  - array of clusters (sometimes incorrectly called "grains")
+ segments  - array of segments ("microtracks")
+ frames    - array of frames - keep the information for corresponding CCD frame
+ tracks    - in principle could keep information about linked tracks (not used now)
+
+
+headers (class EdbViewHeader) has the following fields:
+
+  Int_t    eViewID;   // View ID in the Area
+  Int_t    eAreaID;   // Area ID in Run (prediction id)
+
+  Float_t  eXview;    // stage coord, top left corner
+  Float_t  eYview;    // 
+
+  Float_t  eZ1;    //
+  Float_t  eZ2;    // emulsion surfaces in absolute stage coordinates
+  Float_t  eZ3;    // measured once per view
+  Float_t  eZ4;    //
+
+  Int_t    eNframesTop;  // top    | number of frames in the view (0,1,2...16...)
+  Int_t    eNframesBot;  // bottom | 
+
+  Int_t   eTime;         // System time since last view saving in msec
+
+  Int_t   eNclusters;    // number of clusters saved in the view
+  Int_t   eNsegments;    // number of segments saved in the view
+
+  EdbAffine2D   eAff;    // affine transformation for the view 
+                         // (make sence for SySal-converted data only)
+
+  TArrayF  *eZlevels;    //-> do not used any more
+
+
+clusters (class EdbCluster):
+  Float_t    eX;       // cluster coordinates in pixels(?)
+  Float_t    eY;       //
+  Float_t    eZ;       //
+  Float_t    eArea;    // Cluster area: number of pixels
+  Float_t    eVolume;  // Cluster volume - in case of greyscale pixels
+  Int_t      eFrame;   // frame index
+  Int_t      eSide;    // emulsion side index
+  Int_t      eSegment; // segment id to be attached (-1 if no segment)
+
+
+segments (class EdbSegment):
+  Float_t    eX0;         // |_coordinates of the segment's initial point
+  Float_t    eY0;         // | in the SAME FOR ALL SEGMENTS stage coordinate system
+  Float_t    eZ0;         // |
+  Float_t    eTx;         // tanX: deltaX/deltaZ
+  Float_t    eTy;         // tanY: deltaY/deltaZ
+
+  Float_t    eDz;         // length of the segment along Z with sign
+
+  Int_t      eSide;       // side of the segment location (0-up, 1-down)
+  Int_t      ePuls;       // puls height (number of grains)
+  Int_t      eID;         // segment identifier
+  Float_t    eSigmaX;     // dispersion parameter of grains around track line
+  Float_t    eSigmaY;     // dispersion parameter of grains around track line
+
+frames (class EdbFrame):
+  Int_t       eFrameID;           // frame identifier
+  Float_t     eZframe;            // Z-coordinate of the frame
+  Int_t       eNcl;               // total number of clusters found in the frame
+  Int_t       eNpix;              // total number of nonzero pixels found in the frame
+  EdbImage    *eImage;            // CCD image (not used yet)
+
+-----------------
+VT 23-09-2003
+-----------------
