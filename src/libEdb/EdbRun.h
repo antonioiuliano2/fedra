@@ -92,7 +92,7 @@ public:
   void Close();
   TFile    *GetFile(){ return eFile; }
 
-  EdbView        *GetEntry(         int entry );
+  EdbView        *GetEntry(         int entry, int ih=1, int icl=0, int iseg=1, int itr=0, int ifr=0 );
   EdbViewHeader  *GetEntryHeader(   int entry ) const;
   TClonesArray   *GetEntryClusters( int entry ) const;
   TClonesArray   *GetEntrySegments( int entry ) const;

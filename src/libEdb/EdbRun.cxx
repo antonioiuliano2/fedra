@@ -287,19 +287,19 @@ void EdbRun::Close()
   eFile->Close();
 }
 
-//______________________________________________________________________________
-EdbView *EdbRun::GetEntry( int entry )
+//_________________________________________________________________________________
+EdbView *EdbRun::GetEntry( int entry, int ih, int icl, int iseg, int itr, int ifr )
 {
   if(eView)     eView->Clear();
   else          SetView();
 
   if( !eView->GetClusters() )  SetView();
 
-  GetEntryHeader(   entry );
-  GetEntryClusters( entry );
-  GetEntrySegments( entry );
-  //GetEntryTracks(   entry );
-  //GetEntryFrames(   entry );
+  if(ih)   GetEntryHeader(   entry );
+  if(icl)  GetEntryClusters( entry );
+  if(iseg) GetEntrySegments( entry );
+  if(itr)  GetEntryTracks(   entry );
+  if(ifr)  GetEntryFrames(   entry );
 
   return eView;
 }

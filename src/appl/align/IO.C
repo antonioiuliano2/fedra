@@ -11,7 +11,6 @@ void getDataEdb( EdbRun *edbRun,
   EdbView    *view=edbRun->GetView();
   EdbSegment *seg=0;
 
-
   float x,y,z,tx,ty;
   float dzu = edbRun->GetHeader()->GetPlate()->GetUp() * shrU/2.;
   float dzd = edbRun->GetHeader()->GetPlate()->GetDown() * shrD/2.;
@@ -28,29 +27,23 @@ void getDataEdb( EdbRun *edbRun,
   EdbViewHeader *head=0;
   for(int iv=0; iv<nentr; iv++ ) {
 
-    printf("iv= %d nentr = %d\n",iv,nentr);
-    
     head = edbRun->GetEntryHeader(iv);
     if(head->GetAreaID()!=aid)  continue;
 
     view = edbRun->GetEntry(iv);
-    //    if( view->GetAreaID() != aid )   continue;
-    view->Print();
 
+    printf("Area %d    \t View %d (%5.1f\% ): \t %d/%d",
+	   aid, iv,100.*iv/nentr,head->GetNframesTop(),head->GetNframesBot() );
+    
+    nseg=0;
 
     for(int j=0;j<view->Nsegments();j++) {
 
       seg = view->GetSegment(j);
 
-//        if( seg->GetX0()>-44.8&&seg->GetX0()<-44.2&&
-//  	  seg->GetY0()>139.2&&seg->GetY0()<139.8 ) continue;
+      if( !cut_seg(seg->GetX0(),seg->GetY0()) ) continue;
 
-//        if( seg->GetX0()>120.6&&seg->GetX0()<121.2&&
-//  	  seg->GetY0()>-163.8&&seg->GetY0()<-163.2 ) continue;
-
-      if( (TMath::Abs(seg->GetTy())<0.003) && 
-	  (TMath::Abs(seg->GetTx())<0.003) ) continue;
-
+      nseg++;
       //segP->SetDZ( seg->GetDz() );
 
       if(seg->GetSide()==0)     {
@@ -80,6 +73,8 @@ void getDataEdb( EdbRun *edbRun,
 
       
     }
+
+    printf("\t nseg = %d  ( %d rejected ) \n", nseg, view->Nsegments()-nseg );
     
   }
 

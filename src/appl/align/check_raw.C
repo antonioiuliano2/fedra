@@ -1,4 +1,4 @@
-void check_all()
+void check_raw()
 {
   check_z();
   check_view();
@@ -44,7 +44,7 @@ void check_surf()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  //  surf_1->cd();       Views->Draw("eY0:eX0","","lego2");
+
   surf_1->cd();       Views->Draw("eYview:eXview");
   surf_1->cd();       Views->Draw("eYview+eY0:eXview+eX0","eNframesTop==0","samecontZ");
   surf_2->cd();       Views->Draw("eYview:eXview");
@@ -82,7 +82,7 @@ void check_puls()
 //-------------------------------------------------------
 void check_seg()
 {
-  TCanvas *c = new TCanvas("cseg","check segments");
+  TCanvas *c = new TCanvas("cseg","check segments angle");
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
