@@ -195,12 +195,13 @@ class EdbDataProc : public TObject {
 
   void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);  // to be displaced
 
+  int  InitVolume(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
   int  Link();
   int  Link(EdbDataPiece &piece);
   void Align();
-  int  InitVolume(EdbPVRec *ali);
   void LinkTracks();
+  void AlignLinkTracks();
 
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );

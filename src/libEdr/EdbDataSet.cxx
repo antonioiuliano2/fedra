@@ -1144,8 +1144,8 @@ void EdbDataProc::Align()
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
-  ali->Align();
 
+  ali->Align();
   ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
@@ -1160,6 +1160,25 @@ void EdbDataProc::LinkTracks()
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
+  ali->Link();
+  printf("link ok\n");
+  ali->MakeTracksTree();
+}
+
+///______________________________________________________________________________
+void EdbDataProc::AlignLinkTracks()
+{
+  EdbPVRec    *ali  = new EdbPVRec();
+  InitVolume(ali);
+
+  ali->Align();
+  ali->PrintAff();
+  EdbAffine2D  aff;
+  for(int i=0; i<ali->Npatterns(); i++) {
+    ali->GetPattern(i)->GetKeep(aff);
+    eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
+  }
+
   ali->Link();
   printf("link ok\n");
   ali->MakeTracksTree();

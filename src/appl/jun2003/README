@@ -63,7 +63,7 @@ Data processing scheme:
    All cuts will be applied one by one in the same sequence as them setted.
 
 4) Linking: 
-      >	recset link XXXX_data_set.def
+      >	recset l XXXX_data_set.def
 	
 	With this instruction for all pieces listed in runs.lst with flag 1
 	will be performed up/down linking. Output root files with "couples" 
@@ -74,7 +74,7 @@ Data processing scheme:
 	modified parameters.
 	
 5) Alingment:
-	> recset align XXXX_data_set.def
+	> recset a XXXX_data_set.def
 
 	this procedure will search plate to plate offset in the limits 
 	defined by OFFSET parameter and then calculate the affine 
@@ -99,7 +99,7 @@ Data processing scheme:
 	The most economic way to do it is by couples: 2->1; 3->2; etc.
 
 6) Track linking:
-	> recset track XXXX_data_set.def
+	> recset t XXXX_data_set.def
 
 	ones the affine transformations are defined for N plates - for 
 	all of them could be done track linking. This procedure is similar to 
@@ -109,7 +109,6 @@ Data processing scheme:
 --------------------------------------------------
 
 TODO list:
-	- add CUTCP
 	- to fix const/file memory leak in link procedure
 ok	- to apply Andrew's routine for s par
 	- to provide correct track linking with recalculation of 
