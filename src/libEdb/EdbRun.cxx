@@ -4,11 +4,12 @@
 //                                                                      //
 // EdbRun                                                               //
 //                                                                      //
-// Class for handling data of one run of emulsion scanning              //
-// EdbRun is always assosiated with the correspondent root file
+// Class for handling data of one session of emulsion scanning.         //
+// Session means that all scanned data are in the same reference system //
+// EdbRun is always associated with the correspondent root file
 //
 // EdbRun could be used in 2 ways: 
-// a) to put row scanning data
+// a) to put raw scanning data
 // b) to put the processed data
 //
 // in case a) normally new run should be creted via EdbOnline class
@@ -17,7 +18,7 @@
 //
 //    EdbRun    *runIN  = new EdbRun("/row_data/run0093.root");
 //    EdbRun    *runOUT = new EdbRun( *runIN,"/analysed_data/run0093_seg.root");
-//    EdbView  *view = 0;
+//    EdbView   *view = 0;
 // 
 //    int N = runIN->GetEntries();
 // 
@@ -48,7 +49,7 @@
 
 ClassImp(EdbRun)
 
-EdbRun      *gRUN;         // global pointer in the current Run
+EdbRun      *gRUN;         // global pointer to the current Run
 
 //______________________________________________________________________________
 EdbRun::EdbRun()
@@ -92,8 +93,8 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
     eMarks  = new EdbMarksSet(*(run.GetMarks()));
   if(run.GetPredictions())  
     ePredictions  = new EdbPredictionsBox(*(run.GetPredictions()));
-  SelectOpenMode( fname, "RECREATE" );
   printf("Run headers are copied\n");
+  SelectOpenMode( fname, "RECREATE" );
 }
 
 //______________________________________________________________________________
@@ -104,7 +105,6 @@ EdbRun::~EdbRun()
   if(ePredictions) delete ePredictions;
   if(eMarks)       delete eMarks;
   if(eView)        delete eView;
-  //if(eTree)        eTree->Delete("");
 }
 
 //______________________________________________________________________________
@@ -178,8 +178,8 @@ void EdbRun::OpenUpdate( const char *fname )
 //______________________________________________________________________________
 void EdbRun::Create( const char *fname )
 {
-  ePredictions   = new EdbPredictionsBox();
-  eMarks         = new EdbMarksSet();
+  if(!ePredictions) ePredictions   = new EdbPredictionsBox();
+  if(!eMarks)       eMarks         = new EdbMarksSet();
 
   if( !gSystem->AccessPathName(fname, kFileExists) )
     printf("WARNING : file %s  is already exist!\n", fname);
