@@ -1,52 +1,70 @@
 :: Installation script for the fedra-package
 :: for Windows XP and Windows 2003 Server
+::
+:: usage:
+::       makeall.cmd         - build  all libraries
+::       makeall.cmd  clean  - clean  all directories
+::       makeall.cmd  depend - create all dipendencies //not implemented yet
+::
+
 
 @ECHO OFF
+ IF /I '%1'=='checkall'	GOTO CHECKALL
  IF /I '%1'=='chktgt'	GOTO CHKTGT
 ::-----------------------------------------------------------------------
 
  call vsvars32.bat 
 
  cd libEmath
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEdb
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libVt++
- nmake /F Makefile.w32
+ nmake %1 /F Makefile.w32
 
  cd ../libEphys
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEGA
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEdr
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEIO
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEdd
- nmake /F Makefile.w32
+ nmake %1
 
  cd ../libEMC
- nmake /F Makefile.w32
+ nmake %1
+
+ cd ../libEdg
+ nmake %1
 
  cd ../appl/recset
- nmake /F Makefile.w32
+ nmake %1 /F Makefile.w32
 
  cd ../../appl/rwc2edb
- nmake /F Makefile.w32
+ nmake %1 /F Makefile.w32
 
  cd ../../appl/cp2edb
- nmake /F Makefile.w32
+ nmake %1 /F Makefile.w32
  
  cd ../../appl/bmatrix
- nmake /F Makefile.w32
+ nmake %1
  
  cd ../../
+
+ IF '%1'=='' CALL %0 CHECKALL
+
+ GOTO END
+
+::-------------------------------------------
+:CHECKALL
 
  ECHO Check Targets:
  ECHO --------------
@@ -76,8 +94,8 @@
  CALL %0 chktgt ..\bin\rwdread.exe
  CALL %0 chktgt ..\bin\recset.exe
  CALL %0 chktgt ..\bin\cp2edb.exe
- CALL %0 chktgt ..\lib\bmatrix.lib
- CALL %0 chktgt ..\lib\bmatrix.dll
+ CALL %0 chktgt ..\lib\libbmatrix.lib
+ CALL %0 chktgt ..\lib\libbmatrix.dll
 
 GOTO END
 

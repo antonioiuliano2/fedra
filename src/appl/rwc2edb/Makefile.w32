@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
-include ../../config/RootDef.w32.mk
-include ../../config/ProjectDef.w32.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
 PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  ole32.lib
