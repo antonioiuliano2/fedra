@@ -1,7 +1,7 @@
 # usage:
 #       ./makeall.sh         - build  all libraries
 #       ./makeall.sh  clean  - clean  all directories
-#       ./makeall.sh  depend - create all dipendencies
+#       ./makeall.sh  depend - create all dependencies
 #
 
 LIBS="libEdb libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++"
