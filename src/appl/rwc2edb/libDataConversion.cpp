@@ -1,10 +1,18 @@
 // libIOConverter.h and libIOConverter.cpp
+// ---------------------------------------
 // library for win32 which converts data from the DAQ files to root using libEdb
-// (was rwc2edb.cpp)
+// (was rwc2edb.cpp up to 1.7)
+// author : Gabriele Sirri
+//          AddGrainsTXT by Igor Kreslo
+// ----------------------------------------
+//
+// Revision 1.2 May 11, 2004
+// -> compiler warning C4244 fixed (implicit conversions to smaller types
+//    are now explicit)
 //
 // Revision 1.1 Jul 08, 2003
 // -> Initial revision (adapted from rwc2edb.cpp 1.7)
-
+//
 
 #include "libDataConversion.h"
 
@@ -60,11 +68,11 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 
 	EdbRunHeader *Header;
 	Header =  run->GetHeader();
-								       // customize run flags:
-                               //  eFlag[0] = 1  - UTS data
-                               //  eFlag[0] = 2  - SySal data
-                               //  eFlag[1] = 1  - Stage coordinates
-                               //  eFlag[1] = 2  - Absolute (marks) coordinates
+									// customize run flags:
+									//  eFlag[0] = 1  - UTS data
+									//  eFlag[0] = 2  - SySal data
+									//  eFlag[1] = 1  - Stage coordinates
+									//  eFlag[1] = 2  - Absolute (marks) coordinates
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,1);
 	Header->SetLimits(pCat->Area.XMin,pCat->Area.XMax,
@@ -72,31 +80,36 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD)
 	// fiducial coordinates
 	Header->SetArea(pCat->Area.XViews*pCat->Area.YViews, 
 						 pCat->Area.XStep,pCat->Area.YStep, 
-						 FindConfig(pCat,"Vertigo Scan","VLayers"),
-						 FindConfig(pCat,"Vertigo Scan","VLayers"),
+						 (int) FindConfig(pCat,"Vertigo Scan","VLayers"),
+						 (int) FindConfig(pCat,"Vertigo Scan","VLayers"),
 						 0);
 
 	Header->SetNareas(pCat->Area.Fragments);
-	Header->SetCCD(FindConfig(pCat,"Objective","Width"),
-						FindConfig(pCat,"Objective","Height"),
-						-999,						// physical pixel size in microns along X
-						-999,						// physical pixel size in microns along Y
-						"",						// es. "Dalsa CAD4"
-						"");						// es. "Bologna"
-	Header->SetObjective(-999,				// magnification
-				FindConfig(pCat,"Objective","Width" )*fabs(FindConfig(pCat,"Objective","PixelToMicronX")),0,
-				0,FindConfig(pCat,"Objective","Height")*fabs(FindConfig(pCat,"Objective","PixelToMicronY")),
+	Header->SetCCD((int) FindConfig(pCat,"Objective","Width"),
+						(int) FindConfig(pCat,"Objective","Height"),
+						-999,		// physical pixel size in microns along X
+						-999,		// physical pixel size in microns along Y
+						"",			// es. "Dalsa CAD4"
+						"");		// es. "Bologna"
+	Header->SetObjective(-999,		// magnification
+				(float)FindConfig(pCat,"Objective","Width" )*
+				    fabs((float)FindConfig(pCat,"Objective","PixelToMicronX")),
 				0,0,
-				"",				// es. "Nikon CFI - oil"
+				(float)FindConfig(pCat,"Objective","Height")*
+				    fabs((float)FindConfig(pCat,"Objective","PixelToMicronY")),
+				0,0,
+				"",					// es. "Nikon CFI - oil"
 				"");				// es, "50x"
-	Header->SetPlate(-999,					// plate ID
-						  FindConfig(pCat,"Vertigo Scan","VStep")*FindConfig(pCat,"Vertigo Scan","Shrinkage"),
-						  FindConfig(pCat,"Vertigo Scan","BaseThickness"),
-						  FindConfig(pCat,"Vertigo Scan","VStep")*FindConfig(pCat,"Vertigo Scan","Shrinkage"),
-						  FindConfig(pCat,"Vertigo Scan","Shrinkage"),
-						  FindConfig(pCat,"Vertigo Scan","Shrinkage"),
-						  "",						// es. "Test Plate"
-						  "");					//
+	Header->SetPlate(-999,			// plate ID
+				(float)FindConfig(pCat,"Vertigo Scan","VStep")*
+				       (float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				(float)FindConfig(pCat,"Vertigo Scan","BaseThickness"),
+				(float)FindConfig(pCat,"Vertigo Scan","VStep")*
+				       (float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				"",					// es. "Test Plate"
+				"");				//
 
 	if (pCat) CoTaskMemFree(pCat);
 	pCat=0;
@@ -301,7 +314,7 @@ int AddGrainsTXT(EdbRun* run, char* txtname)
 		  sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
 		  if((gv!=curv)||(gs!=curs))			//new view found
 		  {
-            View->GetHeader()->SetViewID(curv);
+            View->GetHeader()->SetViewID((int) curv);
 			View->GetHeader()->SetNframes(curs,1-curs);
 			View->GetHeader()->SetNclusters(ngr);
 			View->GetHeader()->SetNsegments(-1);//grain view
@@ -317,7 +330,7 @@ int AddGrainsTXT(EdbRun* run, char* txtname)
 		  ngr++;
 		}
 
-        View->GetHeader()->SetViewID(curv);
+        View->GetHeader()->SetViewID((int) curv);
 		View->GetHeader()->SetNframes(curs,1-curs);
 		View->GetHeader()->SetNclusters(ngr);
 		View->GetHeader()->SetNsegments(-1);	//grain view

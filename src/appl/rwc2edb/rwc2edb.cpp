@@ -1,6 +1,11 @@
 // rwc2edb.cpp
 // convert rwc, rwd and grains dump files to root using the libEdb library
+// author: Gabriele Sirri
 //______________________________________________________________________________
+//
+// Revision 1.9 May 11, 2004
+// -> conversion TXT (Test & Configure grains) -> ROOT  without RWD was added
+//    In the previous versions only TXT+RWD -> ROOT was possible
 //
 // Revision 1.8	Jul 08, 2003 
 // -> modular structure of the source code (libDataConversion.h and libDataConversion.cpp)
@@ -49,36 +54,32 @@ int main(int argc, char* argv[])
 	
 	if (argc < 3)
 	{
-		cout<< "usage:\nrwc2edb <input file (.rwc)> <output file (.root)>"<<endl<<"or"<<endl;
-		cout<< "rwc2edb <input file (.rwc)> <output file (.root)> <marks file (.map)>"<<endl<<"or"<<endl;
+		cout<< "usage:\nrwc2edb <input file (.rwc)> <output file (.root)>"<<endl;
+		cout<< "rwc2edb <input file (.rwc)> <output file (.root)> <marks file (.map)>"<<endl;
 		cout<< "rwc2edb <input file (.rwd)> <output file (.root)> <grains text file (.txt)>"<<endl;
+		cout<< "rwc2edb <grains text file (.txt)> <output file (.root)> "<<endl;
+
 		return 0;
 	};
 	char* rwcname = argv[1];
 	char* edbname = argv[2];
-	char* mapname = argv[3];
+	char* auxname = argv[3];
 	bool testrun = FALSE;
+	bool txtrun = FALSE ;
 	if(rwcname[strlen(rwcname)-1]=='d') testrun=TRUE; //if we have .rwd first 
+	if(rwcname[strlen(rwcname)-1]=='t') txtrun =TRUE;  //if we have .txt first 
 
    EdbRun* outrun;
 	outrun = new EdbRun(edbname,"CREATE");
 
 	if(testrun) 
 	{
+		// Add RWD 
 		cout<<"TestRun"<<endl;
 		int fragID = 0;
 		AddRWD(outrun, rwcname, fragID);
-	}
-	else 
-	{
-		AddRWC(outrun, rwcname, TRUE);
-		if (mapname) AddMAP(outrun, mapname);
-	}
-	outrun->Print();
-	outrun->Close();
 
-	if (testrun) 
-		if (mapname)
+		if (auxname)  // Add Clusters file (TXT) ....
 		{
 			char* grsname;
 			grsname = _strdup(rwcname);
@@ -88,10 +89,26 @@ int main(int argc, char* argv[])
 			EdbRun* outrun2;
 			outrun2 = new EdbRun(grsname,"CREATE");
 
-			AddGrainsTXT(outrun2,mapname);
+			AddGrainsTXT(outrun2,auxname);
 			outrun2->Print();
 			outrun2->Close();
 		}
+	}
+	else if(txtrun)
+	{
+		 // Add clusters file (TXT) ....
+		AddGrainsTXT(outrun,rwcname);
+	}
+	else 
+	{
+		// Add RWC and all RWDs
+		AddRWC(outrun, rwcname, TRUE);
+		if (auxname) AddMAP(outrun, auxname);
+	}
+	outrun->Print();
+	outrun->Close();
+
+	if (testrun) 
 			
 	return 0;
 };
