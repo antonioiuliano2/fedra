@@ -37,9 +37,9 @@ ClassImp(EdbMarksSet)
 ClassImp(EdbArea)
 
 //______________________________________________________________________________
-EdbArea::EdbArea( int N, float stepx, float stepy, int ft, int fb ) : EdbMarksBox(N)
+EdbArea::EdbArea( int N, float stepx, float stepy, int ft, int fb, int path ) : EdbMarksBox(N)
 {
-  Set( N, stepx, stepy, ft, fb );
+  Set( N, stepx, stepy, ft, fb, path );
 }
 
 
@@ -55,41 +55,43 @@ int  EdbArea::ReadParameters( const char *str )
 {
   int  npar = 0;
 
-  int   n, ft, fb;
+  int   n, ft, fb, path;
   float stepx,stepy;
 
-  npar = sscanf(str,"%d %f %f %d %d", &n, &stepx, &stepy, &ft, &fb );
+  npar = sscanf(str,"%d %f %f %d %d %d", &n, &stepx, &stepy, &ft, &fb, &path );
 
-  Set( n, stepx, stepy, ft, fb);
+  Set( n, stepx, stepy, ft, fb, path);
 
   return npar;
 }
 
 
 //______________________________________________________________________________
-void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb )
+void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb, int path )
 {
   eN = N;
-  if( GetMarks() ) GetMarks()->Clear();
-
-  int *x = new int[eN];
-  int *y = new int[eN];
-
-  MakeSpiralPath(eN, x, y);
-
-  for(int i=0; i<eN; i++){
-    AddMark(i,x[i],y[i]);
-  }
-
-  eStepX = stepx;
-  eStepY = stepy;
-  Scale(stepx,stepy);
-
   eFramesTop = ft;
   eFramesBot = fb;
+  eStepX     = stepx;
+  eStepY     = stepy;
+  ePath      = path;
 
-  delete [] x;
-  delete [] y;
+  if( GetMarks() ) GetMarks()->Clear();
+
+  if(ePath) {
+    int *x = new int[eN];
+    int *y = new int[eN];
+    
+    if(ePath==1) MakeSpiralPath(eN, x, y);
+
+    for(int i=0; i<eN; i++){
+      AddMark(i,x[i],y[i]);
+    }
+
+    Scale(stepx,stepy);
+    delete [] x;
+    delete [] y;
+  }
 }
 
 //______________________________________________________________________________

@@ -21,9 +21,26 @@ ClassImp(EdbFrame)
 //______________________________________________________________________________
 EdbFrame::EdbFrame()
 {
-  eFrameID  = 0;
-  eImage    = 0;
-  eZframe   = 0;
+  Set0();
+}
+
+//______________________________________________________________________________
+EdbFrame::EdbFrame( int frame, int columns, int rows, char *image, float z )
+{
+  Set0();
+  eFrameID = frame;
+  eZframe  = z;
+  eImage   = new EdbImage(columns,rows,image);
+}
+
+//______________________________________________________________________________
+EdbFrame::EdbFrame( int frame, float z, int ncl, int npix )
+{
+  Set0();
+  eFrameID  = frame;
+  eZframe   = z;
+  eNcl      = ncl;
+  eNpix     = npix;
 }
 
 //______________________________________________________________________________
@@ -33,18 +50,12 @@ EdbFrame::~EdbFrame()
 }
 
 //______________________________________________________________________________
-EdbFrame::EdbFrame( int frame, int columns, int rows, char *image, float z )
+void EdbFrame::Set0()
 {
-  eFrameID = frame;
-  eZframe  = z;
-  eImage   = new EdbImage(columns,rows,image);
-}
-
-//______________________________________________________________________________
-EdbFrame::EdbFrame( int frame, float z )
-{
-  eFrameID  = frame;
-  eZframe   = z;
+  eFrameID  = 0;
+  eZframe   = 0;
+  eNcl      = 0;
+  eNpix     = 0;
   eImage    = 0;
 }
 

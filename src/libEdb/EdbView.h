@@ -200,7 +200,7 @@ public:
 			   float a,  float v, int f, int s, int seg=-1);
   void         AddSegment( EdbSegment *s   );
   void         AddTrack(   EdbTrack   *t   );
-  void         AddFrame(   int id, float z );
+  void         AddFrame(   int id, float z, int ncl=0, int npix=0 );
   void         AddFrame(   EdbFrame *frame );
 
   void         GenerateFrames( int n=32 );

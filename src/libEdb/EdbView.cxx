@@ -158,10 +158,10 @@ void EdbView::AddTrack( EdbTrack *t )
 }
 
 //______________________________________________________________________________
-void EdbView::AddFrame( int id, float z )
+void EdbView::AddFrame( int id, float z, int ncl, int npix )
 {
   int i = eFrames->GetLast()+1;
-  new((*eFrames)[i++])  EdbFrame( id,z );
+  new((*eFrames)[i++])  EdbFrame( id,z,ncl,npix );
 }
 
 //______________________________________________________________________________

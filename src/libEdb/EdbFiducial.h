@@ -127,22 +127,25 @@ class EdbArea : public EdbMarksBox {
   Int_t     eFramesTop;    // number of frames to scan
   Int_t     eFramesBot;
 
+  Int_t     ePath;         // path to be used (0-nopath, 1-spiral, 2-serpantine, ...)
+
  public:
-  EdbArea( int n=1, float stepx=1, float stepy=1, int ft=0, int fb=0 );
+  EdbArea( int n=1, float stepx=1, float stepy=1, int ft=0, int fb=0, int path=0 );
   virtual ~EdbArea(){}
 
   void   MakeSpiralPath( int n , int *x, int *y );
 
-  void   Set( int n, float stepx, float stepy, int ft, int fb );
+  void   Set( int n, float stepx, float stepy, int ft, int fb, int path );
 
   void   SetCentre( float x, float y );
   void   Scale( float dx, float dy );
 
-  Int_t        GetN()             const   { return eN; }
-  Float_t      GetStepX()         const   { return eStepX; }
-  Float_t      GetStepY()         const   { return eStepY; }
+  Int_t        GetN()              const   { return eN; }
+  Float_t      GetStepX()          const   { return eStepX; }
+  Float_t      GetStepY()          const   { return eStepY; }
   Int_t        GetNframesTop()     const   { return eFramesTop; }
   Int_t        GetNframesBot()     const   { return eFramesBot; }
+  Int_t        GetPath()           const   { return ePath; }
 
   Int_t      Nviews()        { return N(); }
 
@@ -152,7 +155,7 @@ class EdbArea : public EdbMarksBox {
   int  ReadParameters( const char *str );
   void Print(Option_t opt=0) const;
 
-  ClassDef(EdbArea,1)  // Area to scan
+  ClassDef(EdbArea,2)  // Area structure definition
 };
 
 #endif /* ROOT_EdbFiducial */

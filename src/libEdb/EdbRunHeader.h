@@ -204,8 +204,8 @@ public:
 
   void SetArea( int N, 
 		float stepx, float stepy,
-		int   ft,    int fb )
-    { eArea->Set(N, stepx, stepy, ft, fb); }
+		int   ft,    int fb , int path )
+    { eArea->Set(N, stepx, stepy, ft, fb, path); }
 
   // other routines
 
