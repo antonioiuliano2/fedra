@@ -35,22 +35,26 @@ int eloss_flag = 2; // =0 - no energy losses, 1-average energy losses, 2-Landau 
 
 float momentumK=30.; // momentum of K-meson
 
-float seg_s[4]={1.,1.,0.0015,0.0015}; //sx,sy,stx,sty,sP
+float seg_s[4]={.5,.5,0.0015,0.0015}; //sx,sy,stx,sty,sP
+float seg_zero[4]={.0,.0,.0,.0}; //no measurement errors
 
-float dpp = 0.2;   // average dp/P 
+float dpp = 0.15;   // average dp/P 
 
 const unsigned long int PrintN = 100;
 
 //float vxyz[3] = {0., 0., 0.};
-float vxyz[3] = {0., 0., 13000.};   // simulated vertex position
+float vxyz[3] = {0., 0., -1000.};   // simulated vertex position
 
 TObjArray *genVtx;  //vertex array
 
 TH1F *hp[9] = {0,0,0,0,0,0,0,0,0};
+TProfile *hpp[2] = {0,0};
 
 EdbVertex *vedb;
 
 double mK=.4937;  // mass of K-meson
+
+EdbTrackP *ti[10] = {0,0,0,0,0,0,0,0,0,0}; 
 
 //-------------------------------------------------------------------
 TGenPhaseSpace *K3Pi(float p=3.)
@@ -214,22 +218,23 @@ void gen_tracks_v(EdbVertex &vedb)
     ali->AddTrack(tr[ip]);
   }
 
+  if (vxyz[3] > 0.)
+  {
+    tr[nt] = new EdbTrackP();
+    tr[nt]->Set(ip, x, y, 0., 0.,1,0);
+    tr[nt]->SetZ(0);
+    tr[nt]->SetP(momentumK);
+    tr[nt]->SetM(mK);
+    ali->AddTrack(tr[nt]);
 
-  tr[nt] = new EdbTrackP();
-  tr[nt]->Set(ip, x, y, 0., 0.,1,0);
-  tr[nt]->SetZ(0);
-  tr[nt]->SetP(momentumK);
-  tr[nt]->SetM(mK);
-  ali->AddTrack(tr[nt]);
+    // generation of basetrack for primary K-meson
 
-  // generation of basetrack for primary K-meson
-
-  float zlim[2];
-  zlim[0] =-1000.;
-  zlim[1] =12000.;
-  EdbVertexRec::TrackMC( *((EdbPatternsVolume*)ali),zlim, brick.lim, seg_s, *(tr[nt]), eloss_flag );
-  tr[nt]->FitTrackKFS(false);
-  
+    float zlim[2];
+    zlim[0] =-1000.;
+    zlim[1] =vxyz[3];
+    EdbVertexRec::TrackMC( *((EdbPatternsVolume*)ali),zlim, brick.lim, seg_s, *(tr[nt]), eloss_flag );
+    tr[nt]->FitTrackKFS(false);
+  }
 }
 
 //-------------------------------------------------------------------
@@ -237,6 +242,7 @@ void gen_segs_v(BRICK &b, EdbVertex &vedb)
 {
   // generation of basetracks for secondary tracks
 
+  unsigned int seed = 0;
   float zlim[2];
   zlim[0] =-1000.;  
   zlim[1] =130000.;
@@ -246,20 +252,29 @@ void gen_segs_v(BRICK &b, EdbVertex &vedb)
   for(int ip=0; ip<nt; ip++) {
     tr = vedb.GetTrack(ip);
     tr->SetFlag(1000+ip);
+    if (0) tr->SetP(4.);
 
+    ti[ip] = new EdbTrackP();
+    ti[ip]->Set(tr->ID(),tr->X(),tr->Y(),tr->TX(),tr->TY(),tr->W(),tr->Flag());
+    ti[ip]->SetZ(tr->Z());
+    ti[ip]->SetP(tr->P());
+    ti[ip]->SetM(tr->M());
+    seed = gRandom->GetSeed();
     EdbVertexRec::TrackMC( *((EdbPatternsVolume*)ali), zlim, b.lim, seg_s, *tr, eloss_flag);
+    gRandom->SetSeed(seed);
+    EdbVertexRec::TrackMC( *((EdbPatternsVolume*)ali), zlim, b.lim, seg_zero, *ti[ip], eloss_flag);
   }
 
 
 }
-
+double DE_MC, DE;
 ///------------------------------------------------------------
 void rec_v(EdbVertex &vedb)
 {
   // tracks and vertex reconstruction (KF fitting only without track finding)
 
   int nsegMin=5;
-  float p;
+  float p, de;
   EdbTrackP *tr;
 
   Vertex *v = new Vertex();
@@ -274,6 +289,7 @@ void rec_v(EdbVertex &vedb)
 
     p = tr->P();
     tr->SetErrorP(p*p*dpp*dpp);
+    DE_MC = tr->DE();
 
     p = p*(1.+dpp*gRandom->Gaus());
     if (p < 0.01) p = 0.01;
@@ -281,10 +297,44 @@ void rec_v(EdbVertex &vedb)
     tr->SetP(p);
     tr->FitTrackKFS(false);
 
+    DE = tr->DE();
+    
+    EdbSegP *s, *sf;
+    float dx = 0., sx = 0.;
+    TMatrixD cov(5,5);
+
+    if(tr->NF() == brick.plates)
+    {
+	for (int is = 0; is < brick.plates; is++)
+	{
+	    s  = tr->GetSegment(is);
+	    sf = tr->GetSegmentF(is);
+	    dx = sf->X() - s->X();
+	    if (ti[ip])
+	    {
+		dx = sf->X() - (ti[ip]->GetSegment(is))->X();
+	    }
+	    cov = (sf->COV());
+	    sx = (float)TMath::Sqrt(cov(0,0));
+	    hpp[0]->Fill((float)is,dx);
+	    hpp[1]->Fill((float)is,sx);
+	}
+    }
+
     t[ip] = new Track();
     if (!EdbVertexRec::Edb2Vt( *tr, *t[ip] )) break;
+/*
+    cout << *t[ip] << endl;
+    t[ip]->propagate(10000.);
+    cout << *t[ip] << endl;
+    t[ip]->propagate(-10000.);
+    cout << *t[ip] << endl;
+    t[ip]->propagate(0.);
+    cout << *t[ip] << endl;
+*/
     t[ip]->rm(tr->M());            //?
     v->push_back(*t[ip]);           //?
+    hp[6]->Fill(DE-DE_MC);
   }
 
   if (v->ntracks() == 3)       // fit vertex
@@ -434,10 +484,13 @@ void BookHistsV()
   if (!hp[3]) hp[3] = new TH1F("Hist_Vt_Sx","Vertex X sigma",100,0.,1.);
   if (!hp[4]) hp[4] = new TH1F("Hist_Vt_Sy","Vertex Y sigma",100,0.,1.);
   if (!hp[5]) hp[5] = new TH1F("Hist_Vt_Sz","Vertex Z sigma",100,0.,200.);
-  if (!hp[6]) hp[6] = new TH1F("Hist_Vt_Chi2","Vertex Chi-square/D.F.",25,0.,5.);
+//  if (!hp[6]) hp[6] = new TH1F("Hist_Vt_Chi2","Vertex Chi-square/D.F.",25,0.,5.);
+  if (!hp[6]) hp[6] = new TH1F("Hist_Vt_DE","DE(MC)-DE",100,-0.5,+0.5);
   if (!hp[7]) hp[7] = new TH1F("Hist_Vt_Prob","Vertex Chi-square Probability",25,0.,1.);
   if (!hp[8]) hp[8] = new TH1F("Hist_Vt_Mass","Vertex Mass",50,-0.200,+0.200);
 //  if (!hp[8]) hp[8] = new TH1F("Hist_Vt_Ntra","Vertex Ntracks",20,0.,20.);
+  if (!hpp[0]) hpp[0] = new TProfile("Hist_DX_Prof","Delta X vs Z",56,0.,56.,-1000.,+1000.,"s");
+  if (!hpp[1]) hpp[1] = new TProfile("Hist_SX_Prof","Sigma X vs Z",56,0.,56.,-1000.,+1000.," ");
 }
 
 double smass = 0.139;
@@ -467,10 +520,19 @@ void DrawHistsV()
     cv->cd(i+1);
     if (hp[i]) hp[i]->Draw();
   }
+  TCanvas *cv1 = new TCanvas();
+  cv1->Divide(1,2);
+  cv1->cd(1);
+  hpp[0]->Draw();
+  cv1->cd(2);
+  hpp[1]->Draw();
 }
 void ClearHistsV()
 {
   for(int i=0; i<9; i++) {
     if (hp[i]) hp[i]->Clear();
+  }
+  for(int i=0; i<2; i++) {
+    if (hpp[i]) hpp[i]->Clear();
   }
 }
