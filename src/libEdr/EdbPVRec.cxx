@@ -1847,6 +1847,11 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
   if (dz == 0.) dz = zBin;
   float   deltaX = dz*dA;  // limit for the transverse coordinates difference
   float   deltaY = deltaX;
+  float   dzseg = 0;
+  float   dzsegmin = -BinDifMin*zBin;
+  float   dzsegmax =  BinDifMax*zBin;
+  float zvmin = 0.;
+  float zvmax = 0.;
 
   TIndexCell *c1=0, *c2=0;
   EdbTrackP  *tr1=0, *tr2=0;
@@ -1855,7 +1860,6 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //debug
 //  int id1, id2, iid1, iid2;
 //
-  int i2min, i2max;
 
   EdbVertex *v2;  // temporary vertex for couples check
   float x, y, z, d, prob;
@@ -1869,12 +1873,7 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
   for(int i1=0; i1<n1; i1++)   {        // first group
     c1 = list1.At(i1);
 
-    i2min = i1 - BinDifMin;
-    i2min = i2min < 0 ? 0 : i2min;
-    i2max = i1 + BinDifMax + 1;
-    i2max = i2max > n2 ? n2 : i2max;
-
-    for(int i2=i2min; i2<i2max; i2++)   {        // second group
+    for(int i2=0; i2<n2; i2++)   {        // second group
       c2 = list2.At(i2);
 
       int nc1=c1->GetEntries();
@@ -1890,7 +1889,7 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 	if(zmin1) s1 = (EdbSegP *)tr1->TrackZmin();
 	else      s1 = (EdbSegP *)tr1->TrackZmax();
 
-	if( ((&list1)==(&list2)) && (i1 == i2) ) ic2start=ic1+1;
+	if( ((&list1)==(&list2)) ) ic2start=ic1+1;
 	else ic2start=0;
 
 	for(int ic2=ic2start; ic2<nc2; ic2++) {    // second group entries
@@ -1913,6 +1912,11 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 
 	  if(zmin2) s2 = (EdbSegP *)tr2->TrackZmin();
 	  else      s2 = (EdbSegP *)tr2->TrackZmax();
+
+	  dzseg = s2->Z() - s1->Z();
+
+	  if (dzseg < dzsegmin) continue;
+	  if (dzseg > dzsegmax) continue;
 
 	  if( TMath::Abs(s2->X()-s1->X()) > deltaX )
 	  {
@@ -2000,6 +2004,39 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 	  y = v2->V()->vy() + v2->Y();
 	  z = v2->V()->vz() + v2->Z();
 	  prob = v2->V()->prob();
+	  if (zmin1 == 0 && zmin2 == 1)            // ends & starts
+	  {
+	    zvmin = TMath::Min(s1->Z() ,s2->Z());
+	    zvmax = TMath::Max(s1->Z() ,s2->Z()) + zBin;
+	    if (z < zvmin || z > zvmax)
+	    {
+		delete v2;
+		v2 = 0;
+		continue;
+	    } 
+	  }
+	  else if (zmin1 == 1 && zmin2 == 1)        // starts & starts
+	  {
+	    zvmax = TMath::Min(s1->Z() ,s2->Z()) + zBin;
+	    zvmin = zvmax - 6*zBin;
+	    if (z > zvmax || z < zvmin)
+	    {
+		delete v2;
+		v2 = 0;
+		continue;
+	    } 
+	  }
+	  else if (zmin1 == 0 && zmin2 == 0)        // ends & ends
+	  {
+	    zvmin = TMath::Max(s1->Z() ,s2->Z());
+	    zvmax = zvmin + 6*zBin;
+	    if (z < zvmin || z > zvmax )
+	    {
+		delete v2;
+		v2 = 0;
+		continue;
+	    } 
+	  }
 
 //	  if(z<0.)
 //	  {
