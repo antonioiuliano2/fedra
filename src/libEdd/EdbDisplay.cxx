@@ -575,15 +575,25 @@ void EdbDisplay::Refresh()
 void EdbDisplay::TrackDraw(EdbTrackP *tr)
 {
   TPolyLine3D *line=0;
+  const EdbSegP *seg=0;
 
-  EdbTrackG *pm = new EdbTrackG(1);
-  pm->SetTrack( tr );
-  pm->SetMarkerStyle(24);
-  pm->SetPoint(0, tr->X(), tr->Y(), tr->Z() );
-  pm->SetMarkerColor(kWhite);
-  pm->Draw();
+  EdbTrackG *pms = new EdbTrackG(1);
+  pms->SetTrack( tr );
+  pms->SetMarkerStyle(24);
+  seg = tr->TrackZmin();
+  pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+  pms->SetMarkerColor(kWhite);
+  pms->Draw();
 
-  EdbSegP *seg=0;
+  EdbTrackG *pme = new EdbTrackG(1);
+  pme->SetTrack( tr );
+  pme->SetMarkerStyle(24);
+  seg = tr->TrackZmax();
+  pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+  pme->SetMarkerColor(kRed);
+  pme->Draw();
+
+
   line = new TPolyLine3D(tr->N());
   for(int is=0; is<tr->NF(); is++) {
     seg = tr->GetSegmentF(is);
