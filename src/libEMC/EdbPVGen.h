@@ -59,12 +59,12 @@ class EdbPVGen : public TObject {
   void GenerateUncorrelatedSegments(int nb, float lim[4], float sig[4],
 				    float TetaMax, int flag );
 
-  void GenerateBackgroundTracks(int nb, float lim[4], float plim[2],
-				float sig[4], float TetaMax,
+  void GenerateBackgroundTracks(int nb, float vlim[4], float lim[4],
+				float plim[2], float sig[4], float TetaMax,
 				float ProbGap, int eloss_flag );
 
-  void GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float zlim[2],
-				 float lim[4],    float sig[4],
+  void GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float vzlim[2],
+				 float vlim[4], float lim[4],    float sig[4],
 				 float ProbGap,   int eloss_flag,
 				 int *charges );
 
