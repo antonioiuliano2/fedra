@@ -339,7 +339,7 @@ int  EdbIP::CutBG( EdbFrame *frame )
     for(ir=0; ir<nr; ir++) {
       pix = (float)(h->GetBinContent(ic,ir));
       if(pix>0)   {
-	buf[nc*ir+ic] = (unsigned char)(pix*255/binmax);
+	buf[nc*ir+ic] = (unsigned char)(255.*pix/binmax);
 	npix++;
       }
       else buf[nc*ir+ic] =0;

@@ -64,7 +64,7 @@ void EdbGA::GetClustPFile(const char *file)
     //if( clp->Yp()>600.) continue;
 
     new((*clarr)[ncl])  
-      EdbCluster( clp->Xcg(),clp->Ycg(),clp->GetFrame(),
+      EdbCluster( clp->Xcg(),clp->Ycg(),clp->Z(),
 		  clp->GetArea(), clp->Peak(), clp->GetFrame(), 0);
     ncl++;
   }
@@ -77,10 +77,10 @@ void EdbGA::GetClustPFile(const char *file)
   TIndexCell chains;
   printf("chains\n");
   VerticalChains(clarr,chains);
-  for(int i=0; i<10; i++) {
-    printf("chainsA\n");
-    VerticalChainsA(clarr);
-  }
+//    for(int i=0; i<10; i++) {
+//      printf("chainsA\n");
+//      VerticalChainsA(clarr);
+//    }
   printf("\n tree: \n\n");
   InitTree("grains_tree.root");
   MakeGrainsTree(clarr,chains);
