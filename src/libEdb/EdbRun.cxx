@@ -92,6 +92,17 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
 }
 
 //______________________________________________________________________________
+EdbRun::~EdbRun()
+{
+  if(eFile)        delete eFile;
+  if(eHeader)      delete eHeader;
+  if(ePredictions) delete ePredictions;
+  if(eMarks)       delete eMarks;
+  if(eView)        delete eView;
+  //if(eTree)        eTree->Delete("");
+}
+
+//______________________________________________________________________________
 void EdbRun::Init( )
 {
   eView        = new EdbView();      //each run has his own view
@@ -162,7 +173,6 @@ void EdbRun::OpenUpdate( const char *fname )
 //______________________________________________________________________________
 void EdbRun::Create( const char *fname )
 {
-
   ePredictions   = new EdbPredictionsBox();
   eMarks         = new EdbMarksSet();
 
@@ -221,6 +231,7 @@ void EdbRun::SetView()
   eTree->SetBranchAddress("clusters", eView->GetClustersAddr() );
   eTree->SetBranchAddress("segments", eView->GetSegmentsAddr() );
   eTree->SetBranchAddress("tracks",   eView->GetTracksAddr() );
+  eTree->SetBranchAddress("frames",   eView->GetFramesAddr() );
 }
 
 //______________________________________________________________________________
@@ -266,7 +277,6 @@ void EdbRun::Save()
 void EdbRun::Close()
 {
   const char *status = eFile->GetOption();
-  printf("File status: %s\n",status);
 
   eHeader->GetFinishTime()->Set();
   //*** eHeader->SetCPU( TStopwatch::GetCPUTime() );
@@ -282,7 +292,6 @@ void EdbRun::Close()
     eTree->BuildIndex("eAreaID","eViewID");
     eTree->Write();
   }
-  //  eFile->ls();
   eFile->Purge();
   eFile->Close();
 }

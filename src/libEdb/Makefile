@@ -36,15 +36,18 @@ depend:
 	$(CXX) $(CXXFLAGS) -c $<
 # DO NOT DELETE
 
-EdbAffine.o: /var/local/root/include/TMath.h /var/local/root/include/Rtypes.h
+EdbAffine.o: /usr/include/math.h /usr/include/features.h
+EdbAffine.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbAffine.o: /usr/include/bits/huge_val.h /usr/include/bits/mathdef.h
+EdbAffine.o: /usr/include/bits/mathcalls.h /var/local/root/include/TMath.h
+EdbAffine.o: /var/local/root/include/Rtypes.h
 EdbAffine.o: /var/local/root/include/RConfig.h
 EdbAffine.o: /var/local/root/include/RVersion.h
 EdbAffine.o: /var/local/root/include/DllImport.h
 EdbAffine.o: /var/local/root/include/Rtypeinfo.h
 EdbAffine.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
 EdbAffine.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
-EdbAffine.o: /usr/include/stdio.h /usr/include/features.h
-EdbAffine.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
+EdbAffine.o: /usr/include/stdio.h
 EdbAffine.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
 EdbAffine.o: /usr/include/bits/types.h /usr/include/libio.h
 EdbAffine.o: /usr/include/_G_config.h /usr/include/wchar.h

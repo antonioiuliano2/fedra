@@ -64,6 +64,7 @@ class EdbAffine2D : public TObject{
 
   Int_t     Calculate( int n, float *x0, float *y0, float *x1, float *y1 );
   Int_t     Calculate( EdbPointsBox2D *b1, EdbPointsBox2D *b2 );
+  Int_t     CalculateTurn( int n, float *x0, float *y0, float *x1, float *y1 );
   Double_t  Phi(Double_t x, Double_t y) const;
 
   void Print(Option_t *opt="") const;

@@ -51,7 +51,7 @@ public:
   EdbRun( int id, const char *status="READ" , const char *path="." );
   EdbRun( const char *fname, const char *status="READ" );
   EdbRun( EdbRun &run, const char *fname );
-  virtual ~EdbRun() {}
+  virtual ~EdbRun();
 
 
   EdbView             *GetView() const { return eView; }
