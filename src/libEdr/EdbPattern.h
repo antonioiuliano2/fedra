@@ -259,6 +259,7 @@ class EdbTrackP : public EdbSegP {
   virtual ~EdbTrackP();
 
   void  AddVTA(EdbVTA *vta);
+  void  ClearVTA(EdbVTA *vta);
 
   EdbVTA *VTAS() const { return eVTAS;}
   EdbVTA *VTAE() const { return eVTAE;}
@@ -292,6 +293,7 @@ class EdbTrackP : public EdbSegP {
 
   float    Wgrains() const;
   int	   GetSegmentsFlag( int &nseg ) const;
+  int	   GetSegmentsAid( int &nseg ) const;
 
   EdbSegP *GetSegmentFirst()   const { return (eS) ? (EdbSegP*)(eS->First())  : 0; }
   EdbSegP *GetSegmentLast()    const { return (eS) ? (EdbSegP*)(eS->Last())   : 0; }

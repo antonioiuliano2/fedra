@@ -624,6 +624,12 @@ void EdbTrackP::AddVTA(EdbVTA *vta)
   if(vta->Zpos()==0)      eVTAE=vta;
   else if(vta->Zpos()==1) eVTAS=vta;
 }
+//______________________________________________________________________________
+void EdbTrackP::ClearVTA(EdbVTA *vta)
+{
+  if(vta->Zpos()==0)      eVTAE=0;
+  else if(vta->Zpos()==1) eVTAS=0;
+}
 
 //______________________________________________________________________________
 void EdbTrackP::Copy(const EdbTrackP &tr)
@@ -679,6 +685,41 @@ int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 	{
 	    cmax = count[i];
 	    flagmax = GetSegment(i)->Flag();
+	}
+  }
+  nsegf = cmax;
+  return flagmax;
+}
+//______________________________________________________________________________
+int EdbTrackP::GetSegmentsAid( int& nsegf ) const
+{
+  int nseg = N();
+  if (nseg < 2) return -1;
+  if (nseg > 100) nseg = 100;
+  int count[100];
+  int aid[100], ai;
+  int i, f = 0;
+  for(i=0; i<nseg; i++)
+  {
+    count[i] = 0;
+    aid[i] = -1;
+    ai = GetSegment(i)->Aid(1);
+    f = ai + (GetSegment(i)->Aid(0))*1000;
+    if (f < 0) continue;
+    aid[i] = ai;
+    for (int j=0; j<nseg; j++)
+    {
+	if ( f == (GetSegment(j)->Aid(1) + (GetSegment(i)->Aid(0))*1000)) count[i]++;
+    }
+  }
+  int cmax = 0;
+  int flagmax = -1;
+  for(i=0; i<nseg; i++)
+  {
+	if (count[i] > cmax)
+	{
+	    cmax = count[i];
+	    flagmax = aid[i];
 	}
   }
   nsegf = cmax;
@@ -885,10 +926,11 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
   // if (zmax==false) track parameters are calculated at segment with min Z
   // TODO: track parameters??
   //
-  // Note: SetP() for track must be setted before!
-  // Note: SetErrorP() for track should be setted - necessary for vertex fit with momenta
+  // Note: momentum for track must be defined with SetP() prior to call this routine!
+  // Note: momentum dispersion for track should be defined with SetErrorP()
+  //	   prior to call this routine - it is necessary for vertex fit
   //
-  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = nseg*4
+  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = 4
   //                Prob: is Chi2 probability (area of the tail of Chi2-distribution)
   //                      If we accept events with Prob >= ProbMin then ProbMin is the 
   //                      probability to reject the good event
@@ -901,7 +943,11 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 
   //printf("%d segments to fit\n",N());
 
-  float dPb = 0.;
+  float dPb = 0., p = 0., m = 0.13957, e = 0.13957, de = 0., pa = 0., pn = 0.;
+  float e0 = e;
+  float PbPart = 1000./1300.;
+  int eloss_flag = 0;
+  float pcut = 0.050;
   double teta0sq;
   double dz, ptx, pty;
   int step;
@@ -971,7 +1017,12 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 
   Double_t chi2=0.; 
 
-  i=istart; 
+  i = istart;
+  p = P();
+  m = M();
+  if (p < pcut) p = pcut; 
+  e = TMath::Sqrt((double)p*(double)p + (double)m*(double)m);
+  e0 = e;
   while( (i+=step) != iend+step ) {
 
     seg = GetSegment(i);
@@ -980,16 +1031,30 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
     dms.clear();
 
     dz = seg->Z()-seg0->Z();
-    ptx = (*par[i-step])(2);                        //?
-    pty = (*par[i-step])(3);                        //?
+    ptx = (*par[i-step])(2);                        // previous tx
+    pty = (*par[i-step])(3);                        // previous ty
     dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-    //teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
-    teta0sq = EdbPhysics::ThetaMS2( P(), M(), dPb, X0 );
-
+    if (eloss_flag && (p > pcut))
+    {
+	de = EdbPhysics::DeAveragePb(p, m, PbPart*dPb);
+	if (de < 0.) de = e - m;
+	e  = e - de;
+	if (e < m) e = m;
+	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+	pa = 0.5*(p + pn);
+	p  = pn;
+	if (p <= pcut) p = pcut;
+    }
+    else
+    {
+	pa = p;
+    }
+    teta0sq = EdbPhysics::ThetaMS2( pa, m, dPb, X0 );
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
     dms(2,2) = teta0sq;
     dms(3,3) = dms(2,2);
+//    dms(2,0) = teta0sq*TMath::Abs(dz)/2.;
     dms(2,0) = teta0sq*dz/2.;
     dms(3,1) = dms(2,0);
     dms(0,2) = dms(2,0);
@@ -1112,6 +1177,9 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
   SetW( (float)nseg );
   SetDE( (float)DE );
 
+//  DEBUG
+//  printf(" e0 - e = %f, de = %f\n", e0-e, DE);
+
 // Delete matrixes and vectors
 
   delete par[istart];
@@ -1157,11 +1225,19 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 ///______________________________________________________________________________
 int EdbTrackP::MakeSelector( EdbSegP &ss, bool followZ )
 {
-  if(N()<2)           return 0;
+  if(N()<2) return 0;
   ss.SetCOV( GetSegment(0)->COV() );             // TODO ?
   const EdbSegP *tr;
-  if( followZ ) tr = TrackZmax();
-  else  tr = TrackZmin();
+  if (NF())
+  {
+    if( followZ ) tr = TrackZmax();
+    else  tr = TrackZmin();
+  }
+  else
+  {
+    if( followZ ) tr = GetSegmentLast();
+    else  tr = GetSegmentFirst();
+  }
   ss.SetTX(tr->TX());
   ss.SetTY(tr->TY());
   ss.SetX(tr->X());
@@ -1422,14 +1498,19 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
   float sx = TMath::Sqrt( s.SX() + s.STX()*dz*dz );
   float sy = TMath::Sqrt( s.SY() + s.STY()*dz*dz );
 
+  float stx = s.STX();
+  if (stx <= 0.) stx = 0.0015*0.0015;
+  float sty = s.STY();
+  if (sty <= 0.) sty = 0.0015*0.0015;
+
   long vcent[4] = { (long)(x/StepX()),
 		    (long)(y/StepY()),
 		    (long)(s.TX()/StepTX()),
 		    (long)(s.TY()/StepTY())  };
   long vdiff[4] = { (long)(sx*nsigx/StepX()+1),
 		    (long)(sy*nsigx/StepY()+1),
-		    (long)(TMath::Sqrt(s.STX())*nsigt/StepTX()+1),
-		    (long)(TMath::Sqrt(s.STY())*nsigt/StepTY()+1) };
+		    (long)(TMath::Sqrt(stx)*nsigt/StepTX()+1),
+		    (long)(TMath::Sqrt(sty)*nsigt/StepTY()+1) };
 
   sy*=sy;
   sx*=sx;
@@ -1442,6 +1523,7 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 
   //printf("find compliments in pattern %d\n",ID());
   //s.Print();
+
   long vmin[4],vmax[4];
   for(int i=0; i<4; i++) {
     vmin[i] = vcent[i]-vdiff[i];
@@ -1471,9 +1553,9 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 
 
 	    dtx=s.TX()-seg->TX();
-	    if( dtx*dtx > s.STX()*nsigt*nsigt )    continue;
+	    if( dtx*dtx > stx*nsigt*nsigt )    continue;
 	    dty=s.TY()-seg->TY();
-	    if( dty*dty > s.STY()*nsigt*nsigt )    continue;
+	    if( dty*dty > sty*nsigt*nsigt )    continue;
 	    dz = seg->Z()-s.Z();
 	    dx=s.X()+s.TX()*dz-seg->X();
 	    if( dx*dx > sx*nsigx*nsigx )           continue;

@@ -1811,6 +1811,19 @@ int EdbPVRec::ProbVertex(int maxgap[6], float dA, float ProbMin, float ProbMinT,
   // ProbMin - minimal probability for chi2-distance between tracks
 
   int nvtx = 0;
+  EdbVertex *v = 0;
+  if (eVTX)
+  {
+    nvtx = eVTX->GetEntries();
+    for (int i=0; i<nvtx; i++)
+    {
+	v = (EdbVertex *)(eVTX->At(i));
+	if (v) { delete v; v = 0; }
+    }
+    eVTA.Clear();
+    eVTX->Clear();
+  }
+  nvtx = 0;
   int npat = Npatterns();
 
   if( npat<2 )  return 0;
@@ -2133,18 +2146,71 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //______________________________________________________________________________
 int EdbPVRec::ProbVertexN(float ProbMin)
 {
-  EdbVTA *vta=0;
+  EdbVTA *vta=0, *vta1 = 0, *vta2 = 0;
   EdbVertex *edbv1 = 0;
   EdbVertex *edbv2 = 0;
   EdbTrackP *tr = 0;
   EdbTrackP *tr2 = 0;
-  int zpos = 0;
-  int nvtx = eVTX->GetEntries();
+  int zpos = 0, zpos1 = 0, zpos2 = 0;
+  int nvtx = 0;
   int nadd = 0;
   int ncombin = 0;
   int ncombinv = 0;
   bool wasadded = false;
   
+  if (eVTX)
+  {
+    nvtx = eVTX->GetEntries();
+    for (int i=0; i<nvtx; i++)
+    {
+	edbv1 = (EdbVertex *)(eVTX->At(i));
+	if (edbv1)
+	{
+	    if (edbv1->N() > 2)
+	    {
+		for (int j=0; j<edbv1->N(); j++) eVTA.Remove(edbv1->GetVTa(j));
+		for (int j=0; j<edbv1->Nn(); j++) eVTA.Remove(edbv1->GetVTn(j));
+		tr  = edbv1->GetTrack(0);
+		tr2 = edbv1->GetTrack(1);
+		zpos1 = edbv1->Zpos(0);
+		zpos2 = edbv1->Zpos(1);
+		edbv1->Clear();
+		vta1 = edbv1->AddTrack(tr, zpos1);
+		vta2 = edbv1->AddTrack(tr2, zpos2);
+		edbv1->MakeV();
+		edbv1->V()->findVertexVt();
+		edbv1->SetQuality(edbv1->V()->prob()/
+			   (edbv1->V()->vtx_cov_x()+edbv1->V()->vtx_cov_y()));
+		tr->AddVTA(vta1);
+		tr2->AddVTA(vta2);
+		AddVTA(vta1);
+		AddVTA(vta2);
+	    }
+	    else
+	    {
+		if (edbv1->Flag() < 0)
+		{
+		    zpos1 = edbv1->Zpos(0);
+		    zpos2 = edbv1->Zpos(1);
+		    zpos  = zpos1 + zpos2;
+		    if ( zpos == 0 )
+			edbv1->SetFlag(2);
+		    if ( zpos == 1 )
+			edbv1->SetFlag(1);
+		    if ( zpos == 2 )
+			edbv1->SetFlag(0);
+		}
+	    }
+	}
+    }
+    edbv1 = 0;
+    zpos  = 0;
+  }
+  else
+  {
+    return 0;
+  }
+  nvtx = eVTX->GetEntries();
   printf("-----Merge 2-track vertex pairs to N-track vertexes-----\n");
   printf("N-track vertexes search in progress... %3d%%", 0);
 
@@ -2279,7 +2345,7 @@ int EdbPVRec::LinkedVertexes()
 	{
 	    if (v->Nv() != 0)
 	    {
-			v->SetFlag(v->Flag()+3);
+			if (v->Flag() < 3) v->SetFlag(v->Flag()+3);
 			nvl++;
 	    }
 	}
@@ -2294,9 +2360,9 @@ int EdbPVRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpa
 
   if (!v) return 0;
 
-  float x = v->V()->vx();
-  float y = v->V()->vy();
-  float z = v->V()->vz();
+  float x = v->V()->vx() + v->X();
+  float y = v->V()->vy() + v->Y();
+  float z = v->V()->vz() + v->Z();
 
   ss.SetX(x);
   ss.SetY(y);
@@ -2314,10 +2380,12 @@ int EdbPVRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpa
     {
 	if ( i > 0 )  ss.SetPID(i-1);
 	else	      ss.SetPID(0);
+	break;
     }
     else if (ss.Z() == pat->Z())
     {
 	ss.SetPID(i);
+	break;
     }
   }
   
@@ -2330,17 +2398,17 @@ int EdbPVRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpa
 
   arr.Clear();
   int nseg = 0;
+  int n = 0;
   for(int i=pstart; i <=pend; i++ ) {
     pat = GetPattern(i);
     if(!pat)                   continue;
-    ss.PropagateTo(pat->Z());
-    
-    nseg += pat->FindCompliments(ss,arr,1,0);
-
+    n = pat->FindCompliments(ss,arr,1,1000);
+    nseg += n;
   }
 
-  EdbSegP   *s  = 0;
+  nseg = arr.GetEntries();
   EdbTrackP *tr = 0;
+  EdbSegP   *s  = 0;
   int trflg  = 0;
   int trind  = 0;
   int ntr = eTracks->GetEntries();
@@ -2360,8 +2428,11 @@ int EdbPVRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpa
 	    trflg = tr->Flag();
 	    if (trflg != -10 && seltype == 0)
 	    {
-		ao->Add(tr);
-		nadd++;
+		if (!(ao->FindObject(tr)))
+		{
+		    ao->Add(tr);
+		    nadd++;
+		}
 		continue;
 	    }
 	}
@@ -2392,11 +2463,12 @@ int EdbPVRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
   const EdbSegP   *ss  = 0;
   const EdbSegP   *se  = 0;
   int 	    zpos = 0;
-  int 	    nn   = 0;
+  int 	    nn   = 0, itv = 0;
   float     distxs, distys, distzs1, distzs, dists, dist = 0.;
   float     distxe = 0., distye = 0., distze1= 0., distze = 0., diste = 0.;
+  float     xvert = 0, yvert = 0, zvert = 0;
   Float_t   Zbin = TMath::Abs(GetPattern(1)->Z() - GetPattern(0)->Z());
-  TObjArray an;
+  TObjArray an(20);
 
   for (int iv=0; iv<nvt; iv++) {
     v = (EdbVertex*)(eVTX->At(iv));
@@ -2404,28 +2476,37 @@ int EdbPVRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
     {
 	if (v->Flag() != -10)
 	{
-	    // Select trackss neigborhood
+	    v->ClearNeighborhood();
+	    xvert = v->V()->vx() + v->X();
+	    yvert = v->V()->vy() + v->Y();
+	    zvert = v->V()->vz() + v->Z();
+	    // Select tracks neigborhood
 	    an.Clear();
 	    int nvn = SelVertNeighboor(v, 0, RadMax, Dpat, &an); 
 	    for (int it=0; it<nvn; it++) {
 		    tr = (EdbTrackP*)(an.At(it));
 		    if (tr)
 		    {
+			    for (itv = 0; itv < v->N(); itv++)
+			    {
+				if (v->GetTrack(itv) == tr) break;
+			    }
+			    if (itv < v->N()) continue;
 			    ss = tr->TrackZmin();
-			    distxs = (v->V()->vx() - ss->X());
+			    distxs = (xvert - ss->X());
 			    distxs *= distxs;
-			    distys = (v->V()->vy() - ss->Y());
+			    distys = (yvert - ss->Y());
 			    distys *= distys;
-			    distzs1 = (v->V()->vz() - ss->Z());
+			    distzs1 = (zvert - ss->Z());
 			    distzs = distzs1*distzs1;
 			    dists  =  distxs + distys + distzs;
 			    dists  =  TMath::Sqrt(dists); 
 			    se = tr->TrackZmax();
-			    distxe = (v->V()->vx() - se->X());
+			    distxe = (xvert - se->X());
 			    distxe *= distxe;
-			    distye = (v->V()->vy() - se->Y());
+			    distye = (yvert - se->Y());
 			    distye *= distye;
-			    distze1 = (v->V()->vz() - se->Z());
+			    distze1 = (zvert - se->Z());
 			    distze = distze1*distze1;
 			    diste  =  distxe + distye + distze;
 			    diste  =  TMath::Sqrt(diste);
@@ -2443,7 +2524,6 @@ int EdbPVRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
 				dist = dists;
 				zpos = 1;
 			    }
-//			    printf("Vertex ID %d, before CheckImp\n",v->ID());
 			    vta = v->CheckImp(tr, ImpMax, zpos, dist);
 			    if (vta)
 			    {
@@ -2459,22 +2539,22 @@ int EdbPVRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
 		    ss = (EdbSegP*)(an.At(it));
 		    if (ss)
 		    {
-			    distxs = (v->V()->vx() - ss->X());
+			    distxs = (xvert - ss->X());
 			    distxs *= distxs;
-			    distys = (v->V()->vy() - ss->Y());
+			    distys = (yvert - ss->Y());
 			    distys *= distys;
-			    distzs1 = (v->V()->vz() - ss->Z());
+			    distzs1 = (zvert - ss->Z());
 			    distzs = distzs1*distzs1;
 			    dists  =  distxs + distys + distzs;
 			    dists  =  TMath::Sqrt(dists); 
-			    if (TMath::Sqrt(distxe+distye) > RadMax)    continue;
-			    if (TMath::Abs(distze1)        > Dpat*Zbin) continue;
-			    vta = v->CheckImp((EdbTrackP *)ss, ImpMax, zpos, dists);
+//			    if (TMath::Sqrt(distxs+distys) > RadMax)    continue;
+//			    if (TMath::Abs(distzs1)        > Dpat*Zbin) continue;
+//			    vta = v->CheckImp((EdbTrackP *)ss, ImpMax, zpos, dists);
 			    vta = new EdbVTA((EdbTrackP *)ss, v);
 			    vta->SetZpos(1);
 			    vta->SetFlag(1);
 			    vta->SetImp(0.);
-			    vta->SetDist(dist);
+			    vta->SetDist(dists);
 			    v->AddVTA(vta);
 			    AddVTA(vta);
 			    nn++;
@@ -2634,14 +2714,29 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
   if (p > 0. && mass > 0.)
 	printf("fit %d tracks assuming p = %f, mass = %f and X0 = %f ...\n",
 	 ntr,p,mass,X0);
-  else if ( p <= 0. && mass > 0.)
+  else if ( p <  0. && mass > 0.)
 	printf("fit %d tracks assuming MC momentum, mass = %f and X0 = %f ...\n",
 	 ntr,mass,X0);
-  else if ( p > 0. && mass <= 0.)
+  else if ( p == 0. && mass > 0.)
+	printf("fit %d tracks with MS momentum, mass = %f and X0 = %f ...\n",
+	 ntr,mass,X0);
+  else if ( p > 0. && mass < 0.)
 	printf("fit %d tracks assuming p = %f, MC mass and X0 = %f ...\n",
 	 ntr,p,X0);
-  else if ( p <= 0. && mass <= 0.)
+  else if ( p <  0. && mass < 0.)
 	printf("fit %d tracks assuming MC momentum, MC mass and X0 = %f ...\n",
+	 ntr,X0);
+  else if ( p == 0. && mass < 0.)
+	printf("fit %d tracks with MS momentum, MC mass and X0 = %f ...\n",
+	 ntr,X0);
+  else if ( p > 0. && mass == 0.)
+	printf("fit %d tracks assuming p = %f, pre-defined mass and X0 = %f ...\n",
+	 ntr,p,X0);
+  else if ( p <  0. && mass == 0.)
+	printf("fit %d tracks assuming MC momentum, pre-defined mass and X0 = %f ...\n",
+	 ntr,X0);
+  else if ( p == 0. && mass == 0.)
+	printf("fit %d tracks with MS momentum, pre-defined mass and X0 = %f ...\n",
 	 ntr,X0);
 
   int nseg;
@@ -2668,11 +2763,14 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
 	if (tr->P() == 0.) 
 	{
 	    pms = tr->P_MS();
-	    if      (pms < 0.01) pms = 0.01;
+	    if      (pms < 0.05) pms = 0.05;
 	    else if (pms > 30.0) pms = 30.;
 	    tr->SetP(pms);
 	}
     }
+    else tr->SetP(4.);
+
+
     if(mass>0) tr->SetM(mass);
     else if(mass<0 && gener)
     {
@@ -2685,6 +2783,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
 	    }
 	}
     }
+    else if (tr->M() == 0.) tr->SetM(0.139);
     tr->FitTrackKFS(false,X0);
   }
 
@@ -3153,7 +3252,8 @@ int EdbPVRec::ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr,
   for(int i=0; i<npat; i++) {
     pat = GetPattern(i);
     if(!pat)                   continue;
-    //ss.PropagateTo(pat->Z());
+    
+    ss.PropagateTo(pat->Z());
 
     nseg += pat->FindCompliments(ss,arr,binx,bint);
   }

@@ -51,7 +51,19 @@ void EdbVTA::Set0()
   eImp=0.;
   eDist=0.;
 }
-
+//________________________________________________________________________
+EdbVTA::~EdbVTA()
+{
+  if(eTrack) { eTrack->ClearVTA(this); }
+  if(eVertex && (eFlag == 2)) { (eVertex->VTa())->Remove(this); }
+  if(eVertex && (eFlag < 2)) { (eVertex->VTn())->Remove(this); }
+}
+//______________________________________________________________________________
+void EdbVTA::AddVandT()
+{
+    GetTrack()->AddVTA(this);
+    GetVertex()->AddVTA(this);
+}
 //______________________________________________________________________________
 EdbVertex::EdbVertex()
 {
@@ -62,12 +74,6 @@ EdbVertex::EdbVertex()
   eZ = 0.;
   eFlag = 0;
   eQuality=0.;
-}
-//______________________________________________________________________________
-void EdbVTA::AddVandT()
-{
-    GetTrack()->AddVTA(this);
-    GetVertex()->AddVTA(this);
 }
 //______________________________________________________________________________
 EdbVertex::EdbVertex(EdbVertex &v)
@@ -88,15 +94,15 @@ EdbVertex::EdbVertex(EdbVertex &v)
 EdbVertex::~EdbVertex()
 {
   if(eV) { eV->clear(); delete eV; eV=0; }
-  for(int i=0; i<N();  i++) GetVTa(i)->SetVertex(0);
-  for(int i=0; i<Nn(); i++) GetVTn(i)->SetVertex(0);
+  for(int i=0; i<N();  i++) delete GetVTa(i);
+  for(int i=0; i<Nn(); i++) delete GetVTn(i);
 }
 
 //________________________________________________________________________
 void EdbVertex::Clear()
 {
-  for(int i=0; i<N();  i++) GetVTa(i)->SetVertex(0);
-  for(int i=0; i<Nn(); i++) GetVTn(i)->SetVertex(0);
+  for(int i=0; i<N();  i++) delete GetVTa(i);
+  for(int i=0; i<Nn(); i++) delete GetVTn(i);
   eVTa.Clear();
   eVTn.Clear();
   if(eV) { eV->clear(); delete eV; eV=0; }
@@ -106,6 +112,12 @@ void EdbVertex::Clear()
   eID = 0;
   eFlag = 0;
   eQuality = 0.;
+}
+//________________________________________________________________________
+void EdbVertex::ClearNeighborhood()
+{
+  for(int i=0; i<Nn(); i++) delete GetVTn(i);
+  if (Nn()>0) eVTn.Clear();
 }
 //________________________________________________________________________
 int EdbVertex::Compare(const TObject *o) const
@@ -200,6 +212,24 @@ EdbVertex *EdbVertex::GetConnectedVertex(int nv)
 	}
     }
     return 0;
+}
+//________________________________________________________________________
+float EdbVertex::Impact( int i)
+{
+    EdbTrackP *tr = 0;
+    float imp = 1000000.;
+    if (i < 0 || i >= N())   return imp;
+    if (!(tr = GetTrack(i))) return imp;
+    Vertex *v = this->V();
+    if (!v) return imp;
+    Track *t = new Track();
+    if (Edb2Vt(*tr, *t))
+    {
+	imp = (float)distance(*t,*v);
+    }
+    delete t;
+    t = 0;
+    return imp; 
 }
 //________________________________________________________________________
 EdbVTA *EdbVertex::CheckImp( const EdbTrackP *tr , float ImpMax, int zpos, float dist)

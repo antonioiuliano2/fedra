@@ -34,7 +34,7 @@ class EdbVTA: public TObject {
  public:
   EdbVTA();
   EdbVTA(EdbTrackP *tr, EdbVertex *v );
-  virtual ~EdbVTA() {};
+  virtual ~EdbVTA();
 
   void Set0();
   void SetZpos(int zpos)   {eZpos=zpos;}
@@ -90,6 +90,7 @@ class EdbVertex: public TObject {
 
   VERTEX::Vertex *V() const {return eV;}
   void Clear();
+  void ClearNeighborhood();
 
   int N()  const {return eVTa.GetSize();}
   int Nn() const {return eVTn.GetSize();}
@@ -109,8 +110,8 @@ class EdbVertex: public TObject {
   void SetID( int ID = 0 ) { eID = ID; }
   Int_t ID() { return eID; }
 
-//  TList VTa() { return eVTa; }
-//  TList VTn() { return eVTn; } 
+  TList *VTa() { return &eVTa; }
+  TList *VTn() { return &eVTn; } 
   EdbVTA *GetVTa(int i) { return (EdbVTA*)(eVTa.At(i)); }
   EdbVTA *GetVTn(int i) { return (EdbVTA*)(eVTn.At(i)); }
   void AddVTA(EdbVTA *vta);
@@ -120,6 +121,7 @@ class EdbVertex: public TObject {
   Int_t      Zpos(int i)     { return GetVTa(i)->Zpos(); }
   EdbVertex *GetConnectedVertex(int i);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
+  float Impact(int i);
 
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
 
