@@ -5,9 +5,10 @@ DllSuf        = dll
 OutPutOpt     = /out:
 
 ROOTCFLAGS    = -I$(ROOTSYS)/include
-ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib libCore.lib libCint.lib libGraf.lib \
+
+ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib libCore.lib libCint.lib \
                 libHist.lib libGraf.lib libGraf3d.lib libGpad.lib libTree.lib \
-                libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib \
+                libRint.lib libPostscript.lib libMatrix.lib libPhysics.lib libGeom.lib\
 !IF EXISTS("$(ROOTSYS)/lib/libWin32gdk.lib")
 	        libWin32gdk.lib
 !ELSE 
