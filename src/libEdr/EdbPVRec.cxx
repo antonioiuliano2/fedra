@@ -2677,9 +2677,51 @@ float EdbPVRec::Chi2Fast(EdbSegP &s1, EdbSegP &s2)
 		     dz , dx,dy, s2.TX()-s1.TX(), s2.TY()-s1.TY(),chi2 );
   return chi2;
 }
-
 //______________________________________________________________________________
-void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
+void EdbPVRec::ClearPropagation(int design)
+{
+    if (!eTracks) return;
+    float X0 =  GetScanCond()->RadX0();
+    EdbTrackP *tr = 0, *tr1 = 0;
+    EdbSegP *seg = 0;
+    int itr, iseg, ntr = 0, nseg = 0, trind = 0;
+    ntr = eTracks->GetEntries();
+    for (itr=0; itr<ntr; itr++)
+    {
+	tr = (EdbTrackP*)(eTracks->At(itr));
+	if (tr)
+	{
+	    if (tr->Flag() == -10)
+	    {
+		tr->SetFlag(0);
+		nseg = tr->N();
+		for (iseg=0; iseg<nseg; iseg++)
+		{
+		    seg = tr->GetSegment(iseg);
+		    if (seg)
+		    {
+			if ( (trind == seg->Track()) >= 0 )
+			{
+			    if (trind != itr)
+			    {
+				tr1 = (EdbTrackP*)(eTracks->At(trind));
+				if (tr1)
+				{
+				    seg->SetTrack(itr);
+				    tr1->RemoveSegment(seg);
+				    tr1->ClearF();
+				    tr1->FitTrackKFS(false, X0, design);
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+//______________________________________________________________________________
+void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 {
   // measurement errors: TODO
   // TODO: move gener logic out from EdbPVRec
@@ -2687,6 +2729,14 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
   float X0 =  GetScanCond()->RadX0();
   float pms = 0.;
   int nsegmatch = 0;
+
+  if (eVTX)
+  {
+    eVTX->Delete();
+    eVTX->Clear();
+  }
+
+  ClearPropagation(design);
 
   EdbTrackP *tr = 0, *trg = 0;
   int ntr = eTracks->GetEntries();
@@ -2723,6 +2773,8 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
   int itrg;
   for(int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(eTracks->At(itr));
+
+    tr->ClearF();
 
     nseg = tr->N();
 
@@ -2764,7 +2816,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener)
 	}
     }
     else if (tr->M() == 0.) tr->SetM(0.139);
-    tr->FitTrackKFS(false,X0);
+    tr->FitTrackKFS(false,X0,design);
   }
 
 }
@@ -2775,8 +2827,15 @@ int EdbPVRec::MakeTracks(int nsegments)
   // extract from index_table tracks longer then nsegments
   // and form tracks array
 
-  if(eTracks) delete eTracks;
-  eTracks  = new TObjArray();
+  if(eTracks)
+  {
+    eTracks->Delete();
+    eTracks->Clear();
+  }
+  else
+  {
+    eTracks  = new TObjArray();
+  }
   printf("make tracks...\n");
 
   int         nseg, ntr=0, n0;
@@ -3059,12 +3118,21 @@ int EdbPVRec::SelectLongTracks(int nsegments)
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin, int ngapMax)
+int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
+			      int ngapMax, int design)
 {
   //  extrapolate incomplete tracks and update them with new segments
   //
   //  input: nplmax - the maximal length of the track to be continued
   //  input: nplmin - the minimal length of the track to be continued
+
+  if (eVTX)
+  {
+    eVTX->Delete();
+    eVTX->Clear();
+  }
+
+  ClearPropagation(design);
 
   int ntr = eTracks->GetEntries();
   printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
@@ -3110,14 +3178,14 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin, int ngapMax
 
 	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
-	nseg = PropagateTrack(*tr, true, probMin, ngapMax);
+	nseg = PropagateTrack(*tr, true, probMin, ngapMax, design);
   	nsegTot += nseg;
 	//printf("\t %d after true ",tr->N());
 
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
-  	nseg = PropagateTrack(*tr, false, probMin, ngapMax);
+  	nseg = PropagateTrack(*tr, false, probMin, ngapMax, design);
   	nsegTot += nseg;
 	//printf("\t %d after false \n",tr->N());
 
@@ -3129,7 +3197,8 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin, int ngapMax
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin, int ngapMax )
+int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
+			      int ngapMax,   int design )
 {
   float binx=10, bint=10;
   float X0 = GetScanCond()->RadX0();
@@ -3209,7 +3278,7 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin, int ng
 
   tr.SetNpl();
   tr.SetN0();
-  tr.FitTrackKFS(followZ,X0);
+  tr.FitTrackKFS(followZ,X0,design);
   tr.SetSegmentsTrack();
 
   return nsegTot;

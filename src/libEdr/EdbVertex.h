@@ -15,6 +15,8 @@
 #include "EdbPattern.h"
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"
+#include "vt++/VtRelation.hh"
+#include "vt++/VtKalman.hh"
 
 //_________________________________________________________________________
 class EdbVTA: public TObject {
@@ -33,6 +35,7 @@ class EdbVTA: public TObject {
   
  public:
   EdbVTA();
+  EdbVTA(EdbVTA &vta);
   EdbVTA(EdbTrackP *tr, EdbVertex *v );
   virtual ~EdbVTA();
 
@@ -119,7 +122,7 @@ class EdbVertex: public TObject {
   EdbVTA *GetVTa(int i) { return (EdbVTA*)(eVTa.At(i)); }
   EdbVTA *GetVTn(int i) { return (EdbVTA*)(eVTn.At(i)); }
   void AddVTA(EdbVTA *vta);
-
+  void ResetTracks();
   EdbVTA *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
   EdbTrackP *GetTrack(int i) { return GetVTa(i)->GetTrack(); }
   Int_t      Zpos(int i)     { return GetVTa(i)->Zpos(); }

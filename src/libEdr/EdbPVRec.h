@@ -362,7 +362,8 @@ class EdbPVRec : public EdbPatternsVolume {
   int   MergeTracks(int maxgap=2);
   int   MergeTracks1(int maxgap);
   int   MakeTracks(int nsegments=2);
-  void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0);
+  void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0,
+		  int design=0);
 
   int    LinkSlow();
   int    Link();
@@ -413,9 +414,11 @@ class EdbPVRec : public EdbPatternsVolume {
   int ExtractDataVolumeSegAll( TObjArray &arr );
 
   int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05,
-		      int ngapMax = 3 );
+		      int ngapMax = 3, int design = 0 );
   int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05,
-		      int ngapMax = 3 );
+		      int ngapMax = 3, int design = 0 );
+
+  void ClearPropagation(int design = 0);
 
   int MakePatternsFromTracks();
 

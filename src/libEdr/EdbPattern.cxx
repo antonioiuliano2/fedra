@@ -922,7 +922,7 @@ int  EdbTrackP::FitTrackKF( bool zmax)
 
 */
 //______________________________________________________________________________
-int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
+int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 {
   // if (zmax==true)  track parameters are calculated at segment with max Z
   // if (zmax==false) track parameters are calculated at segment with min Z
@@ -947,8 +947,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 
   float dPb = 0., p = 0., m = 0.13957, e = 0.13957, de = 0., pa = 0., pn = 0.;
   float e0 = e;
-  float PbPart = 1000./1300.;
-  int eloss_flag = 0;
+  float eTPb = 1000./1300.;
   float pcut = 0.050;
   double teta0sq;
   double dz, ptx, pty;
@@ -1036,16 +1035,20 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
     ptx = (*par[i-step])(2);                        // previous tx
     pty = (*par[i-step])(3);                        // previous ty
     dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-    if (eloss_flag && (p > pcut))
+    if ((design != 0) && (p > pcut))
     {
-	de = EdbPhysics::DeAveragePb(p, m, PbPart*dPb);
-	if (de < 0.) de = e - m;
-	e  = e - de;
+	de = EdbPhysics::DeAveragePb(p, m, TMath::Abs(eTPb*dPb));
+	if (de < 0.) de = 0.;
+	if (design < 0) de = -de;
+	if (dz >= 0.)
+	    e = e - de;
+	else
+	    e = e + de;
 	if (e < m) e = m;
 	pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+	if (pn <= pcut) pn = pcut;
 	pa = 0.5*(p + pn);
 	p  = pn;
-	if (p <= pcut) p = pcut;
     }
     else
     {
@@ -1170,9 +1173,9 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0)
 	segf.SetP( P() );
 	segf.SetPID( GetSegment(i)->PID() );
 	AddSegmentF(new EdbSegP(segf));
-	dz = TMath::Abs(GetSegment(i)->Z() - GetSegment(i+step)->Z()); 
+	dz = eTPb*TMath::Abs(GetSegment(i)->Z() - GetSegment(i+step)->Z()); 
         dPb = dz*TMath::Sqrt(1.+(*pars[i])(2)*(*pars[i])(2)+(*pars[i])(3)*(*pars[i])(3)); // thickness of the Pb+emulsion cell in microns
-	DE += EdbPhysics::DeAveragePbFast(P(),M(),dPb);
+	DE += EdbPhysics::DeAveragePbFast(P(),M(),TMath::Abs(dPb));
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,4));
@@ -1308,111 +1311,92 @@ void EdbTrackP::Print()
 }
 
 //______________________________________________________________________________
-float  EdbTrackP::P_MS( float X0, bool draw)
+float  EdbTrackP::P_MS( float X0, float m, bool de_correction )
 {
   // momentum estimation by multiple scattering
 
-  int    nms[60];
-  double xms[60];
-  double yms[60];
-  double sxms[60];
-  double syms[60];
-  for(int i=0; i<60; i++) {
-    nms[i]=0;
-    xms[i]=0;
-    yms[i]=0;
-    sxms[i]=0;
-    syms[i]=0;
-  }
+  int	 stepmax = 1;
+  int    nms = 0;
+  double tms = 0.;
+  int ist = 0;
 
   EdbSegP *s1=0,*s2=0;
 
   double dx,dy,dz,ds;
-  double dtx,dty,dts;
+  double dtx,dty,dts,fact,ax1,ax2,ay1,ay2,dax1,dax2,day1,day2;
 
-  int nseg=N();
-  for(int ist=1; ist<nseg; ist++) {     // step size
+  int nseg = N(), i1 = 0, i2 = 0;
 
-    int ii=0;
-    while(ist*(ii+1)<nseg) {            // steps
+  for (ist=1; ist<=stepmax; ist++) {     // step size
 
-      //for(int i1=0; i1<ist; i1++) {     // for each step and each segment
-      for(int i1=0; i1<1; i1++) {       // for each step just once
-	int istart = ii*ist+i1;
-	int iend   = istart+ist;
-	if(iend >= nseg-1)            break;
-	s1 = GetSegment(istart);
-	s2 = GetSegment(iend);
+      for (i1=0; i1<(nseg-ist); i1++) {       // for each step just once
 
+	i2 = i1+ist;
+
+	s1 = GetSegment(i1);
+	s2 = GetSegment(i2);
+	
 	dx = s2->X()-s1->X();
 	dy = s2->Y()-s1->Y();
 	dz = s2->Z()-s1->Z();
-	ds = (TMath::Sqrt(dx*dx+dy*dy+dz*dz));
-
-	dtx = s2->TX()-s1->TX();
-	dty = s2->TY()-s1->TY();
-	dts = TMath::Sqrt(dtx*dtx+dty*dty);
-
-	xms[ist-1] += TMath::Sqrt(ds);
-	yms[ist-1] += dts;
-	nms[ist-1]++;
+	ds = TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+	
+	ax1 = TMath::ATan(s1->TX());
+	ax2 = TMath::ATan(s2->TX());
+	ay1 = TMath::ATan(s1->TY());
+	ay2 = TMath::ATan(s2->TY());
+	dax1 = s1->STX();
+	dax2 = s2->STX();
+	day1 = s1->STY();
+	day2 = s2->STY();
+	dtx = (ax2-ax1);
+	dty = (ay2-ay1);
+	dts = dtx*dtx+dty*dty;
+	fact = 1.+0.038*TMath::Log(ds/X0);
+	dts = (dts-dax1-dax2-day1-day2)/ds/fact/fact;
+//	if (dts < 0.) dts = 0.;
+	tms += dts;
+	nms++;
       }
-      ii++;
+  }
+
+  double pbeta = 0., pbeta2 = 0.;
+  pbeta = TMath::Sqrt((double)nms/tms/X0)*0.01923;
+  pbeta2 = pbeta*pbeta;
+  double p = 0.5*(pbeta2 + TMath::Sqrt(pbeta2*pbeta2 + 4.*pbeta2*m*m));
+  if (p <= 0.)
+    p = 0.;
+  else
+    p = TMath::Sqrt(p);
+  
+  if (de_correction)
+  {
+    double dtot = 0., eTPb = 1000./1300., e = 0., tkin = 0.;
+    s1 = GetSegment(0);
+    s2 = GetSegment(nseg-1);
+
+    dx = s2->X()-s1->X();
+    dy = s2->Y()-s1->Y();
+    dz = s2->Z()-s1->Z();
+    
+    dtot = TMath::Sqrt(dx*dx+dy*dy+dz*dz)*eTPb;
+
+    double DE = EdbPhysics::DeAveragePb(p, m, dtot);
+    tkin = TMath::Sqrt(p*p + m*m) - m;
+
+    if (tkin < DE)
+    {
+	tkin = 0.5*DE;
+	e = tkin + m;
+	p = TMath::Sqrt(e*e - m*m);
+	DE = EdbPhysics::DeAveragePb(p, m, dtot);
     }
+    tkin = tkin + 0.5*DE;
+    e = tkin + m;
+    p = TMath::Sqrt(e*e - m*m);
   }
-
-  double K=0,W=0,w=0;
-  int ist=0;
-  //while( nms[ist]>ist ) {
-  while( nms[ist]>0 ) {
-    xms[ist] /=nms[ist];
-    yms[ist] /=nms[ist];
-    w = TMath::Sqrt((double)nms[ist]);
-    float expected = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), xms[ist]*xms[ist]));
-    syms[ist] = expected/w;
-    //syms[ist] = yms[ist]/w;
-    //printf("%d %d \t %f \t %f\n",ist,nms[ist],xms[ist],yms[ist] );
-    K += w*yms[ist]/xms[ist];
-    W += w;
-    ist++;
-  }
-  K /= W;
-//  printf("K = %f\n",K);
-
-//  if(draw) {
-//    TGraphErrors *gr = new TGraphErrors(ist,xms,yms,sxms,syms);
-//    gr->Draw("ALP");
-//    gr->Fit("pol1");
-//
-//    double *x = new double[ist];
-//    double *y = new double[ist];
-//
-//    for(int i=0; i<ist; i++) {
-//      x[i] = xms[i];
-//      y[i] = TMath::Sqrt(2.*EdbPhysics::ThetaPb2( P(),M(), x[i]*x[i]));
-//    }
-//    TPolyLine *line = new TPolyLine(ist,x,y);
-//    line->SetFillColor(38);
-//    line->SetLineColor(2);
-//    line->SetLineWidth(2);
-//    line->Draw("f");
-//    line->Draw();
-//
-//    float Kteor=(y[ist]-y[0])/(x[ist]-x[0]);
-//    printf("Kteor = %f  k = %f\n",Kteor,Kteor*P());
-//  }
-
-
-  //TODO: tune coefficients !
-
-  double p=0;
-  double k = 1.4/X0;
-
-  //double m2 = M()*M();
-  //p = (k+TMath::Sqrt(k*k+4.*K*k*m2))/K;
-
-  p = k/K;
-  return p;
+  
+  return (float)p;
 }
 //______________________________________________________________________________
 EdbVertex  *EdbTrackP::VertexS()

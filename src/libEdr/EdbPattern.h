@@ -314,9 +314,19 @@ class EdbTrackP : public EdbSegP {
       if(!eS) eS = new TSortedList();
       eS->Add(s);
     }
+  void   RemoveSegment(EdbSegP *s)
+    { 
+      if(!eS) return;
+      eS->Remove(s);
+      SetCounters();
+    }
   void     AddSegmentF(EdbSegP *s)  
     { 
-      if(!eSF) eSF = new TSortedList();
+      if(!eSF) 
+      {
+        eSF = new TSortedList();
+	eSF->SetOwner();
+      }
       eSF->Add(s);
     }
 
@@ -327,16 +337,18 @@ class EdbTrackP : public EdbSegP {
   void Copy(const EdbTrackP &tr);
   void FitTrack();
   //int FitTrackKF( bool zmax=false );
-  int FitTrackKFS( bool zmax=false, float X0=5810. );
+  int FitTrackKFS( bool zmax=false, float X0=5810., int design = 0 );
 
   int MakeSelector( EdbSegP &ss, bool followZ=true );
 
   float CHI2();
   float CHI2F();
 
-  float P_MS( float X0 = 5810., bool draw = false );
+  float P_MS( float X0 = 5810., float m = 0.13957, bool de_correction = false );
 
   void Clear() { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
+
+  void ClearF() { if(eSF) eSF->Clear(); }
 
   void Print();
 

@@ -34,6 +34,17 @@ EdbVTA::EdbVTA()
 }
 
 //______________________________________________________________________________
+EdbVTA::EdbVTA( EdbVTA& vta )
+{
+  eTrack=vta.GetTrack();
+  eVertex=vta.GetVertex();
+  eZpos=vta.Zpos();
+  eFlag=vta.Flag();
+  eImp=vta.Imp();
+  eDist=vta.Dist();
+}
+
+//______________________________________________________________________________
 EdbVTA::EdbVTA( EdbTrackP *tr, EdbVertex *v )
 {
   Set0();
@@ -78,13 +89,27 @@ EdbVertex::EdbVertex()
 //______________________________________________________________________________
 EdbVertex::EdbVertex(EdbVertex &v)
 {
-  for (int i=0; i<v.N(); i++) this->AddVTA(v.GetVTa(i));
-  for (int i=0; i<v.Nn(); i++) this->AddVTA(v.GetVTn(i));
-  if(v.V()) eV = new VERTEX::Vertex(*(v.V()));
-  else eV=0;
-  eX    = v.eX;
-  eY    = v.eY;
-  eZ    = v.eZ;
+  eID= 0;
+  eV = 0;
+  eX = 0.;
+  eY = 0.;
+  eZ = 0.;
+  eFlag = 0;
+  eQuality = 0.;
+  EdbVTA *vta = 0;
+  eVTn.Clear();
+  eVTa.Clear();
+  for (int i=0; i<v.Nn(); i++) AddVTA(new EdbVTA(*v.GetVTn(i)));
+  for (int i=0; i<v.N(); i++)
+  {
+    if ((vta = AddTrack(v.GetTrack(i), v.Zpos(i), 0.0)))
+    {
+	v.GetTrack(i)->AddVTA(vta);
+	AddVTA(vta);
+    }
+  }
+  bool usemom = v.V()->back()->kalman.use_momentum();
+  MakeV(usemom);  
   eID   = v.ID();
   eFlag = v.Flag();
   eQuality = v.Quality();
@@ -96,6 +121,17 @@ EdbVertex::~EdbVertex()
   if(eV) { eV->clear(); delete eV; eV=0; }
   for(int i=0; i<N();  i++) delete GetVTa(i);
   for(int i=0; i<Nn(); i++) delete GetVTn(i);
+}
+
+//______________________________________________________________________________
+void EdbVertex::ResetTracks()
+{
+  EdbVTA *vta = 0;
+  for (int i=0; i<N(); i++)
+  {
+    vta = GetVTa(i);
+    if (vta) GetTrack(i)->AddVTA(vta);
+  }
 }
 
 //________________________________________________________________________
@@ -275,8 +311,10 @@ int EdbVertex::MakeV( bool usemom )
   if (eV->ntracks() < 2) return retval;
   retval = eV->findVertexVt();
   if (!retval) return retval;
-  if (!(eV->valid())) return retval;
-  for (int i=0; i<N(); i++) {
+  if (!(eV->valid())) return 0;
+  int n = N();
+  if ( n > 50) n = 50;
+  for (int i=0; i<n; i++) {
     if (ta[i]) GetVTa(i)->SetImp(distance(*ta[i],*eV));
   }
   return retval;
@@ -289,8 +327,9 @@ EdbVTA *EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
   // if vertex do not exist yet - calculate medium x,y,z
 
   if (!track) return 0;
-  EdbVTA *vta = 0;
+  for (int i=0; i<N(); i++) if (track == GetTrack(i)) return 0;
 
+  EdbVTA *vta = 0;
   EdbSegP *seg = 0;
   if   (zpos)
     {
