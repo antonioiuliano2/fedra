@@ -7,7 +7,7 @@
 #include "TMath.h"
 
 /////////////// not nedded /////////////
-#include <conio.h>
+//#include <conio.h>
 ////////////////////////////////////
 
 ClassImp(TBitView);
@@ -311,7 +311,8 @@ void TBitView::FillBitView(EdbView *v, float s, float Xmin, float Xmax, float Ym
 	int NumberOfLayers = nframes;
 	float zmin = ((EdbFrame *)(frames->At(0)))->GetZ();
 	float zmax = zmin;
-	for (int i=0; i<nframes; i++) {
+	int i;
+	for (i=0; i<nframes; i++) {
 		f = (EdbFrame *)(frames->At(i));
 		if (zmin>f->GetZ()) zmin = f->GetZ();
 		if (zmax<f->GetZ()) zmax = f->GetZ();
