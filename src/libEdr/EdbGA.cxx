@@ -4,14 +4,14 @@
 //                                                                      //
 // EdbGA                                                                //
 //                                                                      //
-// Grains Analysis  stuff                                               //
+// Grains Analysis  module                                              //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 //
 // Usage:
 // 
 // root [0] EdbGA ga("/mnt/nusrv4_2/ftpuser/testFV1.grs.root",6,6,1)
-// root [1] ga.CheckViewGrains(0)
+// root [1] ga.CheckViewGrains()
 // ...
 // create grains_chain.root with grains tree
 //
@@ -43,6 +43,13 @@ EdbGA::~EdbGA()
 }
 
 ///-----------------------------------------------------------------------------
+void EdbGA::CheckViewGrains()
+{
+  int nview = eRun->GetEntries();
+  for(int i=0; i<nview; i++)  CheckViewGrains(i);
+}
+
+///-----------------------------------------------------------------------------
 void EdbGA::CheckViewGrains(int vid)
 {
   eVid = vid;
@@ -67,8 +74,6 @@ void EdbGA::VerticalChains( TClonesArray *clusters, TIndexCell &chains )
 
   EdbCluster *cl;
 
-  printf("1 \n");
-
   int ncl = clusters->GetEntries();
   for( int i=0; i<ncl; i++ ) {
     cl = (EdbCluster*)(clusters->UncheckedAt(i));
@@ -79,15 +84,9 @@ void EdbGA::VerticalChains( TClonesArray *clusters, TIndexCell &chains )
     chains.Add(4,v);
   }
 
-  printf("2 \n");
   chains.Sort();
-  printf("3 \n");
-  chains.SetName("x:y:z:entry");
-  printf("4 \n");
   chains.PrintStat();
-  printf("5 \n");
   chains.PrintPopulation(3);
-  printf("6 \n");
 }
 
 ///------------------------------------------------------------------
@@ -131,19 +130,25 @@ int EdbGA::MakeGrainsTree( TClonesArray *clust, TIndexCell &chains)
   float zlvl;
   EdbCluster *cl;
 
-  for(int ix=0; ix<chains.GetEntries(); ix++)  {
+  int nix,niy,niz,nie;
+  
+  nix = chains.GetEntries();
+  for(int ix=0; ix<nix; ix++)  {
     cx = chains.At(ix);
-    for(int iy=0; iy<cx->GetEntries(); iy++)   {
+    niy = cx->GetEntries();
+    for(int iy=0; iy<niy; iy++)   {
       cy = cx->At(iy);
       zlvl = -9999999.;
-      for(int iz=0; iz<cy->GetEntries(); iz++) {
+      niz = cy->GetEntries();
+      for(int iz=0; iz<niz; iz++) {
 	cz = cy->At(iz);
-	for(int ie=0; ie<cz->GetEntries(); ie++) {
+	nie = cz->GetEntries();
+	for(int ie=0; ie<nie; ie++) {
 	  entry = cz->At(ie)->Value();
 	  cl = (EdbCluster *)clust->UncheckedAt(entry);
 
 	  if( cl->Z()-zlvl > 2.*eBinZ ) {
-	    if( eClusters->GetEntries()>0 ) {
+	    if( ncl>0 ) {
 	      GrainStat(eClusters,x0,y0,z0);
 	      eGrains->Fill();
 	      eClusters->Clear();
@@ -157,7 +162,7 @@ int EdbGA::MakeGrainsTree( TClonesArray *clust, TIndexCell &chains)
 	}
       }
 
-      if( eClusters->GetEntries()>0 ) {
+      if( ncl>0 ) {
 	GrainStat(eClusters,x0,y0,z0);
 	eGrains->Fill();
 	eClusters->Clear();

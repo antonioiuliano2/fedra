@@ -41,6 +41,7 @@ class EdbGA : public TObject {
     { eBinX=bx; eBinY=by; eBinZ=bz; } 
 
   void   InitTree(const char *file="grain_chains.root");
+  void   CheckViewGrains();
   void   CheckViewGrains(int vid);
   void   VerticalChains( TClonesArray *clusters, TIndexCell &chains);
   int    MakeGrainsTree( TClonesArray *clust, TIndexCell &chains);
