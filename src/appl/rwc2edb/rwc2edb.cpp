@@ -66,10 +66,11 @@ int main(int argc, char *argv[])
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,FindConfig(pCat,"Flexible Sheet Map","FramesPerSecond")?2:1); 
 	Header->SetLimits(pCat->Area.XMin,pCat->Area.XMax,pCat->Area.YMin,pCat->Area.YMax);
-//  	Header->SetArea(pCat->Area.Fragments*pCat->Area.XViews*pCat->Area.YViews,
-//  			pCat->Area.XStep,pCat->Area.YStep, 
-//  			FindConfig(pCat,"Vertigo Scan","VLayers"),
-//  			FindConfig(pCat,"Vertigo Scan","VLayers"));
+    Header->SetArea(pCat->Area.XViews*pCat->Area.YViews,
+					pCat->Area.XStep,pCat->Area.YStep, 
+					FindConfig(pCat,"Vertigo Scan","VLayers"),
+					FindConfig(pCat,"Vertigo Scan","VLayers"),
+					0);
 	Header->SetNareas(pCat->Area.Fragments);
 	Header->SetCCD(FindConfig(pCat,"Objective","Width"),
 						FindConfig(pCat,"Objective","Height"),
@@ -96,7 +97,6 @@ int main(int argc, char *argv[])
 	edbView= outrun->GetView();
 	
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
-	EdbCluster* edbCluster = new EdbCluster(0,0,0,0,0,0,0);
 	
 
 	int f, v, s, t, p;  //f=fragment, v=view, s=side, t=track, p=point
@@ -121,14 +121,13 @@ int main(int argc, char *argv[])
 			{ 
 				VS_View* rwdView = &(pFrag->Fragment.pViews[v]);
 				nviews++;
-   			int vclusters=0;
+   				int vclusters=0;
 				tracks += rwdView->TCount[s];
 
 				int dz = (s==0?
 				rwdView->RelevantZs.TopExt-rwdView->RelevantZs.TopInt:
 				rwdView->RelevantZs.BottomInt-rwdView->RelevantZs.BottomExt );
 
-				
 				edbView->Clear();
 				EdbViewHeader* edbViewHeader = edbView->GetHeader();
 				edbViewHeader->SetAffine(rwdView->ImageMat[s][0][0],
@@ -147,8 +146,8 @@ int main(int argc, char *argv[])
 				edbViewHeader->SetViewID(v);
 //				edbViewHeader->SetZlevels(rwdView->Layers[s].Count,rwdView->Layers[s].pZs);
 				for( int nlvl=0; nlvl<rwdView->Layers[s].Count; nlvl++ )
-				  edbView->AddFrame(nlvl,rwdView->Layers[s].pZs[nlvl]);
-				
+					edbView->AddFrame(nlvl,rwdView->Layers[s].pZs[nlvl]);
+
 				int nclu = 0;	//number of clusters
 				for (t = 0; t < rwdView->TCount[s]; t++)
 				{
@@ -156,11 +155,11 @@ int main(int argc, char *argv[])
 					int id = ntracks;
 					
 //					edbSegment->Set(rwdTrack->Intercept.X,
-//										 rwdTrack->Intercept.Y,
-//										 rwdTrack->Intercept.Z,
-//										 rwdTrack->Slope.X,
-//										 rwdTrack->Slope.Y, 
-//									    dz, s , rwdTrack->PointsN ,id);
+//									rwdTrack->Intercept.Y,
+//									rwdTrack->Intercept.Z,
+//									rwdTrack->Slope.X,
+//									rwdTrack->Slope.Y, 
+//									dz, s , rwdTrack->PointsN ,id);
 
 					edbSegment->Set(rwdView->ImageMat[s][0][0]*rwdTrack->Intercept.X 
 						            +rwdView->ImageMat[s][0][1]*rwdTrack->Intercept.Y,
@@ -175,19 +174,20 @@ int main(int argc, char *argv[])
 
 					edbSegment->SetSigma(rwdTrack->Sigma,-999);
 
+					float xc=-100, yc=-200, zc=-300, arc=0, volc=0;
+					int   ifrc=0, sidec=0;
+
 					for ( p=0; p<rwdTrack->PointsN;p++)
 					{
-//						edbCluster->SetX(rwdTrack->pPoints[p].X);
-//						edbCluster->SetY(rwdTrack->pPoints[p].Y);
-						edbCluster->SetX(rwdView->ImageMat[s][0][0]*rwdTrack->pPoints[p].X
-										    +rwdView->ImageMat[s][0][1]*rwdTrack->pPoints[p].Y );
-						edbCluster->SetY(rwdView->ImageMat[s][1][0]*rwdTrack->pPoints[p].X
-											 +rwdView->ImageMat[s][1][1]*rwdTrack->pPoints[p].Y );
+//						xc = rwdTrack->pPoints[p].X;
+//						yc = rwdTrack->pPoints[p].Y;
+						xc = rwdView->ImageMat[s][0][0]*rwdTrack->pPoints[p].X
+							 +rwdView->ImageMat[s][0][1]*rwdTrack->pPoints[p].Y;
+						yc = rwdView->ImageMat[s][1][0]*rwdTrack->pPoints[p].X
+							 +rwdView->ImageMat[s][1][1]*rwdTrack->pPoints[p].Y;
+						zc = rwdTrack->pPoints[p].Z;
 
-						edbCluster->SetZ(rwdTrack->pPoints[p].Z);
-						edbCluster->SetSegment(id);
-						edbSegment->AddElement(edbCluster);
-						edbView->AddCluster(edbCluster);
+						edbView->AddCluster(xc,yc,zc, arc, volc, ifrc, sidec, id);
 						clusters++;
 						nclu++;
 					}
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 				outrun->AddView(edbView);
 			}; //end of views (v) 
 		};//end of sides (s)
-		cout<<"Fragment: "<<f<<" microtracks: "<<tracks<<"\tclusters: "<<clusters<<endl;	
+		cout<<"Fragment: "<<f<<"/"<<pCat->Area.Fragments<<"  microtracks: "<<tracks<<"\tclusters: "<<clusters<<endl;	
 		cout << flush;
 		CoTaskMemFree(pFrag);
 		pFrag = 0;
