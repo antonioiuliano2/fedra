@@ -176,6 +176,8 @@ class EdbPatCouple : public TObject {
 
   float eChi2Max; 
 
+  int eCHI2mode;           // algorithm used for chi2 calculation
+
  public:
   EdbPatCouple();
   ~EdbPatCouple();
@@ -222,11 +224,14 @@ class EdbPatCouple : public TObject {
 			Long_t vdiff[4]);
 
   int          DiffPatCell( TIndexCell *cel1, TIndexCell *cel2, 
-			    Long_t vdiff[4]); 
+			    Long_t vdiff[4]);
 
-  int          FillCHI2n();
+  void         SetCHI2mode(int m) { eCHI2mode=m; }
+  int          FillCHI2Pn();
+  int          FillCHI2Pz0();
   int          FillCHI2();
   int          FillCHI2P();
+  int          FillCHI2Pold();
 
   int          SelectIsolated();
   int          CutCHI2P(float chimax);

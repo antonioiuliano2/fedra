@@ -181,6 +181,7 @@ EdbPatCouple::EdbPatCouple()
   eCond=0;
   ePat1=0;
   ePat2=0;
+  eCHI2mode=0;
 }
 
 ///______________________________________________________________________________
@@ -343,6 +344,14 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
 ///______________________________________________________________________________
 int EdbPatCouple::FillCHI2P()
 {
+  if     (eCHI2mode==1) return FillCHI2Pn();
+  else if(eCHI2mode==2) return FillCHI2Pz0();
+  else return FillCHI2Pold();
+}
+
+///______________________________________________________________________________
+int EdbPatCouple::FillCHI2Pold()
+{
   EdbSegCouple *scp=0;
   float       chi2;
   int ncp = Ncouples();
@@ -356,7 +365,7 @@ int EdbPatCouple::FillCHI2P()
 }
 
 ///______________________________________________________________________________
-int EdbPatCouple::FillCHI2n()
+int EdbPatCouple::FillCHI2Pn()
 {
   EdbSegP *s1=0, *s2=0;
   float sx=.5, sy=.5, sz=3., dz=44.;
@@ -387,7 +396,47 @@ int EdbPatCouple::FillCHI2n()
 
     chi2 = TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
       eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
-    scp->SetCHI2(chi2);
+    scp->SetCHI2P(chi2);
+  }
+
+  return Ncouples();
+}
+
+///______________________________________________________________________________
+int EdbPatCouple::FillCHI2Pz0()
+{
+  EdbSegP *s1=0, *s2=0;
+  float sx=.5, sy=.5, sz=3., dz=44.;
+  float sa;
+  float chi2, a1,a2;
+  float tx,ty;
+
+  TVector3 v1,v2,v;
+
+  EdbSegCouple *scp=0;
+  int ncp = Ncouples();
+  for( int i=0; i<ncp; i++ ) {
+    scp=GetSegCouple(i);
+    s1 = Pat1()->GetSegment(scp->ID1());
+    s2 = Pat2()->GetSegment(scp->ID2());
+
+    tx = (s1->TX()+s2->TX())/2.;
+    ty = (s1->TY()+s2->TY())/2.;
+
+    v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
+    v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
+
+    v = v1+v2;
+    v *= .5;
+
+    a1 = v.Angle(v1);
+    a2 = v.Angle(v2);
+
+    sa = sz/dz*TMath::Cos(v.Theta());
+
+    chi2 = TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
+      eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
+    scp->SetCHI2P(chi2);
   }
 
   return Ncouples();
@@ -811,6 +860,8 @@ void EdbPVRec::SetCouples()
     //printf("SetCouples: %d(%d) %d %d \n",i,Ncouples(), pc->ID1(),pc->ID2());
     pc->SetPat1( GetPattern(pc->ID1()) );
     pc->SetPat2( GetPattern(pc->ID2()) );
+
+    if( TMath::Abs(pc->Pat2()->Z() - pc->Pat1()->Z()) < 40. )  pc->SetCHI2mode(2); 
   }
 }
 
