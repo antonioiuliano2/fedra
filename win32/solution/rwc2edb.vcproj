@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="rwc2edb"
+	SccProjectName=""
+	SccLocalPath=""
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\appl\rwc2edb
+NMAKE /f &quot;Makefile.w32&quot;"
+				ReBuildCommandLine="cd ..\..\src\appl\rwc2edb
+NMAKE /f &quot;Makefile.w32&quot; /a"
+				CleanCommandLine="cd ..\..\src\appl\rwc2edb
+NMAKE /f &quot;Makefile.w32&quot; clean"
+				Output="..\..\bin\rwc2edb.exe"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\dataIO\dataIO.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\edb2rwc.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\libDataConversion.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwc2edb.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwcread.cpp">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwdread.cpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\dataIO\dataIO.h">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\libDataConversion.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>
