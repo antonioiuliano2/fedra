@@ -516,7 +516,7 @@ TIndexCell const *TIndexCell::At( Int_t nind, Int_t vind[] ) const
 }
 
 //____________________________________________________________________________
-void TIndexCell::Sort(Int_t upto = kMaxInt) 
+void TIndexCell::Sort(Int_t upto) 
 {
   if(fList) {
     fList->Sort();
