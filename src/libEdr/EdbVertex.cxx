@@ -216,20 +216,11 @@ EdbVertex *EdbVertex::GetConnectedVertex(int nv)
 //________________________________________________________________________
 float EdbVertex::Impact( int i)
 {
-    EdbTrackP *tr = 0;
+    EdbVTA *vta = 0;
     float imp = 1000000.;
     if (i < 0 || i >= N())   return imp;
-    if (!(tr = GetTrack(i))) return imp;
-    Vertex *v = this->V();
-    if (!v) return imp;
-    Track *t = new Track();
-    if (Edb2Vt(*tr, *t))
-    {
-	imp = (float)distance(*t,*v);
-    }
-    delete t;
-    t = 0;
-    return imp; 
+    if (!(vta = GetVTa(i)))  return imp;
+    return vta->Imp();
 }
 //________________________________________________________________________
 EdbVTA *EdbVertex::CheckImp( const EdbTrackP *tr , float ImpMax, int zpos, float dist)
@@ -264,7 +255,9 @@ int EdbVertex::MakeV( bool usemom )
   eV->use_momentum(usemom);
   EdbTrackP *tr=0;
   EdbSegP *seg=0;
-  for(int i=0; i<N(); i++) {
+  Track *ta[50];
+  for (int i=0; i<50; i++) ta[i] = 0;
+  for (int i=0; i<N(); i++) {
     tr = GetTrack(i);
     if (tr->NF() <= 0) return 0;
     if   (Zpos(i)) seg = (EdbSegP *)(tr->TrackZmin());
@@ -276,8 +269,17 @@ int EdbVertex::MakeV( bool usemom )
 	eV->push_back(*t);
     }
     else { delete t; t=0;}
+    if (i<50) ta[i] = t;
   }
-  return eV->ntracks();
+  int retval = 0;
+  if (eV->ntracks() < 2) return retval;
+  retval = eV->findVertexVt();
+  if (!retval) return retval;
+  if (!(eV->valid())) return retval;
+  for (int i=0; i<N(); i++) {
+    if (ta[i]) GetVTa(i)->SetImp(distance(*ta[i],*eV));
+  }
+  return retval;
 }
 
 //________________________________________________________________________
@@ -333,6 +335,7 @@ EdbVTA *EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		  vta = new EdbVTA(track, this);
 		  vta->SetZpos(zpos);
 	          vta->SetFlag(2);
+		  vta->SetImp(distance(*t, *eV));
 	          AddVTA(vta);
 		  eQuality = eV->prob()/(eV->vtx_cov_x()+eV->vtx_cov_y());
 		}

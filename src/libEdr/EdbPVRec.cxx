@@ -2000,29 +2000,9 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 	  //if( !v2.EstimateVertexMath(x,y,z,d) )  continue;
 	  //	    printf("%d xyz: %f %f %f \t d: %f\n",nvtx,x,y,z,d);    
 
-	  v2->MakeV(usemom);
-	  if(!(v2->V()->findVertexVt()))
+	  if(!(v2->MakeV(usemom)))
 	  {
 //		printf("Fit-Cut Vertex, tracks %d and %d\n", id1, id2);
-	    delete vta1;
-	    delete vta2;
-	    delete v2;
-	    v2 = 0;
-	    continue;
-	  }
-	  if(!(v2->V()->valid()))
-	  {
-//		printf("Valid-Cut Vertex, tracks %d and %d\n", id1, id2);
-	    delete vta1;
-	    delete vta2;
-	    delete v2;
-	    v2 = 0;
-	    continue;
-	  }
-
-	  if(v2->V()->ntracks() != 2)
-	  {
-//		printf("Ntracks!=2-Cut Vertex, tracks %d and %d\n", id1, id2);
 	    delete vta1;
 	    delete vta2;
 	    delete v2;
@@ -3079,7 +3059,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
+int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin, int ngapMax)
 {
   //  extrapolate incomplete tracks and update them with new segments
   //
@@ -3087,8 +3067,8 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
   //  input: nplmin - the minimal length of the track to be continued
 
   int ntr = eTracks->GetEntries();
-  printf("propagate %d tracks, selecting in range [%d : %d] plates...\n"
-	 ,ntr,nplmin,nplmax );
+  printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
+	 ,ntr,nplmin,nplmax, ngapMax );
 
   TIndexCell cn;  //"npl:prob:entry"
   Long_t v[3];
@@ -3130,14 +3110,14 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
 
 	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
-	nseg = PropagateTrack(*tr, true, probMin);
+	nseg = PropagateTrack(*tr, true, probMin, ngapMax);
   	nsegTot += nseg;
 	//printf("\t %d after true ",tr->N());
 
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
-  	nseg = PropagateTrack(*tr, false, probMin);
+  	nseg = PropagateTrack(*tr, false, probMin, ngapMax);
   	nsegTot += nseg;
 	//printf("\t %d after false \n",tr->N());
 
@@ -3149,7 +3129,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin)
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin )
+int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin, int ngapMax )
 {
   float binx=10, bint=10;
   float X0 = GetScanCond()->RadX0();
@@ -3172,7 +3152,6 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin )
   int ntr = eTracks->GetEntriesFast();
 
   int ngap =0;
-  int ngapMax=3; //TODO - as parameter
 
   //printf("pstart, pend, step: %d %d %d \t ntr =%d\n",pstart,pend,step,ntr);
 

@@ -412,8 +412,10 @@ class EdbPVRec : public EdbPatternsVolume {
 			    float binx, float bint );
   int ExtractDataVolumeSegAll( TObjArray &arr );
 
-  int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05 );
-  int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05 );
+  int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05,
+		      int ngapMax = 3 );
+  int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05,
+		      int ngapMax = 3 );
 
   int MakePatternsFromTracks();
 

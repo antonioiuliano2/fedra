@@ -99,6 +99,10 @@ class EdbVertex: public TObject {
   Float_t X() const { return eX;}
   Float_t Y() const { return eY;}
   Float_t Z() const { return eZ;}
+  Float_t VX() const { if (eV) return (eV->vx() + eX); else return 1000000.;}
+  Float_t VY() const { if (eV) return (eV->vy() + eY); else return 1000000.;}
+  Float_t VZ() const { if (eV) return (eV->vz() + eZ); else return 1000000.;}
+  
   void SetXYZ( float x, float y, float z) { eX=x; eY=y; eZ=z;} 
 
   void SetFlag( int flag = 0 ) { eFlag = flag; }
