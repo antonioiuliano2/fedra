@@ -90,7 +90,7 @@ postinstall:
 	   $(MAKE) $(MFLAGS) -C $$i install;\
 	done
 
-install: includedir postinstall
+install: postinstall
 
 debug: install
 	@for i in $(projects); do\
@@ -130,16 +130,3 @@ check:
 	@echo " projects   :" $(projects)
 	@echo " instproj   :" $(instproj)
 	@echo " MAKE       :" $(MAKE)
-
-includedir:
-	@if [ "$(instproj)" != "" ]; then\
-	   if [ ! -d include ]; then\
-	     echo "Create directory include...";\
-	     mkdir include;\
-	   fi;\
-	   for i in $(instproj); do\
-	     if [ ! -L "include/$$i" ]; then\
-	       ln -s ../$$i/include include/$$i;\
-	     fi;\
-	   done;\
-	 fi
