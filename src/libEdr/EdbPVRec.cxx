@@ -1966,6 +1966,7 @@ int EdbPVRec::ProbVertex( TIndexCell &list1, TIndexCell &list2,
 //	    if (iid1 == iid2)
 //	    {
 //		printf("Fit-Cut Vertex # %d, tracks %d and %d\n", iid1, id1%3, id2%3);
+//		printf("Fit-Cut Vertex\n");
 //	    }
 	    delete v2;
 	    v2 = 0;
@@ -2224,6 +2225,7 @@ int EdbPVRec::ProbVertexN(float ProbMin)
   EdbVertex *edbv1 = 0;
   EdbVertex *edbv2 = 0;
   EdbTrackP *tr = 0;
+  EdbTrackP *tr2 = 0;
   int zpos = 0;
   int nvtx = eVTX->GetEntries();
   int nadd = 0;
@@ -2231,7 +2233,9 @@ int EdbPVRec::ProbVertexN(float ProbMin)
   int ncombinv = 0;
   bool wasadded = false;
   bool already_used[10000];
+  bool track_used[10000];
   for (int i1=0; i1<10000; i1++) already_used[i1] = false;
+  for (int i1=0; i1<10000; i1++) track_used[i1] = false;
   
   printf("-----Merge 2-track vertex pairs to N-track vertexes-----\n");
 
@@ -2241,13 +2245,24 @@ int EdbPVRec::ProbVertexN(float ProbMin)
 	if (already_used[i1]) continue;
   	edbv1 = (EdbVertex *)(eVTX->At(i1));
 	if (!edbv1) continue;
-	    int nt1 = edbv1->N();
+	bool anyused = false;
+	for (int icheck1=0; icheck1<edbv1->N(); icheck1++)
+	{
+	    if (track_used[edbv1->GetTrack(icheck1)->ID()]) anyused = true;
+	}
+	if (anyused) continue;
+	for (int icheck1=0; icheck1<edbv1->N(); icheck1++)
+	{
+	    track_used[edbv1->GetTrack(icheck1)->ID()] = true;
+	}
 	    for (int i2=i1+1; (i2<nvtx); i2++)
 	    {
+		if (already_used[i2]) continue;
   		edbv2 = (EdbVertex *)(eVTX->At(i2));
 		if (!edbv2) continue;
 		if (edbv2->N() == 2)
 		{
+		    int nt1 = edbv1->N();
 		    int nt2 = edbv2->N();
 		    int it1=0;
 		    int nomatch = 1;
@@ -2255,6 +2270,7 @@ int EdbPVRec::ProbVertexN(float ProbMin)
 		    {
 		      int it2=0;
 		      tr = edbv1->GetTrack(it1);
+//		      if (track_used[tr->ID()]) { it1++; continue;}
 		      while ( (it2<nt2) && nomatch)
 		      {
 			if (edbv2->GetTrack(it2) == tr)
@@ -2262,29 +2278,40 @@ int EdbPVRec::ProbVertexN(float ProbMin)
 			    ncombin++;
 			    if      (it2 == 0) 
 			    {
-				tr = edbv2->GetTrack(1);
+				tr2 = edbv2->GetTrack(1);
 				zpos = edbv2->Zpos(1);
 			    }
 			    else if (it2 == 1)
 			    {
-				tr = edbv2->GetTrack(0);
+				tr2 = edbv2->GetTrack(0);
 				zpos = edbv2->Zpos(0);
 			    }
 			    bool exist = false;
-			    for (int icheck1=0; icheck1<edbv1->N(); icheck1++)
+			    if (track_used[tr2->ID()]) exist = true;
+			    if (!exist)
 			    {
-				if (tr == edbv1->GetTrack(icheck1)) exist = true;
+				for (int icheck1=0; icheck1<edbv1->N(); icheck1++)
+				{
+				    if (tr2 == edbv1->GetTrack(icheck1)) exist = true;
+				}
 			    }
 			      if (!exist)			    
 			      {
 			        ncombinv++;
-				if(edbv1->AddTrack(tr, zpos, ProbMin))
+				if(edbv1->AddTrack(tr2, zpos, ProbMin))
 				{
+				    track_used[tr2->ID()] = true;
 				    edbv1->SetTracksVertex();
 				    nomatch = 0;
 				    wasadded = true;
 				    already_used[i2] = true;
+//				    printf("Add track ID %d from vertex %d to vertex %d\n",
+//				    tr2->ID(), i2, i1);
 				}
+			      }
+			      else
+			      {
+			        nomatch = 0;
 			      }
 			} // if one of tracks vertex 2 equal some in vertex 1
 			it2++;
