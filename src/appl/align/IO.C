@@ -1,40 +1,80 @@
+void make_views_map( EdbRun *edbRun, TIndexCell &up, TIndexCell &down )
+{
+  int nentr = edbRun->GetEntries();
+  printf("Make views entry map,  nentr = %d\n",nentr);
+
+  Long_t v[2];
+  EdbViewHeader *head=0;
+  for(int iv=0; iv<nentr; iv++ ) {
+
+    head = edbRun->GetEntryHeader(iv);
+
+    v[0]=head->GetAreaID();
+    v[1]=iv;
+
+    if(head->GetNframesTop()==0) {         // fill down views
+      down.Add(2,v);
+    }
+    else if(head->GetNframesBot()==0) {    // fill up views
+      up.Add(2,v);
+    }
+  }
+  
+}
+
 //--------------------------------------------------------------
 void getDataEdb( EdbRun *edbRun,
                  EdbPVRec *pvol,
-                 int aid, float shrU, float shrD,
-                 float uoff[2], float doff[2] )
+                 TIndexCell *up, TIndexCell *down, 
+		 float shrU, float shrD,
+                 float uoff[2], float doff[2], float plate[3] )
 {
-  EdbPattern *patU = 0;
-  EdbPattern *patD = 0;
+  //  float dzd = edbRun->GetHeader()->GetPlate()->GetDown() * shrD/2.;
+  float base=plate[1];
+  float dzd = plate[0];
+  EdbPattern *patD = new EdbPattern(0.,0., dzd );
+  patD->SetID(1);
+
+  getPatternEdb(edbRun,patD,down,shrD,doff,dzd);
+  pvol->AddPattern(patD);
+
+  //  float dzu = edbRun->GetHeader()->GetPlate()->GetUp()   * shrU/2.;
+  float dzu = plate[2];
+  EdbPattern *patU = new EdbPattern(0.,0., -base-dzu);
+  patU->SetID(2);
+
+  getPatternEdb(edbRun,patU,up,shrU,uoff,-dzu);
+  pvol->AddPattern(patU);
+}
+
+//--------------------------------------------------------------
+void getPatternEdb( EdbRun *edbRun,
+		    EdbPattern *pat,
+		    TIndexCell *elist,
+		    float shr, float off[2], float dz )
+{
   EdbSegP    *segP = new EdbSegP();
 
   EdbView    *view=edbRun->GetView();
   EdbSegment *seg=0;
 
   float x,y,z,tx,ty;
-  float dzu = edbRun->GetHeader()->GetPlate()->GetUp() * shrU/2.;
-  float dzd = edbRun->GetHeader()->GetPlate()->GetDown() * shrD/2.;
-  patU = new EdbPattern(0.,0., dzu);
-  patD = new EdbPattern(0.,0., -210.-dzd);
-
-  patU->SetID(1);
-  patD->SetID(2);
 
   int nseg=0;
   int nentr = edbRun->GetEntries();
   printf("nentr = %d\n",nentr);
 
   EdbViewHeader *head=0;
-  for(int iv=0; iv<nentr; iv++ ) {
+  int entry;
 
-    head = edbRun->GetEntryHeader(iv);
-    if(head->GetAreaID()!=aid)  continue;
+  for(int iu=0; iu<elist->N(); iu++) {
+    entry = elist->At(iu)->Value();
 
-    view = edbRun->GetEntry(iv);
+    view = edbRun->GetEntry(entry);
+    head = view->GetHeader();
 
-    printf("Area %d    \t View %d (%5.1f\% ): \t %d/%d",
-	   aid, iv,100.*iv/nentr,head->GetNframesTop(),head->GetNframesBot() );
-    
+    printf(" View %d (%5.1f\% ): \t %d/%d ",
+	   entry,100.*entry/nentr,head->GetNframesTop(),head->GetNframesBot() );
     nseg=0;
 
     for(int j=0;j<view->Nsegments();j++) {
@@ -46,40 +86,20 @@ void getDataEdb( EdbRun *edbRun,
       nseg++;
       //segP->SetDZ( seg->GetDz() );
 
-      if(seg->GetSide()==0)     {
+      tx = seg->GetTx()/shr + off[0];
+      ty = seg->GetTy()/shr + off[1];
+      x  = (seg->GetX0()+view->GetXview()) + dz*tx;
+      y  = (seg->GetY0()+view->GetYview()) + dz*ty;
+      segP->Set( seg->GetID(),x,y,tx,ty);
+      segP->SetZ( pat->Z() );
+      segP->SetW(seg->GetPuls());
+      segP->SetVid(entry,j);
+      pat->AddSegment( *segP);
 
-	tx = seg->GetTx()/shrU + uoff[0];
-	ty = seg->GetTy()/shrU + uoff[1];
-	x  = (seg->GetX0()+view->GetXview()) + dzu*tx;
-	y  = (seg->GetY0()+view->GetYview()) + dzu*ty;
-	segP->Set( seg->GetID(),x,y,tx,ty);
-  	segP->SetZ( patU->Z() );
-	segP->SetW(seg->GetPuls());
-	segP->SetVid(iv,j);
-        patU->AddSegment( *segP);
-      }
-      if(seg->GetSide()==1)     {
-
-	tx = seg->GetTx()/shrD + doff[0];
-	ty = seg->GetTy()/shrD + doff[1];
-	x  = (seg->GetX0()+view->GetXview()) - dzd*tx;
-	y  = (seg->GetY0()+view->GetYview()) - dzd*ty;
-	segP->Set( seg->GetID(),x,y,tx,ty);
-  	segP->SetZ( patD->Z() );
-	segP->SetW(seg->GetPuls());
-	segP->SetVid(iv,j);
-        patD->AddSegment( *segP);
-      }
-
-      
     }
-
     printf("\t nseg = %d  ( %d rejected ) \n", nseg, view->Nsegments()-nseg );
-    
   }
 
-  pvol->AddPattern(patU);
-  pvol->AddPattern(patD);
 }
 
 

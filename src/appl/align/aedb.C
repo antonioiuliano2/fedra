@@ -25,10 +25,11 @@ void aedb()
      "/mnt/operalabdb_e/data/rawr/b1_sep2002/PL03/Sept2002_pl3_1.root"
     ,"READ");
 
-  float  shrU  = 1./1.1;       //
-  float  shrD  = 1./1.2;       //
-  float  uOff[2] = {0.,0.};    // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
-  float  dOff[2] = {0.,0.};    // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
+  float  plate[3] = {44,215,44}; // we do not rely yet on values coming after convertor
+  float  shrD  = 1.02;           //
+  float  shrU  = 0.93;           //
+  float  uOff[2] = {0.,0.};      // s1.eTX-s.eTX, s1.eTY-s.eTY  (at 0 angle)
+  float  dOff[2] = {0.,0.};      // s2.eTX-s.eTX, -(s2.eTY-s.eTY)
 
   TTree *tree = inittree("couples",
 			 "aedb.root",
@@ -38,14 +39,25 @@ void aedb()
   Set_Prototype_OPERA_microtrack( scanCond );
   EdbPatternsVolume *pvol = (EdbPatternsVolume *)ali;
 
-  int nareas= edbRun->GetHeader()->GetNareas();
+  TIndexCell uplist;
+  TIndexCell downlist;
+  make_views_map(edbRun,uplist,downlist);
+  uplist->PrintStat();
+  downlist->PrintStat();
 
+  TIndexCell *up=0;
+  TIndexCell *down=0;
+
+  int nareas= edbRun->GetHeader()->GetNareas();
   for(int aid=0; aid<nareas; aid++) {
-  
+
+    up   = uplist.Find(aid);
+    down = downlist.Find(aid);
+
     ali      = new EdbPVRec();
     ali->SetScanCond(scanCond);
 
-    getDataEdb( edbRun, ali,   aid, shrU, shrD, uOff, dOff );
+    getDataEdb( edbRun, ali, up,down, shrU, shrD, uOff, dOff, plate );
 
     ali->GetScanCond()->Print();
     ali->SetSegmentsErrors();
@@ -58,7 +70,7 @@ void aedb()
     delete pvol;
     delete ali;
   }
-
+  
 }
 
 
