@@ -802,7 +802,7 @@ void rec_all()
 	{
 	    trg = (EdbTrackP*)(gener->eTracks->At(itrg));
 	    p = trg->P();
-	    tr->SetErrorP(p*p*dpp*dpp);
+//test	    tr->SetErrorP(p*p*dpp*dpp);
 	    p = p*(1.+dpp*gRandom->Gaus());
 	    tr->SetP(p);
 	    if (trg->Flag() == 0)        // background track
@@ -935,7 +935,7 @@ void rec_all()
   if (hp[10]) hp[10]->Fill(ntr-negflag);
 
   bool usemom = false;
-  if ( neutral_primary && (nuse == npi) ) usemom = true; 
+//test  if ( neutral_primary && (nuse == npi) ) usemom = true; 
 
   int nvtx = ali->ProbVertex(maxgaps, AngleAcceptance, ProbMinV, ProbMinT, nsegMin, usemom);
 

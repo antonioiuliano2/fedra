@@ -11,8 +11,8 @@ float AngleAcceptance = 0.4;
 float ProbMinV  = 0.001;      // min vertex probability 
 float ProbMinP  = 0.001;     // minimal propagate probability
 float ProbMinT  = 0.001;     // minimal track probability to be used for vtx
-int   nsegMin=4;
-bool  usemom=false;
+int   nsegMin = 5;
+bool  usemom = false;
 
 TH1F *hp[23] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 TObjArray hlist, hld1, hld2, hld3, hld4;
@@ -123,9 +123,9 @@ void init( char *file="ali.root" )
   int nn = gAli->VertexNeighboor(1000.);
   printf("%d neighbooring tracks found\n", nn);
 
-  TFile f("alirec.root","RECREATE");
+  TFile fo("alirec.root","RECREATE");
   gAli->Write("alirec");
-  f.Close();
+  fo.Close();
 }
 
 //---------------------------------------------------------
