@@ -239,6 +239,8 @@ class EdbDataProc : public TObject {
 
   EdbDataSet *eDataSet;
 
+  int  eNoUpdate;
+
  public:
   EdbDataProc() {eDataSet=0;}
   EdbDataProc(const char *file);
@@ -254,6 +256,8 @@ class EdbDataProc : public TObject {
   void LinkTracks(int alg=0);
   void LinkRawTracks(int alg=0);
   void AlignLinkTracks(int alg=0);
+  void SetNoUpdate(int nu) { eNoUpdate=nu; }
+  int  NoUpdate() const    { return eNoUpdate; }
 
   int    ShrinkCorr() {return 1;}
   int    CheckShrinkage( EdbPVRec *ali, int couple, float &shr1, float &shr2 );

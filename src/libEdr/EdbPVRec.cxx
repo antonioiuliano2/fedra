@@ -461,9 +461,60 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
 }
 
+/*
+///______________________________________________________________________________
+float EdbPatCouple::Chi2full( EdbSegP *s1, EdbSegP *s2, int iprob  )
+{
+  // full estimation of chi2  
+  //
+  // All calculation are done in the track plane which remove the 
+  // dependancy of the polar angle (phi)
+
+  float tx,ty;
+
+  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
+  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
+
+  TVector3 v1,v2,v;  // values
+  TVector3 s1,s2,s;  // sigmas
+  s1.SetXYZ( 
+
+
+  v1.SetXYZ( s1->TX(), s1->TY() , -1. );
+  v2.SetXYZ( s2->TX(), s2->TY() , -1. );
+  v.SetXYZ(  -( s2->X() - s1->X() ),
+	     -( s2->Y() - s1->Y() ),
+	     -( s2->Z() - s1->Z() ) );
+
+  float phi = v.Phi();
+  v.RotateZ(  -phi );
+  v1.RotateZ( -phi );
+  v2.RotateZ( -phi );
+
+  float dz  = v.Z();
+  tx  = v.X()/dz;
+  ty  = v.Y()/dz;
+  float stx   = eCond->SigmaTX(tx);
+  float sty   = eCond->SigmaTY(ty);
+  float prob1=1., prob2=1.;
+  if(iprob) {
+    prob1 = eCond->ProbSeg(tx,ty,s1->W());
+    prob2 = eCond->ProbSeg(tx,ty,s2->W());
+  }
+  float dtx1 = (v1.X()-tx)*(v1.X()-tx)/stx/stx/prob1;
+  float dty1 = (v1.Y()-ty)*(v1.Y()-ty)/sty/sty/prob1;
+  float dtx2 = (v2.X()-tx)*(v2.X()-tx)/stx/stx/prob2;
+  float dty2 = (v2.Y()-ty)*(v2.Y()-ty)/sty/sty/prob2;
+  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+}
+
+*/
+
 ///______________________________________________________________________________
 float EdbPatCouple::Chi2Pn( EdbSegCouple *scp )
 {
+  //use grain parameters for segment errors estimation
+
   EdbSegP *s1=0, *s2=0;
   float sx=.5, sy=.5, sz=3., dz=44.;
   float sa;
@@ -1343,6 +1394,7 @@ int EdbPVRec::CollectSegment1( TIndexCell *ct, THashList *cross)
 int EdbPVRec::MakeHoles(int ort)
 {
   // holes attached only from the one side corresponding to ort
+  // only tracks with nseg>= abs(ort) are extrapolated
 
   TIndexCell *ct;
   Long_t     vn=0,v0=0,v1=0,v2=0;
@@ -1357,18 +1409,19 @@ int EdbPVRec::MakeHoles(int ort)
 
     ct = eTracksCell->At(it);
     n = ct->N(1);
-    if( n >= Npatterns() )       continue;  // too many segments
+    if( n >= Npatterns() )       continue;  // too many   segments
+    if( n < TMath::Abs(ort) )    continue;  // not enough segments
     vn = ct->At(n-1)->Value();
     v0 = ct->At(0)->Value();
     if( Pid(vn)-Pid(v0) < n-1 )  continue;  // track is not isolated
 
     if(ort<0)    {              // attach at the beginnning of the track
-      if( Pid(v0) < 1 )    continue; 
+      if( Pid(v0) < 1 )                continue;
       v2=v0;
       v1 = ct->At(1)->Value();
       pid =  Pid(v0)-1;
     } else if(ort>0) {          // attach at the end of the track
-      if( Pid(vn) > Npatterns()-2 )    continue; 
+      if( Pid(vn) > Npatterns()-2 )    continue;
       v2=vn;
       v1 = ct->At(n-2)->Value();
       pid =  Pid(vn)+1;

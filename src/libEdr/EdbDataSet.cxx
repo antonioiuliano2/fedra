@@ -477,7 +477,7 @@ int EdbDataPiece::UpdateShrPar(int layer)
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
-    return 0;
+    return -1;
   }else
     printf( "\nUpdate parameters file with SHRINK %d: %s\n\n", layer, file );
 
@@ -497,7 +497,7 @@ int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
-    return 0;
+    return -1;
   }else
     printf( "\nUpdate parameters file with AFFXY: %s\n\n", file );
 
@@ -518,7 +518,7 @@ int EdbDataPiece::UpdateZPar(int layer, float z)
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
-    return 0;
+    return -1;
   }else
     printf( "\nUpdate parameters file with ZLAYER: %s\n\n", file );
 
@@ -543,7 +543,7 @@ int EdbDataPiece::UpdateAffTPar(int layer, EdbAffine2D &aff)
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
-    return 0;
+    return -1;
   }else
     printf( "\nUpdate parameters file with AFFTXTY: %s\n\n", file );
 
@@ -780,6 +780,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 {
   if (eRun ) delete eRun;
   eRun =  new EdbRun( GetRunFile(0),"READ" );
+  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
   EdbView    *view = eRun->GetView();
   EdbSegment *seg;
 
@@ -867,7 +868,7 @@ int EdbDataPiece::UpdateSegmentCut(EdbSegmentCut cut)
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
-    return 0;
+    return -1;
   }
 
   char str[124];
@@ -920,7 +921,7 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
 
   CloseRun();
   eRun =  new EdbRun( GetRunFile(0),"READ" );
-  if(!eRun) return 0;
+  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
 
   EdbPattern *pat1 = new EdbPattern( 0.,0., GetLayer(1)->Z() + GetLayer(0)->Z() );
   EdbPattern *pat2 = new EdbPattern( 0.,0., GetLayer(2)->Z() + GetLayer(0)->Z() );
@@ -1012,6 +1013,8 @@ int EdbDataPiece::MakeLinkListArea(int irun)
 {
   if (eRun ) delete eRun;
   eRun =  new EdbRun( GetRunFile(irun),"READ" );
+  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(irun)); return -1; }
+
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -1111,6 +1114,8 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
 {
   if(eRun) delete eRun;
   eRun =  new EdbRun( GetRunFile(irun),"READ" );
+  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
+
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -1367,8 +1372,9 @@ int EdbDataSet::GetRunList(const char *file)
     } else {
       piece->MakeNameCP(GetAnaDir());
       piece->MakeNamePar(GetParDir());
-      piece->TakePiecePar();
-      ePieces.Add(piece);
+      if(piece->TakePiecePar()>=0)
+	ePieces.Add(piece);
+      else printf("skip piece!!!\n");
     }
   }
   fclose(fp);
@@ -1380,6 +1386,7 @@ int EdbDataSet::GetRunList(const char *file)
 EdbDataProc::EdbDataProc(const char *file)
 {
   eDataSet = new EdbDataSet(file);
+  eNoUpdate=0;
 }
 
 ///------------------------------------------------------------------------------
@@ -1398,6 +1405,7 @@ int EdbDataProc::CheckCCD()
   for(int i=0; i<np; i++) {
     piece = eDataSet->GetPiece(i);
     ndef = piece->CheckCCD();
+    if(ndef<0) { printf("skip piece\n"); continue; }
     printf("piece %s: eliminated defects: %d\n",piece->GetName(),ndef); 
     piece->WriteCuts();
     piece->CloseRun();
@@ -1568,6 +1576,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
     nareas = piece.MakeLinkListCoord(irun);
     //nareas = piece.MakeLinkListArea(irun);
+    if(nareas<=0) continue; 
     for(int i=0; i<nareas; i++ ) {
 
       ali      = new EdbPVRec();
@@ -1601,8 +1610,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     printf("Shrinkage correction: %f %f\n", (float)shrtot1,(float)shrtot2);
     piece.CorrectShrinkage( 1, (float)shrtot1 );
     piece.CorrectShrinkage( 2, (float)shrtot2 );
-    piece.UpdateShrPar(1);
-    piece.UpdateShrPar(2);
+    if(!NoUpdate())   piece.UpdateShrPar(1);
+    if(!NoUpdate())   piece.UpdateShrPar(2);
   }
   CloseCouplesTree(cptree);
 
@@ -1720,7 +1729,7 @@ void EdbDataProc::Align()
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
     ali->GetPattern(i)->GetKeep(aff);
-    eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
   }
 
 }
@@ -1733,15 +1742,15 @@ void EdbDataProc::LinkTracks( int alg )
   ali->Link();
   printf("link ok\n");
 
-  if(alg==1) {
+  if(alg>1) {
     int nhol;
     ali->FillTracksCell();
-    nhol = ali->MakeHoles(1);
-    //    printf("inserted %d holes forward\n",nhol);
+    nhol = ali->MakeHoles(alg);
+    printf("inserted %d holes forward of >=%d-segmented tracks\n",nhol,alg);
     ali->Link();
     ali->FillTracksCell();
-    nhol = ali->MakeHoles(-1);
-    //    printf("inserted %d holes backward\n",nhol);
+    nhol = ali->MakeHoles(-alg);
+    printf("inserted %d holes backward of >=%d-segmented tracks\n",nhol,alg);
     ali->Link();
   }
 
@@ -1807,7 +1816,7 @@ void EdbDataProc::FineAlignment()
   if(fctr>fcMin) {
     for( i=0; i<ali.Npatterns(); i++) {
       ali.GetPattern(i)->GetKeep(aff);
-      eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
+      if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
     }
   }
 
@@ -1820,7 +1829,7 @@ void EdbDataProc::FineAlignment()
     if(fctr<=fcMin) break;
     z -= dz;
     printf("dz = %f  z = %f\n",dz,z);
-    eDataSet->GetPiece(i)->UpdateZPar(0,z);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,z);
   }
 
   ali.SelectLongTracks(ali.Npatterns());
@@ -1829,7 +1838,7 @@ void EdbDataProc::FineAlignment()
     fctr = ali.FineCorrTXTY(i,aff);
     if(fctr<=fcMin) break;
     aff.Print();
-    eDataSet->GetPiece(i)->UpdateAffTPar(0,aff);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffTPar(0,aff);
   }
 
   ali.SelectLongTracks(ali.Npatterns());
@@ -1841,7 +1850,7 @@ void EdbDataProc::FineAlignment()
     if(fctr<=fcMin) break;
     z -= dz;
     printf("dz = %f  z = %f\n",dz,z);
-    eDataSet->GetPiece(i)->UpdateZPar(0,z);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,z);
   }
 
   ali.SelectLongTracks(ali.Npatterns());
@@ -1851,7 +1860,7 @@ void EdbDataProc::FineAlignment()
     fctr = ali.FineCorrShr(i,shr);
     if(fctr<=fcMin) break;
     eDataSet->GetPiece(i)->CorrectShrinkage(0,shr);
-    eDataSet->GetPiece(i)->UpdateShrPar(0);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateShrPar(0);
   }
 
 }
@@ -1867,7 +1876,7 @@ void EdbDataProc::AlignLinkTracks(int alg)
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
     ali->GetPattern(i)->GetKeep(aff);
-    eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
   }
 
   ali->Link();

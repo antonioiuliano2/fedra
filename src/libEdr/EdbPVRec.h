@@ -19,7 +19,9 @@ class TIndexCell;
 
 //______________________________________________________________________________
 class EdbScanCond : public TNamed {
- 
+  //
+  //  Keep the accuracy parameters for 1 pattern/layer
+  // 
  private:
 
   Float_t  eDegrad;    // angular degradation of parameters: S = S0*(1 + eDegrad*Ang)
@@ -41,7 +43,8 @@ class EdbScanCond : public TNamed {
   Float_t eChi2Max;           //
   Float_t eChi2PMax;          //
 
-  Float_t eOffX, eOffY;       // maximal offsets in x and y
+  Float_t eOffX, eOffY;       // maximal offsets in x and y - the accuracy of pattern 
+                              // itself in respect to the upper level RS
 
  public:
   EdbScanCond();

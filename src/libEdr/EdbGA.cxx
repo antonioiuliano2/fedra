@@ -51,13 +51,13 @@ void EdbGA::GetClustPFile(const char *file)
   EdbClustP *clp = 0;
   clust->SetBranchAddress("cl",&clp);
 
-  int nentr=clust->GetEntries();
+  int nentr = (int)(clust->GetEntries());
   TClonesArray *clarr = new TClonesArray("EdbCluster");
 
   int ncl =0;
   for(int i=0; i<nentr; i++) {
     clust->GetEntry(i);
-    if( clp->GetZ()>-50.) continue;
+    //if( clp->GetZ()>-50.) continue;
     //if( clp->Xp()<500.) continue;
     //if( clp->Xp()>600.) continue;
     //if( clp->Yp()<500.) continue;
@@ -75,7 +75,13 @@ void EdbGA::GetClustPFile(const char *file)
 
   SetBin(4,4,1);
   TIndexCell chains;
+  printf("chains\n");
   VerticalChains(clarr,chains);
+  for(int i=0; i<10; i++) {
+    printf("chainsA\n");
+    VerticalChainsA(clarr);
+  }
+  printf("\n tree: \n\n");
   InitTree("grains_tree.root");
   MakeGrainsTree(clarr,chains);
   eGrainsFile->Close();  
@@ -104,6 +110,42 @@ void EdbGA::CheckViewGrains(int vid)
 }
 
 ///-----------------------------------------------------------------------------
+void EdbGA::VerticalChainsA( TClonesArray *clusters )
+{
+  float eDX = 1301, eDY=1025;
+  eBinX=4; eBinY=4;
+  const int nx = (int)(eDX/eBinX);
+  const int ny = (int)(eDY/eBinY);
+  const int nz = 50; 
+
+  int *v = new int[nx*nx*ny];
+
+  int ix,iy,iz,iv;
+
+  EdbCluster *cl;
+
+  for(iz=0; iz<nz; iz++)
+    for(iy=0; iy<ny; iy++)
+      for(ix=0; ix<nx; ix++) {
+	iv = ix + nx*iy + nx*ny*iz;
+	v[iv] = -1;
+      }
+  
+  int ncl = clusters->GetEntries();
+  for( int i=0; i<ncl; i++ ) {
+    cl = (EdbCluster*)(clusters->UncheckedAt(i));
+    ix = (int)(cl->X()/eBinX);
+    iy = (int)(cl->Y()/eBinY);
+    iz = (int)(cl->GetFrame());
+
+    iv = ix + nx*iy + nx*ny*iz;
+    v[iv] = i;
+  }
+
+  delete[] v;
+}
+
+///-----------------------------------------------------------------------------
 void EdbGA::VerticalChains( TClonesArray *clusters, TIndexCell &chains )
 {
   //chains: "x:y:z:entry"
@@ -124,8 +166,8 @@ void EdbGA::VerticalChains( TClonesArray *clusters, TIndexCell &chains )
   }
 
   chains.Sort();
-  chains.PrintStat();
-  chains.PrintPopulation(3);
+  //chains.PrintStat();
+  //chains.PrintPopulation(3);
 }
 
 ///------------------------------------------------------------------
