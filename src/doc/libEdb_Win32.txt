@@ -198,4 +198,4 @@ The library has be written to be used with ROOT v.3 and higher. Unfortunately, s
 ---------------------------------------
 Take care that the library which reads the files *.rwc is registered.
 
-regsvr32 *.dll
+regsvr32 SySalSataIO.dll

@@ -1,5 +1,5 @@
 set PATH=C:\WINNT\system32;C:\WINNT;C:\WINNT\System32\Wbem
-rem call "C:\Program Files\Microsoft Visual Studio\VC98\Bin\vcvars32.bat"
+call "C:\Program Files\Microsoft Visual Studio\VC98\Bin\vcvars32.bat"
 
 set TEMP=c:\temp
 set HOME=c:\valeri

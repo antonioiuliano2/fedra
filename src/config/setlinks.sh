@@ -1,5 +1,5 @@
-export PROJECT_INC=/home/valeri/public/fedra/include
-export PROJECT_SRC=/home/valeri/public/fedra/src
+export PROJECT_INC=/home/valeri/tmp/fedra/include
+export PROJECT_SRC=/home/valeri/tmp/fedra/src
 
 ln -si $PROJECT_SRC/libEmath/TIndexCell.h  $PROJECT_INC/TIndexCell.h
 
