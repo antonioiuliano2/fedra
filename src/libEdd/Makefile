@@ -37,7 +37,9 @@ depend:
 	$(CXX) $(CXXFLAGS) -c $<
 # DO NOT DELETE
 
-EdbDisplay.o: EdbDisplay.h EdbDisplayBase.h /var/local/root/include/TObject.h
+EdbDisplay.o: /var/local/root/include/TStyle.h
+EdbDisplay.o: /var/local/root/include/TNamed.h
+EdbDisplay.o: /var/local/root/include/TObject.h
 EdbDisplay.o: /var/local/root/include/Rtypes.h
 EdbDisplay.o: /var/local/root/include/RConfig.h
 EdbDisplay.o: /var/local/root/include/RVersion.h
@@ -59,14 +61,6 @@ EdbDisplay.o: /var/local/root/include/TStorage.h
 EdbDisplay.o: /var/local/root/include/Riosfwd.h
 EdbDisplay.o: /var/local/root/include/TBuffer.h
 EdbDisplay.o: /var/local/root/include/Bytes.h /usr/include/string.h
-EdbDisplay.o: /var/local/root/include/TCanvas.h
-EdbDisplay.o: /var/local/root/include/TPad.h
-EdbDisplay.o: /var/local/root/include/TVirtualPad.h
-EdbDisplay.o: /var/local/root/include/TAttPad.h
-EdbDisplay.o: /var/local/root/include/Gtypes.h
-EdbDisplay.o: /var/local/root/include/Htypes.h
-EdbDisplay.o: /var/local/root/include/TVirtualX.h
-EdbDisplay.o: /var/local/root/include/TNamed.h
 EdbDisplay.o: /var/local/root/include/TList.h
 EdbDisplay.o: /var/local/root/include/TSeqCollection.h
 EdbDisplay.o: /var/local/root/include/TCollection.h
@@ -75,10 +69,20 @@ EdbDisplay.o: /var/local/root/include/TString.h
 EdbDisplay.o: /var/local/root/include/TMath.h
 EdbDisplay.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbDisplay.o: /var/local/root/include/TRefCnt.h
+EdbDisplay.o: /var/local/root/include/TAttAxis.h
+EdbDisplay.o: /var/local/root/include/Gtypes.h
+EdbDisplay.o: /var/local/root/include/Htypes.h
 EdbDisplay.o: /var/local/root/include/TAttLine.h
 EdbDisplay.o: /var/local/root/include/TAttFill.h
 EdbDisplay.o: /var/local/root/include/TAttText.h
 EdbDisplay.o: /var/local/root/include/TAttMarker.h
+EdbDisplay.o: /var/local/root/include/TArrayI.h
+EdbDisplay.o: /var/local/root/include/TArray.h EdbDisplay.h EdbDisplayBase.h
+EdbDisplay.o: /var/local/root/include/TCanvas.h
+EdbDisplay.o: /var/local/root/include/TPad.h
+EdbDisplay.o: /var/local/root/include/TVirtualPad.h
+EdbDisplay.o: /var/local/root/include/TAttPad.h
+EdbDisplay.o: /var/local/root/include/TVirtualX.h
 EdbDisplay.o: /var/local/root/include/GuiTypes.h
 EdbDisplay.o: /var/local/root/include/Buttons.h
 EdbDisplay.o: /var/local/root/include/TQObject.h
@@ -96,8 +100,6 @@ EdbDisplay.o: /var/local/root/include/TPolyMarker3D.h
 EdbDisplay.o: /var/local/root/include/TClonesArray.h
 EdbDisplay.o: /var/local/root/include/TObjArray.h
 EdbDisplay.o: /var/local/root/include/TArrayF.h
-EdbDisplay.o: /var/local/root/include/TArray.h
-EdbDisplay.o: /var/local/root/include/TArrayI.h
 EdbDisplay.o: /var/local/root/include/TButton.h
 EdbDisplay.o: /var/local/root/include/TGClient.h
 EdbDisplay.o: /var/local/root/include/TGButton.h
@@ -151,22 +153,7 @@ EdbDisplayBase.o: /var/local/root/include/TCanvas.h
 EdbDisplayBase.o: /var/local/root/include/TPad.h
 EdbDisplayBase.o: /var/local/root/include/TVirtualPad.h
 EdbDisplayBase.o: /var/local/root/include/TAttPad.h
-EdbDisplayBase.o: /var/local/root/include/Gtypes.h
-EdbDisplayBase.o: /var/local/root/include/Htypes.h
 EdbDisplayBase.o: /var/local/root/include/TVirtualX.h
-EdbDisplayBase.o: /var/local/root/include/TNamed.h
-EdbDisplayBase.o: /var/local/root/include/TList.h
-EdbDisplayBase.o: /var/local/root/include/TSeqCollection.h
-EdbDisplayBase.o: /var/local/root/include/TCollection.h
-EdbDisplayBase.o: /var/local/root/include/TIterator.h
-EdbDisplayBase.o: /var/local/root/include/TString.h
-EdbDisplayBase.o: /var/local/root/include/TMath.h
-EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
-EdbDisplayBase.o: /var/local/root/include/TRefCnt.h
-EdbDisplayBase.o: /var/local/root/include/TAttLine.h
-EdbDisplayBase.o: /var/local/root/include/TAttFill.h
-EdbDisplayBase.o: /var/local/root/include/TAttText.h
-EdbDisplayBase.o: /var/local/root/include/TAttMarker.h
 EdbDisplayBase.o: /var/local/root/include/GuiTypes.h
 EdbDisplayBase.o: /var/local/root/include/Buttons.h
 EdbDisplayBase.o: /var/local/root/include/TQObject.h
@@ -178,14 +165,18 @@ EdbDisplayBase.o: /var/local/root/include/TCanvasImp.h
 EdbDisplayBase.o: /var/local/root/include/TSlider.h
 EdbDisplayBase.o: /var/local/root/include/TView.h
 EdbDisplayBase.o: /var/local/root/include/TPolyLine3D.h
+EdbDisplayBase.o: /var/local/root/include/TString.h
+EdbDisplayBase.o: /var/local/root/include/TMath.h
+EdbDisplayBase.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
+EdbDisplayBase.o: /var/local/root/include/TRefCnt.h
 EdbDisplayBase.o: /var/local/root/include/TAtt3D.h
 EdbDisplayBase.o: /var/local/root/include/X3DBuffer.h
 EdbDisplayBase.o: /var/local/root/include/TPolyMarker3D.h
 EdbDisplayBase.o: /var/local/root/include/TClonesArray.h
 EdbDisplayBase.o: /var/local/root/include/TObjArray.h
 EdbDisplayBase.o: /var/local/root/include/TArrayF.h
-EdbDisplayBase.o: /var/local/root/include/TArray.h
 EdbDisplayBase.o: /var/local/root/include/TArrayI.h
+EdbDisplayBase.o: /var/local/root/include/TArray.h
 EdbDisplayBase.o: /var/local/root/include/TButton.h
 EdbDisplayBase.o: /var/local/root/include/TGClient.h
 EdbDisplayBase.o: /var/local/root/include/TGButton.h
@@ -218,6 +209,12 @@ EdbDisplayBase.o: /var/local/root/include/TWbox.h
 EdbDisplayBase.o: /var/local/root/include/TGaxis.h
 EdbDisplayBase.o: /var/local/root/include/TROOT.h
 EdbDisplayBase.o: /var/local/root/include/TDirectory.h
+EdbDisplayBase.o: /var/local/root/include/TNamed.h
+EdbDisplayBase.o: /var/local/root/include/TList.h
+EdbDisplayBase.o: /var/local/root/include/TSeqCollection.h
+EdbDisplayBase.o: /var/local/root/include/TCollection.h
+EdbDisplayBase.o: /var/local/root/include/TIterator.h
 EdbDisplayBase.o: /var/local/root/include/TDatime.h
+EdbDisplayBase.o: /var/local/root/include/Htypes.h
 EdbDisplayBase.o: /var/local/root/include/TUUID.h
 EdbDisplayBase.o: /var/local/root/include/TInetAddress.h

@@ -71,16 +71,6 @@ protected:
    TButton          *fZoomButton;           //Button to activate Zoom mode
    TArc             *fArcButton;            //Gren/Red button to show Pick/Zoom mode
    TList            *fFruits;               //List for fruits
-   TButton	    *fUnZoomButton;
-   TPaveText        *fTitle;
-   TPaveLabel       *fLabel;
-   TButton          *fButton1;
-   TButton          *fButton2;
-   TButton          *fButton3;
-   TButton          *fButton4;
-   TButton          *fButton5;
-   TButton          *fButton6;
-   TDiamond         *fDiamond;
 
 public:
 
@@ -91,9 +81,10 @@ public:
 		   Float_t z0, Float_t z1 );
    ~EdbDisplayBase(){};
 
+   virtual void      Set0();
    virtual void      Refresh() {}
    virtual void      ExecuteEvent(Int_t event, Int_t px, Int_t py);
-   virtual void      DisplayButtons(const char *title);
+   virtual void      DisplayButtons();
    virtual void      SetView(Float_t theta, Float_t phi, Float_t psi=0);
    virtual void      DrawAllViews();
    virtual void      DrawViewGL();
