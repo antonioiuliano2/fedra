@@ -7,7 +7,7 @@ PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  ole32.lib
 
 CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR) -D_USESYSAL 
 
-targets = rwc2edb.exe edb2rwc.exe rwdread.exe rwcread.exe
+targets = rwc2edb.exe edb2rwc.exe rwdread.exe rwcread.exe rwdcomp.exe
 
 $(targets): libDataConversion.obj $(@B).obj
 	$(LD) $** $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@

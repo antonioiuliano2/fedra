@@ -28,92 +28,122 @@ int main(int argc, char *argv[])
    if (ReadFragment((void**)&pFrag, (char*)rwdname) != 1) return false;
 
 	cout<<"-----------------------------------------------------------------------\n";
-	cout<<"t_Hdr Hdr\tIO_Header Type  BYTE InfoType = "	<<pFrag->Hdr.Type.InfoType<<endl;
-	cout<<"\t\t\t\tWORD HeaderFormat = "							<<pFrag->Hdr.Type.HeaderFormat <<endl;
-	cout<<"\t\tIdentifier ID\tDWORD Part[0] = "<<pFrag->Hdr.ID.Part[0] <<endl;
-	cout<<"\t\t\t\tDWORD Part[1] = "					<<pFrag->Hdr.ID.Part[1] <<endl;
-	cout<<"\t\t\t\tDWORD Part[2] = "					<<pFrag->Hdr.ID.Part[2] <<endl;
-	cout<<"\t\t\t\tDWORD Part[3] = "					<<pFrag->Hdr.ID.Part[3] <<endl;
-	cout<<"-----------------------------------------------------------------------\n";
+	cout<<"IO_VS_Fragment2" << endl;	
+	cout<<"  |-- t_Hdr Hdr"<<endl;
+	cout<<"  |\t  |-- IO_Header Type"<<endl;
+	cout<<"  |\t  |\t  |-- BYTE InfoType     = " << pFrag->Hdr.Type.InfoType <<endl;
+	cout<<"  |\t  |\t  |-- WORD HeaderFormat = " << pFrag->Hdr.Type.HeaderFormat <<endl;
+	cout<<"  |\t  |-- Identifier ID"<<endl;
+	cout<<"  |\t   \t  |-- DWORD Part[0] = " << pFrag->Hdr.ID.Part[0] <<endl;
+	cout<<"  |\t   \t  |-- DWORD Part[1] = " << pFrag->Hdr.ID.Part[1] <<endl;
+	cout<<"  |\t   \t  |-- DWORD Part[2] = " << pFrag->Hdr.ID.Part[2] <<endl;
+	cout<<"  |\t   \t  |-- DWORD Part[3] = " << pFrag->Hdr.ID.Part[3] <<endl;
 
-	cout<<"VS_Fragment2 Fragment\tint Index = "<<pFrag->Fragment.Index<<endl;
-	cout<<"\t\tint StartView = "					<<pFrag->Fragment.StartView<<endl;
-	cout<<"\t\tint CountOfViews = "				<<pFrag->Fragment.CountOfViews<<endl;
-	cout<<"\t\tint FitCorrectionDataSize = "	<<pFrag->Fragment.FitCorrectionDataSize<<endl;
-	cout<<"\t\tint CodingMode = "					<<pFrag->Fragment.CodingMode<<endl;
+   VS_Fragment2* fr(& pFrag->Fragment) ;
 
-   if (vid>=(unsigned int)pFrag->Fragment.CountOfViews ) { cout <<"View ID out of range!"<<endl ; return false ;}
-	cout<<"\t\tVS_View2 *pViews\tint TileX = "	<<pFrag->Fragment.pViews[vid].TileX<<endl;
-	cout<<"\t\t\t\tint TileY = "	<<pFrag->Fragment.pViews[vid].TileY<<endl;
-	cout<<"\t\t\t\tfloat X[0] = "	<<pFrag->Fragment.pViews[vid].X[0]<<endl;
-	cout<<"\t\t\t\tfloat Y[0] = "	<<pFrag->Fragment.pViews[vid].Y[0]<<endl;
-	cout<<"\t\t\t\tfloat X[1] = "	<<pFrag->Fragment.pViews[vid].X[1]<<endl;
-	cout<<"\t\t\t\tfloat Y[1] = "	<<pFrag->Fragment.pViews[vid].Y[1]<<endl;
-   cout<<"\t\t\t\tfloat MapX[0] = "	<<pFrag->Fragment.pViews[vid].MapX[0]<<endl;
-   cout<<"\t\t\t\tfloat MapY[0] = "	<<pFrag->Fragment.pViews[vid].MapY[0]<<endl;
-	cout<<"\t\t\t\tfloat MapX[1] = "	<<pFrag->Fragment.pViews[vid].MapX[1]<<endl;
-	cout<<"\t\t\t\tfloat MapY[1] = "	<<pFrag->Fragment.pViews[vid].MapY[1]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[0][0][0] = "<<pFrag->Fragment.pViews[vid].ImageMat[0][0][0]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[0][0][1] = "<<pFrag->Fragment.pViews[vid].ImageMat[0][0][1]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[0][1][0] = "<<pFrag->Fragment.pViews[vid].ImageMat[0][1][0]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[0][1][1] = "<<pFrag->Fragment.pViews[vid].ImageMat[0][1][1]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[1][0][0] = "<<pFrag->Fragment.pViews[vid].ImageMat[1][0][0]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[1][0][1] = "<<pFrag->Fragment.pViews[vid].ImageMat[1][0][1]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[1][1][0] = "<<pFrag->Fragment.pViews[vid].ImageMat[1][1][0]<<endl;
-	cout<<"\t\t\t\tfloat ImageMat[1][1][1] = "<<pFrag->Fragment.pViews[vid].ImageMat[1][1][1]<<endl;
-	cout<<"\t\t\t\tRelevantZs\tfloat TopExt    = "	<<pFrag->Fragment.pViews[vid].RelevantZs.TopExt<<endl;
-	cout<<"\t\t\t\t\t\tfloat TopInt    = "	<<pFrag->Fragment.pViews[vid].RelevantZs.TopInt<<endl;
-	cout<<"\t\t\t\t\t\tfloat BottomInt = "	<<pFrag->Fragment.pViews[vid].RelevantZs.BottomInt<<endl;
-	cout<<"\t\t\t\t\t\tfloat BottomExt = "	<<pFrag->Fragment.pViews[vid].RelevantZs.BottomExt<<endl;
+	cout<<"  |-- VS_Fragment2 Fragment"<<endl;
+	cout<<"  |\t  |-- int Index        = " << fr->Index         <<endl;
+	cout<<"  |\t  |-- int StartView    = " << fr->StartView     <<endl;
+	cout<<"  |\t  |-- int CountOfViews = " << fr->CountOfViews  <<endl;
+	cout<<"  |\t  |-- int FitCorrectionDataSize = " << fr->FitCorrectionDataSize  <<endl;
+	cout<<"  |\t  |-- int CodingMode   = " << fr->CodingMode    <<endl;
 
-   cout<<"\t\t\t\tt_Layers2 Layers[0]\tint Count = "	<<pFrag->Fragment.pViews[vid].Layers[0].Count<<endl;
-   cout<<"\t\t\t\t\t\t\tt_LayerInfo* pLayerInfo\tint Clusters , float Z ="<<endl;
-   for(int i=0;i<pFrag->Fragment.pViews[vid].Layers[0].Count;i++)
-      cout<<"\t\t\t\t\t\t\t " <<pFrag->Fragment.pViews[vid].Layers[0].pLayerInfo[i].Clusters
-          <<"\t"<< pFrag->Fragment.pViews[vid].Layers[0].pLayerInfo[i].Z <<endl;
+   if (vid>=(unsigned int)fr->CountOfViews ) { cout <<"View ID out of range!"<<endl ; return false ;}
+	
+   VS_View2* vw(& pFrag->Fragment.pViews[vid]) ;
+   
+   cout<<"  |\t  |-- VS_View2 *pViews" << endl;
+   cout<<"  |\t   \t  |-- int TileX = "  << vw->TileX <<endl;
+	cout<<"  |\t   \t  |-- int TileY = "  << vw->TileY <<endl;
+	cout<<"  |\t   \t  |-- float X[0] = "	<< vw->X[0] <<endl;
+	cout<<"  |\t   \t  |-- float Y[0] = "	<< vw->Y[0] <<endl;
+	cout<<"  |\t   \t  |-- float X[1] = "	<< vw->X[1] <<endl;
+	cout<<"  |\t   \t  |-- float Y[1] = "	<< vw->Y[1] <<endl;
+   cout<<"  |\t   \t  |-- float MapX[0] = "	<< vw->MapX[0] <<endl;
+   cout<<"  |\t   \t  |-- float MapY[0] = "	<< vw->MapY[0] <<endl;
+	cout<<"  |\t   \t  |-- float MapX[1] = "	<< vw->MapX[1] <<endl;
+	cout<<"  |\t   \t  |-- float MapY[1] = "	<< vw->MapY[1] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[0][0][0] = "<< vw->ImageMat[0][0][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[0][0][1] = "<< vw->ImageMat[0][0][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[0][1][0] = "<< vw->ImageMat[0][1][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[0][1][1] = "<< vw->ImageMat[0][1][1] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[1][0][0] = "<< vw->ImageMat[1][0][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[1][1][0] = "<< vw->ImageMat[1][1][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[1][0][1] = "<< vw->ImageMat[1][0][1] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[1][1][0] = "<< vw->ImageMat[1][1][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[1][1][1] = "<< vw->ImageMat[1][1][1] <<endl;
+   cout<<"  |\t   \t  |-- t_RelevantZs2 RelevantZs" <<endl;
+   cout<<"  |\t   \t  |     |-- float TopExt    = "	<< vw->RelevantZs.TopExt    <<endl;
+	cout<<"  |\t   \t  |     |-- float TopInt    = "	<< vw->RelevantZs.TopInt    <<endl;
+	cout<<"  |\t   \t  |     |-- float BottomInt = "	<< vw->RelevantZs.BottomInt <<endl;
+	cout<<"  |\t   \t  |     |-- float BottomExt = "	<< vw->RelevantZs.BottomExt <<endl;
+   
+   for(int j=0;j<2;j++)
+   {
+      cout<<"  |\t   \t  |-- t_Layers2 Layers["<<j<<"]" <<endl;
+      cout<<"  |\t   \t  |     |-- int Count         = " << vw->Layers[j].Count <<endl;
+      cout<<"  |\t   \t  |     |-- t_LayerInfo* pLayerInfo" <<endl;
+      cout<<"  |\t   \t  |           |-- int Clusters     #### see below  " <<endl;
+      cout<<"  |\t   \t  |           |-- float Z          #### see below  "<<endl;
+   }
 
-   cout<<"\t\t\t\tt_Layers2 Layers[0]\tint Count = "	<<pFrag->Fragment.pViews[vid].Layers[1].Count<<endl;
-   cout<<"\t\t\t\t\t\t\tt_LayerInfo* pLayerInfo\tint Clusters , float Z ="<<endl;
-   for(int i=0;i<pFrag->Fragment.pViews[vid].Layers[1].Count;i++)
-      cout<<"\t\t\t\t\t\t\t " <<pFrag->Fragment.pViews[vid].Layers[1].pLayerInfo[i].Clusters
-          <<"\t"<< pFrag->Fragment.pViews[vid].Layers[1].pLayerInfo[i].Z <<endl;
+   cout<<"  |\t   \t  |-- unsigned char Status[0] = " << vw->Status[0] <<endl;
+   cout<<"  |\t   \t  |-- unsigned char Status[1] = " << vw->Status[1] <<endl;
+   cout<<"  |\t   \t  |-- int TCount[0] = " << vw->TCount[0] <<endl;
+   cout<<"  |\t   \t  |-- int TCount[1] = " << vw->TCount[1] <<endl;
 
-   cout<<"\t\t\t\tunsigned char Status[0] = " << pFrag->Fragment.pViews[vid].Status[0]<<endl;
-	cout<<"\t\t\t\tunsigned char Status[1] = " << pFrag->Fragment.pViews[vid].Status[1]<<endl;
-	cout<<"\t\t\t\tint TCount[0] = " << pFrag->Fragment.pViews[vid].TCount[0]<<endl;
-	cout<<"\t\t\t\tint TCount[1] = " << pFrag->Fragment.pViews[vid].TCount[1]<<endl;
+  if ( tid>=(unsigned int) vw->TCount[tside] ) { cout <<"track ID out of range!"<<endl ; return false ;}
 
-  if (tid>=(unsigned int)pFrag->Fragment.pViews[vid].TCount[tside] ) { cout <<"track ID out of range!"<<endl ; return false ;}
+   Track2* tr(& vw->pTracks[tside][tid]) ;
+   cout<<"  |\t   \t  |-- Track2 *pTracks["<<tside<<"]" <<endl;
+   cout<<"  |\t   \t       |-- Field       = " << tr->Field   << endl;	
+   cout<<"  |\t   \t       |-- int AreaSum = " << tr->AreaSum << endl;
+	cout<<"  |\t   \t       |-- int Grains  = " << tr->Grains  << endl;
+	cout<<"  |\t   \t       |-- Grain *pGrains"<<endl;
+	cout<<"  |\t   \t       |     |--  short Area      #### see below "<< endl; 
+   cout<<"  |\t   \t       |     |--  float X         #### see below "<< endl; 
+   cout<<"  |\t   \t       |     |--  float Y         #### see below "<< endl;
+   cout<<"  |\t   \t       |     |--  float Z         #### see below "<< endl;
 
-   cout<<"\t\t\t\tTrack2 *pTracks["<<tside<<"]  int Field = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].Field << endl;
-	cout<<"\t\t\t\t\t\t   int AreaSum = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].AreaSum << endl;
-	cout<<"\t\t\t\t\t\t   int Grains = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].Grains << endl;
-	cout<<"\t\t\t\t\t\t   Grain *pGrains short Area float X,Y,Z = " << 
-                        pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[0].Area <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[0].X <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[0].Y <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[0].Z << endl ;
-   for(int i=1;i<(int)pFrag->Fragment.pViews[vid].pTracks[tside][tid].Grains;i++)			
-				cout<<"\t   "<< pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[i].Area <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[i].X <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[i].Y <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].pGrains[i].Z << endl ;
-	cout<<"\t\t\t\t\t\t   BYTE *pCorrection = " /*<< pFrag->Fragment.pViews[vid].pTracks[tside][tid].pCorrection */<<endl;
-	cout<<"\t\t\t\t\t\t   TVector Intercept float X,Y,Z = " << 
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Intercept.X <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Intercept.Y <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Intercept.Z << endl ;
-	cout<<"\t\t\t\t\t\t   TVector Slope float X,Y,Z = " << 
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Slope.X <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Slope.Y <<" "<<
-								pFrag->Fragment.pViews[vid].pTracks[tside][tid].Slope.Z << endl ;
-	cout<<"\t\t\t\t\t\t   float Sigma = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].Sigma <<endl;
-	cout<<"\t\t\t\t\t\t   float FirstZ = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].FirstZ <<endl;
-	cout<<"\t\t\t\t\t\t   float LastZ = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].LastZ <<endl;
-	cout<<"\t\t\t\t\t\t   boolean Valid = " << pFrag->Fragment.pViews[vid].pTracks[tside][tid].Valid << endl;
-	cout<<"-----------------------------------------------------------------------\n";
-	cout<<"unsigned char Reserved[256] = " ; for(int i=0;i<256;i++) cout << pFrag->Reserved[i]; cout<<endl;
-	cout<<"-----------------------------------------------------------------------\n";
+	cout<<"  |\t   \t       |-- BYTE *pCorrection = " <</* tr->pCorrection  <<*/endl;
+	cout<<"  |\t   \t       |-- TVector Intercept" <<endl;
+	cout<<"  |\t   \t       |     |--  float X = " << tr->Intercept.X <<endl;
+	cout<<"  |\t   \t       |     |--  float Y = " << tr->Intercept.Y <<endl;
+	cout<<"  |\t   \t       |     |--  float Z = " << tr->Intercept.Z <<endl;
+	cout<<"  |\t   \t       |-- TVector Slope" <<endl;
+	cout<<"  |\t   \t       |     |--  float X = " << tr->Slope.X <<endl;
+	cout<<"  |\t   \t       |     |--  float Y = " << tr->Slope.Y <<endl;
+	cout<<"  |\t   \t       |     |--  float Z = " << tr->Slope.Z <<endl;
+	cout<<"  |\t   \t       |-- float Sigma   = "  << tr->Sigma   <<endl;
+	cout<<"  |\t   \t       |-- float FirstZ  = "  << tr->FirstZ  <<endl;
+	cout<<"  |\t   \t       |-- float LastZ   = "  << tr->LastZ   <<endl;
+	cout<<"  |\t   \t       |-- boolean Valid = "  << tr->Valid   << endl;
+	cout<<"  |-- unsigned char Reserved[256] = " ; 
+          for(int i=0;i<256;i++) cout << pFrag->Reserved[i] ; cout<<endl;
+	cout<<"-----------------------------------------------------------------------\n"<<endl;
+
+   cout<<"\t##### clusters[0]  Z[0]\t clusters[1]  Z[1]" <<endl;
+   for(int i=0;i< max(vw->Layers[0].Count,vw->Layers[1].Count);i++)
+   {
+         cout<<"\t\t " ;
+         if (i < vw->Layers[0].Count)
+            cout << vw->Layers[0].pLayerInfo[i].Clusters  <<"\t"
+                 << vw->Layers[0].pLayerInfo[i].Z ;
+         else cout <<"\t\t";
+         cout <<"\t";
+         if (i < vw->Layers[1].Count)
+            cout << vw->Layers[1].pLayerInfo[i].Clusters  <<"\t"
+                 << vw->Layers[1].pLayerInfo[i].Z << endl;
+         else cout << endl;
+   }
+   cout<<"\n\t ##### area  X     Y     Z" <<endl;
+   for(int i=0;i<(int) tr->Grains;i++)			
+         cout<<"\t\t " 
+               <<  tr->pGrains[i].Area  <<" "<<
+					    tr->pGrains[i].X     <<" "<<
+					    tr->pGrains[i].Y     <<" "<<
+					    tr->pGrains[i].Z     << endl ;
+
 
    FreeMemory((void**)pFrag);
    delete pFrag ;

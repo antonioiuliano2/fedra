@@ -19,7 +19,7 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 
 	ISySalDataIO*  iIO=0;
 	ISySalDataIO2* iIO2=0;
-   UINT ExtErrorInfo; 
+   UINT Error;
 	CoInitialize(NULL);
 	CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
 						IID_ISySalDataIO, (void **)&iIO);
@@ -43,17 +43,47 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 	int nviews   =  lst_t->GetN();
 //  cout << "nviews (top): " << nviews << " (bot): " << lst_b->GetN() << endl;
 
-	if(pCat) Frag2.Hdr.ID = pCat->Hdr.ID;                                             // <--------- 
-   else Frag2.Hdr.ID.Part[0] =Frag2.Hdr.ID.Part[1] =Frag2.Hdr.ID.Part[2] =Frag2.Hdr.ID.Part[3] = 0 ;
 	Frag2.Hdr.Type.InfoType = VS_HEADER_BYTES | VS_FRAGMENT_SECTION;
+            // VS_CATALOG_SECTION			1
+            // VS_VIEW_SECTION				2
+            // VS_TRACK_SECTION				3
+            // VS_GRAIN_SECTION 				4
+            // VS_CONFIG_SECTION				5
+            // VS_FRAGMENT_SECTION			6
+            // VS_DATA_BYTES					0x30
+            // VS_HEADER_BYTES				0x60
 	Frag2.Hdr.Type.HeaderFormat = VS_HEADER_TYPE;
-	//for (i = 0; i < sizeof(Frag2.Reserved); i++) Frag2.Reserved[i] = i;
+            // VS_OLD_HEADER_TYPE			0x701
+            // VS_HEADER_TYPE					0x702
+	if(pCat) Frag2.Hdr.ID = pCat->Hdr.ID;                                             // <--------- from catalog
+   else Frag2.Hdr.ID.Part[0] =Frag2.Hdr.ID.Part[1] =Frag2.Hdr.ID.Part[2] =Frag2.Hdr.ID.Part[3] = 0 ;
+
+   // Rebuild the Startview value                                                   // <--------- from catalog
+   
+   int xf(0),yf(0);
+   if(pCat)
+   {
+      int xv(pCat->Area.XViews), yv(pCat->Area.YViews) ,
+          xf( (int) FindConfig(pCat,"Vertigo Scan","XFields")  ),
+          yf( (int) FindConfig(pCat,"Vertigo Scan","YFields")  );
+      int row  = (int) (fragID -1)*xf/xv ;
+      int col0 = (fragID-1) % (xv/xf) ;
+      int col  = (1-row%2)*col0 + (row%2) *(xv/xf-col0-1) ;
+      Frag2.Fragment.StartView = col*xf + row*xv*yf;
+   }
+   else Frag2.Fragment.StartView = 0;
+
 	Frag2.Fragment.CountOfViews = nviews;
-	//	Frag2.Fragment.CodingMode = (rand() % 2) ? VS_COMPRESSION_NULL : VS_COMPRESSION_GRAIN_SUPPRESSION;
-	Frag2.Fragment.CodingMode = VS_COMPRESSION_NULL ;
-	Frag2.Fragment.FitCorrectionDataSize = 0;
-	Frag2.Fragment.StartView = fragID * nviews;
-	Frag2.Fragment.Index = fragID;
+	Frag2.Fragment.CodingMode = VS_COMPRESSION_NULL ;                                // <--------- default
+            // VS_COMPRESSION_NULL				0
+            // VS_COMPRESSION_METHOD			0x100
+            // VS_COMPRESSION_GRAIN_SUPPRESSION	(VS_COMPRESSION_METHOD + 2)
+   Frag2.Fragment.FitCorrectionDataSize = 0;                                        // <--------- default
+
+	
+   Frag2.Fragment.Index = fragID;
+
+   for(int j=0;j<sizeof(Frag2.Reserved);j++) Frag2.Reserved[j] = (unsigned char) 0; // <--------- reserved = null
 	Frag2.Fragment.pViews = new VS_View2[nviews];
 
    EdbView* eView = run->GetView();
@@ -72,9 +102,9 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
       run->GetEntry(lst_t->GetEntry(v));
     
       rwdView = &(Frag2.Fragment.pViews[v]);
+      rwdView->TileX = eViewHeader->GetCol();
+      rwdView->TileY = eViewHeader->GetRow();
 
-		rwdView->TileX = -1;                                                 // <--------------
-		rwdView->TileY = -1;                                                 // <--------------
       rwdView->RelevantZs.TopExt = eViewHeader->GetZ1();
 		rwdView->RelevantZs.TopInt = eViewHeader->GetZ2();
 		rwdView->RelevantZs.BottomInt = eViewHeader->GetZ3();
@@ -142,12 +172,13 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 	            eCluster = (EdbCluster*)eClusterArray->At(p);
    				rwdGrain = &(rwdTrack->pGrains[p]);
 
-               rwdGrain->Area = eCluster->GetArea();
+               rwdGrain->Area = (unsigned short) eCluster->GetArea();
 					rwdTrack->AreaSum += rwdGrain->Area ;
 					rwdGrain->X = eCluster->GetX();
 					rwdGrain->Y = eCluster->GetY();
-               int z = eCluster->GetZ() ;
-					rwdGrain->Z = z;
+					rwdGrain->Z = eCluster->GetZ() ;
+
+               float z = eCluster->GetZ();
                if(p==0) zmin=zmax= z;
                else
                {
@@ -159,12 +190,22 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 				};
 			   /*if (Frag2.Fragment.FitCorrectionDataSize)
 			   {
-				      T.pCorrection = new BYTE[Frag2.Fragment.FitCorrectionDataSize];
-				      for (p = 0; p < Frag2.Fragment.FitCorrectionDataSize; T.pCorrection[p++] = rand() % 256);
+				      rwdTrack->pCorrection = new BYTE[Frag2.Fragment.FitCorrectionDataSize];
+				      for (p = 0; p < Frag2.Fragment.FitCorrectionDataSize; p++) rwdTrack->pCorrection[p] = rand() % 256;
 				      }
 		      else*/ 
 			   rwdTrack->pCorrection = 0;
 			};
+
+         rwdView->Status[s] = VSSCAN_NOTSCANNED;                                               // <--------- default                
+               // VSSCAN_OK						0x00       0
+               // VSSCAN_NOTOPFOCUS				0x01       1
+               // VSSCAN_NOBOTTOMFOCUS			0x02       2
+               // VSSCAN_ZLIMITER				0x04       4
+               // VSSCAN_XLIMITER				0x08       8
+               // VSSCAN_YLIMITER				0x10      16
+               // VSSCAN_TERMINATED				0x80     128
+               // VSSCAN_NOTSCANNED				0xFF     255
 		};
 	};
 
@@ -175,8 +216,8 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 	sprintf(rwdname, "%s.%08X", temp, fragID);
 
    cout << rwdname << "  segments: "<< totsegments << "\tclusters: "<< totclusters << endl;
-	if (iIO2->Write2(0, (BYTE *)&Frag2, &ExtErrorInfo, (UCHAR *)rwdname) != S_OK)
-		cout << "Error Writing"<< endl;
+	if (iIO2->Write2(0, (BYTE *)&Frag2, &Error, (UCHAR *)rwdname) != S_OK)
+		cout << "\tError Writing"<< endl;
 
    iIO2->Release();
    iIO->Release();
@@ -187,17 +228,16 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 int DumpRWC(EdbRun* run, char* rwcname)
 {
    // Retrieve the catalog file from the comment field of the run header
-   /*
-   TString rwc = run->GetHeader()->GetComment();
-   if (rwc.Length()>2000)
+   TObjString* objstr=0;
+   if (objstr = (TObjString*) gDirectory->Get("catalog"))
    {
+      TString rwc = objstr->GetString();
       ofstream out;
       out.open(rwcname,ios::out | ios::binary);
       out << rwc ;
       out.close();
    }
    else 
-   */
    {
       cout << "Cannot extract catalog information from the root file !" << endl;
       return 0;
@@ -236,7 +276,7 @@ int main(int argc, char* argv[])
 	}
   }
   if(printusage) { 
-		cout<< "usage: edb2rwc <input file (.root)> <output file (.rwc|.rwd|.txt)> "<<endl;
+		cout<< "usage: edb2rwc <input file (.root)> <output file (.rwc)> "<<endl;
 		return 0;
 	};
 

@@ -92,7 +92,7 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 						(int) FindConfig(pCat,"Objective","Height"),
 						-999,		// physical pixel size in microns along X
 						-999,		// physical pixel size in microns along Y
-						"",			// es. "Dalsa CAD4"
+						"",		// es. "Dalsa CAD4"
 						"");		// es. "Bologna"
 	Header->SetObjective(-999,		// magnification
 				(float)FindConfig(pCat,"Objective","Width" )*
@@ -105,36 +105,41 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 				"");				   // es, "50x"
 	Header->SetPlate(-999,		// plate ID
 				(float)FindConfig(pCat,"Vertigo Scan","VStep")*
-				       (float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
 				(float)FindConfig(pCat,"Vertigo Scan","BaseThickness"),
 				(float)FindConfig(pCat,"Vertigo Scan","VStep")*
-				       (float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
+				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
 				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
 				(float)FindConfig(pCat,"Vertigo Scan","Shrinkage"),
 				"",					// es. "Test Plate"
 				"");				//
 
-// Store the catalog file "as it is" in the comment field of the run header
-/*
-   TString str ;
+   // Store the catalog file as TObjString 
+   TObjString objstr ;
    int  i, ch;
    FILE *stream;
    if( (stream = fopen( rwcname, "rb" )) == NULL ) exit( 0 );
    ch = fgetc( stream );
-   for( i=0; (i < 250000 ) && ( feof( stream ) == 0 ); i++ )
+   for( i=0;  feof( stream ) == 0 ; i++ )
    {
-      str.Append( ch ); 
+      objstr.String().Append( ch ); 
       ch = fgetc( stream );
    }
-   fclose( stream );
-   Header->SetComment(str) ;
-*/
 
+   int NviewCols = (int) FindConfig(pCat,"Vertigo Scan","XFields")  ;
+   int NviewRows = (int) FindConfig(pCat,"Vertigo Scan","YFields")  ;
+   int NfragmCols = pCat->Area.XViews / NviewCols  ;
+   int NfragmRows = pCat->Area.YViews / NviewRows  ;
+
+   fclose( stream );
+   objstr.Write("catalog"); 
+
+   // Free memory
    FreeMemory((void**)pCat);
 	delete pCat;
 
 	// loop on rwd files
-	if(bAddRWD)
+   if(bAddRWD)
 	{
 		for (int f = 1; f < nFragments+1; f++)
 		{
@@ -157,7 +162,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 	Bool_t addcl(true);
 	// OPTIONS
 	if (strstr(options,"NOCL") ) addcl=false; // do not add clusters
-
+   
 	EdbView*    edbView = run->GetView();
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
 
@@ -202,6 +207,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 
 			edbViewHeader->SetNsegments(rwdView->TCount[s]);
 			edbViewHeader->SetViewID(v);
+         edbViewHeader->SetColRow(rwdView->TileX  ,rwdView->TileY );
 
 			for( int nlvl=0; nlvl<rwdView->Layers[s].Count; nlvl++ )
 				edbView->AddFrame(nlvl,rwdView->Layers[s].pLayerInfo[nlvl].Z,
