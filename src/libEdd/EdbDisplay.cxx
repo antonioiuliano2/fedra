@@ -180,7 +180,7 @@ void EdbDisplay::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 }
 
 //________________________________________________________________________
-void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.)
+void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
 {
   printf("Reading tree..\n");
   EdbSegCouple    *cp = 0;
@@ -240,7 +240,7 @@ void EdbDisplay::AddCouplesTree(TTree* tree, Float_t* plate, Float_t Zoffs, Floa
 
 
 //________________________________________________________________________
-void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0=-1., Float_t tx1=1., Float_t ty0=-1., Float_t ty1=1.)
+void EdbDisplay::AddTracksTree(TTree* tree, Float_t* plate, Float_t Zoffs, Float_t tx0, Float_t tx1, Float_t ty0, Float_t ty1)
 {
   printf("Reading tree..\n");
   EdbSegP         *t = 0;
