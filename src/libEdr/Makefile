@@ -129,7 +129,8 @@ EdbPVGen.o: /var/local/root/include/TIterator.h
 EdbPVGen.o: /var/local/root/include/TString.h /var/local/root/include/TMath.h
 EdbPVGen.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbPVGen.o: /var/local/root/include/TRefCnt.h EdbPVGen.h EdbPVRec.h
-EdbPVGen.o: EdbPattern.h /var/local/root/include/TTree.h
+EdbPVGen.o: /var/local/root/include/THashList.h EdbPattern.h
+EdbPVGen.o: /var/local/root/include/TTree.h
 EdbPVGen.o: /var/local/root/include/TClonesArray.h
 EdbPVGen.o: /var/local/root/include/TAttLine.h
 EdbPVGen.o: /var/local/root/include/Gtypes.h

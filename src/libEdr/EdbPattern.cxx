@@ -442,6 +442,13 @@ float EdbSegmentsBox::Diff(EdbSegmentsBox &p)
 }
  
 //______________________________________________________________________________
+void EdbSegmentsBox::SetSegmentsZ()
+{
+  int nseg = N();
+  for(int i=0; i<nseg; i++ )    GetSegment(i)->SetZ( Z() );
+}
+
+//______________________________________________________________________________
 void EdbSegmentsBox::ProjectTo(const float dz)
 {
   eZ += dz;  eDZkeep += dz;
@@ -452,6 +459,7 @@ void EdbSegmentsBox::ProjectTo(const float dz)
     p = GetSegment(i);
     p->SetX( p->X() + p->TX()*dz );
     p->SetY( p->Y() + p->TY()*dz );
+    p->SetZ( Z() );
   }
 }
  
@@ -515,6 +523,23 @@ void EdbSegmentsBox::TransformA( const EdbAffine2D *aff )
 }
 
 //______________________________________________________________________________
+void EdbSegmentsBox::TransformShr( float shr )
+{
+  EdbSegP *p;
+  float tx,ty;
+
+  int nseg = N();
+  for(int i=0; i<nseg; i++ ) {
+    p = GetSegment(i);
+
+    tx = p->TX()/shr;
+    ty = p->TY()/shr;
+    p->SetTX(tx);
+    p->SetTY(ty);
+  }
+}
+
+//______________________________________________________________________________
 void EdbSegmentsBox::TransformARot( const EdbAffine2D *aff )
 {
   // apply to the angles only rotation members of transformation
@@ -563,6 +588,48 @@ void EdbTrackP::Copy(EdbTrackP &tr)
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
     AddSegment(*tr.GetSegment(i));
+}
+
+//______________________________________________________________________________
+void EdbTrackP::FitTrack()
+{
+  int nseg=N();
+  float x=0,y=0,z=0,tx=0,ty=0,w=0;
+  EdbSegP *seg=0;
+  for(int i=0; i<nseg; i++) {
+    seg = GetSegment(i);
+    x  += seg->X();
+    y  += seg->Y();
+    z  += seg->Z();
+    tx += seg->TX();
+    ty += seg->TY();
+    w  += seg->W();
+  }
+  x  /= nseg;
+  y  /= nseg;
+  z  /= nseg;
+  tx /= nseg;
+  ty /= nseg;
+  w  /= nseg;
+  eTrack.Set(eID,x,y,tx,ty,w);
+  eTrack.SetZ(z);
+}
+
+//______________________________________________________________________________
+float EdbTrackP::CHI2()
+{
+  int    nseg=N();
+  double dtx=0,dty=0,chi2=0;
+  EdbSegP *seg=0;
+  for(int i=0; i<nseg; i++) {
+    seg = GetSegment(i);
+    dtx = seg->TX()-eTrack.TX();
+    dty = seg->TY()-eTrack.TY();
+    chi2 += TMath::Sqrt( dtx*dtx/seg->STX()/seg->STX() + 
+			 dty*dty/seg->STY()/seg->STY() );
+  }
+  chi2  /= nseg;
+  return chi2;
 }
 
 //______________________________________________________________________________
@@ -698,10 +765,15 @@ void EdbPatternsVolume::Centralize()
   xc = xc/Npatterns()/2;
   yc = yc/Npatterns()/2;
 
-  eX = xc;  eY=yc;
+  Centralize(xc,yc);
+}
 
+//______________________________________________________________________________
+void EdbPatternsVolume::Centralize( float xc, float yc )
+{
+  eX = xc;  eY=yc;
   Shift(-xc,-yc);
-  npat = Npatterns();
+  float npat = Npatterns();
   for(int i=0; i<npat; i++ ) 
     GetPattern(i)->SetKeep(1,0,0,1,0,0);
 }

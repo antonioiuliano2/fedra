@@ -9,6 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "THashList.h"
 #include "EdbPattern.h"
 #include "TIndexCell.h"
 #include "EdbAffine.h"
@@ -270,6 +271,7 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbScanCond *eScanCond;     // scanning conditions (sigma, puls, etc)
 
   TIndexCell  *eTracksCell;
+ public:
   TObjArray   *eTracks;
 
  public:
@@ -307,12 +309,20 @@ class EdbPVRec : public EdbPatternsVolume {
   int    Align();
   int    AlignA();
   int    LinkTracks();
+  void   FillTracksCell2();
   void   FillTracksCell1();
   void   FillTracksCell();
   int    InsertHole( const EdbSegP *s1, const EdbSegP *s2, int pid );
   int    InsertHoles();
   int    CollectSegment(TIndexCell *ct, TIndexCell *cross);
-  int    SelectLongTracks(int nsegments, TIndexCell *tracksCell);
+  int    CollectSegment1(TIndexCell *ct, THashList *cross);
+  int    SelectLongTracks(int nsegments);
+
+  int    MakeSummaryTracks();
+  int    FineCorrXY(int ipat, EdbAffine2D &aff);
+  int    FineCorrTXTY(int ipat, EdbAffine2D &aff);
+  int    FineCorrZ(int ipat, float &dz);
+  int    FineCorrShr(int ipat, float &shr);
 
   void SetOffsetsMax(float ox, float oy);
   void SetSegmentsErrors();

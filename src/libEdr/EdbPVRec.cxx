@@ -883,9 +883,8 @@ int EdbPVRec::LinkTracks()
     pc->SortByCHI2();
     pc->SelectIsolated();
   }
-  TIndexCell *tracksCell = eTracksCell;
   FillTracksCell();
-  SelectLongTracks( Npatterns(), tracksCell );
+  SelectLongTracks( Npatterns());
 
   AlignA();
 
@@ -1010,6 +1009,69 @@ void EdbPVRec::FillTracksCell1()
 
   TIndexCell *tracks = eTracksCell;  // "vid1:vid2"
   TIndexCell *cc=0;
+  TIndexCell *cv1=0;
+  TIndexCell *cv2=0;
+
+  THashList  *cross = new THashList();
+  //  TIndexCell *cross = new TIndexCell();
+
+  if(tracks) tracks->Drop();
+
+  EdbPatCouple *pc = 0;
+  EdbSegCouple *sc = 0;
+
+  int ncp = Ncouples();
+  int ncpp;
+  for(int iv=0; iv<ncp; iv++ ) {
+    pc = GetCouple(iv);
+    ncpp = pc->Ncouples();
+    printf("cross: %d %d\n",iv,ncpp);
+    for(int ip=0; ip<ncpp; ip++) {
+      sc = pc->GetSegCouple(ip);
+
+      vid1 = Vid( pc->ID1(),sc->ID1() );
+      vid2 = Vid( pc->ID2(),sc->ID2() );
+      cv1 = new TIndexCell(vid1);
+      cv2 = new TIndexCell(vid2);
+      if( !(cc=(TIndexCell*)cross->FindObject(cv1)) )  { cross->Add(cv1); cc=cv1; }
+      cc->FindAdd(vid2);
+      if( !(cc=(TIndexCell*)cross->FindObject(cv2)) )  { cross->Add(cv2); cc=cv2; }
+      cc->FindAdd(vid1);
+    }
+  }
+  //cross->PrintPopulation(1);
+
+  TIndexCell *ct=0;
+  int ncross = cross->GetSize();
+  printf("ncross = %d\n",ncross);
+  int ncc=0;
+
+  for(int i=0; i<ncross; i++) {
+    cc = (TIndexCell*)(cross->At(i));
+    ncc = cc->N(1);
+    if(!ncc)     continue;
+
+    ct = tracks->FindAdd(cc->Value());
+    ct->FindAdd(cc->Value());
+
+    CollectSegment1(ct,cross);
+  }
+
+  tracks->Sort();
+  tracks->PrintPopulation(1);
+}
+
+//______________________________________________________________________________
+void EdbPVRec::FillTracksCell2()
+{
+  // TODO: speed-up this algorithm
+
+  // fill tracks cell "vid1:vid2"
+  // second segment is considered as leading one
+  Long_t vid1,vid2;
+
+  TIndexCell *tracks = eTracksCell;  // "vid1:vid2"
+  TIndexCell *cc=0;
   TIndexCell *cross = new TIndexCell();
 
   if(tracks) tracks->Drop();
@@ -1079,6 +1141,27 @@ int EdbPVRec::CollectSegment( TIndexCell *ct, TIndexCell *cross)
     }
     cc->List()->Delete();
     if(!CollectSegment(ct,cross)) return 0;
+  }
+  return flag;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::CollectSegment1( TIndexCell *ct, THashList *cross)
+{
+  TIndexCell *cc =0;
+  int ncc =0;
+  int nct = ct->N(1);
+  int flag=0;
+  for(int j=0; j<nct; j++) {
+    cc  =  (TIndexCell*)(cross->FindObject( ct->At(j) ));
+    ncc = cc->N(1);
+    if(!ncc) continue;
+    flag++;
+    for(int icc=0; icc<ncc; icc++) {
+      ct->FindAdd(cc->At(icc)->Value());
+    }
+    cc->List()->Delete();
+    if(!CollectSegment1(ct,cross)) return 0;
   }
   return flag;
 }
@@ -1156,6 +1239,8 @@ int EdbPVRec::MakeTracksTree()
   EdbSegP *s0=0;
   EdbSegP *tr = new EdbSegP();
   int nseg,trid,npl,n0;
+  float xv=X();
+  float yv=Y();
  
   TFile fil("linked_tracks.root","RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
@@ -1166,6 +1251,8 @@ int EdbPVRec::MakeTracksTree()
   tracks->Branch("nseg",&nseg,"nseg/I");
   tracks->Branch("npl",&npl,"npl/I");
   tracks->Branch("n0",&n0,"n0/I");
+  tracks->Branch("xv",&xv,"xv/F");
+  tracks->Branch("yv",&yv,"yv/F");
   tracks->Branch("t","EdbSegP",&tr,32000,99);
   tracks->Branch("s",&segments);
 
@@ -1218,47 +1305,180 @@ int EdbPVRec::MakeTracksTree()
 
 
 //______________________________________________________________________________
-int EdbPVRec::SelectLongTracks(int nsegments, TIndexCell *tracksCell)
+int EdbPVRec::FineCorrXY(int ipat, EdbAffine2D &aff)
+{
+  if(!eTracks) return 0;
+  int   ntr = eTracks->GetEntries();
+  float x[ntr];
+  float y[ntr];
+  float x1[ntr];
+  float y1[ntr];
+  int   itr=0;
+  EdbTrackP *track=0;
+  EdbSegP   *seg=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    if(track->CHI2()>1.) continue;
+    seg = track->GetSegment(ipat);
+    x1[itr] = seg->X();
+    y1[itr] = seg->Y();
+    x[itr]  = track->X() + track->TX()*(seg->Z() - track->Z());
+    y[itr]  = track->Y() + track->TY()*(seg->Z() - track->Z());
+    itr++;
+  }
+  aff.Calculate( itr,x1,y1,x,y );
+  GetPattern(ipat)->Transform(&aff);
+  return itr;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::FineCorrTXTY(int ipat, EdbAffine2D &aff)
+{
+  if(!eTracks) return 0;
+  int   ntr = eTracks->GetEntries();
+  float tx[ntr];
+  float ty[ntr];
+  float tx1[ntr];
+  float ty1[ntr];
+  int   itr=0;
+  EdbTrackP *track=0;
+  EdbSegP   *seg=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    if(track->CHI2()>1.) continue;
+    seg = track->GetSegment(ipat);
+    tx1[itr] = seg->TX();
+    ty1[itr] = seg->TY();
+    tx[itr]  = track->TX();
+    ty[itr]  = track->TY();
+    itr++;
+  }
+  aff.CalculateTurn( itr,tx1,ty1,tx,ty );
+  GetPattern(ipat)->TransformA(&aff);
+  return itr;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::FineCorrZ(int ipat, float &dz)
+{
+  if(!eTracks) return 0;
+  int   ntr = eTracks->GetEntries();
+  float  tx1,ty1;
+  double t1;
+  double t;
+  double dzz=0;
+  int   itr=0;
+  EdbTrackP *track=0;
+  EdbSegP   *seg1=0;
+  EdbSegP   *seg2=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    if(track->CHI2()>1.2) continue;
+    t  = TMath::Sqrt( track->TX()*track->TX() + track->TY()*track->TY() );
+    if(t<.1)             continue;
+    if(t>.5)             continue;
+    seg1 = track->GetSegment(ipat);
+    seg2 = track->GetSegment(ipat+1);
+    tx1 = (seg2->X()-seg1->X())/(seg2->Z()-seg1->Z());
+    ty1 = (seg2->Y()-seg1->Y())/(seg2->Z()-seg1->Z());
+    t1 = TMath::Sqrt(tx1*tx1+ty1*ty1);
+    dzz += t1/t;
+    itr++;
+  }
+  dzz /= itr;    // dzz is the ratio of "position angle"/"track angle"
+  dz = (GetPattern(ipat+1)->Z()-GetPattern(ipat)->Z())*dzz;
+
+  return itr;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::FineCorrShr(int ipat, float &shr)
+{
+  if(!eTracks) return 0;
+  int   ntr = eTracks->GetEntries();
+  double t1;
+  double t;
+  double dzz=0;
+  int   itr=0;
+  EdbTrackP *track=0;
+  EdbSegP   *seg=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    if(track->CHI2()>1.2) continue;
+    t  = TMath::Sqrt( track->TX()*track->TX() + track->TY()*track->TY() );
+    if(t<.1)             continue;
+    if(t>.45)             continue;
+    seg = track->GetSegment(ipat);
+    t1 = TMath::Sqrt( seg->TX()* seg->TX() +  seg->TY()* seg->TY() );
+    dzz += t1/t;
+    itr++;
+  }
+  dzz /= itr;    // dzz is the ratio of "segment angle"/"track angle"
+  shr = dzz;
+
+  return itr;
+}
+
+
+//______________________________________________________________________________
+int EdbPVRec::MakeSummaryTracks()
+{
+  if(!eTracks) return 0;
+  int ntr = eTracks->GetEntries();
+  EdbTrackP *track=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    track->FitTrack();
+    //    printf("track chi2 = %f\n",track->CHI2());
+  }
+  return ntr;
+}
+
+
+//______________________________________________________________________________
+int EdbPVRec::SelectLongTracks(int nsegments)
 {
   int ntr=0;
-  if(!tracksCell) return ntr;
+  if(!eTracksCell) return ntr;
   if(nsegments<2) return ntr;
-  //if(eTracks) delete eTracks;
-  //eTracks = new TObjArray();
+  if(eTracks) delete eTracks;
+  eTracks = new TObjArray();
 
-  //EdbTrackP  *track=0;
-  //EdbSegP    *seg=0;
+  EdbTrackP  *track=0;
+  EdbSegP    *seg=0;
 
   ResetCouples();
   EdbPatCouple *pc=0;
-  TIndexCell *ct;
+  TIndexCell   *ct=0;
   Long_t vid1=0,vid2=0;
   
   int ntc, nct; 
 
-  ntc = tracksCell->GetEntries();
+  ntc = eTracksCell->GetEntries();
   for(int it=0; it<ntc; it++) {
 
-    ct = tracksCell->At(it);
+    ct = eTracksCell->At(it);
     if( ct->N() < nsegments )     continue;
-    //track = new EdbTrackP();
-    //track->SetID( ct->Value() );
+    track = new EdbTrackP();
+    track->SetID( ct->Value() );
 
-    nct = ct->GetEntries()-1;
-    for(int is=0; is<nct; is++) {
-
+    nct = ct->GetEntries();
+    for(int is=0; is<nct-1; is++) {
       vid1 = ct->At(is)->Value();
       vid2 = ct->At(is+1)->Value();
       pc = GetCouple(Pid(vid1));              //TODO: depends on cp sequence
       pc->AddSegCouple( Sid(vid1), Sid(vid2) );
-      
-      //seg = GetPattern(pid)->GetSegment(segid);
-      //seg->SetPID(pid);
-      //track->AddSegment(*seg);
+    }
+
+    for(int is=0; is<nct; is++) {
+      vid1 = ct->At(is)->Value();
+      seg = GetPattern(Pid(vid1))->GetSegment(Sid(vid1));
+      seg->SetPID(Pid(vid1));
+      track->AddSegment(*seg);
     }
 
     ntr++;
-    //eTracks->Add(track);
+    eTracks->Add(track);
   }
 
   printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);

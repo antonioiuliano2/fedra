@@ -33,8 +33,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   Float_t    eProb;            // probability
 
-  Float_t    eW;               // weight
+  Float_t    eW;              // weight
   Int_t      eFlag;
+  Float_t    eVolume;         // segment volume
 
  public:
   EdbSegP();
@@ -63,6 +64,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void     SetPID( int pid ) { ePID=pid; }
   void     SetFlag( int flag ) { eFlag=flag; }
   void     SetW( float w )  { eW=w; }
+  void     SetVolume( float w )  { eVolume=w; }
   void     SetVid(int vid, int sid) { eVid[0]=vid; eVid[1]=sid; }
 
   void     SetProbability( float p ) { eProb=p; }
@@ -74,6 +76,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t  Z()      const {return eZ;}
   Float_t  SZ()     const {return eSZ;}
   Float_t  Prob()   const {return eProb;}
+  Float_t  Volume() const {return eVolume;}
 
   Float_t  ProbLink( EdbSegP &s1, EdbSegP &s2 );
 
@@ -96,7 +99,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  
   void       Print( Option_t *opt="") const;
  
-  ClassDef(EdbSegP,2)  // segment
+  ClassDef(EdbSegP,3)  // segment
 };
 
 //______________________________________________________________________________
@@ -132,6 +135,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   TClonesArray *GetSegments()     const { return eSegments; }
   void          *GetSegmentsAddr()  { return &eSegments; }
 
+  void SetSegmentsZ();
   // mandatory virtual functions:
   void       SetX(float x) { eX=x; }
   void       SetY(float y) { eY=y; }
@@ -153,8 +157,9 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   int CalculateXY(  EdbSegmentsBox *p , EdbAffine2D *aff  );
   int CalculateAXAY(EdbSegmentsBox *p , EdbAffine2D *affA );
 
-  void TransformA( const EdbAffine2D *affA );
+  void TransformA(    const EdbAffine2D *affA );
   void TransformARot( const EdbAffine2D *affA );
+  void TransformShr(  const float shr );
 
   float DiffAff( EdbAffine2D *aff );
   float Diff( EdbSegmentsBox &p );
@@ -201,11 +206,18 @@ class EdbTrackP : public EdbSegmentsBox {
  public:
   EdbTrackP();
   virtual ~EdbTrackP();
- 
+
+  float X()  const {return eTrack.X();  }
+  float Y()  const {return eTrack.Y();  }
+  float Z()  const {return eTrack.Z();  }
+  float TX() const {return eTrack.TX(); }
+  float TY() const {return eTrack.TY(); }
   int   Nseg() const  { return N(); }
   void SetID( int id) { eID=id; }
   int     ID() const  { return eID; }
   void Copy(EdbTrackP &tr);
+  void FitTrack();
+  float CHI2();
 
   TArrayL  *GetVid() const { return eVid; }
   void SetVid(int n) {if(eVid) delete eVid; eVid = new TArrayL(n);}
@@ -242,6 +254,7 @@ class EdbPatternsVolume : public TObject {
   void Transform( const EdbAffine2D *aff );
   void Shift(float x, float y);
   void Centralize();
+  void Centralize(float xc, float yc);
   void SetXYZ( float x, float y, float z ) { eX=x; eY=y; eZ=z; }
 
   Float_t X() const {return eX;}
