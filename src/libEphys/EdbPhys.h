@@ -11,6 +11,15 @@
 #include <TObject.h>
 #include <TRandom.h>
 
+#ifdef WIN32
+#ifdef _PHYS_EXPORT
+#define _DLL_EX_IMP __declspec(dllexport)
+#endif
+#ifdef _PHYS_IMPORT
+#define _DLL_EX_IMP __declspec(dllimport)
+#endif
+#endif
+
 //_________________________________________________________________________
 class EdbPhysics: public TObject {
  private:
