@@ -7,7 +7,7 @@ PROJECT_LIBS += -lEdr -lEmath -lEdb -lEphys
 
 LIB_TGT       = $(LIB_DIR)/libEMC.so
 
-headers       = EdbPVGen.h
+headers       = EdbPVGen.h EdbBrick.h EdbBrickGen.h
 
 classes	      = $(headers:.h=.$(SrcSuf))
 EMCCint	      = $(headers) EMCLinkDef.h

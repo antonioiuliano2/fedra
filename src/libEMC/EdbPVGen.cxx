@@ -162,10 +162,7 @@ void EdbPVGen::SmearSegments()
   // smearing with parameters defined by ScanCond
 
   EdbPatternsVolume *pv = GetVolume();
-  EdbScanCond *scan = eScanCond;
-
-  Float_t x,y,z,tx,ty;
-  Float_t sx,sy,sz,stx,sty;
+  EdbScanCond *cond = eScanCond;
 
   EdbPattern *pat = 0;
   EdbSegP    *seg = 0;
@@ -176,21 +173,7 @@ void EdbPVGen::SmearSegments()
     for( int j=0; j<pat->N(); j++ ) {
       seg = pat->GetSegment(j);
 
-      sx  = scan->SigmaX(seg->TX());
-      sy  = scan->SigmaY(seg->TY());
-      sz  = 0.;
-      stx = scan->SigmaTX(seg->TX());
-      sty = scan->SigmaTY(seg->TY());
-
-      x  = gRandom->Gaus(seg->X(),   sx);
-      y  = gRandom->Gaus(seg->Y(),   sy);
-      z  = gRandom->Gaus(seg->Z(),   sz);
-      tx = gRandom->Gaus(seg->TX(), stx);
-      ty = gRandom->Gaus(seg->TY(), sty);
-
-      seg->Set( seg->ID(), x,y,tx,ty,seg->W(),seg->Flag());
-      seg->SetZ( z );
-      //seg->SetErrors( sx,sy,sz,stx,sty );
+      SmearSegment(*seg, *cond);
 
     }
   }
@@ -212,6 +195,142 @@ void EdbPVGen::SmearPatterns(float shift, float rot)
   }
 
 }
+
+//______________________________________________________________________________
+int EdbPVGen::TrackMC2( EdbTrackP   &tr,
+			EdbLayer    &lim,
+			int eloss_flag, float PGap)
+{
+  // Segments generation for single MC track with taking into account MS and energy loss
+
+  int ic=0;
+  EdbPatternsVolume *vol = GetVolume();
+  EdbSegP s;
+  s.Copy(*(tr.TrackEnd()));
+  EdbPattern *pat=0;
+  float dz=0;
+  float de=0;
+
+  while(1) {
+    if( !lim.IsInside( s.X(), s.Y(), s.Z() ) )      break;
+    pat = vol->NextPattern( s.Z(), tr.Dir() );
+    if( !pat )                                      break;
+
+    dz = pat->Z()-s.Z();
+
+    de += PropagateSegment( s, dz,
+			    eScanCond->RadX0(),
+			    tr.M(), eloss_flag );
+    
+    if( gRandom->Rndm() < (double)PGap )            continue;
+    if( s.TX()>1.)                                  break;
+    if( s.TY()>1.)                                  break;
+
+    s.SetPID(pat->PID());
+    tr.AddSegment( pat->AddSegment(s) );
+    tr.AddSegmentF( new EdbSegP(s) );
+    ic++;
+  }
+
+  tr.SetDE(de);
+  tr.SetCounters();
+  tr.SetSegmentsTrack();
+
+  return ic;
+}
+
+//______________________________________________________________________________
+float EdbPVGen::PropagateSegment( EdbSegP &s, float dz,
+				  float X0,
+				  float m, 
+				  int eloss_flag )
+{
+  // propagate segment s to the distance dz in the media
+  // input : s          - segment 
+  //         dz         - distance to propagate (along z)
+  //         X0         - rad length
+  //         m          - mass of the particle
+  //         eloss_flag -
+  // output: s          - segment with updated parameters
+  // return: energy loss in this step
+
+  bool doMS    = true;
+
+  float tx=s.TX(), ty=s.TY();
+  float x =s.X(),   y=s.Y(), z=s.Z();
+  float dx=0., dy=0., dtx=0., dty=0.;
+  float cost  = TMath::Sqrt((double)1.+(double)tx*(double)tx+(double)ty*(double)ty);
+  float dzm   = dz*cost;
+  float dzPb  = dzm*1000./1300.;     //TODO
+
+  float p=s.P(), pa=s.P(), pn, de = 0.;
+  Float_t e = TMath::Sqrt((double)p*(double)p+(double)m*(double)m);
+
+  if (eloss_flag == 1)    {
+    de = EdbPhysics::DeAveragePb(s.P(), m, TMath::Abs(dzPb));
+    if ( de < 0.) de = 0;
+    e  = e - de;
+    if (e < m) e = m;
+    pn = TMath::Sqrt((double)e*(double)e - (double)m*(double)m);
+    pa = 0.5*(p+pn);
+    p  = pn;
+  }
+
+  float r1,r2, teta0;
+  if(doMS) {
+    teta0 = EdbPhysics::ThetaMS2( pa, m, dzm, X0);
+    teta0 = TMath::Sqrt(teta0);
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
+    do  { r2 = gRandom->Gaus();} while (TMath::Abs(r2) > 50.);
+    dx = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
+    dtx = r2*teta0;
+    do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
+    do  { r2 = gRandom->Gaus();} while (TMath::Abs(r2) > 50.);
+    dy = (0.5*r1+0.866025*r2)*dzm*teta0/1.73205;
+    dty = r2*teta0;
+  }
+
+  s.SetX( x  + tx*dz + dx );
+  s.SetY( y  + ty*dz + dy );
+  s.SetTX(tx + dtx );
+  s.SetTY(ty + dty );
+  s.SetZ(z+dz);
+  s.SetDZ(300.);
+  s.SetP(p);
+
+  return de;
+}
+
+//______________________________________________________________________________
+void EdbPVGen::SmearSegment( EdbSegP &s, EdbScanCond &cond )
+{
+  // smear parameters of segment s with taking into account angular corellation
+
+  TVector2 vx,vt;
+  vt.Set( s.TX(), s.TY() );
+  vx.Set( s.X(),  s.Y()  );
+  float phi = vt.Phi();
+  vt.Rotate(  -phi );
+  vx.Rotate(  -phi );
+
+  float rx,ry,rtx,rty;
+  gRandom->Rannor(rx,ry);
+  gRandom->Rannor(rtx,rty);
+  
+  vx.Set( vx.X() + rx*cond.SigmaX(vt.X()),
+	  vx.Y() + ry*cond.SigmaY(vt.Y()) );
+  vt.Set( vt.X() + rtx*cond.SigmaTX(vt.X()),
+	  vt.Y() + rty*cond.SigmaTY(vt.Y()) );
+
+  vt.Rotate( phi );
+  vx.Rotate( phi );
+
+  s.SetX(  vx.X() );
+  s.SetY(  vx.Y() );
+  s.SetTX( vt.X() );
+  s.SetTY( vt.Y() );
+}
+
 //______________________________________________________________________________
 void EdbPVGen::TrackMC( float zlim[2], float lim[4], 
 			EdbTrackP &tr, int eloss_flag, float PGap)
@@ -251,9 +370,9 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
   EdbPattern *pat = 0;
   int segnum = 0;
 
-  if ( x0 < lim[0] ) return; 
-  if ( y0 < lim[1] ) return; 
-  if ( x0 > lim[2] ) return; 
+  if ( x0 < lim[0] ) return;
+  if ( y0 < lim[1] ) return;
+  if ( x0 > lim[2] ) return;
   if ( y0 > lim[3] ) return;
 
   EdbSegP    *seg = new EdbSegP();

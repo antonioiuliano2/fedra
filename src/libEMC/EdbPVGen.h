@@ -51,6 +51,14 @@ class EdbPVGen : public TObject {
     eVTX->Add((TObject*)vtx);
   }
 
+  void  SmearSegment( EdbSegP &s, EdbScanCond &cond );
+  float PropagateSegment( EdbSegP &s, float dz,
+			 float X0,
+			 float m, 
+			 int eloss_flag );
+  int TrackMC2( EdbTrackP   &tr,
+		EdbLayer    &lim,
+		int eloss_flag, float PGap);
 
   void TrackMC( float zlim[2], float lim[4], 
 		EdbTrackP &tr, int eloss_flag = 0, float PGap = 0. );
