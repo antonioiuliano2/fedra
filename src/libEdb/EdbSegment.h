@@ -64,7 +64,7 @@ private:
   Float_t    eSigmaX;     // dispersion parameter of grains around track line
   Float_t    eSigmaY;     // dispersion parameter of grains around track line
 
-  TObjArray *eElements;   //! array of clusters (transient!)
+  TObjArray *eElements;   // array of clusters (transient!)
 
 public:
   EdbSegment();
@@ -106,7 +106,7 @@ class EdbTrack : public EdbSeg3D {
 
   Int_t       eID;         // Track identifier
 
-  TObjArray  *eElements;   //! array of segments (transient!)
+  TObjArray  *eElements;   // array of segments (transient!)
 
  public:
   EdbTrack();
