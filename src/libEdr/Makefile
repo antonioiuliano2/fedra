@@ -3,7 +3,7 @@ include ../config/ProjectDef.mk
 include ../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS += -lvt -lEmath -lEdb
+PROJECT_LIBS += -lvt -lEmath -lEdb -lEdv
 
 LIB_TGT       = $(LIB_DIR)/libEdr.so
 
@@ -89,7 +89,6 @@ EdbDataSet.o: /var/local/root/include/TAttFill.h
 EdbDataSet.o: /var/local/root/include/TAttMarker.h
 EdbDataSet.o: /var/local/root/include/TBranch.h
 EdbDataSet.o: /var/local/root/include/TStringLong.h
-EdbDataSet.o: /var/local/root/include/TCut.h
 EdbDataSet.o: /var/local/root/include/TArrayD.h
 EdbDataSet.o: /var/local/root/include/TArray.h
 EdbDataSet.o: /var/local/root/include/TArrayI.h
@@ -166,12 +165,12 @@ EdbIP.o: /var/local/root/include/TAttLine.h
 EdbIP.o: /var/local/root/include/TAttFill.h
 EdbIP.o: /var/local/root/include/TAttMarker.h
 EdbIP.o: /var/local/root/include/TArrayC.h /var/local/root/include/TArrayS.h
-EdbIP.o: /var/local/root/include/TArrayF.h /var/local/root/include/TH2.h
+EdbIP.o: /var/local/root/include/TArrayI.h /var/local/root/include/TArrayF.h
+EdbIP.o: /var/local/root/include/Foption.h /var/local/root/include/TH2.h
 EdbIP.o: /var/local/root/include/TTree.h
 EdbIP.o: /var/local/root/include/TClonesArray.h
 EdbIP.o: /var/local/root/include/TBranch.h
-EdbIP.o: /var/local/root/include/TStringLong.h /var/local/root/include/TCut.h
-EdbIP.o: /var/local/root/include/TArrayI.h
+EdbIP.o: /var/local/root/include/TStringLong.h
 EdbIP.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbIP.o: /var/local/root/include/TFile.h /var/local/root/include/TCache.h
 EdbIP.o: EdbIP.h
@@ -214,7 +213,7 @@ EdbPVGen.o: /var/local/root/include/TAttFill.h
 EdbPVGen.o: /var/local/root/include/TAttMarker.h
 EdbPVGen.o: /var/local/root/include/TBranch.h
 EdbPVGen.o: /var/local/root/include/TStringLong.h
-EdbPVGen.o: /var/local/root/include/TCut.h /var/local/root/include/TArrayD.h
+EdbPVGen.o: /var/local/root/include/TArrayD.h
 EdbPVGen.o: /var/local/root/include/TArray.h
 EdbPVGen.o: /var/local/root/include/TArrayI.h
 EdbPVGen.o: /var/local/root/include/TVirtualTreePlayer.h
@@ -233,10 +232,7 @@ EdbPVRec.o: /var/local/root/include/TVector3.h
 EdbPVRec.o: /var/local/root/include/TMath.h
 EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/float.h
 EdbPVRec.o: /var/local/root/include/TError.h
-EdbPVRec.o: /var/local/root/include/TVector2.h /usr/include/limits.h
-EdbPVRec.o: /usr/include/features.h /usr/include/sys/cdefs.h
-EdbPVRec.o: /usr/include/gnu/stubs.h
-EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/limits.h
+EdbPVRec.o: /var/local/root/include/TVector2.h
 EdbPVRec.o: /var/local/root/include/TObject.h
 EdbPVRec.o: /var/local/root/include/Rtypes.h
 EdbPVRec.o: /var/local/root/include/RConfig.h
@@ -245,7 +241,8 @@ EdbPVRec.o: /var/local/root/include/DllImport.h
 EdbPVRec.o: /var/local/root/include/Rtypeinfo.h
 EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/typeinfo
 EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/exception
-EdbPVRec.o: /usr/include/stdio.h
+EdbPVRec.o: /usr/include/stdio.h /usr/include/features.h
+EdbPVRec.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
 EdbPVRec.o: /usr/lib/gcc-lib/i386-redhat-linux/2.96/include/stddef.h
 EdbPVRec.o: /usr/include/bits/types.h /usr/include/libio.h
 EdbPVRec.o: /usr/include/_G_config.h /usr/include/wchar.h
@@ -272,7 +269,7 @@ EdbPVRec.o: /var/local/root/include/TAttFill.h
 EdbPVRec.o: /var/local/root/include/TAttMarker.h
 EdbPVRec.o: /var/local/root/include/TBranch.h
 EdbPVRec.o: /var/local/root/include/TStringLong.h
-EdbPVRec.o: /var/local/root/include/TCut.h /var/local/root/include/TArrayD.h
+EdbPVRec.o: /var/local/root/include/TArrayD.h
 EdbPVRec.o: /var/local/root/include/TArrayI.h
 EdbPVRec.o: /var/local/root/include/TVirtualTreePlayer.h
 EdbPVRec.o: /var/local/root/include/TClass.h
@@ -283,6 +280,12 @@ EdbPVRec.o: /var/local/root/include/TArrayL.h
 EdbPVRec.o: /var/local/root/include/TMatrixD.h
 EdbPVRec.o: /var/local/root/include/TVectorD.h
 EdbPVRec.o: /var/local/root/include/TMatrixDUtils.h
+EdbPVRec.o: /var/local/root/include/TBenchmark.h
+EdbPVRec.o: /var/local/root/include/TNamed.h /var/local/root/include/TList.h
+EdbPVRec.o: /var/local/root/include/TSeqCollection.h
+EdbPVRec.o: /var/local/root/include/TCollection.h
+EdbPVRec.o: /var/local/root/include/TIterator.h
+EdbPVRec.o: /var/local/root/include/TStopwatch.h
 EdbPattern.o: EdbPattern.h /var/local/root/include/TTree.h
 EdbPattern.o: /var/local/root/include/TClonesArray.h
 EdbPattern.o: /var/local/root/include/TAttLine.h
@@ -291,7 +294,6 @@ EdbPattern.o: /var/local/root/include/TAttFill.h
 EdbPattern.o: /var/local/root/include/TAttMarker.h
 EdbPattern.o: /var/local/root/include/TBranch.h
 EdbPattern.o: /var/local/root/include/TStringLong.h
-EdbPattern.o: /var/local/root/include/TCut.h
 EdbPattern.o: /var/local/root/include/TArrayD.h
 EdbPattern.o: /var/local/root/include/TArray.h /usr/include/string.h
 EdbPattern.o: /usr/include/features.h /usr/include/sys/cdefs.h

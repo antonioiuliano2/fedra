@@ -56,8 +56,10 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void PropagateTo( float z );
   void MergeTo( EdbSegP &s );
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
+  bool       IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
 
   void    Copy(const EdbSegP &s);
+  void    Clear() { eCOV->Clear(); }
 
   void    Set(int id, float x, float y, float tx, float ty, float w=0, int flag=0) 
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
@@ -179,14 +181,14 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   EdbSegmentsBox(float x0, float y0, float z0, int nseg=0);
   virtual ~EdbSegmentsBox();
  
-  void   AddSegment(EdbSegP &s);
-  void   AddSegment(EdbSegP &s1, EdbSegP &s2); 
-  void   AddSegment(int id, float x, float y, float tx, float ty, 
+  EdbSegP   *AddSegment(int i, EdbSegP &s);
+  EdbSegP   *AddSegment(EdbSegP &s);
+  EdbSegP   *AddSegment(EdbSegP &s1, EdbSegP &s2); 
+  EdbSegP   *AddSegment(int id, float x, float y, float tx, float ty, 
 		    float w=0, int flag=0);
   Int_t  GetN()    const 
-    {if(eSegments) return eSegments->GetLast()+1; else return 0;}
-  EdbSegP   *GetSegment(int i) const { return (EdbSegP*)eSegments->At(i); }
-  //EdbSegP   *GetLastSegment() { return (EdbSegP*)eSegments->GetLast(); }
+    {if(eSegments) return eSegments->GetEntriesFast(); else return 0;}
+  EdbSegP      *GetSegment(int i) const { return (EdbSegP*)eSegments->At(i); }
   TClonesArray *GetSegments()     const { return eSegments; }
   void          *GetSegmentsAddr()  { return &eSegments; }
 
@@ -226,27 +228,31 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 class EdbTrackP : public EdbSegP {
  
  private:
-  EdbSegmentsBox  *eS;     //! array of segments
-  EdbSegmentsBox  *eSF;    //! array of fitted segments
+  TObjArray  *eS;     // array of segments
+  TObjArray  *eSF;    // array of fitted segments
 
-  TArrayL         *eVid;  //! volume-wide segments id's
+  Int_t      eNpl;        // number of plates passed throw
+  Int_t      eN0;         // number of holes (if any)
 
-  Float_t    eM;               // invariant mass of the particle
+  Float_t    eM;          // invariant mass of the particle
 
  public:
   EdbTrackP(int nseg=0);
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) )
-    {
-      eS  = new EdbSegmentsBox(*(track.S()));
-      eSF = new EdbSegmentsBox(*(track.SF()));
-    }
+    { Copy(track); }
   virtual ~EdbTrackP();
 
   void     SetM( float m )  { eM=m; }
   Float_t  M()      const {return eM;}
 
-  EdbSegmentsBox *S()  const { return eS; }
-  EdbSegmentsBox *SF() const { return eSF; }
+  void     SetN0( int n0 )  { eN0=n0; }
+  Int_t    N0()      const  {return eN0;}
+
+  void     SetNpl( int npl )  { eNpl=npl; }
+  Int_t    Npl()      const   {return eNpl;}
+
+  TObjArray *S()  const { return eS; }
+  TObjArray *SF() const { return eSF; }
 
   const EdbSegP  *TrackZmin() const 
     { 
@@ -261,70 +267,92 @@ class EdbTrackP : public EdbSegP {
       else return GetSegmentF(N()-1);
     }
 
-  void     AddSegment(EdbSegP &s)  
+  void     AddTrack(const EdbTrackP &tr);
+  
+  void   AddSegment(EdbSegP *s)
     { 
-      if(!eS) eS = new EdbSegmentsBox();
-      eS->AddSegment(s);
+      if(!eS) eS = new TObjArray();
+      eS->Add(s);
     }
-  void     AddSegmentF(EdbSegP &s)  
+  void     AddSegmentF(EdbSegP *s)  
     { 
-      if(!eSF) eSF = new EdbSegmentsBox();
-      eSF->AddSegment(s);
+      if(!eSF) eSF = new TObjArray(N());
+      eSF->Add(s);
+    }
+  void     AddSegmentF(int i, EdbSegP *s)  
+    { 
+      if(!eSF) {eSF = new TObjArray(N()); eSF->SetOwner(); }
+      (*eSF)[i] = s;
     }
 
-  EdbSegP *GetSegment(int i)  const {if(eS) return eS->GetSegment(i); else return 0; }
-  EdbSegP *GetSegmentF(int i) const {if(eSF) return eSF->GetSegment(i); else return 0; }
-  int      N() const  {if(eS)  return eS->N(); else return 0; }
-  void     Reset()    { if(eS) eS->Reset(); }
+  EdbSegP *GetSegment(int i)   const { return (eS) ? (EdbSegP*)(eS->At(i))  : 0; }
+  EdbSegP *GetSegmentF(int i)  const { return (eS) ? (EdbSegP*)(eSF->At(i)) : 0; }
+
+  int      N() const  { if(eS)  return eS->GetEntriesFast(); else return 0; }
+  void     Reset()    { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
   void Copy(const EdbTrackP &tr);
   void FitTrack();
   //int FitTrackKF( bool zmax=false );
   int FitTrackKFS( bool zmax=false );
 
-  static double ThetaPb2( float p, float dPath, float mass);
-
   float CHI2();
+  float CHI2F();
 
-  TArrayL  *GetVid() const { return eVid; }
-  void SetVid(int n) {if(eVid) delete eVid; eVid = new TArrayL(n);}
-
-  void Clear() { if(eS) eS->Reset(); if(eSF) eSF->Reset(); }
+  void Clear() { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
   void Print() 
     { 
-      printf("EdbTrackP with %d segments:\n", N());
+      printf("EdbTrackP with %d segments (%d fitted)\n", N(), SF()->GetEntries() );
       printf("particle mass = %f\n", M() );
       ((EdbSegP*)this)->Print(); 
-      if(eS) eS->Print(); 
+      //if(eS) eS->Print(); 
     }
 
-  ClassDef(EdbTrackP,4)  // track consists of segments
+  ClassDef(EdbTrackP,5)  // track consists of segments
 };
 
 //______________________________________________________________________________
-
 class EdbPattern : public EdbSegmentsBox {
  
  private:
   Int_t       eID;          // pattern id in the volume
+  Int_t       ePID;         // correspond to the piece ID
   TIndexCell *eCell;        //! associated with eSegments
+  Float_t    eStepX ,eStepY;  // bin size for the index cell 
+  Float_t    eStepTX,eStepTY; // bin size for the index cell 
 
-  Float_t eSigma[4];          // accuracy in comparison to neibour pattern
+  Float_t eSigma[4];        // accuracy in comparison to neibour pattern
+
+  Int_t   eFlag;            // pattern flag
 
  public:
   EdbPattern();
-  EdbPattern(float x0, float y0, float z0);
+  EdbPattern(float x0, float y0, float z0, int n=0 );
   virtual ~EdbPattern();
  
   TIndexCell *Cell() const {return eCell;}
   void Set0();
   void SetID(int id) {eID=id;}
+  void SetPID(int pid) {ePID=pid;}
   void SetSigma(float sx,float sy,float stx,float sty) 
     { eSigma[0]=sx; eSigma[1]=sy; eSigma[2]=stx; eSigma[3]=sty; }
+  void SetStep(float stepx, float stepy, float steptx, float stepty ) 
+    {eStepX=stepx; eStepY=stepy; eStepTX=steptx; eStepTY=stepty;}
   void Reset();
 
+  float StepX() const {return eStepX;}
+  float StepY() const {return eStepY;}
+  float StepTX() const {return eStepTX;}
+  float StepTY() const {return eStepTY;}
+
   int  ID() const {return eID;}
+  int  PID() const {return ePID;}
+
+  void FillCell( float stepx, float stepy, float steptx, float stepty );
+
+  int FindCompliments(EdbSegP &s, TObjArray &arr, float nsig, float nsigt);
+  EdbPattern  *ExtractSubPattern(float min[5], float max[5]);
 
   ClassDef(EdbPattern,1)  // pattern of segments
 };
@@ -365,7 +393,7 @@ class EdbPatternsVolume : public TObject {
   Float_t Y() const {return eY;}
   Float_t Z() const {return eZ;}
   Int_t   Npatterns() const { if(ePatterns) 
-                        return ePatterns->GetEntries();
+                        return ePatterns->GetEntriesFast();
                         else return 0; }
 
   void PassProperties(EdbPatternsVolume &pvol);
@@ -381,9 +409,14 @@ class EdbPatternsVolume : public TObject {
   void   PrintAff() const;
   int    DropCouples();
 
-  Long_t Vid(int pid, int sid) { return pid*1000000+sid; }
-  Int_t  Pid(Long_t vid) { return vid/1000000; }
-  Int_t  Sid(Long_t vid) { return vid%1000000; }
+  Long_t Vid(int pid, int sid) const { return pid*1000000+sid; }
+  Int_t  Pid(Long_t vid)       const { return vid/1000000; }
+  Int_t  Sid(Long_t vid)       const { return vid%1000000; }
+
+  EdbSegP *GetSegment(Long_t vid) const 
+    {return GetPattern(Pid(vid))->GetSegment( Sid(vid) );}
+
+  void   Print() const;
 
   ClassDef(EdbPatternsVolume,1)  // patterns nostri
 };

@@ -217,7 +217,7 @@ class EdbPatCouple : public TObject {
   EdbScanCond  *Cond()    {return eCond;}
 
   float   Zlink()    const {return eZlink;}
-  int     Ncouples() const { if(eSegCouples) return eSegCouples->GetEntries(); 
+  int     Ncouples() const { if(eSegCouples) return eSegCouples->GetEntriesFast(); 
                              else return 0; }
   void  ClearSegCouples() { eSegCouples->Clear(); }
 
@@ -305,6 +305,7 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbPVRec();
   ~EdbPVRec();
 
+  void    FillCell( float stepx,  float stepy, float steptx,float stepty);
   void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
   EdbScanCond const *GetScanCond() { return eScanCond; }
 
@@ -320,7 +321,7 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetChi2Max(float chi)
     { eChi2Max=chi; }
 
-  int  Ncouples() const { if(ePatCouples) return ePatCouples->GetEntries(); 
+  int  Ncouples() const { if(ePatCouples) return ePatCouples->GetEntriesFast(); 
                           else return 0; }
 
   EdbPatCouple  *GetCouple(int i) const { if(ePatCouples) 
@@ -328,6 +329,12 @@ class EdbPVRec : public EdbPatternsVolume {
                                else return 0; }
 
   TIndexCell *GetTracksCell() const { return eTracksCell; }
+
+  float Chi2Fast(EdbSegP &s1, EdbSegP &s2);
+  int   MergeTracks(int maxgap=2);
+  int   MergeTracks1(int maxgap);
+  int   MakeTracks(int nsegments=2);
+  void  FitTracks(float p=10., float mass=0.139 );
   int   MakeTracksTree();
 
   int    LinkSlow();
@@ -355,41 +362,13 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetSegmentErrors( EdbSegP &seg );
   void SetSegmentProbability( EdbSegP &seg );
 
+  void AddTrack(EdbTrackP *track) {
+    if(!eTracks) eTracks = new TObjArray();
+    eTracks->Add(track);
+  }
 
-  /*
-
-  float Chi2( EdbSegP *s1,  EdbSegP *s2 ) const;
-  float Chi2_( EdbSegP *s1,  EdbSegP *s2 ) const;
-  float Chi2Z0( EdbSegP *s1,  EdbSegP *s2 ) const;
-
-  void VerifyParameters();
-  void PrintParameters();
-
-  int    AlignFast();
-  int    AlignFast(EdbPatternsVolume &pvol);
-  int    Align();
-  int    Align(int pass);
-
-  void   RemakeTracksCell();
-
-  void   FillTracksCell(  EdbPattern *pat1, EdbPattern *pat2,
-			  int e1,int e2 );
-
-  int  ExtractSelectedTracks( EdbPatternsVolume *pvol=0, int nseg=2 );
-
-  void ExtractSelectedPatterns( EdbPattern *pat1, 
-				EdbPattern *pat2, 
-				TIndexCell *csel,
-				EdbPattern *psel1, 
-				EdbPattern *psel2 );
-
-
-
-  TIndexCell *TracksCell() const { return eTracksCell; }
-
-
-  */
-
+  int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
+			    float binx, float bint );
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };

@@ -102,7 +102,7 @@ void EdbGA::CheckViewGrains(int vid)
 
   clusters = eRun->GetEntryClusters(vid);
 
-  printf("%d clusters are read for view %d \n", clusters->GetEntries(), vid );
+  printf("%d clusters are read for view %d \n", clusters->GetEntriesFast(), vid );
 
   TIndexCell chains;
   VerticalChains(clusters,chains);
@@ -131,7 +131,7 @@ void EdbGA::VerticalChainsA( TClonesArray *clusters )
 	v[iv] = -1;
       }
   
-  int ncl = clusters->GetEntries();
+  int ncl = clusters->GetEntriesFast();
   for( int i=0; i<ncl; i++ ) {
     cl = (EdbCluster*)(clusters->UncheckedAt(i));
     ix = (int)(cl->X()/eBinX);
@@ -155,7 +155,7 @@ void EdbGA::VerticalChains( TClonesArray *clusters, TIndexCell &chains )
 
   EdbCluster *cl;
 
-  int ncl = clusters->GetEntries();
+  int ncl = clusters->GetEntriesFast();
   for( int i=0; i<ncl; i++ ) {
     cl = (EdbCluster*)(clusters->UncheckedAt(i));
     v[0] = (Long_t)(cl->X()/xb);
@@ -265,7 +265,7 @@ void EdbGA::GrainStat(TClonesArray *clusters, float &x0, float &y0, float &z0)
 {
   double xs=0,ys=0,zs=0; 
   EdbCluster *cl=0;
-  int ncl = clusters->GetEntries();
+  int ncl = clusters->GetEntriesFast();
   for( int i=0; i<ncl; i++ ) {
     cl = (EdbCluster *)clusters->At(i);
     xs += cl->X();

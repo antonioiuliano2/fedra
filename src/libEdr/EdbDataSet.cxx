@@ -138,7 +138,7 @@ EdbDataPiece::~EdbDataPiece()
 ///______________________________________________________________________________
 void EdbDataPiece::Set0()
 {
-  eOUTPUT=1;
+  eOUTPUT=0;
   ePlate=0;
   ePiece=0;
   eFlag=0;
@@ -221,7 +221,7 @@ void EdbDataPiece::Print()
   printf("Piece: %s\n",GetName());
   printf("%d %d \n", ePlate,ePiece);
   int i;
-  for(i=0; i<eRunFiles.GetEntries(); i++)
+  for(i=0; i<Nruns(); i++)
     printf("%s\n",GetRunFile(i));
   for(i=0; i<3; i++)  if(eLayers[i])  eLayers[i]->Print();
   for(i=0; i<3; i++)  if(eCond[i])    eCond[i]->Print();
@@ -240,7 +240,7 @@ void EdbDataPiece::AddRunFile( const char *name )
 ///______________________________________________________________________________
 const char *EdbDataPiece::GetRunFile( int i ) const
 {
-  if(eRunFiles.GetEntries()<i+1) return 0;
+  if(Nruns()<i+1) return 0;
   return ((TObjString *)eRunFiles.At(i))->GetName();
 }
 
@@ -279,6 +279,17 @@ void EdbDataPiece::AddSegmentCut(int layer, int xi, float var[10])
 }
 
 ///______________________________________________________________________________
+void EdbDataPiece::AddSegmentCut(int layer, int xi, float min[5], float max[5])
+{
+  if(!eCuts[layer])  eCuts[layer] = new TObjArray();
+  EdbSegmentCut *cut=new EdbSegmentCut();
+  cut->SetXI(xi);
+  cut->SetMin(min);
+  cut->SetMax(max);
+  eCuts[layer]->Add( cut );
+}
+
+///______________________________________________________________________________
 void EdbDataPiece::AddCutCP(float var[6])
 {
   for(int i=0; i<6; i++) eCutCP[i]=var[i];
@@ -288,7 +299,7 @@ void EdbDataPiece::AddCutCP(float var[6])
 int EdbDataPiece::NCuts(int layer)
 {
   if(!eCuts[layer])  return 0;
-  return eCuts[layer]->GetEntries();
+  return eCuts[layer]->GetEntriesFast();
 }
 
 ///______________________________________________________________________________
@@ -743,21 +754,22 @@ int EdbDataPiece::TakeCPSegment( EdbSegCouple &cp, EdbSegP &seg)
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::GetCPData(EdbPVRec *ali)
+int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 {
   printf("z = %f \n", GetLayer(0)->Z());
-  EdbPattern *pat = new EdbPattern( 0.,0., GetLayer(0)->Z() );
   pat->SetID(0);
   EdbSegP    segP;
 
   TTree *tree=eCouplesTree;
   EdbSegCouple    *cp = 0;
-  //EdbSegP         *s1 = 0;
-  //EdbSegP         *s2 = 0;
+  EdbSegP         *s1 = 0;
+  EdbSegP         *s2 = 0;
   EdbSegP         *s  = 0;
 
   tree->SetBranchAddress("cp"  , &cp  );
-  tree->SetBranchAddress("s."  , &s  );
+  if(pat)  tree->SetBranchAddress("s."   , &s   );
+  if(p1)   tree->SetBranchAddress("s1."  , &s1  );
+  if(p2)   tree->SetBranchAddress("s2."  , &s2  );
 
   int nseg = 0;
   int nentr = (int)(tree->GetEntries());
@@ -765,13 +777,30 @@ int EdbDataPiece::GetCPData(EdbPVRec *ali)
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
     if( !TakeCPSegment(*cp,*s) )      continue;
-    s->SetZ(pat->Z());
-    s->SetVid(ePlate*1000+ePiece,i);
-    pat->AddSegment( *s );
-    nseg++;
+    if(pat) {
+      s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
+      s->SetPID( ePlate*10 );
+      s->SetVid(ePlate*1000+ePiece,i);
+      pat->AddSegment( *s  ); 
+      nseg++; 
+    }
+    if(p1)  { 
+      s1->SetZ( s1->Z() + pat->Z() );
+      s1->SetPID( ePlate*10 +1 );
+      p1->AddSegment(  *s1 ); 
+      nseg++; 
+    }
+    if(p2)  { 
+      s2->SetZ( s2->Z() + pat->Z() );
+      s2->SetPID( ePlate*10 + 2 );
+      p2->AddSegment(  *s2 ); 
+      nseg++; 
+    }
   }
+
   printf("%d (of %d) segments are readed\n", nseg,nentr );
-  ali->AddPattern(pat);
+  printf("nseg= %d\n",pat->N());
+
   return nseg;
 }
 
@@ -1162,7 +1191,7 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
       tree->Branch("s2.","EdbSegP",&s2,32000,99);
       tree->Branch("s." ,"EdbSegP",&s,32000,99);
       tree->Write();
-      tree->SetAutoSave(2000000);
+      //tree->SetAutoSave(2000000);
     }
   }
   return tree;
@@ -1291,7 +1320,7 @@ EdbDataSet::EdbDataSet(const char *file)
 ///______________________________________________________________________________
 EdbDataSet::~EdbDataSet()
 {
-  if(ePieces.GetEntries()) ePieces.Delete();
+  if(ePieces.GetEntriesFast()) ePieces.Delete();
 }
 
 ///______________________________________________________________________________
@@ -1358,7 +1387,7 @@ int EdbDataSet::ReadDataSetDef(const char *file)
 ///______________________________________________________________________________
 void EdbDataSet::PrintRunList()
 {
-  for(int i=0; i<ePieces.GetEntries(); i++){
+  for(int i=0; i<ePieces.GetEntriesFast(); i++){
     ((EdbDataPiece*)ePieces.At(i))->Print();
   }
 }
@@ -1374,13 +1403,14 @@ void EdbDataSet::Print()
   }
 }
 
+
 ///______________________________________________________________________________
 void EdbDataSet::WriteRunList()
 {
   if(!eDBFile) eDBFile = new TFile(eDBFileName.Data(),"UPDATE");
   //else eDBFile->Cd();
 
-  for(int i=0; i<ePieces.GetEntries(); i++){
+  for(int i=0; i<ePieces.GetEntriesFast(); i++){
     ((EdbDataPiece*)ePieces.At(i))->MakeName();
   }
 
@@ -1392,7 +1422,7 @@ EdbDataPiece *EdbDataSet::FindPiece(const char *name)
 {
   const char *nn;
   EdbDataPiece *piece=0;
-  for(int i=0; i<ePieces.GetEntries(); i++){
+  for(int i=0; i<ePieces.GetEntriesFast(); i++){
     piece = (EdbDataPiece*)ePieces.At(i);
     nn = piece->GetName();
     if(!strcmp(nn,name)) return piece;
@@ -1446,6 +1476,7 @@ int EdbDataSet::GetRunList(const char *file)
 EdbDataProc::EdbDataProc(const char *file)
 {
   eDataSet = new EdbDataSet(file);
+  ePVR     = 0;
   eNoUpdate=0;
 }
 
@@ -1453,6 +1484,7 @@ EdbDataProc::EdbDataProc(const char *file)
 EdbDataProc::~EdbDataProc()
 {
   if(eDataSet) delete eDataSet;
+  if(ePVR)     delete ePVR;
 }
 
 ///------------------------------------------------------------------------------
@@ -1491,9 +1523,71 @@ int EdbDataProc::Link()
 }
 
 ///______________________________________________________________________________
+int EdbDataProc::Link(EdbDataPiece &piece)
+{
+  EdbPVRec  *ali;
+
+  const char *file_name=piece.GetNameCP();
+  TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
+  EdbScanCond *cond = piece.GetCond(1);
+
+  int ntot=0, nareas=0;
+
+  float  shr1=1,shr2=1;
+  double shrtot1=0, shrtot2=0;
+  int    nshr=0,nshrtot=0;
+
+  for( int irun=0; irun<piece.Nruns(); irun++ ) {
+    nareas = piece.MakeLinkListCoord(irun);
+    //nareas = piece.MakeLinkListArea(irun);
+    if(nareas<=0) continue; 
+    for(int i=0; i<nareas; i++ ) {
+
+      ali      = new EdbPVRec();
+      ali->SetScanCond( cond );
+
+      piece.GetAreaData(ali,i,1);
+      piece.GetAreaData(ali,i,2);
+
+      //ali->SetSegmentsErrors();
+
+      ali->SetCouplesAll();
+      ali->SetChi2Max(cond->Chi2PMax());
+      ali->Link();
+
+      if( ShrinkCorr() ) {
+	shr1 = 1;
+	shr2 = 1;
+	nshr = CheckShrinkage( ali,0, shr1, shr2 );
+	nshrtot += nshr;
+	shrtot1 += nshr*shr1;
+	shrtot2 += nshr*shr2;
+      }
+
+      FillCouplesTree(cptree, ali,piece.GetOUTPUT());  //!!! 0
+
+      delete ali;
+    }
+    ntot+=nareas;
+    shrtot1 = shrtot1/nshrtot;
+    shrtot2 = shrtot2/nshrtot;
+    printf("Shrinkage correction: %f %f\n", (float)shrtot1,(float)shrtot2);
+    piece.CorrectShrinkage( 1, (float)shrtot1 );
+    piece.CorrectShrinkage( 2, (float)shrtot2 );
+    if(!NoUpdate())   piece.UpdateShrPar(1);
+    if(!NoUpdate())   piece.UpdateShrPar(2);
+  }
+  CloseCouplesTree(cptree);
+
+  return ntot;
+}
+
+///______________________________________________________________________________
 void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 {
   tree->GetDirectory()->cd();
+
+  printf("fill couples tree...\n");
 
   EdbPatCouple *patc=0;
   float xv = al->X();
@@ -1618,66 +1712,6 @@ int EdbDataProc::CheckShrinkage(EdbPVRec *ali, int couple, float &shr1, float &s
 }
 
 ///______________________________________________________________________________
-int EdbDataProc::Link(EdbDataPiece &piece)
-{
-  EdbPVRec  *ali;
-
-  const char *file_name=piece.GetNameCP();
-  TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
-  EdbScanCond *cond = piece.GetCond(1);
-
-  int ntot=0, nareas=0;
-
-  float  shr1=1,shr2=1;
-  double shrtot1=0, shrtot2=0;
-  int    nshr=0,nshrtot=0;
-
-  for( int irun=0; irun<piece.Nruns(); irun++ ) {
-    nareas = piece.MakeLinkListCoord(irun);
-    //nareas = piece.MakeLinkListArea(irun);
-    if(nareas<=0) continue; 
-    for(int i=0; i<nareas; i++ ) {
-
-      ali      = new EdbPVRec();
-      ali->SetScanCond( cond );
-
-      piece.GetAreaData(ali,i,1);
-      piece.GetAreaData(ali,i,2);
-
-      //ali->SetSegmentsErrors();
-
-      ali->SetCouplesAll();
-      ali->SetChi2Max(cond->Chi2PMax());
-      ali->Link();
-
-      if( ShrinkCorr() ) {
-	shr1 = 1;
-	shr2 = 1;
-	nshr = CheckShrinkage( ali,0, shr1, shr2 );
-	nshrtot += nshr;
-	shrtot1 += nshr*shr1;
-	shrtot2 += nshr*shr2;
-      }
-
-      FillCouplesTree(cptree, ali,piece.GetOUTPUT());  //!!! 0
-
-      delete ali;
-    }
-    ntot+=nareas;
-    shrtot1 = shrtot1/nshrtot;
-    shrtot2 = shrtot2/nshrtot;
-    printf("Shrinkage correction: %f %f\n", (float)shrtot1,(float)shrtot2);
-    piece.CorrectShrinkage( 1, (float)shrtot1 );
-    piece.CorrectShrinkage( 2, (float)shrtot2 );
-    if(!NoUpdate())   piece.UpdateShrPar(1);
-    if(!NoUpdate())   piece.UpdateShrPar(2);
-  }
-  CloseCouplesTree(cptree);
-
-  return ntot;
-}
-
-///______________________________________________________________________________
 void EdbDataProc::CorrectAngles()
 {
   EdbDataPiece *piece;
@@ -1734,7 +1768,169 @@ int EdbDataProc::InitVolumeRaw(EdbPVRec    *ali)
 }
 
 ///______________________________________________________________________________
-int EdbDataProc::InitVolume(EdbPVRec    *ali)
+EdbPVRec *EdbDataProc::ExtractDataVolume( EdbSegP &seg, int plmin, int plmax,
+					  float acc[4],
+					  int datatype   )
+{
+  // datatype: 0   - base track
+  //           1   - up
+  //           2   - down
+  //           100 - raw?
+
+  if(!ePVR)               return 0;
+  int npat = ePVR->Npatterns();
+
+  EdbPVRec *ali = new EdbPVRec();
+
+  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+	 datatype, npat);
+
+  float dz, min[5],  max[5];
+  EdbPattern *pat=0;
+
+  for(int i=0; i<npat; i++) {
+
+    pat = ePVR->GetPattern(i);
+    if(!pat)                   continue;
+
+    dz = pat->Z() - seg.Z();
+
+    min[0] = seg.X() + dz*seg.TX() - acc[0];
+    min[1] = seg.Y() + dz*seg.TY() - acc[1];
+    max[0] = seg.X() + dz*seg.TX() + acc[0];
+    max[1] = seg.Y() + dz*seg.TY() + acc[1];
+
+    min[2] = -.6;    max[2] = .6;
+    min[3] = -.6;    max[3] = .6;
+    min[4] =  0.;    max[4] = 100.;
+
+    ali->AddPattern( pat->ExtractSubPattern(min,max) );
+  }
+  
+  return ali;
+}
+
+///______________________________________________________________________________
+EdbPVRec *EdbDataProc::ExtractDataVolumeF( EdbTrackP &tr, float binx, float bint,
+					   int datatype   )
+{
+  if(!ePVR)               return 0;
+  int npat = ePVR->Npatterns();
+  EdbPVRec *ali = new EdbPVRec();
+  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+	 datatype, npat);
+
+  EdbSegP ss; // the "selector" segment 
+  ss.SetCOV( tr.GetSegment(0)->COV() );
+
+  float dz  = (tr.GetSegment(tr.N()-1)->Z() - tr.GetSegment(0)->Z());
+  float tx  = (tr.GetSegment(tr.N()-1)->X() - tr.GetSegment(0)->X())/dz;
+  float ty  = (tr.GetSegment(tr.N()-1)->Y() - tr.GetSegment(0)->Y())/dz;
+
+  ss.SetTX(tx);
+  ss.SetTY(ty);
+  ss.SetX(tr.X());
+  ss.SetY(tr.Y());
+  ss.SetZ(tr.Z());
+
+  ss.Print();
+
+  EdbPattern *pat  = 0;
+  EdbPattern *spat = 0;
+  int nseg =0;
+
+  TObjArray arr;
+
+  for(int i=0; i<npat; i++) {
+    pat = ePVR->GetPattern(i);
+    if(!pat)                   continue;
+    ss.PropagateTo(pat->Z());
+    nseg += pat->FindCompliments(ss,arr,binx,bint);
+  }
+
+  spat = new EdbPattern(0,0,0);
+  for(int i=0; i<arr.GetEntriesFast(); i++)
+    spat->AddSegment( *((EdbSegP*)(arr.At(i))) );
+
+  ali->AddPattern( spat );
+
+  printf("%d segments are selected\n",nseg);
+  return ali;
+}
+
+///______________________________________________________________________________
+EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
+					  int datatype   )
+{
+  // datatype: 0   - base track
+  //           1   - up
+  //           2   - down
+  //           100 - raw?
+
+  if(!ePVR)               return 0;
+  int npat = ePVR->Npatterns();
+
+  EdbPVRec *ali = new EdbPVRec();
+
+  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+	 datatype, npat);
+
+  float min[5],  max[5];
+
+  float dx  = binx*TMath::Sqrt(tr.SX()*tr.N());
+  float dy  = binx*TMath::Sqrt(tr.SY()*tr.N());
+  float dtx = bint*TMath::Sqrt(tr.STX()*tr.N());
+  float dty = bint*TMath::Sqrt(tr.STY()*tr.N());
+
+  float dz  = (tr.GetSegment(tr.N()-1)->Z() - tr.GetSegment(0)->Z());
+  float tx  = (tr.GetSegment(tr.N()-1)->X() - tr.GetSegment(0)->X())/dz;
+  float ty  = (tr.GetSegment(tr.N()-1)->Y() - tr.GetSegment(0)->Y())/dz;
+
+  printf("select segments with acceptance: %f %f [microns]   %f %f [mrad]\n",
+	 dx,dy,dtx*1000,dty*1000);
+
+  EdbPattern *pat  = 0;
+  EdbPattern *spat = 0;
+  int nseg =0;
+
+  for(int i=0; i<npat; i++) {
+
+    pat = ePVR->GetPattern(i);
+    if(!pat)                   continue;
+
+    dz = pat->Z() - tr.Z() + 107.;        //TODO
+
+    min[0] = tr.X() + dz*tx - dx;
+    max[0] = tr.X() + dz*tx + dx;
+    min[1] = tr.Y() + dz*ty - dy;
+    max[1] = tr.Y() + dz*ty + dy;
+    min[2] = tx - dtx;
+    max[2] = tx + dtx;
+    min[3] = ty - dty;
+    max[3] = ty + dty;
+    min[4] =  0.;    
+    max[4] = 100.;
+
+    spat = pat->ExtractSubPattern(min,max);
+    nseg += spat->N();
+    ali->AddPattern( spat );
+  }
+  printf("%d segments are selected\n",nseg);
+  return ali;
+}
+
+///______________________________________________________________________________
+int EdbDataProc::InitVolume(int datatype)
+{
+  // datatype: 0  - couples basetrack data
+  //           10 - couples full data
+
+  if(!ePVR) ePVR = new EdbPVRec();
+  return InitVolume(ePVR, datatype);
+}
+
+///______________________________________________________________________________
+int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
 {
   EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
   ali->SetScanCond( cond );
@@ -1746,25 +1942,50 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali)
 
   TTree *cptree=0;
   int i;
+
+  EdbPattern *pat=0;
+  EdbPattern *p1=0;
+  EdbPattern *p2=0;
+
   for(i=0; i<npieces; i++ ) {
     printf("\n");
     piece = eDataSet->GetPiece(i);
     cptree=EdbDataPiece::InitCouplesTree(piece->GetNameCP(),"READ");
     if( !cptree )  printf("no tree %d\n",i);
     piece->SetCouplesTree(cptree);
-    piece->GetCPData(ali);
+
+    pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
+    pat->SetPID(i);
+    if(datatype>0) {
+      p1 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(1)->Z() );
+      p2 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(2)->Z() );
+      p1->SetPID(i);
+      p2->SetPID(i);
+    }
+
+    piece->GetCPData( pat,p1,p2 );
+
+    ali->AddPattern( pat );
+    if(datatype>0) {
+      ali->AddPattern( p1 );
+      ali->AddPattern( p2 );
+    }
+
   }
+
 
   float x0 = eDataSet->GetPiece(npieces-1)->GetLayer(0)->X();
   float y0 = eDataSet->GetPiece(npieces-1)->GetLayer(0)->Y();
   //ali->Centralize();
   ali->Centralize(x0,y0);
 
-  for(i=0; i<npieces; i++ ) {
-    ali->GetPattern(i)->SetSegmentsZ();
-    ali->GetPattern(i)->Transform(    eDataSet->GetPiece(i)->GetLayer(0)->GetAffineXY()   );
-    ali->GetPattern(i)->TransformA(   eDataSet->GetPiece(i)->GetLayer(0)->GetAffineTXTY() );
-    ali->GetPattern(i)->TransformShr( eDataSet->GetPiece(i)->GetLayer(0)->Shr()  );
+  int npat = ali->Npatterns();
+  for(i=0; i<npat; i++ ) {
+    pat = ali->GetPattern(i);
+    //pat->SetSegmentsZ();   /// TO CHECK!!!
+    pat->Transform(    eDataSet->GetPiece(pat->PID())->GetLayer(0)->GetAffineXY()   );
+    pat->TransformA(   eDataSet->GetPiece(pat->PID())->GetLayer(0)->GetAffineTXTY() );
+    pat->TransformShr( eDataSet->GetPiece(pat->PID())->GetLayer(0)->Shr()  );
   }
   ali->SetPatternsID();
 
@@ -1793,12 +2014,12 @@ void EdbDataProc::Align()
 }
 
 ///______________________________________________________________________________
-void EdbDataProc::LinkTracks( int alg )
+void EdbDataProc::LinkTracks( int alg, int merge )
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
   ali->Link();
-  printf("link ok\n");
+  printf("link ok  alg = %d \t merge= %d\n", alg, merge);
 
   if(alg>1) {
     int nhol;
@@ -1814,13 +2035,14 @@ void EdbDataProc::LinkTracks( int alg )
 
   ali->FillTracksCell();  // TODO: very long operation - speedup
 
-  TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
-  FillCouplesTree(cptree, ali,0);
-  CloseCouplesTree(cptree);
+  //TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
+  //FillCouplesTree(cptree, ali,0);
+  //CloseCouplesTree(cptree);
 
-  printf("5\n");
+  ali->MakeTracks();
+  ali->FitTracks(4.);
+  if(merge>0) ali->MergeTracks(merge);
   ali->MakeTracksTree();
-  printf("6\n");
 }
 
 ///______________________________________________________________________________

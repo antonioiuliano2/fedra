@@ -136,6 +136,8 @@ class EdbDataPiece : public TNamed {
   virtual ~EdbDataPiece();
 
   void Set0();
+
+  int  Plate() const {return ePlate;}
   int  InitCouplesInd();
   int  GetLinkedSegEntr(int side, int aid, int vid, int sid, TArrayI &entr) const;
   void SetVolume0( float x0, float y0, float z0, float tx=0, float ty=0 );
@@ -153,7 +155,7 @@ class EdbDataPiece : public TNamed {
   int   UpdateSegmentCut(EdbSegmentCut cut);
 
   void SetCouplesTree(TTree *tree) {eCouplesTree=tree;}
-  int       Nruns() const { return eRunFiles.GetEntries(); }
+  int       Nruns() const { return eRunFiles.GetEntriesFast(); }
   int       Flag() const {return eFlag;}
   EdbLayer *GetMakeLayer(int id);
   EdbLayer *GetLayer(int id)
@@ -166,7 +168,8 @@ class EdbDataPiece : public TNamed {
   void           SetOUTPUT(int out=1) {eOUTPUT=out;}
   void           SetCutGR(float chi) {eCutGR=chi;}
   void           AddCutCP(float var[6]);
-  void           AddSegmentCut(int layer, int xi, float var[5]);
+  void           AddSegmentCut(int layer, int xi, float var[10]);
+  void           AddSegmentCut(int layer, int xi, float min[5], float max[5]);
   int            NCuts(int layer);
   EdbSegmentCut *GetCut(int layer, int i)
     { return (EdbSegmentCut *)(eCuts[layer]->UncheckedAt(i)); }
@@ -195,7 +198,7 @@ class EdbDataPiece : public TNamed {
   float CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz );
 
   int  GetRawData(EdbPVRec *ali);
-  int  GetCPData(EdbPVRec *ali);
+  int  GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0 );
   int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);
 
   int   InitCouplesTree( const char *mode="READ" );
@@ -224,9 +227,9 @@ class EdbDataSet : public TNamed {
   virtual ~EdbDataSet();
 
   void Set0();
-  int N() const { return ePieces.GetEntries(); }
+  int N() const { return ePieces.GetEntriesFast(); }
   EdbDataPiece *GetPiece(int id) 
-    { if(id<ePieces.GetEntries()) return (EdbDataPiece *)ePieces.At(id); else return 0;}
+    { if(id<ePieces.GetEntriesFast()) return (EdbDataPiece *)ePieces.At(id); else return 0;}
 
   const char *GetAnaDir() const {return eAnaDir.Data();}
   const char *GetParDir() const {return eParDir.Data();}
@@ -236,6 +239,7 @@ class EdbDataSet : public TNamed {
   void WriteRunList();
 
   EdbDataPiece *FindPiece(const char *name);
+
   void Print();
 
   ClassDef(EdbDataSet,1)  // OPERA emulsion data set
@@ -248,21 +252,35 @@ class EdbDataProc : public TObject {
 
   EdbDataSet *eDataSet;
 
+  EdbPVRec   *ePVR;
+
   int  eNoUpdate;
 
  public:
-  EdbDataProc() {eDataSet=0;}
+  EdbDataProc() { eDataSet=0; ePVR=0; }
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
-  int  InitVolume(EdbPVRec *ali);
+  EdbPVRec *PVR() const {return ePVR;}
+  void   SetPVR(EdbPVRec *pvr)  {ePVR=pvr;}
+
+  EdbPVRec *ExtractDataVolume( EdbSegP &v, int plmin, int plmax,
+			       float accept[4], 
+			       int datatype=0 );
+  EdbPVRec *ExtractDataVolume( EdbTrackP &tr, float binx=20, float bint=10,
+			       int datatype=0 );
+  EdbPVRec *ExtractDataVolumeF( EdbTrackP &tr, float binx=20, float bint=10,
+			       int datatype=0 );
+
+  int  InitVolume(int datatype=0);
+  int  InitVolume(EdbPVRec *ali, int datatype=0);
   int  InitVolumeRaw(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
   int  CheckCCD();
   int  Link();
   int  Link(EdbDataPiece &piece);
   void Align();
-  void LinkTracks(int alg=0);
+  void LinkTracks(int alg=0, int merge=0);
   void LinkRawTracks(int alg=0);
   void AlignLinkTracks(int alg=0);
   void SetNoUpdate(int nu) { eNoUpdate=nu; }

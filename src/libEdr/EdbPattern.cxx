@@ -11,6 +11,7 @@
 #include "TIndexCell.h"
 #include "EdbAffine.h"
 #include "EdbPattern.h"
+#include "EdbVertex.h"
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
 
@@ -46,7 +47,7 @@ void EdbSegP::SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2
   // setting the diagonal elements of covariance matrix
 
   if(!eCOV) eCOV = new TMatrixD(5,5);
-  else eCOV->Clear();
+  else eCOV->Zero();
   (*eCOV)(0,0) = (double)sx2; 
   (*eCOV)(1,1) = (double)sy2; 
   (*eCOV)(2,2) = (double)stx2;
@@ -238,8 +239,25 @@ void EdbSegP::PropagateTo( float z )
   eX  = X() + TX()*dz;
   eY  = Y() + TY()*dz;
   eZ  = z;
-  (*eCOV)(0,0)=  SX() + STX()*dz*dz;
+  (*eCOV)(0,0) = SX() + STX()*dz*dz;
   (*eCOV)(1,1) = SY() + STY()*dz*dz;
+}
+
+//______________________________________________________________________________
+bool EdbSegP::IsCompatible( EdbSegP &s, float nsigx, float nsigt ) const
+{
+  // return true if segments are closer then nsig sigma in all coordinates
+  // assumed that z is the same
+  float dtx=TX()-s.TX();
+  if( dtx*dtx > STX()*nsigt*nsigt )    return false;
+  float dty=TY()-s.TY();
+  if( dty*dty > STY()*nsigt*nsigt )    return false;
+  float dz=s.Z()-Z();
+  float dx=X()+TX()*dz-s.X();
+  if( dx*dx > SX()*nsigx*nsigx )       return false;
+  float dy=Y()+TY()*dz-s.Y();
+  if( dy*dy > SY()*nsigx*nsigx )       return false;
+  return true;
 }
 
 //______________________________________________________________________________
@@ -343,23 +361,30 @@ void EdbSegmentsBox::Set0()
 }
  
 //______________________________________________________________________________
-void EdbSegmentsBox::AddSegment(int id, float x, float y, float tx, float ty, 
+EdbSegP *EdbSegmentsBox::AddSegment(int id, float x, float y, float tx, float ty, 
 			    float w, int flag)
 {
-  new((*eSegments)[N()])  EdbSegP( id,x,y,tx,ty,w,flag );
+  return new((*eSegments)[N()])  EdbSegP( id,x,y,tx,ty,w,flag );
 }
  
 //______________________________________________________________________________
-void EdbSegmentsBox::AddSegment( EdbSegP &s )
+EdbSegP *EdbSegmentsBox::AddSegment( int i, EdbSegP &s )
 {
-  new((*eSegments)[N()])  EdbSegP( s );
+  return new((*eSegments)[i])  EdbSegP( s );
 }
  
 //______________________________________________________________________________
-void EdbSegmentsBox::AddSegment( EdbSegP &s1, EdbSegP &s2 )
+EdbSegP *EdbSegmentsBox::AddSegment( EdbSegP &s )
+{
+  return new((*eSegments)[N()])  EdbSegP( s );
+}
+ 
+//______________________________________________________________________________
+EdbSegP *EdbSegmentsBox::AddSegment( EdbSegP &s1, EdbSegP &s2 )
 {
   EdbSegP *s = new((*eSegments)[N()])  EdbSegP( s1 );
   s->MergeTo(s2);
+  return s;
 }
  
 //______________________________________________________________________________
@@ -537,36 +562,50 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 } 
 
 //______________________________________________________________________________
+//______________________________________________________________________________
 EdbTrackP::EdbTrackP(int nseg=0)
 {
   eS=0;
   eSF=0;
-  eVid = 0;  
   eM=0;
-  if(nseg>0) eS = new EdbSegmentsBox(nseg);
-  if(nseg>0) eSF = new EdbSegmentsBox(nseg);
+  if(nseg>0) eS  = new TObjArray(nseg);
+  if(nseg>0) { eSF = new TObjArray(nseg);    eSF->SetOwner(); }
 }
  
 //______________________________________________________________________________
 EdbTrackP::~EdbTrackP()
 {
-  if(eS)    { delete eS;  eS=0;  }
-  if(eSF)   { delete eSF; eSF=0; }
-  if(eVid) { delete eVid; eVid=0; }
+  if(eS)    { eS->Clear();  delete eS;  eS=0;  }
+  if(eSF)   { eSF->Clear(); delete eSF; eSF=0; }
 }
 
 //______________________________________________________________________________
 void EdbTrackP::Copy(const EdbTrackP &tr)
 {
+  // do the physical copy of segments
   Reset();
   SetID(tr.ID());
+  SetM(tr.M());
+  SetNpl(tr.Npl());  
+  SetN0(tr.N0());
+
   int nseg=tr.N();
   for(int i=0; i<nseg; i++)
-    AddSegment(*tr.GetSegment(i));
+    AddSegment(new EdbSegP(*tr.GetSegment(i)));
   for(int i=0; i<nseg; i++)
-    AddSegmentF(*tr.GetSegmentF(i));
+    AddSegmentF(new EdbSegP(*tr.GetSegmentF(i)));
+  eS->SetOwner(); 
+  eSF->SetOwner(); 
+}
 
-  SetM(tr.M());
+//______________________________________________________________________________
+void EdbTrackP::AddTrack(const EdbTrackP &tr)
+{
+  int nseg=tr.N();
+  for(int i=0; i<nseg; i++)
+    AddSegment(tr.GetSegment(i));
+  for(int i=0; i<nseg; i++)
+    AddSegmentF(new EdbSegP(*(tr.GetSegmentF(i))));   //TODO keep in mind!
 }
 
 //______________________________________________________________________________
@@ -593,20 +632,6 @@ void EdbTrackP::FitTrack()
   ty /= nseg;
   Set(ID(),x,y,tx,ty,w);
   SetZ(z);
-}
-
-//______________________________________________________________________________
-double EdbTrackP::ThetaPb2(float p, float dPb, float ma)
-{
-  // calculate the square of multiple scattering angle theta (in one projection)
-  // after the distance dPb in lead+emulsion  [microns]
-  // TODO: service class
-
-  if (p < 0.0000001) return 2.;
-  const double Xrad=5810.;           // X0 of the Pb in microns
-  const double k = 0.0136*0.0136;    // [GeV]
-  double p2 = p*p, p4=p2*p2;
-  return  abs(k*(ma*ma+p2)*dPb/p4/Xrad);
 }
 
 /*
@@ -692,7 +717,7 @@ int  EdbTrackP::FitTrackKF( bool zmax)
 
     dz = seg->Z()-seg0->Z();                        //?
     dPb = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of the Pb+emulsion cell in microns
-    teta0sq = ThetaPb2( P(), dPb, M() );
+    teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
 
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
@@ -775,6 +800,9 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   //                      probability to reject the good event
 
 
+  SF()->Clear();
+  SF()->Expand(N());
+
   float dPb;
   double teta0sq;
   double dz, ptx, pty;
@@ -856,7 +884,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
     ptx = (*par[i-step])(2);                        //?
     pty = (*par[i-step])(3);                        //?
     dPb = dz*TMath::Sqrt(1.+ptx*ptx+pty*pty); // thickness of the Pb+emulsion cell in microns
-    teta0sq = ThetaPb2( P(), dPb, M() );
+    teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
 
     dms(0,0) = teta0sq*dz*dz/3.;
     dms(1,1) = dms(0,0);
@@ -918,6 +946,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   Set(ID(),(float)(*par[iend])(0),(float)(*par[iend])(1),
 	   (float)(*par[iend])(2),(float)(*par[iend])(3),1.);
   SetZ(GetSegment(iend)->Z());
+  SetPID(GetSegment(iend)->PID());
   SetCOV( (*cov[iend]).array(), 4 );
 
   //SetChi2((float)chi2);
@@ -942,9 +971,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
   segf.SetW( (float)nseg );
   segf.SetP( P() );
   segf.SetPID( GetSegment(iend)->PID() );
-  AddSegmentF(segf);
 
-  //TODO: fitted segments sequence!!!!!
+  AddSegmentF(iend,new EdbSegP(segf));
 
   i=iend; 
   double chi2p=0; 
@@ -969,7 +997,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax)
 	segf.SetW( (float)nseg );
 	segf.SetP( P() );
 	segf.SetPID( GetSegment(i)->PID() );
-	AddSegmentF(segf);
+	AddSegmentF(i,new EdbSegP(segf));
   }
   SetChi2((float)chi2);
   SetProb((float)TMath::Prob(chi2,(nseg-1)*4));
@@ -1035,6 +1063,24 @@ float EdbTrackP::CHI2()
 }
 
 //______________________________________________________________________________
+float EdbTrackP::CHI2F()
+{
+  double dtx=0,dty=0,chi2=0;
+  EdbSegP *s=0, *sf=0;
+  int    nseg=N();
+  for(int i=0; i<nseg; i++) {
+    s  = GetSegment(i);
+    sf = GetSegmentF(i);
+    dtx = s->TX() - sf->TX();
+    dty = s->TY() - sf->TY();
+    chi2 += TMath::Sqrt( dtx*dtx/s->STX() + 
+			 dty*dty/s->STY() );
+  }
+  chi2  /= nseg;
+  return chi2;
+}
+
+//______________________________________________________________________________
 //______________________________________________________________________________
 EdbPattern::EdbPattern()
 {
@@ -1043,14 +1089,14 @@ EdbPattern::EdbPattern()
 }
 
 //______________________________________________________________________________
-EdbPattern::EdbPattern(float x0, float y0, float z0) : EdbSegmentsBox(x0,y0,z0) 
+EdbPattern::EdbPattern(float x0, float y0, float z0, int n) : EdbSegmentsBox(x0,y0,z0,n) 
 {
   eCell     = new TIndexCell();
   Set0();
 }
  
 //______________________________________________________________________________
-EdbPattern::~EdbPattern( )
+EdbPattern::~EdbPattern()
 {
   if(eCell)     delete eCell;
 }
@@ -1059,6 +1105,135 @@ EdbPattern::~EdbPattern( )
 void EdbPattern::Set0()
 {
   eID = 0;
+}
+
+//______________________________________________________________________________
+void EdbPattern::FillCell( float stepx, float stepy, float steptx, float stepty )
+{
+  // fill cells with fixed size at z=zPat
+
+  TIndexCell *cell = Cell();
+  if(cell) cell->Drop();
+  SetStep(stepx,stepy,steptx,stepty);
+
+  float x,y,tx,ty,dz;
+  Long_t  val[5];  // x,y,ax,ay,i
+  EdbSegP *p;
+  int npat = N();
+  for(int i=0; i<npat; i++ ) {
+    p = GetSegment(i);
+    dz = Z() - p->Z();
+    tx = p->TX();
+    ty = p->TY();
+    x  = p->X() + tx*dz;
+    y  = p->Y() + ty*dz;
+    val[0]= (Long_t)( x / stepx  );
+    val[1]= (Long_t)( y / stepy  );
+    val[2]= (Long_t)( tx/ steptx );
+    val[3]= (Long_t)( ty/ stepty );
+    val[4]= (Long_t)(i);
+    cell->Add(5,val);
+  }
+  cell->Sort();
+
+}
+
+//______________________________________________________________________________
+int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float nsigt)
+{
+  // return the array of segments compatible with the
+  // prediction segment s with the accuracy of nsig (in sigmas)
+
+  long vcent[4] = { (long)(s.X()/StepX()),
+		    (long)(s.Y()/StepY()),
+		    (long)(s.TX()/StepTX()),
+		    (long)(s.TY()/StepTY())  };
+  long vdiff[4] = { (long)(TMath::Sqrt(s.SX())*nsigx/StepX()+1),
+		    (long)(TMath::Sqrt(s.SY())*nsigx/StepY()+1),
+		    (long)(TMath::Sqrt(s.STX())*nsigt/StepTX()+1),
+		    (long)(TMath::Sqrt(s.STY())*nsigt/StepTY()+1) };
+
+  int nseg=0;
+  EdbSegP *seg=0;
+
+
+  long vmin[4],vmax[4];
+  for(int i=0; i<4; i++) {
+    vmin[i] = vcent[i]-vdiff[i];
+    vmax[i] = vcent[i]+vdiff[i];
+  }
+
+  ///TODO: move this cycle into iterator
+
+  TIndexCell *c1=0,*c2=0,*c3=0,*c4=0;
+  for(vcent[0]=vmin[0]; vcent[0]<=vmax[0]; vcent[0]++) {
+    c1 = eCell->Find(vcent[0]);
+    if(!c1) continue;
+    for(vcent[1]=vmin[1]; vcent[1]<=vmax[1]; vcent[1]++) {
+      c2 = c1->Find(vcent[1]);
+      if(!c2) continue;
+      for(vcent[2]=vmin[2]; vcent[2]<=vmax[2]; vcent[2]++) {
+	c3 = c2->Find(vcent[2]);
+	if(!c3) continue;
+	for(vcent[3]=vmin[3]; vcent[3]<=vmax[3]; vcent[3]++) {
+	  c4 = c3->Find(vcent[3]);
+	  if(!c4) continue;
+
+	  for(int i=0; i<c4->N(); i++) {
+	    seg = GetSegment(c4->At(i)->Value());
+	    if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
+	    arr.Add(seg);
+	    nseg++;
+	  }
+
+	}
+      }
+    }
+  }
+
+
+//    TIndexCellIterV itr( eCell, 4, vcent, vdiff );
+//    const TIndexCell *c=0;
+//    while( (c=itr.Next()) ) 
+//      for(int i=0; i<c->N(); i++) {
+//        seg = GetSegment(c->At(i)->Value());
+//        if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
+//        arr.Add(seg);
+//        nseg++;
+//      }
+
+  return nseg;
+}
+
+//______________________________________________________________________________
+EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5])
+{
+  //
+  // return the copy of selected segments
+  //
+  EdbPattern *pat = new EdbPattern( X(), Y(), Z() );
+  EdbSegP *s;
+  int nseg = N();
+
+  for(int i=0; i<nseg; i++) {
+    s = GetSegment(i);
+
+    if(s->X()  < min[0])   continue;
+    if(s->Y()  < min[1])   continue;
+    if(s->TX() < min[2])   continue;
+    if(s->TY() < min[3])   continue;
+    if(s->W()  < min[4])   continue;
+
+    if(s->X()  > max[0])   continue;
+    if(s->Y()  > max[1])   continue;
+    if(s->TX() > max[2])   continue;
+    if(s->TY() > max[3])   continue;
+    if(s->W()  > max[4])   continue;
+
+    pat->AddSegment(*s);
+  }
+
+  return pat;
 }
 
 //______________________________________________________________________________
@@ -1219,6 +1394,19 @@ void EdbPatternsVolume::PrintStat( Option_t *opt) const
 //______________________________________________________________________________
 void EdbPatternsVolume::PrintStat(EdbPattern &pat) const
 {
+} 
+
+//______________________________________________________________________________
+void EdbPatternsVolume::Print() const
+{
+  int npat = Npatterns();
+  printf("\nEdbPatternsVolume with %d patterns\n",npat);
+  EdbPattern *pat=0;
+  for(int i=0; i<npat; i++ ) {
+    pat = GetPattern(i);
+    printf(" x:y:z =  %f %f %f \t n= %d \n", 
+	   pat->X(),pat->Y(),pat->Z(),pat->N());
+  }
 } 
 
 //______________________________________________________________________________
