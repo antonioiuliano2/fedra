@@ -42,6 +42,9 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 				RelativePath="..\..\src\appl\rwc2edb\edb2rwc.cpp">
 			</File>
 			<File
+				RelativePath="..\..\src\appl\rwc2edb\getacqstatus.cpp">
+			</File>
+			<File
 				RelativePath="..\..\src\appl\rwc2edb\libDataConversion.cpp">
 			</File>
 			<File
