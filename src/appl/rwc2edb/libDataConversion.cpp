@@ -138,6 +138,8 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
    FreeMemory((void**)pCat);
 	delete pCat;
 
+   run->Save() ;
+
 	// loop on rwd files
    if(bAddRWD)
 	{
