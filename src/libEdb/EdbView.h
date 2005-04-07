@@ -84,6 +84,8 @@ public:
 
   void     SetNclusters(int nclu) { eNclusters=nclu; }
   void     SetNsegments(int nseg) { eNsegments=nseg; }
+  Int_t    GetNclusters() const { return eNclusters; }
+  Int_t    GetNsegments() const { return eNsegments; }
 
   Int_t    GetViewID()      const { return eViewID; }
   Int_t    GetAreaID()      const { return eAreaID; }

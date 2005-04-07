@@ -139,8 +139,9 @@ void EdbRun::Open( const char *fname )
 {
   printf("\nOpen an existing file %s \n", fname);
   eFile = new TFile(fname);
-
+  if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
+  if(!eTree) return;
   SetView();
 
   if(eHeader) delete eHeader;

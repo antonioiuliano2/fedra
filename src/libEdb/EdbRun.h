@@ -56,6 +56,7 @@ public:
   EdbView             *GetView() const { return eView; }
   void                 SetView(EdbView *view);
   void                 SetView();
+  TTree               *GetTree() const {return eTree; }
 
   EdbPredictionDC    *GetPrediction(int ip)  { return ePredictions->GetPrediction(ip); }
   int                 Npredictions()      const { return ePredictions->N(); }
