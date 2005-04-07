@@ -5,10 +5,9 @@
 //                                                                      //
 // EdbRunAccess                                                         //
 //                                                                      //
-// OPERA data Run Access helper class                                        //
+// OPERA data Run Access helper class                                   //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
 #include "EdbRun.h"
 #include "EdbPattern.h"
 #include "EdbLayer.h"
@@ -50,6 +49,8 @@ class EdbRunAccess : public TObject {
   void Set0();
   bool InitRun();
   void PrintStat();
+  void CheckRunLine();
+  int CheckEmptyViews(EdbPattern &pat);
 
   EdbLayer *GetMakeLayer(int id);
   EdbLayer *GetLayer(int id)

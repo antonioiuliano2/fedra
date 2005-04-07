@@ -7,7 +7,7 @@
 // OPERA Run Access helper class                                        //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include "Riostream.h"
 #include "TSystem.h"
 #include "EdbMath.h"
 #include "EdbSegment.h"
@@ -61,12 +61,13 @@ bool EdbRunAccess::InitRun()
       return false;
     }
   eRun=new EdbRun(eRunFileName.Data());
-
+  if(!eRun) return false;
+  if(!(eRun->GetTree())) return false;
   for(int i=0; i<3; i++) if(eLayers[i]==0) GetMakeLayer(i);
 
   if(FillVP()<1) return false;
   
-  PrintStat();
+  //PrintStat();
 
   eXstep=400;  //TODO
   eYstep=400;
@@ -283,11 +284,12 @@ void EdbRunAccess::PrintStat()
     var =  nviews/eNareas;
     printf("views/area : %d  (%d/side)\n", var, var/2 );
   }
-  if(var*eNareas != nviews) printf("WARNING: areas are not equal\n");
+  if(var*eNareas != nviews) printf("\t WARNING: areas are not equal\n");
 
   for(int ud=0; ud<3; ud++) {
     EdbPattern *pat=GetVP(ud);
-    if(pat)
+	int nempty=0;
+	if(pat) {
       printf( "side:%d  xmin,xmax  = %f %f   ymin,ymax = %f %f\n", 
 	      ud,
 	      pat->Xmin(), 
@@ -295,8 +297,52 @@ void EdbRunAccess::PrintStat()
 	      pat->Ymin(),
 	      pat->Ymax()
 	      );
+		nempty = CheckEmptyViews(*pat);
+		if(nempty>0) printf("\t WARNING: %d empty views in layer %d\n",nempty,ud);
+	}
   }
   printf("\n");
+}
+
+///_________________________________________________________________________
+void EdbRunAccess::CheckRunLine()
+{
+  if(!eRun) return;
+
+  cerr << endl << eRunFileName.Data();
+  int nviews=eRun->GetEntries();
+  eNareas=eRun->GetHeader()->GetNareas();
+  cerr<<"\tv: "<< nviews <<"  a: "<<eNareas;
+
+  int var=0;
+  if(eNareas>0) {
+    var =  nviews/eNareas/2;
+	cerr<<"   v/a/s: "<<var <<endl;
+  }
+  if(var*2*eNareas != nviews) cerr<<"\tWARNING: areas do not equal!\n";
+
+  for(int ud=0; ud<3; ud++) {
+    EdbPattern *pat=GetVP(ud);
+	int nempty=0;
+	if(pat) {
+ 		nempty = CheckEmptyViews(*pat);
+		if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
+	}
+  }
+}
+
+///_________________________________________________________________________
+int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
+{
+	int nempty=0;
+	EdbSegP *s=0;
+	for(int i=0; i<pat.N(); i++) {
+		s = pat.GetSegment(i);
+		if( s->Flag()>0 ) continue;
+		if( s->W()>0 )    continue;
+		nempty++;
+	}
+	return nempty;
 }
 
 ///_________________________________________________________________________
@@ -327,14 +373,17 @@ int EdbRunAccess::FillVP()
   eLastArea  = 0;
 
   int side;
+  int nseg,ncl;
   for(int iv=0; iv<nentr; iv++ ) {
     view = eRun->GetEntry(iv,1,0,0,0,0);
 
+	nseg = head->GetNsegments();
+	ncl  = head->GetNclusters();
     if(eAFID) {
-      segP.Set( iv,0,0, 0,0,0,0);
+      segP.Set( iv,0,0, 0,0,ncl,nseg);
       segP.Transform( head->GetAffine() );
     } else {
-      segP.Set( iv,view->GetXview(),view->GetYview(), 0,0,0,0);
+      segP.Set( iv,view->GetXview(),view->GetYview(), 0,0,ncl,nseg);
     }
 
     if( view->GetAreaID() < eFirstArea )  eFirstArea= view->GetAreaID();
