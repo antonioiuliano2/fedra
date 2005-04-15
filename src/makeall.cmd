@@ -10,7 +10,7 @@
  @ECHO OFF
 
  SET eLIBS=libEmath libEdb libVt++ libEphys libEGA libEdr libEIO libEdd libEdg libEMC libEMR appl\bmatrix
- SET eBINS=appl\recset appl\rwc2edb appl\cp2edb
+ SET eBINS=appl\recset appl\rwc2edb appl\cp2edb appl\checkrun
 
  IF /I '%1'=='checkall'	( GOTO CHECKALL
  ) ELSE GOTO MAKEALL

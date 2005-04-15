@@ -13,7 +13,7 @@ for lib in ${LIBS} ; do
     cd ..
 done
 
-APPLS="appl/recset appl/rwc2edb appl/cp2edb appl/bmatrix"
+APPLS="appl/recset appl/rwc2edb appl/cp2edb appl/bmatrix appl/checkrun"
 for appl in ${APPLS} ; do
     echo 
     echo "make $1 in ${appl} ............"
