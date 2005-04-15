@@ -132,6 +132,8 @@ void EdbRun::SelectOpenMode( const char *fname, const char *status )
     if( !gSystem->AccessPathName(fname, kFileExists) ) Open(fname);
     else                                               Create(fname);
   }
+
+  printf("root file version: %d \n",eFile->GetVersion());
 }
 
 //______________________________________________________________________________
@@ -193,18 +195,17 @@ void EdbRun::Create( const char *fname )
 
   eTree = new TTree("Views","Scanning Viewes data");
   eTree->SetAutoSave(100000000);                     // autosave each 100Mb
-  int bufsize=32000;
-
-  eTree->Branch("clusters",  eView->GetClustersAddr() , bufsize, 1);
-  eTree->Branch("segments",  eView->GetSegmentsAddr() , bufsize, 1);
-  eTree->Branch("tracks",    eView->GetTracksAddr() , bufsize, 1);
-  eTree->Branch("frames",    eView->GetFramesAddr() , bufsize, 1);
-
-  eTree->Branch("headers", "EdbViewHeader", eView->GetHeaderAddr() , bufsize, 1);
-
-  //  TObjArray *frames = new TObjArray();
-  //  eTree->Branch("frames", "TObjArray", eView->GetFramesAddr() , bufsize*4, 0);
-
+ 
+  TClonesArray     *eClusters = eView->GetClusters();
+  TClonesArray     *eSegments = eView->GetSegments();
+  TClonesArray     *eTracks   = eView->GetTracks();
+  TClonesArray     *eFrames   = eView->GetFrames();
+  eTree->Branch( "clusters", &eClusters);
+  eTree->Branch( "segments", &eSegments);
+  eTree->Branch( "tracks",   &eTracks);
+  eTree->Branch( "frames",   &eFrames);
+  eTree->Branch("headers", "EdbViewHeader", eView->GetHeaderAddr());
+  SetView();
 }
 
 //______________________________________________________________________________
@@ -234,11 +235,11 @@ void EdbRun::SetView()
 
   printf("Note: EdbRun::SetView \n");
 
-  eTree->SetBranchAddress("headers",  eView->GetHeaderAddr() );
-  eTree->SetBranchAddress("clusters", eView->GetClustersAddr() );
-  eTree->SetBranchAddress("segments", eView->GetSegmentsAddr() );
-  eTree->SetBranchAddress("tracks",   eView->GetTracksAddr() );
-  eTree->SetBranchAddress("frames",   eView->GetFramesAddr() );
+  if(eView->GetHeader())   eTree->SetBranchAddress("headers",  eView->GetHeaderAddr()   );
+  if(eView->GetClusters()) eTree->SetBranchAddress("clusters", eView->GetClustersAddr() );
+  if(eView->GetSegments()) eTree->SetBranchAddress("segments", eView->GetSegmentsAddr() );
+  if(eView->GetTracks())   eTree->SetBranchAddress("tracks",   eView->GetTracksAddr()   );
+  if(eView->GetFrames())   eTree->SetBranchAddress("frames",   eView->GetFramesAddr()   );
 }
 
 //______________________________________________________________________________

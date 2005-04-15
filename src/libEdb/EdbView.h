@@ -52,7 +52,7 @@ private:
   EdbAffine2D   eAff;    // affine transformation for the view 
                          // (make sence for SySal-converted data only)
 
-  TArrayF  *eZlevels;    // z of each taken view (frame)
+  TArrayF  *eZlevels;    //! z of each taken view (frame) (obsolete!)
 
   Int_t   eCol;          // the position of the view in the scanned area, measured in views, 
   Int_t   eRow;          // starting from the reference angle (typically up-left)
@@ -120,7 +120,7 @@ public:
   Int_t    GetStatus()      const { return eStatus; }
   void     Print() const;
 
-  ClassDef(EdbViewHeader,2)  // view identification
+  ClassDef(EdbViewHeader,3)  // view identification
 };
 
 //______________________________________________________________________________
@@ -235,7 +235,7 @@ public:
   float Zmin() const {return TMath::Min( GetZ1(), GetZ4() );}
   float Zmax() const {return TMath::Max( GetZ1(), GetZ4() );}
 
-  ClassDef(EdbView,1)  // Base scanning data object: entry into Run tree
+  ClassDef(EdbView,2)  // Base scanning data object: entry into Run tree
 };
 
 #endif /* ROOT_EdbView */
