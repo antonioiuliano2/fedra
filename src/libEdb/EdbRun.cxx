@@ -143,7 +143,11 @@ void EdbRun::Open( const char *fname )
   eFile = new TFile(fname);
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
-  if(!eTree) return;
+  if(!eTree) {
+    printf("ERROR: %s has no Views tree\n",fname);
+    return;
+  }
+
   SetView();
 
   if(eHeader) delete eHeader;
@@ -161,7 +165,7 @@ void EdbRun::Open( const char *fname )
 //______________________________________________________________________________
 void EdbRun::OpenUpdate( const char *fname )
 {
-  printf("\nOpen an existing file for updation %s \n", fname);
+  printf("\nOpen an existing file for update %s \n", fname);
   eFile = new TFile(fname,"UPDATE");
 
   eTree = (TTree*)eFile->Get("Views");

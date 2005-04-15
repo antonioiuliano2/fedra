@@ -61,11 +61,11 @@ bool EdbRunAccess::InitRun()
       return false;
     }
   eRun=new EdbRun(eRunFileName.Data());
-  if(!eRun) return false;
+  if(!eRun)              return false;
   if(!(eRun->GetTree())) return false;
   for(int i=0; i<3; i++) if(eLayers[i]==0) GetMakeLayer(i);
 
-  if(FillVP()<1) return false;
+  if(FillVP()<1)         return false;
   
   //PrintStat();
 
@@ -319,30 +319,42 @@ void EdbRunAccess::CheckRunLine()
     var =  nviews/eNareas/2;
 	cerr<<"   v/a/s: "<<var <<endl;
   }
-  if(var*2*eNareas != nviews) cerr<<"\tWARNING: areas do not equal!\n";
 
-  for(int ud=0; ud<3; ud++) {
+  for(int ud=1; ud<3; ud++) {
     EdbPattern *pat=GetVP(ud);
-	int nempty=0;
-	if(pat) {
- 		nempty = CheckEmptyViews(*pat);
-		if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
-	}
+    int nempty=0;
+    int vf=0, vl=0, af=0, al=0;
+
+    if(!pat)        { cerr<< "ERROR: side "<<ud<<" do not exist!"<<endl; continue;}
+    if(pat->N()<=0) { cerr<< "WARNING: side "<<ud<<" is empty!"<<endl; continue;}
+
+    af = pat->GetSegment(0)->Aid(0);
+    al = pat->GetSegment(pat->N()-1)->Aid(0);
+    vf = pat->GetSegment(0)->Aid(1);
+    vl = pat->GetSegment(pat->N()-1)->Aid(1);
+
+    if( al-af+1 != eNareas) 
+      cerr<<"\t WARNING: side "<<ud<<" incomplete areas: "<<af<<":"<<al<<endl;
+    if(var*2*eNareas != nviews ) 
+      cerr<<"\t WARNING: side "<<ud<<" incomplete views: "<<vf<<":"<<vl<<endl;
+
+    nempty = CheckEmptyViews(*pat);
+    if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
   }
+
 }
 
 ///_________________________________________________________________________
 int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
 {
-	int nempty=0;
-	EdbSegP *s=0;
-	for(int i=0; i<pat.N(); i++) {
-		s = pat.GetSegment(i);
-		if( s->Flag()>0 ) continue;
-		if( s->W()>0 )    continue;
-		nempty++;
-	}
-	return nempty;
+  int nempty=0;
+  EdbSegP *s=0;
+  for(int i=0; i<pat.N(); i++) {
+    s = pat.GetSegment(i);
+    if( s->Vid(0) + s->Vid(1) >0 ) continue;
+    nempty++;
+  }
+  return nempty;
 }
 
 ///_________________________________________________________________________
@@ -374,22 +386,23 @@ int EdbRunAccess::FillVP()
 
   int side;
   int nseg,ncl;
+
   for(int iv=0; iv<nentr; iv++ ) {
     view = eRun->GetEntry(iv,1,0,0,0,0);
-
-	nseg = head->GetNsegments();
-	ncl  = head->GetNclusters();
+    nseg = head->GetNsegments();
+    ncl  = head->GetNclusters();
     if(eAFID) {
       segP.Set( iv,0,0, 0,0,ncl,nseg);
       segP.Transform( head->GetAffine() );
     } else {
       segP.Set( iv,view->GetXview(),view->GetYview(), 0,0,ncl,nseg);
     }
-
+    
     if( view->GetAreaID() < eFirstArea )  eFirstArea= view->GetAreaID();
     if( view->GetAreaID() > eLastArea )   eLastArea = view->GetAreaID();
 
-    segP.SetAid( view->GetAreaID(), view->GetViewID() );
+    segP.SetAid( view->GetAreaID(),     view->GetViewID() );
+    segP.SetVid( view->GetNframesBot(), view->GetNframesTop() );
 
     side = ViewSide(view);
     if(side<1||side>2) continue;
