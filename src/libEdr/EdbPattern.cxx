@@ -1401,7 +1401,7 @@ float  EdbTrackP::P_MS( float X0, float m, bool de_correction )
   }
 
   if(tms<=0) { 
-	printf("P_MS: BAD estimation for track %d: tms=%g  nms=%d fact=%f\n",ID(),tms,nms,fact);
+	printf("P_MS: BAD estimation for track %d: tms=%g  nms=%d\n",ID(),tms,nms);
 	return 0;
   }
   double pbeta = 0., pbeta2 = 0.;
