@@ -221,8 +221,8 @@ class EdbDataProc : public TObject {
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
 
-  int   MakeTracksTree( EdbPVRec *ali=0);
-  static int  MakeTracksTree( TObjArray &tracks, float xv=0, float yv=0 );
+  int   MakeTracksTree( EdbPVRec *ali=0, char *file="linked_tracks.root");
+  static int  MakeTracksTree( TObjArray &tracks, float xv=0, float yv=0, char *file="linked_tracks.root");
   int   ReadTracksTree( EdbPVRec &ali,
 			char *fname="linked_tracks.root",
 			int   nsegMin=3,

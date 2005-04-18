@@ -1721,6 +1721,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 		s1->W()+s2->W(),0
 		);
 	s->SetZ( (s2->Z()+s1->Z())/2 );
+	s->SetChi2( cp->CHI2P() );
       } else {
 	s = cp->eS;
 	//s->Print();
@@ -2334,20 +2335,19 @@ void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
 }
 
 //______________________________________________________________________________
-int EdbDataProc::MakeTracksTree(EdbPVRec *ali)
+int EdbDataProc::MakeTracksTree(EdbPVRec *ali, char *file)
 {
   if(!ali) return 0;
   TObjArray *trarr = ali->eTracks;
   if(!trarr) return 0;
   float xv=ali->X();
   float yv=ali->Y();
-  return MakeTracksTree(*trarr,xv,yv);
+  return MakeTracksTree(*trarr,xv,yv, file);
 }
 
 //______________________________________________________________________________
-int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv)
+int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, char *file)
 {
-  char *file="linked_tracks.root";
   printf("write tracks into %s ... \n",file);
   TFile fil(file,"RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
