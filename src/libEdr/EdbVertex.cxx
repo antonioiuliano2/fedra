@@ -382,6 +382,7 @@ EdbVTA *EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		  delete t;
 		  t=0;
 		  printf("EdbVertex::AddTrack - vertex not found!");
+	          eV->findVertexVt();
 		}
 	      else if (!(eV->valid()))
 		{
@@ -389,12 +390,14 @@ EdbVTA *EdbVertex::AddTrack(EdbTrackP *track, int zpos, float ProbMin )
 		  delete t;
 		  t=0;
 		  printf("EdbVertex::AddTrack - vertex not valid!");
+	          eV->findVertexVt();
 		}
 	      else if (eV->prob() < ProbMin )
 		{
 		  eV->remove_last();
 		  delete t;
 		  t=0;
+	          eV->findVertexVt();
 		}
 	      else
 		{
@@ -549,6 +552,46 @@ bool EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t)
     t.set(x1,  y1,  z1,  tx1,  ty1, p1, cov1);
     t.propagate(0.);
     return true;
+}
+//________________________________________________________________________
+float EdbVertex::Chi2Track(int i)
+{
+  // distance from track to already existed vertex
+
+  EdbVTA *vta = GetVTa(i);
+  if (!vta) return 0.;
+  EdbTrackP *track = vta->GetTrack();
+  if (!track) return 0.;
+  double distchi2 = 0.;
+  int zpos = vta->Zpos();
+  EdbSegP *seg = 0;
+  if   (zpos)
+    {
+      seg = (EdbSegP *)(track->TrackZmin());
+    }
+  else
+    {
+      seg = (EdbSegP *)(track->TrackZmax());
+    }
+  if (eV)
+    {
+      if (track->NF() <= 0) return 0.;
+      Track *t=new Track();
+      if( Edb2Vt( *seg, *t ) )
+	{
+	  if (eV->valid())
+	    {
+	      distchi2 = eV->distance(*t);
+	    } 
+	}
+      else
+	{ 
+	  printf("EdbVertex::DistTrack - conversion to VT failed!");
+	}
+      delete t;
+      t=0;
+    }
+  return (float)distchi2;
 }
 
 //========================================================================
@@ -994,16 +1037,53 @@ int EdbVertexRec::ProbVertexN(float ProbMin)
 	    printf("\b\b\b\b%3d%%",(int)((double)i1/double(nvtx)*100.));
 	}
 	if (!edbv1) continue;
-	if (edbv1->Flag()==-10) continue;
+	if (edbv1->Flag() == -10) continue;
+	int  nt1 = edbv1->N();
+	bool exist = false;
+	if (nt1 == 2)
+	{
+	    for (int ic1=0; ic1<nt1; ic1++)
+	    {
+		tr = edbv1->GetTrack(ic1);
+		zpos = edbv1->Zpos(ic1);
+		if (zpos)
+		{
+		    if (tr->VertexS())
+		    {
+			if (nt1 < tr->VertexS()->N())
+			{
+			    exist = true;
+			    break;
+			}
+		    }
+		}
+		else
+		{
+		    if (tr->VertexE())
+		    {
+			if (nt1 <  tr->VertexE()->N())
+			{
+			    exist = true;
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (exist)
+	    {
+		edbv1->SetFlag(-10);
+		continue;
+	    }
+	}
 	for (int i2=i1+1; (i2<nvtx); i2++)
 	{
   		edbv2 = (EdbVertex *)(eVTX->At(i2));
 		if (!edbv2) continue;
-		if (edbv2->Flag()==-10) continue;
+		if (edbv2->Flag() == -10) continue;
 		if (edbv2->N() == 2)
 		{
 //		    printf(" v1 id %d, v2 id %d\n", edbv1->ID(), edbv2->ID()); 
-		    int nt1 = edbv1->N();
+		    nt1 = edbv1->N();
 		    int nt2 = edbv2->N();
 		    int it1=0;
 		    int nomatch = 1;
@@ -1028,7 +1108,7 @@ int EdbVertexRec::ProbVertexN(float ProbMin)
 				zpos = edbv2->Zpos(0);
 			    }
 
-			    bool exist = false;
+			    exist = false;
 			    for (int ic1=0; ic1<edbv1->N(); ic1++)
 			    {
 			        if (tr2 == edbv1->GetTrack(ic1)) exist = true;
@@ -1095,8 +1175,6 @@ int EdbVertexRec::ProbVertexN(float ProbMin)
     printf("--------------------------------------------------------\n");
     return nadd;
 }
-
-
 
 //________________________________________________________________________
 TTree *EdbVertexRec::init_tracks_tree(const char *file_name, EdbTrackP *track)
