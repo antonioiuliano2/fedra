@@ -185,6 +185,7 @@ class EdbDataProc : public TObject {
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();
 
+  EdbDataSet *GetDataSet() {return eDataSet;}
   EdbPVRec *PVR() const {return ePVR;}
   void   SetPVR(EdbPVRec *pvr)  {ePVR=pvr;}
 
