@@ -3147,6 +3147,7 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
   int   ntr = eTracks->GetEntriesFast();
   int   ngap =0, trind=0;
   float probmax=0, prob=0;
+  EdbTrackP *ttt = 0;
 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
@@ -3170,19 +3171,20 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
     trind= segmax->Track();
     if(trind==tr.ID()) printf("TRACK LOOP: %d %d \n",trind, tr.ID());
 
+    ttt = 0;
     if( trind >= 0 && trind<ntr )    {
-      EdbTrackP *ttt = ((EdbTrackP*)eTracks->At(trind));
+      ttt = ((EdbTrackP*)eTracks->At(trind));
       if(!ttt)  printf("BAD TRACK POINTER: %d\n", trind); 
       
       if(ttt->Flag()>=0) {
 	if( ttt->N() > tr.N() )     goto GAP;
 	else if( segmax->Z() > (ttt->TrackZmin()->Z()+300.) && 
 		 segmax->Z() < (ttt->TrackZmax()->Z()-300.) )     goto GAP; // do not attach in-middle segments
-	else 	ttt->SetFlag(-10);
       }
     }
 
     if( !EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) goto GAP;
+    if(ttt) ttt->SetFlag(-10);
 
     segmax->SetTrack(tr.ID());
     tr.MakeSelector(ss,followZ);

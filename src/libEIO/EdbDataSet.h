@@ -120,7 +120,7 @@ class EdbDataPiece : public TNamed {
 
   int  GetRawData(EdbPVRec *ali);
   int  GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0 );
-  int  GetCPData_new( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0 );
+  int  GetCPData_new( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0, TIndex2 *trseg=0 );
   int  TakeCPSegment(EdbSegCouple &cp, EdbSegP &segP);
 
   int   InitCouplesTree( const char *mode="READ" );
@@ -197,7 +197,7 @@ class EdbDataProc : public TObject {
 			       int datatype=0 );
 
   int  InitVolume(int datatype=0, const char *rcut="1");
-  int  InitVolume(EdbPVRec *ali, int datatype=0);
+  int  InitVolume(EdbPVRec *ali, int datatype=0, TIndex2 *trseg=0 );
   int  InitVolumeTracks(EdbPVRec *ali, const char *rcut);
   int  InitVolumeRaw(EdbPVRec *ali);
   int  Process(){ return Link(); }  // to be removed
@@ -228,6 +228,8 @@ class EdbDataProc : public TObject {
 			int   nsegMin=3,
 			float probMin=0.01, 
 			const char *rcut="t.eFlag>-1&&nseg>2&&t.eProb>.01" );
+
+  TIndex2 *MakeTracksSegmentsList( EdbPVRec &ali );
 
   ClassDef(EdbDataProc,1)  // emulsion data processing
 };

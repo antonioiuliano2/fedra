@@ -768,7 +768,7 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 }
 
 ///______________________________________________________________________________
-int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
+int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
 {
   printf("z = %f \n", GetLayer(0)->Z());
   pat->SetID(0);
@@ -805,6 +805,12 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   int entr=0;
   for(int i=0; i<nlst; i++ ) {
     entr = lst->GetEntry(i);
+
+    if(trseg) {           //exclude segments participating in tracks
+      if( (trseg->Find(ePlate*1000+ePiece,entr) >= 0) )  continue;
+	//{printf("exclude seg %d of pat %d\n",entr,ePlate); continue;}
+    }
+
     b_cp->GetEntry(entr);                            // !!!
     b_s->GetEntry(entr);                             // !!!
     if( !TakeCPSegment(*cp,*s) )      continue;
@@ -2001,14 +2007,27 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
 ///______________________________________________________________________________
 int EdbDataProc::InitVolume(int datatype, const char *rcut)
 {
-  // datatype: 0   - couples basetrack data
-  //           10  - couples full data
-  //           100 - tracks only
+  // datatype: 0    - couples basetrack data
+  //           10   - couples full data
+  //           100  - tracks only
+  //           1000 - tracks and basetracks
 
   if(!ePVR) ePVR = new EdbPVRec();
-  if(datatype==100) return InitVolumeTracks(ePVR, rcut);
+  if(datatype==100)  return InitVolumeTracks(ePVR, rcut);
+
+  if(datatype==1000) {
+    InitVolumeTracks(ePVR, rcut);
+    TIndex2 *trseg=MakeTracksSegmentsList( *ePVR );
+    delete ePVR;
+    ePVR = new EdbPVRec();
+    int n = InitVolume(ePVR, datatype, trseg);
+    n += InitVolumeTracks(ePVR, rcut);
+    return n;
+  }
+
   return InitVolume(ePVR, datatype);
 }
+
 
 ///______________________________________________________________________________
 int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
@@ -2021,17 +2040,19 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
   printf("npieces = %d\n",npieces);
   if(!npieces) return 0;
 
-  EdbAffine2D *a=0;
-  EdbPattern  *pat=0;
-  for(int i=0; i<npieces; i++ ) {
-    piece = eDataSet->GetPiece(i);
-    pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
-    a = piece->GetLayer(0)->GetAffineXY();
-    pat->SetKeep( a->A11(),a->A12(),a->A21(),a->A22(), a->B1(),a->B2() );
-    pat->SetPID(i);
-    ali->AddPattern( pat );
+  if( ali->Npatterns() == 0) {                    // case of segments already readed
+    EdbAffine2D *a=0;
+    EdbPattern  *pat=0;
+    for(int i=0; i<npieces; i++ ) {
+      piece = eDataSet->GetPiece(i);
+      pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
+      a = piece->GetLayer(0)->GetAffineXY();
+      pat->SetKeep( a->A11(),a->A12(),a->A21(),a->A22(), a->B1(),a->B2() );
+      pat->SetPID(i);
+      ali->AddPattern( pat );
+    }
+    ali->SetPatternsID();
   }
-  ali->SetPatternsID();
 
   int ntr = ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
   printf("ntr=%d\n",ntr);
@@ -2067,12 +2088,10 @@ void EdbDataProc::FineAlignmentTracks()
       //if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffTPar(0,afft);
     }
   }
-
-  
 }
 
 ///______________________________________________________________________________
-int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
+int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
 {
   EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
   ali->SetScanCond( cond );
@@ -2099,17 +2118,17 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype)
     pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
     pat->SetPID(i);
     //pat->SetSegmentsPID();  //TO CHECK!!
-    if(datatype>0) {
+    if(datatype==10) {
       p1 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(1)->Z() );
       p2 = new EdbPattern( 0.,0., piece->GetLayer(0)->Z() + piece->GetLayer(2)->Z() );
       p1->SetPID(i);
       p2->SetPID(i);
     }
 
-    piece->GetCPData_new( pat,p1,p2 );
+    piece->GetCPData_new( pat,p1,p2,trseg );
 
     ali->AddPattern( pat );
-    if(datatype>0) {
+    if(datatype==10) {
       ali->AddPattern( p1 );
       ali->AddPattern( p2 );
     }
@@ -2471,4 +2490,34 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     ali.AddTrack(tr1);
   }
   return nlst;
+}
+
+//---------------------------------------------------------------------------
+TIndex2 *EdbDataProc::MakeTracksSegmentsList( EdbPVRec &ali)
+{
+  TIndex2 *itracks = 0;
+  int nsegtot=0;
+  EdbTrackP *tr=0;
+  int ntr = ali.eTracks->GetEntries();
+
+  if(!ntr) return 0;
+  Double_t *w    = new Double_t[500000];
+  itracks = new TIndex2();
+
+  for(int i=0; i<ntr; i++) {
+    tr = (EdbTrackP*)(ali.eTracks->At(i));
+    if(!tr) continue;
+    EdbSegP *s=0;
+    int nseg=tr->N();
+    for(int j=0; j<nseg; j++) {
+      s = tr->GetSegment(j);
+      if(!s) continue;
+      w[nsegtot] = TIndex2::BuildValue( s->Vid(0), s->Vid(1) );
+      nsegtot++;
+    }
+  }
+  itracks->Set(0);
+  itracks->BuildIndex(nsegtot,w);
+  delete[] w;
+  return itracks;
 }
