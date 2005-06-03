@@ -16,6 +16,7 @@ class EdbSegG;
 
 //_________________________________________________________________________
 class EdbDisplay: public EdbDisplayBase {
+
  private:
 
   EdbPVRec  *ePVR;
@@ -23,32 +24,42 @@ class EdbDisplay: public EdbDisplayBase {
   TObjArray *eArrTr;       // array of tracks to be drawn
   Int_t      eDrawTracks;  // tracks drawing option
 
-  TObjArray *eArrV;        // array of vertexes to be drawn
   Int_t      eDrawVertex;  // vertex drawing option
 
   TArrayI* eColors;
   TArrayF* eDZs;
 
+  TObjArray *eArrSegPSave;     // saved array of segments to be drawn
+  TObjArray *eArrTrSave;       // saved array of tracks to be drawn
+
  public:
 
+  TObjArray *eArrV;        // array of vertexes to be drawn
+  TObjArray *eArrVSave;    // saved array of vertexes to be drawn
   EdbVertex *eWorking;     // working vertex
   EdbVertex *eVertex;      // current selected vertex
+  EdbVertex *ePrevious;    // saved previous vertex modifications
+  Bool_t eWait_Answer;	   // set TRUE when answer received
+  Int_t eIndVert;	   // Index of selected vertex in ArrV
+  Int_t eIndVertSave;	   // Index of selected vertex in ArrV (seved)
 
  public:
 
   EdbDisplay() : EdbDisplayBase() { Set0(); };
+  ~EdbDisplay();
+
   EdbDisplay(const char *title, 
 	     Float_t x0, Float_t x1, 
 	     Float_t y0, Float_t y1, 
 	     Float_t z0, Float_t z1) : 
     EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
+
   EdbDisplay(const char *title, EdbLayer &la) : 
     EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
 		   la.Zmin(), la.Zmax())  { Set0(); };
 
-  ~EdbDisplay() { if (eWorking) delete eWorking; };
-
-
+  static bool EdbDisplayExist(const char *title);
+  void Delete();
   void Set0();
 
   void Refresh();
@@ -65,6 +76,14 @@ class EdbDisplay: public EdbDisplayBase {
   void SetArrV(TObjArray *arrv) {eArrV=arrv;}
   void VertexDraw(EdbVertex *v);
   void SetDrawVertex(int opt) {eDrawVertex=opt;}
+  void CancelModifiedVTX();
+  void AcceptModifiedVTX();
+  void DialogModifiedVTX();
+  void CloseDialogModifiedVTX();
+  void UndoModifiedVTX();
+  void DrawVertexEnvironment();
+  void DrawAllObjects();
+  void DrawVTXTracks(char *type, EdbVertex *v = 0);
 
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };

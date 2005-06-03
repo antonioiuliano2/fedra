@@ -36,7 +36,7 @@
 #include <TMath.h>
 
 //_________________________________________________________________________
-class EdbDisplayBase: public TObject {
+class EdbDisplayBase: public TNamed {
 
 protected:
   Float_t vx0,vy0,vz0,vx1,vy1,vz1;
@@ -52,15 +52,33 @@ protected:
    Float_t           fZoomX1[20];           //High x range of zoom number i
    Float_t           fZoomY1[20];           //High y range of zoom number i
    Int_t             fZooms;                //Number of zooms
+   Int_t             fIndVert;		    //Index of selected vertex in ArrV
    TCanvas          *fCanvas;               //Pointer to the display canvas
+   TView            *fView;                 //Main View object
+   char		    fCanvasName[128];       //Name of main canvas
+   char       	    fTitle[128];            //EdbDisplay Object Name
    TPad             *fTrigPad;              //Pointer to the trigger pad
    TPad             *fButtons;              //Pointer to the buttons pad
    TPad             *fPad;                  //Pointer to the event display main pad
+   TButton          *fAllButton;            //Button to draw all objects
+   TButton          *fEnvButton;            //Button to draw vertex environment
+   TButton          *fUndButton;            //Button to undo vertex modofication
+   TButton          *fAccButton;            //Button to accept modified vertex
+   TButton          *fCanButton;            //Button to cancel modified vertex
    TButton          *fPickButton;           //Button to activate Pick mode
    TButton          *fZoomButton;           //Button to activate Zoom mode
+   TButton          *fUnZoomButton;         //Button to Undo previous Zoom
    TArc             *fArcButton;            //Gren/Red button to show Pick/Zoom mode
-   TPaveText	    *fProb;		    //Vertex probability
-   TPaveText	    *fNewProb;		    //Modified Vertex probability
+   TCanvas          *fCanvasVTX;            //Pointer to the vertex canvas
+   TGMainFrame      *fMain;                 //Dialog frame
+   TText	    *fHdrVTX;		    //Vertex data header
+   TText	    *fOldVTX;		    //Old Vertex data
+   TText	    *fNewVTX;		    //Modified Vertex data
+   TText	    *fPreVTX;		    //Previous Vertex data
+   TPaveText        *fVTXTracks;	    //Vertex tracks information
+   TButton	    *fOldBut;		    //Old Vertex display button
+   TButton	    *fNewBut;		    //Modified Vertex display button
+   TButton	    *fPreBut;		    //Previous Vertex display button
 
 public:
 
@@ -69,8 +87,10 @@ public:
 		   Float_t x0, Float_t x1, 
 		   Float_t y0, Float_t y1, 
 		   Float_t z0, Float_t z1 );
-   ~EdbDisplayBase(){};
+   ~EdbDisplayBase();
 
+//   virtual TCanvas   *GetCanvas() { return fCanvas; }
+//   virtual TCanvas   *GetCanvasVTX() { return fCanvasVTX; }
    virtual void      Set0();
    virtual void      Refresh() {}
    virtual void      ExecuteEvent(Int_t event, Int_t px, Int_t py);
@@ -80,9 +100,19 @@ public:
    virtual void      DrawViewGL();
    virtual void      DrawViewX3D();
    virtual void      DrawTitle(Option_t *option="");
-   virtual void      DrawProb(double prob);
-   virtual void      DrawNewProb(double prob);
-   virtual void      ClearNewProb();
+   virtual void      DrawPreVTX(char *text);
+   virtual void      DrawOldVTX(char *text);
+   virtual void      DrawNewVTX(char *text);
+   virtual void      DrawPreBut(char *text);
+   virtual void      DrawOldBut(char *text);
+   virtual void      DrawNewBut(char *text);
+   virtual void      ClearPreVTX();
+   virtual void      ClearNewVTX();
+   virtual void      CreateCanvasVTX();
+   virtual void      DrawUnd();
+   virtual void      DrawAcc();
+   virtual void      DrawCan();
+   virtual void      DrawEnv();
    virtual void      DrawView(Float_t theta, Float_t phi, Float_t psi=0);
    virtual void      SetPickMode();
    virtual void      SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, Float_t z0, Float_t z1);

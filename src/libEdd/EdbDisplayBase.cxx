@@ -29,116 +29,389 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 			       Float_t y0, Float_t y1, 
 			       Float_t z0, Float_t z1)
 {
+   static char VPadName[140], TPadName[140];
+   static char ZoomButName[140], PickButName[140], UnZoomButName[140];
+
    Set0();
    vx0=x0; vx1=x1; vy0=y0; vy1=y1; vz0=z0; vz1=z1;
 
    // Set front view by default
+//   fTheta = 0;
+//   fPhi   = -90;
+//   fPsi   = 0;
+   fTheta = 90;
+   fPhi   = 0;
+   fPsi   = 90;
 
-   fTheta = 0;
-   fPhi   = -90;
-   fPsi   = 0;
    fDrawAllViews  = kFALSE;
    fZoomMode      = 1;
    fZooms         = 0;
 
-   fCanvas = new TCanvas("Canvas", "Emulsion Data Display",14,47,800,700);
+   strcpy(fTitle, title);
+   this->SetName(&fTitle[0]);
+   strcpy(fCanvasName, "Canvas-");
+   strcat(fCanvasName, title);
+   fCanvas = new TCanvas(fCanvasName, "Emulsion Data Display", 14, 47, 800, 700);
    fCanvas->ToggleEventStatus();
 
   // Create main display pad
-   fPad = new TPad("viewpad", "Emulsion display",0.15,0,0.97,0.96);
+   strcpy(VPadName, "ViewPad-");
+   strcat(VPadName, title);
+   fPad = new TPad(VPadName, "Emulsion Display",0.15,0.,1.,1.);
    fPad->Draw();
-   fPad->Modified();
+   fPad->Modified(kTRUE);
    fPad->SetFillColor(1);
    fPad->SetBorderSize(2);
 
-  // Create user interface control pad
+   // Create view type control pad
    DisplayButtons();
+ 
+   // Create Control pad
    fCanvas->cd();
-
-   // Create Range and mode pad
    Float_t dxtr     = 0.15;
    Float_t dytr     = 0.45;
-   fTrigPad = new TPad("trigger", "range and mode pad",0,0,dxtr,dytr);
+   strcpy(TPadName, "ControlPad-");
+   strcat(TPadName, title);
+   fTrigPad = new TPad(TPadName, "Control Pad",0,0,dxtr,dytr);
    fTrigPad->Draw();
    fTrigPad->cd();
    fTrigPad->SetFillColor(22);
    fTrigPad->SetBorderSize(2);
 
-   fProb = new TPaveText(0.05, 0.84, 0.95, 0.93);
-   fProb->SetBit(kCanDelete);
-   fProb->SetFillColor(22);
-   fProb->SetTextSize(0.1);
-   fProb->Draw();
-
-   fNewProb = new TPaveText(0.05, 0.73, 0.95, 0.82);
-   fNewProb->SetBit(kCanDelete);
-   fNewProb->SetFillColor(22);
-   fNewProb->SetTextSize(0.1);
-   fNewProb->Draw();
-
-   char pickmode[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetPickMode()";
+   char undov[256];
+   sprintf(undov,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UndoModifiedVTX()",fTitle);
    Float_t db = 0.09;
+   fUndButton = new TButton("Undo  VTX",undov,0.05,0.85,0.85,0.85+db);
+   fUndButton->SetFillColor(38);
+   fUndButton->Draw();
+
+   char cancelv[256];
+   sprintf(cancelv,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->CancelModifiedVTX()",fTitle);
+   fCanButton = new TButton("Cancel VTX",cancelv,0.05,0.74,0.85,0.74+db);
+   fCanButton->SetFillColor(38);
+   fCanButton->Draw();
+
+   char acceptv[256];
+   sprintf(acceptv,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedVTX()",fTitle);
+   fAccButton = new TButton("Accept VTX",acceptv,0.05,0.63,0.85,0.63+db);
+   fAccButton->SetFillColor(38);
+   fAccButton->Draw();
+
+   char envv[256];
+   sprintf(envv,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVertexEnvironment()",fTitle);
+   fEnvButton = new TButton("Neighboor",envv,0.05,0.47,0.85,0.47+db);
+   fEnvButton->SetFillColor(38);
+   fEnvButton->Draw();
+
+   char allv[256];
+   sprintf(allv,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawAllObjects()",fTitle);
+   fAllButton = new TButton("AllObjcts",allv,0.05,0.47,0.85,0.47+db);
+   fAllButton->SetFillColor(38);
+   fAllButton->Draw();
+
+   char pickmode[256];
+   sprintf(pickmode,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetPickMode()",fTitle);
    fPickButton = new TButton("Pick",pickmode,0.05,0.32,0.65,0.32+db);
    fPickButton->SetFillColor(38);
+   strcpy(PickButName, "PickBut-");
+   strcat(PickButName, title);
+   fPickButton->SetName(PickButName);
    fPickButton->Draw();
 
-   char zoommode[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetZoomMode()";
+   char zoommode[256];
+   sprintf(zoommode,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetZoomMode()",fTitle);
    fZoomButton = new TButton("Zoom",zoommode,0.05,0.21,0.65,0.21+db);
    fZoomButton->SetFillColor(38);
+   strcpy(ZoomButName, "ZoomBut-");
+   strcat(ZoomButName, title);
+   fZoomButton->SetName(ZoomButName);
    fZoomButton->Draw();
 
    fArcButton = new TArc(.8,fZoomButton->GetYlowNDC()+0.5*db,0.33*db);
    fArcButton->SetFillColor(kGreen);
    fArcButton->Draw();
 
-   char butUnzoom[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->UnZoom()";
-   TButton *button = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
-   button->SetFillColor(38);
-   button->Draw();
+   char butUnzoom[256];
+   sprintf(butUnzoom,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UnZoom()",fTitle);
+   TButton *fUnZoomButton = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
+   fUnZoomButton->SetFillColor(38);
+   strcpy(UnZoomButName, "UnZoomBut-");
+   strcat(UnZoomButName, title);
+   fUnZoomButton->SetName(UnZoomButName);
+   fUnZoomButton->Draw();
 
    fTrigPad->SetEditable(kFALSE);
    fButtons->SetEditable(kFALSE);
 
    fCanvas->cd();
    fCanvas->Update();
+
    gROOT->GetListOfSpecials()->Add(this);
+
+   TList *li = fTrigPad->GetListOfPrimitives();
+   li->Remove(fUndButton);
+   li->Remove(fAccButton);
+   li->Remove(fCanButton);
+   li->Remove(fEnvButton);
+   li->Remove(fAllButton);
 }
 //=============================================================================
-void EdbDisplayBase::DrawProb(double prob)
+EdbDisplayBase::~EdbDisplayBase()
 {
-  char ptitle[100];
-  sprintf(ptitle,"Vertex prob %7.5f", prob);
-  fProb->Clear();
-  fProb->AddText(ptitle);
-  fTrigPad->Modified();
+  //
+  // Default destructor
+  //
+    if (fMain) delete fMain;
+    fMain = 0;
+    if (fView) delete fView;
+    fView = 0;
+    if (fCanvas) delete fCanvas;
+    fCanvas = 0;
 }
 //=============================================================================
-void EdbDisplayBase::DrawNewProb(double prob)
+void EdbDisplayBase::DrawOldVTX(char *ptitle)
 {
-  char ptitle[100];
-  sprintf(ptitle,"New prob %7.5f", prob);
-  fNewProb->Clear();
-  fNewProb->AddText(ptitle);
-  fTrigPad->Modified();
+  fCanvasVTX->cd();
+  if (fOldVTX)
+  {
+    fOldVTX->Clear();
+    fOldVTX->SetText(0.05, 0.88, ptitle);
+  }
+  else
+  {
+    fOldVTX = new TText(0.05, 0.88, ptitle);
+    fOldVTX->ResetBit(kCanDelete);
+    fOldVTX->SetTextColor(1);
+    fOldVTX->SetTextSize(0.04);
+    fOldVTX->SetTextAlign(12);
+    fOldVTX->SetTextFont(102);
+  }
+  fOldVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
 }
 //=============================================================================
-void EdbDisplayBase::ClearNewProb()
+void EdbDisplayBase::DrawPreVTX(char *ptitle)
 {
-  fNewProb->Clear();
-  fTrigPad->Modified();
+  fCanvasVTX->cd();
+  if (fPreVTX)
+  {
+    fPreVTX->Clear();
+    fPreVTX->SetText(0.05, 0.82, ptitle);
+  }
+  else
+  {
+    fPreVTX = new TText(0.05, 0.82, ptitle);
+    fPreVTX->ResetBit(kCanDelete);
+    fPreVTX->SetTextColor(1);
+    fPreVTX->SetTextSize(0.04);
+    fPreVTX->SetTextAlign(12);
+    fPreVTX->SetTextFont(102);
+  }
+  fPreVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawNewVTX(char *ptitle)
+{
+  fCanvasVTX->cd();
+  if (fNewVTX)
+  {
+    fNewVTX->Clear();
+    fNewVTX->SetText(0.05, 0.76, ptitle);
+  }
+  else
+  {
+    fNewVTX = new TText(0.05, 0.76, ptitle);
+    fNewVTX->ResetBit(kCanDelete);
+    fNewVTX->SetTextColor(1);
+    fNewVTX->SetTextSize(0.04);
+    fNewVTX->SetTextAlign(12);
+    fNewVTX->SetTextFont(102);
+  }
+  fNewVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::CreateCanvasVTX()
+{
+  static char CanvasVTXName[140];
+  strcpy(CanvasVTXName, "VTX-");
+  strcat(CanvasVTXName, fCanvasName);
+  if ((fCanvasVTX = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasVTXName))))
+  {
+    fCanvasVTX->Clear();
+  }
+  else
+  {
+    int xpos = fCanvas->GetWindowTopX()+fCanvas->GetWw();
+    int ypos = fCanvas->GetWindowTopY();
+    fCanvasVTX = new TCanvas(CanvasVTXName, "Vertex Data Display",
+			     -xpos, ypos, 640, 350);
+    fCanvasVTX->ToggleEventStatus();
+  }
+  if (fHdrVTX)
+  {
+    fHdrVTX->Clear();
+    fHdrVTX->SetText(0.05, 0.94,
+    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+  }
+  else
+  {
+    fHdrVTX = new TText(0.05, 0.94,
+    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+    fHdrVTX->ResetBit(kCanDelete);
+    fHdrVTX->SetTextColor(4);
+    fHdrVTX->SetTextSize(0.04);
+    fHdrVTX->SetTextAlign(12);
+    fHdrVTX->SetTextFont(102);
+  }
+  fHdrVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::ClearNewVTX()
+{
+  fCanvasVTX->cd();
+  fNewVTX->Clear();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::ClearPreVTX()
+{
+  fCanvasVTX->cd();
+  fPreVTX->Clear();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawOldBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fOldBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fOldBut = new TButton("TR",but,0.01,0.86,0.04,0.90);
+    fOldBut->ResetBit(kCanDelete);
+    fOldBut->SetFillColor(38);
+    fOldBut->SetName("DrawOldVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fOldBut->SetMethod(but);
+  }
+  fOldBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawPreBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fPreBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fPreBut = new TButton("TR",but,0.01,0.80,0.04,0.84);
+    fPreBut->ResetBit(kCanDelete);
+    fPreBut->SetFillColor(38);
+    fPreBut->SetName("DrawPreVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fPreBut->SetMethod(but);
+  }
+  fPreBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawNewBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fNewBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fNewBut = new TButton("TR",but,0.01,0.74,0.04,0.78);
+    fNewBut->ResetBit(kCanDelete);
+    fNewBut->SetFillColor(38);
+    fNewBut->SetName("DrawNewVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fNewBut->SetMethod(but);
+  }
+  fNewBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
 }
 //=============================================================================
 void EdbDisplayBase::Set0()
 {
   fCanvas = 0;
+  fCanvasVTX = 0;
   fTrigPad = 0;
   fButtons = 0;
   fPad = 0;
+  fAllButton = 0;
+  fEnvButton = 0;
+  fUndButton = 0;
+  fCanButton = 0;
+  fAccButton = 0;
   fPickButton = 0;
   fZoomButton = 0;
+  fUnZoomButton = 0;
   fArcButton = 0;
-  fProb = 0;
-  fNewProb = 0;
+  fHdrVTX = 0;
+  fOldVTX = 0;
+  fNewVTX = 0;
+  fPreVTX = 0;
+  fOldBut = 0;
+  fNewBut = 0;
+  fPreBut = 0;
+  fCanvasName[0] = '\0';
+  fTitle[0] = '\0';
+  fVTXTracks = 0;
+  fMain      = 0;
+  fView      = 0;
 }
 
 //_____________________________________________________________________________
@@ -184,8 +457,11 @@ void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, F
 void EdbDisplayBase::DisplayButtons()
 {
 //    Create the user interface buttons
+   static char ViewTypePadName[140];
 
-   fButtons = new TPad("buttons", "newpad",0,0.45,0.15,1);
+   strcpy(ViewTypePadName, "ViewTypePad-");
+   strcat(ViewTypePadName, fCanvasName);
+   fButtons = new TPad(ViewTypePadName, "View Type Pad",0,0.45,0.15,1);
    fButtons->Draw();
    fButtons->SetFillColor(38);
    fButtons->SetBorderSize(2);
@@ -204,19 +480,25 @@ void EdbDisplayBase::DisplayButtons()
 
    y -= dbutton +dy;
 
-   char but3[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(90,-90,90)";
+   char but3[256];
+   sprintf(but3,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,-90,90)",fTitle);
    button = new TButton("Top View",but3,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
-   char but4[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(90,0,90)";
+   char but4[256];
+   sprintf(but4,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,0,90)",fTitle);
    button = new TButton("Side View",but4,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
-   char but5[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->SetView(0,-90,0)";
+   char but5[256];
+   sprintf(but5,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(0,-90,0)",fTitle);
    button = new TButton("Front View",but5,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
@@ -224,13 +506,17 @@ void EdbDisplayBase::DisplayButtons()
    y -= dbutton +dy;
 
    y -= dbutton +dy;
-   char but7[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawViewGL()";
+   char but7[256];
+   sprintf(but7,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewGL()",fTitle);
    button = new TButton("OpenGL",but7,x0,y-dbutton,x1,y);
    button->SetFillColor(38);
    button->Draw();
 
    y -= dbutton +dy;
-   char but8[] = "((EdbDisplay*)(gROOT->FindObject(\"EdbDisplay\")))->DrawViewX3D()";
+   char but8[256];
+   sprintf(but8,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewX3D()",fTitle);
    button = new TButton("X3D",but8,x0,y-dbutton,x1,y);
    button->SetFillColor(38);
    button->Draw();
@@ -261,8 +547,8 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    gPad->Clear();
 
    Int_t iret;
-   TView *view = new TView(1);
-   view->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
+   fView = new TView(1);
+   fView->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
    fZoomX1[0] =  1;
@@ -274,7 +560,7 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 //   gPad->GetListOfPrimitives()->AddFirst(this);
    AppendPad();
 
-   view->SetView(phi, theta, psi, iret);
+   fView->SetView(phi, theta, psi, iret);
 
    gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
    gPad->Modified(kTRUE);
@@ -299,10 +585,10 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
       }
       return;
    }
-   if (!fZoomMode && gPad->GetView()) {
-      gPad->GetView()->ExecuteRotateView(event, px, py);
-      return;
-   }
+//   if (!fZoomMode && gPad->GetView()) {
+//      gPad->GetView()->ExecuteRotateView(event, px, py);
+//      return;
+//   }
 
    // something to zoom ?
 //   fPad->SetCursor(kCross);
@@ -366,7 +652,7 @@ void EdbDisplayBase::SetView(Float_t theta, Float_t phi, Float_t psi)
    if (view) view->SetView(fPhi, fTheta, fPsi, iret);
    else      Draw();
 
-   gPad->Modified();
+   gPad->Modified(kTRUE);
 }
 
 //_____________________________________________________________________________
@@ -458,7 +744,7 @@ void EdbDisplayBase::SetPickMode()
    fZoomMode = 0;
 
    fArcButton->SetY1(fPickButton->GetYlowNDC()+0.5*fPickButton->GetHNDC());
-   fTrigPad->Modified();
+   fTrigPad->Modified(kTRUE);
 }
 
 //_____________________________________________________________________________
@@ -470,7 +756,7 @@ void EdbDisplayBase::SetZoomMode()
    fZoomMode = 1;
 
    fArcButton->SetY1(fZoomButton->GetYlowNDC()+0.5*fZoomButton->GetHNDC());
-   fTrigPad->Modified();
+   fTrigPad->Modified(kTRUE);
 }
 
 
@@ -482,10 +768,15 @@ void EdbDisplayBase::UnZoom()
   //
   if (fZooms <= 0) return;
   fZooms--;
-  TPad *pad = (TPad*)gPad->GetPadSave();
-  pad->Range(fZoomX0[fZooms],fZoomY0[fZooms], fZoomX1[fZooms],fZoomY1[fZooms]);
-  pad->Modified();
-  pad->cd();
+//  doesn't work when we have more than one EdbDisplay objects
+//  TPad *pad = (TPad*)gPad->GetPadSave();
+//  pad->Range(fZoomX0[fZooms],fZoomY0[fZooms], fZoomX1[fZooms],fZoomY1[fZooms]);
+//  pad->Modified();
+//  pad->cd();
+  fPad->Range(fZoomX0[fZooms],fZoomY0[fZooms], fZoomX1[fZooms],fZoomY1[fZooms]);
+  fPad->Modified();
+  fPad->cd();
+  fPad->Draw();
 }
 
 //______________________________________________________________________________
@@ -493,9 +784,11 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
 {
 // Compute distance from point px,py to objects in event
 
-   gPad->SetCursor(kCross);
 
    if (gPad == fTrigPad) return 9999;
+   if (gPad == fButtons) return 9999;
+
+   gPad->SetCursor(kCross);
 
    const Int_t kbig = 9999;
    Int_t dist   = kbig;
@@ -513,4 +806,44 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
 */
    if (fZoomMode) return 0;
    else           return 7;
+}
+//______________________________________________________________________________
+void EdbDisplayBase::DrawUnd()
+{
+    fTrigPad->cd();
+    fTrigPad->GetListOfPrimitives()->Add(fUndButton);
+    fUndButton->Draw();
+    fTrigPad->Modified(kTRUE);
+    fTrigPad->Update();
+    fPad->cd();
+}
+//______________________________________________________________________________
+void EdbDisplayBase::DrawAcc()
+{
+    fTrigPad->cd();
+    fTrigPad->GetListOfPrimitives()->Add(fAccButton);
+    fAccButton->Draw();
+    fTrigPad->Modified(kTRUE);
+    fTrigPad->Update();
+    fPad->cd();
+}
+//______________________________________________________________________________
+void EdbDisplayBase::DrawCan()
+{
+    fTrigPad->cd();
+    fTrigPad->GetListOfPrimitives()->Add(fCanButton);
+    fCanButton->Draw();
+    fTrigPad->Modified(kTRUE);
+    fTrigPad->Update();
+    fPad->cd();
+}
+//______________________________________________________________________________
+void EdbDisplayBase::DrawEnv()
+{
+    fTrigPad->cd();
+    fTrigPad->GetListOfPrimitives()->Add(fEnvButton);
+    fEnvButton->Draw();
+    fTrigPad->Modified(kTRUE);
+    fTrigPad->Update();
+    fPad->cd();
 }
