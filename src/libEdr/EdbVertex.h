@@ -129,6 +129,7 @@ class EdbVertex: public TObject {
   EdbVertex *GetConnectedVertex(int i);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
+  float Chi2Track(int i);
   float MaxAperture();
 
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
