@@ -1182,7 +1182,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   segf.SetW( (float)nseg );
   segf.SetP( P() );
   segf.SetPID( GetSegment(iend)->PID() );
-
+  segf.SetDZ(seg->DZ());
+  
   AddSegmentF(new EdbSegP(segf));
 
   i=iend; 
@@ -1212,6 +1213,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 	segf.SetW( (float)nseg );
 	segf.SetP( P() );
 	segf.SetPID( GetSegment(i)->PID() );
+	segf.SetDZ(seg->DZ());
 	AddSegmentF(new EdbSegP(segf));
 	dz = eTPb*TMath::Abs(GetSegment(i)->Z() - GetSegment(i+step)->Z()); 
         dPb = dz*TMath::Sqrt(1.+(*pars[i])(2)*(*pars[i])(2)+(*pars[i])(3)*(*pars[i])(3)); // thickness of the Pb+emulsion cell in microns
