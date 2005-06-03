@@ -26,7 +26,7 @@ int   rec_primary_vertex_ntracks_min = 2; // min reconstructed vertex multiplici
 bool  read_from_file = false;         // read events from file
 bool  regenerate_vertex_xyz = true;  // vertex coordinates regeneration
 				     // (when readevents from file)
-bool  select_neighborhood = false;   // call vertexes neighborhood procedure
+bool  select_neighborhood = true;   // call vertexes neighborhood procedure
 float back1_tetamax =  0.35;         // angular range for BG segments
 float back2_tetamax =  0.25;         // angular range for cosmics
 float back2_plim[2] = {1., 1.};    // momentum range for cosmics
@@ -42,8 +42,8 @@ float fiducial_border_z = 12000.;    // xmin = brick.xmin + fiducial_border
 				     // fiducial volume not limited by this
 				     // volume, but total brick volume
 int neutral_primary = 1;  // 1 if neutral primary (phase space generation)
-int npi = 4;   // number of secondary pions (phase space generation)
-int nuse = 2;  // number of "visible" secondary pions (phase space generation)
+int npi = 5;   // number of secondary pions (phase space generation)
+int nuse = 5;  // number of "visible" secondary pions (phase space generation)
 float momentumK=15.; // momentum of K-meson (or compound object)
 //double mK=.4937;   // mass of K-meson
 double mK=5.6;     // mass of compound  object similar to neutrino events kinematics
@@ -993,8 +993,12 @@ void rec_all()
 	hp[19]->Fill(DE_FIT-DE_MC);
 	// fill hist with relative difference between MS-estimated and
 	// generated  track momentum
-//	hp[23]->Fill((tr->P_MS(brick.X0,trg->M(),true) - trg->P())/trg->P()*100.);
-	hp[23]->Fill((1./tr->P_MS(brick.X0,trg->M(),false) - 1./trg->P())*trg->P()*100.);
+//	float pms = tr->P_MS(brick.X0, trg->M(), true);
+	float pms = tr->P_MS(brick.X0, trg->M(), false);
+	if (pms > 0.)
+	{
+	    hp[23]->Fill((1./pms - 1./trg->P())*trg->P()*100.);
+	}
     }
   }
 
@@ -1152,7 +1156,7 @@ void rec_all()
     }
     if (select_neighborhood)
     {
-	int nn = ali->VertexNeighboor(2500., 4, 100000.);
+	int nn = ali->VertexNeighboor(1000., 2, 10000.);
 	printf("------------------------------------------------------------\n");
 	printf("%d neighbooring tracks and segments found\n", nn);
     }
@@ -1397,14 +1401,15 @@ EdbDisplay *ds2=0;
 void dsall()
 {
 
-  if(ds) delete ds; 
   arrs->Clear();  
 
   ali->ExtractDataVolumeSegAll( *arrs );
  
   gStyle->SetPalette(1);
 
-  ds=new EdbDisplay("display-segments",-60000.,60000.,-60000., 60000., 0.,80000.);
+  const char *title = "display-segments";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+   ds=new EdbDisplay(title, -60000.,60000.,-60000., 60000., 0.,80000.);
   
   ds->SetArrSegP( arrs );
   if (ali->eTracks) ds->SetArrTr( ali->eTracks );
@@ -1417,7 +1422,6 @@ void dsall()
 void dst( int numt = -1 )
 {
 
-  if(ds) delete ds; 
   arrs->Clear();  
   arrtr->Clear();  
 
@@ -1443,7 +1447,9 @@ void dst( int numt = -1 )
   //if (numt < 0) ali->ExtractDataVolumeSegAll( *arrs );
  
   gStyle->SetPalette(1);
-  ds=new EdbDisplay("display-tracks",-60000.,60000.,-60000., 60000., 0.,80000.);
+  const char *title = "display-tracks";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds=new EdbDisplay(title,-60000.,60000.,-60000., 60000., 0.,80000.);
   
   EdbTrackP *track = 0;
   for(int i=it0; i<it1; i++) {
@@ -1527,9 +1533,11 @@ void dsv( int numv = -1, int ntrMin=0, float binx=6, float bint=10 )
 
   gStyle->SetPalette(1);
 
-  if(!ds) 
-    ds=new EdbDisplay("display-vertexes",-60000.,60000.,-60000., 60000., 0.,80000.);
+  const char *title = "display-vertexes";
+  if(!(EdbDisplay::EdbDisplayExist(title))) 
+    ds=new EdbDisplay(title,-60000.,60000.,-60000., 60000., 0.,80000.);
   
+//  ds->SetPVR( ali );
   ds->SetArrSegP( arrs );
   ds->SetArrTr( arrtr );
   ds->SetArrV( arrv );
@@ -1546,7 +1554,6 @@ void dsvg( int numv = -1, float binx=6, float bint=10 )
 {
   if(!gener->eVTX) return;
 
-  if(ds) delete ds; 
   arrs->Clear();  
   arrtr->Clear();  
   arrv->Clear();  
@@ -1590,7 +1597,9 @@ void dsvg( int numv = -1, float binx=6, float bint=10 )
 
   gStyle->SetPalette(1);
 
-  ds=new EdbDisplay("display-generated-vertexes",-60000.,60000.,-60000., 60000., 0.,80000.);
+  const char *title = "display-generated-vertexes";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds=new EdbDisplay(title, -60000.,60000.,-60000., 60000., 0.,80000.);
   
   ds->SetArrSegP( arrs );
   ds->SetArrTr( arrtr );

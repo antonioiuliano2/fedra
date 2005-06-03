@@ -176,8 +176,9 @@ void ds(int iseg=0, float binx=20, float bint=10, int ntr=1)
   }
 
     gStyle->SetPalette(1);
-    if(!ds) 
-      ds=new EdbDisplay("display-tracks",-15000.,15000.,-15000.,15000.,-4000.,40000.);
+    const char *title = "display-segments";
+    if(!EdbDisplay::EdbDisplayExist(title)) 
+      ds=new EdbDisplay(title,-15000.,15000.,-15000.,15000.,-4000.,40000.);
 
     ds->SetArrSegP( arr );
     ds->SetArrTr( arrtr );
@@ -228,8 +229,9 @@ void dsv( int numv = -1, int ntrMin=2, float binx=6, float bint=10 )
   }
 
   gStyle->SetPalette(1);
-  if(!ds)
-    ds=new EdbDisplay("display-vertexes",-15000.,15000.,-15000.,15000.,-4000.,40000.);
+  const char *title = "display-vertexes";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds=new EdbDisplay(title,-15000.,15000.,-15000.,15000.,-4000.,40000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( arrtr );

@@ -827,8 +827,9 @@ void dsall()
   gAli->ExtractDataVolumeSegAll( *arr );
  
   gStyle->SetPalette(1);
-  if(!ds) 
-    ds=new EdbDisplay("display-segments",-60000.,60000.,-60000., 62000., 0.,100000.);
+  const char *title = "display-segments";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds=new EdbDisplay(title, -60000.,60000.,-60000., 62000., 0.,100000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( gAli->eTracks );
@@ -941,8 +942,9 @@ void dsvg( int numv = -1, float binx=6, float bint=10 )
 
   gStyle->SetPalette(1);
 
-  if(ds) delete ds;
-  ds=new EdbDisplay("display-generated",-60000.,60000.,-60000., 62000., 0.,100000.);
+  const char *title = "display-generated";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds=new EdbDisplay(title, -60000.,60000.,-60000., 62000., 0.,100000.);
   
   ds->SetArrSegP( arr );
   ds->SetArrTr( arrtr );
@@ -997,8 +999,9 @@ void dsvg2( int numv = -1, float binx=6, float bint=10 )
 
   gStyle->SetPalette(1);
 
-  if(ds2) delete ds2;
-  ds2=new EdbDisplay("display-generated-2",-60000.,60000.,-60000., 62000., 0.,100000.);
+  const char *title = "display-generated-2";
+  if(!EdbDisplay::EdbDisplayExist(title)) 
+    ds2=new EdbDisplay(title, -60000.,60000.,-60000., 62000., 0.,100000.);
   
   ds2->SetArrSegP( arr );
   ds2->SetArrTr( arrtr );
