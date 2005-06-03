@@ -234,6 +234,7 @@ class EdbPVRec : public EdbPatternsVolume {
   int	  ProbVertexN(float ProbMin);
   int	  LinkedVertexes();
   int	  VertexNeighboor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
+  int	  VertexNeighboor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);
