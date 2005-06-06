@@ -813,154 +813,6 @@ void EdbTrackP::FitTrack()
   SetZ(z);
 }
 
-/*
-//______________________________________________________________________________
-int  EdbTrackP::FitTrackKF( bool zmax)
-{
-  // if (zmax==true)  track parameters are calculated at segment with max Z
-  // if (zmax==false) track parameters are calculated at segment with min Z
-  //
-  // Note: SetP() for track must be setted before!
-  // Note: SetErrorP() for track should be setted - necessary for vertex fit with momenta
-  //
-  // on the output: Chi2: the full chi-square (not divided by NDF); NDF = (nseg-1)*4
-  //                Prob: is Chi2 probability (area of the tail of Chi2-distribution)
-  //                      If we accept events with Prob >= ProbMin then ProbMin is the 
-  //                      probability to reject the good event
-
-  float dPb;
-  double teta0sq;
-  double dz;
-  int step;
-  int istart, iend;
-
-  int nseg=N();
-  if(nseg<2)   return -1;
- 
-  //TODO: elaborate case of 1 segment
-
-  EdbSegP *seg0=0;
-  EdbSegP *seg=0;
-
-  if(  GetSegment(N()-1)->Z() <  GetSegment(0)->Z() )
-  {
-    if (zmax)
-    {
-	step=-1;
-	istart=nseg-1;
-	iend=0;
-    }
-    else
-    {
-	step=1;
-	istart=0;
-	iend=nseg-1;
-    }
-  }
-  else
-  {
-    if (!zmax)
-    {
-	step=-1;
-	istart=nseg-1;
-	iend=0;
-    }
-    else
-    {
-	step=1;
-	istart=0;
-	iend=nseg-1;
-    }
-
-  }
-
-  seg0 = GetSegment(istart);
-  VtVector par( (double)(seg0->X()), 
-		(double)(seg0->Y()),  
-		(double)(seg0->TX()), 
-		(double)(seg0->TY()) );
-
-  VtSymMatrix cov(4);             // covariance matrix for seg0
-  for(int k=0; k<4; k++) 
-    for(int l=0; l<4; l++) cov(k,l) = (seg0->COV())(k,l);
-
-  Double_t chi2=0.; 
-
-  int i=istart; 
-  while( (i+=step) != iend+step ) {
-
-    seg = GetSegment(i);
-
-    VtSymMatrix dms(4);   // multiple scattering matrix
-    dms.clear();
-
-    dz = seg->Z()-seg0->Z();                        //?
-    dPb = dz*TMath::Sqrt(1.+par(2)*par(2)+par(3)*par(3)); // thickness of the Pb+emulsion cell in microns
-    teta0sq = EdbPhysics::ThetaPb2( P(), M(), dPb );
-
-    dms(0,0) = teta0sq*dz*dz/3.;
-    dms(1,1) = dms(0,0);
-    dms(2,2) = teta0sq;
-    dms(3,3) = dms(2,2);
-    dms(2,0) = teta0sq*dz/2.;
-    dms(3,1) = dms(2,0);
-    dms(0,2) = dms(2,0);
-    dms(1,3) = dms(2,0);
-
-    VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
-    pred.clear();
-
-    pred(0,0) = 1.;
-    pred(1,1) = 1.;
-    pred(2,2) = 1.;
-    pred(3,3) = 1.;
-    pred(0,2) = dz;
-    pred(1,3) = dz;
-
-    VtVector parpred(4);            // prediction from seg0 to seg
-    parpred = pred*par;
-
-    VtSymMatrix covpred(4);         // covariation matrix for prediction
-    covpred = pred*(cov*pred.T())+dms;
-
-    VtSymMatrix dmeas(4);           // original covariation  matrix for seg
-    for(int k=0; k<4; k++) 
-      for(int l=0; l<4; l++) dmeas(k,l) = (seg->COV())(k,l);
-
-    covpred = covpred.dsinv();
-    dmeas   = dmeas.dsinv();
-    cov = covpred + dmeas;
-    cov = cov.dsinv();
-
-    VtVector meas( (double)(seg->X()), 
-		   (double)(seg->Y()),  
-		   (double)(seg->TX()), 
-		   (double)(seg->TY()) );
-
-    par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
-
-    chi2 += (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
-
-    seg0 = seg;
-  }
-
-  Set(ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),1.);
-  SetZ(GetSegment(iend)->Z());
-  SetCOV( cov.array(), 4 );
-  SetChi2((float)chi2);
-  SetProb( (float)TMath::Prob(chi2,(nseg-1)*4));
-  SetW( (float)nseg );
-
-  if(zmax) {
-    eSegZmax.Copy( *((EdbSegP*)this) );
-  } else {
-    eSegZmin.Copy( *((EdbSegP*)this) );
-  }
-
-  return 0;
-}
-
-*/
 //______________________________________________________________________________
 int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 {
@@ -978,7 +830,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   //                      probability to reject the good event
 
 
-  if(!N()) return 0;
+  int nseg=N();
+  if(nseg<=0) return 0;
   if(NF()) {
     eSF->Delete();
   }
@@ -999,8 +852,22 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   VtSymMatrix *cov[60], *covpred[60], *covpredinv[60], *covs[60], *dmeas[60];
  
   int i=0;
-  int nseg=N();
-  if(nseg<2)    return -1;
+  if(nseg==1) {
+    EdbSegP segf(*(GetSegment(0)));
+
+    segf.Set(ID(),X(),Y(),TX(),TY(),1.,Flag());
+    segf.SetZ(Z());
+    segf.SetErrorP ( SP() );
+    segf.SetChi2(0.);
+    segf.SetProb(1.);
+    segf.SetP( P() );
+    segf.SetPID( PID() );
+    segf.SetDZ(DZ());
+
+    AddSegmentF(new EdbSegP(segf));
+    return 0;
+  }
+
   if(nseg>59)   return -1;
 
   EdbSegP *seg0=0;

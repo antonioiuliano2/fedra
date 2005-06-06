@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // EdbPVRec                                                             //
 //                                                                      //
@@ -3215,8 +3215,9 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
     tr->SetFlag(0);
     tr->SetNpl();
     tr->SetN0(0);
+    tr->SetSegmentsTrack(-1);
     v[0]= -(tr->Npl());
-    v[1]= (Long_t)(tr->Prob()*100);
+    v[1]= (Long_t)((1.-tr->Prob())*100);
     v[2]= i;
     cn.Add(3,v);
   }
@@ -3232,18 +3233,39 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
       int nt = c->GetEntries();
       for(int it=0; it<nt; it++) {
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
-
 	tr->SetSegmentsTrack();
+      }
+    }
+  }
+
+  cp=0; 
+  c=0;
+  nn=cn.GetEntries();
+  for(int i=0; i<nn; i++) {
+    cp = cn.At(i);                              // tracks with fixed npl
+
+    int np = cp->GetEntries();
+    for(int ip=0; ip<np; ip++) {
+      c = cp->At(ip);                           // tracks with fixed Npl & Prob
+
+      int nt = c->GetEntries();
+      for(int it=0; it<nt; it++) {
+	
+	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
+
+  	if(tr->RemoveAliasSegments()>0){
+  	  if(tr->N()<nplmin)                  tr->SetFlag(-10);
+  	  else if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
+  	}
 
       }
     }
   }
 
-
   int nsegTot=0;
+
   cp=0; 
   c=0;
-  nn=cn.GetEntries();
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
     if( -(cp->Value()) > nplmax )    continue;
@@ -3258,27 +3280,16 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
-  	//if(tr->CheckAliasSegments()>0)   tr->SetFlag(-10);
-
-  	if(tr->RemoveAliasSegments()>0){
-  	  if(tr->N()<2)                       tr->SetFlag(-10);
-  	  else if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
-  	}
-
 	if(tr->Flag()==-10) continue;
-
-	//printf("\n propagate track: %d with %d segments ",tr->ID(),tr->N());
 
 	nseg = PropagateTrack(*tr, true, probMin, ngapMax, design);
   	nsegTot += nseg;
-	//printf("\t %d after true ",tr->N());
 
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
   	nseg = PropagateTrack(*tr, false, probMin, ngapMax, design);
   	nsegTot += nseg;
-	//printf("\t %d after false \n",tr->N());
 
       }
     }
@@ -3312,7 +3323,6 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
   int   ngap =0, trind=0;
   float probmax=0, prob=0;
   EdbTrackP *ttt = 0;
-
 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
@@ -3349,6 +3359,7 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
     }
 
     if( !EdbVertexRec::AttachSeg( tr, segmax , X0, probMin, probmax )) goto GAP;
+
     if(ttt) ttt->SetFlag(-10);
 
     segmax->SetTrack(tr.ID());

@@ -261,6 +261,8 @@ class EdbTrackP : public EdbSegP {
 
  public:
   EdbTrackP(int nseg=0);
+  EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
+    { AddSegment(seg); SetM(m); }
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) )
     { Copy(track); }
   virtual ~EdbTrackP();
@@ -358,7 +360,7 @@ class EdbTrackP : public EdbSegP {
   void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
   void Copy(const EdbTrackP &tr);
   void FitTrack();
-  //int FitTrackKF( bool zmax=false );
+
   int FitTrackKFS( bool zmax=false, float X0=5810., int design = 0 );
 
   int MakeSelector( EdbSegP &ss, bool followZ=true );
