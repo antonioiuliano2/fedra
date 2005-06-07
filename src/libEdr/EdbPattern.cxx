@@ -838,6 +838,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 
   //printf("%d segments to fit\n",N());
 
+  //TODO - eliminate constants!!!
+
   float dPb = 0., p = 0., m = 0.13957, e = 0.13957, de = 0., pa = 0., pn = 0.;
   float e0 = e;
   float eTPb = 1000./1300.;

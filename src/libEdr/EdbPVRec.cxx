@@ -344,13 +344,13 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   stx   = eCond->SigmaTX(tx);
   sty   = eCond->SigmaTY(0);
   float sx2 = sx*sx, sy2 = sy*sy, sz2 = 0., stx2 = stx*stx, sty2= sty*sty;
-  s1->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
+  s1->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 1.);
 
   tx = TMath::Sqrt(s2->TX()*s2->TX()+s2->TY()*s2->TY());
   sx    = eCond->SigmaX(tx);
   stx   = eCond->SigmaTX(tx);
   sx2 = sx*sx; stx2 = stx*stx;
-  s2->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 0.);
+  s2->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 1.);
 
   if(scp->eS) delete (scp->eS);
   scp->eS=new EdbSegP(*s2);
