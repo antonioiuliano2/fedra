@@ -22,11 +22,15 @@ EdbPVGen::EdbPVGen()
   eTracks = 0;
   eVTX    = 0;
   eScanCond = 0;
+  eEVR = new EdbVertexRec();
+  eEVR->eEdbTracks = eTracks;
+  eEVR->eVTX       = eVTX;
 }
 
 ///______________________________________________________________________________
 EdbPVGen::~EdbPVGen()
 {
+  if(eEVR)            delete eEVR;
   if(eTracks)         delete eTracks;
   if(eVTX)            delete eVTX;
 }
@@ -711,9 +715,9 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	if (tr->N() > 0)
 	{
 	    if (pi->Pz() < 0.)
-		vedb->AddTrack(tr, 0);
+		eEVR->AddTrack(*vedb, tr, 0);
 	    else
-		vedb->AddTrack(tr, 1);
+		eEVR->AddTrack(*vedb, tr, 1);
 	    AddTrack(tr);
 	    ntrgood++;
 	}
@@ -744,7 +748,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	TrackMC( zlimt, lim, *tr, 0, ProbGap );
 	if (tr->N() > 0)
 	{
-	    vedb->AddTrack(tr, 0);
+	    eEVR->AddTrack(*vedb, tr, 0);
 	    AddTrack(tr);
 	    ntrgood++;
 	}

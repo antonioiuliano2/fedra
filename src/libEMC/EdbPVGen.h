@@ -10,6 +10,7 @@
 //////////////////////////////////////////////////////////////////////////
 #include "TGenPhaseSpace.h"
 #include "EdbPVRec.h"
+#include "EdbVertex.h"
 
 //______________________________________________________________________________
 class EdbPVGen : public TObject {
@@ -21,9 +22,9 @@ class EdbPVGen : public TObject {
   EdbScanCond *eScanCond;
 
  public:
-  TObjArray   *eTracks;
-  TObjArray   *eVTX;          //
-
+  TObjArray    *eTracks;
+  TObjArray    *eVTX;          //
+  EdbVertexRec *eEVR;
  public:
   EdbPVGen();
   ~EdbPVGen();
