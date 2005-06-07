@@ -836,6 +836,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
     eSF->Delete();
   }
 
+  if(SP()<.000001) SetErrorP(1.);    // TODO: razobratsia s etimi impul'sami!
   //printf("%d segments to fit\n",N());
 
   //TODO - eliminate constants!!!
