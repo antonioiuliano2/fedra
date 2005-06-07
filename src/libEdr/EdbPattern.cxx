@@ -1796,3 +1796,43 @@ EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
   }
   return pat;
 }
+
+//______________________________________________________________________________
+int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsig, float nsigt, int Dpat)
+{
+  EdbPattern *pat  = 0;
+  int npat = Npatterns();
+  for (int i = 0; i<npat; i++)
+  {
+    pat = GetPattern(i);  
+    if (ss.Z() < pat->Z())
+    {
+	if ( i > 0 )  ss.SetPID(i-1);
+	else	      ss.SetPID(0);
+	break;
+    }
+    else if (ss.Z() == pat->Z())
+    {
+	ss.SetPID(i);
+	break;
+    }
+  }
+  
+  int p0 = ss.PID();
+  int pend   = p0 + Dpat;
+  if (pend >= npat) pend = npat - 1;
+  int pstart   = p0 - Dpat;
+  if (pstart < 0) pstart = 0;
+
+  arr.Clear();
+  int nseg = 0;
+  int n = 0;
+  for(int i=pstart; i <=pend; i++ ) {
+    pat = GetPattern(i);
+    if(!pat)                   continue;
+    n = pat->FindCompliments(ss,arr,nsig,nsigt);
+    nseg += n;
+  }
+
+  return nseg;
+}

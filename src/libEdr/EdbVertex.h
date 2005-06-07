@@ -18,6 +18,8 @@
 #include "vt++/VtRelation.hh"
 #include "vt++/VtKalman.hh"
 
+class EdbPVRec;
+
 //_________________________________________________________________________
 class EdbVTA: public TObject {
 
@@ -86,11 +88,12 @@ class EdbVertex: public TObject {
   
  public:
   EdbVertex();
-  EdbVertex(EdbVertex &v);
+  //EdbVertex(EdbVertex &v);
   virtual ~EdbVertex();
 
-  int MakeV( bool usemom = true );
+  //  int MakeV( bool usemom = true, bool usesegpar=false );
 
+  void    SetV(VERTEX::Vertex *v) {eV=v;}
   VERTEX::Vertex *V() const {return eV;}
   void Clear();
   void ClearNeighborhood();
@@ -123,7 +126,7 @@ class EdbVertex: public TObject {
   EdbVTA *GetVTn(int i) { return (EdbVTA*)(eVTn.At(i)); }
   void AddVTA(EdbVTA *vta);
   void ResetTracks();
-  EdbVTA *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
+  //  EdbVTA *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
   EdbTrackP *GetTrack(int i) { return GetVTa(i)->GetTrack(); }
   Int_t      Zpos(int i)     { return GetVTa(i)->Zpos(); }
   EdbVertex *GetConnectedVertex(int i);
@@ -151,22 +154,28 @@ class EdbVertexRec: public TObject {
 
  private:
 
+ public:
   TList        eVTA;          // vertex-track associations
 
- public:
   TObjArray   *eEdbTracks;
   TObjArray   *eVTX;          // array of vertex
+  EdbPVRec    *ePVR;          // patterns volume (optional)
   
   Float_t     eZbin;          // z- granularity (default is 100 microns)
+  Float_t     eAbin;          // safety margin for angular aperture of vertex products
   Float_t     eDZmax;         // maximum z-gap in the track-vertex group
-  Float_t     eDAmax;         // maximum angular aperture of vertex products
   Float_t     eProbMin;       // minimum acceptable probability for chi2-distance between tracks
   Float_t     eImpMax;        // maximal acceptable impact parameter (preliminary check)
   Bool_t      eUseMom;        // use or not track momentum for vertex calculations
+  Bool_t      eUseSegPar;     // use only the nearest measured segments for vertex fit (as Neuchatel)
+  Int_t       eQualityMode;   // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
 
  public:
   EdbVertexRec();
   virtual ~EdbVertexRec();
+
+  int MakeV( EdbVertex &edbv );
+  EdbVTA *AddTrack(EdbVertex &edbv, EdbTrackP *track, int zpos );
 
   int FindVertex();
 
@@ -190,10 +199,11 @@ class EdbVertexRec: public TObject {
     eVTA.Add((TObject*)vta);
   }
 
-  int  ProbVertexN(float ProbMin);
-
-
-
+  int     ProbVertexN();
+  int	  LinkedVertexes();
+  int	  VertexNeighboor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
+  int	  VertexNeighboor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
+  int	  SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
 
   TTree *init_tracks_tree(const char *file_name, EdbTrackP *track);
   int BuildTracksArr(const char *file_name="linked_tracks.root", int nsegMin=2 );
@@ -201,21 +211,6 @@ class EdbVertexRec: public TObject {
   double Tdistance(const EdbSegP& s1, const EdbSegP& s2);
 
   EdbTrackP *GetEdbTrack( const int index );
-
-  static double ProbeSeg( const EdbTrackP *s1, EdbTrackP *s2, 
-			  const float X0=5810. );
-  static double ProbeSeg( const EdbTrackP *s1, EdbSegP *s2, 
-			  const float X0=5810. );
-  static double ProbeSeg( const EdbSegP *s1, EdbSegP *s2, 
-			  const float X0=5810., const float mass=0.1396 );
-  static float  Chi2Seg( EdbSegP *s1, EdbSegP *s2);
-
-  static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
-			  const float X0, const float ProbMin, float &prob );
-  static bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t );
-  static bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
-
-  //VERTEX::Track& GetVtTrack( const int index, VERTEX::Track& t);
 
   ClassDef(EdbVertexRec,2) //reconstruct vertexes in OPERA emulsion data
 };

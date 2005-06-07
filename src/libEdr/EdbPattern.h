@@ -316,8 +316,8 @@ class EdbTrackP : public EdbSegP {
   EdbSegP *GetSegment(int i)   const { return (eS) ? (EdbSegP*)(eS->At(i)) : 0; }
   EdbSegP *GetSegmentF(int i)  const { return (eSF) ? (EdbSegP*)(eSF->At(i)) : 0; }
 
-  const EdbSegP  *TrackZmin() const { return GetSegmentFFirst(); }
-  const EdbSegP  *TrackZmax() const { return GetSegmentFLast();  }
+  const EdbSegP  *TrackZmin(bool usesegpar=false) const { if(usesegpar) return GetSegmentFirst(); else return GetSegmentFFirst(); }
+  const EdbSegP  *TrackZmax(bool usesegpar=false) const { if(usesegpar) return GetSegmentLast();  else return GetSegmentFLast();  }
 
   float Zmax()   const;
   float Zmin()   const;
@@ -486,6 +486,8 @@ class EdbPatternsVolume : public TObject {
 
   EdbSegP *GetSegment(Long_t vid) const 
     {return GetPattern(Pid(vid))->GetSegment( Sid(vid) );}
+
+  int FindComplimentsVol(EdbSegP &s, TObjArray &arr, float nsig, float nsigt, int dpat);
 
   void   Print() const;
 

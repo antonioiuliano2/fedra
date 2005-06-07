@@ -216,26 +216,10 @@ class EdbPVRec : public EdbPatternsVolume {
  public:
   TObjArray   *eTracks;
   TObjArray   *eVTX;          // array of vertex
-  TList        eVTA;          // vertex-track associations
 
  public:
   EdbPVRec();
   ~EdbPVRec();
-
-  void    FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends,
-			     float zFrom, float zTo, float zBin,
-			     float ProbMinT, int Nsegmin);
-
-  int     ProbVertex(int maxgap[6], float dA, float ProbMin,
-		     float ProbMinT=0.05, int Nsegmin=3, bool usemom=true);
-  int     ProbVertex(TIndexCell &list1, TIndexCell &list2,
-		     int BinDifMin,     int BinDifMax,
-		     float dA,          float ProbMin,   float zBin, bool usemom);
-  int	  ProbVertexN(float ProbMin);
-  int	  LinkedVertexes();
-  int	  VertexNeighboor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
-  int	  VertexNeighboor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
-  int	  SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
 
   void    FillCell( float stepx,  float stepy, float steptx,float stepty);
   void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
@@ -309,10 +293,6 @@ class EdbPVRec : public EdbPatternsVolume {
     eVTX->Add((TObject*)vtx);
   }
 
-  void AddVTA(EdbVTA *vta) {
-    eVTA.Add((TObject*)vta);
-  }
-
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
   int ExtractDataVolumeSegAll( TObjArray &arr );
@@ -321,6 +301,17 @@ class EdbPVRec : public EdbPatternsVolume {
 		      int ngapMax = 3, int design = 0 );
   int PropagateTrack( EdbTrackP &tr, bool followZ, float probMin = 0.05,
 		      int ngapMax = 3, int design = 0 );
+
+  static double ProbeSeg( const EdbTrackP *s1, EdbTrackP *s2, 
+			  const float X0=5810. );
+  static double ProbeSeg( const EdbTrackP *s1, EdbSegP *s2, 
+			  const float X0=5810. );
+  static double ProbeSeg( const EdbSegP *s1, EdbSegP *s2, 
+			  const float X0=5810., const float mass=0.1396 );
+  static float  Chi2Seg( EdbSegP *s1, EdbSegP *s2);
+
+  static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
+			  const float X0, const float ProbMin, float &prob );
 
   void ClearPropagation(int design = 0);
 
