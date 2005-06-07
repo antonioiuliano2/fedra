@@ -19,7 +19,6 @@ class EdbDisplay: public EdbDisplayBase {
 
  private:
 
-  EdbPVRec  *ePVR;
   TObjArray *eArrSegP;     // array of segments to be drawn
   TObjArray *eArrTr;       // array of tracks to be drawn
   Int_t      eDrawTracks;  // tracks drawing option
@@ -34,6 +33,7 @@ class EdbDisplay: public EdbDisplayBase {
 
  public:
 
+  EdbVertexRec  *eVerRec;
   TObjArray *eArrV;        // array of vertexes to be drawn
   TObjArray *eArrVSave;    // saved array of vertexes to be drawn
   EdbVertex *eWorking;     // working vertex
@@ -63,12 +63,12 @@ class EdbDisplay: public EdbDisplayBase {
   void Set0();
 
   void Refresh();
-  void SetPVR(EdbPVRec *pvr) {ePVR=pvr;}
+  void SetVerRec(EdbVertexRec *pvr) {eVerRec=pvr;}
   void SetArrSegP(TObjArray *arr) {eArrSegP=arr;}
   void SetArrTr(TObjArray *arr) {eArrTr=arr;}
   void SetDrawTracks(int opt) {eDrawTracks=opt;}
 
-  EdbPVRec *PVR() const {return ePVR;}
+  EdbVertexRec *VerRec() const {return eVerRec;}
   //void PatternDraw(EdbPattern &pat);
   void TrackDraw(EdbTrackP *tr);
   EdbSegG *SegLine(const EdbSegP *seg);

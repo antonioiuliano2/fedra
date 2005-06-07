@@ -60,7 +60,7 @@ void EdbSegG::InspectSegment()
 //________________________________________________________________________
 void EdbDisplay::Set0()
 {
-  ePVR     = 0;
+  eVerRec = ((EdbVertexRec *)(gROOT->FindObject("EdbVertexRec")));
   eArrSegP = 0;
   eArrTr   = 0;
   eArrV    = 0;
@@ -409,7 +409,7 @@ void EdbTrackG::RemoveTrack()
 	for(i=0; i<ntr; i++)
 	{
 	    if (eD->eVertex->GetTrack(i) == eTr) continue;
-	    if ((vta = (eD->eWorking)->AddTrack((eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i), 0.0)))
+	    if ((vta = (eD->eVerRec)->AddTrack( *(eD->eWorking), (eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i))))
 	    {
 		((eD->eVertex)->GetTrack(i))->AddVTA(vta);
 		n++;
@@ -426,7 +426,7 @@ void EdbTrackG::RemoveTrack()
 	for(i=0; i<ntr; i++)
 	{
 	    if (eD->ePrevious->GetTrack(i) == eTr) continue;
-	    if ((vta = (eD->eWorking)->AddTrack((eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i), 0.0)))
+	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking),(eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i))))
 	    {
 		((eD->ePrevious)->GetTrack(i))->AddVTA(vta);
 		n++;
@@ -449,8 +449,8 @@ void EdbTrackG::RemoveTrack()
 	}
 	return;
     }
-    bool usemom = (eD->eVertex)->V()->back()->kalman.use_momentum();
-    if ((eD->eWorking)->MakeV(usemom))
+
+    if ((eD->eVerRec)->MakeV(*(eD->eWorking)))
     {
 	EdbVertex *eW = eD->eWorking;
 	eW->SetID(eD->eVertex->ID());
@@ -511,7 +511,6 @@ void EdbTrackG::AddTrack()
 {
   char text[512];
   int zpos = 1;
-  float ProbMinV = 0.00;
   EdbVTA *vta = 0;
   // ask for zpos and ProbMinV
   if (eTr && eD)
@@ -529,7 +528,7 @@ void EdbTrackG::AddTrack()
 	int i = 0, n = 0;
 	for(i=0; i<ntr; i++)
 	{
-	    if ((vta = (eD->eWorking)->AddTrack((eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i), 0.0)))
+	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), (eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i))))
 	    {
 		(eD->eVertex)->GetTrack(i)->AddVTA(vta);
 		n++;
@@ -550,8 +549,8 @@ void EdbTrackG::AddTrack()
 	    }
 	    return;
 	}
-	bool usemom = (eD->eVertex)->V()->back()->kalman.use_momentum();
-	if (!((eD->eWorking)->MakeV(usemom)))
+
+	if (!((eD->eVerRec)->MakeV(*(eD->eWorking))))
 	{
 	    delete eD->eWorking;
 	    if (eD->ePrevious)
@@ -576,7 +575,7 @@ void EdbTrackG::AddTrack()
 	int i = 0, n = 0;
 	for(i=0; i<ntr; i++)
 	{
-	    if ((vta = (eD->eWorking)->AddTrack((eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i), 0.0)))
+	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking),(eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i))))
 	    {
 		((eD->ePrevious)->GetTrack(i))->AddVTA(vta);
 		n++;
@@ -598,8 +597,8 @@ void EdbTrackG::AddTrack()
 	    }
 	    return;
 	}
-	bool usemom = (eD->eVertex)->V()->back()->kalman.use_momentum();
-	if (!((eD->eWorking)->MakeV(usemom)))
+
+	if (!((eD->eVerRec)->MakeV(*(eD->eWorking))))
 	{
 	    delete eD->eWorking;
 	    if (eD->ePrevious)
@@ -616,7 +615,7 @@ void EdbTrackG::AddTrack()
 	    return;
 	}
     }
-    if ((vta = (eD->eWorking)->AddTrack(eTr, zpos, ProbMinV)))
+    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), eTr, zpos)))
     {
 	eTr->AddVTA(vta);
 	EdbVertex *eW = eD->eWorking;
@@ -814,19 +813,19 @@ void EdbDisplay::AcceptModifiedVTX()
     }
     if (eWorking && eVertex)
     {
-	if (!ePVR) ePVR = ((EdbPVRec*)(gROOT->FindObject("EdbPVRec")));
+	if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->FindObject("EdbVertexRec")));
         EdbVertex *eW = eWorking;
 	int ind = eVertex->ID();
 	eW->SetID(ind);
 	eW->SetQuality(eW->V()->prob()/
 			   (eW->V()->vtx_cov_x()+eW->V()->vtx_cov_y()));
-	if (ePVR)
+	if (eVerRec)
 	{
 	    int ntr = eW->N();
 	    int i = 0;
 	    for(i=0; i<ntr; i++)
 	    {
-		(ePVR->eVTA).Remove(eVertex->GetVTa(i));
+		(eVerRec->eVTA).Remove(eVertex->GetVTa(i));
 	    }
 	}
 	int indd = -1;
@@ -875,13 +874,13 @@ void EdbDisplay::AcceptModifiedVTX()
 	if (ifl == 3) ifl = 0;
 	if (eW->Nv()) ifl += 3;
 	eW->SetFlag(ifl);
-	if (ePVR)
+	if (eVerRec)
 	{
-	    ePVR->eVTX->RemoveAt(ind);
-	    ePVR->eVTX->AddAt(eW, ind);
+	    eVerRec->eVTX->RemoveAt(ind);
+	    eVerRec->eVTX->AddAt(eW, ind);
 	    for(i=0; i<ntr; i++)
 	    {
-		ePVR->AddVTA(eW->GetVTa(i));
+		eVerRec->AddVTA(eW->GetVTa(i));
 	    }
 	}
 	eVertex = 0;
@@ -926,8 +925,8 @@ void EdbDisplay::AcceptModifiedVTX()
 //_____________________________________________________________________________
 void EdbDisplay::DrawVertexEnvironment()
 {
-    if (!ePVR) ePVR = ((EdbPVRec *)(gROOT->FindObject("EdbPVRec")));
-    if (!ePVR) return;
+    if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->FindObject("EdbVertexRec")));
+    if (!eVerRec) return;
     if (!eVertex) return;
     
     fTrigPad->cd();
@@ -942,7 +941,7 @@ void EdbDisplay::DrawVertexEnvironment()
     if (eWorking) eW = eWorking;
     float Rmax = 1000., ImpMax = 10000.;
     int Dpat = 2;
-    ePVR->VertexNeighboor(eW, Rmax, Dpat, ImpMax);
+    eVerRec->VertexNeighboor(eW, Rmax, Dpat, ImpMax);
     eArrTrSave  = eArrTr; 
     eArrSegPSave  = eArrSegP; 
     eArrVSave  = eArrV;
