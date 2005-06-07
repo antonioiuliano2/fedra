@@ -2,7 +2,7 @@
  include $(FEDRA_ROOT)/src/config/ProjectDef.mk
  include $(FEDRA_ROOT)/src/config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdb  -lEdd  -lEdr  -lEmath  -lEphys  -lvt -lEIO
+PROJECT_LIBS = -L$(LIB_DIR) -lEdb  -lEdr  -lEmath  -lEphys  -lvt -lEIO
 
 CXXFLAGS  += -I$(INC_DIR)
 
