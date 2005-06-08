@@ -1855,7 +1855,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
     eVTX->Clear();
   }
 
-  ClearPropagation(design);
+  //ClearPropagation(design);
 
   EdbTrackP *tr = 0, *trg = 0;
   int ntr = eTracks->GetEntries();
@@ -2251,7 +2251,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
     eVTX->Clear();
   }
 
-  ClearPropagation(design);
+  //ClearPropagation(design);
 
   int ntr = eTracks->GetEntries();
   printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"

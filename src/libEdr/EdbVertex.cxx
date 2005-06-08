@@ -158,7 +158,7 @@ void EdbVertex::ClearNeighborhood()
 int EdbVertex::Compare(const TObject *o) const
 {
     /*printf("Inside compare\n");*/
-    if      ( eQuality <  ((EdbVertex *)o)->eQuality )  return -1;
+    if      ( eQuality >  ((EdbVertex *)o)->eQuality )  return -1;
     else if ( eQuality == ((EdbVertex *)o)->eQuality )  return  0;
     else	      	       				return  1;
 }
@@ -173,7 +173,7 @@ bool EdbVertex::IsEqual(const TObject *o) const
 //________________________________________________________________________
 void EdbVertex::Print()
 {
-      printf("****** Vertex Id %d, Flag %d, quality %f, %d connected tracks ********\n",
+      printf("****** Vertex Id %d, Flag %d, quality %g, %d connected tracks ********\n",
     	     ID(), Flag(), Quality(), N());
       EdbTrackP *tr=0;
       printf("IDs ");
@@ -567,7 +567,20 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 	          vta->SetFlag(2);
 		  vta->SetImp(distance(*t, *v));
 	          edbv.AddVTA(vta);
-		  edbv.SetQuality( v->prob()/(v->vtx_cov_x()+v->vtx_cov_y()) );
+		  if (eQualityMode == 0)
+		    edbv.SetQuality( v->prob()/(v->vtx_cov_x()+v->vtx_cov_y()) );
+		  else if (eQualityMode == 1)
+		  {
+		    double rms=(edbv.V())->rmsDistAngle();
+		    if (rms != 0.) 
+			edbv.SetQuality( (float)(1./rms) );
+		    else
+			edbv.SetQuality( 10.e+35 );
+		  }
+		  else
+		  {
+		    edbv.SetQuality( 1. );
+		  }
 		}
 	    }
 	}
@@ -615,6 +628,21 @@ int EdbVertexRec::FindVertex()
   printf(" End-End tracks combinations:\n");
   nvtx += LoopVertex(ends  , ends,    0, 0 );
 
+  int nvtxt = 0;
+  if (eVTX) nvtxt = eVTX->GetEntries();
+  
+  for (int i = 0; i < nvtxt; i++)
+  {
+    ((EdbVertex *)(eVTX->At(i)))->SetID(i);
+  }
+
+  if (nvtxt) eVTX->Sort(nvtxt-1);
+
+  for (int i = 0; i < nvtxt; i++)
+  {
+    ((EdbVertex *)(eVTX->At(i)))->SetID(i);
+  }
+
   printf("--------------------------------------------------------\n");
 
   return nvtx;
@@ -632,6 +660,7 @@ void EdbVertexRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends )
 
   for(int itr=0; itr<ntr; itr++)   {
     tr = (EdbTrackP*)(eEdbTracks->At(itr));
+    if (tr->Flag() < 0) continue;
     v[0] = (Long_t)(tr->TrackZmin()->Z()/eZbin);
     v[1] = itr;
     starts.Add(2,v); 
@@ -744,21 +773,6 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 
   printf("\b\b\b\b%3d%%\n",100);
 
-  int nvtxt = 0;
-  if (eVTX) nvtxt = eVTX->GetEntries();
-  
-  for (int i = 0; i < nvtxt; i++)
-  {
-    ((EdbVertex *)(eVTX->At(i)))->SetID(i);
-  }
-
-  if (nvtxt) eVTX->Sort(nvtxt-1);
-
-  for (int i = 0; i < nvtxt; i++)
-  {
-    ((EdbVertex *)(eVTX->At(i)))->SetID(i);
-  }
-
   printf("  %6d pairs, %d vertexes, %d with Prob > %f\n",
 	    ncombin, ncombinv, nvtx, eProbMin);
 
@@ -865,10 +879,11 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
 
   
   d = v2->V()->rmsDistAngle();
-  x = v2->V()->vx() + v2->X();
-  y = v2->V()->vy() + v2->Y();
-  z = v2->V()->vz() + v2->Z();
+  x = v2->VX();
+  y = v2->VY();
+  z = v2->VZ();
   prob = v2->V()->prob();
+
   if (zpos1 == 0 && zpos2 == 1)            // ends & starts
     {
       zvmin = TMath::Min(s1->Z() ,s2->Z()) - 0.5*eZbin;
@@ -924,9 +939,21 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
   //  printf("prob = %f , eProbmin= %f\n", prob, eProbMin);
 
   if(prob >= eProbMin) {
-    
-    v2->SetQuality(v2->V()->prob()/
-		   (v2->V()->vtx_cov_x()+v2->V()->vtx_cov_y()));
+
+    if (eQualityMode == 0)
+	v2->SetQuality(v2->V()->prob()/
+			    (v2->V()->vtx_cov_x()+v2->V()->vtx_cov_y()));
+    else if (eQualityMode == 1)
+    {
+	if (d != 0.) 
+	    v2->SetQuality( 1./d );
+	else
+	    v2->SetQuality( 10.e+35 );
+    }
+    else
+    {
+	v2->SetQuality( 1. );
+    }
     tr1->AddVTA(vta1);
     tr2->AddVTA(vta2);
     AddVTA(vta1);
@@ -950,6 +977,7 @@ int EdbVertexRec::ProbVertexN()
   EdbVTA *vta=0, *vta1 = 0, *vta2 = 0;
   EdbVertex *edbv1 = 0;
   EdbVertex *edbv2 = 0;
+  Vertex *v = 0;
   EdbTrackP *tr = 0;
   EdbTrackP *tr2 = 0;
   int zpos = 0, zpos1 = 0, zpos2 = 0;
@@ -979,9 +1007,22 @@ int EdbVertexRec::ProbVertexN()
 		vta1 = AddTrack(*edbv1, tr, zpos1);
 		vta2 = AddTrack(*edbv1, tr2, zpos2);
 		MakeV(*edbv1);
-		edbv1->V()->findVertexVt();
-		edbv1->SetQuality(edbv1->V()->prob()/
-			   (edbv1->V()->vtx_cov_x()+edbv1->V()->vtx_cov_y()));
+		v = edbv1->V();
+		v->findVertexVt();
+		if (eQualityMode == 0)
+		    edbv1->SetQuality( v->prob()/(v->vtx_cov_x()+v->vtx_cov_y()) );
+		else if (eQualityMode == 1)
+		{
+		    double rms=v->rmsDistAngle();
+		    if (rms != 0.) 
+			edbv1->SetQuality( (float)(1./rms) );
+		    else
+			edbv1->SetQuality( 10.e+35 );
+		}
+		else
+		{
+		    edbv1->SetQuality( 1. );
+		}
 		tr->AddVTA(vta1);
 		tr2->AddVTA(vta2);
 		AddVTA(vta1);
