@@ -1,0 +1,81 @@
+New compilation scripts on Linux and Windows: full FEDRA code 
+is builded and tested on both systems.
+
+on Linux:
+ . ./install.sh   - to build and install the system
+ . ./uninstall.sh - to clean up the installation and remove all binaries
+on Windows:
+ install.cmd   - to build install the system
+ uninstall.cmd - to clean up the installation and remove all binaries
+
+
+Libraries makefiles (libXXX/Makefile) are the same for linux and windows, 
+all dependencies are located in src/config directory
+
+FEDRA libraries structure:
+
+libEmath - some mathematical functions       (no dependency)
+libEphys - some physics function             (no dependency)
+libVt++  - vertex fit library                (no dependency)
+libEdb   - raw data storage classes	     (no dependency)
+libEdg   - grain and image analysis classes  (depends on Edb)
+libEdr   - tracks and vertex reconstruction  (depends on Emath, Ephys, Edb, Vt++)
+libEIO   - input-output and control classes  (depends on Edr)
+libEMC   - internal Monte-Carlo              (depends on EIO)
+libEGA   - image and grains analysis library (depends on Edb)
+libEdd   - display classes                   (depends on Edr, EIO)
+
+Applications:
+
+recset       - reconstruction front-end application       (Libux & w32)
+rwc2edb      - raw data (rwc, rwd) -> root data (Edb format) convertor (Linux & w32)
+edb2rwd      - raw root (Edb)      -> (rwc, rwd) convertor (w32 only)
+rwdcomp      - appliaction for comparison of rwd files     (w32 only)
+rwcread      - print on screan contents of the catalog     (w32 only)
+getacqstatus - check if scanning is complete or not        (w32 only)
+
+
+List of updates and modifications:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- new parameter card RAWR (important!) is the new
+  type of cut (root style) in the default.par file, for example:
+
+  --------------- default.par --------------------------
+  ....
+  #
+  # Cuts for basetracks (applied while reading from couples tree
+  #                    before alignment and tracking operations)
+  # No blank space are permitted in the RCUT string!
+  #
+
+  RCUT 0  eN1==1&&eN2==1&&eCHI2P<3.5
+  RCUT 0  abs(s.eTX)<.3&&abs(s.eTY)<.3
+  RCUT 0  abs(s.eX+70000)<5000&&abs(s.eY-40000)<5000
+
+  # OBSOLETE:  "ICUT 0" and "XCUT 0" and "CUTCP" are still available but it's
+  # functionality is fully overloaded by RCUT 0;
+  # RCUT 0 is much faster - it is the recommended option
+  #
+  # Cuts for basetrack (coord - same as in couples tree) used for alingment search
+  # and plate-to-plate linking	
+  #
+  #          xmin xmax     ymin ymax       txmin   txmax   tymin tymax   Pmin Pmax
+  #ICUT 0 -65000. -55000. 50000. 60000.   -.9     .9        -.9    .9     0.  33.
+  ----------------------------------------------------------------------------------
+
+
+The structures of libraries are a bit modified - see
+new src/appl/macros/rootlogon.C
+
+- updates in the libEdb to fit new information from catalog in EdbViewHeader new words:
+
+  Int_t   eCol;          // the position of the view in the scanned area, measured in views
+  Int_t   eRow;          // starting from the reference angle (typically up-left)
+  Int_t   eStatus;       // View scanning status
+
+- catalog is stored inside the Edb run file as a binary object
+
+- modifications and bugs fixes in the tracking and vertex search part
+
+- new vertex search procedure (the old one is still kept)
