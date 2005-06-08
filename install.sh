@@ -81,3 +81,6 @@ if [[ $yesno == 'y' ]] ; then
   cd $installdir/src
   $installdir/src/makeall.sh
 fi
+
+# install fedra macros
+cp -r $PROJECT_SRC/appl/macros $installdir/macros

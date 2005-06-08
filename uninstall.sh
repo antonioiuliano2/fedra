@@ -20,6 +20,9 @@ fi
 if [[ -a $installdir/lib ]] ; then
   rm -r $installdir/lib
 fi
+if [[ -a $installdir/macros ]] ; then
+  rm -r $installdir/macros
+fi
 
 if [[ -a $installdir/setup_new.sh ]] ; then
   rm $installdir/setup_new.sh
