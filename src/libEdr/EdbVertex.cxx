@@ -698,6 +698,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
   int   nz2 = list2.GetEntries();
   float z1,z2;
   float dz, dtx,dty,deltaZ, imp=-1;
+  float isign=1.;
 
   int ntot = nz1*nz2;
   printf("2-track vertexes search in progress... %3d%%", 0);
@@ -745,13 +746,18 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 	  dz     = TMath::Abs(s2->Z()-s1->Z());
 	  if( dz > eDZmax )                                       continue;
 
-	  if(zpos1!=zpos2) deltaZ = (dz+eZbin);
-	  else             deltaZ = (2*eDZmax-dz);
+	  if(zpos1!=zpos2) {              // start-end,   end-start
+	    deltaZ = (dz+eZbin);
+	    isign = -1.;
+	  } else {                        // start-start, end-end
+            deltaZ = (eDZmax-dz/2.);
+	    isign = +1.;
+	  }
 
-	  dtx = TMath::Abs(s2->TX()-s1->TX())+eAbin;
+	  dtx = TMath::Abs(s2->TX() - isign*s1->TX())+eAbin;
 	  if( TMath::Abs(s2->X()-s1->X()) > dtx*deltaZ )          continue;
 
-	  dty = TMath::Abs(s2->TY()-s1->TY())+eAbin;
+	  dty = TMath::Abs(s2->TY() - isign*s1->TY())+eAbin;
 	  if( TMath::Abs(s2->Y()-s1->Y()) > dty*deltaZ )          continue;
 
 	  imp = CheckImpact( s1,s2, zpos1,zpos2 );
@@ -904,7 +910,7 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
   else if (zpos1 == 1 && zpos2 == 1)        // starts & starts
     {
       zvmax = TMath::Min(s1->Z() ,s2->Z()) + eZbin;
-      zvmin = zvmax - eDZmax;
+      zvmin = TMath::Max(s1->Z() ,s2->Z()) - eDZmax;
       if (z > zvmax || z < zvmin)
 	{
 	  delete vta1;
@@ -921,7 +927,7 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
   else if (zpos1 == 0 && zpos2 == 0)        // ends & ends
     {
       zvmin = TMath::Max(s1->Z() ,s2->Z());
-      zvmax = zvmin + eDZmax;
+      zvmax = TMath::Min(s1->Z() ,s2->Z()) + eDZmax + eZbin;
       if (z < zvmin || z > zvmax )
 	{
 	  delete vta1;
