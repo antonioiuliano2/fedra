@@ -45,7 +45,7 @@ void check_eff(const char *nplmin="7")
   c->cd(3);
   tracks->Draw("t.eProb",trcut&&"npl>=npl0");
   c->cd(4);
-  tracks->Draw("s.eZ", trcut );
+  tracks->Draw("npl", trcut );
 }
 
 //-----------------------------------------------------------------
