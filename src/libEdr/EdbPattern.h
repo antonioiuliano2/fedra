@@ -261,8 +261,7 @@ class EdbTrackP : public EdbSegP {
 
  public:
   EdbTrackP(int nseg=0);
-  EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
-    { AddSegment(seg); SetM(m); }
+  EdbTrackP(EdbSegP *seg, float m);
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) )
     { Copy(track); }
   virtual ~EdbTrackP();
