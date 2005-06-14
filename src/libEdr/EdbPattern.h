@@ -355,8 +355,8 @@ class EdbTrackP : public EdbSegP {
   int  RemoveAliasSegments();
   int  CheckMaxGap();
   int  CheckAliasSegments();
-  void SetSegmentsTrack(int id) {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(id);}
-  void SetSegmentsTrack() {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(ID());}
+  int  SetSegmentsTrack(int id) {for(int i=0; i<N(); i++) GetSegment(i)->SetTrack(id); return N();}
+  int  SetSegmentsTrack() {return SetSegmentsTrack(ID());}
   void Copy(const EdbTrackP &tr);
   void FitTrack();
 
