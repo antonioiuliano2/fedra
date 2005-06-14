@@ -412,6 +412,7 @@ void EdbDisplayBase::Set0()
   fVTXTracks = 0;
   fMain      = 0;
   fView      = 0;
+  for (int i=0; i<50; i++) fRemBut[i] = 0;
 }
 
 //_____________________________________________________________________________
@@ -476,7 +477,7 @@ void EdbDisplayBase::DisplayButtons()
 
    TButton *button;
 
-   y -= dbutton +dy;
+//   y -= dbutton +dy;
 
    y -= dbutton +dy;
 
@@ -522,6 +523,12 @@ void EdbDisplayBase::DisplayButtons()
    button->Draw();
 
    y -= dbutton +dy;
+   char but9[256];
+   sprintf(but9,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DialogNeighborParameters()",fTitle);
+   button = new TButton("NeighParms",but9,x0,y-dbutton,x1,y);
+   button->SetFillColor(38);
+   button->Draw();
 
    // display logo
    TDiamond *diamond = new TDiamond(0.05,0.015,0.95,0.22);
@@ -547,7 +554,9 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    gPad->Clear();
 
    Int_t iret;
+//   if (fView) delete fView;
    fView = new TView(1);
+//   fView->SetBit(kCannotPick);
    fView->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
@@ -579,12 +588,12 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
    static Int_t linedrawn;
    Float_t temp;
 
-   if (px == 0 && py == 0) { //when called by sliders
-      if (event == kButton1Up) {
-         Draw();
-      }
-      return;
-   }
+//   if (px == 0 && py == 0) { //when called by sliders
+//      if (event == kButton1Up) {
+//         Draw();
+//      }
+//      return;
+//   }
 //   if (!fZoomMode && gPad->GetView()) {
 //      gPad->GetView()->ExecuteRotateView(event, px, py);
 //      return;
@@ -812,6 +821,7 @@ void EdbDisplayBase::DrawUnd()
 {
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Add(fUndButton);
+    fUndButton->SetPad(0.05,0.85,0.85,0.94);
     fUndButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
@@ -822,6 +832,7 @@ void EdbDisplayBase::DrawAcc()
 {
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Add(fAccButton);
+    fAccButton->SetPad(0.05,0.63,0.85,0.72);
     fAccButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
@@ -832,6 +843,7 @@ void EdbDisplayBase::DrawCan()
 {
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Add(fCanButton);
+    fCanButton->SetPad(0.05,0.74,0.85,0.83);
     fCanButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
@@ -842,6 +854,7 @@ void EdbDisplayBase::DrawEnv()
 {
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Add(fEnvButton);
+    fEnvButton->SetPad(0.05,0.47,0.85,0.56);
     fEnvButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();

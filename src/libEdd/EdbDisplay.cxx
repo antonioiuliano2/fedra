@@ -12,6 +12,7 @@
 #include "TGClient.h"
 #include "TSystem.h"
 #include "TGButton.h"
+#include "TGLabel.h"
 #include "TGFrame.h"
 #include "TRootEmbeddedCanvas.h"
 #include "EdbDisplay.h"
@@ -60,7 +61,7 @@ void EdbSegG::InspectSegment()
 //________________________________________________________________________
 void EdbDisplay::Set0()
 {
-  eVerRec = ((EdbVertexRec *)(gROOT->FindObject("EdbVertexRec")));
+  eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
   eArrSegP = 0;
   eArrTr   = 0;
   eArrV    = 0;
@@ -74,20 +75,33 @@ void EdbDisplay::Set0()
   eVertex  = 0;
   eWorking = 0;
   ePrevious= 0;
+  eSegment = 0;
+  eSegPM = 0;
   eWait_Answer = false;
   eIndVert = -1;
   eIndVertSave = -1;
+  eRadMax = 1000.;
+  eDpat = 2.;
+  eImpMax = 10000.;
+  fNumericEntries[0] = 0;
+  fNumericEntries[1] = 0;
+  fNumericEntries[2] = 0;
+  
   fCanvas->Connect("Closed()", "EdbDisplay", this, "Delete()");
 }
 //________________________________________________________________________
 bool EdbDisplay::EdbDisplayExist(const char *title)
 {
-    if (gROOT->GetListOfSpecials()->FindObject(title)) return true;
+    TSeqCollection *l = gROOT->GetListOfSpecials();
+    if (!l) return false;
+    if (l->FindObject(title)) return true;
     return false;
 }
 //________________________________________________________________________
 EdbDisplay::~EdbDisplay()
 {
+    DeleteModifiedVTX();
+
     if (gROOT->GetListOfSpecials()->FindObject(this))
     {
 	gROOT->GetListOfSpecials()->Remove(this);
@@ -108,6 +122,8 @@ EdbDisplay::~EdbDisplay()
 //________________________________________________________________________
 void EdbDisplay::Delete()
 {
+    DeleteModifiedVTX();
+
     if (gROOT->GetListOfSpecials()->FindObject(this))
     {
 	gROOT->GetListOfSpecials()->Remove(this);
@@ -154,7 +170,19 @@ void EdbDisplay::Refresh()
       if (v) VertexDraw(v);
     }
   }
-
+  
+  if (eSegment)
+  {
+    eSegPM = new TPolyMarker3D(1);
+    eSegPM->SetMarkerStyle(20);
+    eSegPM->SetPoint(0, 
+		        eSegment->X() + eSegment->TX()*eSegment->DZ()/2.,
+			eSegment->Y() + eSegment->TY()*eSegment->DZ()/2.,
+			eSegment->Z() +                eSegment->DZ()/2.);
+    eSegPM->SetMarkerColor(kGreen);
+    eSegPM->SetMarkerSize(1.2);
+    eSegPM->Draw();
+  }
 }
 
 //________________________________________________________________________
@@ -211,13 +239,17 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       }
       if(!seg) continue;
       line = new TPolyLine3D(2);
-      float dxv = (seg->X() - xv)/10.;
-      float dyv = (seg->Y() - yv)/10.;
-      float dzv = (seg->Z() - zv)/10.;
+//      float dxv = (seg->X() - xv)/10.;
+//      float dyv = (seg->Y() - yv)/10.;
+//      float dzv = (seg->Z() - zv)/10.;
+      float dxv = 0.;
+      float dyv = 0.;
+      float dzv = 0.;
       line->SetPoint(0, xv+dxv,yv+dyv,zv+dzv );
       line->SetPoint(1, seg->X()-dxv, seg->Y()-dyv, seg->Z()-dzv );
       line->SetLineColor(kWhite);
       line->SetLineWidth(1);
+      line->SetBit(kCannotPick);
       line->Draw();
     }
   }
@@ -278,10 +310,37 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     }
     line->SetLineColor(kWhite);
     line->SetLineWidth(1);
+    line->SetBit(kCannotPick);
     if (tr->Flag() != -10)
 	line->SetLineStyle(3);
     else
 	line->SetLineStyle(4);
+    line->Draw();
+  }
+
+  if(eDrawTracks>3 && eDrawTracks<8 && tr->N()>0 ) {
+    for(int is=0; is<tr->N(); is++) {
+      seg = tr->GetSegment(is);
+      if (seg) SegLine(seg)->Draw();
+    }
+  }
+
+  if(eDrawTracks>7) {
+    line = new TPolyLine3D(tr->N());
+    if (tr->NF()){
+      for(int is=0; is<tr->NF(); is++) {
+	seg = tr->GetSegmentF(is);
+	if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+      }
+    }    else    {
+      for(int is=0; is<tr->N(); is++) {
+	seg = tr->GetSegment(is);
+	if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
+      }
+    }
+    line->SetLineColor(kWhite);
+    line->SetLineWidth(1);
+    line->SetLineStyle(1);
     line->Draw();
   }
 
@@ -317,31 +376,6 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     }
   }
 
-  if(eDrawTracks>3 && eDrawTracks<8 && tr->N()>0 ) {
-    for(int is=0; is<tr->N(); is++) {
-      seg = tr->GetSegment(is);
-      if (seg) SegLine(seg)->Draw();
-    }
-  }
-
-  if(eDrawTracks>7) {
-    line = new TPolyLine3D(tr->N());
-    if (tr->NF()){
-      for(int is=0; is<tr->NF(); is++) {
-	seg = tr->GetSegmentF(is);
-	if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
-      }
-    }    else    {
-      for(int is=0; is<tr->N(); is++) {
-	seg = tr->GetSegment(is);
-	if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
-      }
-    }
-    line->SetLineColor(kWhite);
-    line->SetLineWidth(1);
-    line->SetLineStyle(1);
-    line->Draw();
-  }
 }
 
 ///------------------------------------------------------------
@@ -364,6 +398,221 @@ EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
 }
 
 //_____________________________________________________________________________
+void EdbSegG::AddAsTrack()
+{
+  char text[512];
+  EdbVTA *vta = 0;
+  if (eSeg && eD)
+  {
+    if (eD->eWait_Answer) return;
+    if (!(eD->eVertex)) return;
+    if (eSeg->Track() >= 0) return;
+    EdbVertex *ePreviousSaved = eD->ePrevious;
+    if (eD->eWorking == 0)
+    {
+	eD->eWorking = new EdbVertex();
+	int ntr = eD->eVertex->N();
+	int i = 0, n = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), (eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i))))
+	    {
+		(eD->eVertex)->GetTrack(i)->AddVTA(vta);
+		n++;
+	    }
+	}
+	if (n < 2)
+	{
+	    delete eD->eWorking;
+	    if (eD->ePrevious)
+	    {
+		eD->eWorking = eD->ePrevious;
+		(eD->eWorking)->ResetTracks();
+	    }
+	    else
+	    {
+		eD->eWorking = 0;
+		(eD->eVertex)->ResetTracks();
+	    }
+	    return;
+	}
+
+	if (!((eD->eVerRec)->MakeV(*(eD->eWorking))))
+	{
+	    delete eD->eWorking;
+	    if (eD->ePrevious)
+	    {
+		eD->eWorking = eD->ePrevious;
+		(eD->eWorking)->ResetTracks();
+	    }
+	    else
+	    {
+		eD->eWorking = 0;
+		(eD->eVertex)->ResetTracks();
+	    }
+	    return;
+	}
+    }
+    else
+    {
+//	if (ePrevious) delete ePrevious;
+	eD->ePrevious = eD->eWorking;
+	eD->eWorking = new EdbVertex();
+	int ntr = eD->ePrevious->N();
+	int i = 0, n = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking),(eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i))))
+	    {
+		((eD->ePrevious)->GetTrack(i))->AddVTA(vta);
+		n++;
+	    }
+	}
+	if (n < 2)
+	{
+	    delete eD->eWorking;
+	    if (eD->ePrevious)
+	    {
+		eD->eWorking = eD->ePrevious;
+		(eD->eWorking)->ResetTracks();
+		eD->ePrevious = ePreviousSaved;
+	    }
+	    else
+	    {
+		eD->eWorking = 0;
+		(eD->eVertex)->ResetTracks();
+	    }
+	    return;
+	}
+
+	if (!((eD->eVerRec)->MakeV(*(eD->eWorking))))
+	{
+	    delete eD->eWorking;
+	    if (eD->ePrevious)
+	    {
+		eD->eWorking = eD->ePrevious;
+		(eD->eWorking)->ResetTracks();
+		eD->ePrevious = ePreviousSaved;
+	    }
+	    else
+	    {
+		eD->eWorking = 0;
+		(eD->eVertex)->ResetTracks();
+	    }
+	    return;
+	}
+    }
+    EdbTrackP *Tr = new EdbTrackP((EdbSegP *)eSeg, (float)0.139);
+    Tr->FitTrackKFS();
+    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), Tr, 1)))
+    {
+	if ( Tr->Z() >= (eD->eWorking)->VZ() ) vta->SetZpos(1);
+	else vta->SetZpos(0);
+	Tr->AddVTA(vta);
+	(eD->eArrTr)->Add(Tr);
+	EdbVertex *eW = eD->eWorking;
+	eW->SetID(eD->eVertex->ID());
+	eW->V()->rmsDistAngle();
+	sprintf(text,"New     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+	eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+	eD->DrawOldBut("Original");
+	if (eD->ePrevious)
+	{
+	    eD->DrawNewVTX(text);
+	    eD->DrawNewBut("Modified");
+	    eW = eD->ePrevious;
+	    eW->V()->rmsDistAngle();
+	    sprintf(text,"Pre     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	    eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+	    eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+	    eD->DrawPreVTX(text);
+	    eD->DrawPreBut("Previous");
+	}
+	else
+	{
+	    eD->DrawPreVTX(text);
+	    eD->DrawPreBut("Modified");
+	    eD->DrawAcc();
+	    eD->DrawCan();
+	    eD->DrawUnd();
+	}
+	eD->DrawOldBut("Original");
+	eD->DrawVTXTracks("Modified", eD->eWorking);
+	if (ePreviousSaved) delete ePreviousSaved;
+	if (eD->eIndVert >= 0) 
+	{
+	    eD->eArrV->RemoveAt(eD->eIndVert);
+	    eD->eArrV->AddAt(eD->eWorking, eD->eIndVert);
+	}	
+	(eD->eCreatedTracks).Add(Tr);
+	eD->Draw();
+    }
+    else
+    {
+	printf("Track not added! May be Prob < ProbMin.\n");
+	delete Tr;
+	delete eD->eWorking;
+	if (eD->ePrevious)
+	{
+	    eD->eWorking = eD->ePrevious;
+	    (eD->eWorking)->ResetTracks();
+	    eD->ePrevious = ePreviousSaved;
+	}
+	else
+	{
+	    eD->eWorking = 0;
+	    (eD->eVertex)->ResetTracks();
+	}
+	return;
+    }
+  }
+}
+
+//_____________________________________________________________________________
+void EdbSegG::SetAsWorking()
+{
+  if (eD && eSeg)
+  {
+    if (eD->eVertex)
+    {
+	if (eD->eWait_Answer) return;
+	if (eD->eWorking)
+	{
+	    eD->DialogModifiedVTX();
+	    return;
+	}
+	else if (eD->fCanvasVTX) eD->fCanvasVTX->Close();
+	eD->fCanvasVTX = 0;
+    }
+    if (eD->eSegPM)
+    { 
+	if (eD->fPad->GetListOfPrimitives()->FindObject(eD->eSegPM))
+	{
+	    eD->fPad->GetListOfPrimitives()->Remove(eD->eSegPM);
+	}
+	delete eD->eSegPM;
+	eD->eSegPM = 0;
+    }
+    eD->eVertex = 0;
+    eD->eSegment = (EdbSegP *)eSeg;
+    eD->DrawEnv();
+    eD->eSegPM = new TPolyMarker3D(1);
+    eD->eSegPM->SetMarkerStyle(20);
+    if(eSeg) {
+      eD->eSegPM->SetPoint(0, 
+    		    eSeg->X() + eSeg->TX()*eSeg->DZ()/2.,
+		    eSeg->Y() + eSeg->TY()*eSeg->DZ()/2.,
+		    eSeg->Z() +            eSeg->DZ()/2.);
+      eD->eSegPM->SetMarkerColor(kGreen);
+      eD->eSegPM->SetMarkerSize(1.2);
+      eD->eSegPM->AppendPad();
+      eD->eSegPM->Draw();
+    }
+  }
+}
+
+//_____________________________________________________________________________
 void EdbVertexG::SetAsWorking()
 {
   char text[512];
@@ -375,6 +624,16 @@ void EdbVertexG::SetAsWorking()
 	eD->DialogModifiedVTX();
 	return;
     }
+    if (eD->eSegPM)
+    { 
+	if (eD->fPad->GetListOfPrimitives()->FindObject(eD->eSegPM))
+	{
+	    eD->fPad->GetListOfPrimitives()->Remove(eD->eSegPM);
+	}
+	delete eD->eSegPM;
+	eD->eSegPM = 0;
+    }
+    eD->eSegment = 0;
     eD->eVertex = eV;
     eD->CreateCanvasVTX();
     eV->V()->rmsDistAngle();
@@ -385,6 +644,7 @@ void EdbVertexG::SetAsWorking()
     eD->DrawVTXTracks("Original", eD->eVertex);
     eD->DrawEnv();
     eD->eIndVert = eD->eArrV->IndexOf(eV);
+    (eD->eCreatedTracks).Clear();
   }
 }
 
@@ -408,7 +668,11 @@ void EdbTrackG::RemoveTrack()
 	int i = 0;
 	for(i=0; i<ntr; i++)
 	{
-	    if (eD->eVertex->GetTrack(i) == eTr) continue;
+	    if (eD->eVertex->GetTrack(i) == eTr)
+	    {
+		eTr->ClearVTA(eD->eVertex->GetVTa(i));
+		continue;
+	    }
 	    if ((vta = (eD->eVerRec)->AddTrack( *(eD->eWorking), (eD->eVertex)->GetTrack(i), (eD->eVertex)->Zpos(i))))
 	    {
 		((eD->eVertex)->GetTrack(i))->AddVTA(vta);
@@ -425,7 +689,11 @@ void EdbTrackG::RemoveTrack()
 	int i = 0;
 	for(i=0; i<ntr; i++)
 	{
-	    if (eD->ePrevious->GetTrack(i) == eTr) continue;
+	    if (eD->ePrevious->GetTrack(i) == eTr)
+	    {
+		eTr->ClearVTA(eD->ePrevious->GetVTa(i));
+		continue;
+	    }
 	    if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking),(eD->ePrevious)->GetTrack(i), (eD->ePrevious)->Zpos(i))))
 	    {
 		((eD->ePrevious)->GetTrack(i))->AddVTA(vta);
@@ -453,6 +721,7 @@ void EdbTrackG::RemoveTrack()
     if ((eD->eVerRec)->MakeV(*(eD->eWorking)))
     {
 	EdbVertex *eW = eD->eWorking;
+	eW->ResetTracks();
 	eW->SetID(eD->eVertex->ID());
 	eW->V()->rmsDistAngle();
 	sprintf(text,"New     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
@@ -486,6 +755,15 @@ void EdbTrackG::RemoveTrack()
 	    eD->eArrV->RemoveAt(eD->eIndVert);
 	    eD->eArrV->AddAt(eD->eWorking, eD->eIndVert);
 	}	
+	if ((eD->eCreatedTracks).FindObject(eTr))
+	{
+	    (eD->eCreatedTracks).Remove(eTr);
+	    if ( eD->eArrTr)
+		if ((eD->eArrTr)->FindObject(eTr)) (eD->eArrTr)->Remove(eTr);
+	    if ( eD->eArrTrSave)
+		if ((eD->eArrTrSave)->FindObject(eTr)) (eD->eArrTrSave)->Remove(eTr);
+	    delete eTr;
+	}
 	eD->Draw();
     }
     else
@@ -506,20 +784,166 @@ void EdbTrackG::RemoveTrack()
   }
 }
 
+
+//_____________________________________________________________________________
+void EdbDisplay::RemoveTrackFromTable(int ivt)
+{
+    char text[512];
+    EdbTrackP *etr = 0;
+    if (eWait_Answer) return;
+    if (!(eVertex)) return;
+    EdbVTA *vta = 0;
+    EdbVertex *ePreviousSaved = ePrevious;
+    int n = 0;
+    int ntr = 0;
+    if (eWorking == 0)
+    {
+	ntr = eVertex->N();
+	if (ntr < 3) return;
+	eWorking = new EdbVertex();
+	int i = 0;
+	etr = eVertex->GetTrack(ivt);
+	for(i=0; i<ntr; i++)
+	{
+	    if (i == ivt)
+	    {
+		etr->ClearVTA(eVertex->GetVTa(i));
+		continue;
+	    }
+	    if ((vta = (eVerRec)->EdbVertexRec::AddTrack( *(eWorking), (eVertex)->GetTrack(i), (eVertex)->Zpos(i))))
+	    {
+		((eVertex)->GetTrack(i))->AddVTA(vta);
+		n++;
+	    }
+	}
+    }
+    else
+    {
+	ntr = eWorking->N();
+	if (ntr < 3) return;
+	etr = eWorking->GetTrack(ivt);
+	ePrevious = eWorking;
+	eWorking = new EdbVertex();
+	int i = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if (i == ivt)
+	    {
+		etr->ClearVTA(ePrevious->GetVTa(i));
+		continue;
+	    }
+	    if ((vta = (eVerRec)->EdbVertexRec::AddTrack(*(eWorking),(ePrevious)->GetTrack(i), (ePrevious)->Zpos(i))))
+	    {
+		((ePrevious)->GetTrack(i))->AddVTA(vta);
+		n++;
+	    }
+	}
+    }
+    if ((n < 2)||(n == ntr))
+    {
+	delete eWorking;
+	if (ePrevious)
+	{
+	    eWorking = ePrevious;
+	    (eWorking)->ResetTracks();
+	    ePrevious = ePreviousSaved;
+	}
+	else
+	{
+	    eWorking = 0;
+	    (eVertex)->ResetTracks();
+	}
+	return;
+    }
+
+    if ((eVerRec)->MakeV(*(eWorking)))
+    {
+	EdbVertex *eW = eWorking;
+	eW->ResetTracks();
+	eW->SetID(eVertex->ID());
+	eW->V()->rmsDistAngle();
+	sprintf(text,"New     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+	eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+	DrawOldBut("Original");
+	if (ePrevious)
+	{
+	    DrawNewVTX(text);
+	    DrawNewBut("Modified");
+	    eW = ePrevious;
+	    sprintf(text,"Pre     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	    eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+	    eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+	    DrawPreVTX(text);
+	    DrawPreBut("Previous");
+	}
+	else
+	{
+	    DrawPreVTX(text);
+	    DrawPreBut("Modified");
+	    DrawAcc();
+	    DrawCan();
+	    DrawUnd();
+	}
+	DrawOldBut("Original");
+	DrawVTXTracks("Modified", eWorking);
+	if (ePreviousSaved) delete ePreviousSaved;
+	if (eIndVert >= 0) 
+	{
+	    eArrV->RemoveAt(eIndVert);
+	    eArrV->AddAt(eWorking, eIndVert);
+	}	
+	if (eCreatedTracks.FindObject(etr))
+	{
+	    eCreatedTracks.Remove(etr);
+	    if ( eArrTr)
+		if (eArrTr->FindObject(etr)) eArrTr->Remove(etr);
+	    if ( eArrTrSave)
+		if (eArrTrSave->FindObject(etr)) eArrTrSave->Remove(etr);
+	    delete etr;
+	} 
+	fCanvas->cd();
+	Draw();
+	fPad->Update(); 
+	fCanvasVTX->cd();
+    }
+    else
+    {
+	delete eWorking;
+	if (ePrevious)
+	{
+	    eWorking = ePrevious;
+	    (eWorking)->ResetTracks();
+	    ePrevious = ePreviousSaved;
+	}
+	else
+	{
+	    eWorking = 0;
+	    (eVertex)->ResetTracks();
+	}
+    }
+}
+
 //_____________________________________________________________________________
 void EdbTrackG::AddTrack()
 {
   char text[512];
   int zpos = 1;
   EdbVTA *vta = 0;
-  // ask for zpos and ProbMinV
+  EdbVertex *old = 0;
   if (eTr && eD)
   {
     if (eD->eWait_Answer) return;
     if (!(eD->eVertex)) return;
     if (GetMarkerColor() == kRed) zpos = 0;
-    if (eTr->VertexS() && (zpos == 1)) return; 
-    if (eTr->VertexE() && (zpos == 0)) return; 
+    if ((old = eTr->VertexS()) && (zpos == 1)) return;
+//    {
+//	if (old != eD->eVertex && old != eD->ePrevious && old != eD->eWorking) return;
+//    } 
+    if ((old = eTr->VertexE()) && (zpos == 0)) return;
+//    {
+//	if (old != eD->eVertex && old != eD->ePrevious && old != eD->eWorking) return;
+//    } 
     EdbVertex *ePreviousSaved = eD->ePrevious;
     if (eD->eWorking == 0)
     {
@@ -677,6 +1101,7 @@ void EdbTrackG::AddTrack()
 //_____________________________________________________________________________
 void EdbDisplay::CancelModifiedVTX()
 {
+    if (eArrVSave) DrawAllObjects();
     if (eWorking)
     {
 	delete eWorking;
@@ -695,6 +1120,21 @@ void EdbDisplay::CancelModifiedVTX()
     li->Remove(fUndButton);
     li->Remove(fAccButton);
     li->Remove(fCanButton);
+
+    EdbTrackP *tr = 0;
+
+    for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+    {
+	tr = (EdbTrackP *)eCreatedTracks.At(i);
+	if (tr)
+	{
+	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
+	    delete tr;
+	} 
+    }
+    eCreatedTracks.Clear();
+
     if (eArrVSave)
     {
 	li->Remove(fAllButton);
@@ -716,15 +1156,12 @@ void EdbDisplay::CancelModifiedVTX()
 	eIndVert = eIndVertSave;
 	Draw();    
     }
-    else
+    li->Remove(fEnvButton);
+    if (eIndVert >= 0 && eVertex) 
     {
-	li->Remove(fEnvButton);
-	if (eIndVert >= 0) 
-	{
 	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eVertex, eIndVert);
-	}	
-    }
+    }	
     fTrigPad->cd();
     fTrigPad->Update();
     fTrigPad->Draw();
@@ -732,12 +1169,81 @@ void EdbDisplay::CancelModifiedVTX()
     if (eWait_Answer) CloseDialogModifiedVTX();
     if (fCanvasVTX) fCanvasVTX->Close();
     fCanvasVTX = 0;
+    eIndVert = -1;
+    eVertex = 0;
     Draw();
+}
+
+//_____________________________________________________________________________
+void EdbDisplay::DeleteModifiedVTX()
+{
+    if (eWorking)
+    {
+	delete eWorking;
+	eWorking = 0;
+    }
+    if (ePrevious)
+    {
+	delete ePrevious;
+	ePrevious = 0;
+    }
+    if (eVertex)
+    {
+	(eVertex)->ResetTracks();
+    }
+
+    EdbTrackP *tr = 0;
+
+    for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+    {
+	tr = (EdbTrackP *)eCreatedTracks.At(i);
+	if (tr)
+	{
+	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
+	    delete tr;
+	} 
+    }
+    eCreatedTracks.Clear();
+
+    if (eArrVSave)
+    {
+	delete eArrV;
+	eArrV = eArrVSave;
+	eArrVSave = 0;
+	if (eArrTrSave)
+	{
+	    delete eArrTr;
+	    eArrTr = eArrTrSave;
+	    eArrTrSave = 0;
+	}
+	if (eArrSegPSave)
+	{
+	    delete eArrSegP;
+	    eArrSegP = eArrSegPSave;
+	    eArrSegPSave = 0;
+	}
+	eIndVert = eIndVertSave;
+    }
+    if (eIndVert >= 0 && eVertex) 
+    {
+	    eArrV->RemoveAt(eIndVert);
+	    eArrV->AddAt(eVertex, eIndVert);
+	    eIndVert = -1;
+    }	
 }
 //_____________________________________________________________________________
 void EdbDisplay::UndoModifiedVTX()
 {
     char text[512];
+    EdbTrackP *tr = eWorking->GetTrack(eWorking->N() - 1);
+    if (tr && eCreatedTracks.FindObject(tr))
+    {
+	    eCreatedTracks.Remove(tr);
+	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
+	    delete tr;
+    } 
     if (ePrevious)
     {
 	delete eWorking;
@@ -757,8 +1263,8 @@ void EdbDisplay::UndoModifiedVTX()
 	    delete fNewBut;
 	    fNewBut = 0;
 	}
-	DrawVTXTracks("Modified", eWorking);
 	ePrevious = 0;
+	DrawVTXTracks("Modified", eWorking);
 	if (eIndVert >= 0) 
 	{
 	    eArrV->RemoveAt(eIndVert);
@@ -789,8 +1295,8 @@ void EdbDisplay::UndoModifiedVTX()
 	    delete fOldBut;
 	    fOldBut = 0;
 	}
-	DrawVTXTracks("Original", eVertex);
 	eWorking = 0;
+	DrawVTXTracks("Original", eVertex);
 	if (eIndVert >= 0) 
 	{
 	    eArrV->RemoveAt(eIndVert);
@@ -806,6 +1312,7 @@ void EdbDisplay::UndoModifiedVTX()
 //_____________________________________________________________________________
 void EdbDisplay::AcceptModifiedVTX()
 {
+    if (eArrVSave) DrawAllObjects();
     if (ePrevious && (ePrevious != eVertex) && (ePrevious != eWorking))
     {
 	delete ePrevious;
@@ -813,7 +1320,7 @@ void EdbDisplay::AcceptModifiedVTX()
     }
     if (eWorking && eVertex)
     {
-	if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->FindObject("EdbVertexRec")));
+	if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
         EdbVertex *eW = eWorking;
 	int ind = eVertex->ID();
 	eW->SetID(ind);
@@ -845,10 +1352,25 @@ void EdbDisplay::AcceptModifiedVTX()
 	    }
 	}*/
 	delete eVertex;
+	EdbTrackP *tr = 0;
+
+	TObjArray *etr = eVerRec->ePVR->eTracks;
+	int trind = etr->GetEntries();
+	for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+	{
+	    tr = (EdbTrackP *)(eCreatedTracks.At(i));
+	    if (tr)
+	    {
+		tr->SetID(trind++);
+		etr->Add(tr);
+		eArrTr->Add(tr);
+	    } 
+	}
+	eCreatedTracks.Clear();
+
 	eW->ResetTracks();
 	int ntr = eW->N();
 	int i = 0, ifl = 0;
-	EdbTrackP *tr = 0;
 	for(i=0; i<ntr; i++)
 	{
 		if (eW->Zpos(i)) ifl = ifl | 1; 
@@ -883,9 +1405,9 @@ void EdbDisplay::AcceptModifiedVTX()
 		eVerRec->AddVTA(eW->GetVTa(i));
 	    }
 	}
-	eVertex = 0;
 	eWorking = 0;
     }
+    eVertex = 0;
     TList *li = fTrigPad->GetListOfPrimitives();
     li->Remove(fUndButton);
     li->Remove(fAccButton);
@@ -921,17 +1443,20 @@ void EdbDisplay::AcceptModifiedVTX()
     if (eWait_Answer) CloseDialogModifiedVTX();
     if (fCanvasVTX) fCanvasVTX->Close();
     fCanvasVTX = 0;
+    Draw();
+    eIndVert = -1;
 }
 //_____________________________________________________________________________
 void EdbDisplay::DrawVertexEnvironment()
 {
-    if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->FindObject("EdbVertexRec")));
+    if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
     if (!eVerRec) return;
-    if (!eVertex) return;
+    if (!eVertex && !eSegment) return;
     
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Remove(fEnvButton);
     fTrigPad->GetListOfPrimitives()->Add(fAllButton);
+    fAllButton->SetPad(0.05,0.47,0.85,0.56);
     fAllButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
@@ -939,9 +1464,9 @@ void EdbDisplay::DrawVertexEnvironment()
 
     EdbVertex *eW = eVertex;
     if (eWorking) eW = eWorking;
-    float Rmax = 1000., ImpMax = 10000.;
-    int Dpat = 2;
-    eVerRec->VertexNeighboor(eW, Rmax, Dpat, ImpMax);
+    float Rmax = eRadMax, ImpMax = eImpMax;
+    int Dpat = (int)eDpat;
+
     eArrTrSave  = eArrTr; 
     eArrSegPSave  = eArrSegP; 
     eArrVSave  = eArrV;
@@ -949,6 +1474,18 @@ void EdbDisplay::DrawVertexEnvironment()
     eArrV = new TObjArray(20);
     eArrTr = new TObjArray(20);
     eArrSegP = new TObjArray(20);
+
+    if (eVertex)
+	eVerRec->VertexNeighboor(eW, Rmax, Dpat, ImpMax);
+    else if (eSegment)
+    {
+	eIndVert = -1;
+	eVerRec->SegmentNeighboor(eSegment, Rmax, Dpat, eArrSegP, eArrTr);
+	if (!(eArrSegP->FindObject(eSegment))) eArrSegP->Add(eSegment);
+	Draw();
+	return;
+    }
+    
     eArrV->Add(eW);
     int nntr = eW->N();
     for(int i=0; i<nntr; i++)
@@ -980,6 +1517,7 @@ void EdbDisplay::DrawAllObjects()
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Remove(fAllButton);
     fTrigPad->GetListOfPrimitives()->Add(fEnvButton);
+    fEnvButton->SetPad(0.05,0.47,0.85,0.56);
     fEnvButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
@@ -990,6 +1528,7 @@ void EdbDisplay::DrawAllObjects()
 	delete eArrV;
 	eArrV = eArrVSave;
 	eArrVSave = 0;
+	eIndVert = eIndVertSave;
     }
     if (eArrTrSave)
     {
@@ -1003,13 +1542,96 @@ void EdbDisplay::DrawAllObjects()
 	eArrSegP = eArrSegPSave;
 	eArrSegPSave = 0;
     }
-    eIndVert = eIndVertSave;
-    if (eWorking) 
+    if (eWorking && eIndVert >= 0) 
     {
 	eArrV->RemoveAt(eIndVert);
 	eArrV->AddAt(eWorking, eIndVert);
     }
     Draw();    
+}
+//_____________________________________________________________________________
+void EdbDisplay::DialogNeighborParameters()
+{
+    fMain = new TGMainFrame(gClient->GetRoot(), 240, 340);
+    TGMainFrame *fTra = fMain;
+
+    fTra->Connect("CloseWindow()", "EdbDisplay", this, "CloseDialogModifiedParams()");
+
+   // use hierarchical cleaning
+    fTra->SetCleanup(kDeepCleanup);
+
+    TGHorizontalFrame *fF[3] = {0,0,0};
+    TGLabel *fLabel[3] = {0,0,0};
+    Double_t parinit[3] = {eRadMax, eDpat,  eImpMax};
+    Double_t parmax[3] =  { 50000.,   25.,  100000.};
+    Double_t parmin[3] =  {    10.,    0.,      10.};
+    if (eVerRec->ePVR) parmax[1] = (eVerRec->ePVR->Npatterns()-1)/2.;
+    char *parlabel[3] = {"    Maximal radius", "    +/- patterns", "    Maximal impact"};
+
+    TGVerticalFrame *fF1 = new TGVerticalFrame(fMain, 200, 250);
+    TGLayoutHints *fL1 = new TGLayoutHints(kLHintsTop | kLHintsLeft, 2, 2, 2, 2);
+    fTra->AddFrame(fF1, fL1);
+    TGLayoutHints *fL2 = new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2);
+    for (int i = 0; i < 3; i++) {
+      fF[i] = new TGHorizontalFrame(fF1, 200, 30);
+      fF1->AddFrame(fF[i], fL2);
+      fNumericEntries[i] = new TGNumberEntry(fF[i], parinit[i], 12, i,
+                                 TGNumberFormat::kNESInteger,
+				 TGNumberFormat::kNEANonNegative,
+				 TGNumberFormat::kNELLimitMinMax,
+				 parmin[i], parmax[i]);
+      fF[i]->AddFrame(fNumericEntries[i], fL2);
+      fLabel[i] = new TGLabel(fF[i], parlabel[i]);
+      fF[i]->AddFrame(fLabel[i], fL2);
+    }
+
+    TGHorizontalFrame *fFrame = new TGHorizontalFrame(fTra, 210, 30);
+    char cmda[256];
+    sprintf(cmda,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedParams()",fTitle);
+    TGTextButton *abut = new TGTextButton(fFrame, "&Accept", cmda);
+    fFrame->AddFrame(abut,
+		     new TGLayoutHints(kLHintsCenterY | kLHintsLeft,
+		     5,5,3,4));
+
+    char cmdc[256];
+    sprintf(cmdc,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->CancelDialogModifiedParams()",fTitle);
+    TGTextButton *cbut = new TGTextButton(fFrame, "&Cancel", cmdc);
+    fFrame->AddFrame(cbut,
+		     new TGLayoutHints(kLHintsCenterY | kLHintsRight,
+    		     5, 5, 4, 4));
+    fFrame->Resize(230, 30);
+
+    fTra->AddFrame(fFrame,
+		   new TGLayoutHints(kLHintsCenterY | kLHintsCenterX,
+		   5, 5, 4, 4));
+
+    fTra->MapSubwindows();
+    fTra->Resize(250, fTra->GetDefaultHeight());
+    fTra->SetWindowName("Neighborhood Parameters");
+    fTra->MapWindow();
+    gClient->WaitFor(fTra);
+}
+//_____________________________________________________________________________
+void EdbDisplay::AcceptModifiedParams()
+{
+    eRadMax = fNumericEntries[0]->GetIntNumber();
+    eDpat   = fNumericEntries[1]->GetIntNumber();
+    eImpMax = fNumericEntries[2]->GetIntNumber();
+    fMain->SendCloseMessage();
+    fMain = 0;
+}
+//_____________________________________________________________________________
+void EdbDisplay::CloseDialogModifiedParams()
+{
+    fMain = 0;
+}
+//_____________________________________________________________________________
+void EdbDisplay::CancelDialogModifiedParams()
+{
+    fMain->SendCloseMessage();
+    fMain = 0;
 }
 //_____________________________________________________________________________
 void EdbDisplay::DialogModifiedVTX()
@@ -1070,7 +1692,13 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
 	vv = eWorking;
     }
   }
+  if (!vv) return;
+  bool drawrem = true;
+  if (vv == eVertex && eWorking) drawrem = false;
+  if (vv == ePrevious) drawrem = false;
+
   fCanvasVTX->cd();
+
   if (fVTXTracks)
   {
     fVTXTracks->Clear();
@@ -1113,6 +1741,46 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
   t->SetTextAlign(12);
   t->SetTextFont(102);
   fVTXTracks->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
+
+  float dy = 0.67/(2+ntr+1);
+  for (int i=0; i<50; i++)
+  {
+    if (!drawrem)
+    {
+	if (fRemBut[i])
+	{
+	    fRemBut[i]->Delete();
+	    fRemBut[i] = 0;
+	}
+	continue;
+    }
+    if ( i < ntr )
+    {
+      if (!fRemBut[i])
+      {
+	char but[256], tit[32]="Rem";
+	sprintf(but,
+	"((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->RemoveTrackFromTable(%d)",fTitle,i);
+	fRemBut[i] = new TButton(tit, but, 0.88, 0.635-(i+2)*dy, 0.94, 0.675-(i+2)*dy);
+	fRemBut[i]->ResetBit(kCanDelete);
+	fRemBut[i]->SetFillColor(38);
+	sprintf(tit,"RemTr%d",i);
+	fRemBut[i]->SetName(tit);
+	fRemBut[i]->Draw();
+      }
+      else
+      {
+        fRemBut[i]->SetPad(0.88,0.635-(i+2)*dy,0.94,0.675-(i+2)*dy);
+	fRemBut[i]->Draw();
+      }
+    }
+    else if (fRemBut[i])
+    {
+	fRemBut[i]->Delete();
+	fRemBut[i] = 0;
+    }
+  }
+
+  gPad->Modified(kTRUE);
+  gPad->Update();
 }

@@ -59,7 +59,6 @@ protected:
    char       	    fTitle[128];            //EdbDisplay Object Name
    TPad             *fTrigPad;              //Pointer to the trigger pad
    TPad             *fButtons;              //Pointer to the buttons pad
-   TPad             *fPad;                  //Pointer to the event display main pad
    TButton          *fAllButton;            //Button to draw all objects
    TButton          *fEnvButton;            //Button to draw vertex environment
    TButton          *fUndButton;            //Button to undo vertex modofication
@@ -69,7 +68,6 @@ protected:
    TButton          *fZoomButton;           //Button to activate Zoom mode
    TButton          *fUnZoomButton;         //Button to Undo previous Zoom
    TArc             *fArcButton;            //Gren/Red button to show Pick/Zoom mode
-   TCanvas          *fCanvasVTX;            //Pointer to the vertex canvas
    TGMainFrame      *fMain;                 //Dialog frame
    TText	    *fHdrVTX;		    //Vertex data header
    TText	    *fOldVTX;		    //Old Vertex data
@@ -79,6 +77,12 @@ protected:
    TButton	    *fOldBut;		    //Old Vertex display button
    TButton	    *fNewBut;		    //Modified Vertex display button
    TButton	    *fPreBut;		    //Previous Vertex display button
+   TButton          *fRemBut[50];           //track removing buttons
+   
+public:
+
+   TCanvas          *fCanvasVTX;            //Pointer to the vertex canvas
+   TPad             *fPad;                  //Pointer to the event display main pad
 
 public:
 

@@ -8,6 +8,7 @@
 // Class to display pattern volume in 3D                                //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TGNumberEntry.h"
 #include "EdbDisplayBase.h"
 #include "EdbPVRec.h"
 #include "EdbVertex.h"
@@ -20,7 +21,6 @@ class EdbDisplay: public EdbDisplayBase {
  private:
 
   TObjArray *eArrSegP;     // array of segments to be drawn
-  TObjArray *eArrTr;       // array of tracks to be drawn
   Int_t      eDrawTracks;  // tracks drawing option
 
   Int_t      eDrawVertex;  // vertex drawing option
@@ -29,19 +29,27 @@ class EdbDisplay: public EdbDisplayBase {
   TArrayF* eDZs;
 
   TObjArray *eArrSegPSave;     // saved array of segments to be drawn
-  TObjArray *eArrTrSave;       // saved array of tracks to be drawn
+  TGNumberEntry *fNumericEntries[3];
 
  public:
 
-  EdbVertexRec  *eVerRec;
+  EdbVertexRec *eVerRec;
+  TObjArray *eArrTr;       // array of tracks to be drawn
   TObjArray *eArrV;        // array of vertexes to be drawn
   TObjArray *eArrVSave;    // saved array of vertexes to be drawn
+  TObjArray *eArrTrSave;   // saved array of tracks to be drawn
   EdbVertex *eWorking;     // working vertex
   EdbVertex *eVertex;      // current selected vertex
   EdbVertex *ePrevious;    // saved previous vertex modifications
+  EdbSegP   *eSegment;     // working segment (for segment neighborhood)
+  TPolyMarker3D *eSegPM;   // green mark for segment selected as working
   Bool_t eWait_Answer;	   // set TRUE when answer received
   Int_t eIndVert;	   // Index of selected vertex in ArrV
   Int_t eIndVertSave;	   // Index of selected vertex in ArrV (seved)
+  TList eCreatedTracks;    // list of tracks, created during vertex operations 
+  Double_t eRadMax;        // Maximal Radius for neighborhood
+  Double_t eDpat;          // +/- patterns for neighborhood
+  Double_t eImpMax;        // Maximal impact for neighborhood
 
  public:
 
@@ -52,18 +60,20 @@ class EdbDisplay: public EdbDisplayBase {
 	     Float_t x0, Float_t x1, 
 	     Float_t y0, Float_t y1, 
 	     Float_t z0, Float_t z1) : 
-    EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
+  EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
 
   EdbDisplay(const char *title, EdbLayer &la) : 
-    EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
-		   la.Zmin(), la.Zmax())  { Set0(); };
+
+	EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
+		       la.Zmin(), la.Zmax())
+		    				 { Set0(); };
 
   static bool EdbDisplayExist(const char *title);
   void Delete();
   void Set0();
+  void SetVerRec(EdbVertexRec *evr) { eVerRec = evr; };
 
   void Refresh();
-  void SetVerRec(EdbVertexRec *pvr) {eVerRec=pvr;}
   void SetArrSegP(TObjArray *arr) {eArrSegP=arr;}
   void SetArrTr(TObjArray *arr) {eArrTr=arr;}
   void SetDrawTracks(int opt) {eDrawTracks=opt;}
@@ -77,6 +87,7 @@ class EdbDisplay: public EdbDisplayBase {
   void VertexDraw(EdbVertex *v);
   void SetDrawVertex(int opt) {eDrawVertex=opt;}
   void CancelModifiedVTX();
+  void DeleteModifiedVTX();
   void AcceptModifiedVTX();
   void DialogModifiedVTX();
   void CloseDialogModifiedVTX();
@@ -84,7 +95,12 @@ class EdbDisplay: public EdbDisplayBase {
   void DrawVertexEnvironment();
   void DrawAllObjects();
   void DrawVTXTracks(char *type, EdbVertex *v = 0);
-
+  void RemoveTrackFromTable( int ivt = 0 );
+  void DialogNeighborParameters();
+  void AcceptModifiedParams();
+  void CloseDialogModifiedParams();
+  void CancelDialogModifiedParams();
+ 
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };
 //_________________________________________________________________________
@@ -149,6 +165,8 @@ class EdbSegG : public TPolyLine3D {
 
   virtual void          DumpSegment(); 	  // *MENU*
   virtual void          InspectSegment(); // *MENU*
+  virtual void		AddAsTrack();     // *MENU*
+  virtual void		SetAsWorking();   // *MENU*
 
  ClassDef(EdbSegG,1) //
 };
