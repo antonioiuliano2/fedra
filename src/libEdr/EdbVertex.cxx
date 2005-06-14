@@ -444,6 +444,46 @@ float EdbVertex::Chi2Track(int i)
   return (float)distchi2;
 }
 
+//________________________________________________________________________
+float EdbVertex::ImpTrack(int i)
+{
+  // distance from track to already existed vertex
+
+  EdbVTA *vta = GetVTa(i);
+  if (!vta) return 0.;
+  EdbTrackP *track = vta->GetTrack();
+  if (!track) return 0.;
+  double dist = 0.;
+  int zpos = vta->Zpos();
+  EdbSegP *seg = 0;
+  if   (zpos)
+    {
+      seg = (EdbSegP *)(track->TrackZmin());
+    }
+  else
+    {
+      seg = (EdbSegP *)(track->TrackZmax());
+    }
+  if (eV)
+    {
+      if (track->NF() <= 0) return 0.;
+      Track *t=new Track();
+      if( Edb2Vt( *seg, *t ) )
+	{
+	  if (eV->valid())
+	    {
+	      dist = distance(*eV, *t);
+	    } 
+	}
+      else
+	{ 
+	  printf("EdbVertex::DistTrack - conversion to VT failed!");
+	}
+      delete t;
+      t=0;
+    }
+  return (float)dist;
+}
 //========================================================================
 EdbVertexRec::EdbVertexRec()
 {
@@ -458,12 +498,17 @@ EdbVertexRec::EdbVertexRec()
   eImpMax     = 25.;       // microns
   eUseMom     = false;     // do not use it
   eUseSegPar  = false;     // use fitted track parameters
-  gROOT->GetListOfSpecials()->Add(this);
+
+  (gROOT->GetListOfSpecials())->Add(this);
 }
 
 //________________________________________________________________________
 EdbVertexRec::~EdbVertexRec()
 {
+  if ((gROOT->GetListOfSpecials())->FindObject(this))
+  {
+    (gROOT->GetListOfSpecials())->Remove(this);
+  }
 }
 
 //________________________________________________________________________
@@ -566,6 +611,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 		  vta->SetZpos(zpos);
 	          vta->SetFlag(2);
 		  vta->SetImp(distance(*t, *v));
+		  for (int i=0; i<ntr; i++) edbv.GetVTa(i)->SetImp(edbv.ImpTrack(i));
 	          edbv.AddVTA(vta);
 		  if (eQualityMode == 0)
 		    edbv.SetQuality( v->prob()/(v->vtx_cov_x()+v->vtx_cov_y()) );
@@ -1260,7 +1306,7 @@ int EdbVertexRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int
   ss.SetErrors(RadMax*RadMax, RadMax*RadMax, 0., 0., 0., 0.);
 
   TObjArray arr(20);
-  ePVR->FindComplimentsVol(ss,arr,1,1000,Dpat);   ///1000????
+  ePVR->FindComplimentsVol(ss,arr,1,1,Dpat);
   
   int nseg = arr.GetEntries();
   EdbTrackP *tr = 0;
@@ -1303,10 +1349,70 @@ int EdbVertexRec::SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int
   return nadd;
 }
 
+//---------------------------------------------------------
+int EdbVertexRec::SelSegNeighboor( EdbSegP *sin, int seltype, float RadMax, int Dpat, TObjArray *ao)
+{
+  EdbSegP ss; // the virtual "vertex" segment
+
+  if (!sin) return 0;
+
+  ss.SetX(sin->X());
+  ss.SetY(sin->Y());
+  ss.SetZ(sin->Z());
+  ss.SetTX(sin->TX());
+  ss.SetTY(sin->TY());
+  ss.SetErrors(RadMax*RadMax, RadMax*RadMax, 0., 0., 0., 0.);
+
+  TObjArray arr(1000);
+  
+  ePVR->FindComplimentsVol(ss,arr,1,1,Dpat);
+  
+  int nseg = arr.GetEntries();
+  EdbTrackP *tr = 0;
+  EdbSegP   *s  = 0;
+  int trflg  = 0;
+  int trind  = 0;
+  int ntr = eEdbTracks->GetEntries();
+
+  int nadd = 0;
+  for (int i=0; i<nseg; i++)
+  {
+    s = (EdbSegP *)(arr.At(i));
+    if (!s) continue;
+    tr = 0;
+    trind = s->Track();
+    trflg = 0;
+    if ( trind >= 0 && trind < ntr)
+    {
+	if ((tr = (EdbTrackP *)eEdbTracks->At(trind))) 
+	{
+	    trflg = tr->Flag();
+	    if (trflg != -10 && seltype == 0)
+	    {
+		if (!(ao->FindObject(tr)))
+		{
+		    if (ao) ao->Add(tr);
+		    nadd++;
+		}
+		continue;
+	    }
+	}
+    } 
+    if((trind < 0 || trflg == -10)&&(seltype == 1))
+    {
+	if (ao) ao->Add(s);
+	nadd++;
+    }
+  }
+ 
+  return nadd;
+}
+
 //______________________________________________________________________________
 int EdbVertexRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
 {
   if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighboor: EdbPVRec not defined\n"); return 0;}
+
   int nn   = 0, iv = 0, i = 0, nntr = 0;
   int nvt = 0;
   int ntr = 0;
@@ -1333,6 +1439,7 @@ int EdbVertexRec::VertexNeighboor(float RadMax, int Dpat, float ImpMax)
 //______________________________________________________________________________
 int EdbVertexRec::VertexNeighboor(EdbVertex *v, float RadMax, int Dpat, float ImpMax)
 {
+  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighboor: EdbPVRec not defined\n"); return 0;}
 
   EdbVTA    *vta = 0;
@@ -1435,6 +1542,71 @@ int EdbVertexRec::VertexNeighboor(EdbVertex *v, float RadMax, int Dpat, float Im
   return nn;
 } 
 
+//______________________________________________________________________________
+int EdbVertexRec::SegmentNeighboor(EdbSegP *s, float RadMax, int Dpat, TObjArray *arrs, TObjArray *arrt)
+{
+  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighboor: EdbPVRec not defined\n"); return 0;}
+
+  EdbTrackP *tr  = 0;
+  const EdbSegP   *ss  = 0;
+  const EdbSegP   *se  = 0;
+  int 	    nn   = 0;
+  float     distxs, distys, distzs1, distzs, dists;
+  float     distxe = 0., distye = 0., distze1= 0., distze = 0., diste = 0.;
+  float     xseg = 0, yseg = 0, zseg = 0;
+  Float_t   Zbin = TMath::Abs(ePVR->GetPattern(1)->Z() - ePVR->GetPattern(0)->Z());
+  TObjArray an(20);
+
+	    xseg = s->X();
+	    yseg = s->Y();
+	    zseg = s->Z();
+	    // Select tracks neigborhood
+	    an.Clear();
+	    int nvn = SelSegNeighboor(s, 0, RadMax, Dpat, &an); 
+	    for (int it=0; it<nvn; it++) {
+		    tr = (EdbTrackP*)(an.At(it));
+		    if (tr)
+		    {
+			    ss = tr->TrackZmin();
+			    distxs = (xseg - ss->X());
+			    distxs *= distxs;
+			    distys = (yseg - ss->Y());
+			    distys *= distys;
+			    distzs1 = (zseg - ss->Z());
+			    distzs = distzs1*distzs1;
+			    dists  =  distxs + distys + distzs;
+			    dists  =  TMath::Sqrt(dists); 
+			    se = tr->TrackZmax();
+			    distxe = (xseg - se->X());
+			    distxe *= distxe;
+			    distye = (yseg - se->Y());
+			    distye *= distye;
+			    distze1 = (zseg - se->Z());
+			    distze = distze1*distze1;
+			    diste  =  distxe + distye + distze;
+			    diste  =  TMath::Sqrt(diste);
+			    if (diste < dists)
+			    {
+				if (TMath::Sqrt(distxe+distye) > RadMax)    continue;
+				if (TMath::Abs(distze1)        > Dpat*Zbin) continue;
+			    }
+			    else
+			    {
+				if (TMath::Sqrt(distxs+distys) > RadMax)    continue;
+				if (TMath::Abs(distzs1)        > Dpat*Zbin) continue;
+			    }
+			    if (arrt) arrt->Add(tr);
+			    nn++;
+		    }
+	    }
+
+	    // Select segments neigborhood
+	    nvn = SelSegNeighboor(s, 1, RadMax, Dpat, arrs); 
+//	    printf("Selected %d segments\n", nvn);
+	    nn += nvn;
+  return nn;
+} 
 
 //________________________________________________________________________
 TTree *EdbVertexRec::init_tracks_tree(const char *file_name, EdbTrackP *track)

@@ -133,6 +133,7 @@ class EdbVertex: public TObject {
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
   float Chi2Track(int i);
+  float ImpTrack(int i);
   float MaxAperture();
 
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
@@ -204,6 +205,9 @@ class EdbVertexRec: public TObject {
   int	  VertexNeighboor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  VertexNeighboor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  SelVertNeighboor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
+  int	  SelSegNeighboor( EdbSegP *s, int seltype, float RadMax, int Dpat, TObjArray *ao);
+  int	  SegmentNeighboor(EdbSegP *s, float RadMax = 1000., int Dpat = 1,
+			   TObjArray *aseg = 0, TObjArray *atr = 0);
 
   TTree *init_tracks_tree(const char *file_name, EdbTrackP *track);
   int BuildTracksArr(const char *file_name="linked_tracks.root", int nsegMin=2 );
