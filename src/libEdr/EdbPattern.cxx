@@ -616,6 +616,19 @@ EdbTrackP::EdbTrackP(int nseg)
   if(nseg>0) eS  = new TSortedList();
   if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
+
+//______________________________________________________________________________
+EdbTrackP::EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
+{
+  eS=0;
+  eSF=0;
+  eDE=0;
+  ePDG=-999;
+  eVTAS = 0;
+  eVTAE = 0;
+  AddSegment(seg);
+  SetM(m);
+}
  
 //______________________________________________________________________________
 EdbTrackP::~EdbTrackP()
@@ -850,13 +863,14 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   int step;
   int istart, iend;
 
-  VtVector *par[60], *parpred[60], *pars[60], *meas[60];
-  VtSqMatrix *pred[60];
-  VtSymMatrix *cov[60], *covpred[60], *covpredinv[60], *covs[60], *dmeas[60];
+  VtVector *par[260], *parpred[260], *pars[260], *meas[260];
+  VtSqMatrix *pred[260];
+  VtSymMatrix *cov[260], *covpred[260], *covpredinv[260], *covs[260], *dmeas[260];
  
   int i=0;
-  if(nseg==1) {
-    EdbSegP segf(*(GetSegment(0)));
+  if(nseg == 1) {
+    EdbSegP *s = GetSegment(0);
+    EdbSegP segf(*s);
 
     segf.Set(ID(),X(),Y(),TX(),TY(),1.,Flag());
     segf.SetZ(Z());
@@ -871,7 +885,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
     return 0;
   }
 
-  if(nseg>59)   return -1;
+  if(nseg>259)   return -1;
 
   EdbSegP *seg0=0;
   EdbSegP *seg=0;
@@ -1438,9 +1452,9 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
   float sy = TMath::Sqrt( s.SY() + s.STY()*dz*dz );
 
   float stx = s.STX();
-  if (stx <= 0.) stx = 0.0015*0.0015;
+  if (stx <= 0.) stx = 1.;
   float sty = s.STY();
-  if (sty <= 0.) sty = 0.0015*0.0015;
+  if (sty <= 0.) sty = 1.;
 
   long vcent[4] = { (long)(x/StepX()),
 		    (long)(y/StepY()),
@@ -1489,8 +1503,6 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 
 	  for(int i=0; i<c4->N(); i++) {
 	    seg = GetSegment(c4->At(i)->Value());
-
-
 	    dtx=s.TX()-seg->TX();
 	    if( dtx*dtx > stx*nsigt*nsigt )    continue;
 	    dty=s.TY()-seg->TY();
@@ -1500,7 +1512,6 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 	    if( dx*dx > sx*nsigx*nsigx )           continue;
 	    dy=s.Y()+s.TY()*dz-seg->Y();
 	    if( dy*dy > sy*nsigx*nsigx )           continue;	    
-	    
 	    //if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
 	    arr.Add(seg);
 	    nseg++;
@@ -1805,18 +1816,22 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
 {
   EdbPattern *pat  = 0;
   int npat = Npatterns();
+  bool p_inverse_z = (GetPattern(1)->Z() - GetPattern(0)->Z()) > 0. ? false : true ;
+  int ii = 0;
   for (int i = 0; i<npat; i++)
   {
-    pat = GetPattern(i);  
+    ii = i;
+    if (p_inverse_z) ii = npat-1-i;
+    pat = GetPattern(ii);  
     if (ss.Z() < pat->Z())
     {
-	if ( i > 0 )  ss.SetPID(i-1);
-	else	      ss.SetPID(0);
+	if ( ii > 0 )  ss.SetPID(ii-1);
+	else	       ss.SetPID(0);
 	break;
     }
     else if (ss.Z() == pat->Z())
     {
-	ss.SetPID(i);
+	ss.SetPID(ii);
 	break;
     }
   }
