@@ -100,6 +100,7 @@ class EdbDisplay: public EdbDisplayBase {
   void AcceptModifiedParams();
   void CloseDialogModifiedParams();
   void CancelDialogModifiedParams();
+  void ClearSegmentEnv();
  
   ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
 };

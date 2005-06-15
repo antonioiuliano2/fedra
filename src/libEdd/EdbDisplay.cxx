@@ -9,11 +9,13 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "TStyle.h"
-#include "TGClient.h"
 #include "TSystem.h"
 #include "TGButton.h"
 #include "TGLabel.h"
+#include "TGFont.h"
 #include "TGFrame.h"
+#include "TGResourcePool.h"
+#include "TGClient.h"
 #include "TRootEmbeddedCanvas.h"
 #include "EdbDisplay.h"
 
@@ -81,7 +83,7 @@ void EdbDisplay::Set0()
   eIndVert = -1;
   eIndVertSave = -1;
   eRadMax = 1000.;
-  eDpat = 2.;
+  eDpat = 2;
   eImpMax = 10000.;
   fNumericEntries[0] = 0;
   fNumericEntries[1] = 0;
@@ -574,9 +576,9 @@ void EdbSegG::SetAsWorking()
 {
   if (eD && eSeg)
   {
+    if (eD->eWait_Answer) return;
     if (eD->eVertex)
     {
-	if (eD->eWait_Answer) return;
 	if (eD->eWorking)
 	{
 	    eD->DialogModifiedVTX();
@@ -626,12 +628,7 @@ void EdbVertexG::SetAsWorking()
     }
     if (eD->eSegPM)
     { 
-	if (eD->fPad->GetListOfPrimitives()->FindObject(eD->eSegPM))
-	{
-	    eD->fPad->GetListOfPrimitives()->Remove(eD->eSegPM);
-	}
-	delete eD->eSegPM;
-	eD->eSegPM = 0;
+	eD->ClearSegmentEnv();
     }
     eD->eSegment = 0;
     eD->eVertex = eV;
@@ -1552,13 +1549,15 @@ void EdbDisplay::DrawAllObjects()
 //_____________________________________________________________________________
 void EdbDisplay::DialogNeighborParameters()
 {
-    fMain = new TGMainFrame(gClient->GetRoot(), 240, 340);
+    eWait_Answer = true;
+
+    fMain = new TGMainFrame(gClient->GetRoot(), 260, 340);
     TGMainFrame *fTra = fMain;
 
-    fTra->Connect("CloseWindow()", "EdbDisplay", this, "CloseDialogModifiedParams()");
+//    fTra->Connect("CloseWindow()", "EdbDisplay", this, "CloseDialogModifiedParams()");
 
    // use hierarchical cleaning
-    fTra->SetCleanup(kDeepCleanup);
+//    fTra->SetCleanup(kDeepCleanup);
 
     TGHorizontalFrame *fF[3] = {0,0,0};
     TGLabel *fLabel[3] = {0,0,0};
@@ -1566,26 +1565,30 @@ void EdbDisplay::DialogNeighborParameters()
     Double_t parmax[3] =  { 50000.,   25.,  100000.};
     Double_t parmin[3] =  {    10.,    0.,      10.};
     if (eVerRec->ePVR) parmax[1] = (eVerRec->ePVR->Npatterns()-1)/2.;
-    char *parlabel[3] = {"    Maximal radius", "    +/- patterns", "    Maximal impact"};
+    char *parlabel[3] = {"Maximal radius","+/- patterns", "Maximal impact"};
 
-    TGVerticalFrame *fF1 = new TGVerticalFrame(fMain, 200, 250);
+    TGGC myGC = *(gClient->GetResourcePool()->GetFrameGC());
+    TGFont *myfont = gClient->GetFont("-adobe-helvetica-bold-r-*-*-12-*-*-*-*-*-iso8859-1");
+    if (myfont) myGC.SetFont(myfont->GetFontHandle());
+
+    TGVerticalFrame *fF1 = new TGVerticalFrame(fTra, 240, 250);
     TGLayoutHints *fL1 = new TGLayoutHints(kLHintsTop | kLHintsLeft, 2, 2, 2, 2);
     fTra->AddFrame(fF1, fL1);
     TGLayoutHints *fL2 = new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2);
     for (int i = 0; i < 3; i++) {
-      fF[i] = new TGHorizontalFrame(fF1, 200, 30);
+      fF[i] = new TGHorizontalFrame(fF1, 220, 35);
       fF1->AddFrame(fF[i], fL2);
-      fNumericEntries[i] = new TGNumberEntry(fF[i], parinit[i], 12, i,
+      fNumericEntries[i] = new TGNumberEntry(fF[i], parinit[i], 12, i+1000,
                                  TGNumberFormat::kNESInteger,
 				 TGNumberFormat::kNEANonNegative,
 				 TGNumberFormat::kNELLimitMinMax,
 				 parmin[i], parmax[i]);
       fF[i]->AddFrame(fNumericEntries[i], fL2);
-      fLabel[i] = new TGLabel(fF[i], parlabel[i]);
+      fLabel[i] = new TGLabel(fF[i], parlabel[i], myGC(), myfont->GetFontStruct());
       fF[i]->AddFrame(fLabel[i], fL2);
     }
 
-    TGHorizontalFrame *fFrame = new TGHorizontalFrame(fTra, 210, 30);
+    TGHorizontalFrame *fFrame = new TGHorizontalFrame(fTra, 220, 30);
     char cmda[256];
     sprintf(cmda,
     "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedParams()",fTitle);
@@ -1601,14 +1604,14 @@ void EdbDisplay::DialogNeighborParameters()
     fFrame->AddFrame(cbut,
 		     new TGLayoutHints(kLHintsCenterY | kLHintsRight,
     		     5, 5, 4, 4));
-    fFrame->Resize(230, 30);
+//    fFrame->Resize(220, 30);
 
     fTra->AddFrame(fFrame,
 		   new TGLayoutHints(kLHintsCenterY | kLHintsCenterX,
 		   5, 5, 4, 4));
 
     fTra->MapSubwindows();
-    fTra->Resize(250, fTra->GetDefaultHeight());
+    fTra->Resize(260, fTra->GetDefaultHeight());
     fTra->SetWindowName("Neighborhood Parameters");
     fTra->MapWindow();
     gClient->WaitFor(fTra);
@@ -1616,20 +1619,29 @@ void EdbDisplay::DialogNeighborParameters()
 //_____________________________________________________________________________
 void EdbDisplay::AcceptModifiedParams()
 {
-    eRadMax = fNumericEntries[0]->GetIntNumber();
-    eDpat   = fNumericEntries[1]->GetIntNumber();
-    eImpMax = fNumericEntries[2]->GetIntNumber();
+    eWait_Answer = false;
+    if(fNumericEntries[0]) eRadMax = fNumericEntries[0]->GetIntNumber();
+    if(fNumericEntries[1]) eDpat   = fNumericEntries[1]->GetIntNumber();
+    if(fNumericEntries[2]) eImpMax = fNumericEntries[2]->GetIntNumber();
+    if(fNumericEntries[0]) delete fNumericEntries[0];  
+    if(fNumericEntries[1]) delete fNumericEntries[1];  
+    if(fNumericEntries[2]) delete fNumericEntries[2];  
     fMain->SendCloseMessage();
     fMain = 0;
 }
 //_____________________________________________________________________________
 void EdbDisplay::CloseDialogModifiedParams()
 {
+    eWait_Answer = false;
     fMain = 0;
 }
 //_____________________________________________________________________________
 void EdbDisplay::CancelDialogModifiedParams()
 {
+    eWait_Answer = false;
+    if(fNumericEntries[0]) delete fNumericEntries[0];  
+    if(fNumericEntries[1]) delete fNumericEntries[1];  
+    if(fNumericEntries[2]) delete fNumericEntries[2];  
     fMain->SendCloseMessage();
     fMain = 0;
 }
@@ -1783,4 +1795,36 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
 
   gPad->Modified(kTRUE);
   gPad->Update();
+}
+//=============================================================================
+void EdbDisplay::ClearSegmentEnv()
+{
+	if (fPad->GetListOfPrimitives()->FindObject(eSegPM))
+	{
+	    fPad->GetListOfPrimitives()->Remove(eSegPM);
+	}
+	delete eSegPM;
+	eSegPM = 0;
+	TList *li = fTrigPad->GetListOfPrimitives();
+	if (eArrVSave)
+	{
+	    li->Remove(fAllButton);
+	    delete eArrV;
+	    eArrV = eArrVSave;
+	    eArrVSave = 0;
+	    if (eArrTrSave)
+	    {
+		delete eArrTr;
+		eArrTr = eArrTrSave;
+		eArrTrSave = 0;
+	    }
+	    if (eArrSegPSave)
+	    {
+		delete eArrSegP;
+		eArrSegP = eArrSegPSave;
+		eArrSegPSave = 0;
+	    }
+	    Draw();    
+	}
+	else li->Remove(fEnvButton);
 }

@@ -554,7 +554,13 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    gPad->Clear();
 
    Int_t iret;
-//   if (fView) delete fView;
+//   if (fView)
+//   {
+//    if (fView->GetOutline()) fView->GetOutline()->Clear("nodelete");
+//    fView->SetViewChanged(kTRUE);
+//    delete fView;
+//   }
+//   else fView = new TView(1);
    fView = new TView(1);
 //   fView->SetBit(kCannotPick);
    fView->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
@@ -564,7 +570,6 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    fZoomY1[0] =  1;
 //   fZooms = 0;
 
-
    Refresh();
 //   gPad->GetListOfPrimitives()->AddFirst(this);
    AppendPad();
@@ -573,6 +578,7 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 
    gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
    gPad->Modified(kTRUE);
+//   gPad->Update();
 //   fPad->cd();
 }
 
