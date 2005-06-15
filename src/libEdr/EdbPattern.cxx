@@ -1818,6 +1818,9 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
   int npat = Npatterns();
   bool p_inverse_z = (GetPattern(1)->Z() - GetPattern(0)->Z()) > 0. ? false : true ;
   int ii = 0;
+  int dpat = 1;
+  int pid = 0;
+  if (p_inverse_z) dpat = -1;
   for (int i = 0; i<npat; i++)
   {
     ii = i;
@@ -1825,8 +1828,10 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
     pat = GetPattern(ii);  
     if (ss.Z() < pat->Z())
     {
-	if ( ii > 0 )  ss.SetPID(ii-1);
-	else	       ss.SetPID(0);
+	pid = ii - dpat;
+	if ( pid >= npat )  ss.SetPID(npat);
+	if ( pid <  0 )     ss.SetPID(0);
+	else	            ss.SetPID(pid);
 	break;
     }
     else if (ss.Z() == pat->Z())
@@ -1835,7 +1840,7 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
 	break;
     }
   }
-  
+
   int p0 = ss.PID();
   int pend   = p0 + Dpat;
   if (pend >= npat) pend = npat - 1;
