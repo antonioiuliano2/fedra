@@ -579,7 +579,6 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
    gPad->Modified(kTRUE);
 //   gPad->Update();
-//   fPad->cd();
 }
 
 //________________________________________________________________________
@@ -781,17 +780,19 @@ void EdbDisplayBase::UnZoom()
   //
   // Resets ZOOM
   //
-  if (fZooms <= 0) return;
+  if (fZooms <= 0)
+  {
+    fCanvas->Paint();
+    fCanvas->Update();
+    return;
+  }
   fZooms--;
-//  doesn't work when we have more than one EdbDisplay objects
-//  TPad *pad = (TPad*)gPad->GetPadSave();
-//  pad->Range(fZoomX0[fZooms],fZoomY0[fZooms], fZoomX1[fZooms],fZoomY1[fZooms]);
-//  pad->Modified();
-//  pad->cd();
   fPad->Range(fZoomX0[fZooms],fZoomY0[fZooms], fZoomX1[fZooms],fZoomY1[fZooms]);
   fPad->Modified();
   fPad->cd();
   fPad->Draw();
+  fCanvas->Paint();
+  fCanvas->Update();
 }
 
 //______________________________________________________________________________

@@ -177,10 +177,11 @@ void EdbDisplay::Refresh()
   {
     eSegPM = new TPolyMarker3D(1);
     eSegPM->SetMarkerStyle(20);
+    float dz = TMath::Abs(eSegment->DZ()/2.);
     eSegPM->SetPoint(0, 
-		        eSegment->X() + eSegment->TX()*eSegment->DZ()/2.,
-			eSegment->Y() + eSegment->TY()*eSegment->DZ()/2.,
-			eSegment->Z() +                eSegment->DZ()/2.);
+		        eSegment->X() + eSegment->TX()*dz,
+			eSegment->Y() + eSegment->TY()*dz,
+			eSegment->Z() +                dz);
     eSegPM->SetMarkerColor(kGreen);
     eSegPM->SetMarkerSize(1.2);
     eSegPM->Draw();
@@ -227,28 +228,26 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
     TPolyLine3D *line=0;
     const EdbSegP *seg=0;
     EdbTrackP *tr=0;
+    bool measured_segment = false;
+    if (eVerRec) measured_segment = eVerRec->eUseSegPar;
+    float dz = 0;
     for(int i=0; i<vv->N(); i++ ) {
       tr = vv->GetTrack(i);
-      if (tr->NF())
+      if (!(tr->NF())) measured_segment = true;
+      dz = 0.;
+      if( vv->Zpos(i)==0 )
       {
-        if( vv->Zpos(i)==0 )       seg = vv->GetTrack(i)->TrackZmax();
-        else                       seg = vv->GetTrack(i)->TrackZmin();
+             seg = vv->GetTrack(i)->TrackZmax(measured_segment);
+	     dz = TMath::Abs(seg->DZ());
       }
       else
       {
-        if( vv->Zpos(i)==0 )       seg = vv->GetTrack(i)->GetSegmentLast();
-        else                       seg = vv->GetTrack(i)->GetSegmentFirst();
+             seg = vv->GetTrack(i)->TrackZmin(measured_segment);
       }
       if(!seg) continue;
       line = new TPolyLine3D(2);
-//      float dxv = (seg->X() - xv)/10.;
-//      float dyv = (seg->Y() - yv)/10.;
-//      float dzv = (seg->Z() - zv)/10.;
-      float dxv = 0.;
-      float dyv = 0.;
-      float dzv = 0.;
-      line->SetPoint(0, xv+dxv,yv+dyv,zv+dzv );
-      line->SetPoint(1, seg->X()-dxv, seg->Y()-dyv, seg->Z()-dzv );
+      line->SetPoint(0, xv,yv,zv );
+      line->SetPoint(1, seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
       line->SetLineColor(kWhite);
       line->SetLineWidth(1);
       line->SetBit(kCannotPick);
@@ -264,13 +263,16 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   // eDrawTracks: 1 - draw fitted track dotted line only
   //              2 - draw also white marker at zmin
   //              3 - draw also red marker at zmax
-  //              4 - draw also raw segments
-  //
+  //              4 - draw also measured segments
+  //              5 - draw fitted line and  measured segments, no markers 
+  //              6 - draw measured segments only
+  //              7 - draw measured segments only
   //              8 - draw only solid white track line
 
   if (!tr) return;
   TPolyLine3D *line=0;
   const EdbSegP *seg=0;
+  float dz = 0.;
 
   if(eDrawTracks>0 && eDrawTracks<6) {   // only dotted track line
     line = new TPolyLine3D(tr->N());
@@ -281,9 +283,10 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 	{
 	    if (is == 0)
 	    {
-		line->SetPoint(is, seg->X()+seg->TX()*seg->DZ(),
-				   seg->Y()+seg->TY()*seg->DZ(),
-				   seg->Z()+seg->DZ() );
+		dz = TMath::Abs(seg->DZ());
+		line->SetPoint(is, seg->X()+seg->TX()*dz,
+				   seg->Y()+seg->TY()*dz,
+				   seg->Z()+          dz );
 	    }
 	    else
 	    {
@@ -299,9 +302,10 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 	{
 	    if (is == 0)
 	    {
-		line->SetPoint(is, seg->X()+seg->TX()*seg->DZ(),
-				   seg->Y()+seg->TY()*seg->DZ(),
-				   seg->Z()+seg->DZ() );
+		dz = TMath::Abs(seg->DZ());
+		line->SetPoint(is, seg->X()+seg->TX()*dz,
+				   seg->Y()+seg->TY()*dz,
+				   seg->Z()+          dz);
 	    }
 	    else
 	    {
@@ -369,9 +373,10 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     if (tr->NF())      seg = tr->TrackZmax();
     else               seg = tr->GetSegmentLast();
     if(seg) {
-      pme->SetPoint(0, seg->X()+seg->TX()*seg->DZ(),
-    		       seg->Y()+seg->TY()*seg->DZ(),
-		       seg->Z()+seg->DZ() );
+      dz = TMath::Abs(seg->DZ());
+      pme->SetPoint(0, seg->X()+seg->TX()*dz,
+    		       seg->Y()+seg->TY()*dz,
+		       seg->Z()+          dz);
       pme->SetMarkerColor(kRed);
       pme->SetMarkerSize(1.2);
       pme->Draw();
@@ -384,12 +389,13 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
 {
   if (!seg) return 0;
+  float dz = TMath::Abs(seg->DZ());
   EdbSegG *line = new EdbSegG(2, this);
   line->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
   line->SetPoint(1,
-                 seg->X() + seg->TX()*seg->DZ(),
-                 seg->Y() + seg->TY()*seg->DZ(),
-                 seg->Z() +           seg->DZ() );
+                 seg->X() + seg->TX()*dz,
+                 seg->Y() + seg->TY()*dz,
+                 seg->Z() +           dz);
 
   int eNpieces=30;
   line->SetLineColor(gStyle->GetColorPalette(int(46.*(1.-1.*seg->PID()/eNpieces))));  
@@ -602,10 +608,11 @@ void EdbSegG::SetAsWorking()
     eD->eSegPM = new TPolyMarker3D(1);
     eD->eSegPM->SetMarkerStyle(20);
     if(eSeg) {
+      float dz = TMath::Abs(eSeg->DZ()/2.);
       eD->eSegPM->SetPoint(0, 
-    		    eSeg->X() + eSeg->TX()*eSeg->DZ()/2.,
-		    eSeg->Y() + eSeg->TY()*eSeg->DZ()/2.,
-		    eSeg->Z() +            eSeg->DZ()/2.);
+    		    eSeg->X() + eSeg->TX()*dz,
+		    eSeg->Y() + eSeg->TY()*dz,
+		    eSeg->Z() +            dz);
       eD->eSegPM->SetMarkerColor(kGreen);
       eD->eSegPM->SetMarkerSize(1.2);
       eD->eSegPM->AppendPad();
