@@ -305,6 +305,7 @@ class EdbTrackP : public EdbSegP {
   float    Wgrains() const;
   int	   GetSegmentsFlag( int &nseg ) const;
   int	   GetSegmentsAid( int &nseg ) const;
+  int	   GetSegmentsMCTrack( int &nseg ) const;
 
   EdbSegP *GetSegmentFirst()   const { return (eS) ? (EdbSegP*)(eS->First())  : 0; }
   EdbSegP *GetSegmentLast()    const { return (eS) ? (EdbSegP*)(eS->Last())   : 0; }

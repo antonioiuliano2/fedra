@@ -713,14 +713,45 @@ int EdbTrackP::CheckMaxGap()
   }
   return ngap;
 }
+//______________________________________________________________________________
+int EdbTrackP::GetSegmentsMCTrack( int& nsegf ) const
+{
+  int nseg = N();
+  if (nseg < 2) return -1;
+  if (nseg > 300) nseg = 300;
+  int count[300];
+  int i, f = 0;
+  for(i=0; i<nseg; i++)
+  {
+    count[i] = 0;
+    f = GetSegment(i)->MCTrack();
+    if (f < 0) continue;
+    for (int j=0; j<nseg; j++)
+    {
+	if ( f == GetSegment(j)->MCTrack()) count[i]++;
+    }
+  }
+  int cmax = 0;
+  int mctrackmax = -1;
+  for(i=0; i<nseg; i++)
+  {
+	if (count[i] > cmax)
+	{
+	    cmax = count[i];
+	    mctrackmax = GetSegment(i)->MCTrack();
+	}
+  }
+  nsegf = cmax;
+  return mctrackmax;
+}
 
 //______________________________________________________________________________
 int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 {
   int nseg = N();
   if (nseg < 2) return -1;
-  if (nseg > 100) nseg = 100;
-  int count[100];
+  if (nseg > 300) nseg = 300;
+  int count[300];
   int i, f = 0;
   for(i=0; i<nseg; i++)
   {
@@ -750,9 +781,9 @@ int EdbTrackP::GetSegmentsAid( int& nsegf ) const
 {
   int nseg = N();
   if (nseg < 2) return -1;
-  if (nseg > 100) nseg = 100;
-  int count[100];
-  int aid[100], ai;
+  if (nseg > 300) nseg = 300;
+  int count[300];
+  int aid[300], ai;
   int i, f = 0;
   for(i=0; i<nseg; i++)
   {
@@ -768,17 +799,17 @@ int EdbTrackP::GetSegmentsAid( int& nsegf ) const
     }
   }
   int cmax = 0;
-  int flagmax = -1;
+  int aidmax = -1;
   for(i=0; i<nseg; i++)
   {
 	if (count[i] > cmax)
 	{
 	    cmax = count[i];
-	    flagmax = aid[i];
+	    aidmax = aid[i];
 	}
   }
   nsegf = cmax;
-  return flagmax;
+  return aidmax;
 }
 //______________________________________________________________________________
 float EdbTrackP::Wgrains() const
