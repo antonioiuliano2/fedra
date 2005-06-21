@@ -1572,42 +1572,52 @@ void EdbDisplay::DrawVertexEnvironment()
 	{
 		tr = (EdbTrackP *)eArrTr->At(i);
 		ve = tr->VertexS(); 
-		if (ve && ve->Flag() >= -99)
+		if (ve && ve->Flag() >= -99 && ve->Flag() != -10)
 		{
 		    dx = ve->VX() - eSegment->X();
 		    dy = ve->VY() - eSegment->Y();
-		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
-		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
-		    if (dzp > Dpat) continue;
-		    ve->SetFlag(-ve->Flag()-200);
-		    eArrV->Add(ve);
-		    for(int j=0; j<ve->N(); j++)
+		    if (TMath::Sqrt(dx*dx + dy*dy) <= Rmax)
 		    {
-			trv = ve->GetTrack(j);
-			if (trv->MCEvt() < -999) continue;
-			eArrTr->Add(trv);
+			dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
+			if (dzp <= Dpat)
+			{
+			    ve->SetFlag(-ve->Flag()-200);
+			    eArrV->Add(ve);
+			    for(int j=0; j<ve->N(); j++)
+			    {
+				trv = ve->GetTrack(j);
+				if (trv->MCEvt() < -999) continue;
+				eArrTr->Add(trv);
+    				trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+			    }
+			}
 		    }
 		}
 		ve = tr->VertexE(); 
-		if (ve && ve->Flag() >= -99)
+		if (ve && ve->Flag() >= -99 && ve->Flag() != -10)
 		{
 		    dx = ve->VX() - eSegment->X();
 		    dy = ve->VY() - eSegment->Y();
-		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
-		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
-		    if (dzp > Dpat) continue;
-		    ve->SetFlag(-ve->Flag()-200);
-		    eArrV->Add(ve);
-		    for(int j=0; j<ve->N(); j++)
+		    if (TMath::Sqrt(dx*dx + dy*dy) <= Rmax)
 		    {
-			trv = ve->GetTrack(j);
-			if (trv->MCEvt() < -999) continue;
-			eArrTr->Add(trv);
-    			trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+			dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
+			if (dzp <= Dpat)
+			{
+			    ve->SetFlag(-ve->Flag()-200);
+			    eArrV->Add(ve);
+			    for(int j=0; j<ve->N(); j++)
+			    {
+				trv = ve->GetTrack(j);
+				if (trv->MCEvt() < -999) continue;
+				eArrTr->Add(trv);
+    				trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+			    }
+			}
 		    }
 		}
 	}
 	int nv = eArrV->GetEntries();
+	if (nv) eDrawVertex = 1;
 	for (int i=0; i<nv; i++)
 	{
 	    ve = (EdbVertex *)eArrV->At(i);
@@ -1655,41 +1665,47 @@ void EdbDisplay::DrawVertexEnvironment()
 		eArrTr->Add((tr = vta->GetTrack()));
 		if (Zbin == 0.) continue;
 		ve = tr->VertexS(); 
-		if (ve && ve->Flag() >= -99)
+		if (ve && ve->Flag() >= -99 && ve->Flag() != -10 && ve != eW)
 		{
-		    if (ve == eW) continue;
 		    dx = ve->VX() - eW->VX();
 		    dy = ve->VY() - eW->VY();
-		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
-		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
-		    if (dzp > Dpat) continue;
-		    ve->SetFlag(-ve->Flag()-200);
-		    eArrV->Add(ve);
-		    for(int j=0; j<ve->N(); j++)
+		    if (TMath::Sqrt(dx*dx + dy*dy) <= Rmax)
 		    {
-			trv = ve->GetTrack(j);
-			if (trv->MCEvt() < -999) continue;
-			eArrTr->Add(trv);
-    			tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+			dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
+			if (dzp <= Dpat)
+			{
+			    ve->SetFlag(-ve->Flag()-200);
+			    eArrV->Add(ve);
+			    for(int j=0; j<ve->N(); j++)
+			    {
+				trv = ve->GetTrack(j);
+				if (trv->MCEvt() < -999) continue;
+				eArrTr->Add(trv);
+    				trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+			    }
+			}
 		    }
 		}
 		ve = tr->VertexE(); 
-		if (ve && ve->Flag() >= -99)
+		if (ve && ve->Flag() >= -99 && ve->Flag() != -10 && ve != eW)
 		{
-		    if (ve == eW) continue;
 		    dx = ve->VX() - eW->VX();
 		    dy = ve->VY() - eW->VY();
-		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
-		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
-		    if (dzp > Dpat) continue;
-		    ve->SetFlag(-ve->Flag()-200);
-		    eArrV->Add(ve);
-		    for(int j=0; j<ve->N(); j++)
+		    if (TMath::Sqrt(dx*dx + dy*dy) <= Rmax)
 		    {
-			trv = ve->GetTrack(j);
-			if (trv->MCEvt() < -999) continue;
-			eArrTr->Add(trv);
-    			tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+			dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
+			if (dzp <= Dpat)
+			{
+			    ve->SetFlag(-ve->Flag()-200);
+			    eArrV->Add(ve);
+			    for(int j=0; j<ve->N(); j++)
+			    {
+				trv = ve->GetTrack(j);
+				if (trv->MCEvt() < -999) continue;
+				eArrTr->Add(trv);
+    				trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+			    }
+			}
 		    }
 		}
 	    }
@@ -1726,21 +1742,15 @@ void EdbDisplay::DrawAllObjects()
     fTrigPad->Update();
     fPad->cd();
 
-    if (eArrVSave)
+    if (eArrVSave || eArrTrSave || eArrSegPSave)
     {
 	delete eArrV;
 	eArrV = eArrVSave;
 	eArrVSave = 0;
 	eIndVert = eIndVertSave;
-    }
-    if (eArrTrSave)
-    {
 	delete eArrTr;
 	eArrTr = eArrTrSave;
 	eArrTrSave = 0;
-    }
-    if (eArrSegPSave)
-    {
 	delete eArrSegP;
 	eArrSegP = eArrSegPSave;
 	eArrSegPSave = 0;
@@ -1980,6 +1990,7 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
 	sprintf(but,
 	"((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->RemoveTrackFromTable(%d)",fTitle,i);
 	fRemBut[i] = new TButton(tit, but, 0.88, 0.635-(i+2)*dy, 0.94, 0.675-(i+2)*dy);
+	fRemBut[i]->SetToolTipText("Remove corresponding track");
 	fRemBut[i]->ResetBit(kCanDelete);
 	fRemBut[i]->SetFillColor(38);
 	sprintf(tit,"RemTr%d",i);
