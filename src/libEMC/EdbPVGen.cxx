@@ -235,6 +235,7 @@ int EdbPVGen::TrackMC2( EdbTrackP   &tr,
     if( s.TX()*s.TX()+s.TY()*s.TY()>1.)             break;
 
     s.SetPID(pat->PID());
+    s.SetMC(0, tr.ID());
     tr.AddSegment( pat->AddSegment(s) );
     tr.AddSegmentF( new EdbSegP(s) );
     ic++;
@@ -242,7 +243,7 @@ int EdbPVGen::TrackMC2( EdbTrackP   &tr,
 
   tr.SetDE(de);
   tr.SetCounters();
-  tr.SetSegmentsTrack();
+//  tr.SetSegmentsTrack();
 
   return ic;
 }
@@ -524,6 +525,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
 	tys = ty + dtys;
     }
     seg->Set(segnum++, xs, ys, txs, tys, 25., tr.ID());
+    seg->SetMC(0, tr.ID());
     seg->SetP(pa);
     seg->SetZ(z);
     seg->SetDZ(300.);
@@ -539,7 +541,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
   }
   tr.SetDE(DE);
   tr.SetCounters();
-  tr.SetSegmentsTrack();
+//  tr.SetSegmentsTrack();
   delete seg;
 }
 //______________________________________________________________________________
