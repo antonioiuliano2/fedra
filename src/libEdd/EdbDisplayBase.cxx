@@ -7,10 +7,9 @@
 // Class to display pattern volume in 3D                                //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+
 #include "EdbDisplayBase.h"
 #include "TROOT.h"
-
-static const int kMAXZOOMS=30;
 
 ClassImp(EdbDisplayBase);
 
@@ -103,7 +102,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    char envv[256];
    sprintf(envv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVertexEnvironment()",fTitle);
-   fEnvButton = new TButton("Neighboor",envv,0.05,0.47,0.85,0.47+db);
+   fEnvButton = new TButton("Neighbor",envv,0.05,0.47,0.85,0.47+db);
    fEnvButton->SetFillColor(38);
    fEnvButton->Draw();
 
@@ -551,34 +550,32 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 
    gPad->SetCursor(kWatch);
    gPad->SetFillColor(1);
-   gPad->Clear();
-
-   Int_t iret;
-//   if (fView)
+//   TList *li = gPad->GetListOfPrimitives();
+//   int np = li->GetSize();
+//   TObject *o = 0;
+//   for (int i=0; i<np; i++)
 //   {
-//    if (fView->GetOutline()) fView->GetOutline()->Clear("nodelete");
-//    fView->SetViewChanged(kTRUE);
-//    delete fView;
+//    o = li->At(i);
+//    if (o && o->TestBit(kCanDelete)) delete o;
 //   }
-//   else fView = new TView(1);
+//   li->Clear("nodelete");
+   gPad->Clear("nodelete");
+
    fView = new TView(1);
-//   fView->SetBit(kCannotPick);
    fView->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
    fZoomX1[0] =  1;
    fZoomY1[0] =  1;
-//   fZooms = 0;
 
    Refresh();
-//   gPad->GetListOfPrimitives()->AddFirst(this);
    AppendPad();
 
+   Int_t iret;
    fView->SetView(phi, theta, psi, iret);
 
    gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
    gPad->Modified(kTRUE);
-//   gPad->Update();
 }
 
 //________________________________________________________________________
