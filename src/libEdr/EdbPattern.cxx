@@ -1059,11 +1059,11 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 //    chi2 += ((*par[i])-(*parpred[i]))*((*covpredinv[i])*((*par[i])-(*parpred[i]))) + 
 //	    ((*par[i])-(*meas[i]))*(dmeasinv*((*par[i])-(*meas[i])));
 
-//    VtSymMatrix dresid(4);
-//    dresid = (*dmeas[i]) - (*cov[i]);
-//    dresid = dresid.dsinv();
-//
-//    chi2 += ((*par[i])-(*meas[i]))*(dresid*((*par[i])-(*meas[i])));
+    VtSymMatrix dresid(4);
+    dresid = (*dmeas[i]) - (*cov[i]);
+    dresid = dresid.dsinv();
+
+    chi2 += ((*par[i])-(*meas[i]))*(dresid*((*par[i])-(*meas[i])));
 
     seg0 = seg;
   }
@@ -1079,12 +1079,14 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 
 // Smoothing
 
+  double chi2p=0;
+
   pars[iend] = new VtVector(*par[iend]);
   covs[iend] = new VtSymMatrix(*cov[iend]);
   VtSymMatrix dresid(4);
   dresid = (*dmeas[iend]) - (*covs[iend]);
   dresid = dresid.dsinv();
-  chi2 = ((*pars[iend])-(*meas[iend]))*(dresid*((*pars[iend])-(*meas[iend])));
+  chi2p = ((*pars[iend])-(*meas[iend]))*(dresid*((*pars[iend])-(*meas[iend])));
 
   EdbSegP segf;
   segf.Set(ID(),(float)(*pars[iend])(0),(float)(*pars[iend])(1),
@@ -1092,8 +1094,8 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   segf.SetZ(GetSegment(iend)->Z());
   segf.SetCOV( (*covs[iend]).array(), 4 );
   segf.SetErrorP ( SP() );
-  segf.SetChi2((float)chi2);
-  segf.SetProb( (float)TMath::Prob(chi2,4));
+  segf.SetChi2((float)chi2p);
+  segf.SetProb( (float)TMath::Prob(chi2p,4));
   segf.SetW( (float)nseg );
   segf.SetP( P() );
   segf.SetPID( GetSegment(iend)->PID() );
@@ -1102,7 +1104,6 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
   AddSegmentF(new EdbSegP(segf));
 
   i=iend; 
-  double chi2p=0;
   double DE=0.;
   EdbPhysics::DeAveragePbFastSet(P(), M());
    
@@ -1135,7 +1136,7 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
 	DE += EdbPhysics::DeAveragePbFast(P(),M(),TMath::Abs(dPb));
   }
   SetChi2((float)chi2);
-  SetProb((float)TMath::Prob(chi2,4));
+  SetProb((float)TMath::Prob(chi2,4*(nseg-1)));
   SetW( (float)nseg );
   SetDE( (float)DE );
 
@@ -1878,7 +1879,7 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
   int pstart   = p0 - Dpat;
   if (pstart < 0) pstart = 0;
 
-  arr.Clear();
+  //arr.Clear();
   int nseg = 0;
   int n = 0;
   for(int i=pstart; i <=pend; i++ ) {
