@@ -1127,7 +1127,7 @@ void EdbDisplay::CancelModifiedVTX()
 
     EdbTrackP *tr = 0;
 
-    for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+    for (int i = 0; i < eCreatedTracks.GetSize(); i++)
     {
 	tr = (EdbTrackP *)eCreatedTracks.At(i);
 	if (tr)
@@ -1198,7 +1198,7 @@ void EdbDisplay::DeleteModifiedVTX()
 
     EdbTrackP *tr = 0;
 
-    for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+    for (int i = 0; i < eCreatedTracks.GetSize(); i++)
     {
 	tr = (EdbTrackP *)eCreatedTracks.At(i);
 	if (tr)
@@ -1360,7 +1360,7 @@ void EdbDisplay::AcceptModifiedVTX()
 
 	TObjArray *etr = eVerRec->ePVR->eTracks;
 	int trind = etr->GetEntries();
-	for (int i = 0; i < eCreatedTracks.GetEntries(); i++)
+	for (int i = 0; i < eCreatedTracks.GetSize(); i++)
 	{
 	    tr = (EdbTrackP *)(eCreatedTracks.At(i));
 	    if (tr)
@@ -1470,6 +1470,14 @@ void EdbDisplay::DrawVertexEnvironment()
     if (eWorking) eW = eWorking;
     float Rmax = eRadMax, ImpMax = eImpMax;
     int Dpat = (int)eDpat;
+    EdbTrackP *tr = 0;
+    EdbTrackP *trv = 0;
+    EdbVertex *ve = 0;
+    float dx = 0., dy = 0.;
+    int dzp = 0;
+    float Zbin = 0.;
+    if (eVerRec->ePVR) Zbin = TMath::Abs(eVerRec->ePVR->GetPattern(1)->Z() -
+					 eVerRec->ePVR->GetPattern(0)->Z());
 
     eArrTrSave  = eArrTr; 
     eArrSegPSave  = eArrSegP; 
@@ -1480,12 +1488,68 @@ void EdbDisplay::DrawVertexEnvironment()
     eArrSegP = new TObjArray(20);
 
     if (eVertex)
-	eVerRec->VertexNeighboor(eW, Rmax, Dpat, ImpMax);
+	eVerRec->VertexNeighbor(eW, Rmax, Dpat, ImpMax);
     else if (eSegment)
     {
 	eIndVert = -1;
-	eVerRec->SegmentNeighboor(eSegment, Rmax, Dpat, eArrSegP, eArrTr);
-	if (!(eArrSegP->FindObject(eSegment))) eArrSegP->Add(eSegment);
+	eVerRec->SegmentNeighbor(eSegment, Rmax, Dpat, eArrSegP, eArrTr);
+	int ntr = eArrTr->GetEntries();
+	for (int i=0; i<ntr; i++)
+	{
+    	    tr = (EdbTrackP *)eArrTr->At(i);
+    	    tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+	}
+	for (int i=0; (i<ntr) && (Zbin != 0.); i++)
+	{
+		tr = (EdbTrackP *)eArrTr->At(i);
+		ve = tr->VertexS(); 
+		if (ve && ve->Flag() >= -99)
+		{
+		    dx = ve->VX() - eSegment->X();
+		    dy = ve->VY() - eSegment->Y();
+		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
+		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
+		    if (dzp > Dpat) continue;
+		    ve->SetFlag(-ve->Flag()-200);
+		    eArrV->Add(ve);
+		    for(int j=0; j<ve->N(); j++)
+		    {
+			trv = ve->GetTrack(j);
+			if (trv->MCEvt() < -999) continue;
+			eArrTr->Add(trv);
+		    }
+		}
+		ve = tr->VertexE(); 
+		if (ve && ve->Flag() >= -99)
+		{
+		    dx = ve->VX() - eSegment->X();
+		    dy = ve->VY() - eSegment->Y();
+		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
+		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eSegment->Z()/Zbin));
+		    if (dzp > Dpat) continue;
+		    ve->SetFlag(-ve->Flag()-200);
+		    eArrV->Add(ve);
+		    for(int j=0; j<ve->N(); j++)
+		    {
+			trv = ve->GetTrack(j);
+			if (trv->MCEvt() < -999) continue;
+			eArrTr->Add(trv);
+    			trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+		    }
+		}
+	}
+	int nv = eArrV->GetEntries();
+	for (int i=0; i<nv; i++)
+	{
+	    ve = (EdbVertex *)eArrV->At(i);
+	    if (ve->Flag() < -99 ) ve->SetFlag(-ve->Flag()-200);
+	}
+	ntr = eArrTr->GetEntries();
+	for (int i=0; i<ntr; i++)
+	{
+	    tr = (EdbTrackP *)eArrTr->At(i);
+	    if (tr->MCEvt() < -999 ) tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+	}
 	Draw();
 	return;
     }
@@ -1494,7 +1558,22 @@ void EdbDisplay::DrawVertexEnvironment()
     int nntr = eW->N();
     for(int i=0; i<nntr; i++)
     {
-	eArrTr->Add(eW->GetTrack(i));
+	eArrTr->Add((tr = eW->GetTrack(i)));
+	tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+	if (Zbin == 0.) continue;
+	if (eW->Zpos(i) == 1)
+	    ve = tr->VertexE(); 
+	else
+	    ve = tr->VertexS(); 
+	if (ve)
+	{
+	    dx = ve->VX() - eW->VX();
+	    dy = ve->VY() - eW->VY();
+	    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
+	    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
+	    if (dzp > Dpat) continue;
+	    eArrV->Add(ve);
+	}
     }
     nntr = eW->Nn();
     EdbVTA *vta = 0;
@@ -1504,7 +1583,46 @@ void EdbDisplay::DrawVertexEnvironment()
 	{
 	    if (vta->Flag() == 0) //track
 	    {
-		eArrTr->Add(vta->GetTrack());
+		eArrTr->Add((tr = vta->GetTrack()));
+		if (Zbin == 0.) continue;
+		ve = tr->VertexS(); 
+		if (ve && ve->Flag() >= -99)
+		{
+		    if (ve == eW) continue;
+		    dx = ve->VX() - eW->VX();
+		    dy = ve->VY() - eW->VY();
+		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
+		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
+		    if (dzp > Dpat) continue;
+		    ve->SetFlag(-ve->Flag()-200);
+		    eArrV->Add(ve);
+		    for(int j=0; j<ve->N(); j++)
+		    {
+			trv = ve->GetTrack(j);
+			if (trv->MCEvt() < -999) continue;
+			eArrTr->Add(trv);
+    			tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+		    }
+		}
+		ve = tr->VertexE(); 
+		if (ve && ve->Flag() >= -99)
+		{
+		    if (ve == eW) continue;
+		    dx = ve->VX() - eW->VX();
+		    dy = ve->VY() - eW->VY();
+		    if (TMath::Sqrt(dx*dx + dy*dy) > Rmax) continue;
+		    dzp = TMath::Abs((int)(ve->VZ()/Zbin) - (int)(eW->VZ()/Zbin));
+		    if (dzp > Dpat) continue;
+		    ve->SetFlag(-ve->Flag()-200);
+		    eArrV->Add(ve);
+		    for(int j=0; j<ve->N(); j++)
+		    {
+			trv = ve->GetTrack(j);
+			if (trv->MCEvt() < -999) continue;
+			eArrTr->Add(trv);
+    			tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+		    }
+		}
 	    }
 	    else if (vta->Flag() == 1) //segment
 	    {
@@ -1513,7 +1631,19 @@ void EdbDisplay::DrawVertexEnvironment()
 	}
     }
     eIndVert = eArrV->IndexOf(eW);
-    Draw();    
+    int nv = eArrV->GetEntries();
+    for (int i=0; i<nv; i++)
+    {
+        ve = (EdbVertex *)eArrV->At(i);
+        if (ve->Flag() < -99 ) ve->SetFlag(-ve->Flag()-200);
+    }
+    int ntr = eArrTr->GetEntries();
+    for (int i=0; i<ntr; i++)
+    {
+        tr = (EdbTrackP *)eArrTr->At(i);
+        if (tr->MCEvt() < -999 ) tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+    }
+    Draw();
 }
 //_____________________________________________________________________________
 void EdbDisplay::DrawAllObjects()
