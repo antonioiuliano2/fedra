@@ -35,6 +35,8 @@
 #include <TVirtualX.h>
 #include <TMath.h>
 
+static const int kMAXZOOMS=30;
+
 //_________________________________________________________________________
 class EdbDisplayBase: public TNamed {
 
@@ -47,10 +49,10 @@ protected:
    Float_t           fTheta;                //Viewing angle theta
    Float_t           fPhi;                  //Viewing angle phi
    Float_t           fPsi;                  //Viewving angle psi (rotation on display)
-   Float_t           fZoomX0[20];           //Low x range of zoom number i
-   Float_t           fZoomY0[20];           //Low y range of zoom number i
-   Float_t           fZoomX1[20];           //High x range of zoom number i
-   Float_t           fZoomY1[20];           //High y range of zoom number i
+   Float_t           fZoomX0[kMAXZOOMS];    //Low x range of zoom number i
+   Float_t           fZoomY0[kMAXZOOMS];    //Low y range of zoom number i
+   Float_t           fZoomX1[kMAXZOOMS];    //High x range of zoom number i
+   Float_t           fZoomY1[kMAXZOOMS];    //High y range of zoom number i
    Int_t             fZooms;                //Number of zooms
    Int_t             fIndVert;		    //Index of selected vertex in ArrV
    TCanvas          *fCanvas;               //Pointer to the display canvas
