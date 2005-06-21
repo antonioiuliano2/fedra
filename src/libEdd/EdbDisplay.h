@@ -102,7 +102,7 @@ class EdbDisplay: public EdbDisplayBase {
   void CancelDialogModifiedParams();
   void ClearSegmentEnv();
  
-  ClassDef(EdbDisplay,1) //class to display OPERA emulsion data
+  ClassDef(EdbDisplay,1) //FEDRA Event Display
 };
 //_________________________________________________________________________
 class EdbVertexG : public TPolyMarker3D {
@@ -121,8 +121,11 @@ class EdbVertexG : public TPolyMarker3D {
   virtual void          DumpVertex();    // *MENU*
   virtual void          InspectVertex(); // *MENU*
   virtual void		SetAsWorking();  // *MENU*
+  virtual const char *	GetTitle() const;
+  virtual const char *	GetName() const;
+  virtual char *	GetObjectInfo(int px, int py) const;
 
- ClassDef(EdbVertexG,1)  //EdbVertex graphics
+ ClassDef(EdbVertexG,1)  //Vertex
 };
 
 //_________________________________________________________________________
@@ -144,8 +147,11 @@ class EdbTrackG : public TPolyMarker3D {
   virtual void          InspectTrack(); // *MENU*
   virtual void		RemoveTrack();  // *MENU*
   virtual void		AddTrack();  // *MENU*
+  virtual const char *	GetTitle() const;
+  virtual const char *	GetName() const;
+  virtual char *	GetObjectInfo(int px, int py) const;
 
- ClassDef(EdbTrackG,1)  //EdbTrack graphics
+ ClassDef(EdbTrackG,1)  //Track
 };
 
 //_________________________________________________________________________
@@ -168,8 +174,11 @@ class EdbSegG : public TPolyLine3D {
   virtual void          InspectSegment(); // *MENU*
   virtual void		AddAsTrack();     // *MENU*
   virtual void		SetAsWorking();   // *MENU*
+  virtual const char *	GetTitle() const;
+  virtual const char *	GetName() const;
+  virtual char *	GetObjectInfo(int px, int py) const;
 
- ClassDef(EdbSegG,1) //
+ ClassDef(EdbSegG,1) //Segment
 };
 
 

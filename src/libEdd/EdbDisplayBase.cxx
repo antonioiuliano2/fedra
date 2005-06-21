@@ -82,6 +82,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UndoModifiedVTX()",fTitle);
    Float_t db = 0.09;
    fUndButton = new TButton("Undo  VTX",undov,0.05,0.85,0.85,0.85+db);
+   fUndButton->SetToolTipText("Undo last vertex modification");
    fUndButton->SetFillColor(38);
    fUndButton->Draw();
 
@@ -89,6 +90,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(cancelv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->CancelModifiedVTX()",fTitle);
    fCanButton = new TButton("Cancel VTX",cancelv,0.05,0.74,0.85,0.74+db);
+   fCanButton->SetToolTipText("Cancel vertex modifications");
    fCanButton->SetFillColor(38);
    fCanButton->Draw();
 
@@ -96,6 +98,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(acceptv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedVTX()",fTitle);
    fAccButton = new TButton("Accept VTX",acceptv,0.05,0.63,0.85,0.63+db);
+   fAccButton->SetToolTipText("Accept vertex modifications");
    fAccButton->SetFillColor(38);
    fAccButton->Draw();
 
@@ -103,6 +106,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(envv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVertexEnvironment()",fTitle);
    fEnvButton = new TButton("Neighbor",envv,0.05,0.47,0.85,0.47+db);
+   fEnvButton->SetToolTipText("Draw vertex neighborhood");
    fEnvButton->SetFillColor(38);
    fEnvButton->Draw();
 
@@ -110,6 +114,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(allv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawAllObjects()",fTitle);
    fAllButton = new TButton("AllObjcts",allv,0.05,0.47,0.85,0.47+db);
+   fAllButton->SetToolTipText("Draw all objects");
    fAllButton->SetFillColor(38);
    fAllButton->Draw();
 
@@ -117,6 +122,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(pickmode,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetPickMode()",fTitle);
    fPickButton = new TButton("Pick",pickmode,0.05,0.32,0.65,0.32+db);
+   fPickButton->SetToolTipText("Set Pickup mode");
    fPickButton->SetFillColor(38);
    strcpy(PickButName, "PickBut-");
    strcat(PickButName, title);
@@ -127,6 +133,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(zoommode,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetZoomMode()",fTitle);
    fZoomButton = new TButton("Zoom",zoommode,0.05,0.21,0.65,0.21+db);
+   fZoomButton->SetToolTipText("Set Zooming mode");
    fZoomButton->SetFillColor(38);
    strcpy(ZoomButName, "ZoomBut-");
    strcat(ZoomButName, title);
@@ -141,6 +148,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    sprintf(butUnzoom,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UnZoom()",fTitle);
    TButton *fUnZoomButton = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
+   fUnZoomButton->SetToolTipText("Undo previous zooming");
    fUnZoomButton->SetFillColor(38);
    strcpy(UnZoomButName, "UnZoomBut-");
    strcat(UnZoomButName, title);
@@ -307,6 +315,7 @@ void EdbDisplayBase::DrawOldBut(char *type)
     strcat(but,type);
     strcat(but,"\")");
     fOldBut = new TButton("TR",but,0.01,0.86,0.04,0.90);
+    fOldBut->SetToolTipText("Show tracks table");
     fOldBut->ResetBit(kCanDelete);
     fOldBut->SetFillColor(38);
     fOldBut->SetName("DrawOldVTX");
@@ -336,6 +345,7 @@ void EdbDisplayBase::DrawPreBut(char *type)
     strcat(but,type);
     strcat(but,"\")");
     fPreBut = new TButton("TR",but,0.01,0.80,0.04,0.84);
+    fPreBut->SetToolTipText("Show tracks table");
     fPreBut->ResetBit(kCanDelete);
     fPreBut->SetFillColor(38);
     fPreBut->SetName("DrawPreVTX");
@@ -365,6 +375,7 @@ void EdbDisplayBase::DrawNewBut(char *type)
     strcat(but,type);
     strcat(but,"\")");
     fNewBut = new TButton("TR",but,0.01,0.74,0.04,0.78);
+    fNewBut->SetToolTipText("Show tracks table");
     fNewBut->ResetBit(kCanDelete);
     fNewBut->SetFillColor(38);
     fNewBut->SetName("DrawNewVTX");
@@ -510,6 +521,7 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but7,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewGL()",fTitle);
    button = new TButton("OpenGL",but7,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Show 3-D view with OpenGL");
    button->SetFillColor(38);
    button->Draw();
 
@@ -518,6 +530,7 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but8,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewX3D()",fTitle);
    button = new TButton("X3D",but8,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Show 3-D view with X3D");
    button->SetFillColor(38);
    button->Draw();
 
@@ -526,6 +539,7 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but9,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DialogNeighborParameters()",fTitle);
    button = new TButton("NeighParms",but9,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Set Parameters for Neighborhood");
    button->SetFillColor(38);
    button->Draw();
 

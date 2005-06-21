@@ -127,7 +127,7 @@ public:
    virtual void      Draw(Option_t *option="");
    virtual Int_t     DistancetoPrimitive(Int_t px, Int_t py);
 
-  ClassDef(EdbDisplayBase,1) //basic class for Display
+  ClassDef(EdbDisplayBase,1) //basic class for FEDRA Event Display
 };
 
 #endif /* ROOT_EdbDisplayBase */

@@ -37,6 +37,29 @@ void EdbVertexG::InspectVertex()
 }
 
 //_____________________________________________________________________________
+const char *EdbVertexG::GetTitle() const
+{
+    static char title[80];
+    sprintf(title, "Vertex ID %d, Prongs %d, Prob %f", eV->ID(), eV->N(), eV->V()->prob());
+    return title;
+}
+
+//_____________________________________________________________________________
+const char *EdbVertexG::GetName() const
+{
+    static char name[] = "Vertex";
+    return name;
+}
+
+//_____________________________________________________________________________
+char *EdbVertexG::GetObjectInfo(int px, int py) const
+{
+    static char coordinates[80];
+    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eV->VX(), eV->VY(), eV->VZ());
+    return coordinates;
+}
+
+//_____________________________________________________________________________
 void EdbTrackG::DumpTrack()
 {
   if (eTr) eTr->Print();
@@ -49,6 +72,29 @@ void EdbTrackG::InspectTrack()
 }
 
 //_____________________________________________________________________________
+const char *EdbTrackG::GetTitle() const
+{
+    static char title[80];
+    sprintf(title, "Track ID %d, Nsegments %d, Prob %f", eTr->ID(), eTr->N(), eTr->Prob());
+    return title;
+}
+
+//_____________________________________________________________________________
+const char *EdbTrackG::GetName() const
+{
+    static char name[] = "Track";
+    return name;
+}
+
+//_____________________________________________________________________________
+char *EdbTrackG::GetObjectInfo(int px, int py) const
+{
+    static char coordinates[80];
+    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eTr->X(), eTr->Y(), eTr->Z());
+    return coordinates;
+}
+
+//_____________________________________________________________________________
 void EdbSegG::DumpSegment()
 {
   if (eSeg) eSeg->Print();
@@ -58,6 +104,29 @@ void EdbSegG::DumpSegment()
 void EdbSegG::InspectSegment()
 {
   if (eSeg) eSeg->Inspect();
+}
+
+//_____________________________________________________________________________
+const char *EdbSegG::GetTitle() const
+{
+    static char title[80];
+    sprintf(title, "Segment ID %d, PID %d", eSeg->ID(), eSeg->PID());
+    return title;
+}
+
+//_____________________________________________________________________________
+const char *EdbSegG::GetName() const
+{
+    static char name[] = "Segment";
+    return name;
+}
+
+//_____________________________________________________________________________
+char *EdbSegG::GetObjectInfo(int px, int py) const
+{
+    static char coordinates[80];
+    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eSeg->X(), eSeg->Y(), eSeg->Z());
+    return coordinates;
 }
 
 //________________________________________________________________________
