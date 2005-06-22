@@ -53,9 +53,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
  public:
   EdbSegP() {Set0();}
-  EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0)
-    { Set(id,x,y,tx,ty,w,flag); eCOV=0; eZ=0; eTrack=-1; }
-  EdbSegP(EdbSegP &s) { eCOV=0; Copy(s); }
+  EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0);
+  EdbSegP(EdbSegP &s) { Set0(); Copy(s); }
   virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);

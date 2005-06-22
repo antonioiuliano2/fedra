@@ -25,6 +25,12 @@ ClassImp(EdbPatternsVolume)
 
 using namespace MATRIX;
 
+EdbSegP:: EdbSegP(int id, float x, float y, float tx, float ty, float w, int flag)
+{
+  Set0();
+  Set(id,x,y,tx,ty,w,flag);
+}
+
 //______________________________________________________________________________
 void EdbSegP::Set0() 
 {
