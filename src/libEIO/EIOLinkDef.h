@@ -8,6 +8,7 @@
 #pragma link C++ class EdbDataSet;
 #pragma link C++ class EdbDataProc;
 
+#pragma link C++ class EdbTraceBack;
 #pragma link C++ class EdbRunAccess;
 
 #endif

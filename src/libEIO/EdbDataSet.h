@@ -206,9 +206,13 @@ class EdbDataProc : public TObject {
   int  Link();
   int  Link(EdbDataPiece &piece);
   void Align(int alignFlag);
+
+  int  LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag );
   void LinkTracks(int alg=0, float p=-1.);
+  void LinkTracksC(int alg=0, float p=-1.);
   void LinkRawTracks(int alg=0);
   void AlignLinkTracks(int alg=0, int alignFlag=0);
+
   void SetNoUpdate(int nu) { eNoUpdate=nu; }
   int  NoUpdate() const    { return eNoUpdate; }
 

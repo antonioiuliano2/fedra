@@ -14,6 +14,7 @@
 #include "EdbSegment.h"
 #include "EdbCluster.h"
 #include "EdbMath.h"
+#include "EdbTraceBack.h"
 
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
@@ -715,33 +716,29 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
   EdbSegP         *s2 = 0;
   EdbSegP         *s  = 0;
 
-  TBranch *b_cp=0, *b_s=0, *b_s1=0, *b_s2=0;                        // !!!
-  b_cp = tree->GetBranch("cp");                   // !!!
-  b_s  = tree->GetBranch("s.");                   // !!!
-  b_s1 = tree->GetBranch("s1.");                  // !!!
-  b_s2 = tree->GetBranch("s2.");                  // !!!
+  TBranch *b_cp=0, *b_s=0, *b_s1=0, *b_s2=0;
+  b_cp = tree->GetBranch("cp");
+  b_s  = tree->GetBranch("s.");
+  b_s1 = tree->GetBranch("s1.");
+  b_s2 = tree->GetBranch("s2.");
 
   b_cp->SetAddress( &cp  );
   b_s->SetAddress(  &s   );
   b_s1->SetAddress( &s1  );
   b_s2->SetAddress( &s2  );
 
-//    tree->SetBranchAddress("cp"  , &cp  );
-//    if(pat)  tree->SetBranchAddress("s."   , &s   );
-//    if(p1)   tree->SetBranchAddress("s1."  , &s1  );
-//    if(p2)   tree->SetBranchAddress("s2."  , &s2  );
 
   int nseg = 0;
   int nentr = (int)(tree->GetEntries());
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
-    b_cp->GetEntry(i);                             // !!!
-    b_s->GetEntry(i);                             // !!!
+    b_cp->GetEntry(i);
+    b_s->GetEntry(i);
     if( !TakeCPSegment(*cp,*s) )      continue;
     if(pat) {
       s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
       //s->SetPID( ePlate*10 );       /// TO CHECK !!!
-      s->SetVid(ePlate*1000+ePiece,i);
+      EdbTraceBack::SetBaseTrackVid( *s, ePlate, ePiece, i );
       s->SetChi2(cp->CHI2P());
       pat->AddSegment( *s  );
       nseg++;
@@ -1730,13 +1727,13 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 	s->SetChi2( cp->CHI2P() );
       } else {
 	s = cp->eS;
-	//s->Print();
 	tree->SetBranchAddress("s."  ,&s );
       }
 
       s->SetDZ( s2->Z()-s1->Z() );
       s->SetVolume( s1->Volume()+s2->Volume() );
       
+      EdbTraceBack::SetBaseTrackVid( *s, 0, 0, tree->GetEntries() );   //TODO: plate, piece if available
       //EdbSegP::LinkMT(s1,s2,s);
 
       tree->Fill();
@@ -2177,26 +2174,46 @@ void EdbDataProc::Align(int doAlign)
 }
 
 ///______________________________________________________________________________
+int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag )
+{
+  // p       - momentum expected for tracks
+  // probmin - minimum probability to accept tracks
+  // nsegmin - min number of segments/track
+  // maxgap  - max gap permitted for propagation
+  // flag    - to be assigned for the tracks found in this pass
+
+  int ntr0 = ali->Ntracks();
+  ali->Link();
+  ali->FillTracksCell();
+  ali->MakeTracks(nsegmin,flag);
+  if(p<0.01) p=4.;
+
+  //  ali->FitTracks(p); //razobratsia (udalit?) s etoi funkciei
+
+  int ntr = ali->eTracks->GetEntries();
+  float X0 =  ali->GetScanCond()->RadX0();
+  EdbTrackP *tr=0;
+  for(int itr=ntr0; itr<ntr; itr++) {
+    tr = ali->GetTrack(itr);
+    tr->ClearF();
+    tr->SetP(p);
+    tr->FitTrackKFS(false,X0);
+  }
+
+  ali->FillCell(50,50,0.015,0.015);
+  for(int i=0; i<10; i++) 
+    if( ali->PropagateTracks(ali->Npatterns()-1,2, probmin, maxgap ) <1) break;
+
+  return ntr-ntr0;
+}
+
+///______________________________________________________________________________
 void EdbDataProc::LinkTracks( int alg, float p )
 {
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
-  ali->Link();
-  printf("link ok  alg = %d \t p= %f\n", alg, p);
 
-  if(alg>1) {
-    int nhol;
-    ali->FillTracksCell();
-    nhol = ali->MakeHoles(alg);
-    printf("inserted %d holes forward of >=%d-segmented tracks\n",nhol,alg);
-    ali->Link();
-    ali->FillTracksCell();
-    nhol = ali->MakeHoles(-alg);
-    printf("inserted %d holes backward of >=%d-segmented tracks\n",nhol,alg);
-    ali->Link();
-  }
-
-  ali->FillTracksCell();  // TODO: very long operation - speedup
+  printf("tracking:  alg = %d \t p= %f\n", alg, p);
 
   if(alg==-1) {
     TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
@@ -2204,17 +2221,39 @@ void EdbDataProc::LinkTracks( int alg, float p )
     CloseCouplesTree(cptree);
   }
 
-  ali->MakeTracks();
+  ali->SetCouplesPeriodic(0,1);
+  int ntr=0;
 
-  if(p<0.1) ali->FitTracks(4.);   // default momentum: 4 GeV
-  else      ali->FitTracks(p);
+  ntr = LinkTracksWithFlag( ali, p, 0.05, 2, 3, 0 );
+
+  //ntr = LinkTracksWithFlag( ali, p/4., 0.01, 2, 3, 1 );
 
   //if(merge>0) ali->MergeTracks(merge);
 
-  if(p>0) {
-    ali->FillCell(50,50,0.015,0.015);
-    ali->PropagateTracks(ali->Npatterns()-1,2);
-  }
+  MakeTracksTree(ali);
+}
+
+///______________________________________________________________________________
+void EdbDataProc::LinkTracksC( int alg, float p )
+{
+  // special tracking procedure for carbonium dataset
+
+  EdbPVRec    *ali  = new EdbPVRec();
+  InitVolume(ali);
+
+  printf("carbonium tracking:  alg = %d \t p= %f\n", alg, p);
+
+  ali->SetCouplesPeriodic(0,1);
+  LinkTracksWithFlag( ali, p, 0.01, 2, 3, 0 );
+
+  ali->SetCouplesPeriodic(0,3);
+  LinkTracksWithFlag( ali, p, 0.01, 2, 6, 1 );
+
+  ali->SetCouplesPeriodic(1,3);
+  LinkTracksWithFlag( ali, p, 0.01, 2, 6, 2 );
+
+  ali->SetCouplesPeriodic(2,3);
+  LinkTracksWithFlag( ali, p, 0.01, 2, 6, 3 );
 
   MakeTracksTree(ali);
 }
@@ -2413,6 +2452,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, char *file
       if(sf) new((*segmentsf)[is])  EdbSegP( *sf );
     }
 
+    track->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
     tracks->Fill();
     track->Clear();
   }
