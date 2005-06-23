@@ -10,8 +10,13 @@
 
 #include "EdbDisplayBase.h"
 #include "TROOT.h"
+#include "TVirtualViewer3D.h"
 
 ClassImp(EdbDisplayBase);
+ClassImp(Edb3DView);
+
+const Int_t kCARTESIAN   = 1;
+const Int_t kPOLAR       = 2;
 
 //=============================================================================
 EdbDisplayBase::EdbDisplayBase()
@@ -39,7 +44,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 //   fPhi   = -90;
 //   fPsi   = 0;
    fTheta = 90;
-   fPhi   = 0;
+   fPhi   = 180;
    fPsi   = 90;
 
    fDrawAllViews  = kFALSE;
@@ -48,15 +53,16 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 
    strcpy(fTitle, title);
    this->SetName(&fTitle[0]);
+   this->SetTitle("FEDRA Event Display");
    strcpy(fCanvasName, "Canvas-");
    strcat(fCanvasName, title);
-   fCanvas = new TCanvas(fCanvasName, "Emulsion Data Display", 14, 47, 800, 700);
+   fCanvas = new TCanvas(fCanvasName, "FEDRA Event Display", 14, 47, 800, 700);
    fCanvas->ToggleEventStatus();
 
   // Create main display pad
    strcpy(VPadName, "ViewPad-");
    strcat(VPadName, title);
-   fPad = new TPad(VPadName, "Emulsion Display",0.15,0.,1.,1.);
+   fPad = new TPad(VPadName, "FEDRA Event Display",0.15,0.,1.,1.);
    fPad->Draw();
    fPad->Modified(kTRUE);
    fPad->SetFillColor(1);
@@ -480,7 +486,8 @@ void EdbDisplayBase::DisplayButtons()
 
    Int_t butcolor = 33;
    Float_t dbutton = 0.07;
-   Float_t y  = 0.96;
+//   Float_t y  = 0.96;
+   Float_t y  = 1.044;
    Float_t dy = 0.014;
    Float_t x0 = 0.05;
    Float_t x1 = 0.95;
@@ -493,7 +500,7 @@ void EdbDisplayBase::DisplayButtons()
 
    char but3[256];
    sprintf(but3,
-   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,-90,90)",fTitle);
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,90,90)",fTitle);
    button = new TButton("Top View",but3,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
@@ -501,7 +508,7 @@ void EdbDisplayBase::DisplayButtons()
    y -= dbutton +dy;
    char but4[256];
    sprintf(but4,
-   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,0,90)",fTitle);
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,180,90)",fTitle);
    button = new TButton("Side View",but4,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
@@ -515,6 +522,15 @@ void EdbDisplayBase::DisplayButtons()
    button->Draw();
 
    y -= dbutton +dy;
+
+   y -= dbutton +dy;
+   char but6[256];
+   sprintf(but6,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetRotate()",fTitle);
+   button = new TButton("Rotate",but6,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Rotate 3-D view");
+   button->SetFillColor(38);
+   button->Draw();
 
    y -= dbutton +dy;
    char but7[256];
@@ -564,6 +580,7 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 
    gPad->SetCursor(kWatch);
    gPad->SetFillColor(1);
+
 //   TList *li = gPad->GetListOfPrimitives();
 //   int np = li->GetSize();
 //   TObject *o = 0;
@@ -573,10 +590,18 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 //    if (o && o->TestBit(kCanDelete)) delete o;
 //   }
 //   li->Clear("nodelete");
+
    gPad->Clear("nodelete");
 
-   fView = new TView(1);
-   fView->SetRange(vx0,vy0,vz0,vx1,vy1,vz1);
+   fView = new Edb3DView();
+
+   if (gPad->GetView() != fView || fView == 0) printf("Error!\n");
+
+   fView->SetLongitude((double)phi);
+   fView->SetLatitude((double)theta);
+   fView->SetPsi((double)psi);
+   fView->SetRange((double)vx0,(double)vy0,(double)vz0,(double)vx1,(double)vy1,(double)vz1);
+
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
    fZoomX1[0] =  1;
@@ -585,10 +610,8 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    Refresh();
    AppendPad();
 
-   Int_t iret;
-   fView->SetView(phi, theta, psi, iret);
-
    gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
+   
    gPad->Modified(kTRUE);
 }
 
@@ -597,12 +620,12 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 {
 //  Execute action corresponding to the mouse event
 
-   static Float_t x0, y0, x1, y1;
+   static Double_t x0, y0, x1, y1;
 
    static Int_t pxold, pyold;
    static Int_t px0, py0;
    static Int_t linedrawn;
-   Float_t temp;
+   Double_t temp;
 
 //   if (px == 0 && py == 0) { //when called by sliders
 //      if (event == kButton1Up) {
@@ -616,7 +639,13 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 //   }
 
    // something to zoom ?
-//   fPad->SetCursor(kCross);
+
+   if (!fZoomMode && gPad->GetView())
+   {
+	gPad->SetCursor(kPointer);
+	return;
+   }
+
    gPad->SetCursor(kCross);
 
    switch (event) {
@@ -665,6 +694,8 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 void EdbDisplayBase::SetView(Float_t theta, Float_t phi, Float_t psi)
 {
 //  change viewing angles for current event
+
+   if (fView) fView->SetRotateMode(false);
 
    fPad->cd();
    fDrawAllViews = kFALSE;
@@ -766,10 +797,13 @@ void EdbDisplayBase::SetPickMode()
   //
   // Set Pick Mode -- disable zoom
   //
+   if (fView) fView->SetRotateMode(false);
+
    fZoomMode = 0;
 
    fArcButton->SetY1(fPickButton->GetYlowNDC()+0.5*fPickButton->GetHNDC());
    fTrigPad->Modified(kTRUE);
+   gPad->SetCursor(kPointer);
 }
 
 //_____________________________________________________________________________
@@ -778,12 +812,29 @@ void EdbDisplayBase::SetZoomMode()
   //
   // Set Zoom Mode -- disable pick
   //
+   if (fView) fView->SetRotateMode(false);
+
    fZoomMode = 1;
 
    fArcButton->SetY1(fZoomButton->GetYlowNDC()+0.5*fZoomButton->GetHNDC());
    fTrigPad->Modified(kTRUE);
+   gPad->SetCursor(kCross);
 }
 
+//_____________________________________________________________________________
+void EdbDisplayBase::SetRotate()
+{
+  //
+  // Set 3-D View Rotate Mode
+  //
+  
+   fZoomMode = 0;
+  
+   if (fView) fView->SetRotateMode(true);
+
+   fArcButton->SetY1(fPickButton->GetYlowNDC()+0.5*fPickButton->GetHNDC());
+   fTrigPad->Modified(kTRUE);
+}
 
 //______________________________________________________________________________
 void EdbDisplayBase::UnZoom()
@@ -815,13 +866,13 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
    if (gPad == fTrigPad) return 9999;
    if (gPad == fButtons) return 9999;
 
-   gPad->SetCursor(kCross);
+//   gPad->SetCursor(kCross);
 
    const Int_t kbig = 9999;
    Int_t dist   = kbig;
    Float_t xmin = gPad->GetX1();
    Float_t xmax = gPad->GetX2();
-   Float_t dx   = 0.02*(xmax - xmin);
+   Float_t dx   = 0.002*(xmax - xmin);
    Float_t x    = gPad->AbsPixeltoX(px);
    if (x < xmin+dx || x > xmax-dx) return dist;
 /*
@@ -833,6 +884,29 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
 */
    if (fZoomMode) return 0;
    else           return 7;
+}
+//_____________________________________________________________________________
+char *EdbDisplayBase::GetObjectInfo(int px, int py) const
+{
+    static char rcoordinates[]="Rotated coordinates";
+    static char coordinates[80];
+    if (!fPad || !fView) return rcoordinates;
+    float nxyz[3] = {fPad->AbsPixeltoX(px), fPad->AbsPixeltoY(py), 0.}, wxyz[3] = {0., 0., 0.};
+    if (fView) fView->NDCtoWC(nxyz, wxyz);
+    if (fView->GetLatitude() == 90.)
+    {
+	if (fView->GetLongitude() == 180.)
+	    sprintf(coordinates, "Y = %.1f, Z = %.1f", wxyz[1], wxyz[2]);
+	else if (fView->GetLongitude() == 90.)
+	    sprintf(coordinates, "X = %.1f, Z = %.1f", wxyz[0], wxyz[2]);
+	else
+	    return rcoordinates;
+    }
+    else if (fView->GetLatitude() == 0.)
+	sprintf(coordinates, "X = %.1f, Y = %.1f", wxyz[0], wxyz[1]);
+    else
+	return rcoordinates;
+    return coordinates;
 }
 //______________________________________________________________________________
 void EdbDisplayBase::DrawUnd()
@@ -878,3 +952,174 @@ void EdbDisplayBase::DrawEnv()
     fTrigPad->Update();
     fPad->cd();
 }
+//_____________________________________________________________________________
+const char *Edb3DView::GetTitle() const
+{
+    static char title[80];
+    sprintf(title, "%s", "FEDRA Event Display");
+    return title;
+}
+
+//_____________________________________________________________________________
+const char *Edb3DView::GetName() const
+{
+    static char name[] = "3-D View";
+    return name;
+}
+//_____________________________________________________________________________
+char *Edb3DView::GetObjectInfo(int px, int py) const
+{
+    static char rcoordinates[]="Rotated coordinates";
+    static char coordinates[80];
+    if (!gPad) return rcoordinates;
+    float nxyz[3] = {gPad->AbsPixeltoX(px), gPad->AbsPixeltoY(py), 0.}, wxyz[3] = {0., 0., 0.};
+    ((TView *)this)->NDCtoWC(nxyz, wxyz);
+    if (((TView *)this)->GetLatitude() == 90.)
+    {
+	if (((TView *)this)->GetLongitude() == 180.)
+	    sprintf(coordinates, "Y = %.1f, Z = %.1f", wxyz[1], wxyz[2]);
+	else if (((TView *)this)->GetLongitude() == 90.)
+	    sprintf(coordinates, "X = %.1f, Z = %.1f", wxyz[0], wxyz[2]);
+	else
+	    return rcoordinates;
+    }
+    else if (((TView *)this)->GetLatitude() == 0.)
+	sprintf(coordinates, "X = %.1f, Y = %.1f", wxyz[0], wxyz[1]);
+    else
+	return rcoordinates;
+    return coordinates;
+}
+
+//______________________________________________________________________________
+void Edb3DView::ExecuteRotateView(Int_t event, Int_t px, Int_t py)
+{
+//*-*-*-*-*-*-*-*-*Execute action corresponding to one event*-*-*-*-*-*-*-*-*-*
+//*-*              =========================================                    *
+//*-*  This member function is called when a object is clicked with the locator *
+//*-*                                                                           *
+//*-*  If Left button clicked in the object area, while the button is kept down *
+//*-*  the cube representing the surrounding frame for the corresponding        *
+//*-*  new latitude and longitude position is drawn.                                         *
+//*-*                                                                           *
+//*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+   static Int_t system, framewasdrawn;
+   static Double_t xrange, yrange, xmin, ymin, longitude1, latitude1, longitude2, latitude2;
+   static Double_t newlatitude, newlongitude, oldlatitude, oldlongitude;
+   Double_t dlatitude, dlongitude, x, y;
+   Int_t irep = 0;
+   Double_t psideg;
+
+   // all coordinate transformation are from absolute to relative
+
+   if (!fRotateMode) return;
+
+   if (!gPad->IsEditable()) return;
+   gPad->AbsCoordinates(kTRUE);
+
+   switch (event) {
+
+   case kKeyPress :
+       fChanged = kTRUE;
+       MoveViewCommand(Char_t(px), py);
+       break;
+   case kMouseMotion:
+      gPad->SetCursor(kRotate);
+      break;
+
+   case kButton1Down:
+
+      // remember position of the cube
+      xmin   = gPad->GetX1();
+      ymin   = gPad->GetY1();
+      xrange = gPad->GetX2() - xmin;
+      yrange = gPad->GetY2() - ymin;
+      x      = gPad->PixeltoX(px);
+      y      = gPad->PixeltoY(py);
+      system = GetSystem();
+      framewasdrawn = 0;
+      if (system == kCARTESIAN || system == kPOLAR || IsPerspective()) {
+         longitude1 = 180*(x-xmin)/xrange;
+         latitude1  =  90*(y-ymin)/yrange;
+      } else {
+         latitude1  =  90*(x-xmin)/xrange;
+         longitude1 = 180*(y-ymin)/yrange;
+      }
+      newlongitude = oldlongitude = -90 - gPad->GetPhi();
+      newlatitude  = oldlatitude  =  90 - gPad->GetTheta();
+      psideg       = GetPsi();
+
+      // if outline isn't set, make it look like a cube
+      if(!fOutline)
+          SetOutlineToCube();
+      break;
+
+   case kButton1Motion:
+   {
+      // draw the surrounding frame for the current mouse position
+      // first: Erase old frame
+      fChanged = kTRUE;
+      if (framewasdrawn) fOutline->Paint();
+      framewasdrawn = 1;
+      x = gPad->PixeltoX(px);
+      y = gPad->PixeltoY(py);
+      if (system == kCARTESIAN || system == kPOLAR || IsPerspective()) {
+         longitude2 = 180*(x-xmin)/xrange;
+         latitude2  =  90*(y-ymin)/yrange;
+      } else {
+         latitude2  =  90*(x-xmin)/xrange;
+         longitude2 = 180*(y-ymin)/yrange;
+      }
+      dlongitude   = longitude2   - longitude1;
+      dlatitude    = latitude2    - latitude1;
+      newlatitude  = oldlatitude  + dlatitude;
+      newlongitude = oldlongitude - dlongitude;
+      psideg       = GetPsi();
+      ResetView(newlongitude, newlatitude, psideg, irep);
+      fOutline->Paint();
+
+      break;
+   }
+   case kButton1Up:
+
+      // Temporary fix for 2D drawing problems on pad. fOutline contains
+      // a TPolyLine3D object for the rotation box. This will be painted
+      // through a newly created TViewer3DPad instance, which is left
+      // behind on pad. This remaining creates 2D drawing problems.
+      //
+      // This is a TEMPORARY fix - will be removed when proper multiple viewers
+      // on pad problems are resolved.
+      if (gPad) {
+         TVirtualViewer3D *viewer = gPad->GetViewer3D();
+         if (viewer && !strcmp(viewer->IsA()->GetName(),"TViewer3DPad")) {
+            gPad->ReleaseViewer3D();
+            delete viewer;
+         }
+      }
+      // End fix
+
+      // Recompute new view matrix and redraw
+      psideg = GetPsi();
+      SetView(newlongitude, newlatitude, psideg, irep);
+      gPad->SetPhi(-90-newlongitude);
+      gPad->SetTheta(90-newlatitude);
+      gPad->Modified(kTRUE);
+
+      // Set line color, style and width
+      gVirtualX->SetLineColor(-1);
+      gVirtualX->SetLineStyle(-1);
+      gVirtualX->SetLineWidth(-1);
+      break;
+   }
+
+   // set back to default transformation mode
+   gPad->AbsCoordinates(kFALSE);
+}
+//_____________________________________________________________________________
+void Edb3DView::SetRotateMode(bool mode)
+{
+  //
+  // Set or unset 3-D View Rotate Mode
+  //
+   fRotateMode = mode;
+}
+

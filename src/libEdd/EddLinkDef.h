@@ -9,5 +9,6 @@
 #pragma link C++ class EdbSegG;
 #pragma link C++ class EdbTrackG;
 #pragma link C++ class EdbVertexG;
+#pragma link C++ class Edb3DView;
 
 #endif

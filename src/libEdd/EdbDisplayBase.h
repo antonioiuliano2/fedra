@@ -38,6 +38,27 @@
 static const int kMAXZOOMS=30;
 
 //_________________________________________________________________________
+class Edb3DView: public TView {
+
+protected:
+
+   bool fRotateMode;
+
+public:
+
+   Edb3DView() : TView(1) { fRotateMode = false;};
+   ~Edb3DView() {};
+
+   virtual const char *	GetTitle() const;
+   virtual const char *	GetName() const;
+   virtual char *    GetObjectInfo(int px, int py) const;
+   virtual void  ExecuteRotateView(Int_t event, Int_t px, Int_t py);
+   virtual void  SetRotateMode( bool Mode = true );
+
+   ClassDef(Edb3DView,1) //Event Display
+};
+
+//_________________________________________________________________________
 class EdbDisplayBase: public TNamed {
 
 protected:
@@ -49,14 +70,14 @@ protected:
    Float_t           fTheta;                //Viewing angle theta
    Float_t           fPhi;                  //Viewing angle phi
    Float_t           fPsi;                  //Viewving angle psi (rotation on display)
-   Float_t           fZoomX0[kMAXZOOMS];    //Low x range of zoom number i
-   Float_t           fZoomY0[kMAXZOOMS];    //Low y range of zoom number i
-   Float_t           fZoomX1[kMAXZOOMS];    //High x range of zoom number i
-   Float_t           fZoomY1[kMAXZOOMS];    //High y range of zoom number i
+   Double_t          fZoomX0[kMAXZOOMS];    //Low x range of zoom number i
+   Double_t          fZoomY0[kMAXZOOMS];    //Low y range of zoom number i
+   Double_t          fZoomX1[kMAXZOOMS];    //High x range of zoom number i
+   Double_t          fZoomY1[kMAXZOOMS];    //High y range of zoom number i
    Int_t             fZooms;                //Number of zooms
    Int_t             fIndVert;		    //Index of selected vertex in ArrV
    TCanvas          *fCanvas;               //Pointer to the display canvas
-   TView            *fView;                 //Main View object
+   Edb3DView        *fView;                 //Main View object
    char		    fCanvasName[128];       //Name of main canvas
    char       	    fTitle[128];            //EdbDisplay Object Name
    TPad             *fTrigPad;              //Pointer to the trigger pad
@@ -126,6 +147,8 @@ public:
    virtual void      UnZoom(); // *MENU*
    virtual void      Draw(Option_t *option="");
    virtual Int_t     DistancetoPrimitive(Int_t px, Int_t py);
+   virtual char *    GetObjectInfo(int px, int py) const;
+   virtual void      SetRotate();
 
   ClassDef(EdbDisplayBase,1) //basic class for FEDRA Event Display
 };

@@ -215,12 +215,29 @@ void EdbDisplay::Delete()
 //________________________________________________________________________
 void EdbDisplay::Refresh()
 {
+
+  float x = 0., y = 0., z = 0;
+  float wx0 = vx0, wy0 = vy0, wz0 = vz0;
+  float wx1 = vx1, wy1 = vy1, wz1 = vz1;
+
   EdbSegP *seg=0;
   if( eArrSegP ) {
     int nseg = eArrSegP->GetEntries();
     for(int j=0;j<nseg;j++) {
       seg = (EdbSegP*)(eArrSegP->At(j));
-      if (seg) SegLine(seg)->Draw();
+      if (seg)
+      {
+        SegLine(seg)->Draw();
+	x = seg->X();
+	y = seg->Y();
+	z = seg->Z();
+	wx0 = x < wx0 ? x : wx0;
+	wy0 = y < wy0 ? y : wy0;
+	wz0 = z < wz0 ? z : wz0;
+	wx1 = x < wx0 ? x : wx1;
+	wy1 = y < wy0 ? y : wy1;
+	wz1 = z < wz0 ? z : wz1;
+      }
     }
   }
 
@@ -229,7 +246,27 @@ void EdbDisplay::Refresh()
     int ntr = eArrTr->GetEntries();
     for(int j=0;j<ntr;j++) {
       tr = (EdbTrackP*)(eArrTr->At(j));
-      if(tr) TrackDraw(tr);
+      if(tr)
+      {
+        TrackDraw(tr);
+
+	x = tr->TrackZmin()->X();
+	y = tr->TrackZmin()->Y();
+	z = tr->TrackZmin()->Z();
+	wx0 = x < wx0 ? x : wx0;
+	wy0 = y < wy0 ? y : wy0;
+	wz0 = z < wz0 ? z : wz0;
+	wx1 = x > wx1 ? x : wx1;
+	wy1 = y > wy1 ? y : wy1;
+	x = tr->TrackZmax()->X();
+	y = tr->TrackZmax()->Y();
+	z = tr->TrackZmax()->Z();
+	wx0 = x < wx0 ? x : wx0;
+	wy0 = y < wy0 ? y : wy0;
+	wx1 = x > wx1 ? x : wx1;
+	wy1 = y > wy1 ? y : wy1;
+	wz1 = z > wz1 ? z : wz1;
+      }
     }
   }
 
@@ -238,9 +275,28 @@ void EdbDisplay::Refresh()
     int nv = eArrV->GetEntries();
     for(int j=0;j<nv;j++) {
       v = (EdbVertex*)(eArrV->At(j));
-      if (v) VertexDraw(v);
+      if (v)
+      {
+        VertexDraw(v);
+	x = v->VX();
+	y = v->VY();
+	z = v->VZ();
+	wx0 = x < wx0 ? x : wx0;
+	wy0 = y < wy0 ? y : wy0;
+	wz0 = z < wz0 ? z : wz0;
+	wx1 = x < wx0 ? x : wx1;
+	wy1 = y < wy0 ? y : wy1;
+	wz1 = z < wz0 ? z : wz1;
+      }
     }
   }
+
+  if (wx0 < vx0) vx0 = wx0 - 500.;
+  if (wy0 < vy0) vy0 = wy0 - 500.;
+  if (wz0 < vx0) vz0 = wz0 - 500.;
+  if (wx1 > vx1) vx1 = wx1 + 500.;
+  if (wy1 > vy1) vy1 = wy1 + 500.;
+  if (wz1 > vz1) vz1 = wz1 + 500.;
   
   if (eSegment)
   {
@@ -253,6 +309,7 @@ void EdbDisplay::Refresh()
 			eSegment->Z() +                dz);
     eSegPM->SetMarkerColor(kGreen);
     eSegPM->SetMarkerSize(1.2);
+    eSegPM->SetBit(kCannotPick);
     eSegPM->Draw();
   }
 }
