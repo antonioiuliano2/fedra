@@ -727,7 +727,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
   // zpos2  - the direction flag for the second track
   // in cycles is assumed that members of list1 has z <= members of list2
 
-  printf(" vertex selection: dZmax=%f Abin=%f ProbMin = %f zBin=%f  usemom=%d\n",
+  printf("  Selection: dZmax=%.0f Abin=%.3f ProbMin=%f zBin=%.0f usemom=%d\n",
          eDZmax, eAbin, eProbMin, eZbin, eUseMom);
 
   int nvtx     = 0; 
@@ -747,7 +747,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
   float isign=1.;
 
   int ntot = nz1*nz2;
-  printf("2-track vertexes search in progress... %3d%%", 0);
+  printf("  2-track vertexes search in progress... %3d%%", 0);
 
   for(int iz1=0; iz1<nz1; iz1++)   {           // first z-group
     c1 = list1.At(iz1);
