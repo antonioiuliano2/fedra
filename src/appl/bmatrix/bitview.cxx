@@ -5,8 +5,9 @@
 #include "EdbSegment.h"
 #include "Riostream.h"
 #include "TMath.h"
+#include "deriv.h"
 
-/////////////// not nedded /////////////
+/////////////// do not need /////////////
 //#include <conio.h>
 ////////////////////////////////////
 
@@ -43,14 +44,8 @@ int CommonClusters(EdbSegment *seg0, EdbSegment *seg1)
 
 void TrackAngle(track tr, float *teta, float *phi)
 {
-	float xt = tr.x;
-	float yt = tr.y;
-	float zt = tr.z;
 	float tgx = tr.tgx;
 	float tgy = tr.tgy;
-
-//	float x = xt + (zc-zt)*tgx;
-//	float y = yt + (zc-zt)*tgy;
 
 	float tgteta = TMath::Sqrt(tgx*tgx+tgy*tgy);
 	*teta = TMath::ATan(tgteta);
@@ -238,6 +233,115 @@ int MY_LFIT( float *X, float *Y, int L, int KEY, float &A, float &B,float &erA, 
 }
 
 //________________________________________________________________________
+
+TClonesArray* Smoothing(EdbView *v)
+{
+	TClonesArray *t = new TClonesArray("EdbFrame");
+	EdbFrame *fpp=0,*fpred=0,*f=0,*fsucc=0,*fss=0;
+	int nFrame = v->GetNframes();
+	for (int i=0; i<nFrame; i++) {
+		int Nclpp,Nclp,Ncl,Ncls,Nclss;
+		if (i>1) {
+			fpp = (EdbFrame *)(v->GetFrames()->At(i-2));
+			Nclpp = fpp->GetNcl();
+		}
+		else Nclpp = 0;
+		if (i>0) {
+			fpred = (EdbFrame *)(v->GetFrames()->At(i-1));
+			Nclp = fpred->GetNcl();
+		}
+		else Nclp = 0;
+		f = (EdbFrame *)(v->GetFrames()->At(i));
+		Ncl = f->GetNcl();
+		if (i<nFrame-1) {
+			fsucc = (EdbFrame *)(v->GetFrames()->At(i+1));
+			Ncls = fsucc->GetNcl();
+		}
+		else Ncls = 0;
+		if (i<nFrame-2) {
+			fss = (EdbFrame *)(v->GetFrames()->At(i+2));
+			Nclss = fss->GetNcl();
+		}
+		else Nclss = 0;
+		int ncl = (Nclpp+2*Nclp+3*Ncl+2*Ncls+Nclss)/9;
+		new((*t)[i]) EdbFrame(f->GetID(),f->GetZ(),ncl,f->GetNpix());
+//		h2->Fill(f->GetZ(),ncl);
+//		t->Add(new EdbFrame(f->GetID(),f->GetZ(),ncl,f->GetNpix()));
+	}
+	return t;
+}
+//________________________________________________________________________
+
+float min(TClonesArray *t) {
+
+int num = t->GetEntries();
+//cout<<num<<endl;
+float d,z;
+float dmin = ((Deriv *)(t->At(0)))->GetD();
+float zmin = ((Deriv *)(t->At(0)))->GetZ();
+//cout<<" "<<zmin<<" "<<dmin<<endl;
+for (int i=1; i<num; i++) {
+    d=((Deriv *)(t->At(i)))->GetD();
+    z=((Deriv *)(t->At(i)))->GetZ();
+//    cout<<" "<<z<<" "<<d<<" "<<endl;
+    if (d<dmin) {
+	zmin=z;
+	dmin=d;
+    }
+}
+//cout<<endl;
+return zmin;
+}
+
+//________________________________________________________________
+float max(TClonesArray *t) {
+
+int num = t->GetEntries();
+float d,z;
+float dmax = ((Deriv *)(t->At(0)))->GetD();
+float zmax = ((Deriv *)(t->At(0)))->GetZ();
+for (int i=1; i<num; i++) {
+    d=((Deriv *)(t->At(i)))->GetD();
+    z=((Deriv *)(t->At(i)))->GetZ();
+    if (d>dmax) {
+	zmax=z;
+	dmax=d;
+    }
+}
+return zmax;
+}
+//________________________________________________________________________
+
+void PreciseBasePosition(float zmin, float zmax, TClonesArray *dc, float &zup, float &zdown)
+{
+	TH1F *h1min = new TH1F("h1min","h1min",20,zmin-5.,zmin+5.);
+	TH1F *h1max = new TH1F("h1max","h1max",20,zmax-5.,zmax+5.);
+	float z,d;
+	Deriv *D=0;
+	int N=dc->GetEntries();
+	for (int i=0; i<N; i++) {
+		D=(Deriv *)(dc->At(i));
+		z=D->GetZ();
+		d=D->GetD();
+		if (TMath::Abs(z-zmin)<5.) h1min->Fill(z,d);
+		if (TMath::Abs(z-zmax)<5.) h1max->Fill(z,d);
+	}
+//	h1min->Fit("gaus","Q0");
+//	h1max->Fit("gaus","Q0");
+//	TF1 *fmin = h1min->GetFunction("gaus");
+//	TF1 *fmax = h1max->GetFunction("gaus");
+//	error->Fill(fmin->GetParameter(2));
+//	error->Fill(fmax->GetParameter(2));
+//	zdown = fmax->GetParameter(1);
+//	zup = fmin->GetParameter(1);
+	zdown = h1max->GetMean();
+	zup = h1min->GetMean();
+//	error->Fill(h1max->GetRMS());
+//	error->Fill(h1min->GetRMS());
+	delete h1min;
+	delete h1max;
+}
+//________________________________________________________________________
 //========================================================================
 track::track()
 {
@@ -263,6 +367,7 @@ track::~track()
 TBitView::TBitView()
 {
 	ZBase=0.;
+	delta = 1.6;
 //	NumberOfLayers=0;
 	TBitArray = new TObjArray();
 }
@@ -271,6 +376,7 @@ TBitView::TBitView()
 TBitView::TBitView(float z, float bs)
 {
 	ZBase = z;
+	delta = 1.6;
 //	NumberOfLayers = 0;
 	bitSize = bs;
 	TBitArray = new TObjArray();
@@ -298,42 +404,108 @@ TBitMatrix* TBitView::GetLayer(int n)
 	else return NULL;
 }
 //________________________________________________________________________
-void TBitView::FillBitView(EdbView *v, float s, float Xmin, float Xmax, float Ymin, float Ymax)
+void TBitView::FillBitView(EdbView *v, float sx, float sy, float Xmin, float Xmax, float Ymin, float Ymax, int inside, int rep)
 {
-	long xs = (Xmax-Xmin)/bitSize +1;
-	long ys = (Ymax-Ymin)/bitSize +1;
+	int i;
+	long xs = (long)((Xmax-Xmin)/bitSize +1);
+	long ys = (long)((Ymax-Ymin)/bitSize +1);
+// added at 31.01.2005 //////////////////////////////////////////////
+	{
+		EdbFrame *f=0;
+		EdbFrame *fpred=0;
+		EdbFrame *fsuc=0;
+		TClonesArray *dc = new TClonesArray("Deriv");
+		Deriv *d=new Deriv();
+		float zmin,zmax;
+
+		TClonesArray* t = Smoothing(v);
+		int nFrame = t->GetEntries();
+//    printf(" View: %d of %d   \n",j+jj,nEntries);
+		for (int ifr=0; ifr<nFrame; ifr++) {
+//	printf(" Field:%d of %d;   ",ifr,nFrame);
+			f = (EdbFrame *)(t->At(ifr));
+			if (ifr==0) fpred=NULL;
+			else fpred = (EdbFrame *)(t->At(ifr-1));
+			if (ifr==nFrame-1) fsuc=NULL;
+			else fsuc = (EdbFrame *)(t->At(ifr+1));
+//	d = new Deriv();
+//	printf(" deriv=%f\n",
+			d->derivate(fpred,f,fsuc);
+//		d2->Fill(d->GetZ(),d->GetD());
+//        tree->Fill();
+//	dc->Add(d);
+//	fc->Add(f);
+//	delete d;
+			new((*dc)[ifr]) Deriv(*d);
+//		new((*fc)[ifr]) EdbFrame(*f);
+    	}
+		zmin=min(dc);
+		zmax=max(dc);
+		if (v->GetNframesTop()) {
+			PreciseBasePosition(zmin,zmax,dc,Z1,Z2);
+			if ((Z1-Z2)<30||(Z1-Z2)>60) {
+				printf("!!!!!!!! dztop=%f, z1=%f, z2=%f\n",Z1-Z2,Z1,Z2);
+				Z1 = v->GetZ1();
+				Z2 = v->GetZ2();
+			}
+		}
+		else {
+			PreciseBasePosition(zmin,zmax,dc,Z3,Z4);
+			if ((Z3-Z4)<30||(Z3-Z4)>60) {
+				printf("!!!!!!!! dzbot=%f, z3=%f, z4=%f\n",Z3-Z4,Z3,Z4);
+				Z3 = v->GetZ3();
+				Z4 = v->GetZ4();
+			}
+		}
+//	printf("zmin=%f, zmax=%f, dif=%f \n",zmin,zmax,zmax-zmin);
+//    tree->Fill();
+		dc->Delete();
+		t->Delete();
+		delete d;
+		delete dc;
+		delete t;
+	}
+/////////////////////////////////////////////////////////////////////////////// 31.01.2005
 	TClonesArray* frames = v->GetFrames();
-	TClonesArray* clusters = v->GetClusters();
+	//	TClonesArray* clusters = v->GetClusters();
 	EdbFrame* f = 0;
 	EdbCluster* c = 0;
 	int nframes = v->GetNframes();
 	int nclusters = v->Nclusters();
-	int NumberOfLayers = nframes;
+//	int NumberOfLayers = nframes;
 	float zmin = ((EdbFrame *)(frames->At(0)))->GetZ();
 	float zmax = zmin;
-	int i;
-	for (i=0; i<nframes; i++) {
+	for (i=0; i<nframes; i=i+rep) {
 		f = (EdbFrame *)(frames->At(i));
+		if (inside)
+			if (!(f->GetZ()>((v->GetNframesTop())?(Z2+delta):(Z4+delta))&&
+				f->GetZ()<((v->GetNframesTop())?(Z1-delta):(Z3-delta)))) continue;
 		if (zmin>f->GetZ()) zmin = f->GetZ();
 		if (zmax<f->GetZ()) zmax = f->GetZ();
         TBitMatrix* TBit = new TBitMatrix(xs,ys,f->GetZ());
 		TBitArray->Add(TBit);
 //		delete TBit;
 	}
+	cout<<GetNumberOfLayers()<<endl;
 	for (i=0; i<nclusters; i++) {
 		int j;
+		int flag = false;
 		c = v->GetCluster(i);
 		float xc = c->GetX();
 		float yc = c->GetY();
 		if (In(xc,yc,Xmin,Xmax,Ymin,Ymax)) {
-			for (j=0; j<NumberOfLayers; j++) {
+			for (j=0; j<GetNumberOfLayers(); j++) {
 //				cout<<c->GetZ()<<" "<<GetLayer(j)->GetZ()<<endl;
-				if (c->GetZ()==GetLayer(j)->GetZ()) break;
+				if (c->GetZ()==GetLayer(j)->GetZ()) {
+					flag = true;
+					break;
+				}
 			}
-			long xi = (xc-Xmin)/bitSize;
-			long yi = (yc-Ymin)/bitSize;
+			if (!flag) continue;
+			long xi = (long)((xc-Xmin)/bitSize);
+			long yi = (long)((yc-Ymin)/bitSize);
 			float area = c->GetArea();
-			GetLayer(j)->SetBit(xi,yi,area*s*s/(bitSize*bitSize));
+			GetLayer(j)->SetBit(xi,yi,(int)(area*sx*sy/(bitSize*bitSize)));
 		}
 	}
 /////////////////////// not needed //////////////////
@@ -346,8 +518,10 @@ void TBitView::FillBitView(EdbView *v, float s, float Xmin, float Xmax, float Ym
  		_getch();
 	}
 *///////////////////////////////////
-	if (c->GetSide()) ZBase = zmax;
-	else ZBase = zmin;
+	ZBase = (v->GetNframesTop())?(Z2):(Z3);
+/*	if (c->GetSide()) ZBase = v->GetZ3();
+	else ZBase = v->GetZ2();
+	*/
 }
 //________________________________________________________________________
 //========================================================================
@@ -423,15 +597,15 @@ TByteMatrix* TBinTracking::GetElement(double tgx, double tgy)
 			if ((abs(Tgx-tgx)<=Tgstep)&&(abs(Tgy-tgy)<=Tgstep)) return TByte;
 		}
 	}
-	else return NULL;
+	return NULL;
 }
 //________________________________________________________________________
 
 void TBinTracking::FillByteArray(TBitView *Tv)
 {
 	ZBase = Tv->ZBase;
-	long tgxi = (Tgxmax-Tgxmin)/Tgstep +1;
-	long tgyi = (Tgymax-Tgymin)/Tgstep +1;
+	long tgxi = (long)((Tgxmax-Tgxmin)/Tgstep +1);
+	long tgyi = (long)((Tgymax-Tgymin)/Tgstep +1);
 	long xs, ys;
 	TBitMatrix *TBit = 0;
 	Tv->GetLayer(0)->GetSize(&xs,&ys);
@@ -442,8 +616,8 @@ void TBinTracking::FillByteArray(TBitView *Tv)
 			TByteMatrix *TByte = new TByteMatrix(xs,ys,tgx,tgy);
 			for (long k=0; k<Tv->GetNumberOfLayers(); k++) {
 				TBit = Tv->GetLayer(k);
-				long shiftX = (TBit->GetZ()-ZBase)*tgx/Tv->bitSize;
-				long shiftY = (TBit->GetZ()-ZBase)*tgy/Tv->bitSize;
+				long shiftX = (long)((TBit->GetZ()-ZBase)*tgx/Tv->bitSize);
+				long shiftY = (long)((TBit->GetZ()-ZBase)*tgy/Tv->bitSize);
 				TBit->MoveMatrix(-shiftY,-shiftX);
 				*TByte += *TBit;
 			}
@@ -486,10 +660,10 @@ void TBinTracking::ImproveTracksArray(TObjArray *tracks, int thr, float accept)
 	int xn[8] = { 1, -1, 0,  0, 1,  1, -1, -1 }; //pixel 3x3 suburbs
 	int yn[8] = { 0,  0, 1, -1, 1, -1,  1, -1 };
 
-	long nc = (Tgymax-Tgymin)/Tgstep;
-	long nr = (Tgxmax-Tgxmin)/Tgstep;
+	long nc = (long)((Tgymax-Tgymin)/Tgstep);
+	long nr = (long)((Tgxmax-Tgxmin)/Tgstep);
 	
-	int pic,pp,pic1;
+	int pic=0,pic1=0;
 
 //	printf("hist: %d %d\n",nc,nr);
 //  int npeaks=0;
@@ -502,7 +676,7 @@ void TBinTracking::ImproveTracksArray(TObjArray *tracks, int thr, float accept)
 			float tgy1 = Tgymin + (ic+1)*Tgstep;
 			int nmax = -1;
 			for (int i=0; i<tracks->GetEntries(); i++) {
-				if (tr = (track *)(tracks->At(i)))
+			  if ( (tr = (track *)(tracks->At(i))) )
 				if (In(tr->tgx,tr->tgy,tgx0,tgx1,tgy0,tgy1)) {
 					nmax = i;
 					pic = tr->height;
@@ -557,8 +731,8 @@ NEXT:
 }
 //________________________________________________________________________
 
-EdbView* TBinTracking::AdoptSegment(EdbView* view, float cf, float Xmin, float Xmax, float Ymin, float Ymax, float bs,
-		int thr, float accept, int inside, int excludeCommonClusters)
+EdbView* TBinTracking::AdoptSegment(EdbView* view, float cfx, float cfy, float Xmin, float Xmax, float Ymin, float Ymax, float bs,
+		int thr, float accept, int inside, int excludeCommonClusters, int rep)
 {
 	EdbView *vmod =	view;		
 //	EdbView *vmod = new EdbView(*view);
@@ -567,7 +741,7 @@ EdbView* TBinTracking::AdoptSegment(EdbView* view, float cf, float Xmin, float X
 	TObjArray *SAr = new TObjArray();
 	TBitView* Tv = new TBitView();
 	Tv->bitSize = bs;
-	Tv->FillBitView(vmod,cf,Xmin,Xmax,Ymin,Ymax);
+	Tv->FillBitView(vmod,cfx,cfy,Xmin,Xmax,Ymin,Ymax,inside,rep);
 	FillByteArray(Tv);
 	TObjArray* tracks = FindBinTracks(thr);
 /////////////////// testing ////////////////////
@@ -597,15 +771,28 @@ CYCLE:
 		TrackAngle(*tr,&teta,&phi);
 */////////////////////////////////////////////////////////////////////////
 		for (long i=0; i<nclusters; i++) {
+			int flag = false;
 			cl = vmod->GetCluster(i);
 			float xc = cl->GetX();
 			float yc = cl->GetY();
 			float zc = cl->GetZ();
-			if (In(xc,yc,Xmin,Xmax,Ymin,Ymax)&&SatCondAccept(tr,xc,yc,zc,dX,dY,dZ,accept)&&
-				(!(inside)||
-				((zc>(view->GetNframesTop()?view->GetZ2():view->GetZ4()))
-				&&(zc<(view->GetNframesTop()?view->GetZ1():view->GetZ3()))))) {
-//printf("distance=%f\n",Distance(cl->GetX(),	cl->GetY(),cl->GetZ(),*tr));
+			if (In(xc,yc,Xmin,Xmax,Ymin,Ymax)&&SatCondAccept(tr,xc,yc,zc,dX,dY,dZ,accept)) {
+/*				(!(inside)||
+				((zc>(view->GetNframesTop()?Tv->GetZ2():Tv->GetZ4()))
+				&&(zc<(view->GetNframesTop()?Tv->GetZ1():Tv->GetZ3()))))) {
+*/
+				//printf("distance=%f\n",Distance(cl->GetX(),	cl->GetY(),cl->GetZ(),*tr));
+				//if (rep!=1) {
+				if (inside) {
+					for (int j=0; j<Tv->GetNumberOfLayers(); j++) {
+//				cout<<c->GetZ()<<" "<<GetLayer(j)->GetZ()<<endl;
+						if (zc==Tv->GetLayer(j)->GetZ()) {
+							flag = true;
+							break;
+						}
+					}
+					if (!flag) continue;
+				}
 /////////////////////// added at 23.09.2004 //////////////////////////////
 				if (int last = s->GetNelements()) {
 					EdbCluster *clsucc = ((EdbCluster *)(s->GetElements()->Last()));
@@ -649,7 +836,7 @@ CYCLE:
 			if (((pulsinit!=puls)||(res!=resinit))&&cyc<cyclelimit) {
 				pulsinit = puls;
 				resinit = res;
-				float zl = side?maxz:minz;
+				float zl =	ZBase;			//side?maxz:minz;
 				tr->tgx = Ax;
 				tr->tgy = Ay;
 				tr->z = zl;
@@ -773,7 +960,7 @@ TH2F* TBinTracking::Histo(double tgx,double tgy)
 	if ((tbyte = GetElement(tgx,tgy)) == NULL) return 0;
 	long xs, ys;
 	tbyte->GetSize(&xs,&ys);
-	printf("xs=%d, ys=%d\n",xs,ys);
+	printf("xs=%ld, ys=%ld\n",xs,ys);
 	TH2F* h2 = new TH2F("h2","h2",xs,0.,xs,ys,0., ys);
 	for (long j=0; j<ys; j++) {
 		for (long i=0; i<xs; i++) {

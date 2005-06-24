@@ -5,7 +5,7 @@ include ../../config/RootDef.mk
 
 NAME          = bmatrix
 
-headers       = bitmatrix.h basematrix.h bytematrix.h bitview.h
+headers       = bitmatrix.h basematrix.h bytematrix.h bitview.h deriv.h
 
 PROJECT_LIBS = $(PROJECT_LIBS) -lEdb 
 

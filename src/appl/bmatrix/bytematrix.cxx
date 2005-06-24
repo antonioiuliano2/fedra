@@ -10,51 +10,51 @@
 ClassImp(TByteMatrix);
 //___________________________________________________________________
 
-TByteMatrix::TByteMatrix() {
+TByteMatrix::TByteMatrix():TBaseMatrix() {
 //	TBaseMatrix();
 /*	xSize=0;
 	ySize=0;
 	byteSize=0;
 	mas = NULL;
-*/
+
 	xSize=0;
 	ySize=0;
 	byteSize=0;
 	mas = NULL;
 	shiftX=0;
 	shiftY=0;
-/*	position = 0;
+	position = 0;
 	NonZeroPoints = new TObjArray();
 */
 }
 
 //___________________________________________________________________
 
-TByteMatrix::TByteMatrix(long x, long y) {
+TByteMatrix::TByteMatrix(long x, long y):TBaseMatrix(x,y) {
 //	TByteMatrix();
 /*	xSize = x;
 	ySize = y;
 	long bitSize = xSize*ySize;
 	byteSize = (long)(bitSize/8) + (bitSize%8)?1:0;
 	mas = (unsigned char *)calloc(byteSize,sizeof(unsigned char));
-*/
+
 	Init(x,y);
-}
+*/}
 
 //___________________________________________________________________
-TByteMatrix::TByteMatrix(long x_size, long y_size, double tgx, double tgy)
+	TByteMatrix::TByteMatrix(long x_size, long y_size, double tgx, double tgy):TBaseMatrix(x_size,y_size)
 {
-	Init(x_size,y_size);
+//	Init(x_size,y_size);
 	Tgx = tgx;
 	Tgy = tgy;
 }
 //___________________________________________________________________
-TByteMatrix::TByteMatrix(TBaseMatrix& T)
+TByteMatrix::TByteMatrix(TBaseMatrix& T):TBaseMatrix(T)
 {
-	long xs,ys;
+/*	long xs,ys;
 	T.GetSize(&xs,&ys);
 	Init(xs,ys);
-}
+*/}
 
 //___________________________________________________________________
 

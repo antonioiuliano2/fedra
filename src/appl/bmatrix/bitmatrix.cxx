@@ -11,50 +11,50 @@
 ClassImp(TBitMatrix);
 //___________________________________________________________________
 
-TBitMatrix::TBitMatrix() {
+TBitMatrix::TBitMatrix():TBaseMatrix() {
 //	TBaseMatrix();
 /*	xSize=0;
 	ySize=0;
 	byteSize=0;
 	mas = NULL;
-*/
+
 	xSize=0;
 	ySize=0;
 	byteSize=0;
 	mas = NULL;
 	shiftX=0;
-/*	position = 0;
+	position = 0;
 	NonZeroPoints = new TObjArray();
-*/
+
 	shiftY=0;
-
+*/
 }
-
 //___________________________________________________________________
 
-TBitMatrix::TBitMatrix(long x, long y) {
+TBitMatrix::TBitMatrix(long x, long y):TBaseMatrix(x,y) {
 //	TBitMatrix();
 /*	xSize = x;
 	ySize = y;
 	long bitSize = xSize*ySize;
 	byteSize = (long)(bitSize/8) + (bitSize%8)?1:0;
 	mas = (unsigned char *)calloc(byteSize,sizeof(unsigned char));
-*/
+
 	Init(x,y);
-}
+*/}
 
 //___________________________________________________________________
-TBitMatrix::TBitMatrix(long x_size, long y_size, float z)
+TBitMatrix::TBitMatrix(long x_size, long y_size, float z):TBaseMatrix(x_size,y_size)
 {
-	Init(x_size, y_size);
+//	Init(x_size, y_size);
 	Z=z;
 }
 //___________________________________________________________________
-TBitMatrix::TBitMatrix(TBaseMatrix& T)
+TBitMatrix::TBitMatrix(TBaseMatrix& T):TBaseMatrix(T)
 {
-	long xs,ys;
+/*	long xs,ys;
 	T.GetSize(&xs,&ys);
 	Init(xs,ys);
+	*/
 }
 
 //___________________________________________________________________
@@ -135,7 +135,7 @@ void TBitMatrix::SetBit(long i, long j, int area)		//area in bits!!
 {
 	if (area<=1) SetBit(i,j);
 	else {
-		int sarea = sqrt(area*1.);
+		int sarea = (int)(sqrt((double)area));
 		long lbx = i - sarea/2;
 		lbx = (lbx>=0)?lbx:0;
 		long rbx = i + sarea/2;
@@ -178,7 +178,7 @@ void TBitMatrix::ClearBit(long i, long j, int area)		//area in bits!!!
 {
 	if (area<=1) ClearBit(i,j);
 	else {
-		int sarea = sqrt(area*1.);
+		int sarea = (int)(sqrt((double)area));
 		long lbx = i - sarea/2;
 		lbx = (lbx>=0)?lbx:0;
 		long rbx = i + sarea/2;

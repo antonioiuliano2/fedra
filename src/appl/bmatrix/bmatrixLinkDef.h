@@ -10,5 +10,6 @@
 #pragma link C++ class TBaseMatrix;
 #pragma link C++ class TBitView;
 #pragma link C++ class TBinTracking;
+#pragma link C++ class Deriv;
 
 #endif

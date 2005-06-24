@@ -42,12 +42,14 @@ TBaseMatrix::TBaseMatrix()
 
 TBaseMatrix::TBaseMatrix(long ix_size, long iy_size)
 {
+	mas=NULL;
 	Init(ix_size,iy_size);
 }
 
 //___________________________________________________________________
 TBaseMatrix::TBaseMatrix(TBaseMatrix& iT)
 {
+	mas=NULL;
 	long ixs,iys;
 	iT.GetSize(&ixs,&iys);
 	Init(ixs,iys);
