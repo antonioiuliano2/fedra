@@ -249,7 +249,7 @@ int EdbView::AttachClustersToSegments()
 //______________________________________________________________________________
 int EdbView::AttachClustersToSegmentsFast()
 {
-  // assume that cl->GetSegment() == segment entry :
+  // assume that cluster->GetSegment() == segment entry :
 
   EdbCluster *cl=0;
   int ncl = eClusters->GetLast()+1;
@@ -276,7 +276,7 @@ int EdbView::AttachClustersToSegmentsFast()
     if(seg->GetNelements()>seg->GetPuls()) {
       printf("AttachClustersToSegmentsFast: ncl(%d) > puls(%d)    %d\n", 
 	     seg->GetNelements(),seg->GetPuls(), seg->GetID());
-      printf("i,iseg = %d %d\n",i,iseg);
+      printf("Area: %d View: %d  Segment: %d, i,iseg = %d %d\n",GetAreaID(), GetViewID(), seg->GetID(), i,iseg);
     }
 
   }
