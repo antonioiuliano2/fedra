@@ -2230,6 +2230,9 @@ void EdbDataProc::LinkTracks( int alg, float p )
 
   //if(merge>0) ali->MergeTracks(merge);
 
+  float mass=0.139;                    //TODO!
+  ali->FitTracks( p, mass );         // is important to call it before MakeTracksTree!
+
   MakeTracksTree(ali);
 }
 
@@ -2254,6 +2257,9 @@ void EdbDataProc::LinkTracksC( int alg, float p )
 
   ali->SetCouplesPeriodic(2,3);
   LinkTracksWithFlag( ali, p, 0.01, 2, 6, 3 );
+
+  float mass=0.139;                    //TODO!
+  ali->FitTracks( p, mass );         // is important to call it before MakeTracksTree!
 
   MakeTracksTree(ali);
 }
@@ -2518,15 +2524,15 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
-      //tr1->AddSegment( new EdbSegP(*s1) );
       pat = ali.GetPattern( s1->PID() );
       if(!pat) { printf("no pattern with pid %d\n",s1->PID()); break;}
-      pat->AddSegment(*s1 );
-      tr1->AddSegment( pat->GetSegmentLast() );
+
+      tr1->AddSegment( pat->AddSegment(*s1 ) );
+      tr1->AddSegmentF( new EdbSegP(*((EdbSegP*)(segf->At(i)))) );
     }
     tr1->SetSegmentsTrack(tr1->ID());
     tr1->SetCounters();
-    tr1->FitTrackKFS(true);
+    //tr1->FitTrackKFS(true);
     ali.AddTrack(tr1);
   }
   return nlst;
