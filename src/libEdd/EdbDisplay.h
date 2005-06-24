@@ -20,24 +20,24 @@ class EdbDisplay: public EdbDisplayBase {
 
  private:
 
-  TObjArray *eArrSegP;     // array of segments to be drawn
   Int_t      eDrawTracks;  // tracks drawing option
 
   Int_t      eDrawVertex;  // vertex drawing option
 
-  TArrayI* eColors;
-  TArrayF* eDZs;
+  TArrayI    *eColors;
+  TArrayF    *eDZs;
 
-  TObjArray *eArrSegPSave;     // saved array of segments to be drawn
   TGNumberEntry *fNumericEntries[3];
 
  public:
 
   EdbVertexRec *eVerRec;
+  TObjArray *eArrSegP;     // array of segments to be drawn
   TObjArray *eArrTr;       // array of tracks to be drawn
   TObjArray *eArrV;        // array of vertexes to be drawn
-  TObjArray *eArrVSave;    // saved array of vertexes to be drawn
+  TObjArray *eArrSegPSave;     // saved array of segments to be drawn
   TObjArray *eArrTrSave;   // saved array of tracks to be drawn
+  TObjArray *eArrVSave;    // saved array of vertexes to be drawn
   EdbVertex *eWorking;     // working vertex
   EdbVertex *eVertex;      // current selected vertex
   EdbVertex *ePrevious;    // saved previous vertex modifications

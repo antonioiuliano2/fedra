@@ -272,6 +272,7 @@ void EdbDisplayBase::CreateCanvasVTX()
     fCanvasVTX = new TCanvas(CanvasVTXName, "Vertex Data Display",
 			     -xpos, ypos, 640, 350);
     fCanvasVTX->ToggleEventStatus();
+    for (int i=0; i<50; i++) fRemBut[i] = 0;
   }
   if (fHdrVTX)
   {
@@ -1011,8 +1012,11 @@ void Edb3DView::ExecuteRotateView(Int_t event, Int_t px, Int_t py)
 
    // all coordinate transformation are from absolute to relative
 
-   if (!fRotateMode) return;
-
+   if (!fRotateMode)
+   {
+	gPad->SetCursor(kPointer);
+	return;
+   }
    if (!gPad->IsEditable()) return;
    gPad->AbsCoordinates(kTRUE);
 
