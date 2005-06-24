@@ -1576,7 +1576,7 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined\n"); return 0;}
 
-  EdbTrackP *tr  = 0;
+  EdbTrackP *tr  = 0, *trown = 0;
   const EdbSegP   *ss  = 0;
   const EdbSegP   *se  = 0;
   int 	    nn   = 0;
@@ -1591,10 +1591,12 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
 	    zseg = s->Z();
 	    // Select tracks neigborhood
 	    an.Clear();
+	    if (s->Track() >= 0)
+		arrt->Add((trown = (EdbTrackP *)ePVR->eTracks->At(s->Track()))); 
 	    int nvn = SelSegNeighbor(s, 0, RadMax, Dpat, &an); 
 	    for (int it=0; it<nvn; it++) {
 		    tr = (EdbTrackP*)(an.At(it));
-		    if (tr)
+		    if (tr && tr != trown)
 		    {
 			    ss = tr->TrackZmin();
 			    distxs = (xseg - ss->X());
