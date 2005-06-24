@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
       return 0;
     };
 
-  int doCCD=0, doLink=0, doAlign=0, doTrack=0, 
+  int doCCD=0, doLink=0, doAlign=0, doTrack=0, doTrackCarbonium=0,
     doFine=0, doAngles=0, doRaw=0, noUpdate=0;
 
   float doPropagation=-1;
@@ -35,35 +35,35 @@ int main(int argc, char* argv[])
   for(int i=1; i<argc-1; i++ ) {
     char *key  = argv[i];
 
-    if(!strcmp(key,"-l"))                doLink=1;
-
-    if(!strncmp(key,"-a",2) && strcmp(key,"-ang") ) {
+    if     (!strcmp(key,"-ccd"))  doCCD    =1;
+    else if(!strcmp(key,"-ang"))  doAngles =1;
+    else if(!strcmp(key,"-rt"))   doRaw    =1;
+    else if(!strcmp(key,"-nu"))   noUpdate =1;
+    else if(!strcmp(key,"-l"))    doLink   =1;
+    else if(!strncmp(key,"-a",2) && strcmp(key,"-ang") ) {
       if(strlen(key)>2)
 	sscanf(key+2,"%d",&doAlign);
       if(doAlign==0)                     doAlign=1;
     }
-
-    if(!strncmp(key,"-f",2)) {
+    else if(!strncmp(key,"-f",2)) {
       if(strlen(key)>2)
 	sscanf(key+2,"%d",&doFine);
       if(doFine==0)                     doFine=1;
     }
-
-    if(!strncmp(key,"-t",2)) {
+    else if(!strncmp(key,"-tc",3)) {
+      if(strlen(key)>3)
+	sscanf(key+2,"%d",&doTrackCarbonium);
+      if(doTrack==0)                    doTrackCarbonium=1;
+    }
+    else if(!strncmp(key,"-t",2)) {
       if(strlen(key)>2)
 	sscanf(key+2,"%d",&doTrack);
       if(doTrack==0)                     doTrack=1;
     }
-
-    if(!strncmp(key,"-p",2)) {
+    else if(!strncmp(key,"-p",2)) {
       if(strlen(key)>2)
 	sscanf(key+2,"%f",&doPropagation);
     }
-
-    if(!strcmp(key,"-ccd"))  doCCD=1;
-    if(!strcmp(key,"-ang"))  doAngles=1;
-    if(!strcmp(key,"-rt"))   doRaw=1;
-    if(!strcmp(key,"-nu"))   noUpdate=1;
   }
 
   printf("%d %d %d %d %d %d %d %f %d %s\n",
@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
   if(doAlign)            { proc.Align(doAlign);           doAlign=0; }
   if(doAngles)           { proc.CorrectAngles();          doAngles=0; }
   if(doTrack)            { proc.LinkTracks(doTrack, doPropagation); doTrack=0; doPropagation=-1; }
+  if(doTrackCarbonium)   { proc.LinkTracksC(doTrackCarbonium, doPropagation); doTrackCarbonium=0; doPropagation=-1; }
   if(doFine)             { proc.FineAlignment(doFine);    doFine=0; }
   if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0; }
 
