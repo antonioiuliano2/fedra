@@ -231,7 +231,9 @@ class EdbPVRec : public EdbPatternsVolume {
   void AddCouple(EdbPatCouple *c) { ePatCouples->Add(c); }
   void SetCouples();
   void ResetCouples();
+  void DeleteCouples() { if(ePatCouples) ePatCouples->Delete(); }
   void SetCouplesAll();
+  void SetCouplesPeriodic(int istart, int iperiod);
 
   float Chi2Max( ) const { return eChi2Max; }
   void SetChi2Max(float chi)
@@ -249,9 +251,11 @@ class EdbPVRec : public EdbPatternsVolume {
   float Chi2Fast(EdbSegP &s1, EdbSegP &s2);
   int   MergeTracks(int maxgap=2);
   int   MergeTracks1(int maxgap);
-  int   MakeTracks(int nsegments=2);
+  int   MakeTracks(int nsegments=2, int flag=0);
   void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0,
 		  int design=0);
+  int  Ntracks() const { if(eTracks) return eTracks->GetEntriesFast(); 
+                         else return 0; }
 
   int    LinkSlow();
   int    Link();
@@ -283,6 +287,8 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetSegmentErrors( EdbSegP &seg );
   void SetSegmentProbability( EdbSegP &seg );
 
+  EdbTrackP* GetTrack(int i) const { if(eTracks) return (EdbTrackP*)(eTracks->At(i)); else return 0; }
+
   void AddTrack(EdbTrackP *track) {
     if(!eTracks) eTracks = new TObjArray();
     eTracks->Add(track);
@@ -296,6 +302,8 @@ class EdbPVRec : public EdbPatternsVolume {
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
   int ExtractDataVolumeSegAll( TObjArray &arr );
+
+  int CombTracks( int nplmin, int ngapMax, float probMin=0.01 );
 
   int PropagateTracks(int nplmax, int nplmin, float probMin = 0.05,
 		      int ngapMax = 3, int design = 0 );
@@ -312,8 +320,6 @@ class EdbPVRec : public EdbPatternsVolume {
 
   static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
 			  const float X0, const float ProbMin, float &prob );
-
-  void ClearPropagation(int design = 0);
 
   int MakePatternsFromTracks();
 

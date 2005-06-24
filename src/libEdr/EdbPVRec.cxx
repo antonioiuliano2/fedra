@@ -15,12 +15,7 @@
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
 #include "EdbMath.h"
-/*
-#include "vt++/VtTrack.hh"
-#include "vt++/VtVertex.hh"
-#include "vt++/VtRelation.hh"
-#include "vt++/VtKalman.hh"
-*/
+
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
 #include "vt++/VtDistance.hh"
@@ -883,6 +878,7 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
   int npat = pat->N();
   for(int i=0; i<npat; i++ ) {
     p = pat->GetSegment(i);
+    if( p->Track() >-1 )      continue;       //to check side effects!!!
     tx = p->TX();
     ty = p->TY();
     x  = p->X() + tx*dz;
@@ -922,6 +918,10 @@ EdbPVRec::~EdbPVRec()
   if(eTracks)         delete eTracks;
   if(eVTX)            delete eVTX;
   if(eTracksCell)     delete eTracksCell;
+  if (gROOT->GetListOfSpecials()->FindObject(this))
+    {
+      gROOT->GetListOfSpecials()->Remove(this);
+    }
 }
 
 ///______________________________________________________________________________
@@ -979,6 +979,8 @@ void EdbPVRec::SetOffsetsMax(float ox, float oy)
 //______________________________________________________________________________
 void EdbPVRec::SetCouples()
 {
+  // using already setted ID's of couples attach the patterns 
+
   EdbPatCouple *pc = 0;
   int ncp=Ncouples();
   for(int i=0; i<ncp; i++ ) {
@@ -1007,12 +1009,26 @@ void EdbPVRec::ResetCouples()
 //______________________________________________________________________________
 void EdbPVRec::SetCouplesAll()
 {
+  // form couples array for all available patterns ID's
+  SetCouplesPeriodic(0,1);
+}
+
+//______________________________________________________________________________
+void EdbPVRec::SetCouplesPeriodic(int istart, int iperiod)
+{
+  // istart:   start from pattern
+  // iperiod:  distance between patterns
+
+  DeleteCouples();
   EdbPatCouple *pc = 0;
   int npat=Npatterns();
+
+  if( istart<0 || istart>=npat-iperiod ) return;
+
   for(int i=0; i<npat; i++ ) GetPattern(i)->SetSegmentsPID();
-  for(int i=0; i<npat-1; i++ ) {
+  for(int i=istart; i<npat-iperiod; i+=iperiod ) {
     pc = new EdbPatCouple();
-    pc->SetID(i,i+1);
+    pc->SetID(i,i+iperiod);
     pc->SetCond(eScanCond);
     pc->SetOffset(0,0,0,0);
     pc->SetSigma(1,1,.003,.003);       //TODO: organise this sigmas
@@ -1796,49 +1812,7 @@ float EdbPVRec::Chi2Fast(EdbSegP &s1, EdbSegP &s2)
 		     dz , dx,dy, s2.TX()-s1.TX(), s2.TY()-s1.TY(),chi2 );
   return chi2;
 }
-//______________________________________________________________________________
-void EdbPVRec::ClearPropagation(int design)
-{
-    if (!eTracks) return;
-    float X0 =  GetScanCond()->RadX0();
-    EdbTrackP *tr = 0, *tr1 = 0;
-    EdbSegP *seg = 0;
-    int itr, iseg, ntr = 0, nseg = 0, trind = 0;
-    ntr = eTracks->GetEntries();
-    for (itr=0; itr<ntr; itr++)
-    {
-	tr = (EdbTrackP*)(eTracks->At(itr));
-	if (tr)
-	{
-	    if (tr->Flag() == -10)
-	    {
-		tr->SetFlag(0);
-		nseg = tr->N();
-		for (iseg=0; iseg<nseg; iseg++)
-		{
-		    seg = tr->GetSegment(iseg);
-		    if (seg)
-		    {
-			if ( (trind == seg->Track()) >= 0 )
-			{
-			    if (trind != itr)
-			    {
-				tr1 = (EdbTrackP*)(eTracks->At(trind));
-				if (tr1)
-				{
-				    seg->SetTrack(itr);
-				    tr1->RemoveSegment(seg);
-				    tr1->ClearF();
-				    tr1->FitTrackKFS(false, X0, design);
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-}
+
 //______________________________________________________________________________
 void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 {
@@ -1848,14 +1822,6 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
   float X0 =  GetScanCond()->RadX0();
   float pms = 0.;
   int nsegmatch = 0;
-
-  if (eVTX)
-  {
-    eVTX->Delete();
-    eVTX->Clear();
-  }
-
-  //ClearPropagation(design);
 
   EdbTrackP *tr = 0, *trg = 0;
   int ntr = eTracks->GetEntries();
@@ -1941,23 +1907,20 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 }
 
 //______________________________________________________________________________
-int EdbPVRec::MakeTracks(int nsegments)
+int EdbPVRec::MakeTracks(int nsegments, int flag)
 {
   // extract from index_table tracks longer then nsegments
   // and form tracks array
+  // assign the flag to the newly created tracks
+  // return the number of created tracks
 
-  if(eTracks)
-  {
-    eTracks->Delete();
-    eTracks->Clear();
-  }
-  else
-  {
-    eTracks  = new TObjArray();
-  }
-  printf("make tracks...\n");
+  int ntr0 = 0;
+  if( eTracks ) ntr0 = eTracks->GetEntries();
+  else   eTracks  = new TObjArray();
 
-  int         nseg, ntr=0, n0;
+  printf("make tracks (ntr0=%d)...\n",ntr0);
+
+  int         nseg, ntr=0;
   Long_t      vid=0;
   EdbSegP    *seg=0;
   EdbTrackP  *track = 0;
@@ -1973,18 +1936,20 @@ int EdbPVRec::MakeTracks(int nsegments)
 
     track->SetNpl( Pid(ct->At(nseg-1)->Value()) - Pid(ct->At(0)->Value()) +1 );
 
-    n0=0;
     for(int is=0; is<nseg; is++) {
       vid = ct->At(is)->Value();
       seg = GetSegment(vid);
-      //seg->SetPID( Pid(vid) );   //TODO check!!!
-      if(seg->Flag()<0) n0++;
       track->AddSegment(seg);
     }
-    track->SetN0(n0);
-    track->SetID(it);
     eTracks->Add(track);
     ntr++;
+  }
+
+  for(int i=ntr0; i<ntr0+ntr; i++) {
+    track = GetTrack(i);
+    track->SetID(i);
+    track->SetFlag(flag);
+    track->SetCounters();
   }
 
   printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
@@ -2237,44 +2202,38 @@ int EdbPVRec::SelectLongTracks(int nsegments)
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
-			      int ngapMax, int design)
+int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
 {
-  //  extrapolate incomplete tracks and update them with new segments
-  //
-  //  input: nplmax - the maximal length of the track to be continued
-  //  input: nplmin - the minimal length of the track to be continued
-
-  if (eVTX)
-  {
-    eVTX->Delete();
-    eVTX->Clear();
-  }
-
-  //ClearPropagation(design);
+  // eliminate crossing&overlapping tracks with multiple segments usage
+  // discard tracks with probability < probMin
 
   int ntr = eTracks->GetEntries();
-  printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
-	 ,ntr,nplmin,nplmax, ngapMax );
+  printf("Comb %d tracks, longer then %d; ngaps <= %d ...\n"
+	 ,ntr,nplmin, ngapMax );
+
+  int nseg=0, nsegtot=0;
+
+  // *** sort tracks by quality
 
   TIndexCell cn;  //"npl:prob:entry"
   Long_t v[3];
 
-  int nseg=0;
   EdbTrackP *tr=0;
-  for(int i=0; i<eTracks->GetEntriesFast(); i++) {
+  for(int i=0; i<ntr; i++) {
     tr = (EdbTrackP*)(eTracks->At(i));
     tr->SetID(i);
-    tr->SetFlag(0);
-    tr->SetNpl();
-    tr->SetN0(0);
-    tr->SetSegmentsTrack(-1);
+    tr->SetCounters();
+    nsegtot += tr->SetSegmentsTrack(-1);
     v[0]= -(tr->Npl());
     v[1]= (Long_t)((1.-tr->Prob())*100);
     v[2]= i;
     cn.Add(3,v);
   }
   cn.Sort();
+
+  printf("%d tracks with %d segments for processing...\n",ntr,nsegtot);
+
+  // *** set track ID for segments attached to
 
   TIndexCell *cp=0, *c=0;
   int nn=cn.GetEntries();
@@ -2290,6 +2249,8 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
       }
     }
   }
+
+  // discard bad tracks with flag -10
 
   cp=0; 
   c=0;
@@ -2307,18 +2268,98 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
   	if(tr->RemoveAliasSegments()>0){
-  	  if(tr->N()<nplmin)                  tr->SetFlag(-10);
-  	  else if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
+  	  if(tr->N()<nplmin)             tr->SetFlag(-10);
+  	  if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
   	}
 
       }
     }
   }
 
+  // discard tracks with low probability
+//   for(int i=0; i<ntr; i++) {
+//     tr = GetTrack(i);
+//     if(tr->Prob() < probMin) tr->SetFlag(-10);
+//   }
+
+  // release the segments and eliminate bad tracks from the tracks array
+
+  int trind;
+  EdbSegP *seg=0;
+  for(int i=0; i<ntr; i++) {
+    tr = GetTrack(i);
+    if(tr->Flag() != -10) continue;
+    nseg = tr->N();
+    for (int iseg=0; iseg<nseg; iseg++) {
+      seg = tr->GetSegment(iseg);
+      trind = seg->Track();
+      if ( trind  < 0 )   continue;                                // segment is already free
+      if ( GetTrack(trind)->Flag() == -10 ) seg->SetTrack(-1);     // release segment
+    }
+  }
+
+  for(int i=ntr-1; i>-1; i--) {
+    tr = GetTrack(i);
+    if(tr->Flag() != -10) continue;
+    eTracks->RemoveAt(i);
+    delete tr;
+  }
+  eTracks->Compress();
+
+  nsegtot = 0;
+  ntr = eTracks->GetEntries();
+  for(int i=0; i<ntr; i++) {
+    tr = GetTrack(i);
+    tr->SetID(i);
+    nsegtot += tr->SetSegmentsTrack();
+  }
+
+  printf("%d tracks with %d segments remaining\n",ntr,nsegtot);
+  return ntr;
+}
+
+///______________________________________________________________________________
+int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
+			      int ngapMax, int design)
+{
+  //  extrapolate incomplete tracks and update them with new segments
+  //
+  //  input: nplmax - the maximal length of the track to be continued
+  //  input: nplmin - the minimal length of the track to be continued
+
+//   if (eVTX)
+//   {
+//     eVTX->Delete();
+//     eVTX->Clear();
+//   }
+
+  //ClearPropagation(design);
+
+  int ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects
+
+  printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
+	 ,ntr,nplmin,nplmax, ngapMax );
+
+  if(ntr<1) return 0;
+
+  TIndexCell cn;  //"npl:prob:entry"
+  Long_t v[3];
+  int nseg=0;
+  EdbTrackP *tr=0;
+  for(int i=0; i<ntr; i++) {
+    tr = GetTrack(i);
+    v[0]= -(tr->Npl());
+    v[1]= (Long_t)((1.-tr->Prob())*100);
+    v[2]= i;
+    cn.Add(3,v);
+  }
+  cn.Sort();
+
   int nsegTot=0;
 
-  cp=0; 
-  c=0;
+  TIndexCell *cp=0, *c=0;
+  int nn=cn.GetEntries();
+
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
     if( -(cp->Value()) > nplmax )    continue;
@@ -2347,7 +2388,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
       }
     }
   }
-  printf("%d segments are attached after propagation\n",nsegTot);
+  printf("%d segments are attached after propagation\n\n",nsegTot);
   return nsegTot;
 }
 
@@ -2419,7 +2460,7 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
     tr.MakeSelector(ss,followZ);
     nsegTot++;
     ngap =0;
-    tr.SetFlag(tr.Flag()+1);
+    //    tr.SetFlag(tr.Flag()+1);            // to check side effects!
 
   GAP:
     if(++ngap>ngapMax) break;
