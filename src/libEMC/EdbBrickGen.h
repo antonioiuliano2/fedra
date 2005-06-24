@@ -72,7 +72,7 @@ class EdbBrickGen : public TObject {
 			   );
 
   void GeneratePatternsVolumeBT(EdbPatternsVolume &v);
-  void GeneratePatternsVolumeBT();
+  void GeneratePatternsVolumeBT(EdbPatternsVolume *v=0);
 
   void Print();
 

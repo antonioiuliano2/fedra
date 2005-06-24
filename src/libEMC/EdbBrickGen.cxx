@@ -133,12 +133,12 @@ void EdbBrickGen::GenerateOperaBrick( EdbBrickP &br,
 }
 
 //____________________________________________________________________________________
-void EdbBrickGen::GeneratePatternsVolumeBT()
+void EdbBrickGen::GeneratePatternsVolumeBT(EdbPatternsVolume *v)
 {
   // generate patterns corresponding to basetracks (1 pattern/plate)
 
   if(!ePVG)  ePVG = new EdbPVGen();
-  EdbPatternsVolume *v = new EdbPatternsVolume();
+  if(!v) v = new EdbPatternsVolume();
   GeneratePatternsVolumeBT(*v);
   ePVG->SetVolume(v);
 }

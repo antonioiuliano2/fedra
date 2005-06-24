@@ -243,7 +243,6 @@ int EdbPVGen::TrackMC2( EdbTrackP   &tr,
 
   tr.SetDE(de);
   tr.SetCounters();
-//  tr.SetSegmentsTrack();
 
   return ic;
 }
@@ -541,7 +540,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
   }
   tr.SetDE(DE);
   tr.SetCounters();
-//  tr.SetSegmentsTrack();
+
   delete seg;
 }
 //______________________________________________________________________________
