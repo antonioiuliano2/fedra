@@ -113,19 +113,19 @@ void EdbVertex::ResetTracks()
 float EdbVertex::MaxAperture()
 {
   float aper=0.;
-  int ntr = N();
+  int   ntr = N();
   if(ntr<2)                      return aper;
   EdbTrackP *t1=0;
   EdbTrackP *t2=0;
 
-  float tx,ty,a=0;
-  for (int i=0; i<ntr; i++) {
+  float tx=0,ty=0,a=0;
+  for (int i=0; i<ntr-1; i++) {
     t1 = GetTrack(i);
     for (int j=i+1; j<ntr; j++) {
       t2 = GetTrack(j);
 
       tx= t1->TX() - t2->TX();
-      ty= t1->TX() - t2->TX();
+      ty= t1->TY() - t2->TY();
       a = TMath::Sqrt( tx*tx+ty*ty );
       if( a>aper) aper=a;
     }
