@@ -747,10 +747,13 @@ void EdbSegG::SetAsWorking()
 	delete eD->eSegPM;
 	eD->eSegPM = 0;
     }
-    if (!(eD->eArrSegP->FindObject(eSeg)))
-    {
-	eD->eArrSegP->Add((TObject *)eSeg);
-	eD->Draw();
+    if (eD->eArrSegP)
+    { 
+	if (!(eD->eArrSegP->FindObject(eSeg)))
+	{
+	    eD->eArrSegP->Add((TObject *)eSeg);
+	    eD->Draw();
+	}
     }
     eD->eSegment = (EdbSegP *)eSeg;
     eD->DrawEnv();
