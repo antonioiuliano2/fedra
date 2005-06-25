@@ -32,6 +32,7 @@ class EdbVTA: public TObject {
   Int_t	    eFlag;            // 0-neighbor track;
 		              // 1-neighbor segment;
 			      // 2-direct (attached) track connection
+			      // 3-neighbor vertex;
   Float_t   eImp;             // impact parameter
   Float_t   eDist;            // distance from vertex to the nearest track point
   
@@ -211,7 +212,7 @@ class EdbVertexRec: public TObject {
   int	  SelVertNeighbor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
   int	  SelSegNeighbor( EdbSegP *s, int seltype, float RadMax, int Dpat, TObjArray *ao);
   int	  SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1,
-			   TObjArray *aseg = 0, TObjArray *atr = 0);
+			  TObjArray *aseg = 0, TObjArray *atr = 0, TObjArray *arv = 0);
 
   TTree *init_tracks_tree(const char *file_name, EdbTrackP *track);
   int BuildTracksArr(const char *file_name="linked_tracks.root", int nsegMin=2 );

@@ -1469,7 +1469,8 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 {
   if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined\n"); return 0;}
 
-  int nn   = 0, iv = 0, i = 0, nntr = 0;
+  int nn   = 0, iv = 0;
+//  int i = 0, nntr = 0;
   int nvt = 0;
   int ntr = 0;
   if (eVTX) nvt = eVTX->GetEntries();
@@ -1484,8 +1485,8 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
     if (v)
     {
 	    nn += VertexNeighbor(v, RadMax, Dpat, ImpMax);
-	    nntr = v->Nn();
-	    for(i=0; i<nntr; i++) AddVTA(v->GetVTn(i));
+//	    nntr = v->Nn();
+//	    for(i=0; i<nntr; i++) AddVTA(v->GetVTn(i));
     }
   }
 
@@ -1502,8 +1503,12 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
   EdbTrackP *tr  = 0;
   const EdbSegP   *ss  = 0;
   const EdbSegP   *se  = 0;
+  EdbTrackP *trv = 0;
+  EdbVertex *ve = 0;
+  float dx = 0., dy = 0.;
+  float dz = 0;
   int 	    zpos = 0;
-  int 	    nn   = 0, itv = 0;
+  int 	    nn   = 0, nntr = 0;
   float     distxs, distys, distzs1, distzs, dists, dist = 0.;
   float     distxe = 0., distye = 0., distze1= 0., distze = 0., diste = 0.;
   float     xvert = 0, yvert = 0, zvert = 0;
@@ -1518,16 +1523,52 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 	    zvert = v->VZ();
 	    // Select tracks neigborhood
 	    an.Clear();
+	    int ntr = v->N();
+	    for(int i=0; i<ntr; i++)
+	    {
+		tr = v->GetTrack(i);
+		tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+		if (v->Zpos(i) == 1)
+		    ve = tr->VertexE(); 
+		else
+		    ve = tr->VertexS(); 
+		if (ve)
+		{
+		    dx = ve->VX() - v->VX();
+		    dy = ve->VY() - v->VY();
+		    if (TMath::Sqrt(dx*dx + dy*dy) > RadMax) continue;
+		    dz = ve->VZ() - v->VZ();
+		    if (dz > Dpat*Zbin) continue;
+		    vta = new EdbVTA((EdbTrackP *)ve, v);
+		    vta->SetFlag(3);
+		    vta->SetDist(TMath::Sqrt(dx*dx+dy*dy+dz*dz));
+		    v->AddVTA(vta);
+		    ve->SetFlag(-ve->Flag()-200);
+		    for(int j=0; j<ve->N(); j++)
+		    {
+			trv = ve->GetTrack(j);
+			if (trv->MCEvt() < -999) continue;
+			if (ve->Zpos(j) == 0)
+			    ss = tr->TrackZmax();
+			else
+			    ss = tr->TrackZmin();
+			dx = ss->X() - v->VX();
+			dy = ss->Y() - v->VY();
+			dz = ss->Z() - v->VZ();
+			if (TMath::Sqrt(dx*dx+dy*dy) > RadMax)    continue;
+			if (TMath::Abs(dz)        > Dpat*Zbin) continue;
+			dist = TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+			vta = v->CheckImp(trv, 10.e+10, ve->Zpos(j), dist);
+			if (vta) trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+		    }
+		}
+	    }
 	    int nvn = SelVertNeighbor(v, 0, RadMax, Dpat, &an); 
 	    for (int it=0; it<nvn; it++) {
 		    tr = (EdbTrackP*)(an.At(it));
 		    if (tr)
 		    {
-			    for (itv = 0; itv < v->N(); itv++)
-			    {
-				if (v->GetTrack(itv) == tr) break;
-			    }
-			    if (itv < v->N()) continue;
+			    if (tr->MCEvt() < -999) continue;
 			    ss = tr->TrackZmin();
 			    distxs = (xvert - ss->X());
 			    distxs *= distxs;
@@ -1564,8 +1605,64 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 			    if (vta)
 			    {
 				nn++;
+				tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+				if (zpos == 0)
+				    ve = tr->VertexE(); 
+				else
+				    ve = tr->VertexS(); 
+				if (ve && ve->Flag() >= -99 && ve->Flag() != -10 && ve != v)
+				{
+				    dx = ve->VX() - v->VX();
+				    dy = ve->VY() - v->VY();
+				    if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
+				    {
+					dz = ve->VZ() - v->VZ();
+					if (dz <= Dpat*Zbin)
+					{
+					    ve->SetFlag(-ve->Flag()-200);
+					    vta = new EdbVTA((EdbTrackP *)ve, v);
+					    vta->SetFlag(3);
+					    vta->SetDist(TMath::Sqrt(dx*dx+dy*dy+dz*dz));
+					    v->AddVTA(vta);
+					    for(int j=0; j<ve->N(); j++)
+					    {
+						trv = ve->GetTrack(j);
+						if (trv->MCEvt() < -999) continue;
+						if (ve->Zpos(j) == 0)
+						    ss = trv->TrackZmax();
+						else
+						    ss = trv->TrackZmin();
+						dx = ss->X() - v->VX();
+						dy = ss->Y() - v->VY();
+						dz = ss->Z() - v->VZ();
+						if (TMath::Sqrt(dx*dx+dy*dy) > RadMax)    continue;
+						if (TMath::Abs(dz)        > Dpat*Zbin) continue;
+						dist = TMath::Sqrt(dx*dx+dy*dy+dz*dz);
+						vta = v->CheckImp(trv, 10.e+10, ve->Zpos(j), dist);
+    						if (vta) trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+					    }
+					}
+				    }
+				}
 			    }
 		    }
+	    }
+	    nntr = v->Nn();
+	    for(int i=0; i<nntr; i++)
+	    {
+		if ((vta = v->GetVTn(i)))
+		{
+		    if (vta->Flag() == 0) //track
+		    {
+			tr = vta->GetTrack();
+    			if (tr->MCEvt() < -999 ) tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+		    }
+		    else if (vta->Flag() == 3) //vertex
+		    {
+    			ve = (EdbVertex *)vta->GetTrack();
+    			if (ve->Flag() < -99 ) ve->SetFlag(-ve->Flag()-200);
+		    }
+		}
 	    }
 	    // Select segments neigborhood
 	    an.Clear();
@@ -1599,7 +1696,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 } 
 
 //______________________________________________________________________________
-int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray *arrs, TObjArray *arrt)
+int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray *arrs, TObjArray *arrt, TObjArray *arrv)
 {
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined\n"); return 0;}
@@ -1611,54 +1708,142 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
   float     distxs, distys, distzs1, distzs, dists;
   float     distxe = 0., distye = 0., distze1= 0., distze = 0., diste = 0.;
   float     xseg = 0, yseg = 0, zseg = 0;
+  EdbTrackP *trv = 0;
+  EdbVertex *ve = 0;
+  float dx = 0., dy = 0.;
+  float dz = 0;
   Float_t   Zbin = TMath::Abs(ePVR->GetPattern(1)->Z() - ePVR->GetPattern(0)->Z());
   TObjArray an(200);
 
 	    xseg = s->X();
 	    yseg = s->Y();
 	    zseg = s->Z();
-	    // Select tracks neigborhood
 	    an.Clear();
 	    if (s->Track() >= 0)
-		arrt->Add((trown = (EdbTrackP *)ePVR->eTracks->At(s->Track()))); 
+	    {
+		trown = (EdbTrackP *)ePVR->eTracks->At(s->Track()); 
+    		if (trown) trown->SetMC(-trown->MCEvt()-2000, trown->MCTrack());
+	    }
+	    // Select tracks neigborhood
 	    int nvn = SelSegNeighbor(s, 0, RadMax, Dpat, &an); 
+	    if (trown) an.Add(trown);
+	    nvn = an.GetEntries();
 	    for (int it=0; it<nvn; it++) {
 		    tr = (EdbTrackP*)(an.At(it));
-		    if (tr && tr != trown)
+		    if (tr)
 		    {
-			    ss = tr->TrackZmin();
-			    distxs = (xseg - ss->X());
-			    distxs *= distxs;
-			    distys = (yseg - ss->Y());
-			    distys *= distys;
-			    distzs1 = (zseg - ss->Z());
-			    distzs = distzs1*distzs1;
-			    dists  =  distxs + distys + distzs;
-			    dists  =  TMath::Sqrt(dists); 
-			    se = tr->TrackZmax();
-			    distxe = (xseg - se->X());
-			    distxe *= distxe;
-			    distye = (yseg - se->Y());
-			    distye *= distye;
-			    distze1 = (zseg - se->Z());
-			    distze = distze1*distze1;
-			    diste  =  distxe + distye + distze;
-			    diste  =  TMath::Sqrt(diste);
-			    if (diste < dists)
+			    if (tr != trown)
 			    {
-				if (TMath::Sqrt(distxe+distye) > RadMax)    continue;
-				if (TMath::Abs(distze1)        > Dpat*Zbin) continue;
-			    }
-			    else
-			    {
-				if (TMath::Sqrt(distxs+distys) > RadMax)    continue;
-				if (TMath::Abs(distzs1)        > Dpat*Zbin) continue;
+				ss = tr->TrackZmin();
+				distxs = (xseg - ss->X());
+				distxs *= distxs;
+				distys = (yseg - ss->Y());
+				distys *= distys;
+				distzs1 = (zseg - ss->Z());
+				distzs = distzs1*distzs1;
+				dists  =  distxs + distys + distzs;
+				dists  =  TMath::Sqrt(dists); 
+				se = tr->TrackZmax();
+				distxe = (xseg - se->X());
+				distxe *= distxe;
+				distye = (yseg - se->Y());
+				distye *= distye;
+				distze1 = (zseg - se->Z());
+				distze = distze1*distze1;
+				diste  =  distxe + distye + distze;
+				diste  =  TMath::Sqrt(diste);
+				if (diste < dists)
+				{
+				    if (TMath::Sqrt(distxe+distye) > RadMax)    continue;
+				    if (TMath::Abs(distze1)        > Dpat*Zbin) continue;
+				}
+				else
+				{
+				    if (TMath::Sqrt(distxs+distys) > RadMax)    continue;
+				    if (TMath::Abs(distzs1)        > Dpat*Zbin) continue;
+				}
 			    }
 			    if (arrt) arrt->Add(tr);
 			    nn++;
+//--------------------------Add vertex neighborhood
+    			    tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+			    ve = tr->VertexS(); 
+			    if (ve && ve->Flag() >= -99 && ve->Flag() != -10)
+			    {
+				dx = ve->VX() - s->X();
+				dy = ve->VY() - s->Y();
+				if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
+				{
+				    dz = ve->VZ() - s->Z();
+				    if (dz <= Dpat*Zbin)
+				    {
+					ve->SetFlag(-ve->Flag()-200);
+					arrv->Add(ve);
+					for(int j=0; j<ve->N(); j++)
+					{
+					    trv = ve->GetTrack(j);
+					    if (trv->MCEvt() < -999) continue;
+					    if (ve->Zpos(j) == 0)
+					        ss = trv->TrackZmax();
+					    else
+					        ss = trv->TrackZmin();
+					    dx = ss->X() - s->X();
+					    dy = ss->Y() - s->Y();
+					    dz = ss->Z() - s->Z();
+					    if (TMath::Sqrt(dx*dx+dy*dy) > RadMax)    continue;
+					    if (TMath::Abs(dz)        > Dpat*Zbin) continue;
+					    arrt->Add(trv);
+    					    trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+					}
+				    }
+				}
+			    }
+			    ve = tr->VertexE(); 
+			    if (ve && ve->Flag() >= -99 && ve->Flag() != -10)
+			    {
+				dx = ve->VX() - s->X();
+				dy = ve->VY() - s->Y();
+				if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
+				{
+				    dy = ve->VZ() - s->Z();
+				    if (dz <= Dpat*Zbin)
+				    {
+					ve->SetFlag(-ve->Flag()-200);
+					arrv->Add(ve);
+					for(int j=0; j<ve->N(); j++)
+					{
+					    trv = ve->GetTrack(j);
+					    if (trv->MCEvt() < -999) continue;
+					    if (ve->Zpos(j) == 0)
+					        ss = trv->TrackZmax();
+					    else
+					        ss = trv->TrackZmin();
+					    dx = ss->X() - s->X();
+					    dy = ss->Y() - s->Y();
+					    dz = ss->Z() - s->Z();
+					    if (TMath::Sqrt(dx*dx+dy*dy) > RadMax)    continue;
+					    if (TMath::Abs(dz)        > Dpat*Zbin) continue;
+					    arrt->Add(trv);
+    					    trv->SetMC(-trv->MCEvt()-2000, trv->MCTrack());
+					}
+				    }
+				}
+			    }
 		    }
 	    }
-
+//----------Restore MCEvt
+	    int nv = arrv->GetEntries();
+	    for (int i=0; i<nv; i++)
+	    {
+		ve = (EdbVertex *)arrv->At(i);
+		if (ve->Flag() < -99 ) ve->SetFlag(-ve->Flag()-200);
+	    }
+	    int ntr = arrt->GetEntries();
+	    for (int i=0; i<ntr; i++)
+	    {
+		tr = (EdbTrackP *)arrt->At(i);
+		if (tr->MCEvt() < -999 ) tr->SetMC(-tr->MCEvt()-2000, tr->MCTrack());
+	    }
 	    // Select segments neigborhood
 	    nvn = SelSegNeighbor(s, 1, RadMax, Dpat, arrs); 
 //	    printf("Selected %d segments\n", nvn);
