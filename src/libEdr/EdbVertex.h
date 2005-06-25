@@ -175,6 +175,9 @@ class EdbVertexRec: public TObject {
   EdbVertexRec();
   virtual ~EdbVertexRec();
 
+
+  int Nvtx() const { if (eVTX) return eVTX->GetEntries(); else return 0; }
+
   int MakeV( EdbVertex &edbv );
   EdbVTA *AddTrack(EdbVertex &edbv, EdbTrackP *track, int zpos );
 
@@ -201,6 +204,7 @@ class EdbVertexRec: public TObject {
   }
 
   int     ProbVertexN();
+  void    StatVertexN();
   int	  LinkedVertexes();
   int	  VertexNeighbor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  VertexNeighbor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);

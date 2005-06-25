@@ -1256,15 +1256,43 @@ int EdbVertexRec::ProbVertexN()
     printf("  %6d pairs when common track not yet attached\n  %6d N-track vertexes with Prob > %f\n",
 	      ncombinv, nadd, eProbMin);
     printf("--------------------------------------------------------\n");
+
+    StatVertexN();
     return nadd;
+}
+
+
+//---------------------------------------------------------
+void EdbVertexRec::StatVertexN()
+{
+  int nvt = Nvtx();
+  if (!nvt) return;
+  TArrayI navtx(10);
+  EdbVertex *v=0;
+  int ntv=0;
+  for(int i=0; i<nvt; i++)    {
+    v = (EdbVertex*)(eVTX->At(i));
+    if (!v) continue;
+    if (v->Flag() < 0) continue;
+    ntv=v->N();
+    if (ntv > 10) ntv = 10;
+    navtx[ntv-2]++;
+  }
+  for ( ntv=0; ntv<10; ntv++)    {
+    if ( ntv < 9 )
+      printf("%5d vertexes with number of tracks  = %2d was found\n",
+	     navtx[ntv], ntv+2);
+    else
+      printf("%5d vertexes with number of tracks >= %2d was found\n",
+	     navtx[ntv], ntv+2);
+  }
 }
 
 
 //---------------------------------------------------------
 int EdbVertexRec::LinkedVertexes()
 {
-  int nvt = 0;
-  if (eVTX) nvt = eVTX->GetEntries();
+  int nvt = Nvtx();
   if (!nvt) return 0;
 
   EdbVertex *v = 0;
