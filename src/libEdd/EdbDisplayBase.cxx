@@ -37,7 +37,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    static char ZoomButName[140], PickButName[140], UnZoomButName[140];
 
    Set0();
-   vx0=x0; vx1=x1; vy0=y0; vy1=y1; vz0=z0; vz1=z1;
+   fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
 
    // Set front view by default
 //   fTheta = 0;
@@ -403,6 +403,7 @@ void EdbDisplayBase::DrawNewBut(char *type)
 //=============================================================================
 void EdbDisplayBase::Set0()
 {
+  fVx0=fVy0=fVz0=fVx1=fVy1=fVz1=0;
   fCanvas = 0;
   fCanvasVTX = 0;
   fTrigPad = 0;
@@ -464,7 +465,7 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
 void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, Float_t z0, Float_t z1)
 {
    
-   vx0=x0; vx1=x1; vy0=y0; vy1=y1; vz0=z0; vz1=z1;
+   fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
 
    if (!fPad) return;
    fPad->Clear();
@@ -601,7 +602,7 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    fView->SetLongitude((double)phi);
    fView->SetLatitude((double)theta);
    fView->SetPsi((double)psi);
-   fView->SetRange((double)vx0,(double)vy0,(double)vz0,(double)vx1,(double)vy1,(double)vz1);
+   fView->SetRange((double)fVx0,(double)fVy0,(double)fVz0,(double)fVx1,(double)fVy1,(double)fVz1);
 
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;

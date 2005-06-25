@@ -62,7 +62,7 @@ public:
 class EdbDisplayBase: public TNamed {
 
 protected:
-  Float_t vx0,vy0,vz0,vx1,vy1,vz1;
+  Float_t fVx0,fVy0,fVz0,fVx1,fVy1,fVz1;
 
 protected:
    Int_t             fZoomMode;             //=1 if in zoom mode

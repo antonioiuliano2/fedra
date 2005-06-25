@@ -161,12 +161,13 @@ void EdbDisplay::Set0()
   fCanvas->Connect("Closed()", "EdbDisplay", this, "Delete()");
 }
 //________________________________________________________________________
-bool EdbDisplay::EdbDisplayExist(const char *title)
+EdbDisplay *EdbDisplay::EdbDisplayExist(const char *title)
 {
-    TSeqCollection *l = gROOT->GetListOfSpecials();
-    if (!l) return false;
-    if (l->FindObject(title)) return true;
-    return false;
+  EdbDisplay *ds=0;
+  TSeqCollection *l = gROOT->GetListOfSpecials();
+  if (!l) return false;
+  ds = (EdbDisplay*)(l->FindObject(title));
+  return ds;
 }
 //________________________________________________________________________
 EdbDisplay::~EdbDisplay()
@@ -217,8 +218,8 @@ void EdbDisplay::Refresh()
 {
 
   float x = 0., y = 0., z = 0;
-  float wx0 = vx0, wy0 = vy0, wz0 = vz0;
-  float wx1 = vx1, wy1 = vy1, wz1 = vz1;
+  float wx0 = fVx0, wy0 = fVy0, wz0 = fVz0;
+  float wx1 = fVx1, wy1 = fVy1, wz1 = fVz1;
 
   EdbSegP *seg=0;
   if( eArrSegP ) {
@@ -234,9 +235,9 @@ void EdbDisplay::Refresh()
 	wx0 = x < wx0 ? x : wx0;
 	wy0 = y < wy0 ? y : wy0;
 	wz0 = z < wz0 ? z : wz0;
-	wx1 = x < wx0 ? x : wx1;
-	wy1 = y < wy0 ? y : wy1;
-	wz1 = z < wz0 ? z : wz1;
+	wx1 = x > wx1 ? x : wx1;
+	wy1 = y > wy1 ? y : wy1;
+	wz1 = z > wz1 ? z : wz1;
       }
     }
   }
@@ -258,11 +259,13 @@ void EdbDisplay::Refresh()
 	wz0 = z < wz0 ? z : wz0;
 	wx1 = x > wx1 ? x : wx1;
 	wy1 = y > wy1 ? y : wy1;
+	wz1 = z > wz1 ? z : wz1;
 	x = tr->TrackZmax()->X();
 	y = tr->TrackZmax()->Y();
 	z = tr->TrackZmax()->Z();
 	wx0 = x < wx0 ? x : wx0;
 	wy0 = y < wy0 ? y : wy0;
+	wz0 = z < wz0 ? z : wz0;
 	wx1 = x > wx1 ? x : wx1;
 	wy1 = y > wy1 ? y : wy1;
 	wz1 = z > wz1 ? z : wz1;
@@ -284,19 +287,19 @@ void EdbDisplay::Refresh()
 	wx0 = x < wx0 ? x : wx0;
 	wy0 = y < wy0 ? y : wy0;
 	wz0 = z < wz0 ? z : wz0;
-	wx1 = x < wx0 ? x : wx1;
-	wy1 = y < wy0 ? y : wy1;
-	wz1 = z < wz0 ? z : wz1;
+	wx1 = x > wx1 ? x : wx1;
+	wy1 = y > wy1 ? y : wy1;
+	wz1 = z > wz1 ? z : wz1;
       }
     }
   }
 
-  if (wx0 < vx0) vx0 = wx0 - 500.;
-  if (wy0 < vy0) vy0 = wy0 - 500.;
-  if (wz0 < vx0) vz0 = wz0 - 500.;
-  if (wx1 > vx1) vx1 = wx1 + 500.;
-  if (wy1 > vy1) vy1 = wy1 + 500.;
-  if (wz1 > vz1) vz1 = wz1 + 500.;
+  if (wx0 < fVx0) fVx0 = wx0 - 500.;
+  if (wy0 < fVy0) fVy0 = wy0 - 500.;
+  if (wz0 < fVz0) fVz0 = wz0 - 500.;
+  if (wx1 > fVx1) fVx1 = wx1 + 500.;
+  if (wy1 > fVy1) fVy1 = wy1 + 500.;
+  if (wz1 > fVz1) fVz1 = wz1 + 500.;
   
   if (eSegment)
   {

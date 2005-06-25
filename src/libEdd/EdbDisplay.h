@@ -68,7 +68,7 @@ class EdbDisplay: public EdbDisplayBase {
 		       la.Zmin(), la.Zmax())
 		    				 { Set0(); };
 
-  static bool EdbDisplayExist(const char *title);
+  static EdbDisplay *EdbDisplayExist(const char *title);
   void Delete();
   void Set0();
   void SetVerRec(EdbVertexRec *evr) { eVerRec = evr; };
