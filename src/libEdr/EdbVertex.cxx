@@ -1538,7 +1538,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 		    dy = ve->VY() - v->VY();
 		    if (TMath::Sqrt(dx*dx + dy*dy) > RadMax) continue;
 		    dz = ve->VZ() - v->VZ();
-		    if (dz > Dpat*Zbin) continue;
+		    if (TMath::Abs(dz) > Dpat*Zbin) continue;
 		    vta = new EdbVTA((EdbTrackP *)ve, v);
 		    vta->SetFlag(3);
 		    vta->SetDist(TMath::Sqrt(dx*dx+dy*dy+dz*dz));
@@ -1616,7 +1616,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 				    dy = ve->VY() - v->VY();
 				    if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
 				    {
-					dz = ve->VZ() - v->VZ();
+					dz = TMath::Abs(ve->VZ() - v->VZ());
 					if (dz <= Dpat*Zbin)
 					{
 					    ve->SetFlag(-ve->Flag()-200);
@@ -1775,7 +1775,7 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
 				if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
 				{
 				    dz = ve->VZ() - s->Z();
-				    if (dz <= Dpat*Zbin)
+				    if (TMath::Abs(dz) <= Dpat*Zbin)
 				    {
 					ve->SetFlag(-ve->Flag()-200);
 					arrv->Add(ve);
@@ -1806,7 +1806,7 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
 				if (TMath::Sqrt(dx*dx + dy*dy) <= RadMax)
 				{
 				    dy = ve->VZ() - s->Z();
-				    if (dz <= Dpat*Zbin)
+				    if (TMath::Abs(dz) <= Dpat*Zbin)
 				    {
 					ve->SetFlag(-ve->Flag()-200);
 					arrv->Add(ve);
