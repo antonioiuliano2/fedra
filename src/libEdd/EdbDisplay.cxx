@@ -214,8 +214,9 @@ void EdbDisplay::Delete()
     eArrTr = 0;
 }
 //________________________________________________________________________
-void EdbDisplay::Refresh()
+void EdbDisplay::SetArrSegP(TObjArray *arr)
 {
+  eArrSegP=arr;
 
   float x = 0., y = 0., z = 0;
   float wx0 = fVx0, wy0 = fVy0, wz0 = fVz0;
@@ -228,16 +229,133 @@ void EdbDisplay::Refresh()
       seg = (EdbSegP*)(eArrSegP->At(j));
       if (seg)
       {
-        SegLine(seg)->Draw();
 	x = seg->X();
 	y = seg->Y();
 	z = seg->Z();
-	wx0 = x < wx0 ? x : wx0;
-	wy0 = y < wy0 ? y : wy0;
-	wz0 = z < wz0 ? z : wz0;
-	wx1 = x > wx1 ? x : wx1;
-	wy1 = y > wy1 ? y : wy1;
-	wz1 = z > wz1 ? z : wz1;
+	if (fView == 0)
+	{
+	    wx0 = x < wx0 ? x : wx0;
+	    wy0 = y < wy0 ? y : wy0;
+	    wz0 = z < wz0 ? z : wz0;
+	    wx1 = x > wx1 ? x : wx1;
+	    wy1 = y > wy1 ? y : wy1;
+	    wz1 = z > wz1 ? z : wz1;
+	}
+      }
+    }
+  }
+  if (fView == 0)
+  {
+    if (wx0 < fVx0) fVx0 = wx0 - 500.;
+    if (wy0 < fVy0) fVy0 = wy0 - 500.;
+    if (wz0 < fVz0) fVz0 = wz0 - 500.;
+    if (wx1 > fVx1) fVx1 = wx1 + 500.;
+    if (wy1 > fVy1) fVy1 = wy1 + 500.;
+    if (wz1 > fVz1) fVz1 = wz1 + 500.;
+  }
+}
+//________________________________________________________________________
+void EdbDisplay::SetArrTr(TObjArray *arr)
+{
+  eArrTr=arr;
+
+  float x = 0., y = 0., z = 0;
+  float wx0 = fVx0, wy0 = fVy0, wz0 = fVz0;
+  float wx1 = fVx1, wy1 = fVy1, wz1 = fVz1;
+
+  EdbTrackP *tr=0;
+  if( eArrTr ) {
+    int ntr = eArrTr->GetEntries();
+    for(int j=0;j<ntr;j++) {
+      tr = (EdbTrackP*)(eArrTr->At(j));
+      if(tr)
+      {
+	if (fView == 0)
+	{
+	    x = tr->TrackZmin()->X();
+	    y = tr->TrackZmin()->Y();
+	    z = tr->TrackZmin()->Z();
+	    wx0 = x < wx0 ? x : wx0;
+	    wy0 = y < wy0 ? y : wy0;
+	    wz0 = z < wz0 ? z : wz0;
+	    wx1 = x > wx1 ? x : wx1;
+	    wy1 = y > wy1 ? y : wy1;
+	    wz1 = z > wz1 ? z : wz1;
+	    x = tr->TrackZmax()->X();
+	    y = tr->TrackZmax()->Y();
+	    z = tr->TrackZmax()->Z();
+	    wx0 = x < wx0 ? x : wx0;
+	    wy0 = y < wy0 ? y : wy0;
+	    wz0 = z < wz0 ? z : wz0;
+	    wx1 = x > wx1 ? x : wx1;
+	    wy1 = y > wy1 ? y : wy1;
+	    wz1 = z > wz1 ? z : wz1;
+	}
+      }
+    }
+  }
+  if (fView == 0)
+  {
+    if (wx0 < fVx0) fVx0 = wx0 - 500.;
+    if (wy0 < fVy0) fVy0 = wy0 - 500.;
+    if (wz0 < fVz0) fVz0 = wz0 - 500.;
+    if (wx1 > fVx1) fVx1 = wx1 + 500.;
+    if (wy1 > fVy1) fVy1 = wy1 + 500.;
+    if (wz1 > fVz1) fVz1 = wz1 + 500.;
+  }
+}
+//________________________________________________________________________
+void EdbDisplay::SetArrV(TObjArray *arrv)
+{
+  eArrV=arrv;
+
+  float x = 0., y = 0., z = 0;
+  float wx0 = fVx0, wy0 = fVy0, wz0 = fVz0;
+  float wx1 = fVx1, wy1 = fVy1, wz1 = fVz1;
+
+  EdbVertex *v=0;
+  if( eArrV ) {
+    int nv = eArrV->GetEntries();
+    for(int j=0;j<nv;j++) {
+      v = (EdbVertex*)(eArrV->At(j));
+      if (v)
+      {
+	if (fView == 0)
+	{
+	    x = v->VX();
+	    y = v->VY();
+	    z = v->VZ();
+	    wx0 = x < wx0 ? x : wx0;
+	    wy0 = y < wy0 ? y : wy0;
+	    wz0 = z < wz0 ? z : wz0;
+	    wx1 = x > wx1 ? x : wx1;
+	    wy1 = y > wy1 ? y : wy1;
+	    wz1 = z > wz1 ? z : wz1;
+	}
+      }
+    }
+  }
+  if (fView == 0)
+  {
+    if (wx0 < fVx0) fVx0 = wx0 - 500.;
+    if (wy0 < fVy0) fVy0 = wy0 - 500.;
+    if (wz0 < fVz0) fVz0 = wz0 - 500.;
+    if (wx1 > fVx1) fVx1 = wx1 + 500.;
+    if (wy1 > fVy1) fVy1 = wy1 + 500.;
+    if (wz1 > fVz1) fVz1 = wz1 + 500.;
+  }
+}
+//________________________________________________________________________
+void EdbDisplay::Refresh()
+{
+  EdbSegP *seg=0;
+  if( eArrSegP ) {
+    int nseg = eArrSegP->GetEntries();
+    for(int j=0;j<nseg;j++) {
+      seg = (EdbSegP*)(eArrSegP->At(j));
+      if (seg)
+      {
+        SegLine(seg)->Draw();
       }
     }
   }
@@ -250,25 +368,6 @@ void EdbDisplay::Refresh()
       if(tr)
       {
         TrackDraw(tr);
-
-	x = tr->TrackZmin()->X();
-	y = tr->TrackZmin()->Y();
-	z = tr->TrackZmin()->Z();
-	wx0 = x < wx0 ? x : wx0;
-	wy0 = y < wy0 ? y : wy0;
-	wz0 = z < wz0 ? z : wz0;
-	wx1 = x > wx1 ? x : wx1;
-	wy1 = y > wy1 ? y : wy1;
-	wz1 = z > wz1 ? z : wz1;
-	x = tr->TrackZmax()->X();
-	y = tr->TrackZmax()->Y();
-	z = tr->TrackZmax()->Z();
-	wx0 = x < wx0 ? x : wx0;
-	wy0 = y < wy0 ? y : wy0;
-	wz0 = z < wz0 ? z : wz0;
-	wx1 = x > wx1 ? x : wx1;
-	wy1 = y > wy1 ? y : wy1;
-	wz1 = z > wz1 ? z : wz1;
       }
     }
   }
@@ -281,26 +380,10 @@ void EdbDisplay::Refresh()
       if (v)
       {
         VertexDraw(v);
-	x = v->VX();
-	y = v->VY();
-	z = v->VZ();
-	wx0 = x < wx0 ? x : wx0;
-	wy0 = y < wy0 ? y : wy0;
-	wz0 = z < wz0 ? z : wz0;
-	wx1 = x > wx1 ? x : wx1;
-	wy1 = y > wy1 ? y : wy1;
-	wz1 = z > wz1 ? z : wz1;
       }
     }
   }
 
-  if (wx0 < fVx0) fVx0 = wx0 - 500.;
-  if (wy0 < fVy0) fVy0 = wy0 - 500.;
-  if (wz0 < fVz0) fVz0 = wz0 - 500.;
-  if (wx1 > fVx1) fVx1 = wx1 + 500.;
-  if (wy1 > fVy1) fVy1 = wy1 + 500.;
-  if (wz1 > fVz1) fVz1 = wz1 + 500.;
-  
   if (eSegment)
   {
     eSegPM = new TPolyMarker3D(1);
@@ -722,53 +805,64 @@ void EdbSegG::AddAsTrack()
 //_____________________________________________________________________________
 void EdbSegG::SetAsWorking()
 {
-  if (eD && eSeg)
+  static EdbDisplay *eDs = 0;
+  static EdbSegP    *eSegs = 0;
+  eDs = eD;
+  eSegs = (EdbSegP *)eSeg;
+  if (eDs && eSegs)
   {
-    if (eD->eSegment == eSeg) return;
-    if (eD->eWait_Answer) return;
-    if (eD->eVertex)
+    if (eDs->eSegment == eSegs) return;
+    if (eDs->eWait_Answer) return;
+    if (eDs->eVertex)
     {
-	if (eD->eWorking)
+	if (eDs->eWorking)
 	{
-	    eD->DialogModifiedVTX();
+	    eDs->DialogModifiedVTX();
 	    return;
 	}
 	else 
 	{
-	    eD->CancelModifiedVTX();
+	    eDs->CancelModifiedVTX();
 	}
     }
-    if (eD->eSegPM)
+    if (eDs->eSegPM)
     { 
-	if (eD->fPad->GetListOfPrimitives()->FindObject(eD->eSegPM))
+	if (eDs->fPad->GetListOfPrimitives()->FindObject(eDs->eSegPM))
 	{
-	    eD->fPad->GetListOfPrimitives()->Remove(eD->eSegPM);
+	    eDs->fPad->GetListOfPrimitives()->Remove(eDs->eSegPM);
 	}
-	delete eD->eSegPM;
-	eD->eSegPM = 0;
+	delete eDs->eSegPM;
+	eDs->eSegPM = 0;
     }
-    if (eD->eArrSegP)
+    if (!(eDs->eArrSegP)) 
+    {
+	eDs->eArrSegP = new TObjArray(20);
+	eDs->eArrSegP->Add((TObject *)eSegs);
+	eDs->Draw();
+    }
+    else
     { 
-	if (!(eD->eArrSegP->FindObject(eSeg)))
+
+	if (!(eDs->eArrSegP->FindObject(eSegs)))
 	{
-	    eD->eArrSegP->Add((TObject *)eSeg);
-	    eD->Draw();
+	    eDs->eArrSegP->Add((TObject *)eSegs);
+	    eDs->Draw();
 	}
     }
-    eD->eSegment = (EdbSegP *)eSeg;
-    eD->DrawEnv();
-    eD->eSegPM = new TPolyMarker3D(1);
-    eD->eSegPM->SetMarkerStyle(20);
-    if(eSeg) {
-      float dz = TMath::Abs(eSeg->DZ()/2.);
-      eD->eSegPM->SetPoint(0, 
-    		    eSeg->X() + eSeg->TX()*dz,
-		    eSeg->Y() + eSeg->TY()*dz,
-		    eSeg->Z() +            dz);
-      eD->eSegPM->SetMarkerColor(kGreen);
-      eD->eSegPM->SetMarkerSize(1.2);
-      eD->eSegPM->AppendPad();
-      eD->eSegPM->Draw();
+    eDs->eSegment = (EdbSegP *)eSegs;
+    eDs->DrawEnv();
+    eDs->eSegPM = new TPolyMarker3D(1);
+    eDs->eSegPM->SetMarkerStyle(20);
+    if(eSegs) {
+      float dz = TMath::Abs(eSegs->DZ()/2.);
+      eDs->eSegPM->SetPoint(0, 
+    		    eSegs->X() + eSegs->TX()*dz,
+		    eSegs->Y() + eSegs->TY()*dz,
+		    eSegs->Z() +            dz);
+      eDs->eSegPM->SetMarkerColor(kGreen);
+      eDs->eSegPM->SetMarkerSize(1.2);
+      eDs->eSegPM->AppendPad();
+      eDs->eSegPM->Draw();
     }
   }
 }
@@ -778,49 +872,69 @@ void EdbVertexG::SetAsWorking()
 {
   char text[512];
   EdbTrackP *tr = 0;
-  if (eD && eV)
+  static EdbDisplay *eDs = 0;
+  static EdbVertex  *eVs = 0;
+  eDs = eD;
+  eVs = eV;
+  if (eDs && eVs)
   {
-    if (eD->eVertex == eV) return;
-    if (eD->eWait_Answer) return;
-    if (eD->eWorking)
+    if (eDs->eVertex == eVs) return;
+    if (eDs->eWait_Answer) return;
+    if (eDs->eWorking)
     {
-	eD->DialogModifiedVTX();
+	eDs->DialogModifiedVTX();
 	return;
     }
-    if (eD->eVertex)
+    if (eDs->eVertex)
     {
-    	eD->CancelModifiedVTX();
+    	eDs->CancelModifiedVTX();
     }
-    if (eD->eSegPM)
+    if (eDs->eSegPM)
     { 
-	eD->ClearSegmentEnv();
+	eDs->ClearSegmentEnv();
     }
     SetMarkerColor(kGreen);
-    if (!(eD->eArrV->FindObject(eV)))
+    if (!(eDs->eArrV)) 
     {
-	eD->eArrV->Add(eV);
-	for (int i=0; i<eV->N(); i++)
+	eDs->eArrV = new TObjArray(20);
+	eDs->eArrV->Add((TObject *)eVs);
+	if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+	for (int i=0; i<eVs->N(); i++)
 	{
-	    tr = eV->GetTrack(i);
-	    if(!(eD->eArrTr->FindObject(tr))) eD->eArrTr->Add(tr);
+	    tr = eVs->GetTrack(i);
+	    if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
 	}
-	eD->eVertex = 0;
-	eD->Draw();
+	eDs->Draw();
     }
-    eD->eSegment = 0;
-    eD->eVertex = eV;
-    eD->ePrevious = 0;
-    eD->CreateCanvasVTX();
-    eV->V()->rmsDistAngle();
+    else
+    {
+	if (!(eDs->eArrV->FindObject(eVs)))
+	{
+	    eDs->eArrV->Add(eVs);
+	    if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+	    for (int i=0; i<eVs->N(); i++)
+	    {
+		tr = eVs->GetTrack(i);
+		if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
+	    }
+	    eDs->eVertex = 0;
+	    eDs->Draw();
+	}
+    }
+    eDs->eSegment = 0;
+    eDs->eVertex = eVs;
+    eDs->ePrevious = 0;
+    eDs->CreateCanvasVTX();
+    eVs->V()->rmsDistAngle();
     sprintf(text,"Orig    %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
-    eV->ID(), eV->N(), eV->VX(), eV->VY(), eV->VZ(), eV->V()->dist(),
-    eV->V()->chi2()/eV->V()->ndf(), eV->V()->prob());
-    eD->DrawOldVTX(text);
-    eD->DrawVTXTracks("Original", eD->eVertex);
-    eD->DrawEnv();
-    eD->eIndVert = eD->eArrV->IndexOf(eV);
-    (eD->eCreatedTracks).Clear();
-    eD->Draw();
+    eVs->ID(), eVs->N(), eVs->VX(), eVs->VY(), eVs->VZ(), eVs->V()->dist(),
+    eVs->V()->chi2()/eVs->V()->ndf(), eVs->V()->prob());
+    eDs->DrawOldVTX(text);
+    eDs->DrawVTXTracks("Original", eDs->eVertex);
+    eDs->DrawEnv();
+    eDs->eIndVert = eD->eArrV->IndexOf(eVs);
+    (eDs->eCreatedTracks).Clear();
+    eDs->Draw();
   }
 }
 
@@ -1283,7 +1397,7 @@ void EdbTrackG::AddTrack()
 //_____________________________________________________________________________
 void EdbDisplay::CancelModifiedVTX()
 {
-    if (eArrVSave) DrawAllObjects();
+    if (eArrVSave || eArrTrSave || eArrSegPSave) DrawAllObjects();
     if (eWorking)
     {
 	delete eWorking;
@@ -1317,21 +1431,6 @@ void EdbDisplay::CancelModifiedVTX()
     }
     eCreatedTracks.Clear();
 
-    if (eArrVSave || eArrTrSave || eArrSegPSave)
-    {
-	li->Remove(fAllButton);
-	delete eArrV;
-	eArrV = eArrVSave;
-	eArrVSave = 0;
-	delete eArrTr;
-	eArrTr = eArrTrSave;
-	eArrTrSave = 0;
-	delete eArrSegP;
-	eArrSegP = eArrSegPSave;
-	eArrSegPSave = 0;
-	eIndVert = eIndVertSave;
-	Draw();    
-    }
     li->Remove(fEnvButton);
     if (eIndVert >= 0 && eVertex) 
     {
@@ -1577,27 +1676,11 @@ void EdbDisplay::AcceptModifiedVTX()
     li->Remove(fUndButton);
     li->Remove(fAccButton);
     li->Remove(fCanButton);
-    if (eArrVSave || eArrTrSave || eArrSegPSave)
-    {
-	li->Remove(fAllButton);
-	delete eArrV;
-	eArrV = eArrVSave;
-	eArrVSave = 0;
-	delete eArrTr;
-	eArrTr = eArrTrSave;
-	eArrTrSave = 0;
-	delete eArrSegP;
-	eArrSegP = eArrSegPSave;
-	eArrSegPSave = 0;
-	eIndVert = eIndVertSave;
-    }
-    else
-    {
-	li->Remove(fEnvButton);
-    }
+    li->Remove(fEnvButton);
     fTrigPad->cd();
     fTrigPad->Update();
     fTrigPad->Draw();
+
     fPad->cd();
     if (eWait_Answer) CloseDialogModifiedVTX();
     if (fCanvasVTX) fCanvasVTX->Close();
@@ -1636,7 +1719,7 @@ void EdbDisplay::DrawVertexEnvironment()
     eArrTr = new TObjArray(20);
     eArrSegP = new TObjArray(20);
 
-    if (eVertex)
+    if (eW)
     {
 	eVerRec->VertexNeighbor(eW, Rmax, Dpat, ImpMax);
 	eArrV->Add(eW);

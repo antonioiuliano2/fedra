@@ -74,8 +74,8 @@ class EdbDisplay: public EdbDisplayBase {
   void SetVerRec(EdbVertexRec *evr) { eVerRec = evr; };
 
   void Refresh();
-  void SetArrSegP(TObjArray *arr) {eArrSegP=arr;}
-  void SetArrTr(TObjArray *arr) {eArrTr=arr;}
+  void SetArrSegP(TObjArray *arr);
+  void SetArrTr(TObjArray *arr);
   void SetDrawTracks(int opt) {eDrawTracks=opt;}
 
   EdbVertexRec *VerRec() const {return eVerRec;}
@@ -83,7 +83,7 @@ class EdbDisplay: public EdbDisplayBase {
   void TrackDraw(EdbTrackP *tr);
   EdbSegG *SegLine(const EdbSegP *seg);
 
-  void SetArrV(TObjArray *arrv) {eArrV=arrv;}
+  void SetArrV(TObjArray *arrv);
   void VertexDraw(EdbVertex *v);
   void SetDrawVertex(int opt) {eDrawVertex=opt;}
   void CancelModifiedVTX();
