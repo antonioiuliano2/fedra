@@ -1867,7 +1867,7 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
     if (ss.Z() < pat->Z())
     {
 	pid = ii - dpat;
-	if ( pid >= npat )  ss.SetPID(npat);
+	if ( pid >= npat )  ss.SetPID(npat-1);
 	if ( pid <  0 )     ss.SetPID(0);
 	else	            ss.SetPID(pid);
 	break;

@@ -1427,7 +1427,8 @@ int EdbVertexRec::SelSegNeighbor( EdbSegP *sin, int seltype, float RadMax, int D
   EdbSegP   *s  = 0;
   int trflg  = 0;
   int trind  = 0;
-  int ntr = eEdbTracks->GetEntries();
+  int ntr = 0;
+  if (eEdbTracks) ntr = eEdbTracks->GetEntries();
 
   int nadd = 0;
   for (int i=0; i<nseg; i++)

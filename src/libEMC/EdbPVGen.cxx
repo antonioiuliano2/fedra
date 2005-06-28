@@ -23,6 +23,7 @@ EdbPVGen::EdbPVGen()
   eVTX    = 0;
   eScanCond = 0;
   eEVR = new EdbVertexRec();
+  gROOT->GetListOfSpecials()->Remove(eEVR);
   eEVR->eEdbTracks = eTracks;
   eEVR->eVTX       = eVTX;
 }
@@ -641,7 +642,16 @@ void EdbPVGen::GenerateBackgroundTracks(int nb, float vlim[4], float lim[4],
 
 	TrackMC( zlim, lim, *trb, eloss_flag, ProbGap );
 //	delete trb;
-	AddTrack(trb);
+	if (trb->N() <= 0)
+	{
+	    delete trb;
+	    trb = 0;
+	    id--;
+	}
+	else
+	{
+	    AddTrack(trb);
+	}
   }
 
 }
@@ -661,13 +671,15 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
   EdbTrackP *tr = 0; 
   Double_t    weight, tx, ty;
   TLorentzVector *pi = 0;
-  int numt = 0, nt = 0, ntrgood = 0;
+  int numt = 0, numv = 0, nt = 0, ntrgood = 0;
   double pxs,pys,pzs,es, p2;
   float mp, pp;
 
   if (eTracks) numt = eTracks->GetEntries();
 
   int nvmod = nv;
+
+  if (eVTX) numv = eVTX->GetEntries();
 
   for(int iv=0; iv<nvmod; iv++) {
     vedb = new EdbVertex();
@@ -695,7 +707,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	tr = new EdbTrackP();
 	tx = pi->Px()/pi->Pz();
 	ty = pi->Py()/pi->Pz();
-	tr->Set(numt++, x, y, (float)tx, (float)ty, 1, iv+1);
+	tr->Set(numt++, x, y, (float)tx, (float)ty, 1, numv+1);
 	tr->SetZ(z);
 	tr->SetP(pi->P());
 	tr->SetM(pi->M());
@@ -726,6 +738,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	{
 	    delete tr;
 	    tr = 0;
+	    numt--;
 	}
     }
 
@@ -757,6 +770,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	{
 	    delete tr;
 	    tr = 0;
+	    numt--;
 	}
     }
 
@@ -777,6 +791,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     else
     {
 	AddVertex(vedb);
+	numv++;
     }
   }
 }

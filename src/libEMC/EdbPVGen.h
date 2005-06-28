@@ -43,12 +43,12 @@ class EdbPVGen : public TObject {
   void GeneratePulsGaus( float amp, float mean, float sigma, float wmin=0, float wmax=0., int flag=0 );
 
   void AddTrack(EdbTrackP *track) {
-    if(!eTracks) eTracks = new TObjArray();
+    if(!eTracks) { eTracks = new TObjArray(); eEVR->eEdbTracks = eTracks; }
     eTracks->Add(track);
   }
 
   void AddVertex(EdbVertex *vtx) {
-    if(!eVTX) eVTX = new TObjArray();
+    if(!eVTX) { eVTX = new TObjArray(); eEVR->eVTX = eVTX; }
     eVTX->Add((TObject*)vtx);
   }
 
