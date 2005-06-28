@@ -272,18 +272,38 @@ void EdbDisplay::SetArrTr(TObjArray *arr)
       {
 	if (fView == 0)
 	{
-	    x = tr->TrackZmin()->X();
-	    y = tr->TrackZmin()->Y();
-	    z = tr->TrackZmin()->Z();
+	    if (tr->NF())
+	    {
+		x = tr->TrackZmin()->X();
+		y = tr->TrackZmin()->Y();
+		z = tr->TrackZmin()->Z();
+	    }
+	    else
+	    {
+		eRadMax = 0;
+		x = tr->GetSegmentFirst()->X();
+		y = tr->GetSegmentFirst()->Y();
+		z = tr->GetSegmentFirst()->Z();
+	    }
 	    wx0 = x < wx0 ? x : wx0;
 	    wy0 = y < wy0 ? y : wy0;
 	    wz0 = z < wz0 ? z : wz0;
 	    wx1 = x > wx1 ? x : wx1;
 	    wy1 = y > wy1 ? y : wy1;
 	    wz1 = z > wz1 ? z : wz1;
-	    x = tr->TrackZmax()->X();
-	    y = tr->TrackZmax()->Y();
-	    z = tr->TrackZmax()->Z();
+	    if (tr->NF())
+	    {
+		x = tr->TrackZmax()->X();
+		y = tr->TrackZmax()->Y();
+		z = tr->TrackZmax()->Z();
+	    }
+	    else
+	    {
+		eRadMax = 0;
+		x = tr->GetSegmentLast()->X();
+		y = tr->GetSegmentLast()->Y();
+		z = tr->GetSegmentLast()->Z();
+	    }
 	    wx0 = x < wx0 ? x : wx0;
 	    wy0 = y < wy0 ? y : wy0;
 	    wz0 = z < wz0 ? z : wz0;
@@ -322,9 +342,19 @@ void EdbDisplay::SetArrV(TObjArray *arrv)
       {
 	if (fView == 0)
 	{
-	    x = v->VX();
-	    y = v->VY();
-	    z = v->VZ();
+	    if (v->V())
+	    {
+		x = v->VX();
+		y = v->VY();
+		z = v->VZ();
+	    }
+	    else
+	    {
+		eRadMax = 0;
+		x = v->X();
+		y = v->Y();
+		z = v->Z();
+	    }
 	    wx0 = x < wx0 ? x : wx0;
 	    wy0 = y < wy0 ? y : wy0;
 	    wz0 = z < wz0 ? z : wz0;
@@ -1692,6 +1722,12 @@ void EdbDisplay::AcceptModifiedVTX()
 //_____________________________________________________________________________
 void EdbDisplay::DrawVertexEnvironment()
 {
+    if (eRadMax == 0)
+    {
+	printf("No neighborhood in EdbPVGen object!\n");
+	fflush(stdout);
+	return;
+    }
     if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
     if (!eVerRec) return;
     if (!eVertex && !eSegment) return;
@@ -1793,6 +1829,13 @@ void EdbDisplay::DrawAllObjects()
 //_____________________________________________________________________________
 void EdbDisplay::DialogNeighborParameters()
 {
+    if (eRadMax == 0)
+    {
+	printf("No neighborhood in EdbPVGen object!\n");
+	fflush(stdout);
+	return;
+    }
+
     eWait_Answer = true;
 
     fMain = new TGMainFrame(gClient->GetRoot(), 260, 340);

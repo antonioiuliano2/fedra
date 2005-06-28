@@ -75,7 +75,6 @@ protected:
    Double_t          fZoomX1[kMAXZOOMS];    //High x range of zoom number i
    Double_t          fZoomY1[kMAXZOOMS];    //High y range of zoom number i
    Int_t             fZooms;                //Number of zooms
-   Int_t             fIndVert;		    //Index of selected vertex in ArrV
    TCanvas          *fCanvas;               //Pointer to the display canvas
    Edb3DView        *fView;                 //Main View object
    char		    fCanvasName[128];       //Name of main canvas
