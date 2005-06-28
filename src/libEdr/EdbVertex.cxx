@@ -677,21 +677,23 @@ int EdbVertexRec::FindVertex()
 
   int nvtxt = 0;
   if (eVTX) nvtxt = eVTX->GetEntries();
-  
+
+  if(nvtx!=nvtxt) printf("ERROR: EdbVertexRec::FindVertex():  nxtx =%d nvtxt =%d\n",nvtx,nvtxt);
+
   for (int i = 0; i < nvtxt; i++)
-  {
-    ((EdbVertex *)(eVTX->At(i)))->SetID(i);
-  }
+    {
+      ((EdbVertex *)(eVTX->At(i)))->SetID(i);
+    }
 
   if (nvtxt) eVTX->Sort(nvtxt-1);
 
-  for (int i = nvtx-1; i <= 0; i--)
-  {
-    edbv = (EdbVertex *)(eVTX->At(i));
-    if (!edbv) continue;
-    edbv->SetID(i);
-    edbv->ResetTracks();
-  }
+  for (int i = nvtx-1; i >= 0; i--)
+    {
+      edbv = (EdbVertex *)(eVTX->At(i));
+      if (!edbv) continue;
+      edbv->SetID(i);
+      edbv->ResetTracks();
+    }
 
   printf("--------------------------------------------------------\n");
 
