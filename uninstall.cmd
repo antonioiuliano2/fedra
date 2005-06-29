@@ -13,6 +13,7 @@
  if exist %installdir%\bin     rmdir /s/q %installdir%\bin
  if exist %installdir%\lib     rmdir /s/q %installdir%\lib
  if exist %installdir%\include rmdir /s/q %installdir%\include
+ if exist %installdir%\macros  rmdir /s/q %installdir%\macros
 
  set configdir=%installdir%\src\config
  if exist %configdir%\RootDef.mk    del /q %configdir%\RootDef.mk

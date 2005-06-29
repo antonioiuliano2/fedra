@@ -99,6 +99,10 @@
 :: load environment variables
 :: --------------------------
  cd %installdir%
+
+# install fedra macros
+xcopy /E "%PROJECT_SRC%"/appl/macros "%installdir%"/macros
+
  call setup_new.cmd
 
  pause
