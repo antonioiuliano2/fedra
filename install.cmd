@@ -14,6 +14,7 @@
  if not exist %installdir%\include           mkdir %installdir%\include
  if not exist %installdir%\include\vt++      mkdir %installdir%\include\vt++    
  if not exist %installdir%\include\smatrix   mkdir %installdir%\include\smatrix 
+ if not exist %installdir%\macros            mkdir %installdir%\macros
  del /s/q %installdir%\bin
  del /s/q %installdir%\lib
  del /s/q %installdir%\include
@@ -100,8 +101,7 @@
 :: --------------------------
  cd %installdir%
 
-# install fedra macros
-xcopy /E "%PROJECT_SRC%"/appl/macros "%installdir%"/macros
+ copy /Y "%PROJECT_SRC%"\appl\macros\* "%installdir%"\macros
 
  call setup_new.cmd
 
