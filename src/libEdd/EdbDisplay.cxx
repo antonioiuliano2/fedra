@@ -1672,8 +1672,8 @@ void EdbDisplay::AcceptModifiedVTX()
 
 	eW->ResetTracks();
 	int ntr = eW->N();
-	int i = 0, ifl = 0;
-	for(i=0; i<ntr; i++)
+	int ifl = 0;
+	for(int i=0; i<ntr; i++)
 	{
 		if (eW->Zpos(i)) ifl = ifl | 1; 
 		else		 ifl = ifl | 2; 
