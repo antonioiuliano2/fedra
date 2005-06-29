@@ -1631,8 +1631,7 @@ void EdbDisplay::AcceptModifiedVTX()
 	if (eVerRec)
 	{
 	    int ntr = eVertex->N();
-	    int i = 0;
-	    for(i=0; i<ntr; i++)
+	    for(int i=0; i<ntr; i++)
 	    {
 		(eVerRec->eVTA).Remove(eVertex->GetVTa(i));
 	    }
@@ -1696,7 +1695,7 @@ void EdbDisplay::AcceptModifiedVTX()
 	{
 //	    eVerRec->eVTX->RemoveAt(ind);
 	    eVerRec->eVTX->AddAt(eW, ind);
-	    for(i=0; i<ntr; i++)
+	    for(int i=0; i<ntr; i++)
 	    {
 		eVerRec->AddVTA(eW->GetVTa(i));
 	    }
