@@ -607,7 +607,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 		}
 	      else
 		{
-		  vta = new EdbVTA::EdbVTA(track, &edbv);
+		  vta = new EdbVTA(track, &edbv);
 		  vta->SetZpos(zpos);
 	          vta->SetFlag(2);
 		  vta->SetImp(distance(*t, *v));
