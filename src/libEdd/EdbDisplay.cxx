@@ -503,7 +503,7 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       line->SetPoint(0, xv,yv,zv );
       line->SetPoint(1, seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
       line->SetLineColor(kWhite);
-      line->SetLineWidth(1);
+      line->SetLineWidth(fLineWidth);
       line->SetBit(kCannotPick);
       line->Draw();
     }
@@ -569,7 +569,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       }
     }
     line->SetLineColor(kWhite);
-    line->SetLineWidth(1);
+    line->SetLineWidth(fLineWidth);
     line->SetBit(kCannotPick);
     if (tr->Flag() != -10)
 	line->SetLineStyle(3);
@@ -599,7 +599,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       }
     }
     line->SetLineColor(kWhite);
-    line->SetLineWidth(1);
+    line->SetLineWidth(fLineWidth);
     line->SetLineStyle(1);
     line->Draw();
   }
@@ -654,7 +654,9 @@ EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
   int eNpieces=30;
   line->SetLineColor(gStyle->GetColorPalette(int(46.*(1.-1.*seg->PID()/eNpieces))));  
   //line->SetLineColor( 2+seg->PID()%7 );
-  line->SetLineWidth(int(seg->W()/10.));
+  Width_t lwf = int(seg->W()/10.);
+  if (lwf > 3) lwf = 2;
+  line->SetLineWidth(lwf*fLineWidth);
   line->SetSeg(seg);
   return line;
 }

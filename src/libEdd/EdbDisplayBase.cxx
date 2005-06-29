@@ -10,7 +10,8 @@
 
 #include "EdbDisplayBase.h"
 #include "TROOT.h"
-#include "TVirtualViewer3D.h"
+//Doesn't work in old versions of ROOT 
+//#include "TVirtualViewer3D.h"
 
 ClassImp(EdbDisplayBase);
 ClassImp(Edb3DView);
@@ -35,6 +36,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 {
    static char VPadName[140], TPadName[140];
    static char ZoomButName[140], PickButName[140], UnZoomButName[140];
+   char *pres = 0;
 
    Set0();
    fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
@@ -51,6 +53,8 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fZoomMode      = 1;
    fZooms         = 0;
 
+   if ((pres = strstr(title, "Presentation"))) SetStyle(1); // presentation style
+   else if ((pres = strstr(title, "presentation"))) SetStyle(1);
    strcpy(fTitle, title);
    this->SetName(&fTitle[0]);
    this->SetTitle("FEDRA Event Display");
@@ -190,217 +194,6 @@ EdbDisplayBase::~EdbDisplayBase()
     fCanvas = 0;
 }
 //=============================================================================
-void EdbDisplayBase::DrawOldVTX(char *ptitle)
-{
-  fCanvasVTX->cd();
-  if (fOldVTX)
-  {
-    fOldVTX->Clear();
-    fOldVTX->SetText(0.05, 0.88, ptitle);
-  }
-  else
-  {
-    fOldVTX = new TText(0.05, 0.88, ptitle);
-    fOldVTX->ResetBit(kCanDelete);
-    fOldVTX->SetTextColor(1);
-    fOldVTX->SetTextSize(0.04);
-    fOldVTX->SetTextAlign(12);
-    fOldVTX->SetTextFont(102);
-  }
-  fOldVTX->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::DrawPreVTX(char *ptitle)
-{
-  fCanvasVTX->cd();
-  if (fPreVTX)
-  {
-    fPreVTX->Clear();
-    fPreVTX->SetText(0.05, 0.82, ptitle);
-  }
-  else
-  {
-    fPreVTX = new TText(0.05, 0.82, ptitle);
-    fPreVTX->ResetBit(kCanDelete);
-    fPreVTX->SetTextColor(1);
-    fPreVTX->SetTextSize(0.04);
-    fPreVTX->SetTextAlign(12);
-    fPreVTX->SetTextFont(102);
-  }
-  fPreVTX->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::DrawNewVTX(char *ptitle)
-{
-  fCanvasVTX->cd();
-  if (fNewVTX)
-  {
-    fNewVTX->Clear();
-    fNewVTX->SetText(0.05, 0.76, ptitle);
-  }
-  else
-  {
-    fNewVTX = new TText(0.05, 0.76, ptitle);
-    fNewVTX->ResetBit(kCanDelete);
-    fNewVTX->SetTextColor(1);
-    fNewVTX->SetTextSize(0.04);
-    fNewVTX->SetTextAlign(12);
-    fNewVTX->SetTextFont(102);
-  }
-  fNewVTX->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::CreateCanvasVTX()
-{
-  static char CanvasVTXName[140];
-  strcpy(CanvasVTXName, "VTX-");
-  strcat(CanvasVTXName, fCanvasName);
-  if ((fCanvasVTX = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasVTXName))))
-  {
-    fCanvasVTX->Clear();
-  }
-  else
-  {
-    int xpos = fCanvas->GetWindowTopX()+fCanvas->GetWw();
-    int ypos = fCanvas->GetWindowTopY();
-    fCanvasVTX = new TCanvas(CanvasVTXName, "Vertex Data Display",
-			     -xpos, ypos, 640, 350);
-    fCanvasVTX->ToggleEventStatus();
-    for (int i=0; i<50; i++) fRemBut[i] = 0;
-  }
-  if (fHdrVTX)
-  {
-    fHdrVTX->Clear();
-    fHdrVTX->SetText(0.05, 0.94,
-    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
-  }
-  else
-  {
-    fHdrVTX = new TText(0.05, 0.94,
-    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
-    fHdrVTX->ResetBit(kCanDelete);
-    fHdrVTX->SetTextColor(4);
-    fHdrVTX->SetTextSize(0.04);
-    fHdrVTX->SetTextAlign(12);
-    fHdrVTX->SetTextFont(102);
-  }
-  fHdrVTX->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::ClearNewVTX()
-{
-  fCanvasVTX->cd();
-  fNewVTX->Clear();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::ClearPreVTX()
-{
-  fCanvasVTX->cd();
-  fPreVTX->Clear();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::DrawOldBut(char *type)
-{
-  fCanvasVTX->cd();
-  if (!fOldBut)
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fOldBut = new TButton("TR",but,0.01,0.86,0.04,0.90);
-    fOldBut->SetToolTipText("Show tracks table");
-    fOldBut->ResetBit(kCanDelete);
-    fOldBut->SetFillColor(38);
-    fOldBut->SetName("DrawOldVTX");
-  }
-  else
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fOldBut->SetMethod(but);
-  }
-  fOldBut->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::DrawPreBut(char *type)
-{
-  fCanvasVTX->cd();
-  if (!fPreBut)
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fPreBut = new TButton("TR",but,0.01,0.80,0.04,0.84);
-    fPreBut->SetToolTipText("Show tracks table");
-    fPreBut->ResetBit(kCanDelete);
-    fPreBut->SetFillColor(38);
-    fPreBut->SetName("DrawPreVTX");
-  }
-  else
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fPreBut->SetMethod(but);
-  }
-  fPreBut->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
-void EdbDisplayBase::DrawNewBut(char *type)
-{
-  fCanvasVTX->cd();
-  if (!fNewBut)
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fNewBut = new TButton("TR",but,0.01,0.74,0.04,0.78);
-    fNewBut->SetToolTipText("Show tracks table");
-    fNewBut->ResetBit(kCanDelete);
-    fNewBut->SetFillColor(38);
-    fNewBut->SetName("DrawNewVTX");
-  }
-  else
-  {
-    char but[256];
-    sprintf(but,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
-    strcat(but,type);
-    strcat(but,"\")");
-    fNewBut->SetMethod(but);
-  }
-  fNewBut->Draw();
-  fCanvasVTX->Modified(kTRUE);
-  fCanvasVTX->Update();
-}
-//=============================================================================
 void EdbDisplayBase::Set0()
 {
   fVx0=fVy0=fVz0=fVx1=fVy1=fVz1=0;
@@ -430,9 +223,29 @@ void EdbDisplayBase::Set0()
   fVTXTracks = 0;
   fMain      = 0;
   fView      = 0;
+  fStyle     = 0;
+  fLineWidth = 1;
   for (int i=0; i<50; i++) fRemBut[i] = 0;
 }
+//=============================================================================
+void EdbDisplayBase::SetStyle(int Style)
+{
 
+    if (Style == 0)
+    {
+	fStyle = Style;
+	fLineWidth = 1;
+    }
+    else if (Style == 1)
+    {
+	fStyle = Style;
+	fLineWidth = 2;
+    }
+    else
+    {
+	fLineWidth = 1;
+    }
+}
 //_____________________________________________________________________________
 void EdbDisplayBase::DrawTitle(Option_t *option)
 {
@@ -459,17 +272,6 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
       label->SetFillColor(42);
       label->Draw();
    }
-}
-
-//_____________________________________________________________________________
-void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, Float_t z0, Float_t z1)
-{
-   
-   fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
-
-   if (!fPad) return;
-   fPad->Clear();
-   Draw();
 }
 
 //_____________________________________________________________________________
@@ -573,6 +375,17 @@ void EdbDisplayBase::DisplayButtons()
    diamond->AddText("OPERA");
    diamond->AddText("... ");
    diamond->AddText(" ");
+}
+
+//_____________________________________________________________________________
+void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, Float_t z0, Float_t z1)
+{
+   
+   fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
+
+   if (!fPad) return;
+   fPad->Clear();
+   Draw();
 }
 
 //_____________________________________________________________________________
@@ -910,6 +723,218 @@ char *EdbDisplayBase::GetObjectInfo(int px, int py) const
 	return rcoordinates;
     return coordinates;
 }
+
+//=============================================================================
+void EdbDisplayBase::DrawOldVTX(char *ptitle)
+{
+  fCanvasVTX->cd();
+  if (fOldVTX)
+  {
+    fOldVTX->Clear();
+    fOldVTX->SetText(0.05, 0.88, ptitle);
+  }
+  else
+  {
+    fOldVTX = new TText(0.05, 0.88, ptitle);
+    fOldVTX->ResetBit(kCanDelete);
+    fOldVTX->SetTextColor(1);
+    fOldVTX->SetTextSize(0.04);
+    fOldVTX->SetTextAlign(12);
+    fOldVTX->SetTextFont(102);
+  }
+  fOldVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawPreVTX(char *ptitle)
+{
+  fCanvasVTX->cd();
+  if (fPreVTX)
+  {
+    fPreVTX->Clear();
+    fPreVTX->SetText(0.05, 0.82, ptitle);
+  }
+  else
+  {
+    fPreVTX = new TText(0.05, 0.82, ptitle);
+    fPreVTX->ResetBit(kCanDelete);
+    fPreVTX->SetTextColor(1);
+    fPreVTX->SetTextSize(0.04);
+    fPreVTX->SetTextAlign(12);
+    fPreVTX->SetTextFont(102);
+  }
+  fPreVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawNewVTX(char *ptitle)
+{
+  fCanvasVTX->cd();
+  if (fNewVTX)
+  {
+    fNewVTX->Clear();
+    fNewVTX->SetText(0.05, 0.76, ptitle);
+  }
+  else
+  {
+    fNewVTX = new TText(0.05, 0.76, ptitle);
+    fNewVTX->ResetBit(kCanDelete);
+    fNewVTX->SetTextColor(1);
+    fNewVTX->SetTextSize(0.04);
+    fNewVTX->SetTextAlign(12);
+    fNewVTX->SetTextFont(102);
+  }
+  fNewVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::CreateCanvasVTX()
+{
+  static char CanvasVTXName[140];
+  strcpy(CanvasVTXName, "VTX-");
+  strcat(CanvasVTXName, fCanvasName);
+  if ((fCanvasVTX = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasVTXName))))
+  {
+    fCanvasVTX->Clear();
+  }
+  else
+  {
+    int xpos = fCanvas->GetWindowTopX()+fCanvas->GetWw();
+    int ypos = fCanvas->GetWindowTopY();
+    fCanvasVTX = new TCanvas(CanvasVTXName, "Vertex Data Display",
+			     -xpos, ypos, 640, 350);
+    fCanvasVTX->ToggleEventStatus();
+    for (int i=0; i<50; i++) fRemBut[i] = 0;
+  }
+  if (fHdrVTX)
+  {
+    fHdrVTX->Clear();
+    fHdrVTX->SetText(0.05, 0.94,
+    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+  }
+  else
+  {
+    fHdrVTX = new TText(0.05, 0.94,
+    "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+    fHdrVTX->ResetBit(kCanDelete);
+    fHdrVTX->SetTextColor(4);
+    fHdrVTX->SetTextSize(0.04);
+    fHdrVTX->SetTextAlign(12);
+    fHdrVTX->SetTextFont(102);
+  }
+  fHdrVTX->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::ClearNewVTX()
+{
+  fCanvasVTX->cd();
+  fNewVTX->Clear();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::ClearPreVTX()
+{
+  fCanvasVTX->cd();
+  fPreVTX->Clear();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawOldBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fOldBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fOldBut = new TButton("TR",but,0.01,0.86,0.04,0.90);
+    fOldBut->SetToolTipText("Show tracks table");
+    fOldBut->ResetBit(kCanDelete);
+    fOldBut->SetFillColor(38);
+    fOldBut->SetName("DrawOldVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fOldBut->SetMethod(but);
+  }
+  fOldBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawPreBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fPreBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fPreBut = new TButton("TR",but,0.01,0.80,0.04,0.84);
+    fPreBut->SetToolTipText("Show tracks table");
+    fPreBut->ResetBit(kCanDelete);
+    fPreBut->SetFillColor(38);
+    fPreBut->SetName("DrawPreVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fPreBut->SetMethod(but);
+  }
+  fPreBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
+//=============================================================================
+void EdbDisplayBase::DrawNewBut(char *type)
+{
+  fCanvasVTX->cd();
+  if (!fNewBut)
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fNewBut = new TButton("TR",but,0.01,0.74,0.04,0.78);
+    fNewBut->SetToolTipText("Show tracks table");
+    fNewBut->ResetBit(kCanDelete);
+    fNewBut->SetFillColor(38);
+    fNewBut->SetName("DrawNewVTX");
+  }
+  else
+  {
+    char but[256];
+    sprintf(but,
+    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVTXTracks(\"",fTitle);
+    strcat(but,type);
+    strcat(but,"\")");
+    fNewBut->SetMethod(but);
+  }
+  fNewBut->Draw();
+  fCanvasVTX->Modified(kTRUE);
+  fCanvasVTX->Update();
+}
 //______________________________________________________________________________
 void EdbDisplayBase::DrawUnd()
 {
@@ -1093,13 +1118,14 @@ void Edb3DView::ExecuteRotateView(Int_t event, Int_t px, Int_t py)
       //
       // This is a TEMPORARY fix - will be removed when proper multiple viewers
       // on pad problems are resolved.
-      if (gPad) {
-         TVirtualViewer3D *viewer = gPad->GetViewer3D();
-         if (viewer && !strcmp(viewer->IsA()->GetName(),"TViewer3DPad")) {
-            gPad->ReleaseViewer3D();
-            delete viewer;
-         }
-      }
+//Doesn't work in old versions of ROOT 
+//      if (gPad) {
+//         TVirtualViewer3D *viewer = gPad->GetViewer3D();
+//         if (viewer && !strcmp(viewer->IsA()->GetName(),"TViewer3DPad")) {
+//            gPad->ReleaseViewer3D();
+//            delete viewer;
+//         }
+//      }
       // End fix
 
       // Recompute new view matrix and redraw
