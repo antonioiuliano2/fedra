@@ -5,4 +5,5 @@
 # user's directory
 #------------------------------------------------------------
 
-Unix.*.Root.MacroPath:      $(FEDRA_ROOT)/macros
+Unix.*.Root.MacroPath:      .:$(FEDRA_ROOT)/macros
+WinNT.*.Root.MacroPath:     .;$(FEDRA_ROOT)/macros
