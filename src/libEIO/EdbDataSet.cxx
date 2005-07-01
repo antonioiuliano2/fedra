@@ -2513,7 +2513,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     entr = lst->GetEntry(j);
     tracks->GetEntry(entr);
 
-    EdbTrackP *tr1 = new EdbTrackP( trk, 0.124 );  // TODO: the default mass for the time being
+    EdbTrackP *tr1 = new EdbTrackP( trk, 0.140 );  // TODO: the default pi mass for the time being
 
     tr1->SetID(trk->ID());
     tr1->SetP(trk->P());
