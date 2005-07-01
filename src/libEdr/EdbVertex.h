@@ -133,14 +133,14 @@ class EdbVertex: public TObject {
   EdbVertex *GetConnectedVertex(int i);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
-  float Chi2Track(int i);
+  float Chi2Track(EdbTrackP *tr, int zpos, float X0);
   float ImpTrack(int i);
   float MaxAperture();
 
   bool EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
 
-  bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t );
-  bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t );
+  bool Edb2Vt( const EdbTrackP& tr, VERTEX::Track& t, float X0 = 0., float m = 0.139 );
+  bool Edb2Vt( const EdbSegP& s, VERTEX::Track& t,float X0 = 0., float m = 0.139 );
 
   void Print();
 
@@ -190,10 +190,10 @@ class EdbVertexRec: public TObject {
 		  int zpos1, int zpos2);
 
   float CheckImpact( EdbSegP *s1,   EdbSegP *s2,
-		     int zpos1,     int zpos2 );
+		     int zpos1,     int zpos2,    float pv[3] = 0  );
 
   int ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
-		  int zpos1,     int zpos2 );
+		  int zpos1,        int zpos2,    float pv[3] = 0  );
 
   void AddVertex(EdbVertex *vtx) {
     if(!eVTX) eVTX = new TObjArray();
