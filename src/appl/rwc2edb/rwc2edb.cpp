@@ -5,10 +5,15 @@
 //  
 //______________________________________________________________________________
 //
-// Revision 2.0 
+// Revision 1.12
+// -> option -clframe: to fill the clusters.eFrame branch
+// -> EdbRunHeader: set camera coordinates eFlag[2] = (1 real , 2 pixel)  
+//
+// Revision 1.11 
 // -> integration of windows and linux versions in the same source code
 //    (see libDataConversion.cpp)
-// -> add the possibility to not convert clusters (-nocl option)
+// -> option -nocl: do not convert clusters
+// -> add tilex, tiley in the EdbViewHeader
 //
 // Revision 1.9 May 11, 2004
 // -> conversion TXT (Test & Configure grains) -> ROOT  without RWD was added
@@ -64,7 +69,7 @@ int main(int argc, char* argv[])
 
   bool printusage=(argc<3)?true:false;
   for (int i = 1; i < argc; i++)  {  // Skip argv[0] (program name)
-	if (!strcmp(argv[i], "-map")) { // Process optional arguments
+	if (!strcmp(argv[i], "-map")) {   // Process optional arguments
 	  if (i + 1 <= argc - 1) { sprintf(mapname,argv[++i]); addmap=true; }
 	  else printusage=true; 
 	}
@@ -72,7 +77,8 @@ int main(int argc, char* argv[])
 	  if (i + 1 <= argc - 1) { sprintf(grsname,argv[++i]); addgrs=true; }
 	  else printusage=true; 
 	}
-	else if (!strcmp(argv[i], "-nocl")) strcat(options,"NOCL") ;
+	else if (!strcmp(argv[i], "-nocl"))    strcat(options,"NOCL") ;
+	else if (!strcmp(argv[i], "-clframe")) strcat(options,"CLFRAME") ;
 	else  { // Process non-optional arguments here
       sprintf(rwcname,argv[i++]);
       sprintf(edbname,argv[i]);
@@ -80,10 +86,11 @@ int main(int argc, char* argv[])
   }
   if(printusage) { 
 		cout<< "usage: rwc2edb <input file (.rwc|.rwd|.txt)> <output file (.root)> [options] "<<endl;
-		cout << "\n options: -nocl          = do not add the clusters" << endl;
-		cout <<   "          -map filename  = add the fiducial marks file (.map) (only mswindows)" << endl;
-		cout <<   "          -grs filename  = convert both raw data (.rwd) and grains (.txt) " << endl;
-      cout <<   "                           (to convert only grains use: rwc2edb fname.txt fname.root)" << endl;
+		cout << "\n options: -nocl         = do not add the clusters" << endl;
+		cout <<   "          -clframe      = fill clusters.eFrame (default empty) -> +4% file size" << endl;
+		cout <<   "          -map filename = add the fiducial marks file (.map) (only mswindows)" << endl;
+		cout <<   "          -grs filename = convert both raw data (.rwd) and grains (.txt) " << endl;
+      cout <<   "                          (if only grains: rwc2edb fname.txt fname.root)" << endl;
 		return 0;
 	};
 

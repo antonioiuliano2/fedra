@@ -8,11 +8,16 @@
 //
 // ----------------------------------------
 //
-// Revision 2.0
+// Revision 1.10
+// -> AddRWC() and AddGrainsTXT() set camera coordinates flag EdbRunHeader->SetFlag(2, ... );
+// -> AddRWD() option "CLFRAME" to fill clusters.eFrame brach
+//
+// Revision 1.9
 // -> integration of windows and linux versions in the same source code
 //    the op.sys. differences are implemented through preprocessor directives
 //    and saved in the dataIO/dataIO.h and dataIO/dataIO.cpp
 // -> AddRWD() option "NOCL" do not convert clusters
+// -> AddRWD() add tilex,tiley edbViewHeader->SetColRow( ... , ... );
 //
 // Revision 1.2 May 11, 2004
 // -> compiler warning C4244 fixed (implicit conversions to smaller types
@@ -77,8 +82,12 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 									//  eFlag[0] = 2  - SySal data
 									//  eFlag[1] = 1  - Stage coordinates
 									//  eFlag[1] = 2  - Absolute (marks) coordinates
+                           //  eFlag[2] = 1  - real (stage) coordinates for clusters
+                           //  eFlag[2] = 2  - pixels coordinates for clusters
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,1);
+	Header->SetFlag(2,1);
+
 	Header->SetLimits(pCat->Area.XMin,pCat->Area.XMax,
 		               pCat->Area.YMin,pCat->Area.YMax);
 	// fiducial coordinates
@@ -162,8 +171,10 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 {
 	Bool_t addcl(true);
+	Bool_t addclframe(false);
 	// OPTIONS
-	if (strstr(options,"NOCL") ) addcl=false; // do not add clusters
+	if (strstr(options,"NOCL") )    addcl=false;     // do not add clusters
+	if (strstr(options,"CLFRAME") ) addclframe=true; // fill clusters.eFrame branch
    
 	EdbView*    edbView = run->GetView();
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
@@ -211,7 +222,8 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 			edbViewHeader->SetViewID(v);
          edbViewHeader->SetColRow(rwdView->TileX  ,rwdView->TileY );
 
-			for( int nlvl=0; nlvl<rwdView->Layers[s].Count; nlvl++ )
+         int nframes = rwdView->Layers[s].Count;
+			for( int nlvl=0; nlvl<nframes; nlvl++ )
 				edbView->AddFrame(nlvl,rwdView->Layers[s].pLayerInfo[nlvl].Z,
 											  rwdView->Layers[s].pLayerInfo[nlvl].Clusters);
 
@@ -231,15 +243,29 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 				
 				// Add clusters 
 				if (addcl)
-					for ( p=0; p<tr_clusters;p++)
+            {
+               float volume = 0;
+               int frameId  = 0;
+	      		for ( p=0; p<tr_clusters;p++)
 					{
+                  if (addclframe)
+                  {
+	                  for(int nlvl=frameId;nlvl<nframes;nlvl++)
+                        if(rwdTrack->pGrains[p].Z == rwdView->Layers[s].pLayerInfo[nlvl].Z )
+                        {
+                           frameId=nlvl;
+                           break;
+                        }
+                  }
 						edbView->AddCluster(rwdTrack->pGrains[p].X,
 													rwdTrack->pGrains[p].Y,
 													rwdTrack->pGrains[p].Z,
 													rwdTrack->pGrains[p].Area,
-													0,0,s,t);										
+													volume,
+                                       frameId,
+                                       s,t);										
 					}
-					
+            }	
 				edbViewHeader->SetNclusters(vclusters);
 				edbView->AddSegment(edbSegment) ;
 				vclusters += tr_clusters;
@@ -297,51 +323,64 @@ int AddGrainsTXT(EdbRun* run, char* txtname)
 	int gs,gf,gTot,gn;				 //grains: view side frame Total index size
 	float gX,gY,gZ,ga,gv;
 
-		char instr[128];
-		EdbView *View;
-		View=run->GetView();
-		View->Clear();
-		float curv=0;
-		int curs=1;
-		int ngr=0;
-		if(fgets(instr,128,grfile)!=NULL)		//get initial side and viewID
-		{ 
-		  sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
-		}
-		curs=gs;
-		curv=gv;
-		fseek(grfile,0,0);
-        printf("Reading grains from %s..\n",txtname);
-		printf("Filling view %d side %d..",int(curv),curs);
-		while(fgets(instr,128,grfile)!=NULL)
+	EdbRunHeader *Header;
+	Header =  run->GetHeader();
+									// customize run flags:
+									//  eFlag[0] = 1  - UTS data
+									//  eFlag[0] = 2  - SySal data
+									//  eFlag[1] = 1  - Stage coordinates
+									//  eFlag[1] = 2  - Absolute (marks) coordinates
+                           //  eFlag[2] = 1  - real (stage) coordinates for clusters
+                           //  eFlag[2] = 2  - pixels coordinates for clusters
+	Header->SetFlag(0,2);  
+	Header->SetFlag(1,1);
+	Header->SetFlag(2,2);
+
+	char instr[128];
+	EdbView *View;
+	View=run->GetView();
+	View->Clear();
+	float curv=0;
+	int curs=1;
+	int ngr=0;
+	if(fgets(instr,128,grfile)!=NULL)		//get initial side and viewID
+	{ 
+		sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
+	}
+	curs=gs;
+	curv=gv;
+	fseek(grfile,0,0);
+   printf("Reading grains from %s..\n",txtname);
+	printf("Filling view %d side %d..",int(curv),curs);
+	while(fgets(instr,128,grfile)!=NULL)
+	{
+		sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
+		if((gv!=curv)||(gs!=curs))			//new view found
 		{
-		  sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
-		  if((gv!=curv)||(gs!=curs))			//new view found
-		  {
-            View->GetHeader()->SetViewID((int) curv);
-			View->GetHeader()->SetNframes(curs,1-curs);
-			View->GetHeader()->SetNclusters(ngr);
-			View->GetHeader()->SetNsegments(-1);//grain view
-            run->AddView(View);
-
-			View->Clear();
-			curv=gv;
-			curs=gs;
-			printf("%d clusters.\nFilling view %d side %d..",ngr,int(curv),curs);
-			ngr=0;
-		  }
-          View->AddCluster(gX,gY,gZ,ga,gv,gf,gs,-2);
-		  ngr++;
-		}
-
-        View->GetHeader()->SetViewID((int) curv);
+         View->GetHeader()->SetViewID((int) curv);
 		View->GetHeader()->SetNframes(curs,1-curs);
 		View->GetHeader()->SetNclusters(ngr);
-		View->GetHeader()->SetNsegments(-1);	//grain view
-        run->AddView(View);						//the last view
+		View->GetHeader()->SetNsegments(-1);//grain view
+         run->AddView(View);
 
-		printf("%d clusters.\n",ngr);
-		fclose(grfile);
+		View->Clear();
+		curv=gv;
+		curs=gs;
+		printf("%d clusters.\nFilling view %d side %d..",ngr,int(curv),curs);
+		ngr=0;
+		}
+         View->AddCluster(gX,gY,gZ,ga,gv,gf,gs,-2);
+		ngr++;
+	}
+
+   View->GetHeader()->SetViewID((int) curv);
+	View->GetHeader()->SetNframes(curs,1-curs);
+	View->GetHeader()->SetNclusters(ngr);
+	View->GetHeader()->SetNsegments(-1);	//grain view
+   run->AddView(View);						//the last view
+
+	printf("%d clusters.\n",ngr);
+	fclose(grfile);
 
 	return true;
 }
