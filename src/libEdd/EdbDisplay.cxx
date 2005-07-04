@@ -1852,7 +1852,7 @@ void EdbDisplay::DialogNeighborParameters()
     Double_t parinit[3] = {eRadMax, eDpat,  eImpMax};
     Double_t parmax[3] =  { 50000.,   25.,  100000.};
     Double_t parmin[3] =  {    10.,    0.,      10.};
-    if (eVerRec->ePVR) parmax[1] = (eVerRec->ePVR->Npatterns()-1)/2.;
+    if (eVerRec->ePVR) parmax[1] = (eVerRec->ePVR->Npatterns()-1);
     char *parlabel[3] = {"Maximal radius","+/- patterns", "Maximal impact"};
 
     TGGC myGC = *(gClient->GetResourcePool()->GetFrameGC());
