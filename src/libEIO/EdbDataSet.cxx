@@ -2174,7 +2174,7 @@ void EdbDataProc::Align(int doAlign)
 }
 
 ///______________________________________________________________________________
-int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag )
+int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag, float mass )
 {
   // p       - momentum expected for tracks
   // probmin - minimum probability to accept tracks
@@ -2188,8 +2188,6 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
   ali->MakeTracks(nsegmin,flag);
   if(p<0.01) p=4.;
 
-  //  ali->FitTracks(p); //razobratsia (udalit?) s etoi funkciei
-
   int ntr = ali->eTracks->GetEntries();
   float X0 =  ali->GetScanCond()->RadX0();
   EdbTrackP *tr=0;
@@ -2197,6 +2195,7 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
     tr = ali->GetTrack(itr);
     tr->ClearF();
     tr->SetP(p);
+    tr->SetM(mass);
     tr->FitTrackKFS(false,X0);
   }
 
@@ -2513,14 +2512,15 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     entr = lst->GetEntry(j);
     tracks->GetEntry(entr);
 
-    EdbTrackP *tr1 = new EdbTrackP( trk, 0.140 );  // TODO: the default pi mass for the time being
-
-    tr1->SetID(trk->ID());
-    tr1->SetP(trk->P());
-    tr1->SetErrorP(trk->SP());
-    tr1->SetM(0.129);                 //TODO
-    tr1->SetFlag(trk->Flag());
-    tr1->SetProb(trk->Prob());
+    EdbTrackP *tr1 = new EdbTrackP();
+    ((EdbSegP*)tr1)->Copy(*trk);
+    tr1->SetM(0.139);                 //TODO
+ 
+//     tr1->SetID(trk->ID());
+//     tr1->SetP(trk->P());
+//     tr1->SetErrorP(trk->SP());
+//     tr1->SetFlag(trk->Flag());
+//     tr1->SetProb(trk->Prob());
 
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
