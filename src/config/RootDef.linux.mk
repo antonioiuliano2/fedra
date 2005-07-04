@@ -1,5 +1,5 @@
 ARCH         := $(shell root-config --arch)
-PLATFORM     := $(shell root-config --platform)
+#PLATFORM     := $(shell root-config --platform)
 ObjSuf        = o
 SrcSuf        = cxx
 ExeSuf        =
