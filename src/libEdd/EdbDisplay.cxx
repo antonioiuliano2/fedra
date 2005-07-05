@@ -837,8 +837,8 @@ void EdbSegG::AddAsTrack()
 //_____________________________________________________________________________
 void EdbSegG::SetAsWorking()
 {
-  static EdbDisplay *eDs = 0;
-  static EdbSegP    *eSegs = 0;
+  EdbDisplay *eDs = 0;
+  EdbSegP    *eSegs = 0;
   eDs = eD;
   eSegs = (EdbSegP *)eSeg;
   if (eDs && eSegs)
@@ -904,8 +904,8 @@ void EdbVertexG::SetAsWorking()
 {
   char text[512];
   EdbTrackP *tr = 0;
-  static EdbDisplay *eDs = 0;
-  static EdbVertex  *eVs = 0;
+  EdbDisplay *eDs = 0;
+  EdbVertex  *eVs = 0;
   eDs = eD;
   eVs = eV;
   if (eDs && eVs)
@@ -1071,7 +1071,7 @@ void EdbTrackG::RemoveTrack()
 	}
 //	eD->DrawOldBut("Original");
 	eD->DrawVTXTracks("Modified", eD->eWorking);
-	if (eD->eIndVert >= 0) 
+	if (eD->eArrV && (eD->eIndVert >= 0)) 
 	{
 //	    eD->eArrV->RemoveAt(eD->eIndVert);
 	    eD->eArrV->AddAt(eD->eWorking, eD->eIndVert);
@@ -1212,7 +1212,7 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	TButton *rm = fRemBut[ivt];
 	fRemBut[ivt] = 0;
 	DrawVTXTracks("Modified", eWorking);
-	if (eIndVert >= 0) 
+	if (eArrV && (eIndVert >= 0)) 
 	{
 //	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eWorking, eIndVert);
@@ -1398,7 +1398,7 @@ void EdbTrackG::AddTrack()
 	}
 //	eD->DrawOldBut("Original");
 	eD->DrawVTXTracks("Modified", eD->eWorking);
-	if (eD->eIndVert >= 0) 
+	if (eD->eArrV && (eD->eIndVert >= 0)) 
 	{
 //	    eD->eArrV->RemoveAt(eD->eIndVert);
 	    eD->eArrV->AddAt(eD->eWorking, eD->eIndVert);
@@ -1445,9 +1445,13 @@ void EdbDisplay::CancelModifiedVTX()
 	(eVertex)->ResetTracks();
     }
     TList *li = fTrigPad->GetListOfPrimitives();
-    li->Remove(fUndButton);
-    li->Remove(fAccButton);
-    li->Remove(fCanButton);
+    if (li)
+    {
+	li->Remove(fUndButton);
+	li->Remove(fAccButton);
+	li->Remove(fCanButton);
+	li->Remove(fEnvButton);
+    }
 
     EdbTrackP *tr = 0;
 
@@ -1463,8 +1467,7 @@ void EdbDisplay::CancelModifiedVTX()
     }
     eCreatedTracks.Clear();
 
-    li->Remove(fEnvButton);
-    if (eIndVert >= 0 && eVertex) 
+    if (eArrV && (eIndVert >= 0) && eVertex) 
     {
 //	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eVertex, eIndVert);
@@ -1526,7 +1529,7 @@ void EdbDisplay::DeleteModifiedVTX()
 	eArrSegPSave = 0;
 	eIndVert = eIndVertSave;
     }
-    if (eIndVert >= 0 && eVertex) 
+    if (eArrV && (eIndVert >= 0) && eVertex) 
     {
 //	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eVertex, eIndVert);
@@ -1558,7 +1561,6 @@ void EdbDisplay::UndoModifiedVTX()
 	DrawPreVTX(text);
 	DrawPreBut("Modified");
 	ClearNewVTX();
-//	if (fNewBut) (fCanvasVTX->GetListOfPrimitives())->Remove(fNewBut);
 	if (fNewBut)
 	{
 	    delete fNewBut;
@@ -1586,27 +1588,28 @@ void EdbDisplay::UndoModifiedVTX()
 	ClearPreVTX();
 	if (fPreBut)
 	{
-//	    (fCanvasVTX->GetListOfPrimitives())->Remove(fPreBut);
 	    delete fPreBut;
 	    fPreBut = 0;
 	}
 	if (fOldBut)
 	{
-//	    (fCanvasVTX->GetListOfPrimitives())->Remove(fOldBut);
 	    delete fOldBut;
 	    fOldBut = 0;
 	}
 	eWorking = 0;
 	DrawVTXTracks("Original", eVertex);
-	if (eIndVert >= 0) 
+	if (eArrV && (eIndVert >= 0)) 
 	{
 //	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eVertex, eIndVert);
 	}
 	TList *li = fTrigPad->GetListOfPrimitives();
-	li->Remove(fUndButton);
-	li->Remove(fAccButton);
-	li->Remove(fCanButton);
+	if (li)
+	{
+	    li->Remove(fUndButton);
+	    li->Remove(fAccButton);
+	    li->Remove(fCanButton);
+	}
 	Draw();	
     }
 }
@@ -1637,21 +1640,12 @@ void EdbDisplay::AcceptModifiedVTX()
 	    }
 	}
 	int indd = -1;
-	indd = eArrV->IndexOf(eVertex);
+	if (eArrV) indd = eArrV->IndexOf(eVertex);
 	if (indd >= 0)
 	{
 //	    eArrV->RemoveAt(indd);
 	    eArrV->AddAt(eW, indd);
 	}
-/*	if (eArrVSave)
-	{
-	    indd = eArrVSave->IndexOf(eVertex);
-	    if (indd >= 0)
-	    {
-//		eArrVSave->RemoveAt(indd);
-		eArrVSave->AddAt(eW, indd);
-	    }
-	}*/
 	eVe = eVertex;
 	EdbTrackP *tr = 0;
 
@@ -1666,7 +1660,7 @@ void EdbDisplay::AcceptModifiedVTX()
 	    {
 		tr->SetID(trind++);
 		if (etr) etr->Add(tr);
-		eArrTr->Add(tr);
+		if (eArrTr) eArrTr->Add(tr);
 	    } 
 	}
 	eCreatedTracks.Clear();
@@ -1694,7 +1688,7 @@ void EdbDisplay::AcceptModifiedVTX()
 	if (eVerRec)
 	{
 //	    eVerRec->eVTX->RemoveAt(ind);
-	    eVerRec->eVTX->AddAt(eW, ind);
+	    if (eVerRec->eVTX) eVerRec->eVTX->AddAt(eW, ind);
 	    for(int i=0; i<ntr; i++)
 	    {
 		eVerRec->AddVTA(eW->GetVTa(i));
@@ -1704,10 +1698,13 @@ void EdbDisplay::AcceptModifiedVTX()
     }
     eVertex = 0;
     TList *li = fTrigPad->GetListOfPrimitives();
-    li->Remove(fUndButton);
-    li->Remove(fAccButton);
-    li->Remove(fCanButton);
-    li->Remove(fEnvButton);
+    if (li)
+    {
+	li->Remove(fUndButton);
+	li->Remove(fAccButton);
+	li->Remove(fCanButton);
+	li->Remove(fEnvButton);
+    }
     fTrigPad->cd();
     fTrigPad->Update();
     fTrigPad->Draw();
@@ -1820,7 +1817,7 @@ void EdbDisplay::DrawAllObjects()
 	eArrSegP = eArrSegPSave;
 	eArrSegPSave = 0;
     }
-    if (eWorking && eIndVert >= 0) 
+    if (eArrV && eWorking && (eIndVert >= 0)) 
     {
 //	eArrV->RemoveAt(eIndVert);
 	eArrV->AddAt(eWorking, eIndVert);
