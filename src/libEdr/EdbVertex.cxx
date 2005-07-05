@@ -777,10 +777,10 @@ void EdbVertexRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends )
   for(int itr=0; itr<ntr; itr++)   {
     tr = (EdbTrackP*)(eEdbTracks->At(itr));
     if (tr->Flag() < 0) continue;
-    v[0] = (Long_t)(tr->TrackZmin()->Z()/eZbin);
+    v[0] = (Long_t)(tr->TrackZmin(eUseSegPar)->Z()/eZbin);
     v[1] = itr;
     starts.Add(2,v); 
-    v[0] = (Long_t)(tr->TrackZmax()->Z()/eZbin);
+    v[0] = (Long_t)(tr->TrackZmax(eUseSegPar)->Z()/eZbin);
     v[1] = itr;
     ends.Add(2,v);
   }
@@ -1111,8 +1111,7 @@ int EdbVertexRec::ProbVertexN()
   int ncombin = 0;
   int ncombinv = 0;
   bool wasadded = false;
-  float ImpMax2 = 2.*eImpMax;
-  double dvx = 0., dvy = 0., dvz = 0., dv = 0.;
+  float dz = 0.;
   
   if (eVTX)
   {
@@ -1239,10 +1238,6 @@ int EdbVertexRec::ProbVertexN()
   		edbv2 = (EdbVertex *)(eVTX->At(i2));
 		if (!edbv2) continue;
 		if (edbv2->Flag() == -10) continue;
-		dvx = edbv1->VX() - edbv2->VX();
-		dvy = edbv1->VY() - edbv2->VY();
-		dvz = edbv1->VZ() - edbv2->VZ();
-		dv  = TMath::Sqrt(dvx*dvx+dvy*dvy+dvz*dvz);
 		if (edbv2->N() == 2)
 		{
 //		    printf(" v1 id %d, v2 id %d\n", edbv1->ID(), edbv2->ID()); 
@@ -1300,7 +1295,9 @@ int EdbVertexRec::ProbVertexN()
 			    if (!exist)			    
 			    {
 			        ncombinv++;
-				if((dv <= ImpMax2) && ((vta = AddTrack(*edbv1, tr2, zpos))))
+				if (zpos) dz = edbv1->VZ() - tr2->TrackZmin(eUseSegPar)->Z();
+				else      dz = tr2->TrackZmax(eUseSegPar)->Z() - edbv1->VZ();
+				if((dz <= eZbin) && ((vta = AddTrack(*edbv1, tr2, zpos))))
 				{
 				    nomatch = 0;
 				    wasadded = true;
