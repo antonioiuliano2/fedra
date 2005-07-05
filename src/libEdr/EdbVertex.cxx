@@ -522,7 +522,7 @@ float EdbVertex::ImpTrack(int i)
 	{
 	  if (eV->valid())
 	    {
-	      dist = distance(*eV, *t);
+	      dist = distance(*t, *eV);
 	    } 
 	}
       else
@@ -630,9 +630,19 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 	{
 	  if (v->valid())
 	    {
-	      t->rm((double)(track->M()));
-	      v->push_back(*t);
-	      if (!(v->findVertexVt()))
+	      if (distance(*t, *v) > eImpMax)
+	      {
+		  delete t;
+		  t=0;
+	      }
+	      else
+	      {
+		  t->rm((double)(track->M()));
+	          v->push_back(*t);
+	      };
+	      if (t)
+	      {
+	        if (!(v->findVertexVt()))
 		{
 		  v->remove_last();
 		  delete t;
@@ -640,7 +650,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 		  printf("EdbVertex::AddTrack - vertex not found!");
 	          v->findVertexVt();
 		}
-	      else if (!(v->valid()))
+	        else if (!(v->valid()))
 		{
 		  v->remove_last();
 		  delete t;
@@ -648,14 +658,14 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 		  printf("EdbVertex::AddTrack - vertex not valid!");
 	          v->findVertexVt();
 		}
-	      else if (v->prob() < eProbMin )
+	        else if (v->prob() < eProbMin )
 		{
 		  v->remove_last();
 		  delete t;
 		  t=0;
 	          v->findVertexVt();
 		}
-	      else
+	        else
 		{
 		  vta = new EdbVTA(track, &edbv);
 		  vta->SetZpos(zpos);
@@ -678,6 +688,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 		    edbv.SetQuality( 1. );
 		  }
 		}
+	      }
 	    }
 	}
       else
@@ -821,6 +832,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 
       ncount++;
       printf("\b\b\b\b%3d%%",(int)((double)ncount/double(ntot)*100.));
+      fflush(stdout);
       
       int nc1=c1->GetEntries();
       int nc2=c2->GetEntries();
@@ -1099,6 +1111,8 @@ int EdbVertexRec::ProbVertexN()
   int ncombin = 0;
   int ncombinv = 0;
   bool wasadded = false;
+  float ImpMax2 = 2.*eImpMax;
+  double dvx = 0., dvy = 0., dvz = 0., dv = 0.;
   
   if (eVTX)
   {
@@ -1179,6 +1193,7 @@ int EdbVertexRec::ProbVertexN()
         if (!(i1%nprint))
 	{
 	    printf("\b\b\b\b%3d%%",(int)((double)i1/double(nvtx)*100.));
+	    fflush(stdout);
 	}
 	if (!edbv1) continue;
 	if (edbv1->Flag() == -10) continue;
@@ -1224,6 +1239,10 @@ int EdbVertexRec::ProbVertexN()
   		edbv2 = (EdbVertex *)(eVTX->At(i2));
 		if (!edbv2) continue;
 		if (edbv2->Flag() == -10) continue;
+		dvx = edbv1->VX() - edbv2->VX();
+		dvy = edbv1->VY() - edbv2->VY();
+		dvz = edbv1->VZ() - edbv2->VZ();
+		dv  = TMath::Sqrt(dvx*dvx+dvy*dvy+dvz*dvz);
 		if (edbv2->N() == 2)
 		{
 //		    printf(" v1 id %d, v2 id %d\n", edbv1->ID(), edbv2->ID()); 
@@ -1281,7 +1300,7 @@ int EdbVertexRec::ProbVertexN()
 			    if (!exist)			    
 			    {
 			        ncombinv++;
-				if((vta = AddTrack(*edbv1, tr2, zpos)))
+				if((dv <= ImpMax2) && ((vta = AddTrack(*edbv1, tr2, zpos))))
 				{
 				    nomatch = 0;
 				    wasadded = true;
