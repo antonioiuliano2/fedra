@@ -2051,9 +2051,9 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
     ali->SetPatternsID();
   }
 
-  int ntr = ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
-  printf("ntr=%d\n",ntr);
+  ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
 
+  ali->SetSegmentsTracks();
   ali->SetSegmentsErrors();
   ali->SetCouplesAll();
   ali->SetChi2Max(cond->Chi2PMax());
@@ -2188,7 +2188,7 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
   ali->MakeTracks(nsegmin,flag);
   if(p<0.01) p=4.;
 
-  int ntr = ali->eTracks->GetEntries();
+  int ntr = ali->Ntracks();
   float X0 =  ali->GetScanCond()->RadX0();
   EdbTrackP *tr=0;
   for(int itr=ntr0; itr<ntr; itr++) {
@@ -2202,6 +2202,19 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
   ali->FillCell(50,50,0.015,0.015);
   for(int i=0; i<10; i++) 
     if( ali->PropagateTracks(ali->Npatterns()-1,2, probmin, maxgap ) <1) break;
+
+  /*
+  ntr = ali->Ntracks();
+  for(int i=0; i<ntr; i++) {
+    tr = ali->GetTrack(i);
+    if(tr->Flag()<0) continue;
+    if(tr->N()<5)  tr->SetP(0.5); 
+    else           tr->SetP(tr->P_MS());
+  }
+
+  for(int i=0; i<10; i++) 
+    if( ali->PropagateTracks(ali->Npatterns()-1,2, probmin, maxgap ) <1) break;
+  */
 
   return ntr-ntr0;
 }
@@ -2535,6 +2548,8 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     //tr1->FitTrackKFS(true);
     ali.AddTrack(tr1);
   }
+
+  printf("%d tracks are read \n",nlst);
   return nlst;
 }
 
