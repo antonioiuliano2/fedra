@@ -12,10 +12,10 @@ int   MINMULT   = 3;	// minimum event multiplicity
 bool  usemom    = false;
 float momentum  = 1.;	// assumed tracks momenta, GeV/c
 float dpp       = .5;	// assumed average track momentum error, dp/p
-bool  UseSegPar = true;// use measured segment parameters
+bool  UseSegPar = false;// use measured segment parameters
 bool  ReFit     = false;	// re-fit tracks from linked_tracks.root
 			// (for example, with another momenta)
-bool  ReProp    = true;	// additional propagations of tracks from linked_tracks.root
+bool  ReProp    = false;	// additional propagations of tracks from linked_tracks.root
 			// (may be, some improvement?)
 			// (this operation can lead to join parts of track)
 
