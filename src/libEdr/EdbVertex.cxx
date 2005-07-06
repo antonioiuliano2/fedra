@@ -1297,7 +1297,8 @@ int EdbVertexRec::ProbVertexN()
 			        ncombinv++;
 				if (zpos) dz = edbv1->VZ() - tr2->TrackZmin(eUseSegPar)->Z();
 				else      dz = tr2->TrackZmax(eUseSegPar)->Z() - edbv1->VZ();
-				if((dz <= eZbin) && ((vta = AddTrack(*edbv1, tr2, zpos))))
+				if(dz <= eZbin)
+				if((vta = AddTrack(*edbv1, tr2, zpos)))
 				{
 				    nomatch = 0;
 				    wasadded = true;
