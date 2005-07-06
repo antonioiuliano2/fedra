@@ -1326,7 +1326,7 @@ float  EdbTrackP::P_MS( float X0, float m, bool de_correction )
 
   if(tms<=0) { 
 	printf("P_MS: BAD estimation for track %d: tms=%g  nms=%d\n",ID(),tms,nms);
-	return 0;
+	return 10;   // with correct parameters setting this problem is usually happend for hard tracks >=10 GeV
   }
   double pbeta = 0., pbeta2 = 0.;
   pbeta = TMath::Sqrt((double)nms/tms/X0)*0.01923;
