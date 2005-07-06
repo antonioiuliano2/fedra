@@ -2307,6 +2307,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   eTracks->Compress();
 
   nsegtot = 0;
+
   ntr = eTracks->GetEntries();
   for(int i=0; i<ntr; i++) {
     tr = GetTrack(i);
@@ -2316,6 +2317,19 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
 
   printf("%d tracks with %d segments remaining\n",ntr,nsegtot);
   return ntr;
+}
+
+///______________________________________________________________________________
+void EdbPVRec::SetSegmentsTracks()
+{
+  EdbTrackP *tr=0;
+  int ntr = Ntracks();
+  for(int i=0; i<ntr; i++) {
+    tr = GetTrack(i);
+    tr->SetID(i);
+    if(tr->Flag()<0) continue;
+    tr->SetSegmentsTrack();
+  }
 }
 
 ///______________________________________________________________________________
@@ -2335,7 +2349,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 
   //ClearPropagation(design);
 
-  int ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects
+  int ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects TODO remove this call from here? 
 
   printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
 	 ,ntr,nplmin,nplmax, ngapMax );
@@ -2388,6 +2402,9 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
       }
     }
   }
+
+  ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects
+
   printf("%d segments are attached after propagation\n\n",nsegTot);
   return nsegTot;
 }

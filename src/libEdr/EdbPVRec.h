@@ -282,6 +282,8 @@ class EdbPVRec : public EdbPatternsVolume {
 
   int    FineCorrF(int ipat, EdbAffine2D &aff,  EdbAffine2D &afft );
 
+  void SetSegmentsTracks();
+
   void SetOffsetsMax(float ox, float oy);
   void SetSegmentsErrors();
   void SetSegmentErrors( EdbSegP &seg );
