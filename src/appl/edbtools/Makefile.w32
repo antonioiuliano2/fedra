@@ -1,0 +1,15 @@
+#------------------------------------------------------------------------------
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  
+
+CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
+
+edbtools.exe: edbtools.obj
+      $(LD) $**  $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+
+#------------------------------------------------------------------------------
+clean:
+    @del /q edbtools.obj "$(BIN_DIR)"\edbtools.exe
