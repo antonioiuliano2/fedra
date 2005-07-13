@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="libEIO"
-	ProjectGUID="{C4BFA40A-6311-4899-B48E-F17C1769ED0A}"
+	Name="tracks2edb"
+	ProjectGUID="{31A35B1D-E429-4344-95D1-D9764E6B8BB6}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -21,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEIO
-NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEIO
-NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEIO
-NMAKE  clean"
-				Output="..\..\lib\libEIO.dll"/>
+				BuildCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE /f &quot;Makefile.w32&quot;"
+				ReBuildCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE /f &quot;Makefile.w32&quot; /a"
+				CleanCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE /f &quot;Makefile.w32&quot; clean"
+				Output="..\..\bin\tracks2edb.exe"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -37,37 +37,19 @@ NMAKE  clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.cxx">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbLayer.cxx">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.cxx">
+				RelativePath="..\..\src\appl\tracks2edb\tracks2edb.C">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbLayer.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EIOLinkDef.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEIO\Makefile">
+			RelativePath="..\..\src\appl\tracks2edb\Makefile.w32">
 		</File>
 	</Files>
 	<Globals>

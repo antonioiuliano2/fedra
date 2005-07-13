@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEmath"
+	ProjectGUID="{8A51EAF8-C292-4F49-8180-C20CA552B98D}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -53,6 +54,9 @@ NMAKE  clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEmath\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

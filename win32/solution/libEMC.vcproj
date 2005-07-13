@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEMC"
+	ProjectGUID="{55C1B4C4-4188-4694-B441-A7BB73435897}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -53,6 +54,9 @@ NMAKE clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEMC\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

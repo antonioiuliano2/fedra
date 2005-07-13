@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEdb"
+	ProjectGUID="{787E0339-BD79-4C80-914C-84FBDF54D2DF}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -140,6 +141,9 @@ NMAKE  clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEdb\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

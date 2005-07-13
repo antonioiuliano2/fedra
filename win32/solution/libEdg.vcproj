@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEdg"
-	ProjectGUID="{CE2AE524-B892-41D3-AC68-7B7704843055}"
+	ProjectGUID="{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -53,6 +53,9 @@ NMAKE clean"
 				RelativePath="..\..\src\libEdg\EdgLinkDef.h">
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEdg\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

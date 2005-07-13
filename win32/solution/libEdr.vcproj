@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEdr"
+	ProjectGUID="{2AFF0E65-856E-4A55-998A-A564942F6FDA}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -68,6 +69,9 @@ NMAKE clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEdr\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

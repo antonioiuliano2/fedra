@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="rwc2edb"
+	ProjectGUID="{5AB5F301-21B3-4774-A560-43EDCB23094D}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">

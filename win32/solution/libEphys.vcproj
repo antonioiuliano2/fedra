@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEphys"
+	ProjectGUID="{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -53,6 +54,9 @@ NMAKE clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEphys\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

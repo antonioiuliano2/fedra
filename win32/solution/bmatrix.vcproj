@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="bmatrix"
-	ProjectGUID="{CB5DF5EE-E77B-4D3D-A5B8-FC341F7345FB}"
+	ProjectGUID="{5F30815E-D10A-4E65-B8B6-64770EB134E6}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -48,6 +48,9 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\appl\bmatrix\bytematrix.cxx">
 			</File>
+			<File
+				RelativePath="..\..\src\appl\bmatrix\deriv.cxx">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -67,11 +70,17 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\appl\bmatrix\bytematrix.h">
 			</File>
+			<File
+				RelativePath="..\..\src\appl\bmatrix\deriv.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\appl\bmatrix\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

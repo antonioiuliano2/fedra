@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="recset"
+	ProjectGUID="{F3C74FDC-A5BF-4F05-90D8-CB07C1182327}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -47,6 +48,9 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\appl\recset\Makefile.w32">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

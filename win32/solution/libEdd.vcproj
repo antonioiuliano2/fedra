@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEdd"
+	ProjectGUID="{E78D63BD-9E21-4AD6-915D-6BDA202F9F9E}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -53,6 +54,9 @@ NMAKE clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEdd\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

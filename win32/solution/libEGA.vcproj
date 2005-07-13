@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libEGA"
-	ProjectGUID="{066BA35A-25AE-43C4-90AA-302C5674FC00}"
+	ProjectGUID="{58C5119D-50A4-4B9B-9EAD-D16BD97B08C8}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -60,6 +60,9 @@ NMAKE clean"
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath="..\..\src\libEGA\Makefile">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
