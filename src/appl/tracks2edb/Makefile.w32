@@ -1,0 +1,15 @@
+#------------------------------------------------------------------------------
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib libEIO.lib 
+
+CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
+
+tracks2edb.exe: tracks2edb.obj
+      $(LD) $**  $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+
+#------------------------------------------------------------------------------
+clean:
+    @del /q tracks2edb.obj "$(BIN_DIR)"\tracks2edb.exe
