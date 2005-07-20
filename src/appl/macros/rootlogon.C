@@ -4,15 +4,15 @@ void rootlogon()
 
   loadlib( "libvt"   , "CMatrix" );
   loadlib( "libEdb"  , "EdbView" );
-
   loadlib( "libEmath", "EdbMath" );
   loadlib( "libEphys", "EdbPhysics" );
-  loadlib( "libEGA"  , "EdbGA" );           //optional
   loadlib( "libEdr"  , "EdbPattern" );
   loadlib( "libEIO"  , "EdbRunAccess" );
 
+  loadlib( "libEGA"  , "EdbGA" );          //optional
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
+  loadlib( "libEoi"  , "EoiIO" );          //optional
 
   //loadlib( "EmrPoint", "libEmr" );
 }
