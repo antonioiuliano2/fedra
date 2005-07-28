@@ -12,7 +12,7 @@ void rootlogon()
   loadlib( "libEGA"  , "EdbGA" );          //optional
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
-  loadlib( "libEoi"  , "EoiIO" );          //optional
+  loadlibEoi();                            //optional
 
   //loadlib( "EmrPoint", "libEmr" );
 }
@@ -25,3 +25,17 @@ void loadlib(const char *lib, const char *key)
     //else                   printf("%s   \tloaded \n",lib);
   }  
 }
+
+//----------------------------------------------------------
+void loadlibEoi()
+{
+  if (!TClassTable::GetDict("EoiIO")) {
+    if( (gSystem->Load("libclntsh")==0) &&
+        (gSystem->Load("libocci")==0) &&
+        (gSystem->Load("libEoi")==0) )
+      printf("libEoi   \tloaded \n");
+    else
+      printf("libEoi do NOT loaded!\n");
+  }
+}
+

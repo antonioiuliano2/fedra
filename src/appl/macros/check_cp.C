@@ -30,6 +30,14 @@ void init()
   couples->SetAlias("ty","(s2.eY-s1.eY)/(s2.eZ-s1.eZ)");  
   couples->SetAlias("t","sqrt(tx*tx+ty*ty)");
   couples->SetAlias("ts","sqrt(s.eTX*s.eTX + s.eTY*s.eTY)");
+
+  couples->SetAlias("t1","sqrt(s1.eTX*s1.eTX + s1.eTY*s1.eTY)");
+  couples->SetAlias("t2","sqrt(s2.eTX*s2.eTX + s2.eTY*s2.eTY)");
+
+  couples->SetAlias("phi","atan(s.eTY/s.eTX)");
+  couples->SetAlias("phi1","atan(s1.eTY/s1.eTX)");
+  couples->SetAlias("phi2","atan(s2.eTY/s2.eTX)");
+
 }
 
 //-----------------------------------------------------------------
