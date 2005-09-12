@@ -27,7 +27,7 @@ namespace VERTEX_PAR
 {
   float DZmax      = 3000.;  // maximum z-gap in the track-vertex group
   float ProbMinV   = 0.001;  // minimum acceptable probability for chi2-distance between tracks
-  float ImpMax     = 40.;    // maximal acceptable impact parameter [microns] (for preliminary check)
+  float ImpMax     = 10.;    // maximal acceptable impact parameter [microns] (for preliminary check)
   bool  UseMom     = false;  // use or not track momentum for vertex calculations
   bool  UseSegPar  = false;  // use only the nearest measured segments for vertex fit (as Neuchatel)
   int   QualityMode= 0;      // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
@@ -36,8 +36,8 @@ namespace VERTEX_PAR
 //---------------------------------------------------------------------
 void check_vertex()
 {
-  trseg(16);    // reconstruct event starting from basetracks
-  //trvol();    // reconstruct vertexes starting from linked_tracks.root
+  //trseg(16);    // reconstruct event starting from basetracks
+  trvol();    // reconstruct vertexes starting from linked_tracks.root
 }
 
 //---------------------------------------------------------------------
@@ -60,7 +60,7 @@ void trseg( int event=40, const char *def="pions_data_set.def" )
 }
 
 //---------------------------------------------------------------------
-void trvol( const char *def="pions_data_set.def", const char *rcut = "nseg>1" )
+void trvol( const char *def="dset.def", const char *rcut = "nseg>1" )
 {
   // this function read volume tracks and do the vertex reconstruction
 
@@ -68,7 +68,7 @@ void trvol( const char *def="pions_data_set.def", const char *rcut = "nseg>1" )
   gAli->FillCell(30,30,0.009,0.009);
   do_propagation();
   do_vertex();
-  vd(3);   // draw reconstructed vertex with >=3 tracks
+  vd(2,0.05);   // draw reconstructed vertex with >=3 tracks
 
   //dproc->MakeTracksTree(gAli,"linked_tracks_p.root");
 }
@@ -226,7 +226,7 @@ void vd( int trmin=2, float amin=.0)
 
   const char *dsname="display-v";
   ds = EdbDisplay::EdbDisplayExist(dsname);
-  if(!ds)  ds=new EdbDisplay(dsname,-50000.,50000.,-50000.,50000.,-4000., 80000.);
+  if(!ds)  ds=new EdbDisplay(dsname,-100000.,100000.,-100000.,100000.,-40000., 0.);
   
   ds->SetArrTr( tarr );
   printf("%d tracks to display\n", tarr->GetEntries() );
