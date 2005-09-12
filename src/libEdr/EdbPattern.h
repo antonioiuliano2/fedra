@@ -178,7 +178,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 
   //  void (*PF_COUPLE)(EdbSegP *seg1,EdbSegP *seg2); //pointer to the function
 
- protected:
+  //protected:
+ public:
   void       SetZ(float z) { eZ=z; }
 
  public:

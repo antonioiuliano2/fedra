@@ -2107,6 +2107,68 @@ int EdbPVRec::FineCorrZ(int ipat, float &dz)
 }
 
 //______________________________________________________________________________
+int EdbPVRec::FineCorrZnew()
+{
+  // calculate z-correction for all patterns based on linked tracks of any length
+  // gaps to be ignored...
+
+  int  nMin = 5; // minimal statistics for doing correction
+  if(!eTracks) return 0;
+  int   ntr  = eTracks->GetEntriesFast();
+
+  if(ntr < nMin) { printf("FineCorrZnew: ntr<%d : nothing to do\n", nMin ); return 0; }
+
+  int   npat = Npatterns();
+  float  tx1,ty1;
+  double t1;
+  double t;
+  TArrayD dzz(npat);
+  TArrayI itr(npat);
+  TArrayF znew(npat);
+
+  EdbTrackP *track=0;
+  EdbSegP   *seg1=0;
+  EdbSegP   *seg2=0;
+  for(int i=0; i<ntr; i++) {
+    track = (EdbTrackP*)eTracks->At(i);
+    if(track->CHI2()>1.2) continue;
+    t  = TMath::Sqrt( track->TX()*track->TX() + track->TY()*track->TY() );
+    if(t<.1)              continue;
+    if(t>.5)              continue;
+
+    int nseg = track->N();
+    for(int j=0; j<nseg-1; j++ )      {
+      seg1 = track->GetSegment(j);
+      seg2 = track->GetSegment(j+1);
+      if(TMath::Abs(seg1->PID()-seg2->PID()) != 1)       continue;     // gap skipped
+      int ipat = TMath::Min( seg1->PID(), seg2->PID() );
+      tx1 = (seg2->X()-seg1->X())/(seg2->Z()-seg1->Z());
+      ty1 = (seg2->Y()-seg1->Y())/(seg2->Z()-seg1->Z());
+      t1 = TMath::Sqrt(tx1*tx1+ty1*ty1);
+      dzz[ipat] = dzz[ipat] + t1/t;
+      itr[ipat] = itr[ipat]+1;
+    }
+  }
+
+  znew[npat-1] = GetPattern(npat-1)->Z();
+  for(int i=npat-2; i>=0; i-- )  {
+    if(itr[i]<nMin) dzz[i] = 1;        // 
+    else  dzz[i] = dzz[i]/itr[i];      // dzz is the ratio of "position angle"/"track angle"
+    float dz = (GetPattern(i)->Z()-GetPattern(i+1)->Z())*dzz[i];
+    znew[i] = znew[i+1] + dz;
+    printf("Ajust Z of pat: %d  by %d tracks: dz = %f  Zold, Znew: %f %f   diff = %f\n", 
+	   i, itr[i], dz, GetPattern(i)->Z(), znew[i], znew[i]-GetPattern(i)->Z() );
+  }
+
+  for(int i=0; i<npat-1; i++ )  {
+    GetPattern(i)->SetZ(znew[i]);
+    GetPattern(i)->SetSegmentsZ();
+  }
+
+  return 0;
+}
+
+//______________________________________________________________________________
 int EdbPVRec::FineCorrShr(int ipat, float &shr)
 {
   if(!eTracks) return 0;

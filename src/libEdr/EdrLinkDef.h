@@ -22,5 +22,6 @@
 #pragma link C++ class EdbVertex;
 #pragma link C++ class EdbVertexRec;
 #pragma link C++ class EdbVTA;
+#pragma link C++ class EdbVertexSpace;
 
 #endif

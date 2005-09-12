@@ -278,6 +278,7 @@ class EdbPVRec : public EdbPatternsVolume {
   int    FineCorrXY(int ipat, EdbAffine2D &aff, int flag);
   int    FineCorrTXTY(int ipat, EdbAffine2D &aff);
   int    FineCorrZ(int ipat, float &dz);
+  int    FineCorrZnew();
   int    FineCorrShr(int ipat, float &shr);
 
   int    FineCorrF(int ipat, EdbAffine2D &aff,  EdbAffine2D &afft );
