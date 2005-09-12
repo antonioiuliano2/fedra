@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -ang  - correct up/down angles offset and rotations\n";
       cout<< "\t\t  -a[n] - plate to plate alignment (if n=2: rigid patterns) \n";
       cout<< "\t\t  -f[n] - fine alignment based on passed-throw tracks (if n=2: rigid patterns)\n";
+      cout<< "\t\t  -z[n] - z-position ajustment, n is the tracks length in segs (minimum 2 is a default)\n";
       cout<< "\t\t  -t[n] - tracking (if n>1, holes isertion started - historical option - do not recommended!)\n";
       cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle in [GeV])\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
@@ -26,7 +27,7 @@ int main(int argc, char* argv[])
     };
 
   int doCCD=0, doLink=0, doAlign=0, doTrack=0, doTrackCarbonium=0,
-    doFine=0, doAngles=0, doRaw=0, noUpdate=0;
+    doFine=0, doZ=0, doAngles=0, doRaw=0, noUpdate=0;
 
   float doPropagation=-1;
 
@@ -50,6 +51,11 @@ int main(int argc, char* argv[])
 	sscanf(key+2,"%d",&doFine);
       if(doFine==0)                     doFine=1;
     }
+    else if(!strncmp(key,"-z",2)) {
+      if(strlen(key)>2)
+	sscanf(key+2,"%d",&doZ);
+      if(doZ<2)                     doZ=2;
+    }
     else if(!strncmp(key,"-tc",3)) {
       if(strlen(key)>3)
 	sscanf(key+2,"%d",&doTrackCarbonium);
@@ -66,8 +72,8 @@ int main(int argc, char* argv[])
     }
   }
 
-  printf("%d %d %d %d %d %d %d %f %d %s\n",
-	 doCCD, doLink, doAlign, doTrack, doFine, doAngles, doRaw, doPropagation, noUpdate, name);
+  printf("%d %d %d %d %d %d %d %d %f %d %s\n",
+	 doCCD, doLink, doAlign, doTrack, doFine, doZ, doAngles, doRaw, doPropagation, noUpdate, name);
 
   EdbDataProc proc(name);
 
@@ -80,7 +86,8 @@ int main(int argc, char* argv[])
   if(doTrack)            { proc.LinkTracks(doTrack, doPropagation); doTrack=0; doPropagation=-1; }
   if(doTrackCarbonium)   { proc.LinkTracksC(doTrackCarbonium, doPropagation); doTrackCarbonium=0; doPropagation=-1; }
   if(doFine)             { proc.FineAlignment(doFine);    doFine=0; }
-  if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0; }
+  if(doZ)                { proc.AjustZ(doZ);              doZ=0;    }
+  if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0;  }
 
   return 0;
 }
