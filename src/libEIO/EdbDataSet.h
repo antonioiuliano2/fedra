@@ -220,6 +220,7 @@ class EdbDataProc : public TObject {
   int    CheckShrinkage( EdbPVRec *ali, int couple, float &shr1, float &shr2 );
   void   CorrectAngles();
 
+  void   AjustZ(int doZ);
   void   FineAlignment(int doFine);
   void   FineAlignmentTracks();
 

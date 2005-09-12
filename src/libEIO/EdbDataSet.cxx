@@ -2142,7 +2142,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
   int npat = ali->Npatterns();
   for(i=0; i<npat; i++ ) {
     pat = ali->GetPattern(i);
-    //pat->SetSegmentsZ();   /// TO CHECK!!!
+    pat->SetSegmentsZ();   /// TO CHECK!!!
     pat->Transform(    eDataSet->GetPiece(pat->PID())->GetLayer(0)->GetAffineXY()   );
     pat->TransformA(   eDataSet->GetPiece(pat->PID())->GetLayer(0)->GetAffineTXTY() );
     pat->TransformShr( eDataSet->GetPiece(pat->PID())->GetLayer(0)->Shr()  );
@@ -2164,13 +2164,27 @@ void EdbDataProc::Align(int doAlign)
   InitVolume(ali);
 
   ali->Align(doAlign);
+
   ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
     ali->GetPattern(i)->GetKeep(aff);
     if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffPar(0,aff);
   }
+}
 
+///______________________________________________________________________________
+void EdbDataProc::AjustZ(int doZ)
+{
+  EdbPVRec    *ali  = new EdbPVRec();
+  InitVolume(ali);
+  ali->Link();
+  ali->FillTracksCell();
+  ali->SelectLongTracks(doZ);
+  ali->MakeSummaryTracks();
+  ali->FineCorrZnew();
+  for(int i=0; i<ali->Npatterns(); i++) 
+    if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,ali->GetPattern(i)->Z());
 }
 
 ///______________________________________________________________________________
