@@ -102,6 +102,8 @@ private:
                                   //    eFlag[0] = 2  - SySal data
                                   //    eFlag[1] = 1  - Stage coordinates
                                   //    eFlag[1] = 2  - Absolute (fiducial) coordinates
+                                  //    eFlag[2] = 1  - real (stage) coordinates for clusters
+                                  //    eFlag[2] = 2  - pixels coordinates for clusters
 
   TDatime      eStartTime;        //  Date and Time of run starting
   TDatime      eFinishTime;       //  Date and Time of run finishing

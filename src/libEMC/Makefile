@@ -7,7 +7,7 @@ NAME          = EMC
 
 headers       = EdbPVGen.h EdbBrickGen.h EdbBrick.h
 
-PROJECT_LIBS  = $(PROJECT_LIBS) -lEdr -lEmath -lEdb -lEphys
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEdr -lEdb -lEphys
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

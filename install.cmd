@@ -88,6 +88,10 @@
 	
  echo.
 
+:: copy macros
+:: ------------
+ copy /Y "%PROJECT_SRC%"\appl\macros\* "%installdir%"\macros
+
 :: compilation of libraries
 :: ------------------------
  set /P YesNo=Do you want to compile the libraries: [y/n]?
@@ -100,9 +104,6 @@
 :: load environment variables
 :: --------------------------
  cd %installdir%
-
- copy /Y "%PROJECT_SRC%"\appl\macros\* "%installdir%"\macros
-
  call setup_new.cmd
 
  pause
