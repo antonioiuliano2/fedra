@@ -83,6 +83,7 @@ class EdbDisplay: public EdbDisplayBase {
   void TrackDraw(EdbTrackP *tr);
   EdbSegG *SegLine(const EdbSegP *seg);
 
+  void DrawRef(float start[3], float end[3]);
   void SetArrV(TObjArray *arrv);
   void VertexDraw(EdbVertex *v);
   void SetDrawVertex(int opt) {eDrawVertex=opt;}

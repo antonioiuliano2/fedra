@@ -431,6 +431,27 @@ void EdbDisplay::Refresh()
 }
 
 //________________________________________________________________________
+void EdbDisplay::DrawRef(float start[3], float end[3])
+{
+  // reference vector to indicate the direction (ie scanback track) can be drawn
+
+  TPolyLine3D *line = new TPolyLine3D(2);
+  line->SetPoint(0, start[0],start[1], start[2] );
+  line->SetPoint(1,   end[0],  end[1],   end[2] );
+  line->SetLineColor(kGreen);
+  line->SetLineWidth(fLineWidth);
+  line->SetBit(kCannotPick);
+  line->Draw();
+
+  TPolyMarker3D *mark = new TPolyMarker3D(1);
+  mark->SetPoint(0, start[0],start[1], start[2] );
+  mark->SetMarkerColor(kGreen);
+  mark->SetMarkerStyle(5);
+  mark->SetMarkerSize(1.2);
+  mark->Draw();
+}
+
+//________________________________________________________________________
 void EdbDisplay::VertexDraw(EdbVertex *vv)
 {
   float xv,yv,zv;
