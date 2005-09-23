@@ -612,13 +612,7 @@ void EdbSegmentsBox::Print(Option_t *opt) const
 //______________________________________________________________________________
 EdbTrackP::EdbTrackP(int nseg)
 {
-  eS=0;
-  eSF=0;
-  eM=0;
-  eDE=0;
-  ePDG=-999;
-  eVTAS = 0;
-  eVTAE = 0;
+  Set0();
   if(nseg>0) eS  = new TSortedList();
   if(nseg>0) { eSF = new TSortedList();    eSF->SetOwner(); }
 }
@@ -626,12 +620,7 @@ EdbTrackP::EdbTrackP(int nseg)
 //______________________________________________________________________________
 EdbTrackP::EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
 {
-  eS=0;
-  eSF=0;
-  eDE=0;
-  ePDG=-999;
-  eVTAS = 0;
-  eVTAE = 0;
+  Set0();
   AddSegment(seg);
   SetM(m);
 }
@@ -641,6 +630,21 @@ EdbTrackP::~EdbTrackP()
 {
   if(eS)    { eS->Clear();  delete eS;  eS=0;  }
   if(eSF)   { eSF->Clear(); delete eSF; eSF=0; }
+}
+
+//______________________________________________________________________________
+void EdbTrackP::Set0()
+{
+  ((EdbSegP*)this)->Set0();
+  eS=0;
+  eSF=0;
+  eM=0;
+  eDE=0;
+  ePDG=-999;
+  eVTAS = 0;
+  eVTAE = 0;
+  eNpl=0;
+  eN0=0;
 }
 
 //______________________________________________________________________________

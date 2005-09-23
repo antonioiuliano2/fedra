@@ -266,6 +266,8 @@ class EdbTrackP : public EdbSegP {
     { Copy(track); }
   virtual ~EdbTrackP();
 
+  void     Set0();
+
   void  AddVTA(EdbVTA *vta);
   void  ClearVTA(EdbVTA *vta);
 
