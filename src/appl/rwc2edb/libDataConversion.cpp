@@ -135,10 +135,10 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
       ch = fgetc( stream );
    }
 
-   int NviewCols = (int) FindConfig(pCat,"Vertigo Scan","XFields")  ;
-   int NviewRows = (int) FindConfig(pCat,"Vertigo Scan","YFields")  ;
-   int NfragmCols = pCat->Area.XViews / NviewCols  ;
-   int NfragmRows = pCat->Area.YViews / NviewRows  ;
+//    int NviewCols = (int) FindConfig(pCat,"Vertigo Scan","XFields")  ;
+//    int NviewRows = (int) FindConfig(pCat,"Vertigo Scan","YFields")  ;
+//    int NfragmCols = pCat->Area.XViews / NviewCols  ;
+//    int NfragmRows = pCat->Area.YViews / NviewRows  ;
 
    fclose( stream );
    objstr.Write("catalog"); 
