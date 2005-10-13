@@ -12,7 +12,9 @@ void rootlogon()
   loadlib( "libEGA"  , "EdbGA" );          //optional
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
-  //loadlibEoi();                            //optional
+
+  loadlibEoi();                                //optional
+  loadlib( "libEOracle"  , "TOracleServerE" );  //optional
 
   //loadlib( "EmrPoint", "libEmr" );
 }
