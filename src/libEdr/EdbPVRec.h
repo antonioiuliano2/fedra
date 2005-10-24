@@ -248,6 +248,7 @@ class EdbPVRec : public EdbPatternsVolume {
 
   TIndexCell *GetTracksCell() const { return eTracksCell; }
 
+  void  ResetTracks();
   float Chi2Fast(EdbSegP &s1, EdbSegP &s2);
   int   MergeTracks(int maxgap=2);
   int   MergeTracks1(int maxgap);

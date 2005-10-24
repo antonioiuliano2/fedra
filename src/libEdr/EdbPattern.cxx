@@ -1583,7 +1583,7 @@ void EdbPattern::SetSegmentsPID()
 {
   int nseg = N();
   for(int i=0; i<nseg; i++) {
-    GetSegment(i)->SetPID(PID());
+    GetSegment(i)->SetPID(ID());  //PID of the segment must be ID of the pattern!
   }
 }
 
@@ -1782,8 +1782,8 @@ void EdbPatternsVolume::Print() const
   EdbPattern *pat=0;
   for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
-    printf(" x:y:z =  %f %f %f \t n= %d \n", 
-	   pat->X(),pat->Y(),pat->Z(),pat->N());
+    printf(" id=%d pid=%d   x:y:z =  %f %f %f \t n= %d \n", 
+	   pat->ID(), pat->PID(), pat->X(),pat->Y(),pat->Z(),pat->N());
   }
 } 
 

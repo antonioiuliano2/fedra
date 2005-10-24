@@ -1007,6 +1007,13 @@ void EdbPVRec::ResetCouples()
 }
 
 //______________________________________________________________________________
+void EdbPVRec::ResetTracks()
+{
+  if(eTracks)     { delete eTracks; eTracks=0; }
+  if(eTracksCell) { delete eTracksCell; eTracksCell=0; }
+}
+
+//______________________________________________________________________________
 void EdbPVRec::SetCouplesAll()
 {
   // form couples array for all available patterns ID's
@@ -1245,6 +1252,7 @@ void EdbPVRec::FillTracksCell()
 
   Long_t vid1,vid2;
 
+  if(!eTracksCell) eTracksCell = new TIndexCell();
   TIndexCell *tracksCell = eTracksCell;  // "vid1:vid2"
   TIndexCell *cc=0;
 
@@ -2450,6 +2458,11 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
+	if(!tr) { 
+	  printf("ERROR: EdbPVRec::PropagateTracks: bad track(%d) pointer!!\n",i);
+	  continue;
+	}
+
 	if(tr->Flag()==-10) continue;
 
 	nseg = PropagateTrack(*tr, true, probMin, ngapMax, design);
@@ -2458,6 +2471,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
+	//printf("EdbPVRec::PropagateTracks:track(%d, %d, %d) \n",i,ip,it);
   	nseg = PropagateTrack(*tr, false, probMin, ngapMax, design);
   	nsegTot += nseg;
 
@@ -2497,6 +2511,8 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
   float probmax=0, prob=0;
   EdbTrackP *ttt = 0;
 
+  //  printf("pat cycle: pstart=%d, pend=%d, step=%d\n",pstart,pend,step);
+ 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
     if(!pat)                     goto GAP;
@@ -2517,8 +2533,11 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
     if(probmax<probMin)          goto GAP;
 
     trind= segmax->Track();
-    if(trind==tr.ID()) printf("TRACK LOOP: %d %d \n",trind, tr.ID());
-
+    if(trind==tr.ID()) {
+      printf("TRACK LOOP: %d %d \n",trind, tr.ID());
+      //printf("ipat=%d followz=%d  patZ: %f trackZ: %f %f  \n",
+      //     i, followZ,pat->Z(), tr.Zmin(), tr.Zmax());
+    }
     ttt=0;
     if( trind >= 0 && trind<ntr )    {
       ttt = ((EdbTrackP*)eTracks->At(trind));
