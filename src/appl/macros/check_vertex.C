@@ -34,10 +34,10 @@ namespace VERTEX_PAR
 }
 
 //---------------------------------------------------------------------
-void check_vertex()
+void check_vertex(char *dset="dset.def")
 {
-  //trseg(16);    // reconstruct event starting from basetracks
-  trvol();    // reconstruct vertexes starting from linked_tracks.root
+  //trseg(16,dset);    // reconstruct event starting from basetracks
+  trvol(dset);    // reconstruct vertexes starting from linked_tracks.root
 }
 
 //---------------------------------------------------------------------
