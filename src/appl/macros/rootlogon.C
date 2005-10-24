@@ -13,8 +13,7 @@ void rootlogon()
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
 
-  loadlibEoi();                                //optional
-  loadlib( "libEOracle"  , "TOracleServerE" );  //optional
+  loadlibEOracle();                                //optional
 
   //loadlib( "EmrPoint", "libEmr" );
 }
@@ -29,15 +28,15 @@ void loadlib(const char *lib, const char *key)
 }
 
 //----------------------------------------------------------
-void loadlibEoi()
+void loadlibEOracle()
 {
-  if (!TClassTable::GetDict("EoiIO")) {
+  if (!TClassTable::GetDict("TOracleServerE")) {
     if( (gSystem->Load("libclntsh")==0) &&
         (gSystem->Load("libocci")==0) &&
-        (gSystem->Load("libEoi")==0) )
-      printf("libEoi   \tloaded \n");
+        (gSystem->Load("libEOracle")==0) )
+      printf("libEOracle   \tloaded \n");
     else
-      printf("libEoi do NOT loaded!\n");
+      printf("libEOracle do NOT loaded!\n");
   }
 }
 
