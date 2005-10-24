@@ -60,13 +60,37 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 
 problem: 
 root [0]  TSQLServer *db=TSQLServer::Connect("oracle://dboperan:1521/dboperan","OPERA","ScanLab");
-Error in <TOracleServer::TOracleServer>: connection to Oracle database dboperan failed (error: ORA-12514: TNS:listener does not currently know of service requested in connect descriptor
+Error in <TOracleServer::TOracleServer>: connection to Oracle database dboperan 
+failed (error: ORA-12514: TNS:listener does not currently know of service requested in connect descriptor
 resolved: by setting dboperan in /etc/hosts (and relogin)
 This was not workingo fofr Igor anyway
 The final solution is to set correctly tnsnames.ora and give as server THIS mashine, since on 
 this mashine are available services described in tnsnames.ora
 
 12-Sep-2005 VT:
-Problem with unstable alignment for small volumes: it appeared to be that alignment is unstable if nbins (x,y) is 
-too big (to fix yet) the workaround: put nbin=4 and increase sx/sy if necessary. 
-The second problem was z-gap tuning not working correctly for small samples - fixed by the FineCorrZnew - working well now.
+Problem with unstable alignment for small volumes: it appeared to be that 
+the alignment is unstable if nbins (x,y) is too big (to fix yet); 
+the workaround: put nbin=4 and increase sx/sy if necessary. 
+The second problem was z-gap tuning not working correctly for small 
+samples - fixed by the FineCorrZnew - working well now.
+
+24-Oct-2005 VT:
+
+Modifications of Igor for processing separately rwd files are added (EdbRunAccess);
+libDataConversion library is moved up on the libraries level
+
+TOracleServer library is added to FEDRA to simplify the usage of the native 
+root library without recompilation. 
+TOtacleServerE class is added with the functions:
+
+QueryTree(char *query, TTree *tree, char *leafs=0);           - to get sql query into root tree
+ReadVolume(long long id_volume, EdbPatternsVolume &vol);      - to read event volume
+ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat); - to read plate parameters
+ReadBasetracksPattern(char *selection, EdbPattern &pat);      - to read basetrack pattern
+
+Bug is fixed in EdbPatternsVolume: 
+GetSegment(i)->SetPID(ID());  //PID of the segment must be ID of the pattern!
+
+Fix in EdbDataSet.cxx: protection against propagation with npl<3, 
+Fix: propagation should not be done with -t option only (without -p).
+

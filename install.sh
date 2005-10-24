@@ -23,7 +23,7 @@ fi
 PROJECT_INC=$installdir/include
 PROJECT_SRC=$installdir/src
 
-LIBS="libEdb libEmath libEGA libEphys libEdr libEIO libEdd libEMC"
+LIBS="libEdb libDataConversion libEmath libEGA libEphys libEdr libEIO libEdd libEMC"
 
 for lib in ${LIBS} ; do
     echo "set links for ${lib} ..."
@@ -35,6 +35,8 @@ done
 echo "set links for libVt++ ..."
 ln -fs $PROJECT_SRC/libVt++/vt++/include $PROJECT_INC/vt++
 ln -fs $PROJECT_SRC/libVt++/smatrix/include $PROJECT_INC/smatrix
+echo "set dataIO link for libDataConversion ..."
+ln -fs $PROJECT_SRC/libDataConversion/dataIO $PROJECT_INC/dataIO
 
 chmod +x $PROJECT_SRC/libVt++/smatrix/CreateBinaryOp.sh
 chmod +x $PROJECT_SRC/libVt++/smatrix/CreateUnaryOp.sh
