@@ -1,0 +1,107 @@
+------------------------------------------
+ How to access ORACLE from FEDRA and ROOT
+------------------------------------------
+	VT: 11-Oct-2005
+       -----------------
+
+1) Lets call the client computer as "thislinuxpc"
+   First of all it is necessary to have the ORACLE client and OCCI on the thislinuxpc 
+   (Ask the sysadmin first if it is alredy exist there!)
+   
+    The simpliest way to obtain it is to install oracleinstantclient. 
+    For linux it means 3 files:
+
+    instantclient-basic-linux-x86-64-10.1.0.3.zip    - client itself
+    instantclient-sdk-linux-x86-64-10.1.0.3.zip      - occi inside
+    instantclient-sqlplus-linux-x86-64-10.1.0.3.zip  - useful guy
+
+    The files can be download from the oracle site (if you are not an arabian terrorist).
+    The versions can be different - (for example 64 means 64-bit operation system. 
+    most probably your's OS is 32-bit, so take files without 64)
+
+    just unzip files into the same subdirectory and then create or edit the script
+
+    setoracleclient.sh
+    ---------------------------------------------------------------------------
+    ### required for occi (access from c++):
+    export OCCIHOME=/sw/oracle/instantclient_10_2
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OCCIHOME
+    export PATH=$PATH:$OCCIHOME
+
+    ### required for $TNS_ADMIN/tnsnames.ora
+    export TNS_ADMIN=/sw/oracle 
+
+    ### required for $ORACLE_HOME/sqplus/admin/glogon.sql  (optional)
+    export ORACLE_HOME=/sw/oracle 
+    ---------------------------------------------------------------------------
+    Put the correct paths inside
+
+    after that you should be able to start sqlplus and access your favorite database:
+    (Note that you do not need superuser priveledge to do all the above)
+
+    > sqlplus 
+
+    you will be asked for username and password. Note that sqlplus try to connect to the 
+    default service which sould be setted in file tnsnames.ora if it do not exist yet it can be 
+    done explicitly as:
+ 
+    sqlplus username\/password\@\"\(DESCRIPTION=\(ADDRESS_LIST=\(ADDRESS=\(PROTOCOL=TCP\)\(HOST=10.10.10.2\)\(PORT=1521\)\)\)\(CONNECT_DATA=\(SERVICE_NAME=dbopera.boh.infn.it\)\)\)\"
+
+    with the correct username, password, host (database server address) and service_name
+
+    if the login is happy one should be able to send sql instructure for example:
+
+    SQL> select table_name from user_tables;   - will print the list of all users tables
+    SQL> desc TB_MIPBASETRACKS;
+    etc...
+
+2) Instead of recompiling root from source with the Oracle support and doing each time configuration as:
+  ./configure  --enable-oracle  --with-oracle-incdir=/sw/oracle/instantclient_10_2/sdk/include  --with-oracle-libdir=/sw/oracle/instantclient_10_2
+
+  this (small) library with the functions added for emulsion specific data access is included into 
+  FEDRA distribution as libEOracle
+
+  after the succesfull compilation one can try to access db as 
+
+  root [0] TSQLServerE *db=TSQLServer::Connect("oracle://dbserver.boh.infn.it:1521/dbopera","username","password");
+
+  I newer succeded to put inside the Connect the complex database address. To simplify it it is 
+  usefull to put database service definitions into tnsnames.ora file.
+  the file to be installed in $TNS_ADMIN directory
+  after that it is possible to do the connect like this:
+
+  root [0] TSQLServer *db=TSQLServer::Connect("oracle://thislinuxpc/dbopera","username","password");
+
+  the example of the tnsnames.ora file is:
+----------------------------------------------
+dbopera =
+ (DESCRIPTION =
+  (ADDRESS_LIST =
+   (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.10.2)(PORT = 1521))
+  )
+  (CONNECT_DATA =
+   (SERVICE_NAME = dboperan.boh.infn.it)
+  )
+ )
+---------------------------------------------
+
+3) onse the connection from root to oracle is working one can 
+   get out some numbers from db using the root scripts like:
+
+   void get_tree()
+   { 
+     TOracleServerE *db=TSQLServer::Connect("oracle://thislinuxpc/dbopera","user","passwd");
+     TTree *t = new TTree("t","t");
+     db->QueryTree("select * from tb_plates",t);
+   }
+
+   all content of the requested sql query will be copied into the tree t
+
+4) scan data can be accesed also directly from fedra with the use of the functions: 
+
+   TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol);
+   TOracleServerE::ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
+   TOracleServerE::ReadBasetracksPattern(char *selection, EdbPattern &pat);
+
+
+   
