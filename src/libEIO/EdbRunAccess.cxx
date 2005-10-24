@@ -13,6 +13,9 @@
 #include "EdbSegment.h"
 #include "EdbCluster.h"
 #include "EdbRunAccess.h"
+#ifndef __CINT__
+#include "libDataConversion.h"
+#endif
 
 ClassImp(EdbRunAccess)
 
@@ -71,6 +74,37 @@ bool EdbRunAccess::InitRun()
 
   eXstep=400;  //TODO
   eYstep=400;
+  return true;
+}
+///_________________________________________________________________________
+bool EdbRunAccess::InitRunFromRWC(char *rwcname)
+{
+  if(!eRun)
+    if( gSystem->AccessPathName(rwcname, kFileExists) ) {
+      printf("ERROR open file: %s\n",rwcname);
+      return false;
+    }
+  eRun=new EdbRun(eRunFileName.Data(),"RECREATE");
+  if(!eRun) return false;
+  
+  AddRWC(eRun, rwcname, true,""); 
+  
+  return true;
+}
+///_________________________________________________________________________
+bool EdbRunAccess::AddRWDToRun(char *rwdname)
+{
+  if(!eRun) return false;
+  if( gSystem->AccessPathName(rwdname, kFileExists) ) {
+      printf("ERROR open file: %s\n",rwdname);
+      return false;
+  }
+
+  int f;//fragment index
+  f=eRun->GetHeader()->GetNareas();
+  f++;
+  if( !AddRWD(eRun, rwdname,f,"") ) return false;  
+  eRun->GetHeader()->SetNareas(f);
   return true;
 }
 

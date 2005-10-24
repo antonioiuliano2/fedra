@@ -48,6 +48,8 @@ class EdbRunAccess : public TObject {
 
   void Set0();
   bool InitRun();
+  bool InitRunFromRWC(char *rwcname);
+  bool AddRWDToRun(char *rwdname);
   void PrintStat();
   void CheckRunLine();
   int CheckEmptyViews(EdbPattern &pat);

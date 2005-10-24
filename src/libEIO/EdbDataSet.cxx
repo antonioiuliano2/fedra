@@ -2200,6 +2200,9 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
   ali->Link();
   ali->FillTracksCell();
   ali->MakeTracks(nsegmin,flag);
+
+  int       noProp=0;
+  if(p<0)   noProp=1;
   if(p<0.01) p=4.;
 
   int ntr = ali->Ntracks();
@@ -2208,14 +2211,18 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
   for(int itr=ntr0; itr<ntr; itr++) {
     tr = ali->GetTrack(itr);
     tr->ClearF();
-    tr->SetP(p);
+    if(p<0) tr->SetP(1.);
+    else    tr->SetP(p);
     tr->SetM(mass);
     tr->FitTrackKFS(false,X0);
   }
 
-  ali->FillCell(50,50,0.015,0.015);
-  for(int i=0; i<10; i++) 
-    if( ali->PropagateTracks(ali->Npatterns()-1,2, probmin, maxgap ) <1) break;
+  if(!noProp)
+    if( ali->Npatterns()>2 ) {
+      ali->FillCell(50,50,0.015,0.015);
+      for(int i=0; i<10; i++) 
+	if( ali->PropagateTracks(ali->Npatterns()-1,2, probmin, maxgap ) <1) break;
+    }
 
   /*
   ntr = ali->Ntracks();

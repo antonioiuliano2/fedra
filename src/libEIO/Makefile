@@ -5,7 +5,7 @@ include ../config/RootDef.mk
 
 NAME          = EIO
 
-headers       = EdbRunAccess.h EdbDataSet.h EdbTraceBack.h
+headers       = EdbDataSet.h EdbTraceBack.h EdbRunAccess.h
 
 PROJECT_LIBS  = $(PROJECT_LIBS) -lEdb -lEdr -lEmath
 
