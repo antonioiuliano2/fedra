@@ -180,7 +180,7 @@ class EdbDataProc : public TObject {
   int  eNoUpdate;
 
  public:
-  EdbDataProc() { eDataSet=0; ePVR=0; }
+  EdbDataProc();
   EdbDataProc(int npl, TArrayI &ids, TArrayF &zs);
   EdbDataProc(const char *file);
   virtual ~EdbDataProc();

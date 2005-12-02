@@ -1516,6 +1516,14 @@ int EdbDataSet::GetRunList(const char *file)
 }
 
 ///==============================================================================
+EdbDataProc::EdbDataProc()
+{
+  eDataSet=0;
+  eNoUpdate=1;
+  ePVR     = new EdbPVRec();
+}
+
+///==============================================================================
 EdbDataProc::EdbDataProc(const char *file)
 {
   eDataSet = new EdbDataSet(file);
@@ -2029,26 +2037,33 @@ int EdbDataProc::InitVolume(int datatype, const char *rcut)
 ///______________________________________________________________________________
 int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
 {
-  EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
-  ali->SetScanCond( cond );
+  EdbScanCond *cond=0;
+  if(eDataSet) {
+    cond= eDataSet->GetPiece(0)->GetCond(0);
+    ali->SetScanCond( cond );
   
-  EdbDataPiece *piece;
-  int npieces = eDataSet->N();
-  printf("npieces = %d\n",npieces);
-  if(!npieces) return 0;
+    EdbDataPiece *piece;
+    int npieces = eDataSet->N();
+    printf("npieces = %d\n",npieces);
+    if(!npieces) return 0;
 
-  if( ali->Npatterns() == 0) {                    // case of segments already readed
-    EdbAffine2D *a=0;
-    EdbPattern  *pat=0;
-    for(int i=0; i<npieces; i++ ) {
-      piece = eDataSet->GetPiece(i);
-      pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
-      a = piece->GetLayer(0)->GetAffineXY();
-      pat->SetKeep( a->A11(),a->A12(),a->A21(),a->A22(), a->B1(),a->B2() );
-      pat->SetPID(i);
-      ali->AddPattern( pat );
+    if( ali->Npatterns() == 0) {                    // case of segments already readed
+      EdbAffine2D *a=0;
+      EdbPattern  *pat=0;
+      for(int i=0; i<npieces; i++ ) {
+	piece = eDataSet->GetPiece(i);
+	pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
+	a = piece->GetLayer(0)->GetAffineXY();
+	pat->SetKeep( a->A11(),a->A12(),a->A21(),a->A22(), a->B1(),a->B2() );
+	pat->SetPID(i);
+	ali->AddPattern( pat );
+      }
+      ali->SetPatternsID();
     }
-    ali->SetPatternsID();
+  }
+  else {
+    cond = new EdbScanCond();
+    ali->SetScanCond( cond );
   }
 
   ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
@@ -2058,7 +2073,7 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
   ali->SetCouplesAll();
   ali->SetChi2Max(cond->Chi2PMax());
   ali->SetOffsetsMax(cond->OffX(),cond->OffY());
-  return npieces;
+  return ali->Npatterns();
 }
 
 ///______________________________________________________________________________
@@ -2559,7 +2574,12 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
       pat = ali.GetPattern( s1->PID() );
-      if(!pat) { printf("no pattern with pid %d\n",s1->PID()); break;}
+      if(!pat) { 
+	printf("WARNING: no pattern with pid %d: creating new one!\n",s1->PID()); 
+	pat = new EdbPattern( 0., 0., s1->Z() );
+	pat->SetID(s1->PID());
+	ali.AddPatternAt(pat,s1->PID());
+      }
 
       tr1->AddSegment( pat->AddSegment(*s1 ) );
       tr1->AddSegmentF( new EdbSegP(*((EdbSegP*)(segf->At(i)))) );
