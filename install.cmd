@@ -32,7 +32,6 @@
  for %%F in (%PROJECT_SRC%\libEdd\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEMC\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEdg\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEmr\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libDataConversion\*.h)        do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %fsutil% hardlink create %PROJECT_INC%\dataio\%%~nF%%~xF    %%F
  for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %fsutil% hardlink create %PROJECT_INC%\vt++\%%~nF%%~xF    %%F
