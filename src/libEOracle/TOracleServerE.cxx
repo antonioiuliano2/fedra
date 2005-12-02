@@ -243,6 +243,7 @@ Int_t  TOracleServerE::ReadBasetracksPattern(char *selection, EdbPattern &pat)
 	      0                 //flag
 	      );
       seg.SetZ(pat.Z());
+      seg.SetDZ(300.);                          //!!!
       seg.SetVolume(rs->getInt(10));
       pat.AddSegment(seg);
       ntracks++;
