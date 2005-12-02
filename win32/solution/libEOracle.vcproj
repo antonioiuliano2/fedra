@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="libEOracle"
+	ProjectGUID="{1A51EAF8-C292-4F49-8180-C20CA552B98D}"
+	SccProjectName=""
+	SccLocalPath=""
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEOracle
+NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEOracle
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEOracle
+NMAKE  clean"
+				Output="..\..\lib\libEOracle.dll"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\..\src\libEOracle\EOracleCint.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleResult.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleRow.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleServer.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleServerE.cxx">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="..\..\src\libEOracle\EOracleCint.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\EOracleLinkDef.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleResult.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleRow.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleServer.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEOracle\TOracleServerE.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		</Filter>
+		<File
+			RelativePath="..\..\src\libEOracle\Makefile">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

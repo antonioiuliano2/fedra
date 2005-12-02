@@ -14,6 +14,7 @@
  if not exist %installdir%\include           mkdir %installdir%\include
  if not exist %installdir%\include\vt++      mkdir %installdir%\include\vt++    
  if not exist %installdir%\include\smatrix   mkdir %installdir%\include\smatrix 
+ if not exist %installdir%\include\dataio    mkdir %installdir%\include\dataio 
  if not exist %installdir%\macros            mkdir %installdir%\macros
  del /s/q %installdir%\bin
  del /s/q %installdir%\lib
@@ -31,7 +32,9 @@
  for %%F in (%PROJECT_SRC%\libEdd\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEMC\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
  for %%F in (%PROJECT_SRC%\libEdg\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEMR\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
+ for %%F in (%PROJECT_SRC%\libEmr\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
+ for %%F in (%PROJECT_SRC%\libDataConversion\*.h)        do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
+ for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %fsutil% hardlink create %PROJECT_INC%\dataio\%%~nF%%~xF    %%F
  for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %fsutil% hardlink create %PROJECT_INC%\vt++\%%~nF%%~xF    %%F
  for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %fsutil% hardlink create %PROJECT_INC%\smatrix\%%~nF%%~xF %%F
 
@@ -51,8 +54,10 @@
  set configdir=%installdir%\src\config
  if exist %configdir%\RootDef.mk    del /q %configdir%\RootDef.mk
  if exist %configdir%\TargetsDef.mk del /q %configdir%\TargetsDef.mk
+ if exist %configdir%\TargetsDefAppl.mk del /q %configdir%\TargetsDefAppl.mk
  %fsutil% hardlink create %configdir%\RootDef.mk %configdir%\RootDef.windows.mk
  %fsutil% hardlink create %configdir%\TargetsDef.mk %configdir%\TargetsDef.windows.mk
+ %fsutil% hardlink create %configdir%\TargetsDefAppl.mk %configdir%\TargetsDefAppl.windows.mk
 
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
