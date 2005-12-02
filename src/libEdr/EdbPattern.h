@@ -471,6 +471,7 @@ class EdbPatternsVolume : public TObject {
   void PassProperties(EdbPatternsVolume &pvol);
 
   void         AddPattern( EdbPattern *pat );
+  void         AddPatternAt( EdbPattern *pat, int id );
   EdbPattern  *GetPattern( int id ) const;
 
   EdbPattern  *NextPattern(float z, int dir) const;

@@ -1794,6 +1794,14 @@ void EdbPatternsVolume::AddPattern( EdbPattern *pat )
 }
 
 //______________________________________________________________________________
+void EdbPatternsVolume::AddPatternAt( EdbPattern *pat,int id )
+{
+  if(ePatterns->GetSize()<id+1) ePatterns->Expand(id+1);
+  pat->SetID(id);
+  ePatterns->AddAt(pat,id);
+}
+
+//______________________________________________________________________________
 EdbPattern *EdbPatternsVolume::GetPattern( int id ) const
 {
   if(Npatterns()>id) return (EdbPattern*)ePatterns->At(id);
