@@ -11,6 +11,7 @@
 
 #include "EdbRun.h"
 class TIndexCell;
+#include "TCut.h"
 
 //______________________________________________________________________________
 class EdbGA : public TObject {
@@ -42,14 +43,21 @@ class EdbGA : public TObject {
 
   void   GetClustPFile( const char *file );
   void   InitTree(const char *file="grain_chains.root");
-  void   CheckViewGrains();
-  void   CheckViewGrains(int vid);
+  void   CheckViewGrains(const char* options = "");
+  void   CheckViewGrains(int vid,const char* options = "");
   void   VerticalChains( TClonesArray *clusters, TIndexCell &chains);
   void   VerticalChainsA( TClonesArray *clusters );
-  int    MakeGrainsTree( TClonesArray *clust, TIndexCell &chains);
+  int    MakeGrainsTree(TClonesArray *clust, TIndexCell &chains,const char* options = "");
   void   GrainStat( TClonesArray *clusters, float &x0, float &y0, float &z0 );
+  int    GrainStat2( TClonesArray *clusters, float &x0, float &y0, float &z0, 
+          float &vol, float &amin, float &amax, float &zmin, float &zmax, int &fmin, int &fmax);
+  void   SelectGrains(TCut c1, const char* outfile="grains_chains_selection.root");
+  void   SelectGrains(const char* selection, const char* outfile="grains_chains_selection.root");
+
+  TTree* GetTree(void) {return eGrains;}
 
   ClassDef(EdbGA,1)  // grains analysys
+
 };
 
 #endif /* ROOT_EdbGA */

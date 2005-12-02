@@ -1,0 +1,22 @@
+#------------------------------------------------------------------------------
+include ../config/ProjectDef.mk
+include ../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+ORA           = $(OCCIHOME)
+ORAINC        = $(ORA)/sdk/include
+#ORALIB        = $(ORA)
+
+NAME          = EOracle
+
+headers       = TOracleServerE.h TOracleServer.h TOracleResult.h TOracleRow.h
+
+PROJECT_LIBS  = $(PROJECT_LIBS) \
+              -LIBPATH:$(OCCIHOME)/sdk/lib/msvc /DEFAULTLIB:ociw32 /DEFAULTLIB:oci /DEFAULTLIB:oraocci10 \
+               -lEdb -lEmath -lEphys -lvt -lEdr
+
+INC_DIR      =  $(INC_DIR)   -I$(ORAINC)
+CXXFLAGS     =  $(CXXFLAGS)  -I$(INC_DIR) -DNOTROOTCINT
+#------------------------------------------------------------------------------
+include ../config/TargetsDef.mk
+#------------------------------------------------------------------------------

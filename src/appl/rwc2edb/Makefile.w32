@@ -3,13 +3,16 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  ole32.lib
+
+PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib libDataConversion.lib \
+                               ole32.lib ..\..\libDataConversion\libDataConversion.obj
+# ole32.lib libDataConversion.obj are needed by edb2rwc.exe
 
 CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR) -D_USESYSAL 
 
-targets = rwc2edb.exe edb2rwc.exe rwdread.exe rwcread.exe rwdcomp.exe getacqstatus.exe
+targets = edb2rwc.exe rwc2edb.exe rwdread.exe rwcread.exe rwdcomp.exe getacqstatus.exe 
 
-$(targets): libDataConversion.obj $(@B).obj
+$(targets): $(@B).obj 
 	$(LD) $** $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
 
 #------------------------------------------------------------------------------
@@ -18,7 +21,3 @@ clean:
     @del /q *.obj
     @cd  "$(BIN_DIR)"
     @del /q $(targets)
-
-
-libDataConversion.obj: dataIO/dataIO.h
-libDataConversion.obj: dataIO/dataIO.cpp

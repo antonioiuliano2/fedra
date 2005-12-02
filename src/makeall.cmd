@@ -9,7 +9,7 @@
 
  @ECHO OFF
 
- SET eLIBS=libEmath libEdb libVt++ libEphys libEGA libEdr libEIO libEdd libEdg libEMC libEMR appl\bmatrix
+ SET eLIBS= libEmath libEdb libDataConversion libVt++ libEphys libEGA libEdr libEIO libEdd libEdg libEMC libEMR libEOracle appl\bmatrix
  SET eBINS=appl\recset appl\rwc2edb appl\tracks2edb appl\checkrun
 
  IF /I '%1'=='checkall'	( GOTO CHECKALL

@@ -1,4 +1,4 @@
-// @(#)root/oracle:$Name: not supported by cvs2svn $:$Id: TOracleServer.cxx,v 1.1 2005-10-24 13:48:29 valeri Exp $
+// @(#)root/oracle:$Name: not supported by cvs2svn $:$Id: TOracleServer.cxx,v 1.2 2005-12-02 18:35:49 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 
 /*************************************************************************
@@ -128,7 +128,9 @@ TSQLResult *TOracleServer::Query(const char *sql)
 
       // NOTE: sql should not end with ";" !!!
       int row_count = -1;
-      char sql_chars[strlen(sql)+1],*str;
+      //char sql_chars[strlen(sql)+1],*str;
+      char* sql_chars = new char[strlen(sql)+1];
+      char* str;
       strcpy(sql_chars, sql);
       str = sql_chars;
       // skip space and newline chars

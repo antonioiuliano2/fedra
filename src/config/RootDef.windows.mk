@@ -24,7 +24,7 @@ ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib libCore.lib libCint.lib \
 CC            = $(cc) 
 CXX           = $(cc) 
 CXXFLAGS      =  -GX -G5 -GR -MD -DWIN32 -DVISUAL_CPLUSPLUS -DUSE_ROOT \
-                 -D_WINDOWS  /Fo$*.obj /TP /nologo
+                 -D_WINDOWS  -D_USESYSAL /Fo$*.obj /TP /nologo
 LD            = $(link) 
 LDFLAGS       = -opt:ref  -nologo -pdb:none 
 DLLFLAGS      = $(dlllflags:/PDB:NONE=) 
@@ -36,3 +36,5 @@ LIBS         = $(ROOTLIBS)
 
 CFLAGS   = $(CXXFLAGS)
 CPPFLAGS = $(CXXFLAGS)
+
+PROJECT_LIBS  = $(PROJECT_LIBS) ole32.lib

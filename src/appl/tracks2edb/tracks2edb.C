@@ -89,10 +89,11 @@ Int_t tracks2edb(const char* datasetname,
                  const char* tracksfname="", 
                  const char* cutstr_tr="1")
 {
-  Bool_t addcl(true), usevoltracks(false);
+  Bool_t addcl(true), usevoltracks(false), writebck(false);
   // SCAN OPTIONS
   if (strstr(options,"NOCL") ) addcl=false;
   if (strstr(options,"TR") ) usevoltracks=true;
+  if (strstr(options,"BCK") ) writebck=true;
 
   // OPEN THE DATASET
   EdbDataSet dataset(datasetname);
@@ -135,7 +136,7 @@ Int_t tracks2edb(const char* datasetname,
    couples->SetEventList(cplist);
   }
 
-  // Show the final number of selected couples
+  // Show the number of selected couples
   TCut cut_cp;
   cut_cp = cutstr_cp ;
   Int_t selcp = couples->Draw(">>dum", cut_cp);
@@ -179,24 +180,63 @@ Int_t tracks2edb(const char* datasetname,
   EdbSegP* segp;
   
   Int_t totsegments=0;
-  // for(Int_t i=0; i<102; i++) 
+  //for(Int_t i=0; i<1; i++) 
   for(Int_t i=0; i<nviews; i++) 
   {
 	if(i%100==0) printf("\b\b\b\b%3d%%",(int)((double)i/double(nviews)*100.));
+
+  	v1->Clear() ; 
+	outv->Clear() ;
+	v1 = run1->GetEntry(i,1,addcl,1,0,1);
+	Int_t side= v1->GetNframesTop()? 1 :0 ;
+
 	//SET THE EVENT LIST (GET THE COUPLES WHICH HAVE AT LEAST ONE SEGMENT IN THE VIEW)
 	sprintf(str,"s1.eVid[0]==%d || s2.eVid[0]==%d",i,i);
 	cut= str ;
-	couples->Draw(">>lst",cut_cp && cut && "eN1==1 && eN2==1");
+	//couples->Draw(">>lst",cut_cp && cut && "eN1==1 && eN2==1");
+	couples->Draw(">>lst",cut_cp && cut );
 	TEventList *lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
-	Int_t nsegments = (Int_t) lst->GetN();
-   totsegments += nsegments;
 
-	v1->Clear() ; 
-	outv->Clear() ;
+   Long_t nlinked = lst->GetN();         //cout<<"nlinked: "<<nlinked<<endl;
+   Long_t ntotal  = v1->Nsegments();     //cout<<"ntotal : "<<ntotal<<endl;
+   Long_t nselected;
 
-	v1 = run1->GetEntry(i,1,addcl,1,0,1);
-
-	Int_t side= v1->GetNframesTop()? 1 :0 ;
+   // CREATE THE LIST OF LINKED SEGMENTS
+   TIndexCell* listselected = new TIndexCell();;
+   TIndexCell* listlinked   = new TIndexCell();
+   Long_t segID;
+   for(int j=0;j<nlinked;j++)  {
+		couples->GetEntry(lst->GetEntry(j));
+		segp = side? s1: s2 ;
+      segID = segp->Vid(1); //cout <<segID<< " " ;
+      //listlinked->Add(segID);
+      listlinked->FindAdd(segID);    //if FindAdd is used nlinked must be re-evaluated (*)
+   }
+   if(listlinked) nlinked = listlinked->GetEntries(); // (*) nlinked is re-eveluated to remove the duplicated segment
+   if(listlinked) listlinked->Sort(); //cout<<"view: "<<i<<" ";for(int l=0;l<nlinked;l++)cout <<" "<<listlinked->At(l)->Value();cout<<endl;
+   
+   // CREATE THE LIST OF SELECTED SEGMENTS
+   if(writebck) {
+      // COMPLEMENTARY LIST 
+      Int_t iLink=0; 
+      for(Int_t j=0;j<ntotal;j++) {
+        // in the next line, nlinked must be evaluated first otherwise if nlinked is 0 the program crashes
+        if ( nlinked && j == listlinked->At(iLink)->Value() ) { 
+            if(iLink < nlinked-1) iLink++;
+            continue;
+         } else {
+            segID = (Long_t) j ; //cout <<segID[0]<< " " ;
+            listselected->Add(segID);
+         }
+      }
+      nselected = listselected->GetEntries();
+   } else {
+      listselected = listlinked;
+      nselected = nlinked ;
+   }
+   //cout <<"nselected: "<<nselected<<endl;
+   //for(int l=0;l<nselected;l++)cout <<" "<<listselected->At(l)->Value();cout<<endl;
+   totsegments += nselected;
 
 	// copy view header
 	EdbAffine2D const * aff = vh1->GetAffine();
@@ -205,7 +245,7 @@ Int_t tracks2edb(const char* datasetname,
 		outvh->SetCoordXY(vh1->GetXview(), vh1->GetYview()); 
 		outvh->SetCoordZ(vh1->GetZ1(),vh1->GetZ2(),	vh1->GetZ3(),vh1->GetZ4());
 		outvh->SetNframes(vh1->GetNframesTop(),vh1->GetNframesBot());
-		outvh->SetNsegments(nsegments);
+		outvh->SetNsegments(nselected);
 		outvh->SetViewID(vh1->GetViewID());
 
 	//copy view frames
@@ -215,12 +255,13 @@ Int_t tracks2edb(const char* datasetname,
 	}
 
 	if (addcl) v1->AttachClustersToSegments() ;
-	//cout <<"outv:"<< outv<<"\t "<< outv->GetHeader()->GetViewID()<<"\t "<<outv->Nsegments()<<"\t "<<outv->GetSegmentsAddr() <<"\t "<<outv->GetNframes()<< endl;
-	for(Int_t j=0; j<nsegments; j++) {
-		Int_t segID=lst->GetEntry(j);
-		couples->GetEntry(segID);
-		segp = side? s1: s2 ;
-		rawseg =  v1->GetSegment(segp->Vid(1));
+   // ADD SEGMENTS
+   for(Int_t j=0; j<nselected; j++) {
+		//Int_t segID=lst->GetEntry(j);
+		//couples->GetEntry(segID);
+		//segp = side? s1: s2 ;
+      rawseg =  v1->GetSegment(listselected->At(j)->Value());  //cout <<listselected->At(j)->Value()<<"\t";
+		//rawseg =  v1->GetSegment(segp->Vid(1));                  cout <<segp->Vid(1)<<" "<<rawseg<<endl;
 		outv->AddSegment(rawseg);
 		if (addcl) {
 			EdbCluster *cl=0;
@@ -257,6 +298,7 @@ int main(int argc, char* argv[])
   char cutstr_tr[256];           sprintf(cutstr_tr,"1");
   char options[256];
   bool printusage=(argc<3)?true:false;
+  bool writebck(false);
   for (int i = 1; i < argc; i++)  {  // Skip argv[0] (program name)
 	if (!strcmp(argv[i], "-f")) { // Process optional arguments
    	  if (i + 1 <= argc - 1) sprintf(outfilename,argv[++i]);
@@ -275,9 +317,12 @@ int main(int argc, char* argv[])
 	  else printusage=true; 
 	}
 	else if (!strcmp(argv[i], "-nocl")) strcat(options,"NOCL") ;
-	else  { // Process non-optional arguments here
-	  sprintf(dataset,"%s",argv[i++]) ;
-	  piece=atoi(argv[i]);
+	else if (!strcmp(argv[i], "-bck"))  strcat(options,"BCK") ;
+   else  { // Process non-optional arguments here
+      if( piece == -1 ) { 
+         sprintf(dataset,"%s",argv[i++]) ;
+         piece=atoi(argv[i]);
+      }
 	}
   }
   if(printusage) { 
@@ -293,8 +338,10 @@ int main(int argc, char* argv[])
    cout <<   "          -tr linked_tracks.root = only couples which belongs to vol. tracks" << endl;
    cout <<   "          -cuttr \"cutstr\"     = cut the linked tracks with \"cutstr\" " << endl;
    cout <<   "                                example -cuttr \"nseg>=3\" " << endl;
+   cout <<   "          -bck                  create the complementary file" << endl;
     return 0;
   }
-  else return tracks2edb(dataset, piece, outfilename, options, cutstr_cp,tracksfilename,cutstr_tr);
+  else tracks2edb(dataset, piece, outfilename, options, cutstr_cp,tracksfilename,cutstr_tr); 
 }
 #endif
+

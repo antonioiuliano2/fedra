@@ -16,32 +16,31 @@
 
 int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 {
-
 	ISySalDataIO*  iIO=0;
 	ISySalDataIO2* iIO2=0;
-   UINT Error;
+  UINT Error;
 	CoInitialize(NULL);
 	CoCreateInstance(CLSID_SySalDataIO, NULL, CLSCTX_INPROC_SERVER, 
 						IID_ISySalDataIO, (void **)&iIO);
 	iIO->QueryInterface(IID_ISySalDataIO2, (void**)&iIO2);
 
-   IO_VS_Fragment2 Frag2;
+  IO_VS_Fragment2 Frag2;
 
-	//SET THE EVENT LISTS
-   char str[128];
-   TCut cut_t,cut_b;
-   TTree* tree = (TTree* ) gDirectory->Get("Views");
-	sprintf(str,"headers.eAreaID==%d && headers.eNframesTop",fragID);
-	cut_t= str ;
-	tree->Draw(">>lst_t", cut_t);
-   TEventList *lst_t = (TEventList*)gDirectory->GetList()->FindObject("lst_t");
-	sprintf(str,"headers.eAreaID==%d && headers.eNframesBot",fragID);
+	//SET THE EVENT LIST
+  char str[128];
+  TCut cut_t,cut_b;
+  TTree* tree = (TTree* ) gDirectory->Get("Views");
+  sprintf(str,"headers.eAreaID==%d && headers.eNframesTop!=0",fragID);
+  cut_t= str ;
+  tree->Draw(">>lst_t", cut_t);
+  TEventList *lst_t = (TEventList*)gDirectory->GetList()->FindObject("lst_t");
+	sprintf(str,"headers.eAreaID==%d && headers.eNframesBot!=0",fragID);
 	cut_b= str ;
 	tree->Draw(">>lst_b", cut_b);
 	TEventList *lst_b = (TEventList*)gDirectory->GetList()->FindObject("lst_b");
 
 	int nviews   =  lst_t->GetN();
-//  cout << "nviews (top): " << nviews << " (bot): " << lst_b->GetN() << endl;
+  cout << "\t nviews (top): " << nviews << " (bot): " << lst_b->GetN() << endl;
 
 	Frag2.Hdr.Type.InfoType = VS_HEADER_BYTES | VS_FRAGMENT_SECTION;
             // VS_CATALOG_SECTION			1
@@ -55,23 +54,27 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 	Frag2.Hdr.Type.HeaderFormat = VS_HEADER_TYPE;
             // VS_OLD_HEADER_TYPE			0x701
             // VS_HEADER_TYPE					0x702
-	if(pCat) Frag2.Hdr.ID = pCat->Hdr.ID;                                             // <--------- from catalog
+	 if(pCat) Frag2.Hdr.ID = pCat->Hdr.ID;                                             // <--------- from catalog
    else Frag2.Hdr.ID.Part[0] =Frag2.Hdr.ID.Part[1] =Frag2.Hdr.ID.Part[2] =Frag2.Hdr.ID.Part[3] = 0 ;
 
    // Rebuild the Startview value                                                   // <--------- from catalog
-   
+   Frag2.Fragment.StartView = 0;
    int xf(0),yf(0);
    if(pCat)
    {
-      int xv(pCat->Area.XViews), yv(pCat->Area.YViews) ,
-          xf( (int) FindConfig(pCat,"Vertigo Scan","XFields")  ),
-          yf( (int) FindConfig(pCat,"Vertigo Scan","YFields")  );
-      int row  = (int) (fragID -1)*xf/xv ;
-      int col0 = (fragID-1) % (xv/xf) ;
-      int col  = (1-row%2)*col0 + (row%2) *(xv/xf-col0-1) ;
-      Frag2.Fragment.StartView = col*xf + row*xv*yf;
+     int  xv(pCat->Area.XViews), yv(pCat->Area.YViews) ,
+          xf( (int) FindConfig(pCat,"Vertigo Scan",  "XFields") +
+              (int) FindConfig(pCat,"Vertigo Scan 4","XFields")  ),
+          yf( (int) FindConfig(pCat,"Vertigo Scan",  "YFields") +
+              (int) FindConfig(pCat,"Vertigo Scan 4","YFields")  );
+      if (xf!=0 && xv!=0)
+      {
+        int row  = (int) (fragID -1)*xf/xv ;
+        int col0 = (fragID-1) % (xv/xf) ;
+        int col  = (1-row%2)*col0 + (row%2) *(xv/xf-col0-1) ;
+        Frag2.Fragment.StartView = col*xf + row*xv*yf;
+     }
    }
-   else Frag2.Fragment.StartView = 0;
 
 	Frag2.Fragment.CountOfViews = nviews;
 	Frag2.Fragment.CodingMode = VS_COMPRESSION_NULL ;                                // <--------- default
@@ -84,7 +87,7 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
    Frag2.Fragment.Index = fragID;
 
    for(int j=0;j<sizeof(Frag2.Reserved);j++) Frag2.Reserved[j] = (unsigned char) 0; // <--------- reserved = null
-	Frag2.Fragment.pViews = new VS_View2[nviews];
+	 Frag2.Fragment.pViews = new VS_View2[nviews];
 
    EdbView* eView = run->GetView();
    EdbViewHeader* eViewHeader = eView->GetHeader();
@@ -92,9 +95,9 @@ int DumpRWD(EdbRun* run, char* rwcname, int fragID, IO_VS_Catalog* pCat)
 
    Grain* rwdGrain;
    Track2* rwdTrack;
-	VS_View2* rwdView;
+	 VS_View2* rwdView;
 
-   int totsegments(0), totclusters(0);
+  int totsegments(0), totclusters(0);
 
 	for (int v = 0; v < nviews; v++)
 	{
@@ -250,6 +253,7 @@ int BackConversion(EdbRun* run, char* rwcname)
 {
    IO_VS_Catalog* pCat = 0;
    DumpRWC(run,rwcname) ;
+   cout << "save the catalog: " << rwcname << endl;
 
    if( ReadCatalog((void**)&pCat, (char*)rwcname) != 1) 
    {
@@ -258,6 +262,7 @@ int BackConversion(EdbRun* run, char* rwcname)
  
    TTree* tree = (TTree* ) gDirectory->Get("Views");  
    int nfragm = tree->GetMaximum("eAreaID");
+   cout << "number of fragments: "<< nfragm << endl;
    for(int i=0; i < nfragm; i++) DumpRWD( run, rwcname, i+1, pCat) ;
 
    return true;
