@@ -31,11 +31,15 @@ void loadlib(const char *lib, const char *key)
 void loadlibEOracle()
 {
   if (!TClassTable::GetDict("TOracleServerE")) {
-    if( (gSystem->Load("libclntsh")==0) &&
-        (gSystem->Load("libocci")==0) &&
-        (gSystem->Load("libEOracle")==0) )
-      printf("libEOracle   \tloaded \n");
-    else
+    if(gSystem->Load("libclntsh")==0) {
+      if(gSystem->Load("libocci")==0)
+        if(gSystem->Load("libEOracle")==0)
+	  printf("libEOracle   \tloaded (Linux)\n");
+    } else {
+      if(gSystem->Load("oraocci10")==0)
+        if(gSystem->Load("libEOracle")==0)
+	  printf("libEOracle   \tloaded (Win32)\n");
+    } else 
       printf("libEOracle do NOT loaded!\n");
   }
 }

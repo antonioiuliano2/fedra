@@ -77,7 +77,15 @@ Int_t TOracleServerE::QueryTree(char *query, TTree *tree, char *leafs)
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol)
+Int_t  TOracleServerE::ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol)
+{
+	char id[24];
+	sprintf(id,"%lld",id_volume);
+	return ReadVolume(id,vol);
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
 {
   int  nsegtot=0;
   char query[2048];
@@ -87,7 +95,7 @@ Int_t  TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol)
     if (!fStmt)
       fStmt = fConn->createStatement();
     sprintf(query,"\
-    select id_plate,id_eventbrick from TB_VOLUME_SLICES where id_volume=%lld order by id_plate", id_volume);
+    select id_plate,id_eventbrick from TB_VOLUME_SLICES where id_volume=%s order by id_plate", id_volume);
     fStmt->setSQL(query);
     printf("\nexecute sql query: %s ...\n",query);
     fStmt->execute();
@@ -110,7 +118,7 @@ Int_t  TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol)
     pat = (EdbPattern*)patterns.At(i);
     if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
       { printf("skip plate %d %d !\n", pat->ID(),pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%lld and id_plate=%d)", id_volume,pat->PID());
+    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%s and id_plate=%d)", id_volume,pat->PID());
     nsegtot  += ReadBasetracksPattern(query, *pat);
     vol.AddPattern(pat);
   }
@@ -120,13 +128,13 @@ Int_t  TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol)
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE::ReadDataSet(long long id_parent_op, int id_brick, EdbPatternsVolume &vol)
+Int_t  TOracleServerE::ReadDataSet(ULong64_t id_parent_op, int id_brick, EdbPatternsVolume &vol)
 {
   int  nsegtot=0;
   char query[2048];
   int npat = 0;
   TObjArray patterns(100);
-  long long *proc_list = new long long[100];
+  ULong64_t *proc_list = new ULong64_t[100];
   EdbPattern *pat=0;
   try{
     if (!fStmt)
@@ -144,7 +152,7 @@ order by op.id_plate",
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
 
-    long long procop=0LL;
+    ULong64_t procop=0LL;
     float z=0;
     int plate=0;
     npat=0;

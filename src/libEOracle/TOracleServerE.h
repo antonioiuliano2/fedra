@@ -16,8 +16,9 @@ public:
 
    Int_t       QueryTree(char *query, TTree *tree, char *leafs=0);
 
-   Int_t       ReadVolume(long long id_volume, EdbPatternsVolume &vol);
-   Int_t       ReadDataSet(long long id_parent_op, int id_brick, EdbPatternsVolume &vol);
+   Int_t       ReadVolume(char *id_volume, EdbPatternsVolume &vol);
+   Int_t       ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol);
+   Int_t       ReadDataSet(ULong64_t id_parent_op, int id_brick, EdbPatternsVolume &vol);
    bool        ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
    Int_t       ReadBasetracksPattern(char *selection, EdbPattern &pat);
 
