@@ -116,7 +116,7 @@ dbopera =
 
 4) scan data can be accesed also directly from fedra with the use of the functions: 
 
-   TOracleServerE::ReadVolume(long long id_volume, EdbPatternsVolume &vol);
+   TOracleServerE::ReadVolume(char *id_proc, EdbPatternsVolume &vol);
    TOracleServerE::ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
    TOracleServerE::ReadBasetracksPattern(char *selection, EdbPattern &pat);
 
