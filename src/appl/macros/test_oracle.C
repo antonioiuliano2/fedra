@@ -1,137 +1,93 @@
+//-----------------------------------------------------------------
+//
+//  Several examples for access to ORACLE data from FEDRA
+//  VT: 06-Dec-05
+//
+//-----------------------------------------------------------------
 
-char user[10]="OPERA";        // da settare
-char password[10]="ScanLab";  // da settare
-char database[1000]="(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.10.51)(PORT = 1521)))(CONNECT_DATA = (SERVICE_NAME = dboperan.na.infn.it)))"; // da settare
+TOracleServerE *db=0;
+EdbPVRec *ali=0;
 
-int brick_id=9; // da settare
-int plate_id_is_irrelevant=0;
-
-long long int proc_op_id=7000000000400115LL; // da settare
-
-EoiIO *io=0;
-EdbPVRec *pvrec=0;
-
-EdbScanCond *cond=0;
-
-EdbScanCond *SetScanCond_Linking()
+//-----------------------------------------------------------------
+void test_oracle()
 {
-  EdbDataPiece p;
-  p.ReadPiecePar("default.par");
-  EdbScanCond* cond=p.GetCond(1);
-
-  return new EdbScanCond(*cond);
+  //get_aff();                    // minimal example of sql query to tree conversion
+  //get_sb_hist();                // more elaborated example (selections may depends on lab)
+  get_volume("8000000000900207"); // this function read total-scan volume into EdbPVRec object and save it
 }
 
-EdbScanCond *SetScanCond_Tracking()
+//-----------------------------------------------------------------
+int init()
 {
-  EdbDataPiece p;
-  p.ReadPiecePar("default.par");
-  EdbScanCond* cond=p.GetCond(0);
-
-  return new EdbScanCond(*cond);
+  db = (TOracleServerE *)TSQLServer::Connect("oracle://operasoft:1521/dbtest","opera","neutrino");
+  printf("Server info: %s\n", db->ServerInfo());
+  if(!db) return 0;
+  return 1;
 }
 
+//-----------------------------------------------------------------
+void get_aff()
+{ 
+  // minimal example of db query to tree conversion
 
-test_oracle()
+  if(!db) if(!init()) return;
+  TTree *t = new TTree("t","t");
+  int n =db->QueryTree( "select * from tb_plates order by id",t);
+  printf("%d entries\n",n);
+  t->Draw("mapdx:z","calibration>0","*");
+  delete db;
+  db=0;
+}
+
+//-----------------------------------------------------------------
+int get_sb_hist(char *id_proc="8000000001131121")
 {
-  cout << "Start" << endl;
-  gSystem->Exec("date");
+  // more elaborated example of db query to tree conversion
+
+  if(!db) if(!init()) return;
+
+  TFile *f=new TFile("sbh.root","RECREATE");
+  TTree *t = new TTree("t","t");
+
+  char *leaflist = new char[512];
+  leaflist = "track/f:grains/f:fpx/f:fpy/f:fsx/f:fsy/f:ppx/f:ppy/f:psx/f:psy/f:z/f:plate/f:path/f:proc/f:brick/f";
+
+  char *query = new char[2048];
+  sprintf(query,"\
+select id_track,grains,fpx,fpy,fsx,fsy,ppx,ppy,psx,psy,z,id_plate,path,id_processoperation-8000000000000000,id_eventbrick \ 
+from vw_scanback_history \ 
+where id_eventbrick=7 and ID_PROCESSOPERATION=%s and id_plate=1 and path in \
+(select path from vw_scanback_history \
+where id_eventbrick=7 and ID_PROCESSOPERATION=%s \
+and id_plate=7 and abs(fpy-ppy)<50 and abs(fpx-ppx)<50) \
+and ppy>25000 and ppy<75000 ", 
+id_proc,id_proc);
+
+  int n =db->QueryTree(query,t,leaflist);
   
-  pvrec = new EdbPVRec;
-
-  cond = SetScanCond_Tracking();
-  pvrec->SetScanCond( cond );
-
-  
-  cout << "Start connection to DB" << endl;
-  gSystem->Exec("date");
-
-  io = new EoiIO(user, password, database, brick_id, plate_id_is_irrelevant);
-
-
-  //  io->ReadBasetrackPatterns(proc_op_id, pvrec);
-
-  //  io->ReadBasetrackPattern(proc_op_id, 57, pvrec);
-  io->ReadBasetrackPattern(proc_op_id, 56, pvrec);
-//   io->ReadBasetrackPattern(proc_op_id, 55, pvrec);
-//   io->ReadBasetrackPattern(proc_op_id, 54, pvrec);
-
-  cout << "End connection to DB" << endl;
-  gSystem->Exec("date");
-
-  pvrec->SetPatternsID();
-  pvrec->SetSegmentsErrors();
-  pvrec->SetCouplesAll();
-  pvrec->SetChi2Max(pvrec->GetScanCond()->Chi2PMax());
-
-  pvrec->Print();
+  printf("%d entries\n",n);
+  t->Write();
+  t->Draw("ppx-fpx","grains>0");
+  f->Close();
+  delete db;  db=0;
 }
 
-
-align()
+//-----------------------------------------------------------------
+get_volume(char *idproc)
 {
-  cout << "Start  alignment" << endl;
-  gSystem->Exec("date");
+  // example of the access to the scanned volume
 
-  pvrec->SetOffsetsMax(cond->OffX(),cond->OffY());
-  pvrec->Align(1);
-  pvrec->PrintAff();
+  if(!db) if(!init()) return;
 
-  cout << "End alignment" << endl;
-  gSystem->Exec("date");
+  ali  = new EdbPVRec();
+
+  EdbPatternsVolume *v = (EdbPatternsVolume*)ali;
+
+  int n = db->ReadVolume(idproc, *v);
+  v->Print();
+  TFile f("vol.root","RECREATE");
+  ali->Write("ali");
+  f.Close();
+  delete db;  db=0;
 }
-
-align(float x, float y)
-{
-  cout << "Start  alignment" << endl;
-  gSystem->Exec("date");
-
-  pvrec->SetOffsetsMax(x,y);
-  pvrec->Align(1);
-  pvrec->PrintAff();
-
-  cout << "End alignment" << endl;
-  gSystem->Exec("date");
-}
-
-
-tracking()
-{
-  
-  cout << "Start tracking" << endl;
-  gSystem->Exec("date");
-
-  pvrec->Link();
-
-  pvrec->FillTracksCell();
-
-  pvrec->MakeTracks();
-  pvrec->FitTracks();
-  pvrec->FillCell(50,50,0.015,0.015);
-
-  EdbTrackP *tr=0;
-  Int_t ntr=0;
-  if(pvrec->eTracks) ntr = pvrec->eTracks->GetEntries();
-  for (int itr=0; itr<ntr; itr++) {
-    tr = (EdbTrackP*)(pvrec->eTracks->At(itr));
-    tr->SetSegmentsTrack();
-  }
-
-  EdbDataProc proc;
-  proc.MakeTracksTree(pvrec);
-
-  cout << "End tracking" << endl;
-  gSystem->Exec("date");
-
-}
-
-void patterns()
-{
-  // test for microtracks reading?
-
-  EoiIO *io = new EoiIO(user, password, "bernopdb", 0, 0);
-  pvrec = new EdbPVRec;
-  for (int i=55; i>39; i--){
-    (io->ReadMicrotracks(5000000000500291ll, i, pvrec));
-  }
-}
+                                                                                                                                                                
