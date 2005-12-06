@@ -48,12 +48,29 @@
     sqlplus username\/password\@\"\(DESCRIPTION=\(ADDRESS_LIST=\(ADDRESS=\(PROTOCOL=TCP\)\(HOST=10.10.10.2\)\(PORT=1521\)\)\)\(CONNECT_DATA=\(SERVICE_NAME=dbopera.boh.infn.it\)\)\)\"
 
     with the correct username, password, host (database server address) and service_name
-
     if the login is happy one should be able to send sql instructure for example:
 
     SQL> select table_name from user_tables;   - will print the list of all users tables
     SQL> desc TB_MIPBASETRACKS;
     etc...
+
+1a) in case of Windows the installation is similar - files as: 
+       instantclient-basic-win32-10.2.0.1-20050930.zip 
+       instantclient-sdk-win32-10.2.0.1-20050930.zip
+       instantclient-sqlplus-win32-10.2.0.1-20050930.zip
+
+    should be unpacked for example into c:/sw/instantclient_10_2 
+    and environment variables setted as in setoracleclient.cmd :
+
+-------------------------------------------------------------
+rem ### required for $ORACLE_HOME/sqplus/admin/glogon.sql, etc..
+set ORACLE_HOME=c:\sw
+rem ### required for tnsnames.ora
+set TNS_ADMIN=c:\sw
+rem ### required for occi:
+set OCCIHOME=c:\sw\instantclient_10_2
+PATH %PATH%;%OCCIHOME%
+-------------------------------------------------------------
 
 2) Instead of recompiling root from source with the Oracle support and doing each time configuration as:
   ./configure  --enable-oracle  --with-oracle-incdir=/sw/oracle/instantclient_10_2/sdk/include  --with-oracle-libdir=/sw/oracle/instantclient_10_2
