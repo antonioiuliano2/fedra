@@ -10,6 +10,7 @@ void rootlogon()
   loadlib( "libEIO"  , "EdbRunAccess" );
 
   loadlib( "libEGA"  , "EdbGA" );          //optional
+  loadlib( "libGui"  , "TGNumberEntry" );  // required only in batch mode
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
 
