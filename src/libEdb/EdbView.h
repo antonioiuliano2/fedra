@@ -17,10 +17,9 @@
 
 
 #include "EdbAffine.h"
-//#include "EdbFrame.h"
+#include "EdbCluster.h"
 //#include "EdbSegment.h"
 
-class EdbCluster;
 class EdbSegment;
 class EdbTrack;
 class EdbFrame;
@@ -208,9 +207,12 @@ public:
   EdbSegment  *GetSegment(int i) const { return (EdbSegment*)eSegments->At(i); }
   EdbTrack    *GetTrack(int i)   const { return (EdbTrack*)eTracks->At(i); }
 
-  void         AddCluster( EdbCluster *c );
-  void         AddCluster( float x,  float y,  float z,  
-			   float a,  float v, int f, int s, int seg=-1);
+  EdbCluster  *AddCluster( EdbCluster *c ) 
+    {return (EdbCluster*)(new((*eClusters)[eClusters->GetLast()+1])  EdbCluster( *c )); }
+  EdbCluster  *AddCluster( float x,  float y,  float z,  
+			   float a,  float v, int f, int s, int seg=-1) 
+    {return (EdbCluster*)(new((*eClusters)[eClusters->GetLast()+1])  EdbCluster(x,y,z, a,v,f,s,seg)); }
+
   void         AddSegment( EdbSegment *s   );
   void         AddTrack(   EdbTrack   *t   );
   void         AddFrame(   int id, float z, int ncl=0, int npix=0 );

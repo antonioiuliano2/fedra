@@ -141,20 +141,20 @@ void EdbView::DeleteClustersFog()
   eClusters->Compress();
 }
 
-//______________________________________________________________________________
-void EdbView::AddCluster( EdbCluster *c )
-{
-  int i = eClusters->GetLast()+1;
-  new((*eClusters)[i++])  EdbCluster( *c );
-}
+// //______________________________________________________________________________
+// void EdbView::AddCluster( EdbCluster *c )
+// {
+//   int i = eClusters->GetLast()+1;
+//   new((*eClusters)[i++])  EdbCluster( *c );
+// }
 
-//______________________________________________________________________________
-void EdbView::AddCluster( float x,  float y,  float z,  
-			  float a,  float v, int f, int s, int seg )
-{
-  int i = eClusters->GetLast()+1;
-  new((*eClusters)[i++])  EdbCluster( x,y,z, a,v,f,s,seg );
-}
+// //______________________________________________________________________________
+// void EdbView::AddCluster( float x,  float y,  float z,  
+// 			  float a,  float v, int f, int s, int seg )
+// {
+//   int i = eClusters->GetLast()+1;
+//   new((*eClusters)[i++])  EdbCluster( x,y,z, a,v,f,s,seg );
+// }
 
 //______________________________________________________________________________
 void EdbView::AddSegment( EdbSegment *s )

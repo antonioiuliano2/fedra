@@ -55,6 +55,22 @@ public:
    Int_t    GetSide()      const  { return eSide   ;}
    Int_t    GetSegment()   const  { return eSegment;}
 
+   void AddPixelSum( int x,  int y, unsigned char pix )
+     {
+       //to speedup the calculation; use Normalize() at the end!
+       eArea++;
+       eVolume += pix ;
+       eX += x;
+       eY += y;
+     }
+
+   void  Normalize()
+     {
+       // assumed to be used only once at the end!
+       eX = eX/eArea - 0.5;
+       eY = eY/eArea - 0.5;
+     }
+
    //mandatory virtual functions
    
    virtual Float_t    X()          const { return eX; }
