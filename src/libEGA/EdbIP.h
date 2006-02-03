@@ -16,6 +16,7 @@
 class EdbImage;
 class EdbFrame;
 class TTree;
+class EdbView;
 
 //______________________________________________________________________________
 class EdbFIRF : public TNamed {
@@ -63,7 +64,7 @@ class EdbClustP : public EdbCluster {
   Float_t  eXp,  eYp;   // peak position
 
  public:
-  EdbClustP(){};
+  EdbClustP();
 
   void SetCG(   float x, float y ) {eXcg=x; eYcg=y;}
   void SetPeak( float x, float y, float peak ) {eXp=x; eYp=y; ePeak=peak;}
@@ -73,8 +74,11 @@ class EdbClustP : public EdbCluster {
   float Xp()   const {return eXp;}
   float Yp()   const {return eYp;}
   void AddPixel( float ic, float ir, float pix );
+  void AddPixelSum( float ic, float ir, float pix );
+  void AddClusterSum( EdbClustP *c );
+  void Normalize();
   void Reset();
-  //void Print();
+  void Print();
 
   ClassDef(EdbClustP,1)  // cluster reconstruction
 };
@@ -99,6 +103,12 @@ class EdbIP : public TObject {
   int          Clusterize( EdbFrame *frame, TTree *tree );
   static int   Clusterize( TH2F *h, float thr, TTree *tree, float z, int ifr );
   static float BurnPix( TH2F *h, int ic, int ir, float thr, EdbClustP &cl );
+
+  int          Clusterize2( EdbFrame *frame, TTree *tree );
+  static int   Clusterize2( TH2F *h, float thr, TTree *tree, float z, int ifr );
+
+  static int   Clusterize( EdbFrame *f, unsigned char thr, EdbView &v );
+  static int   BurnPix( unsigned char *img, int ic, int ir, int nc, unsigned char thr, EdbCluster &cl );
 
   ClassDef(EdbIP,1)  // Image Processing
 };

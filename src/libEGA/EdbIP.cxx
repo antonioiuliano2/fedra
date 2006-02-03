@@ -8,10 +8,12 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TBenchmark.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "EdbView.h"
 #include "EdbImage.h"
 #include "EdbFrame.h"
 #include "EdbIP.h"
@@ -184,6 +186,12 @@ TH2F* EdbFIRF::ApplyTo(EdbImage* img)
 }
 
 //====================================================================================
+EdbClustP::EdbClustP()
+{
+  eXcg=0; eYcg=0; ePeak=0; eXp=0; eYp=0;
+}
+
+//====================================================================================
 void  EdbClustP::AddPixel( float x, float y, float pix )
 {
   float a   = GetArea()+1;
@@ -196,6 +204,41 @@ void  EdbClustP::AddPixel( float x, float y, float pix )
   SetX(xc);  SetY(yc);  SetArea(a); 
   SetCG(xcg,ycg);       SetVolume(v);
   if( pix > Peak() ) SetPeak(x,y,pix);
+}
+
+//-----------------------------------------------------------------------------------
+void  EdbClustP::Print()
+{
+  printf("  eXcg=%f; eYcg=%f; ePeak=%f; eXp=%f; eYp%f0\n",  eXcg,eYcg,ePeak,eXp,eYp);
+}
+
+//-----------------------------------------------------------------------------------
+void  EdbClustP::AddPixelSum( float x,  float y, float pix )
+{
+  //to speedup the calculation use Normalize() at the end
+  SetArea( GetArea()+1 );
+  SetVolume( GetVolume()+pix );
+  eXcg += x;
+  eYcg += y;
+}
+
+//-----------------------------------------------------------------------------------
+void  EdbClustP::AddClusterSum( EdbClustP *c )
+{
+  //to speedup the calculation use Normalize() at the end
+  SetArea(   GetArea()   + c->GetArea() );
+  SetVolume( GetVolume() + c->GetVolume() );
+  eXcg += c->Xcg();
+  eYcg += c->Ycg();
+}
+
+//-----------------------------------------------------------------------------------
+void  EdbClustP::Normalize()
+{
+  // assumed to be used only once at the end!
+  eXcg /= GetArea();
+  eYcg /= GetArea();
+  SetX(eXcg);  SetY(eYcg);
 }
 
 //-----------------------------------------------------------------------------------
@@ -379,6 +422,9 @@ int  EdbIP::Clusterize( TH2F *h, float thr, TTree *tree, float z, int ifr )
   tree->SetBranchAddress("cl",&cl);
   cl = new EdbClustP();
 
+  TStopwatch sw;
+  sw.Start();
+
   for(int ic=2; ic<nc-3; ic++) {
     for(int ir=2; ir<nr-3; ir++) {
 
@@ -393,7 +439,9 @@ int  EdbIP::Clusterize( TH2F *h, float thr, TTree *tree, float z, int ifr )
       ncl++;
     }
   }
+  printf("Clusterize2............ %15.8f\n",sw.CpuTime());
 
+ 
   tree->AutoSave();
 
   return ncl;
@@ -421,6 +469,146 @@ float EdbIP::BurnPix( TH2F *h, int ic, int ir, float thr, EdbClustP &cl )
     pp = (float)( h->GetBinContent(i,j) );
     if( pp < thr ) continue;
     pix += BurnPix(h,i,j, thr, cl);
+  }
+  return pix;
+}
+
+//------------------------------------------------------------------------------------
+int  EdbIP::Clusterize2( EdbFrame *frame, TTree *tree )
+{
+  TH2F *img = eFIR->ApplyTo(frame->GetImage());
+  float z = frame->GetZ();
+  int   ifr = frame->GetID();
+  int ncl = Clusterize2( img, eThr, tree, z, ifr );
+  delete img;
+  return ncl;
+}
+
+//------------------------------------------------------------------------------------
+int  EdbIP::Clusterize2( TH2F *h, float thr, TTree *tree, float z, int ifr )
+{
+  // Should be faster...
+
+  int nc = h->GetNbinsX();
+  int nr = h->GetNbinsY();
+  float pix;
+  printf("hist: %d %d\n",nc,nr);
+
+  tree->GetDirectory()->cd();
+  EdbClustP *cl = 0;
+  tree->SetBranchAddress("cl",&cl);
+
+  TStopwatch sw;
+  sw.Start();
+  TList clusters;         // list of clusters
+  EdbClustP *ptrup[nc];   // line of pointers (ToDo: check direction)
+  for(int i=0; i<nc; i++) ptrup[i]=0;
+
+  int i;
+  for(int ir=1; ir<nr-3; ir++) {
+    for(int ic=1; ic<nc-3; ic++) {
+      
+      i = ic;
+      
+      pix = (float)(h->GetBinContent(ic,ir));
+      
+      if( pix <= thr) {
+	if(cl) {ptrup[i]=cl; cl=0;}
+	else ptrup[i]=0;
+	continue;
+      }
+      if(!cl) {
+	if(!ptrup[i])   {cl = new EdbClustP(); clusters.Add(cl);
+	}
+	else cl = ptrup[i];
+      }
+	printf("ncl=%d\n",clusters.GetEntries());
+      cl->AddPixelSum(ic-.5,ir-.5,pix-thr);
+      cl->Print();
+      if(!ptrup[i]) ptrup[i]=cl;
+      else if( ptrup[i] != cl ) {
+	cl->AddClusterSum(ptrup[i]);
+	clusters.Remove(ptrup[i]);
+	//delete ptrup[i];
+	ptrup[i]=cl;
+	for(int j=i-1; j>1; j--) {if(!ptrup[j]) break; ptrup[j]=cl;}
+      }
+    }
+  }
+  printf("Clusterize2............ %15.8f\n",sw.CpuTime());
+
+  printf("ncl=%d\n",clusters.GetEntries());
+
+  TListIter next(&clusters);
+  int   ncl=0;
+  while (  (cl = (EdbClustP*)next()) ) {
+    cl->Normalize();        //if used AddPixelSum
+    cl->SetZ(z);
+    cl->SetFrame(ifr);
+    tree->Fill();
+    ncl++;
+  }
+  tree->AutoSave();
+  printf("ncl=%d\n",ncl);
+  return ncl;
+}
+
+
+//------------------------------------------------------------------------------------
+int  EdbIP::Clusterize( EdbFrame *frame, unsigned char thr, EdbView &v )
+{
+  // input:  frame; 
+  // output: clusters added to a view
+
+  float z   = frame->GetZ();
+  int   ifr = frame->GetID();
+  EdbImage *img=frame->GetImage();
+  int nc = img->Width();
+  int nr = img->Height();
+  printf("img: %d %d\n",nc,nr);
+
+  unsigned char *buf = (unsigned char*)(img->GetBuffer());
+  unsigned char pix;
+  float wcl;
+  int   ncl=0;
+  EdbCluster *cl=0;
+
+  for(int ir=2; ir<nr-3; ir++) {
+    for(int ic=2; ic<nc-3; ic++) {
+
+      pix = buf[nc*ir+ic];
+      if( pix <= thr)   continue;
+
+      cl = v.AddCluster(0,0,z, 0, 0, ifr, 0);
+      wcl = BurnPix( buf, ic,ir, nc, thr, *cl);
+      cl->Normalize();
+      ncl++;
+    }
+  }
+  return ncl;
+}
+
+//------------------------------------------------------------------------------------
+int EdbIP::BurnPix( unsigned char *buf, int ic, int ir, int nc, unsigned char thr, EdbCluster &cl )
+{
+  int pix = buf[nc*ir+ic];
+  cl.AddPixelSum(ic,ir,pix-thr);
+  buf[nc*ir+ic]=0;
+
+  pix = 1;
+  if(cl.GetArea() >50000) return pix;
+  
+  int xn[4] = { 1, -1, 0,  0 };    //pixel closest suburbs
+  int yn[4] = { 0,  0, 1, -1 };
+  unsigned char pp;
+  int i,j;
+
+  for(int in=0; in<4; in++) {
+    i = ic+xn[in];
+    j = ir+yn[in];
+    pp = buf[nc*j+i];
+    if( pp < thr ) continue;
+    pix += BurnPix(buf,i,j, nc, thr, cl);
   }
   return pix;
 }

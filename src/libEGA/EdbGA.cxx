@@ -206,7 +206,7 @@ int EdbGA::MakeGrainsTree(TClonesArray *clust, TIndexCell &chains, const char* o
   if (! sscanf(option,"MIN_NCL") ) sscanf(option,"MIN_NCL=%d",&min_ncl);
 
   // set branch addresses
-  Int_t ncl,fmin, fmax;
+  Int_t ncl=0,fmin, fmax;
   Float_t x0,y0,z0,vol,amin,amax, zmin, zmax;
   eGrains->SetBranchAddress("vid",&eVid);
   eGrains->SetBranchAddress("ncl",&ncl);
@@ -379,7 +379,7 @@ void EdbGA::SelectGrains(const char* selection, const char* outfile)
    eGrains->SetBranchAddress("fmax",&fmax);
 
    //select the event list
-   printf("Total: %d grains\n", eGrains->GetEntries());
+   printf("Total: %d grains\n", (int)eGrains->GetEntries());
    eGrains->Draw(">>lst",selection);
    TEventList* lst = (TEventList*) gDirectory->Get("lst");
 
