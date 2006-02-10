@@ -85,6 +85,55 @@ Int_t  TOracleServerE::ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol)
 }
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE::ReadCalibration(int id_brick, EdbPatternsVolume &vol)
+{
+  int  nsegtot=0;
+  char query[2048];
+  int  npat=0;
+  ULong64_t *proc_list = new ULong64_t[100];
+  TObjArray patterns(100);
+  EdbPattern *pat=0;
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    sprintf(query,"\
+    select id,to_char(calibration) from  tb_plates \
+    where id_eventbrick = %d and calibration is not null order by id desc", id_brick);
+
+    fStmt->setSQL(query);
+    printf("\nexecute sql query: %s ...\n",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    int plate=0;
+    while (rs->next()){
+      sscanf( (rs->getString(1)).c_str(),"%d", &plate );
+      ULong64_t procop=0LL;
+      sscanf( (rs->getString(2)).c_str(),"%lld", &procop );
+      proc_list[npat] = procop;
+      npat++;
+      pat = new EdbPattern(0.,0.,0);
+      pat->SetPID(plate);
+      pat->SetID(id_brick);
+      patterns.Add( pat );
+    }
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE", "ReadPatternsVolume; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  npat = patterns.GetEntries();
+  for(int i=0; i<npat; i++) {
+    pat = (EdbPattern*)patterns.At(i);
+    if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
+      { printf("skip plate %d %d !\n", pat->ID(),pat->PID()); continue; }
+    sprintf(query,"id_zone in (select id from tb_zones where id_processoperation=%lld)", proc_list[i]);
+    nsegtot  += ReadBasetracksPattern(query, *pat);
+    vol.AddPattern(pat);
+  }
+  printf("%d segments extracted from db into PatternsVolume\n",nsegtot);
+
+  return nsegtot;
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
 {
   int  nsegtot=0;
