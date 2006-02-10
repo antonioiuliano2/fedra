@@ -488,7 +488,7 @@ int  EdbIP::Clusterize2( EdbFrame *frame, TTree *tree )
 int  EdbIP::Clusterize2( TH2F *h, float thr, TTree *tree, float z, int ifr )
 {
   // Should be faster...
-
+  /*
   int nc = h->GetNbinsX();
   int nr = h->GetNbinsY();
   float pix;
@@ -551,6 +551,8 @@ int  EdbIP::Clusterize2( TH2F *h, float thr, TTree *tree, float z, int ifr )
   tree->AutoSave();
   printf("ncl=%d\n",ncl);
   return ncl;
+  */
+  return 0;
 }
 
 
@@ -559,6 +561,9 @@ int  EdbIP::Clusterize( EdbFrame *frame, unsigned char thr, EdbView &v )
 {
   // input:  frame; 
   // output: clusters added to a view
+
+  TStopwatch sw;
+  sw.Start();
 
   float z   = frame->GetZ();
   int   ifr = frame->GetID();
@@ -585,6 +590,8 @@ int  EdbIP::Clusterize( EdbFrame *frame, unsigned char thr, EdbView &v )
       ncl++;
     }
   }
+  printf("Clusterize2............ %15.8f\n",sw.CpuTime());
+  printf("ncl=%d\n",ncl);
   return ncl;
 }
 
