@@ -17,7 +17,7 @@ EdbDisplay   *ds=0;
 
 namespace TRACKING_PAR
 {
-  float  momentum = 4.;     // GeV
+  float  momentum = 1.5;     // GeV
   float  mass     = 0.139;  // particle mass
   float  ProbMinP = 0.05;   // minimal probability to accept segment on propagation
   int    nsegmin  = 2;      // minimal number of segments to propagate this track
@@ -27,21 +27,21 @@ namespace VERTEX_PAR
 {
   float DZmax      = 3000.;  // maximum z-gap in the track-vertex group
   float ProbMinV   = 0.001;  // minimum acceptable probability for chi2-distance between tracks
-  float ImpMax     = 10.;    // maximal acceptable impact parameter [microns] (for preliminary check)
+  float ImpMax     = 50.;    // maximal acceptable impact parameter [microns] (for preliminary check)
   bool  UseMom     = false;  // use or not track momentum for vertex calculations
   bool  UseSegPar  = false;  // use only the nearest measured segments for vertex fit (as Neuchatel)
   int   QualityMode= 0;      // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
 }
 
 //---------------------------------------------------------------------
-void check_vertex(char *dset="dset.def")
+void check_vertex(char *dset=0)
 {
   //trseg(16,dset);    // reconstruct event starting from basetracks
   trvol(dset);    // reconstruct vertexes starting from linked_tracks.root
 }
 
 //---------------------------------------------------------------------
-void trseg( int event=40, const char *def="pions_data_set.def" )
+void trseg( int event=40, const char *def )
 {
   // this function read basetracks for a given simulated event and do the 
   // tracking and vertex reconstruction
@@ -60,25 +60,29 @@ void trseg( int event=40, const char *def="pions_data_set.def" )
 }
 
 //---------------------------------------------------------------------
-void trvol( const char *def="dset.def", const char *rcut = "nseg>1" )
+void trvol( const char *def, const char *rcut = "nseg>1" )
 {
   // this function read volume tracks and do the vertex reconstruction
+  // from linked_tracks.root
 
   init(def, 100 ,rcut);                      // read tracks (option 100)
   gAli->FillCell(30,30,0.009,0.009);
-  do_propagation();
+  //do_propagation();
   do_vertex();
-  vd(2,0.05);   // draw reconstructed vertex with >=3 tracks
-
+  vd(2,0.01);   // draw reconstructed vertex 
+  //td();
   //dproc->MakeTracksTree(gAli,"linked_tracks_p.root");
 }
 
 //---------------------------------------------------------------------
 void init( const char *def, int iopt,  const char *rcut="1" )
 {
-  dproc = new EdbDataProc(def);
+  if(!def)  dproc = new EdbDataProc();
+  else      dproc = new EdbDataProc(def);
+
   dproc->InitVolume(iopt, rcut);
   gAli = dproc->PVR();
+  set_segments_dz(300.);
 }
 
 //---------------------------------------------------------------------
@@ -90,6 +94,17 @@ void do_tracking()
   int ntr = dproc->LinkTracksWithFlag( gAli, momentum, ProbMinP, nsegmin, ngapmax, 0 );
 
   gAli->FitTracks( momentum, mass );
+}
+
+//---------------------------------------------------------------------
+void set_segments_dz(float dz=300.)
+{
+  int np = gAli->Npatterns();
+  for(int i=0; i<np; i++) {
+    EdbPattern *p = gAli->GetPattern(i);
+    int ns = p->N();
+    for(int j=0; j<ns; j++) p->GetSegment(j)->SetDZ(dz);
+  }
 }
 
 //---------------------------------------------------------------------
