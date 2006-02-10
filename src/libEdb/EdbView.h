@@ -201,11 +201,12 @@ public:
 
   TList       *GetClustersFrame( int frame ) const;
   Int_t        Nclusters()       const { return eClusters->GetLast()+1; }
-  EdbCluster  *GetCluster(int i) const { return (EdbCluster*)eClusters->At(i); }
   Int_t        Nsegments()       const { return eSegments->GetLast()+1; }
   Int_t        Ntracks()         const { return eTracks->GetLast()+1; }
+  EdbCluster  *GetCluster(int i) const { return (EdbCluster*)eClusters->At(i); }
   EdbSegment  *GetSegment(int i) const { return (EdbSegment*)eSegments->At(i); }
   EdbTrack    *GetTrack(int i)   const { return (EdbTrack*)eTracks->At(i); }
+  EdbFrame    *GetFrame(int i)   const { return (EdbFrame*)eFrames->At(i); }
 
   EdbCluster  *AddCluster( EdbCluster *c ) 
     {return (EdbCluster*)(new((*eClusters)[eClusters->GetLast()+1])  EdbCluster( *c )); }
