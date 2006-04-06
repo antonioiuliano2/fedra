@@ -32,6 +32,7 @@ class EdbPoint {
   // protocol class for point 
 
  public:
+  virtual ~EdbPoint() {}
 
   virtual Float_t    X()          const = 0;
   virtual Float_t    Y()          const = 0;
@@ -56,6 +57,7 @@ class EdbAngle2D {
   // protocol class for 2D angle 
 
  public:
+  virtual ~EdbAngle2D() {}
 
   virtual Float_t    TX()          const = 0;  // tangens = deltaX/deltaZ
   virtual Float_t    TY()          const = 0;  // 
@@ -76,6 +78,7 @@ class EdbAngle2D {
 class EdbPoint2D : public EdbPoint {
 
  public:
+  virtual ~EdbPoint2D() {}
 
   virtual Float_t    X()          const = 0;
   virtual Float_t    Y()          const = 0;
@@ -100,6 +103,7 @@ class EdbPoint2D : public EdbPoint {
 class EdbPoint3D : public EdbPoint2D {
 
  public:
+  virtual ~EdbPoint3D() {}
 
   virtual Float_t    Z()          const = 0;
   virtual void    SetZ( float z )       = 0;
@@ -123,6 +127,7 @@ class EdbTrack2D : public EdbPoint2D, public EdbAngle2D {
   // virtual class for 2D track
 
  public:
+  virtual ~EdbTrack2D() {}
 
   virtual void Transform( const EdbAffine2D *a );
 
@@ -155,7 +160,7 @@ class EdbPointsBox2D : public EdbPoint3D {
 
   virtual void Print( Option_t *opt="") const;
 
-  virtual Int_t        N()            const = 0;
+  virtual Int_t       N()            const = 0;
   virtual EdbPoint   *At( int i )     const     = 0;
 
   virtual Float_t    X()  const        {return 0;};

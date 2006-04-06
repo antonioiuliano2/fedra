@@ -18,7 +18,7 @@
 //______________________________________________________________________________
 class EdbCluster : public TObject, public EdbPoint3D {
 
-private:
+public:
 
   Float_t    eX;       // cluster coordinates in pixels(?)
   Float_t    eY;       //
@@ -84,6 +84,32 @@ public:
    void Draw(Option_t *opt="") const;
 
    void TT() const { Test(); }
+
+  Bool_t  IsSortable() const { return kTRUE; }
+  Bool_t  IsEqual(const TObject *obj) const
+    {
+      const EdbCluster *c=(EdbCluster*)obj;
+      if(c->eFrame  != eFrame)  return false;
+      if(c->eX      != eX)      return false;
+      if(c->eY      != eY)      return false;
+      return true;
+    }
+
+  Int_t   Compare(const TObject *obj) const
+  {
+    const EdbCluster *c=(EdbCluster*)obj;
+    Long_t f1=0, f2=0;
+    f1 = eFrame*1000000+int(eX)*10000+int(eY);
+    f2 = c->eFrame*1000000+int(c->eX)*10000+int(c->eY);
+    if (f1>f2)
+      return 1;
+    else if (f1<f2)
+      return -1;
+    else
+      return 0;
+  }
+
+
 
    ClassDef(EdbCluster,1)  // single cluster
 };

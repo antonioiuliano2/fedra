@@ -61,7 +61,7 @@ int  EdbArea::ReadParameters( const char *str )
 
 
 //______________________________________________________________________________
-void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb, int path )
+void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb, int path, int nx, int ny )
 {
   eN = N;
   eFramesTop = ft;
@@ -77,6 +77,7 @@ void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb, int path )
     int *y = new int[eN];
     
     if(ePath==1) MakeSpiralPath(eN, x, y);
+    if(ePath==2) MakeSerpentina(eN, x, y, nx, ny);
 
     for(int i=0; i<eN; i++){
       AddMark(i,x[i],y[i]);
@@ -89,7 +90,33 @@ void EdbArea::Set( int N, float stepx, float stepy, int ft, int fb, int path )
 }
 
 //______________________________________________________________________________
-void   EdbArea::MakeSpiralPath( int N, int *x, int *y )
+int   EdbArea::MakeSerpentina( int N, int *x, int *y, int nx, int ny )
+{
+  // convention for the starting point: (0,0)
+  // first increase x then y
+ 
+  if(nx<=0) return 0;
+  if(ny<=0) return 0;
+  int dx = 1;  
+  if(nx<=1) dx=0;
+  int i=0;
+  x[i]=0;
+  y[i]=0;
+  for(i=1; i<N; i++) {
+    if(i%nx==0) {
+      dx = -1*dx;
+      x[i] = x[i-1];
+      y[i] = y[i-1]+1;
+    } else {
+      y[i] = y[i-1];
+      x[i] = x[i-1]+dx;
+    }
+  }
+  return i+1;
+}
+
+//______________________________________________________________________________
+int   EdbArea::MakeSpiralPath( int N, int *x, int *y)
 {
   //convention: n=0 - central point
  
@@ -99,7 +126,8 @@ void   EdbArea::MakeSpiralPath( int N, int *x, int *y )
   int b = 0;
   int k = 0;
 
-  for( int i=0; i<N; i++ ) {
+  int i;
+  for( i=0; i<N; i++ ) {
     
     x[i] = a;
     y[i] = b;
@@ -115,6 +143,7 @@ void   EdbArea::MakeSpiralPath( int N, int *x, int *y )
     a += step[k][0];
     b += step[k][1];
   }
+  return i+1;
 }
 
 //______________________________________________________________________________

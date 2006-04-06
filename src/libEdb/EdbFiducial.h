@@ -129,15 +129,16 @@ class EdbArea : public EdbMarksBox {
   Int_t     eFramesTop;    // number of frames to scan
   Int_t     eFramesBot;
 
-  Int_t     ePath;         // path to be used (0-nopath, 1-spiral, 2-serpantine, ...)
+  Int_t     ePath;         // path to be used (0-nopath, 1-spiral, 2-serpentine, ...)
 
  public:
   EdbArea( int n=1, float stepx=1, float stepy=1, int ft=0, int fb=0, int path=0 );
   virtual ~EdbArea(){}
 
-  void   MakeSpiralPath( int n , int *x, int *y );
+  void   Set( int n, float stepx, float stepy, int ft, int fb, int path=1, int nx=0, int ny=0 );
 
-  void   Set( int n, float stepx, float stepy, int ft, int fb, int path );
+  int   MakeSpiralPath( int n , int *x, int *y );
+  int   MakeSerpentina( int n , int *x, int *y, int nx, int ny );
 
   void   SetCentre( float x, float y );
   void   Scale( float dx, float dy );
