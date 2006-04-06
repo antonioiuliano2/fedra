@@ -5,45 +5,22 @@
 // EdbViewGen - one microscope view simulation                          //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TH2F.h"
+#include "TNtuple.h"
+
 #include "TRandom.h"
 #include "EdbViewGen.h"
 #include "EdbCluster.h"
 #include "EdbSegment.h"
 #include "EdbFrame.h"
+#include "EdbMath.h"
 
 ClassImp(EdbViewGen)
+
 //____________________________________________________________________________________
 EdbViewGen::EdbViewGen()
 {
-	SetDef();
-}
-
-//____________________________________________________________________________________
-void EdbViewGen::SetDef()
-{
-  eNframes =16;   // number of frames
-  eZmin=0;
-  eZmax=45;       // limits in z
-  eZxy=0;         // intersect plane
-
-  eXmin=-200;
-  eXmax= 200;    // limits of the view
-  eYmin=-200;
-  eYmax= 200;    // limits of the view
-  eX0=0;
-  eY0=0;         // center of the view
-
-  eSx= 0.25;
-  eSy= 0.25;
-  eSz= 3.;       // grain size
-
-  eFogGrainArea = 6;  // mean area of the fog grain
-  eGrainArea    = 9;  // mean area of the signal grain
-
-  eFogDens = 3;  // per 10x10x10 microns**3
-
-  eZdead = (eZmin+eZmax)/2.;
-  eDZdead = 1.;                 //micron
+  SetDef();
 }
 
 //____________________________________________________________________________________
@@ -90,7 +67,6 @@ int EdbViewGen::GenGrains(EdbView &v)
   for(int iseg=0; iseg<nseg; iseg++) 
     v.GetSegment(iseg)->GetElements()->Delete();
 
-  //v.Print();
   return ngr;
 }
 
@@ -149,7 +125,7 @@ int EdbViewGen::GenSegGrains(EdbSegment &s)
   for(int i=0; i<nmax; i++ ) {
     step = GrainPathMip()*cs;
     z += step;
-    printf("Zstep: %5.3f \n",step);
+    //printf("Zstep: %5.3f \n",step);
     x += s.GetTx()*step;
     y += s.GetTy()*step;
     if( z > zmax  )   break;
@@ -157,12 +133,15 @@ int EdbViewGen::GenSegGrains(EdbSegment &s)
     if( x > eXmax )   continue;
     if( y < eYmin )   continue;
     if( y > eYmax )   continue;
-
     area = (int)(eGrainArea); // + gRandom->Poisson(4) - 2);
-    
-    double sx,sy,sz, r=gRandom->Gaus(0.,0.01);  // the smearing of the physical grain center position
+   
+    double sx,sy,sz, r=gRandom->Gaus(0.,0.1);  // the smearing of the physical grain center position
     gRandom->Sphere(sx,sy,sz,r);
-
+    x+=sx;    y+=sy;    z+=sz;
+    if(x<eXmin) continue;
+    if(x>eXmax) continue;
+    if(y<eYmin) continue;
+    if(y<eYmin) continue;
     s.AddElement( new EdbCluster( x+sx, y+sy, z+sz, area, 0, 0, s.GetSide(), s.GetID()) );
     ncl++;
   }
@@ -213,6 +192,8 @@ int EdbViewGen::GenFogGrains(EdbSegment &sfog)
   int    area;
   int    ngr = sfog.GetPuls();
   int    n=0;
+
+  printf("GenFogGrains: X:(%f %f)  Y:(%f %f) \n", eXmin,eXmax, eYmin,eYmax );
   while( n<ngr ) {
     x      = eXmin + gRandom->Rndm()*(eXmax-eXmin);
     y      = eYmin + gRandom->Rndm()*(eYmax-eYmin);

@@ -11,6 +11,8 @@
 #pragma link C++ class EdbBrickGen;
 #pragma link C++ class EdbBeamGen;
 
+#pragma link C++ class EdbViewDef;
 #pragma link C++ class EdbViewGen;
+#pragma link C++ class EdbViewRec;
 
 #endif
