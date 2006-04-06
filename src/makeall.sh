@@ -9,7 +9,7 @@ for lib in ${LIBS} ; do
     echo 
     echo "make $1 in ${lib} ............."
     cd ${lib}
-    make $1
+    make -j5 $1
     cd ..
 done
 
@@ -18,6 +18,6 @@ for appl in ${APPLS} ; do
     echo 
     echo "make $1 in ${appl} ............"
     cd ${appl}
-    make $1
+    make -j5 $1
     cd ../..
 done
