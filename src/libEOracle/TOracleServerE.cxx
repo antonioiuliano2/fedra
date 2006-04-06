@@ -140,6 +140,7 @@ Int_t  TOracleServerE::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
   char query[2048];
   TObjArray patterns(100);
   EdbPattern *pat=0;
+  int brick=0;
   try{
     if (!fStmt)
       fStmt = fConn->createStatement();
@@ -150,7 +151,6 @@ Int_t  TOracleServerE::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
     int plate=0;
-    int brick=0;
     while (rs->next()){
       sscanf( (rs->getString(1)).c_str(),"%d", &plate );
       sscanf( (rs->getString(2)).c_str(),"%d", &brick );
@@ -167,7 +167,7 @@ Int_t  TOracleServerE::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
     pat = (EdbPattern*)patterns.At(i);
     if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
       { printf("skip plate %d %d !\n", pat->ID(),pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%s and id_plate=%d)", id_volume,pat->PID());
+    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%s and id_plate=%d and id_eventbrick=%d) and id_eventbrick=%d", id_volume,pat->PID(),brick,brick);
     nsegtot  += ReadBasetracksPattern(query, *pat);
     vol.AddPattern(pat);
   }
@@ -300,8 +300,9 @@ Int_t  TOracleServerE::ReadBasetracksPattern(char *selection, EdbPattern &pat)
 	      0                 //flag
 	      );
       seg.SetZ(pat.Z());
-      seg.SetDZ(300.);                          //!!!
+      seg.SetDZ(300.);                          //!!! a kind of hack
       seg.SetVolume(rs->getInt(10));
+      seg.SetVid(pat.PID(),0);          // keep in a segment also plate ID (by Ale)
       pat.AddSegment(seg);
       ntracks++;
     }
