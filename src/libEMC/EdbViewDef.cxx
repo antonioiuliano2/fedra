@@ -30,9 +30,9 @@ void EdbViewDef::SetDef()
   eX0=0;
   eY0=0;         // center of the view
 
-  eSx= 0.25;
-  eSy= 0.25;
-  eSz= 3.;       // grain size
+  eGrainSX= 0.25;
+  eGrainSY= 0.25;
+  eGrainSZ= 3.;       // grain size
 
   eFogGrainArea = 6;  // mean area of the fog grain
   eGrainArea    = 9;  // mean area of the signal grain
@@ -46,14 +46,13 @@ void EdbViewDef::SetDef()
 //____________________________________________________________________________________
 void EdbViewDef::Print()
 {
-  printf("\n");
+  printf("----------View definition:----------\n");
   printf("X: (%f %f) \t%f\n",eXmin,eXmax,eX0);
   printf("Y: (%f %f) \t%f\n",eYmin,eYmax,eY0);
   printf("Z: (%f %f) \t%f\n",eZmin,eZmax,eZxy);
-
   printf("Zdead: %f (%f) \n",eZdead,eDZdead);
-
-  printf("Sigmas: %f %f %f\n",eSx,eSy,eSz);
-
+  printf("Grain Sigmas: %f %f %f\n",eGrainSX,eGrainSY,eGrainSZ);
   printf("Fog: %f \n",eFogDens);
+  printf("Frames: %d \n",eNframes);
+  printf("------------------------------------\n");
 }

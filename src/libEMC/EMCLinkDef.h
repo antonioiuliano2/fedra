@@ -13,6 +13,7 @@
 
 #pragma link C++ class EdbViewDef;
 #pragma link C++ class EdbViewGen;
+#pragma link C++ class EdbViewCell;
 #pragma link C++ class EdbViewRec;
 
 #endif

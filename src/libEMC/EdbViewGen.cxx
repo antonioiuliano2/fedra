@@ -50,12 +50,15 @@ int EdbViewGen::GenGrains(EdbView &v)
 
   EdbCluster *g;
   ngr = grains.GetEntries();
+  printf("%d grains generated\n",ngr);
 
   // remove grains from the dead layer
+  int icrem=0;
   for(int i=0; i<ngr; i++) {
     g = (EdbCluster*)grains.At(i);
-    if( TMath::Abs(g->GetZ()-eZdead)<eDZdead/2. ) g->SetArea(0);
+    if( TMath::Abs(g->GetZ()-eZdead)<eDZdead/2. ) { g->SetArea(0); icrem++;}
   }
+  printf("%d grains removed in dead layer\n",icrem);
 
   for(int i=0; i<ngr; i++) {
     g = (EdbCluster*)grains.At(i);
@@ -65,9 +68,8 @@ int EdbViewGen::GenGrains(EdbView &v)
   
   if(sfog.GetElements()) sfog.GetElements()->Delete();
   for(int iseg=0; iseg<nseg; iseg++) 
-    v.GetSegment(iseg)->GetElements()->Delete();
-
-  return ngr;
+    if( v.GetSegment(iseg)->GetElements() )
+      v.GetSegment(iseg)->GetElements()->Delete();
 }
 
 //____________________________________________________________________________________
@@ -77,13 +79,17 @@ int EdbViewGen::GenGrainClusters(EdbView &v, EdbCluster &g)
   if( g.GetArea()==0 ) return ncl;
   int nfr= v.GetNframes();
   float z;
-  float dz = 0.5*eSz*TMath::Sqrt(g.GetArea())/3;  //ToDo
+  float dz = 0.5*eGrainSZ*TMath::Sqrt(g.GetArea())/3;  //ToDo
+  float dx,dy;
   EdbCluster *c;
   for(int i=0; i<nfr; i++) {
     z= v.GetFrame(i)->GetZ();
     if( TMath::Abs(z - g.GetZ()) < dz ) {
       c= new EdbCluster(g);
+      gRandom->Rannor(dx,dy);
       c->SetZ(z);
+      c->SetX( g.X()+ dx*eGrainSX );           // TODO: navesti nauku
+      c->SetY( g.Y()+ dy*eGrainSY );
       c->SetFrame(i);
       v.AddCluster(c);
       ncl++;
@@ -135,7 +141,7 @@ int EdbViewGen::GenSegGrains(EdbSegment &s)
     if( y > eYmax )   continue;
     area = (int)(eGrainArea); // + gRandom->Poisson(4) - 2);
    
-    double sx,sy,sz, r=gRandom->Gaus(0.,0.1);  // the smearing of the physical grain center position
+    double sx,sy,sz, r=gRandom->Gaus(0.,eGrainSX);  // the smearing of the physical grain center position
     gRandom->Sphere(sx,sy,sz,r);
     x+=sx;    y+=sy;    z+=sz;
     if(x<eXmin) continue;

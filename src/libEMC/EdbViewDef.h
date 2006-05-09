@@ -22,6 +22,7 @@ public:
   Float_t    eX0,eY0;        // center of the view
 
   Float_t    eSx,eSy,eSz;    // grain size
+  Float_t    eGrainSX,eGrainSY,eGrainSZ;    // grain size
 
   Float_t    eFogDens;       // per 10x10x10 microns**3
   Float_t    eFogGrainArea;  // mean area of the fog grain
