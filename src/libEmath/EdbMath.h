@@ -34,6 +34,9 @@ class EdbMath {
 			 float *p, float *d, float *chi2);
   static void LFITW( float *X, float *Y, float *W, int L, int KEY, float &A, float &B, float &E );
 
+  static int LFIT3( float *X, float *Y, float *Z, float *W, int L, 
+		    float &X0, float &Y0, float &Z0, float &TX, float &TY, float &EX, float &EY );
+
   ClassDef(EdbMath,2)  // general matematical algorithms
 };
 

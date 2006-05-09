@@ -279,6 +279,51 @@ void EdbMath::LFITW( float *X, float *Y, float *W, int L, int KEY, float &A, flo
 }
 
 //-------------------------------------------------------------------------------------
+int EdbMath::LFIT3( float *X, float *Y, float *Z, float *W, int L, 
+		     float &X0, float &Y0, float &Z0, float &TX, float &TY, float &EX, float &EY )
+{
+  // Linar fit in 3-d case (microtrack-like)
+  // Input: X,Y,Z - coords, W -weight - arrays of the lengh >=L
+  //        Note that X,Y,Z modified by function
+  // Output: X0,Y0,Z0 - center of gravity of segment
+  //         TX,TY : tangents in respect to Z axis
+
+  if(L<2) return 0;
+
+  // first find C.O.G.:
+  double wx=0, wy=0, wz=0, w=0;
+  for(int i=0; i<L; i++) {
+    wx += X[i]*W[i];
+    wy += Y[i]*W[i];
+    wz += Z[i]*W[i];
+    w  += W[i];
+  }
+  X0 = wx/w;
+  Y0 = wy/w;
+  Z0 = wz/w;
+  for(int i=0; i<L; i++) {
+    X[i] -= X0;
+    Y[i] -= Y0;
+    Z[i] -= Z0;
+  }
+
+  if(L==2) {
+    TX = (X[1]-X[0])/(Z[1]-Z[0]);
+    TY = (Y[1]-Y[0])/(Z[1]-Z[0]);
+    EX=EY=0;
+    return L;
+  }
+
+  float x0=0,y0=0;
+  EdbMath::LFITW( Z,X,W, L, 1, TX,x0,EX );
+  EdbMath::LFITW( Z,Y,W, L, 1, TY,y0,EY );
+
+  X0 += x0;
+  Y0 += y0;
+  
+  return L;
+}
+
 //-------------------------------------------------------------------------------------
 void TIndex2::BuildIndex( int n, double *w )
 {
