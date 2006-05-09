@@ -183,9 +183,9 @@ void EdbGA::InitTree(const char *file)
   Float_t x0,y0,z0,vol,amin,amax, zmin, zmax; 
 
   eGrains->Branch("vid",&eVid,"eVid/I");
-  eGrains->Branch("ncl",&ncl,"ncl/I");        
-  eGrains->Branch("clusters",&eClusters);       
-  eGrains->Branch("x0",&x0,"x0/F");             
+  eGrains->Branch("ncl",&ncl,"ncl/I");
+  eGrains->Branch("clusters",&eClusters);
+  eGrains->Branch("x0",&x0,"x0/F");
   eGrains->Branch("y0",&y0,"y0/F");
   eGrains->Branch("z0",&z0,"z0/F");
   eGrains->Branch("vol",&vol,"vol/F");
