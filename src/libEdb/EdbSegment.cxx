@@ -62,7 +62,7 @@ EdbSegment::EdbSegment( float x, float y, float z, float tx, float ty,
 //______________________________________________________________________________
 EdbSegment::~EdbSegment()
 {
-  if(eElements)  eElements->Clear();
+	if(eElements)  {delete eElements; eElements=0;}
 }
 
 //______________________________________________________________________________

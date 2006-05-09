@@ -86,6 +86,13 @@ public:
   void       SetSide(int side)   { eSide = side; }
   void       SetPuls(int puls)   { ePuls = puls; }
   void       SetID(int id)       { eID   = id; }
+  void       SetIDE(int id)   { 
+    eID   = id; 
+    if(eElements)
+      for(int i=0; i<eElements->GetLast()+1; i++) 
+	((EdbCluster*)eElements->At(i))->SetSegment(eID);
+  }
+  void       SetIDE()   { SetIDE(GetID()); }
 
   Int_t      GetNelements() const { if(eElements) return eElements->GetLast()+1;
                                     else          return 0; }
