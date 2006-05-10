@@ -15,8 +15,7 @@
 #include "EdbRun.h"
 #include "EdbPVRec.h"
 #include "EdbLayer.h"
-
-class TMatrix;
+#include "TMatrix.h"
 
 //______________________________________________________________________________
 class EdbDataPiece : public TNamed {
