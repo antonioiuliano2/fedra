@@ -11,6 +11,7 @@
  
 #include "TArrayI.h"
 #include "TObjArray.h"
+#include "EdbCluster.h"
  
 class EdbAffine2D;
 
