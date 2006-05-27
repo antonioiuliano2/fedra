@@ -70,6 +70,8 @@ int EdbViewGen::GenGrains(EdbView &v)
   for(int iseg=0; iseg<nseg; iseg++) 
     if( v.GetSegment(iseg)->GetElements() )
       v.GetSegment(iseg)->GetElements()->Delete();
+
+  return ngr;
 }
 
 //____________________________________________________________________________________

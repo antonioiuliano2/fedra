@@ -31,22 +31,22 @@ public:
   Int_t     eNcell;    // eNfr*eNx*eNy
   Int_t     eNcl;      // total number of clusters
 
-private:
+ private:
   TObjArray **eCells;   //! array of clusters arrays
   Int_t      eNeib[9]; // 3x3 neighborhood
 
-public:
-	EdbViewCell();
+ public:
+  EdbViewCell();
   ~EdbViewCell(){}
 
   void SetLimits( float xmin, float xmax, float ymin, float ymax)
-	{ eXmin=xmin; eXmax=xmax; eYmin=ymin; eYmax=ymax; }
+    { eXmin=xmin; eXmax=xmax; eYmin=ymin; eYmax=ymax; }
   void SetS( float sx, float sy)
-	{eSx=sx; eSy=sy;}
-  void CalcN();
+    {eSx=sx; eSy=sy;}
+  void Init();
   void SetNfr(int nfr) {eNfr=nfr;}
-
-  int  FillCell( EdbView &v );
+  
+  int  FillCell( TClonesArray &v, int flag );
   void CleanCell();
 
   int IXcell(float x) const {return (int)((x-eXmin)/eSx); }
@@ -71,58 +71,113 @@ private:
   Int_t     eClMinA;  //  rejected cl->eArea < eClMinA (image noise)
   Int_t     eClMaxA;  //  rejected cl->eArea > eClMaxA (blobs)
 
+  EdbView    *eView;       // point to view currently in processing
   EdbViewCell eVC;
 
-  EdbView    *eView;       // point to view currently in processing
-  Int_t       eNgr;        // number of grains
-  Int_t       eNgrMax;
-  TClonesArray *eG;         //! array of 3-d grains
-  TTree      *eGrainsTree; // debug tree
+  //--------grains rec-----------
+  Int_t         eNgr;              // grains counter
+  Int_t         eNgrMax;           // limit (for mem alloc)
+  TClonesArray  *eG;               //! output array of 3-d grains (segments)
+  TTree         *eGrainsTree;      //! debug tree
+  bool           eAddGrainsToView; // if true: save grains to eView as the segments
+  int            eNclGrMin;        // min number of clusters/grain for saving it
+  int            eNclGrMax;        // max number of clusters/grain for consider it a single grain
 
-  Int_t   eNtheta;    // divisions by theta
-  TArrayF eR;         // R(it) limits definition
-  TArrayF eSphi;      // phiStep(it)
-  TArrayI eNphi;      // nphi(it)
-  Int_t   eNphiTot;   // Sum of all nphi(it)
-  TArrayF eTmask;     // 
-  TArrayF ePmask;     // 
-  Long_t  eNtot;      // eNphiTot*eNx*eNy
-  Int_t   eStep;      // frame step size for seed search: default=1
-  Int_t   eStepFrom;  // low   limit (ifr) for seed search
-  Int_t   eStepTo;    // upper limit (ifr) for seed search
-  TArrayS ePhist;     // "Phase histogram"
-  EdbCluster **eC;    //!
-  Int_t   eSeedThres; // threshold for the seed puls
-  Short_t eSeedLim;   // limit for the seed pointers number
-  Short_t eNseedMax;  // limit for the good seeds (segments) to be processed
-  Int_t   ePulsThres; // threshold for the segment puls
+//-----------segments rec--------
 
-  TObjArray *ePS;     //! array of segments
+  TClonesArray *eCL;           // array of clusters or grains as the input
+  Float_t       eDZmin;        // minimal dz - should be in agreement with eStepFrom
+  Float_t       eThetaLim;     // absolute theta limit
+
+  Int_t         eStep;        // frame step size for seed search: default=1
+  Int_t         eStepFrom;    // low   limit (ifr) for seed search
+  Int_t         eStepTo;      // upper limit (ifr) for seed search
+
+  Int_t         eSeedThres0;   // default threshold for the seed puls
+  TArrayI       eSeedThres;    // thresholds[enT] for the seed puls
+  TArrayF       eR;            // R(it) limits definition (may be setted manually?)
+  Int_t         enSeedsLim;    // limit for the number of seeds
+  Short_t       eSeedLim;      // limit for the number of clusters/seed
+  Int_t         eNseedMax0;    // starting limit for the good seeds (segments) to be processed
+  TArrayI       eNseedMax;     // [enT] limit for the good seeds (segments) to be processed
+  Int_t         ePulsThres;    // threshold for the segment puls
+
+  Float_t       eZcenter;      // estimated center of the emulsion layer (for segments rec)
+
+  Int_t      enT;        // number of Theta divisions
+  TArrayI    enP;        // number of Phi divisions [enT]
+  Int_t      enPtot;     // total number of phi divisions
+  TArrayI    enY;        // number of Y divisions [enPtot]
+  Int_t      enYtot;     // total number of Y divisions
+  TArrayI    enX;        // number of X divisions [enYtot]
+  Int_t      enXtot;     // total number of X divisions
+
+  TArrayF    eTheta;     // theta(it) mean value
+  //TArrayF    esT;        // step of Theta divisions [enT]
+  TArrayF    esP;        // step of Phi   divisions [enT]
+  TArrayF    esY;        // step of Y     divisions [enPtot]
+  TArrayF    esX;        // step of X     divisions [enYtot]
+
+  Short_t ****epT;       //! [enT]    - pointers to the first phi[it]
+  Short_t  ***epP;       //! [enPtot] - pointers to the first y[ip]
+  Short_t   **epY;       //! [enYtot] - pointers to the first x[iy]
+  Short_t    *ehX;       //! [enXtot] - phase histogram
+
+  EdbCluster ***epS;     //! pointers to seeds list
+  EdbCluster **epC;      //! pointers to clusters
+  Float_t      eDmax;    //  max distance inside the view (diameter)
+  Float_t      eFact;    //  occupancy correction factor 
+  Float_t      eRmax;    //  limit for coupling (3-dim)
+//----------------------
+
+  TIndexCell eISC;    // segments: "iseg:icl"
 
 public:
   EdbViewRec();
-  EdbViewRec(EdbViewDef &vd): EdbViewDef(vd) {SetDefRec();}
+  EdbViewRec(EdbViewDef &vd): EdbViewDef(vd) {SetPrimary();}
   ~EdbViewRec(){}
 
-  void  SetDefRec();
+  void  SetPrimary();
+  bool  Init();
+  void  SetNclGrLim(int mincl, int maxcl) { eNclGrMin=mincl; eNclGrMax=maxcl; }
+  void  SetNgrMax0(Int_t ngr)             {eNgrMax=ngr;}
+  void  SetAddGrainsToView(bool yesno)    {eAddGrainsToView=yesno;}
+  void  InitR();
   bool  SetView(EdbView *v);
   void  SetClThres(int mina, int maxa) { eClMinA=mina; eClMaxA=maxa; }
-  void  SetSeedThres(Short_t mins, Short_t maxs=48, Short_t nseedmax=100) 
-    { eSeedThres=mins; eSeedLim=maxs; eNseedMax=nseedmax; }
-  void  SetStep(int sfrom, int sto, int step=1)    { eStepFrom=sfrom; eStepTo=sto; eStep=step; }
+  void  SetSeedsLim( int nseedslim=100000, int seedlim=48 ) { enSeedsLim=nseedslim; eSeedLim=seedlim; }
+  int   SetStep(int sfrom, int sto, int step=1)    { eStepFrom=sfrom; eStepTo=sto; eStep=step; return (sto-sfrom)/step; }
+  void  SetRmax(float rmax)            { eRmax=rmax; }
+  void  SetThetaLim(float t)            { eThetaLim=t; }
+  void  SetNSeedMax0(int n)            { eNseedMax0=n; }
+  void  SetNSeedMax(int nt, int th[])  { if(nt>0){ enT=nt; eNseedMax.Set(nt,th);} };
+  void  SetSeedThres0(Short_t mins)    { eSeedThres0=mins;}
+  void  SetSeedThres(int nt, int th[]) { if(nt>0){ enT=nt; eSeedThres.Set(nt,th);} };
 
   void  ResetClustersSeg();
-  int   FillViewCells();
-  int   FindGrains();
-  int   FitSegment(EdbSegment &s);
+  int   FillViewCells(int flag=0);
+  int   FindGrains(int option=0);
+  static int   FitSegment(EdbSegment &s, int wkey=0);
+  static int   FitSegmentToCl(EdbSegment &s, EdbCluster &c, int wkey=0);
+  float CalculateSegmentChi2( EdbSegment &seg, float sx, float sy, float sz );
   int   CheckFramesShift();
   void  InitGrainsTree(const char *file="grains.root");
   int   FillGrainsTree();
 
-  int   FindSeed();
+  int   FindSeeds();
   int   CheckSeedThres();
+  bool  GoodSegment( EdbSegment &s );
+  float Chi2Seg( EdbSegment &s1, EdbSegment &s2 );
   int   SelectSegments();
-  int   SeekBySeed(EdbSegment &s, float t, float p, int j);
+  int   SelectSegments2();
+  int   MergeSegments();
+  int   MergeSegments2();
+  int   AddSegmentsToView();
+  int   RefillSegment(EdbSegment &s);
+  int   RefitSegments();
+
+  float SThetaGr(float theta, float phi, float dz, float sx, float sy, float sz);
+  float SPhiGr(float theta, float phi, float dz, float sx, float sy, float sz);
 
   ClassDef(EdbViewRec,1)  // Generation of one microscope view
 };
