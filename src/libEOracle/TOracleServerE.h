@@ -21,6 +21,7 @@ public:
    Int_t       ReadDataSet(ULong64_t id_parent_op, int id_brick, EdbPatternsVolume &vol);
    bool        ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
    Int_t       ReadBasetracksPattern(char *selection, EdbPattern &pat);
+   Int_t       ReadMicrotracksPattern(char *selection, EdbPattern &pat);
    Int_t       ReadCalibration(int id_brick, EdbPatternsVolume &vol);
 
    ClassDef(TOracleServerE,0)  // Connection to Oracle server

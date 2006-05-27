@@ -313,3 +313,46 @@ Int_t  TOracleServerE::ReadBasetracksPattern(char *selection, EdbPattern &pat)
   printf("%d segments are readed\n", ntracks);
   return ntracks;
 }
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE::ReadMicrotracksPattern(char *selection, EdbPattern &pat)
+{
+  int ntracks=0;
+  char query[2048];
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    sprintf(query, "SELECT \
+  ID_EVENTBRICK, id_zone, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA \
+  from TB_MIPMICROTRACKS where %s",
+	    selection);
+    fStmt->setSQL(query);
+    fStmt->setPrefetchRowCount(2000);
+    printf("\nexecute sql query: %s ...\n",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    EdbSegP seg;
+    while (rs->next()){
+      seg.Set(
+	      rs->getInt(3),    //id
+	      rs->getFloat(4),  //posx
+	      rs->getFloat(5),  //posy
+	      rs->getFloat(6),  //slopex
+	      rs->getFloat(7),  //slopey
+	      rs->getInt(8),    //grains
+	      0                 //flag
+	      );
+      seg.SetZ(pat.Z());
+      seg.SetDZ(45.);                          //!!! a kind of hack
+      seg.SetVolume(rs->getInt(10));
+      seg.SetVid(pat.PID(),0);          // keep in a segment also plate ID (by Ale)
+      pat.AddSegment(seg);
+      ntracks++;
+    }
+    delete rs;
+  } catch (SQLException &oraex)  {
+    Error("TOracleServerE", "ReadBasetracksPattern failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  printf("%d segments are readed\n", ntracks);
+  return ntracks;
+}
