@@ -76,6 +76,17 @@ void EdbSegment::Set(float x,  float y,  float z,  float tx,  float ty,
 }
 
 //______________________________________________________________________________
+void EdbSegment::Copy(EdbSegment &s)
+{
+  //copy contents of s into this
+  Set( s.GetX0(),s.GetY0(),s.GetZ0(),s.GetTx(),s.GetTy(),s.GetDz(), s.GetSide(),s.GetPuls(), s.GetID() );
+  SetSigma(s.GetSigmaX(),s.GetSigmaY());
+  if(eElements) eElements->Clear();
+  int n = s.GetNelements();
+  for(int i=0; i<n; i++) AddElement( s.GetElements()->UncheckedAt(i) );
+}
+
+//______________________________________________________________________________
 void EdbSegment::Print( Option_t *opt ) const
 {
   printf("EdbSegment: %f %f %f \t %f %f %f \t %d %d %d \t %d\n",

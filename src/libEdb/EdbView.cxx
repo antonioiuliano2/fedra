@@ -97,6 +97,70 @@ void EdbView::Transform( const EdbAffine2D *aff )
 }
 
 //______________________________________________________________________________
+void EdbView::Scale( float zscale )
+{
+  // scale all z coordinates and angles to the given factor
+  EdbCluster *c=0;
+  EdbSegment *s=0;
+  EdbTrack   *t=0;
+  if(eClusters) {
+    int ncl=Nclusters();
+    for( int i=0; i<ncl; i++ ) {  
+      c = GetCluster(i); 
+      c->SetZ( c->GetZ()*zscale ); 
+    }
+  }
+  if(eSegments) {
+    int nseg=Nsegments();
+    for( int i=0; i<nseg; i++ ) { 
+      s = GetSegment(i); 
+      s->SetZ0( s->GetZ0()*zscale ); 
+      s->SetTx( s->GetTx()/zscale ); 
+      s->SetTy( s->GetTy()/zscale ); 
+    }
+  }
+  if(eTracks) {
+    int ntr=Ntracks();
+    for( int i=0; i<ntr; i++ ) {
+      t = GetTrack(i);
+      t->SetZ0( t->GetZ0()*zscale ); 
+      t->SetTx( t->GetTx()/zscale ); 
+      t->SetTy( t->GetTy()/zscale );
+    }
+  }
+}
+
+//______________________________________________________________________________
+void EdbView::Shift( float zshift )
+{
+  // shift all z coordinates to the given offset
+  EdbCluster *c=0;
+  EdbSegment *s=0;
+  EdbTrack   *t=0;
+  if(eClusters) {
+    int ncl=Nclusters();
+    for( int i=0; i<ncl; i++ ) {  
+      c = GetCluster(i); 
+      c->SetZ( c->GetZ()+zshift ); 
+    }
+  }
+  if(eSegments) {
+    int nseg=Nsegments();
+    for( int i=0; i<nseg; i++ ) { 
+      s = GetSegment(i); 
+      s->SetZ0( s->GetZ0()+zshift ); 
+    }
+  }
+  if(eTracks) {
+    int ntr=Ntracks();
+    for( int i=0; i<ntr; i++ ) {
+      t = GetTrack(i);
+      t->SetZ0( t->GetZ0()+zshift ); 
+    }
+  }
+}
+
+//______________________________________________________________________________
 int EdbView::ReadView( char *fname )
 {
   FILE *fp = fopen(fname,"r");
@@ -140,21 +204,6 @@ void EdbView::DeleteClustersFog()
 
   eClusters->Compress();
 }
-
-// //______________________________________________________________________________
-// void EdbView::AddCluster( EdbCluster *c )
-// {
-//   int i = eClusters->GetLast()+1;
-//   new((*eClusters)[i++])  EdbCluster( *c );
-// }
-
-// //______________________________________________________________________________
-// void EdbView::AddCluster( float x,  float y,  float z,  
-// 			  float a,  float v, int f, int s, int seg )
-// {
-//   int i = eClusters->GetLast()+1;
-//   new((*eClusters)[i++])  EdbCluster( x,y,z, a,v,f,s,seg );
-// }
 
 //______________________________________________________________________________
 void EdbView::AddSegment( EdbSegment *s )
@@ -343,8 +392,8 @@ TObjArray *EdbView::GetSegmentsClusters() const
 //______________________________________________________________________________
 void EdbView::Draw(Option_t *option)
 {
-  float xmin=0, xmax=512;
-  float ymin=0, ymax=512;
+  float xmin=-200, xmax=200;
+  float ymin=-150, ymax=150;
   //float xmin=GetXview()-500, xmax=xmin+1000.;
   //float ymin=GetYview()-500, ymax=ymin+1000.;
 
@@ -367,8 +416,8 @@ void EdbView::Draw(Option_t *option)
 
     TPolyMarker3D *marksSeg = DrawClustersSegments();
     marksSeg->SetMarkerColor(kRed);
-    marksSeg->SetMarkerStyle(20);
-    marksSeg->SetMarkerSize(.4);
+    marksSeg->SetMarkerStyle(21);
+    marksSeg->SetMarkerSize(.3);
     marksSeg->Draw();
   }
 

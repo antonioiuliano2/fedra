@@ -40,6 +40,8 @@ public:
    void Print( Option_t *opt=0 ) const;
 
    void Set0(); 
+   void Set(float x, float y, float z, float a, float v, int f, int s, int seg=-1)
+     {eX=x; eY=y; eZ=z; eArea=a; eVolume=v; eFrame=f; eSide=s; eSegment=seg;}
    void SetArea(float a)    { eArea=a;}
    void SetVolume(float v)  { eVolume=v;}
    void SetFrame(int f)     { eFrame=f;}

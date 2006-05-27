@@ -41,6 +41,9 @@ public:
   virtual Float_t    GetTy() const { return eTy; }
   virtual Float_t    GetDz() const { return eDz; }
 
+  virtual void    SetX0( float x ) { eX0 = x; }
+  virtual void    SetY0( float y ) { eY0 = y; }
+  virtual void    SetZ0( float z ) { eZ0 = z; }
   virtual void    SetTx( float tx ) { eTx = tx; }
   virtual void    SetTy( float ty ) { eTy = ty; }
   virtual void    SetDz( float dz ) { eDz = dz; }
@@ -76,6 +79,7 @@ public:
   void       Set(float x,  float y,  float z,  float tx,  float ty, 
 		 float dz=0, int side=0, int puls=0, int id=0);
 
+  void       Copy( EdbSegment &s);
   void       SetSigma(float sx, float sy) { eSigmaX=sx; eSigmaY=sy; }
   float      GetSigmaX() const { return eSigmaX; }
   float      GetSigmaY() const { return eSigmaY; }
@@ -94,6 +98,15 @@ public:
 	((EdbCluster*)eElements->At(i))->SetSegment(eID);
   }
   void       SetIDE()   { SetIDE(GetID()); }
+  void       UnSetIDE()   {
+    if(eElements) {
+      for(int i=0; i<eElements->GetLast()+1; i++) 
+	if( ((EdbCluster*)eElements->UncheckedAt(i))->GetSegment() == eID )
+	  ((EdbCluster*)eElements->UncheckedAt(i))->SetSegment(-1);
+      eElements->Clear();
+    }
+  }
+
 
   Int_t      GetNelements() const { if(eElements) return eElements->GetLast()+1;
                                     else          return 0; }

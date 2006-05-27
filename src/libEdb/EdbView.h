@@ -142,6 +142,8 @@ public:
 
   void Clear();
 
+  void   Scale(float zscale);
+  void   Shift(float zshift);
   void   Transform( const EdbAffine2D *aff );
 
   void GenerateClustersFog( float density );
