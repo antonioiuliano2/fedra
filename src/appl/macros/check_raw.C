@@ -50,10 +50,10 @@ void check_view()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1); Views->Draw("eY0:eX0","eNframesTop==0","lego2");
-  c->cd(2); Views->Draw("eY0:eX0","eNframesTop==0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
-  c->cd(3); Views->Draw("eY0:eX0","eNframesBot==0","lego2");
-  c->cd(4); Views->Draw("eY0:eX0","eNframesBot==0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
+  c->cd(1); Views->Draw("eY0:eX0","eNframesTop==0&&ePuls>0","lego2");
+  c->cd(2); Views->Draw("eY0:eX0","eNframesTop==0&&ePuls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
+  c->cd(3); Views->Draw("eY0:eX0","eNframesBot==0&&ePuls>0","lego2");
+  c->cd(4); Views->Draw("eY0:eX0","eNframesBot==0&&ePuls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
 
   c->SaveAs("raw_view.gif");
 }
@@ -67,9 +67,9 @@ void check_surf()
   gStyle->SetPalette(1);
 
   c->cd(1);       Views->Draw("eYview:eXview");
-  c->cd(1);       Views->Draw("eYview+eY0:eXview+eX0","eNframesTop==0","samecontZ");
+  c->cd(1);       Views->Draw("eYview+eY0:eXview+eX0","eNframesTop==0&&ePuls>0","samecontZ");
   c->cd(2);       Views->Draw("eYview:eXview");
-  c->cd(2);       Views->Draw("eYview+eY0:eXview+eX0","eNframesBot==0","samecontZ");
+  c->cd(2);       Views->Draw("eYview+eY0:eXview+eX0","eNframesBot==0&&ePuls>0","samecontZ");
   c->cd(3);       Views->Draw("eNsegments");
                   Views->SetLineColor(2);
                   Views->Draw("eNsegments>>hbot","eNframesTop==0","same");
@@ -98,10 +98,10 @@ void check_puls()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1);       Views->Draw("segments.ePuls","eNframesTop==0");
-  c->cd(2);       Views->Draw("segments.ePuls","eNframesBot==0");
-  c->cd(3);       Views->Draw("segments.eSigmaX","eNframesTop==0");
-  c->cd(4);       Views->Draw("segments.eSigmaX","eNframesBot==0");
+  c->cd(1);       Views->Draw("segments.ePuls","eNframesTop==0&&ePuls>0");
+  c->cd(2);       Views->Draw("segments.ePuls","eNframesBot==0&&ePuls>0");
+  c->cd(3);       Views->Draw("segments.eSigmaY","eNframesTop==0&&ePuls>0");
+  c->cd(4);       Views->Draw("segments.eSigmaY","eNframesBot==0&&ePuls>0");
   c->SaveAs("raw_puls.gif");
 }
 
@@ -112,11 +112,10 @@ void check_ang()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1);  Views->Draw("segments.eTx");
-  c->cd(2);  Views->Draw("segments.eTy");
-  c->cd(3);  Views->Draw("eTy:eTx","eNframesTop==0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
-  c->cd(4);  Views->Draw("eTy:eTx","eNframesBot==0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
-
+  c->cd(1);  Views->Draw("segments.eTx","ePuls>0");
+  c->cd(2);  Views->Draw("segments.eTy","ePuls>0");
+  c->cd(3);  Views->Draw("eTy:eTx","eNframesTop==0&&ePuls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
+  c->cd(4);  Views->Draw("eTy:eTx","eNframesBot==0&&ePuls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
 
   c->SaveAs("raw_ang.gif");
 }
