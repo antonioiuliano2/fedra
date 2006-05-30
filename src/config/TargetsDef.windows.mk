@@ -22,7 +22,7 @@ $(LIB_TGT): $(OBJ)
 
 $(CINT_NAME).cxx: $(CINT)
     @echo "Generating dictionary Cint..."
-    rootcint -f $(CINT_NAME).cxx -c -I$(INC_DIR) $(CINT)
+    rootcint -f $(CINT_NAME).cxx -c -p -I$(INC_DIR) $(CINT)
 
 clean:
     del /q $(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).*
