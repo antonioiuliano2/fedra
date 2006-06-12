@@ -232,8 +232,8 @@ void EdbView::AddFrame( EdbFrame *frame )
   int i = eFrames->GetLast()+1;
   new((*eFrames)[i++])  EdbFrame( *frame );
 
-  printf("EdbView::AddFrame: \n");
-  frame->Print();
+  //printf("EdbView::AddFrame: \n");
+  //frame->Print();
 }
 
 //______________________________________________________________________________
@@ -652,13 +652,9 @@ void EdbViewHeader::Set0()
 //______________________________________________________________________________
 void EdbViewHeader::Print() const
 {
-  printf("ViewHeader:\t %d %d \t %f %f \n", eViewID, eAreaID, eXview, eYview);
-  printf("Nframes:   \t %d/%d \t Ncl = %d \t Nseg = %d \t col:row = %d:%d\n",
-		eNframesTop,eNframesBot, eNclusters, eNsegments, eCol, eRow);
+  printf("ViewHeader:\t %d %d \t %f %f \t col:row = %d:%d\n", eViewID, eAreaID, eXview, eYview, eCol, eRow);
+  printf("Nframes:   \t %d/%d \t Z(1/2/3/4): %f %f %f %f\n",
+		eNframesTop,eNframesBot, eZ1,eZ2,eZ3,eZ4);
+  printf("Ncl = %d \t Nseg = %d\n",eNclusters, eNsegments);
   printf("View time: \t %d  \t Scan status = %d \n", eTime, eStatus );
-//    if(eZlevels) {
-//      printf("Zlevels(%d): \t", eZlevels->GetSize() );
-//      for(int i=0; i<eZlevels->GetSize(); i++)       printf(" %f ", eZlevels->At(i) );
-//      printf("\n");
-//    }
 }

@@ -62,6 +62,7 @@ public:
   virtual ~EdbViewHeader();
 
   void     Set0();
+  void     Copy(EdbViewHeader *h) { memcpy( this, h, sizeof(EdbViewHeader) ); }
 
   void     SetAffine( float a11, float a12, 
 		      float a21, float a22, 

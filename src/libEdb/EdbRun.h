@@ -44,6 +44,7 @@ private:
 
   EdbPredictionsBox *ePredictions;    // predictions to scan ($c)
 
+public:
   EdbMarksSet       *eMarks;          // fiducial marks
 
 public:
@@ -63,6 +64,7 @@ public:
 
   EdbPredictionsBox   *GetPredictions() const { return ePredictions; }
   EdbMarksSet         *GetMarks()       const { return eMarks; }
+  void                 SetMarks(EdbMarksSet* marks) { eMarks = marks; }
   void                 TransformDC();   // transform predictions according to fid marks
   void                 GeneratePredictions( int n );
 
