@@ -30,6 +30,12 @@ EdbViewCell::EdbViewCell()
 }
 
 //____________________________________________________________________________________
+EdbViewCell::~EdbViewCell()
+{
+  if(eCells)  CleanCell();
+}
+
+//____________________________________________________________________________________
 void EdbViewCell::Init()
 {
   eNx = (int)((eXmax-eXmin)/eSx)+1;
@@ -39,10 +45,8 @@ void EdbViewCell::Init()
 }
 
 //____________________________________________________________________________________
-int EdbViewCell::FillCell(TClonesArray &v, int flag)
+int EdbViewCell::FillCell( TClonesArray &v )
 {
-  // if flag ==0 (default) use all clusters
-  // else use only clusters with eSegment==eFlag (-10 - grains)
 
   eNcl=v.GetLast()+1;
   if(eNcl<1) return 0;
@@ -60,7 +64,6 @@ int EdbViewCell::FillCell(TClonesArray &v, int flag)
   int j=0;
   for(int i=0; i<eNcl; i++) {
     c = (EdbCluster*)v.UncheckedAt(i);
-    if(flag) if(c->eSegment!=flag)                                continue;
     if( c->eX<eXmin || c->eX>eXmax || c->eY<eYmin || c->eY>eYmax) continue;
     j = Jcell(c->eFrame, c->eX, c->eY);
     if(!eCells[j]) eCells[j] = new TObjArray();
@@ -103,6 +106,24 @@ EdbViewRec::EdbViewRec()
 }
 
 //____________________________________________________________________________________
+EdbViewRec::~EdbViewRec()
+{
+   if(eGSeg)        delete eGSeg;
+   if(eGCla)        delete eGCla;
+   if(eGrainsTree)  delete eGrainsTree;
+  
+  if(epT)          delete[] epT;
+  if(epP)          delete[] epP;
+  if(epY)          delete[] epY;
+  if(ehX)          delete[] ehX;
+  if(epS)          delete[] epS;
+  if(epC)          delete[] epC;
+
+  if(eNsegMax>0)  if(eSA) {eSA->Clear();}
+  if(!eAddGrainsToView) if(eNgrMax>0)  if(eG) delete eG;
+}
+
+//____________________________________________________________________________________
 void EdbViewRec::SetPrimary()
 {
 	// define default primary values used later for the calculations in Init() function
@@ -111,8 +132,11 @@ void EdbViewRec::SetPrimary()
   eClMinA = 1;     // by default accept all clusters
   eClMaxA = 10000; // by default accept almoust all clusters
 
-  eVC.SetLimits(eXmin,eXmax,eYmin,eYmax);
-  eVC.SetS(10,10);                         // cell size
+  eVCC.SetLimits(eXmin,eXmax,eYmin,eYmax);
+  eVCC.SetS(10,10);                         // cell size
+
+  eVCG.SetLimits(eXmin,eXmax,eYmin,eYmax);
+  eVCG.SetS(10,10);                         // cell size
 
   eDZmin = 5.87;   // TODO!!!
   enT = 7;         // number of Theta divisions!
@@ -125,10 +149,13 @@ void EdbViewRec::SetPrimary()
   eStepFrom = 2;
   eStepTo   = 3;
   eRmax     = 11.;      // limit on 3-dim distance between points [microns]
-  eSeedThres0   = 5;   // limit for the seed value
-  eFact=1.;            // occupancy correction factor
+  eSeedThres0   = 5;    // limit for the seed value
+  eFact=1.;             // occupancy correction factor
 
-  ePulsThres = 4;    //default threshold for the segment puls value
+  ePulsMin = 4;         //default threshold for the segment puls value
+  ePulsMax = 100;       //default threshold for the segment puls value
+
+  eNsegMax=10000;       // limit for the segments number
 
   eNgr=0;
   eNgrMax=100000;           // limit for the grains number
@@ -136,10 +163,22 @@ void EdbViewRec::SetPrimary()
   eNclGrMin = 1;
   eNclGrMax = 6;
 
+  eDoGrainsProcessing = true;  // when reconstruct segments do grains preprocessing 
+  eCheckSeedThres     = false; // if true: use adaptive seeds threshold (based on eNseedMax)
+  ePropagateToBase    = false; // if true: segments are propagated to the base position
+
 // set to 0 all pointers 
-  eView=0;
-  eG  = 0;          // grains
+  eView       = 0;
   eGrainsTree = 0;
+
+  eG          = 0;          // grains
+  eVC         = 0;
+  eGSeg       = 0;
+  eG          = 0;
+  eGCla       = 0;
+  eCL         = 0;
+  eSA         = 0;
+
 }
 
 //____________________________________________________________________________________
@@ -254,10 +293,16 @@ bool EdbViewRec::Init()
     }
   */
 
-  eVC.Init();
+  eVCC.Init();
+  if(eDoGrainsProcessing) {  // segments reconstruction with grains preprocessing
+    eVCG.Init();
+    eGCla =  new TClonesArray("EdbCluster",eNgrMax);
+  }
 
-  if(!eAddGrainsToView) 
+  if(!eAddGrainsToView)
     if(eNgrMax>0) eG = new TClonesArray("EdbSegment",eNgrMax);
+
+  if(eNsegMax>0) if(!eSA) eSA = new TClonesArray("EdbSegment",eNsegMax);
 
   return true;
 }
@@ -313,19 +358,112 @@ bool  EdbViewRec::SetView(EdbView *v)
   } else return false;
   eZcenter = 0.5*(eZmin+eZmax);
   if(eAddGrainsToView) eG = eView->GetSegments();
+
+  eVCC.SetNfr( eView->GetNframes() );
+  eVCG.SetNfr( eView->GetNframes() );
+
+  eVC = &eVCC;
+  eVC->FillCell( *(eCL) );
+
   return true;
 }
 
 //____________________________________________________________________________________
-int EdbViewRec::FillViewCells(int flag)
+int EdbViewRec::ReconstructGrains()
 {
-  // if flag ==0 (default) use all clusters
-  // else use only clusters with eSegment==eFlag (-10 - grains)
+  // stearing function for grains reconstruction
+  // options: - save grains as the segments into eView
+  //          - keep them as an independent array and then save to separate grains tree
 
-  eVC.SetNfr( eView->GetNframes() );
-  int n = eVC.FillCell( *(eCL), flag );
-  //eVC.Print();
-  return n;
+  int ngr=0;
+
+  ngr = FindGrains();
+  //FillGrainsTree();
+
+  return ngr;
+}
+
+//____________________________________________________________________________________
+int EdbViewRec::ReconstructSegments()
+{
+  // stearing function for segments reconstruction
+  // options: - with    grains preprocessing
+  //          - without grains preprocessing
+
+  int nseg=0;
+  int ngr=0;
+
+  eSA->Clear();             // clear segments array
+
+  if(eDoGrainsProcessing) {
+    ngr = FindGrains(1);    // 1- fit grains to clusters
+    eVC = &eVCG;
+    eCL = eGCla;            // switch processing to grains
+    eVC->FillCell( *(eCL) );
+  }
+
+  FindSeeds();
+  if(eCheckSeedThres)   CheckSeedThres();
+  SelectSegments();
+  MergeSegments();
+
+  if(eDoGrainsProcessing) {   // switch processing back to clusters
+    eCL->Clear();
+    eVC = &eVCC;
+    eCL = eView->GetClusters();
+  }
+ 
+  RefitSegments(1);
+
+  return nseg;
+}
+
+//_______________________________________________________________________________________
+bool EdbViewRec::SaveToOutputView(EdbView &vout, int do_h, int do_c, int do_s, int do_tr, int do_f)
+{
+  // Put the result into the output view;  return true if successful
+  //
+  // do_h : 0/1   (1) - header info:   1-save; 0 - do not save;
+  // do_c : 0/1/2 (2) - cluster  info: 1-save all; 2-save attached to segments; 0- do not save;
+  // do_s : 0/1/2 (2) - segments info: 1-save all; 2-save selected; 0- do not save;
+  // do_tr:       (0) - track info:
+  // do_f : 0/1/2 (2) - frames info:   1-save all; 2-do not save images(if any); 0-do not save;
+
+  if(do_h>0) vout.GetHeader()->Copy(eView->GetHeader());
+
+  if(do_s>0) {
+    int nseg = eSA->GetLast()+1;
+    EdbSegment *s;
+    for(int i=0; i<nseg; i++) {
+      s = (EdbSegment*)(eSA->UncheckedAt(i));
+      if(do_s==2) if(s->GetPuls()<1)  continue;
+      if(ePropagateToBase) {
+	s->SetX0( s->GetX0() + s->GetTx()*(eZxy-s->GetZ0()) );
+	s->SetY0( s->GetY0() + s->GetTy()*(eZxy-s->GetZ0()) );
+	s->SetZ0(eZxy);
+      }
+      vout.AddSegment(s);
+    }
+  }
+  
+  if(do_c>0) {
+    int ncl = eCL->GetLast()+1;
+    EdbCluster *c=0;
+    for(int i=0; i<ncl; i++) {
+      c = (EdbCluster*)(eCL->UncheckedAt(i));
+      if(do_c==2) if(c->eSegment<0) continue;
+      vout.AddCluster(c);
+    }
+  }
+
+  if(do_f>0) {
+    int nfr = eView->GetNframes();
+    for(int i=0; i<nfr; i++) {
+      vout.AddFrame(eView->GetFrame(i));
+    }
+  }
+
+  return true;
 }
 
 //____________________________________________________________________________________
@@ -333,7 +471,7 @@ void EdbViewRec::ResetClustersSeg()
 {
   // set sl.eSegment to the default value (-1) - important only for simulation
 
-  int ncl=eView->Nclusters();
+  int ncl=eCL->GetLast()+1;
   if(ncl>0)
     for(int i=0; i<ncl; i++) ((EdbCluster*)eCL->UncheckedAt(i))->eSegment=-1;
 }
@@ -341,11 +479,11 @@ void EdbViewRec::ResetClustersSeg()
 //____________________________________________________________________________________
 int EdbViewRec::FindGrains(int option)
 {
-  // if option = 0 (default) grains reconstructed as a segments and added to eG  array
-  // if option = 1           grains reconstructed as a clusters and added to eCL array
+  // if option = 0 (default) grains reconstructed as segments and added to eGSeg  array
+  // if option = 1           grains reconstructed as clusters and added to eGCla array
 
-  if(eVC.eNcl<1) return 0;
-  if(eVC.eNfr<2) return 0;
+  if(eVC->eNcl<1) return 0;
+  if(eVC->eNfr<2) return 0;
   //printf("FindGrains with %d clusters, %d frames:\n\n",eVC.eNcl,eVC.eNfr);
   if(eNgr) {eG->Delete(); eNgr=0;}
 
@@ -355,10 +493,12 @@ int EdbViewRec::FindGrains(int option)
   int   iz1=0, jn=0;
   int   n0=0,n1=0;
 
-  for(int iz=0;     iz<eVC.eNfr-1; iz++) {
+  // set to clusters eSegment attribute:
+
+  for(int iz=0;     iz<eVC->eNfr-1; iz++) {
     iz1=iz+1;
-    for(int j=0;     j<eVC.eNcellXY; j++) {
-      arr0 = eVC.GetCell(iz,j);
+    for(int j=0;     j<eVC->eNcellXY; j++) {
+      arr0 = eVC->GetCell(iz,j);
       if(!arr0)    continue;
       n0 = arr0->GetEntriesFast();
       
@@ -366,10 +506,10 @@ int EdbViewRec::FindGrains(int option)
 	cl0 = (EdbCluster*)arr0->UncheckedAt(i0);
 	
 	for(int in=0; in<9; in++) {                 //neighbours
-	  jn = j + eVC.Jneib(in);
+	  jn = j + eVC->Jneib(in);
 	  if(jn<0)                  continue;
-	  if(jn>=eVC.eNcellXY)      continue;
-	  arr1 = eVC.GetCell(iz1,jn);
+	  if(jn>=eVC->eNcellXY)      continue;
+	  arr1 = eVC->GetCell(iz1,jn);
 	  if(!arr1)    continue;
 	  n1 = arr1->GetEntriesFast();
 	  for(int i1=0; i1<n1; i1++) {
@@ -388,16 +528,20 @@ int EdbViewRec::FindGrains(int option)
     }
   }
 
-  for(int i=0; i<eVC.eNcl; i++) {
+  // assemble grains lists (as a segments)
+
+  for(int i=0; i<eVC->eNcl; i++) {
     cl0 = (EdbCluster*)eCL->UncheckedAt(i);
     if( cl0->eSegment<0 ) cl0->eSegment = eNgr++;
     if(eNgr>eNgrMax) {printf("ERROR: too many grains: %d - stop tracking!!\n",eNgr); eNgr--; return -1; }
-    
     if(!eG->UncheckedAt(cl0->eSegment))  new((*eG)[cl0->eSegment]) EdbSegment();
     ((EdbSegment*)eG->UncheckedAt(cl0->eSegment))->AddElement(cl0);
   }
-  printf("ncl: %d   ngr: %d ( %3.1f %% )\n", eVC.eNcl,eNgr, 100.*eNgr/eVC.eNcl );
+  printf("ncl: %d   ngr: %d ( %3.1f %% )\n", eVC->eNcl,eNgr, 100.*eNgr/eVC->eNcl );
 
+  // fit grains to segments or to clusters:
+
+  int iseg;
   EdbSegment *s=0;
   EdbCluster c;
   for(int i=0; i<eNgr; i++) {
@@ -405,15 +549,27 @@ int EdbViewRec::FindGrains(int option)
     s->SetID(i);
     if( s->GetNelements() < eNclGrMin) s->UnSetIDE();  // release clusters
     else     {
-      if(option==1)  {
-	FitSegmentToCl(*s,c, 1);
-	c.eSegment = -10;  // to distinguish grains from clusters
-	new((*eCL)[eCL->GetLast()+1])  EdbCluster(c);
-	s->UnSetIDE();
+      if(option==1)  {                                 // grains preprocessing before tracking
+	if( s->GetNelements() > eNclGrMax )  {  // long grain is a segment
+	  GoodSegment(*s,1);
+	  iseg = eSA->GetLast()+1;
+	  s->SetIDE(iseg);
+	  new((*eSA)[iseg])  EdbSegment( *s );
+	} else {                                                      // short grain is a cluster
+	  FitSegmentToCl(*s,c, 1);
+	  new((*eGCla)[eGCla->GetLast()+1])  EdbCluster(c);
+	  s->UnSetIDE();
+	}
       }
       else           FitSegment(*s,1);
     }
     s->SetPuls(s->GetNelements());
+  }
+
+  if(option==1) {
+    printf("%d segments has been converted from grains\n",eSA->GetLast()+1);
+    if(eNclGrMax<ePulsMin) 
+      printf("WARNING: FindGrains: eNclGrMax(%d) < ePulsMin(%d) : can loose segments!\n",eNclGrMax,ePulsMin);
   }
 
   return eNgr;
@@ -650,50 +806,13 @@ int EdbViewRec::FillGrainsTree()
 //____________________________________________________________________________________
 int EdbViewRec::SelectSegments()
 {
-  int good = 0;
-  eISC.Delete();
-
-  EdbCluster **pps;
-  int jmax;
-  Short_t *p0,*pnext, *plast = ehX+enXtot;
-  for(int it=0; it<enT; it++) {
-    p0    = epT[it][0][0];
-    if(it==enT-1) pnext = plast;
-    else          pnext = epT[it+1][0][0];
-    while(p0<pnext) {
-      jmax = *p0;
-      if( jmax>=eSeedThres[it] ) {
-	//	  printf("it,jmax,thres %d %d %d \n",it,jmax, eSeedThres[it]);
-	int ict = p0-ehX;
-	pps = epS[ict];
-	jmax = (jmax<eSeedLim)?jmax:eSeedLim;
-	for(int j=0; j<jmax; j++) {
-	  eISC.FindAdd(ict)->FindAdd( eCL->IndexOf( *(pps) ) );
-	  pps++;
-	}
-	good++;
-      }
-      p0++;
-    }
-  }
-
-//   eISC.SetName("iseg:icl");
-//   eISC.Print("");
-
-  printf("%d seed segments selected\n", good);
-  return good;
-}
-
-//____________________________________________________________________________________
-int EdbViewRec::SelectSegments2()
-{
   int good  = 0;
   int seeds = 0;
 
   EdbSegment *s=0;
   EdbCluster *c=0;
   EdbCluster **pps;
-  int jmax;
+  int jmax, iseg;
   Short_t *p0,*pnext, *plast = ehX+enXtot;
   for(int it=0; it<enT; it++) {
     p0    = epT[it][0][0];
@@ -714,8 +833,10 @@ int EdbViewRec::SelectSegments2()
 	  pps++;
 	}
 	if( GoodSegment(*s) )  {
-	  s->SetIDE(good++);
-	  eView->AddSegment(s);
+	  good++;
+	  iseg = eSA->GetLast()+1;
+	  s->SetIDE(iseg);
+	  new((*eSA)[iseg])  EdbSegment( *s );
 	}
 	else delete s;
       }
@@ -728,7 +849,7 @@ int EdbViewRec::SelectSegments2()
 }
 
 //____________________________________________________________________________________
-bool EdbViewRec::GoodSegment(EdbSegment &s)
+bool EdbViewRec::GoodSegment(EdbSegment &s, int wkey)
 {
   // TODO: 
   // - probability  to be a straight line  (chi2)
@@ -737,8 +858,9 @@ bool EdbViewRec::GoodSegment(EdbSegment &s)
 
   if(!s.GetElements())            return false;
   s.SetPuls(s.GetNelements());
-  if( s.GetPuls() < ePulsThres )  return false;
-  FitSegment(s);
+  if( s.GetPuls() < ePulsMin )  return false;
+  s.SetSide(((EdbCluster*)(s.GetElements()->At(0)))->eSide);
+  FitSegment( s, wkey );
   if( Sqrt(s.GetTx()*s.GetTx()+s.GetTy()*s.GetTy()) > eThetaLim )     return false;
   s.SetSigma( Sqrt(s.GetSigmaX()*s.GetSigmaX() + s.GetSigmaY()*s.GetSigmaY()),
 	       CalculateSegmentChi2(s, eGrainSX, eGrainSY, eGrainSZ) );
@@ -773,23 +895,23 @@ int  EdbViewRec::RefillSegment(EdbSegment &s)
   EdbCluster *c=0;
   float x0,y0,x,y,dz;
   int   n1, lx, ly, lx0,ly0;
-  for(int i=0; i<eVC.eNfr; i++) {
+  for(int i=0; i<eVC->eNfr; i++) {
     dz = eView->GetFrame(i)->GetZ() - s.GetZ0();
     x0  = s.GetX0() + s.GetTx()*dz;
     y0  = s.GetY0() + s.GetTy()*dz;
-    lx0 = eVC.IXcell(x0);
-    ly0 = eVC.IYcell(y0);
+    lx0 = eVC->IXcell(x0);
+    ly0 = eVC->IYcell(y0);
     for(int ix=-1; ix<2; ix++) 
       for(int iy=-1; iy<2; iy++) {
 	x = x0 + ix*sx;
-	if(x<eVC.eXmin||x>eVC.eXmax) continue;
+	if(x<eVC->eXmin||x>eVC->eXmax) continue;
 	y = y0 + iy*sy;
-	if(y<eVC.eYmin||y>eVC.eYmax) continue;
-	lx = eVC.IXcell(x);
-	ly = eVC.IYcell(y);
+	if(y<eVC->eYmin||y>eVC->eYmax) continue;
+	lx = eVC->IXcell(x);
+	ly = eVC->IYcell(y);
 	if(ix!=0&&iy!=0) 
 	  if( lx == lx0 && ly == ly0 ) continue;
-	cla = eVC.GetCell(i,lx,ly);
+	cla = eVC->GetCell(i,lx,ly);
 	if(!cla) continue;
 	n1 = cla->GetEntriesFast();
 	for(int i1=0; i1<n1; i1++) {
@@ -808,19 +930,19 @@ int  EdbViewRec::RefillSegment(EdbSegment &s)
 }
 
 //____________________________________________________________________________________
-int EdbViewRec::RefitSegments()
+int EdbViewRec::RefitSegments(int wkey)
 {
   int good=0;
-  int nseg = eView->Nsegments();
+  int nseg = eSA->GetLast()+1;
   EdbSegment *s;
   for(int i=0; i<nseg; i++) {
-    s = eView->GetSegment(i);
+    s = (EdbSegment*)(eSA->UncheckedAt(i));
     if(s->GetPuls()<1)  continue;
     s->UnSetIDE();
     RefillSegment(*s);
-    if( !GoodSegment(*s) ) {  
-      s->UnSetIDE(); 
-      s->SetPuls(0); 
+    if( !GoodSegment(*s,wkey) ) {
+      s->UnSetIDE();
+      s->SetPuls(0);
       continue; 
     }
     s->SetIDE(i);
@@ -830,10 +952,11 @@ int EdbViewRec::RefitSegments()
   printf("%d segments after refitting\n", good);
   return good;
 }
+
 //____________________________________________________________________________________
-int EdbViewRec::MergeSegments2()
+int EdbViewRec::MergeSegments()
 {
-  int nseg = eView->Nsegments();
+  int nseg = eSA->GetLast()+1;
   if(nseg<2) return nseg;
 
   int nmerge=0;
@@ -841,9 +964,9 @@ int EdbViewRec::MergeSegments2()
   EdbSegment *s;
   EdbSegment *s1,*s2;
   for(int i=0; i<nseg-1; i++) {
-    s1 = eView->GetSegment(i);
+    s1 = (EdbSegment*)(eSA->UncheckedAt(i));;
     for(int j=i+1; j<nseg; j++) {
-      s2 = eView->GetSegment(j);
+      s2 = (EdbSegment*)(eSA->UncheckedAt(j));
       if( s1->GetPuls() < 1 )                     continue;
       if( s2->GetPuls() < 1 )                     continue;
       if( Abs(s1->GetX0() - s2->GetX0()) > 40.)   continue;
@@ -854,11 +977,17 @@ int EdbViewRec::MergeSegments2()
 
       s = new EdbSegment();
       s->Copy(*s1);
+      int nsame=0;
       for(int ii=0; ii<s2->GetNelements(); ii++) {
 	c = s2->GetElements()->UncheckedAt(ii);
 	if( !(s->GetElements()->FindObject(c)) )  s->AddElement( c );
+	else nsame++;
       }
-      if( GoodSegment(*s) ) {
+      if(nsame > s->GetNelements()/2) {   // same clusters - discard the second segment
+	s2->UnSetIDE();
+	s2->SetPuls(0);	
+	nmerge++;
+      } else if( GoodSegment(*s) ) {     // s1 and s2 are parts of the same segment
 	s->SetID(s1->GetID());
 	s1->Copy(*s);
 	s2->UnSetIDE();
@@ -870,9 +999,9 @@ int EdbViewRec::MergeSegments2()
   }
 
   int good=0;
-  nseg = eView->Nsegments();
+  nseg = eSA->GetLast()+1;
   for(int i=0; i<nseg; i++) {
-    s = eView->GetSegment(i);
+    s = (EdbSegment*)(eSA->UncheckedAt(i));
     if(s->GetPuls()<1)  continue;
     s->SetIDE(i);
     good++;
@@ -886,83 +1015,6 @@ int EdbViewRec::MergeSegments2()
 float EdbViewRec::Chi2Seg(EdbSegment &s1, EdbSegment &s2)
 {
   return 1.;
-}
-
-//____________________________________________________________________________________
-int EdbViewRec::MergeSegments()
-{
-  int nseg = eISC.GetEntries();
-  if(nseg<1) return 0;
-  
-  eISC.Sort();
-  TIndexCell *is1=0, *is2=0;
-  for(int i1 = nseg-1; i1>=0; i1--) {
-    is1 = eISC.At(i1);     //segment 1
-    for(int i2 = 0; i2<i1; i2++) {
-      is2 = eISC.At(i2);     //segment 2
-
-      for(int j2=0; j2<is2->N(); j2++) 
-	if( is1->Find( is2->At(j2)->Value() ) )   { //has common clusters
-	  for(int j1=0; j1<is1->N(); j1++) 
-	    is2->FindAdd( is1->At(j1)->Value() );
-	  eISC.Drop(i1);
-	  goto NEXT_S1;
-	}
-    }
-  NEXT_S1:
-    continue;
-  }
-  eISC.Purge(2);
-  eISC.Sort();
-//   isc.SetName("iseg:icl");
-//   isc.Print("");
-  nseg =  eISC.GetEntries();
-  printf("%d segments after merging\n", nseg);
-  return nseg;
-}
-
-//____________________________________________________________________________________
-int EdbViewRec::AddSegmentsToView()
-{
-  int good=0;
-  int nseg = eISC.GetEntries();
-  if(nseg<1) return 0;
-
-  float tlim2 = eThetaLim*eThetaLim;
-  for(int i = 0; i<nseg; i++)  eISC.At(i)->SetValue(eISC.At(i)->N());
-  eISC.Sort();
-
-  EdbCluster *c=0;
-  EdbSegment *s=0;
-  int ncl;
-  for(int i = 0; i<nseg; i++) {
-    ncl = eISC.At(i)->N();
-    if(ncl>1) {
-      s = new EdbSegment();
-      for(int j=0; j<ncl; j++ ) {
-	//printf("icl = %d \n", isc.At(i)->At(j)->Value());
-	c = (EdbCluster*)eCL->UncheckedAt( eISC.At(i)->At(j)->Value() );
-	s->AddElement(c);
-      }
-      s->SetPuls(s->GetNelements());
-      FitSegment(*s);
-      if( (s->GetTx()*s->GetTx()+s->GetTy()*s->GetTy()) > tlim2)   continue;
-      s->SetSigma( Sqrt(s->GetSigmaX()*s->GetSigmaX() + s->GetSigmaY()*s->GetSigmaY()),
-		   CalculateSegmentChi2(*s, eGrainSX, eGrainSY, eGrainSZ) );
-      if( s->GetSigmaY()>10 )    continue;
-      s->SetX0( s->GetX0()+ (eZxy-s->GetZ0())*s->GetTx());
-      if(s->GetX0()<eXmin) continue;
-      if(s->GetX0()>eXmax) continue;
-      s->SetY0( s->GetY0()+ (eZxy-s->GetZ0())*s->GetTy());
-      if(s->GetY0()<eYmin) continue;
-      if(s->GetY0()>eYmax) continue;
-      s->SetZ0( eZxy );
-      s->SetIDE(good++);
-      eView->AddSegment(s);
-    }
-  }
-  
-  return good;
 }
 
 //____________________________________________________________________________________
@@ -1005,26 +1057,25 @@ int EdbViewRec::CheckSeedThres()
 
   //TArrayL sp(256);   //phase occupancy histogram
   //for (int i=0; i<enXtot; i++) 
-    //if(ehX[i]>0)      sp[ehX[i]]++;
+  //if(ehX[i]>0)      sp[ehX[i]]++;
   //printf("\n total occup: %d / %d = %f %% \n", (int)(sp.GetSum()), enXtot, 100.*eFact*sp.GetSum()/enXtot );
 
-  /*
-  TNtuple *ntpix = new TNtuple("ntpix","pixels","i:pix:ix:iy:t:p");
-  float p,t;
-  int iphi,ix,iy;
-  int jxy=0;
-  for (int i=0; i<eNtot; i++) {
-    if(ePhist[i]<eSeedThres) continue;
-    iphi = i%eNphiTot;
-    t = eTmask[iphi];
-    p = ePmask[iphi];
-    jxy = i/eNphiTot;
-    iy  = jxy/eVC.eNx;
-    ix  = jxy%eVC.eNx;
-    ntpix->Fill(i,ePhist[i],ix,iy,t,p);
-  }
-  */
-  //return thres;
+//   TNtuple *ntpix = new TNtuple("ntpix","pixels","i:pix:ix:iy:t:p");
+//   float p,t;
+//   int iphi,ix,iy;
+//   int jxy=0;
+//   for (int i=0; i<eNtot; i++) {
+//     if(ePhist[i]<eSeedThres) continue;
+//     iphi = i%eNphiTot;
+//     t = eTmask[iphi];
+//     p = ePmask[iphi];
+//     jxy = i/eNphiTot;
+//     iy  = jxy/eVC->eNx;
+//     ix  = jxy%eVC->eNx;
+//     ntpix->Fill(i,ePhist[i],ix,iy,t,p);
+//   }
+//  return thres;
+
   return 0;
 }
 
@@ -1032,20 +1083,23 @@ int EdbViewRec::CheckSeedThres()
 int EdbViewRec::FindSeeds()
 {
   
-  if(eVC.eNcl<1) return 0;
-  if(eVC.eNfr<2) return 0;
-  printf("\nFindSeed with %d clusters, %d frames \t eZcenter[%6.1f:%6.1f] = %6.1f   eZxy = %6.1f\n",
-	 eVC.eNcl,eVC.eNfr,eZmin,eZmax,eZcenter,eZxy);
+  if(eVC->eNcl<1) return 0;
+  if(eVC->eNfr<2) return 0;
+  printf("FindSeed with %d clusters, %d frames \t eZcenter[%6.1f:%6.1f] = %6.1f   eZxy = %6.1f\n",
+	 eVC->eNcl,eVC->eNfr,eZmin,eZmax,eZcenter,eZxy);
 
+#ifdef WIN32
+  memset(ehX,'\0',enXtot*sizeof(Short_t));
+#else
   bzero(ehX,enXtot*sizeof(Short_t));
-  //memset(ehX,'\0',enXtot*sizeof(Short_t));
+#endif
 
   TObjArray  *arr0=0, *arr1=0;
   EdbCluster *cl0=0,  *cl1=0;
   int   iz1=0, jn=0;
   int   n0=0,n1=0;
   long ncycle=0, ict=0, nseeds=0;
-  float r2max=eVC.eSx*eVC.eSx;
+  float r2max=eVC->eSx*eVC->eSx;
   float r2d3max = eRmax*eRmax;
   float dx,dy,dz,r2, r2d3;
   float r,phi,t;
@@ -1055,11 +1109,11 @@ int EdbViewRec::FindSeeds()
   EdbCluster **pps;
 
   for(int istep=eStepFrom; istep<eStepTo; istep+=eStep) {
-    for(int iz=0;     iz<eVC.eNfr-istep; iz++) {
+    for(int iz=0;     iz<eVC->eNfr-istep; iz++) {
       iz1=iz+istep;
       
-      for(int j=0;     j<eVC.eNcellXY; j++) {
-	arr0 = eVC.GetCell(iz,j);
+      for(int j=0;     j<eVC->eNcellXY; j++) {
+	arr0 = eVC->GetCell(iz,j);
 	if(!arr0)    continue;
 	n0 = arr0->GetEntriesFast();
 	
@@ -1067,10 +1121,10 @@ int EdbViewRec::FindSeeds()
 	  cl0 = (EdbCluster*)arr0->UncheckedAt(i0);
 	  
 	  for(int in=0; in<9; in++) {                 //neighbours
-	    jn = j + eVC.Jneib(in);
+	    jn = j + eVC->Jneib(in);
 	    if(jn<0)                  continue;
-	    if(jn>=eVC.eNcellXY)      continue;
-	    arr1 = eVC.GetCell(iz1,jn);
+	    if(jn>=eVC->eNcellXY)      continue;
+	    arr1 = eVC->GetCell(iz1,jn);
 	    if(!arr1)    continue;
 	    n1 = arr1->GetEntriesFast();
 	    for(int i1=0; i1<n1; i1++) {
@@ -1156,6 +1210,6 @@ int EdbViewRec::FindSeeds()
       }
     }
   }
-  printf("occupancy: %ld / %d * %4.3f = %5.2f %% \n\n", nseeds,enXtot, eFact, 100.*eFact*nseeds/enXtot);
+  printf("occupancy: %ld / %d * %4.3f = %5.2f %% \n", nseeds,enXtot, eFact, 100.*eFact*nseeds/enXtot);
   return nseeds;
 }

@@ -599,8 +599,8 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
     segP.SetChi2( chi2 );    
   }
 
-
   EdbLayer  *layer=GetLayer(side);
+  seg->Transform(layer->GetAffineXY());                          //internal view transformation
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
   //  seg->Print();
 
@@ -623,6 +623,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
+  segP.SetChi2( seg->GetSigmaY() );   // make sence in case of fedra tracking 
 
   return 1;
 }
@@ -630,7 +631,9 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 ///______________________________________________________________________________
 float EdbDataPiece::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz )
 {
-  //assumed that clusters are attached to segments
+	//TODO: remove this function from here (already in EdbViewRec)
+
+	//assumed that clusters are attached to segments
   double chi2=0;
   EdbCluster *cl=0;
   TObjArray *clusters = seg->GetElements();
