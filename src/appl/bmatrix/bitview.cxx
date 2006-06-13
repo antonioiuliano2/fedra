@@ -594,7 +594,7 @@ TByteMatrix* TBinTracking::GetElement(double tgx, double tgy)
 		for (long i=0; i<GetNelements(); i++) {
 			TByte = GetElement(i);
 			TByte->GetAngle(&Tgx,&Tgy);
-			if ((abs(Tgx-tgx)<=Tgstep)&&(abs(Tgy-tgy)<=Tgstep)) return TByte;
+			if ((fabs(Tgx-tgx)<=Tgstep)&&(fabs(Tgy-tgy)<=Tgstep)) return TByte;
 		}
 	}
 	return NULL;
@@ -886,7 +886,7 @@ CYCLE:
 */
 			if (((fabs(seg->GetX0()-seg0->GetX0())<bs&&fabs(seg->GetY0()-seg0->GetY0())<bs)&&
 //				(seg->GetZ0()==seg0->GetZ0())&&
-				abs(seg->GetTx()-seg0->GetTx())<Tgstep&&abs(seg->GetTy()-seg0->GetTy())<Tgstep)
+				fabs(seg->GetTx()-seg0->GetTx())<Tgstep&&fabs(seg->GetTy()-seg0->GetTy())<Tgstep)
 //				&&(seg->GetDz()==seg0->GetDz())&&(seg->GetPuls()==seg0->GetPuls())
 // added at 13.11.2004 ///////////////////////////////
 				||(excludeCommonClusters
