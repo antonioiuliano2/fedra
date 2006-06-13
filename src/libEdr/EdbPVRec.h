@@ -234,6 +234,7 @@ class EdbPVRec : public EdbPatternsVolume {
   void DeleteCouples() { if(ePatCouples) ePatCouples->Delete(); }
   void SetCouplesAll();
   void SetCouplesPeriodic(int istart, int iperiod);
+  void SetCouplesExclude(TArrayI &exclude);
 
   float Chi2Max( ) const { return eChi2Max; }
   void SetChi2Max(float chi)

@@ -34,8 +34,8 @@ EdbVertexSpace::EdbVertexSpace(float vmin[3], float vmax[3], float bin[3])
 void EdbVertexSpace::AddTrackLine( float x1[3], float x2[3], int id)
 {
   float zstep = eBin[2];
-  float z = x1[2];
-  int nstep = (x2[2]-x1[2])/zstep;
+  //float z = x1[2];
+  int nstep = (int)((x2[2]-x1[2])/zstep);
 
   for(int i=0; i<nstep; i++) {
   }

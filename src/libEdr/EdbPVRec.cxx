@@ -1045,6 +1045,37 @@ void EdbPVRec::SetCouplesPeriodic(int istart, int iperiod)
 }
 
 //______________________________________________________________________________
+void EdbPVRec::SetCouplesExclude(TArrayI &exclude)
+{
+  // by Alessandra Pastore
+  // TArray exclude[npat]={0,1,1,0,...,0} where
+  //           0 = plate to be excluded from the volume pattern; 
+  //           1 = plate to be included into the volume pattern
+
+  DeleteCouples();
+  EdbPatCouple *pc = 0;
+  int npat = Npatterns();
+
+  for(int i=0; i<npat; i++ ) GetPattern(i)->SetSegmentsPID();
+  for(int i=0; i<npat-1; i++) {
+    if(exclude[i]==0)    continue;
+    for(int j=i+1; j<npat; j++) {
+      if(exclude[j]==0) continue;
+
+      pc = new EdbPatCouple();
+      pc->SetID(i,j);
+      pc->SetCond(eScanCond);
+      pc->SetOffset(0,0,0,0);
+      pc->SetSigma(1,1,.003,.003);
+      AddCouple(pc);
+      break;
+    }
+  }
+
+  SetCouples();
+}
+
+//______________________________________________________________________________
 void EdbPVRec::FillCell(float stepx, float stepy, float steptx, float stepty)
 {
   int npat=Npatterns();
