@@ -148,6 +148,7 @@ class EdbTrackG : public TPolyMarker3D {
   virtual void          InspectTrack(); // *MENU*
   virtual void		RemoveTrack();  // *MENU*
   virtual void		AddTrack();  // *MENU*
+  virtual void		InfoTrackVert();  // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;
@@ -175,6 +176,7 @@ class EdbSegG : public TPolyLine3D {
   virtual void          InspectSegment(); // *MENU*
   virtual void		AddAsTrack();     // *MENU*
   virtual void		SetAsWorking();   // *MENU*
+  virtual void		InfoSegVert();    // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;

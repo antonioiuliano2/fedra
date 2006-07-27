@@ -180,6 +180,8 @@ EdbDisplay::~EdbDisplay()
     }
     if (fCanvasVTX) fCanvasVTX->Close();
     fCanvasVTX = 0;
+    if (fCanvasTRK) fCanvasTRK->Close();
+    fCanvasTRK = 0;
     if (eWorking) delete eWorking;
     eWorking = 0;
     if (ePrevious) delete ePrevious;
@@ -202,6 +204,8 @@ void EdbDisplay::Delete()
     }
     if (fCanvasVTX) fCanvasVTX->Close();
     fCanvasVTX = 0;
+    if (fCanvasTRK) fCanvasTRK->Close();
+    fCanvasTRK = 0;
     if (eWorking) delete eWorking;
     eWorking = 0;
     if (ePrevious) delete ePrevious;
@@ -788,6 +792,7 @@ void EdbSegG::AddAsTrack()
 	}
     }
     EdbTrackP *Tr = new EdbTrackP((EdbSegP *)eSeg, (float)0.139);
+    Tr->SetP(0.1);
     Tr->FitTrackKFS();
     if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), Tr, 1)))
     {
@@ -919,6 +924,117 @@ void EdbSegG::SetAsWorking()
     }
   }
 }
+//_____________________________________________________________________________
+void EdbSegG::InfoSegVert()
+{
+  if (!(eD->eVertex)) return;
+  int zpos = 1;
+  EdbVertex *v = eD->eVertex;
+  if (eD->eWorking) v = eD->eWorking;
+  char CanvasTRKName[140];
+  strcpy(CanvasTRKName, "TRK-");
+  strcat(CanvasTRKName, (eD->fCanvas)->GetName());
+  if ((eD->fCanvasTRK = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasTRKName))))
+  {
+    (eD->fCanvasTRK)->SetTitle("Segment - Vertex relation parameters");
+    (eD->fCanvasTRK)->Clear();
+    (eD->fCanvasTRK)->Modified();
+    (eD->fCanvasTRK)->Update();
+  }
+  else
+  {
+    int xpos = (eD->fCanvas)->GetWindowTopX()+(eD->fCanvas)->GetWw();
+    int ypos = (eD->fCanvas)->GetWindowTopY();
+    eD->fCanvasTRK = new TCanvas(CanvasTRKName, "Segment - Vertex relation parameters",
+			     -xpos, ypos, 640, 330);
+    (eD->fCanvasTRK)->ToggleEventStatus();
+  }
+  if (eD->fVTXTRKInfo)
+  {
+    (eD->fVTXTRKInfo)->Clear();
+  }
+  else
+  {
+    eD->fVTXTRKInfo = new TPaveText(0.05, 0.05, 0.95, 0.95);
+    (eD->fVTXTRKInfo)->ResetBit(kCanDelete);
+  }
+  char line[128];
+  EdbSegP *s = (EdbSegP *)eSeg;  
+  TText *t = 0;
+
+  strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"            %-4d        %-8.1f   %-8.1f   %-8.1f   %-7.4f    %-7.4f",
+		      s->ID(), s->X(), s->Y(), s->Z(),
+		      s->TX(), s->TY());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  strcpy(line, "  Vertex    ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"            %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+    v->ID(), v->N(), v->VX(), v->VY(), v->VZ(), v->V()->dist(),
+    v->V()->chi2()/v->V()->ndf(), v->V()->prob());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  float dx   = v->VX() - s->X();
+  float dy   = v->VY() - s->Y();
+  float dz   = v->VZ() - s->Z();
+  float dist = TMath::Sqrt(dx*dx + dy*dy + dz*dz);
+
+  EdbTrackP *tr = new EdbTrackP((EdbSegP *)eSeg, (float)0.139);
+  tr->SetP(0.1);
+  tr->FitTrackKFS();
+
+  float chi2 = v->Chi2Track(tr, zpos);
+  float impa = v->DistTrack(tr, zpos);
+  delete tr;
+  sprintf(line, "  Segment - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(2);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  t = (eD->fVTXTRKInfo)->AddText("");
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  (eD->fVTXTRKInfo)->Draw();
+  (eD->fCanvasTRK)->Modified();
+  (eD->fCanvasTRK)->Update();
+}
 
 //_____________________________________________________________________________
 void EdbVertexG::SetAsWorking()
@@ -961,7 +1077,7 @@ void EdbVertexG::SetAsWorking()
     }
     else
     {
-	if (!(eDs->eArrV->FindObject(eVs)))
+	if (!((eDs->eArrV)->FindObject(eVs)))
 	{
 	    eDs->eArrV->Add(eVs);
 	    if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
@@ -985,7 +1101,8 @@ void EdbVertexG::SetAsWorking()
     eDs->DrawOldVTX(text);
     eDs->DrawVTXTracks("Original", eDs->eVertex);
     eDs->DrawEnv();
-    eDs->eIndVert = eD->eArrV->IndexOf(eVs);
+    if (eDs->eArrV) eDs->eIndVert = (eDs->eArrV)->IndexOf(eVs);
+    else            eDs->eIndVert = -1;
     (eDs->eCreatedTracks).Clear();
     eDs->Draw();
   }
@@ -1446,7 +1563,112 @@ void EdbTrackG::AddTrack()
     }
   }
 }
+//_____________________________________________________________________________
+void EdbTrackG::InfoTrackVert()
+{
+  if (!(eD->eVertex)) return;
+  int zpos = 1;
+  if (GetMarkerColor() == kRed) zpos = 0;
+  EdbVertex *v = eD->eVertex;
+  if (eD->eWorking) v = eD->eWorking;
+  char CanvasTRKName[140];
+  strcpy(CanvasTRKName, "TRK-");
+  strcat(CanvasTRKName, (eD->fCanvas)->GetName());
+  if ((eD->fCanvasTRK = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasTRKName))))
+  {
+    (eD->fCanvasTRK)->SetTitle("Track - Vertex relation parameters");
+    (eD->fCanvasTRK)->Clear();
+    (eD->fCanvasTRK)->Modified();
+    (eD->fCanvasTRK)->Update();
+  }
+  else
+  {
+    int xpos = (eD->fCanvas)->GetWindowTopX()+(eD->fCanvas)->GetWw();
+    int ypos = (eD->fCanvas)->GetWindowTopY();
+    eD->fCanvasTRK = new TCanvas(CanvasTRKName, "Track - Vertex relation parameters",
+			     -xpos, ypos, 640, 330);
+//    (eD->fCanvasTRK)->ToggleEventStatus();
+  }
+  if (eD->fVTXTRKInfo)
+  {
+    (eD->fVTXTRKInfo)->Clear();
+  }
+  else
+  {
+    eD->fVTXTRKInfo = new TPaveText(0.05, 0.05, 0.95, 0.95);
+    (eD->fVTXTRKInfo)->ResetBit(kCanDelete);
+  }
+  char line[128];
+  EdbTrackP *tr = eTr;  
+  TText *t = 0;
 
+  strcpy(line, " Track     ID   Nseg   Mass       P       Chi2/ndf    Prob");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"         %4d  %4d   %7.4f  %7.2f    %5.2f     %7.4f",
+		      tr->ID(), tr->N(), tr->M(), tr->P(),
+		      tr->Chi2()/tr->N(), tr->Prob());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  strcpy(line, "  Vertex    ID    Mult  X          Y          Z          Dist   Chi2     Prob");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"            %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+    v->ID(), v->N(), v->VX(), v->VY(), v->VZ(), v->V()->dist(),
+    v->V()->chi2()/v->V()->ndf(), v->V()->prob());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  float dx   = v->VX() - tr->X();
+  float dy   = v->VY() - tr->Y();
+  float dz   = v->VZ() - tr->Z();
+  float dist = TMath::Sqrt(dx*dx + dy*dy + dz*dz);
+  float chi2 = v->Chi2Track(tr, zpos);
+  float impa = v->DistTrack(tr, zpos);
+  sprintf(line, "  Track - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(2);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  t = (eD->fVTXTRKInfo)->AddText("");
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  (eD->fVTXTRKInfo)->Draw();
+  (eD->fCanvasTRK)->Modified();
+  (eD->fCanvasTRK)->Update();
+}
 //_____________________________________________________________________________
 void EdbDisplay::CancelModifiedVTX()
 {

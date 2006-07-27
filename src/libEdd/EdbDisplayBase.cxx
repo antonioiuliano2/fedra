@@ -34,9 +34,10 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 			       Float_t y0, Float_t y1, 
 			       Float_t z0, Float_t z1)
 {
-   static char VPadName[140], TPadName[140];
-   static char ZoomButName[140], PickButName[140], UnZoomButName[140];
-   char *pres = 0;
+   char VPadName[140], TPadName[140];
+   char ZoomButName[140], PickButName[140], UnZoomButName[140];
+   char CanTitle[140];
+   char *pres = 0, *ptitle = 0;
 
    Set0();
    fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
@@ -56,11 +57,17 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    if ((pres = strstr(title, "Presentation"))) SetStyle(1); // presentation style
    else if ((pres = strstr(title, "presentation"))) SetStyle(1);
    strcpy(fTitle, title);
+   ptitle = fTitle;
+   while (*ptitle) { if (*ptitle == ' ') *ptitle = '_'; ptitle++; }
    this->SetName(&fTitle[0]);
    this->SetTitle("FEDRA Event Display");
    strcpy(fCanvasName, "Canvas-");
    strcat(fCanvasName, title);
-   fCanvas = new TCanvas(fCanvasName, "FEDRA Event Display", 14, 47, 800, 700);
+   ptitle = fCanvasName;
+   while (*ptitle) { if (*ptitle == ' ') *ptitle = '_'; ptitle++; }
+   strcpy(CanTitle, "FEDRA Event Display: ");
+   strcat(CanTitle, title);
+   fCanvas = new TCanvas(fCanvasName, CanTitle, 14, 47, 800, 700);
    fCanvas->ToggleEventStatus();
 
   // Create main display pad
@@ -199,6 +206,7 @@ void EdbDisplayBase::Set0()
   fVx0=fVy0=fVz0=fVx1=fVy1=fVz1=0;
   fCanvas = 0;
   fCanvasVTX = 0;
+  fCanvasTRK = 0;
   fTrigPad = 0;
   fButtons = 0;
   fPad = 0;
@@ -221,6 +229,7 @@ void EdbDisplayBase::Set0()
   fCanvasName[0] = '\0';
   fTitle[0] = '\0';
   fVTXTracks = 0;
+  fVTXTRKInfo = 0;
   fMain      = 0;
   fView      = 0;
   fStyle     = 0;
@@ -278,7 +287,7 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
 void EdbDisplayBase::DisplayButtons()
 {
 //    Create the user interface buttons
-   static char ViewTypePadName[140];
+   char ViewTypePadName[140];
 
    strcpy(ViewTypePadName, "ViewTypePad-");
    strcat(ViewTypePadName, fCanvasName);

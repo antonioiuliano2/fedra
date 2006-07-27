@@ -80,9 +80,7 @@ protected:
 					    // 1 - presentation
 					    // ...
    Width_t           fLineWidth;            //Line width for tracks and segments
-   TCanvas          *fCanvas;               //Pointer to the display canvas
    Edb3DView        *fView;                 //Main View object
-   char		    fCanvasName[128];       //Name of main canvas
    char       	    fTitle[128];            //EdbDisplay Object Name
    TPad             *fTrigPad;              //Pointer to the trigger pad
    TPad             *fButtons;              //Pointer to the buttons pad
@@ -105,10 +103,14 @@ protected:
    TButton	    *fNewBut;		    //Modified Vertex display button
    TButton	    *fPreBut;		    //Previous Vertex display button
    TButton          *fRemBut[50];           //track removing buttons
+   char		    fCanvasName[128];       //Name of main canvas
    
 public:
 
+   TPaveText        *fVTXTRKInfo;	    //Vertex - tracks information
+   TCanvas          *fCanvas;               //Pointer to the display canvas
    TCanvas          *fCanvasVTX;            //Pointer to the vertex canvas
+   TCanvas          *fCanvasTRK;            //Pointer to the vertex canvas
    TPad             *fPad;                  //Pointer to the event display main pad
 
 public:
