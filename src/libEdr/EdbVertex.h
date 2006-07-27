@@ -133,7 +133,8 @@ class EdbVertex: public TObject {
   EdbVertex *GetConnectedVertex(int i);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
-  float Chi2Track(EdbTrackP *tr, int zpos, float X0);
+  float Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
+  float DistTrack(EdbTrackP *tr, int zpos, float X0 = 0.);
   float ImpTrack(int i);
   float MaxAperture();
 

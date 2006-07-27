@@ -463,7 +463,49 @@ float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
   // distance from track to already existed vertex
 
   if (!track) return 0.;
-  double distchi2 = 0.;
+  double distchi2 = -2.;
+  EdbSegP *seg = 0;
+  if   (zpos)
+    {
+      seg = (EdbSegP *)(track->TrackZmin());
+    }
+  else
+    {
+      seg = (EdbSegP *)(track->TrackZmax());
+    }
+  if (eV)
+    {
+      if (track->NF() <= 0) return -1.;
+      if (track->P() <= 0.) track->SetP(1.);
+      if (track->M() <= 0.) track->SetM(.1395);
+      if (track->SP() <= 0.) track->SetErrorP(1.);
+      Track *t=new Track();
+      if( Edb2Vt( *seg, *t, X0, track->M() ) )
+	{
+	  distchi2 = -3.;
+	  if (eV->valid())
+	    {
+	      t->rm(track->M());
+	      distchi2 = eV->distance(*t);
+	    } 
+	}
+      else
+	{ 
+	  printf("EdbVertex::Chi2Track - conversion to VT failed!");
+	  distchi2 = -4.;
+	}
+      delete t;
+      t=0;
+    }
+  return (float)distchi2;
+}
+//________________________________________________________________________
+float EdbVertex::DistTrack(EdbTrackP *track, int zpos, float X0)
+{
+  // distance from track to already existed vertex
+
+  if (!track) return 0.;
+  double dist = 0.;
   EdbSegP *seg = 0;
   if   (zpos)
     {
@@ -481,7 +523,7 @@ float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
 	{
 	  if (eV->valid())
 	    {
-	      distchi2 = eV->distance(*t);
+	      dist = distance(*t, *eV);
 	    } 
 	}
       else
@@ -491,7 +533,7 @@ float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
       delete t;
       t=0;
     }
-  return (float)distchi2;
+  return (float)dist;
 }
 
 //________________________________________________________________________
