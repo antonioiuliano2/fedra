@@ -219,8 +219,12 @@ class EdbVertexRec: public TObject {
   int BuildTracksArr(const char *file_name="linked_tracks.root", int nsegMin=2 );
   double Tdistance(const VERTEX::Track& t1, const VERTEX::Track& t2);
   double Tdistance(const EdbSegP& s1, const EdbSegP& s2);
+  double TdistanceChi2(const EdbTrackP& tr1, const EdbTrackP& tr2);
+  double TdistanceChi2(const EdbSegP& s1, const EdbSegP& s2, float m);
 
   EdbTrackP *GetEdbTrack( const int index );
+
+  void SetPVRec(EdbPVRec *pvr) { ePVR =pvr; }
 
   ClassDef(EdbVertexRec,2) //reconstruct vertexes in OPERA emulsion data
 };

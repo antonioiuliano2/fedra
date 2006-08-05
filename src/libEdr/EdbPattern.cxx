@@ -620,7 +620,16 @@ EdbTrackP::EdbTrackP(int nseg)
 //______________________________________________________________________________
 EdbTrackP::EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
 {
-  Set0();
+//  Set0();
+  eS=0;
+  eSF=0;
+  eM=0;
+  eDE=0;
+  ePDG=-999;
+  eVTAS = 0;
+  eVTAE = 0;
+  eNpl=0;
+  eN0=0;
   AddSegment(seg);
   SetM(m);
 }

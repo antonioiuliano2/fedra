@@ -607,6 +607,10 @@ EdbVertexRec::~EdbVertexRec()
 int EdbVertexRec::MakeV( EdbVertex &edbv )
 {
   // create new VtVertex and add (two) tracks to this one
+  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Warning: EdbVertexRec::MakeV: EdbPVRec not defined\n"); return 0;}
+
   float X0 =  ePVR->GetScanCond()->RadX0();
   Vertex *v=edbv.V();
   if(v) { v->clear(); delete v; v=0; }
@@ -762,6 +766,7 @@ int EdbVertexRec::FindVertex()
   // ProbMin - minimal probability for chi2-distance between tracks
 
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
   if(!ePVR) {printf("Warning: EdbVertexRec::FindVertex: EdbPVRec not defined\n"); return 0;}
 
   EdbVertex *edbv = 0;
@@ -1137,7 +1142,6 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
   }
   return 0;
 }
-
 //______________________________________________________________________________
 int EdbVertexRec::ProbVertexN()
 {
@@ -1597,6 +1601,7 @@ int EdbVertexRec::SelSegNeighbor( EdbSegP *sin, int seltype, float RadMax, int D
 int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 {
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
   if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined\n"); return 0;}
 
   int nn   = 0, iv = 0;
@@ -1627,6 +1632,7 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float ImpMax)
 {
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
   if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined\n"); return 0;}
 
   EdbVTA    *vta = 0;
@@ -1642,7 +1648,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
   float     distxs, distys, distzs1, distzs, dists, dist = 0.;
   float     distxe = 0., distye = 0., distze1= 0., distze = 0., diste = 0.;
   float     xvert = 0, yvert = 0, zvert = 0;
-  Float_t   Zbin = TMath::Abs(ePVR->GetPattern(1)->Z() - ePVR->GetPattern(0)->Z());
+  Float_t   Zbin = TMath::Abs((ePVR->GetPattern(1))->Z() - (ePVR->GetPattern(0))->Z());
   TObjArray an(20);
 
   if (v->Flag() != -10)
@@ -1867,6 +1873,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray *arrs, TObjArray *arrt, TObjArray *arrv)
 {
   if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
   if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined\n"); return 0;}
 
   EdbTrackP *tr  = 0, *trown = 0;
@@ -2075,6 +2082,29 @@ double EdbVertexRec::Tdistance(const EdbSegP &s1, const EdbSegP &s2)
 
 }
 
+//________________________________________________________________________
+double EdbVertexRec::TdistanceChi2(const EdbTrackP &tr1, const EdbTrackP &tr2) 
+{
+  EdbVertex edbv;
+  Track t1;
+  Track t2;
+  float X0 =  ePVR->GetScanCond()->RadX0();
+  if(!edbv.Edb2Vt(tr1,t1,X0,tr1.M()))  return 1.E20;
+  if(!edbv.Edb2Vt(tr2,t2,X0,tr2.M()))  return 1.E20;
+  return distanceChi2(t1,t2);
+}
+
+//________________________________________________________________________
+double EdbVertexRec::TdistanceChi2(const EdbSegP &s1, const EdbSegP &s2, float m) 
+{
+  EdbVertex edbv;
+  Track t1;
+  Track t2;
+  float X0 =  ePVR->GetScanCond()->RadX0();
+  if(!edbv.Edb2Vt(s1,t1,X0,m))  return 1.E20;
+  if(!edbv.Edb2Vt(s2,t2,X0,m))  return 1.E20;
+  return distanceChi2(t1,t2);
+}
 //________________________________________________________________________
 int EdbVertexRec::BuildTracksArr(const char *file_name, int nsegMin )
 {
