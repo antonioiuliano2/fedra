@@ -42,6 +42,9 @@ class EdbDisplay: public EdbDisplayBase {
   EdbVertex *eVertex;      // current selected vertex
   EdbVertex *ePrevious;    // saved previous vertex modifications
   EdbSegP   *eSegment;     // working segment (for segment neighborhood)
+  EdbTrackP *eTrack;       // working intermediate track (track creation)
+  EdbTrackP *eTrack1;      // working intermediate track (track splitting)
+  EdbTrackP *eTrack2;      // working intermediate track (track splitting)
   TPolyMarker3D *eSegPM;   // green mark for segment selected as working
   Bool_t eWait_Answer;	   // set TRUE when answer received
   Int_t eIndVert;	   // Index of selected vertex in ArrV
@@ -50,6 +53,10 @@ class EdbDisplay: public EdbDisplayBase {
   Double_t eRadMax;        // Maximal Radius for neighborhood
   Double_t eDpat;          // +/- patterns for neighborhood
   Double_t eImpMax;        // Maximal impact for neighborhood
+  Double_t eP;             // track momentum (creation from segment, propagation)
+  Double_t eM;             // track mass (creation from segment, propagation)
+  Double_t eTImpMax;       // Maximal impact for interactive add track
+  Double_t eTProbMin;      // Minimal probability for interactive add track
 
  public:
 
@@ -101,6 +108,10 @@ class EdbDisplay: public EdbDisplayBase {
   void AcceptModifiedParams();
   void CloseDialogModifiedParams();
   void CancelDialogModifiedParams();
+  void DialogTrackParameters();
+  void AcceptModifiedTrackParams();
+  void CloseDialogModifiedTrackParams();
+  void CancelDialogModifiedTrackParams();
   void ClearSegmentEnv();
  
   ClassDef(EdbDisplay,1) //FEDRA Event Display
@@ -122,6 +133,8 @@ class EdbVertexG : public TPolyMarker3D {
   virtual void          DumpVertex();    // *MENU*
   virtual void          InspectVertex(); // *MENU*
   virtual void		SetAsWorking();  // *MENU*
+  virtual void          DeleteVertex();  // *MENU*
+  virtual void          RemoveKink();    // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;
@@ -144,11 +157,18 @@ class EdbTrackG : public TPolyMarker3D {
 
   void SetTrack(EdbTrackP *tr) {eTr=tr;}
 
-  virtual void          DumpTrack();    // *MENU*
-  virtual void          InspectTrack(); // *MENU*
-  virtual void		RemoveTrack();  // *MENU*
-  virtual void		AddTrack();  // *MENU*
-  virtual void		InfoTrackVert();  // *MENU*
+  virtual void          DumpTrack();       // *MENU*
+  virtual void          InspectTrack();    // *MENU*
+  virtual void		RemoveTrackFromVertex();     // *MENU*
+  virtual void		AddTrackToVertex();          // *MENU*
+  virtual void		FixNewTrack();     // *MENU*
+  virtual void		DeleteTrack();     // *MENU*
+  virtual void		UndoNewTrack();    // *MENU*
+  virtual void		UndoSplit();       // *MENU*
+  virtual void		UndoRemoveKink();  // *MENU*
+  virtual void		AddToNewTrack();      // *MENU*
+  virtual void		AddToNewTrackAndFit();// *MENU*
+  virtual void		InfoTrackVert();   // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;
@@ -172,11 +192,16 @@ class EdbSegG : public TPolyLine3D {
 
   void SetSeg(const EdbSegP *s) {eSeg=s;}
 
-  virtual void          DumpSegment(); 	  // *MENU*
-  virtual void          InspectSegment(); // *MENU*
-  virtual void		AddAsTrack();     // *MENU*
-  virtual void		SetAsWorking();   // *MENU*
-  virtual void		InfoSegVert();    // *MENU*
+  virtual void          DumpSegment(); 	   // *MENU*
+  virtual void          InspectSegment();  // *MENU*
+  virtual void		AddAsTrackToVertex();      // *MENU*
+  virtual void		AddToNewTrack();      // *MENU*
+  virtual void		AddToNewTrackAndFit();// *MENU*
+  virtual void		RemoveFromTrack(); // *MENU*
+  virtual void		SplitTrack();      // *MENU*
+  virtual void		SetAsWorking();    // *MENU*
+  virtual void		InfoSegVert();     // *MENU*
+  virtual void		InfoSegSeg();      // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;

@@ -372,8 +372,17 @@ void EdbDisplayBase::DisplayButtons()
    button->SetFillColor(38);
    button->Draw();
 
+   y -= dbutton +dy;
+   char but10[256];
+   sprintf(but10,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DialogTrackParameters()",fTitle);
+   button = new TButton("TrackParms",but10,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Set Mometum and Mas for tracks creation and propagation");
+   button->SetFillColor(38);
+   button->Draw();
+
    // display logo
-   TDiamond *diamond = new TDiamond(0.05,0.015,0.95,0.22);
+   TDiamond *diamond = new TDiamond(0.05,0.015,0.95,0.21);
    diamond->SetFillColor(50);
    diamond->SetTextAlign(22);
    diamond->SetTextColor(5);

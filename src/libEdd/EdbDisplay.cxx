@@ -1,4 +1,5 @@
-//-- Author of drawing part : Igor Kreslo     27.11.2003
+//-- Author of initial drawing part : Igor Kreslo     27.11.2003
+//-- Author                         : Yury Petukhov   25.03.2005
 //   Based on AliDisplay class (AliRoot framework - ALICE CERN)
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
@@ -75,7 +76,7 @@ void EdbTrackG::InspectTrack()
 const char *EdbTrackG::GetTitle() const
 {
     static char title[80];
-    sprintf(title, "Track ID %d, Nsegments %d, Prob %f", eTr->ID(), eTr->N(), eTr->Prob());
+    sprintf(title, "Track ID %d, Nseg %d, Prob %.4f, P %.3f", eTr->ID(), eTr->N(), eTr->Prob(), eTr->P());
     return title;
 }
 
@@ -90,7 +91,22 @@ const char *EdbTrackG::GetName() const
 char *EdbTrackG::GetObjectInfo(int px, int py) const
 {
     static char coordinates[80];
-    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eTr->X(), eTr->Y(), eTr->Z());
+    float tx = 0., ty = 0., z = 0.;
+    int zpos = 1;
+    if (GetMarkerColor() == kRed) zpos = 0;
+    if( zpos == 0 )
+      {
+             tx = (eTr->TrackZmax())->TX();
+             ty = (eTr->TrackZmax())->TY();
+             z  = (eTr->TrackZmax())->Z();
+      }
+    else
+      {
+             tx = (eTr->TrackZmin())->TX();
+             ty = (eTr->TrackZmin())->TY();
+             z  = (eTr->TrackZmin())->Z();
+      }
+    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f", eTr->X(), eTr->Y(), z, tx, ty);
     return coordinates;
 }
 
@@ -110,7 +126,7 @@ void EdbSegG::InspectSegment()
 const char *EdbSegG::GetTitle() const
 {
     static char title[80];
-    sprintf(title, "Segment ID %d, PID %d", eSeg->ID(), eSeg->PID());
+    sprintf(title, "Segment ID %d, PID %d, Track %d", eSeg->ID(), eSeg->PID(), eSeg->Track());
     return title;
 }
 
@@ -125,7 +141,7 @@ const char *EdbSegG::GetName() const
 char *EdbSegG::GetObjectInfo(int px, int py) const
 {
     static char coordinates[80];
-    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eSeg->X(), eSeg->Y(), eSeg->Z());
+    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f", eSeg->X(), eSeg->Y(), eSeg->Z(), eSeg->TX(), eSeg->TY());
     return coordinates;
 }
 
@@ -133,6 +149,8 @@ char *EdbSegG::GetObjectInfo(int px, int py) const
 void EdbDisplay::Set0()
 {
   eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+  if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n");}
+  if (eVerRec->IsA() != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n");}
   eArrSegP = 0;
   eArrTr   = 0;
   eArrV    = 0;
@@ -147,6 +165,9 @@ void EdbDisplay::Set0()
   eWorking = 0;
   ePrevious= 0;
   eSegment = 0;
+  eTrack   = 0;
+  eTrack1   = 0;
+  eTrack2   = 0;
   eSegPM = 0;
   eWait_Answer = false;
   eIndVert = -1;
@@ -154,6 +175,10 @@ void EdbDisplay::Set0()
   eRadMax = 1000.;
   eDpat = 2;
   eImpMax = 10000.;
+  eP = 0.;
+  eM = 0.;
+  eTImpMax = 10000.;
+  eTProbMin = 0.0;
   fNumericEntries[0] = 0;
   fNumericEntries[1] = 0;
   fNumericEntries[2] = 0;
@@ -682,20 +707,34 @@ EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
   Width_t lwf = int(seg->W()/10.);
   if (lwf > 3) lwf = 2;
   line->SetLineWidth(lwf*fLineWidth);
+  if (seg->Track() <= -2) line->SetLineWidth(3*lwf*fLineWidth);
   line->SetSeg(seg);
   return line;
 }
 
 //_____________________________________________________________________________
-void EdbSegG::AddAsTrack()
+void EdbSegG::AddAsTrackToVertex()
 {
   char text[512];
   EdbVTA *vta = 0;
+//  if (eD) if (!(eD->eVerRec)) eD->eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
   if (eSeg && eD)
   {
     if (eD->eWait_Answer) return;
-    if (!(eD->eVertex)) return;
-    if (eSeg->Track() >= 0) return;
+    if (!(eD->eVertex))
+    {
+    
+	    printf("No working vertex selected!\n");
+	    fflush(stdout);
+	    return;
+    }
+    if (eSeg->Track() >= 0)
+    {
+    
+	    printf("Segment already belong to a track!\n");
+	    fflush(stdout);
+	    return;
+    }
     EdbVertex *ePreviousSaved = eD->ePrevious;
     if (eD->eWorking == 0)
     {
@@ -791,13 +830,23 @@ void EdbSegG::AddAsTrack()
 	    return;
 	}
     }
-    EdbTrackP *Tr = new EdbTrackP((EdbSegP *)eSeg, (float)0.139);
-    Tr->SetP(0.1);
+    float mass = 0.139; //pion
+    float momentum = 0.1; // 100 MeV
+    if (eD->eP > 0.) momentum = eD->eP;
+    if (eD->eM > 0.) mass = eD->eM;
+    EdbTrackP *Tr = new EdbTrackP((EdbSegP *)eSeg, mass);
+    Tr->SetP(momentum);
     Tr->FitTrackKFS();
+    float ImpMaxSave = (eD->eVerRec)->eImpMax;
+    (eD->eVerRec)->eImpMax = eD->eTImpMax;
+    float ProbMinSave = (eD->eVerRec)->eProbMin;
+    (eD->eVerRec)->eProbMin = eD->eTProbMin;
+//    printf(" seg id %d x %f y %f z %f\n", eSeg->ID(), eSeg->X(), eSeg->Y(), eSeg->Z());
     if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), Tr, 1)))
     {
 	if ( Tr->Z() >= (eD->eWorking)->VZ() ) vta->SetZpos(1);
 	else vta->SetZpos(0);
+//	printf(" tr  id %d x %f y %f z %f\n", Tr->ID(), Tr->X(), Tr->Y(), Tr->Z());
 	Tr->AddVTA(vta);
 	(eD->eArrTr)->Add(Tr);
 	EdbVertex *eW = eD->eWorking;
@@ -838,10 +887,13 @@ void EdbSegG::AddAsTrack()
 	eD->Draw();
 	if (ePreviousSaved) delete ePreviousSaved;
 	ePreviousSaved = 0;
+	(eD->eVerRec)->eImpMax = ImpMaxSave;
+	(eD->eVerRec)->eProbMin = ProbMinSave;
     }
     else
     {
-	printf("Track not added! May be Prob < ProbMin.\n");
+	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	fflush(stdout);
 	delete Tr;
 	delete eD->eWorking;
 	if (eD->ePrevious)
@@ -855,11 +907,236 @@ void EdbSegG::AddAsTrack()
 	    eD->eWorking = 0;
 	    (eD->eVertex)->ResetTracks();
 	}
+	(eD->eVerRec)->eImpMax = ImpMaxSave;
+	(eD->eVerRec)->eProbMin = ProbMinSave;
 	return;
     }
   }
 }
+//_____________________________________________________________________________
+void EdbSegG::AddToNewTrack()
+{
+  if (eSeg && eD)
+  {
+	if (eSeg->Track() >= 0)
+	{
+	    printf("This segment alredy belong to a track!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (eD->eTrack)
+	{
+	    if ((eD->eTrack)->NF())
+	    {
+		delete eD->eTrack;
+		eD->eTrack = 0;
+	    }
+	}
+	if (!eD->eTrack) eD->eTrack = new EdbTrackP();
+	(eD->eTrack)->AddSegment((EdbSegP *)eSeg);
+  }
+}
+//_____________________________________________________________________________
+void EdbSegG::AddToNewTrackAndFit()
+{
+  if (eSeg && eD)
+  {
+	if (eSeg->Track() >= 0)
+	{
+	    printf("This segment already belong to a track!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (!eD->eTrack) eD->eTrack = new EdbTrackP();
+	eD->eTrack->AddSegment((EdbSegP *)eSeg);
+	float mass = 0.139; //pion
+	float momentum = 1.; // 1000 MeV
+	if (eD->eP > 0.) momentum = eD->eP;
+	if (eD->eM > 0.) mass = eD->eM;
+	eD->eTrack->SetM(mass);
+	eD->eTrack->SetP(momentum);
+	float X0 = 0.;
+	if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+	eD->eTrack->FitTrackKFS(true, X0, 0);
+	if (!eD->eArrTr) eD->eArrTr = new TObjArray();
+	(eD->eArrTr)->Add(eD->eTrack);
+	if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack);
+	eD->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbSegG::RemoveFromTrack()
+{
+  if (eSeg && eD)
+  {
+	int ind = 0;
+	if ((ind = eSeg->Track()) < 0)
+	{
+	    printf("This segment not included in a track!\n");
+	    fflush(stdout);
+	    return;
+	}
+	TObjArray *etr = 0;
+	if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
+	if (!etr)
+	{
+	    printf("No information about tracks array!\n");
+	    fflush(stdout);
+	    return;
+	}
+	int trind = etr->GetEntries();
+	if (ind >= trind)
+	{
+	    printf("Wrong track index in segment!\n");
+	    fflush(stdout);
+	    return;
+	}
+	EdbTrackP *tr = (EdbTrackP *)(etr->At(ind));
+	if (!tr)
+	{
+	    printf("Wrong track address in array!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (tr->N() < 2)
+	{
+	    printf("Only one segment in track - delete track insted!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (tr->VTAS() || tr->VTAE())
+	{
+	    printf("Track belong to a vertex - impossible operate with it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	tr->RemoveSegment((EdbSegP *)eSeg);
+	float X0 = 0.;
+	if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+	tr->FitTrackKFS(true, X0, 0);
+	if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+	if(!((eD->eArrSegP)->FindObject(eSeg))) (eD->eArrSegP)->Add((EdbSegP *)eSeg);
+	if (eD->eArrTrSave)
+	{
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+	    if(!((eD->eArrSegPSave)->FindObject(eSeg))) eD->eArrSegPSave->Add((EdbSegP *)eSeg);
+	}
+	eD->Draw();
+  }
+}
 
+//_____________________________________________________________________________
+void EdbSegG::SplitTrack()
+{
+  if (eSeg && eD)
+  {
+	int ind = 0;
+	if ((ind = eSeg->Track()) < 0)
+	{
+	    printf("This segment not included in a track!\n");
+	    fflush(stdout);
+	    return;
+	}
+	TObjArray *etr = 0;
+	if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
+	if (!etr)
+	{
+	    printf("No information about tracks array!\n");
+	    fflush(stdout);
+	    return;
+	}
+	int trind = etr->GetEntries();
+	if (ind >= trind)
+	{
+	    printf("Wrong track index in segment!\n");
+	    fflush(stdout);
+	    return;
+	}
+	EdbTrackP *tr = (EdbTrackP *)(etr->At(ind));
+	if (!tr)
+	{
+	    printf("Wrong track address in array!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (tr->N() < 2)
+	{
+	    printf("Only one segment in track - delete track insted!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (tr->VTAS() || tr->VTAE())
+	{
+	    printf("Track belong to a vertex - impossible operate with it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (eD->eTrack1)
+	{
+	    printf("Intermediate track already exist - fix it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (eD->eTrack2)
+	{
+	    printf("Intermediate track already exist - fix it!\n");
+	    fflush(stdout);
+	    return;
+	}
+ 	EdbSegP *seg = 0;
+	eD->eTrack1 = new EdbTrackP();
+	eD->eTrack2 = new EdbTrackP();
+    	for(int is=0; is<tr->N(); is++) {
+	    seg = tr->GetSegment(is);
+	    if (seg->Z() <= eSeg->Z()) (eD->eTrack1)->AddSegment((EdbSegP *)seg);
+	    else                       (eD->eTrack2)->AddSegment((EdbSegP *)seg);
+	}
+	tr->SetFlag(-10);
+	tr->SetSegmentsTrack(-2-(tr->ID()+1));
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(tr))
+	{
+	    eD->eArrTr->Remove(tr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+    	    for(int is=0; is<tr->N(); is++) {
+		seg = tr->GetSegment(is);
+		if(eD->eArrSegP) if(!((eD->eArrSegP)->FindObject(seg))) eD->eArrSegP->Add(seg);
+	    }
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(tr))
+	{
+	    eD->eArrTrSave->Remove(tr);
+	    eD->eArrTrSave->Compress();
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+    	    for(int is=0; is<tr->N(); is++) {
+		seg = tr->GetSegment(is);
+		if(eD->eArrSegPSave) if(!((eD->eArrSegPSave)->FindObject(seg))) eD->eArrSegPSave->Add(seg);
+	    }
+	}
+	eD->Draw();
+	float mass = tr->M();
+	float momentum = tr->P();
+	if (eD->eP > 0.) momentum = eD->eP;
+	if (eD->eM > 0.) mass = eD->eM;
+
+	eD->eTrack1->SetM(mass);
+	eD->eTrack1->SetP(momentum);
+	float X0 = 0.;
+	if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+	eD->eTrack1->FitTrackKFS(true, X0, 0);
+	if (!eD->eArrTr) eD->eArrTr = new TObjArray();
+	(eD->eArrTr)->Add(eD->eTrack1);
+	if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack1);
+
+	eD->eTrack2->SetM(mass);
+	eD->eTrack2->SetP(momentum);
+	eD->eTrack2->FitTrackKFS(true, X0, 0);
+	(eD->eArrTr)->Add(eD->eTrack2);
+	if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack2);
+
+	eD->Draw();
+  }
+}
 //_____________________________________________________________________________
 void EdbSegG::SetAsWorking()
 {
@@ -927,7 +1204,13 @@ void EdbSegG::SetAsWorking()
 //_____________________________________________________________________________
 void EdbSegG::InfoSegVert()
 {
-  if (!(eD->eVertex)) return;
+  if (!(eD->eVertex))
+  {
+    
+	    printf("No working vertex selected!\n");
+	    fflush(stdout);
+	    return;
+  }
   int zpos = 1;
   EdbVertex *v = eD->eVertex;
   if (eD->eWorking) v = eD->eWorking;
@@ -1011,12 +1294,18 @@ void EdbSegG::InfoSegVert()
   float dz   = v->VZ() - s->Z();
   float dist = TMath::Sqrt(dx*dx + dy*dy + dz*dz);
 
-  EdbTrackP *tr = new EdbTrackP((EdbSegP *)eSeg, (float)0.139);
-  tr->SetP(0.1);
+  float mass = 0.139; //pion
+  float momentum = 0.1; // 100 MeV
+  if (eD->eP > 0.) momentum = eD->eP;
+  if (eD->eM > 0.) mass = eD->eM;
+  EdbTrackP *tr = new EdbTrackP((EdbSegP *)eSeg, mass);
+  tr->SetP(momentum);
   tr->FitTrackKFS();
 
-  float chi2 = v->Chi2Track(tr, zpos);
-  float impa = v->DistTrack(tr, zpos);
+  float X0 = 0.;
+  if (eD->eVerRec) if ((eD->eVerRec)->ePVR)  X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+  float chi2 = v->Chi2Track(tr, zpos, X0);
+  float impa = v->DistTrack(tr, zpos, X0);
   delete tr;
   sprintf(line, "  Segment - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
   t = (eD->fVTXTRKInfo)->AddText(line);
@@ -1036,6 +1325,132 @@ void EdbSegG::InfoSegVert()
   (eD->fCanvasTRK)->Update();
 }
 
+//_____________________________________________________________________________
+void EdbSegG::InfoSegSeg()
+{
+  if (!(eD->eSegment))
+  {
+    
+	    printf("No working segment selected!\n");
+	    fflush(stdout);
+	    return;
+  }
+  EdbSegP *s = eD->eSegment;
+  char CanvasTRKName[140];
+  strcpy(CanvasTRKName, "SEG-");
+  strcat(CanvasTRKName, (eD->fCanvas)->GetName());
+  if ((eD->fCanvasTRK = (TCanvas *)(gROOT->GetListOfCanvases()->FindObject(CanvasTRKName))))
+  {
+    (eD->fCanvasTRK)->SetTitle("Segment - Segment relation parameters");
+    (eD->fCanvasTRK)->Clear();
+    (eD->fCanvasTRK)->Modified();
+    (eD->fCanvasTRK)->Update();
+  }
+  else
+  {
+    int xpos = (eD->fCanvas)->GetWindowTopX()+(eD->fCanvas)->GetWw();
+    int ypos = (eD->fCanvas)->GetWindowTopY();
+    eD->fCanvasTRK = new TCanvas(CanvasTRKName, "Segment - Segment relation parameters",
+			     -xpos, ypos, 640, 330);
+    (eD->fCanvasTRK)->ToggleEventStatus();
+  }
+  if (eD->fVTXTRKInfo)
+  {
+    (eD->fVTXTRKInfo)->Clear();
+  }
+  else
+  {
+    eD->fVTXTRKInfo = new TPaveText(0.05, 0.05, 0.95, 0.95);
+    (eD->fVTXTRKInfo)->ResetBit(kCanDelete);
+  }
+  char line[128];
+  TText *t = 0;
+
+  strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"            %-4d        %-8.1f   %-8.1f   %-8.1f   %-7.4f    %-7.4f",
+		      s->ID(), s->X(), s->Y(), s->Z(),
+		      s->TX(), s->TY());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(4);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  sprintf(line,"            %-4d        %-8.1f   %-8.1f   %-8.1f   %-7.4f    %-7.4f",
+		      eSeg->ID(), eSeg->X(), eSeg->Y(), eSeg->Z(),
+		      eSeg->TX(), eSeg->TY());
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+
+//  t = (eD->fVTXTRKInfo)->AddText("");
+//  t->SetTextColor(1);
+//  t->SetTextSize(0.03);
+//  t->SetTextAlign(12);
+//  t->SetTextFont(102);
+
+  float dx   = eSeg->X() - s->X();
+  float dy   = eSeg->Y() - s->Y();
+  float dz   = eSeg->Z() - s->Z();
+  float dist = TMath::Sqrt(dx*dx + dy*dy + dz*dz);
+
+  float mass = 0.139; //pion
+  float momentum = .1; // 100 MeV
+  if (eD->eP > 0.) momentum = eD->eP;
+  if (eD->eM > 0.) mass = eD->eM;
+  EdbTrackP *tr1 = new EdbTrackP((EdbSegP *)s, mass);
+  tr1->SetP(momentum);
+  tr1->FitTrackKFS();
+  EdbTrackP *tr2 = new EdbTrackP((EdbSegP *)eSeg, mass);
+  tr2->SetP(momentum);
+  tr2->FitTrackKFS();
+  EdbSegP *seg1 = (EdbSegP *)(tr1->TrackZmax());
+  seg1->SetP(momentum);
+  EdbSegP *seg2 = (EdbSegP *)(tr2->TrackZmax());
+  seg2->SetP(momentum);
+  float chi2 = (eD->eVerRec)->TdistanceChi2(*seg1, *seg2, mass);
+  float impa = (eD->eVerRec)->Tdistance(*s, *eSeg);
+  delete tr1;
+  delete tr2;
+  sprintf(line, "  Segment - Segment  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
+  t = (eD->fVTXTRKInfo)->AddText(line);
+  t->SetTextColor(2);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  t = (eD->fVTXTRKInfo)->AddText("");
+  t->SetTextColor(1);
+  t->SetTextSize(0.03);
+  t->SetTextAlign(12);
+  t->SetTextFont(102);
+
+  (eD->fVTXTRKInfo)->Draw();
+  (eD->fCanvasTRK)->Modified();
+  (eD->fCanvasTRK)->Update();
+}
 //_____________________________________________________________________________
 void EdbVertexG::SetAsWorking()
 {
@@ -1109,13 +1524,603 @@ void EdbVertexG::SetAsWorking()
 }
 
 //_____________________________________________________________________________
-void EdbTrackG::RemoveTrack()
+void EdbVertexG::DeleteVertex()
+{
+  EdbDisplay *eDs = 0;
+  EdbVertex  *eVs = 0;
+  eDs = eD;
+  eVs = eV;
+  if (eDs && eVs)
+  {
+    if (eDs->eWait_Answer) return;
+    if (eDs->eWorking == eVs)
+    {
+	eDs->DialogModifiedVTX();
+	return;
+    }
+    if (eDs->eVertex == eVs)
+    {
+    	eDs->CancelModifiedVTX();
+    }
+    if (eDs->eArrV) 
+    {
+	eDs->eArrV->Remove((TObject *)eVs);
+	eDs->eArrV->Compress();
+	eDs->Draw();
+    }
+    else
+    {
+	if ((eDs->eArrV)->FindObject(eVs))
+	{
+	    eDs->eArrV->Remove(eVs);
+	    eDs->eArrV->Compress();
+	    eDs->eVertex = 0;
+	    eDs->Draw();
+	}
+    }
+    delete eVs;
+    eDs->Draw();
+  }
+}
+
+//_____________________________________________________________________________
+void EdbVertexG::RemoveKink()
+{
+  EdbDisplay *eDs = 0;
+  EdbVertex  *eVs = 0;
+  eDs = eD;
+  eVs = eV;
+  if (eDs && eVs)
+  {
+    if (eDs->eWait_Answer) return;
+    if (eVs->N() != 2)
+    {
+	printf("Wrong vertex type - not a kink-like!\n");
+	fflush(stdout);
+	return;
+    }
+    EdbTrackP *etr = 0;
+    for (int it=0; it<eVs->N(); it++)
+    {
+	etr = eVs->GetTrack(it);
+	if (etr->VTAS() && etr->VTAE())
+	{
+	    printf("Vertex track belong to another vertex too - impossible delete it!\n");
+	    fflush(stdout);
+	    return;
+	}
+    }
+    if (eDs->eWorking == eVs)
+    {
+	eDs->DialogModifiedVTX();
+	return;
+    }
+    if (eDs->eVertex == eVs)
+    {
+    	eDs->CancelModifiedVTX();
+    }
+    if (eDs->eArrV) 
+    {
+	eDs->eArrV->Remove((TObject *)eVs);
+	eDs->eArrV->Compress();
+	eDs->Draw();
+    }
+    else
+    {
+	if ((eDs->eArrV)->FindObject(eVs))
+	{
+	    eDs->eArrV->Remove(eVs);
+	    eDs->eArrV->Compress();
+	    eDs->eVertex = 0;
+	    eDs->Draw();
+	}
+    }
+    EdbSegP *seg = 0;
+    if (!eD->eTrack) eD->eTrack = new EdbTrackP();
+    for (int it=0; it<eVs->N(); it++)
+    {
+	etr = eVs->GetTrack(it);
+    	for(int is=0; is<etr->N(); is++) {
+	    seg = etr->GetSegment(is);
+	    (eD->eTrack)->AddSegment((EdbSegP *)seg);
+	}
+	etr->SetFlag(-10);
+	etr->SetSegmentsTrack(-2-(etr->ID()+1));
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(etr))
+	{
+	    eD->eArrTr->Remove(etr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+    	    for(int is=0; is<etr->N(); is++) {
+		seg = etr->GetSegment(is);
+		if(eD->eArrSegP) if(!((eD->eArrSegP)->FindObject(seg))) eD->eArrSegP->Add(seg);
+	    }
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(etr))
+	{
+	    eD->eArrTrSave->Remove(etr);
+	    eD->eArrTrSave->Compress();
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+    	    for(int is=0; is<etr->N(); is++) {
+		seg = etr->GetSegment(is);
+		if(eD->eArrSegPSave) if(!((eD->eArrSegPSave)->FindObject(seg))) eD->eArrSegPSave->Add(seg);
+	    }
+	}
+    }
+    if(eD->eArrTr) eD->eArrTr->Compress();
+    if(eD->eArrTrSave) eD->eArrTrSave->Compress();
+    eVs->SetFlag(-10);
+    eDs->Draw();
+    float mass = etr->M();
+    float momentum = etr->P();
+    if (eD->eP > 0.) momentum = eD->eP;
+    if (eD->eM > 0.) mass = eD->eM;
+    (eD->eTrack)->SetM(mass);
+    (eD->eTrack)->SetP(momentum);
+    float X0 = 0.;
+    if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+    (eD->eTrack)->FitTrackKFS(true, X0, 0);
+    if (!eD->eArrTr) eD->eArrTr = new TObjArray();
+    (eD->eArrTr)->Add(eD->eTrack);
+    if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack);
+    eD->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::UndoNewTrack()
+{
+    if (eD->eTrack && eD->eTrack == eTr)
+    {
+	TObjArray *etr = 0;
+	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
+
+    	for(int is=0; is<eD->eTrack->N(); is++) {
+	    EdbSegP *seg = eD->eTrack->GetSegment(is);
+	    if (seg->Track() == -2) seg->SetTrack(-1);
+	    else if (seg->Track() < -2)
+	    {
+		int ind = -(seg->Track()+2) - 1;
+		if (!etr)
+		{
+		    printf("No information about tracks array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		int trind = etr->GetEntries();
+		if (ind >= trind)
+		{
+		    printf("Wrong track index in segment!\n");
+		    fflush(stdout);
+		    return;
+		}
+		EdbTrackP *tr = (EdbTrackP *)(etr->At(ind));
+		if (!tr)
+		{
+		    printf("Wrong track address in array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		tr->SetFlag(0);
+		tr->SetSegmentsTrack();
+		if(eD->eArrTr) if(!((eD->eArrTr)->FindObject(tr)))
+		{
+		    eD->eArrTr->Add(tr);
+		}
+		if(eD->eArrTrSave) if(!((eD->eArrTrSave)->FindObject(tr)))
+		{
+		    eD->eArrTrSave->Add(tr);
+		}
+	    }
+	}
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eTr))
+	{
+	    eD->eArrTr->Remove(eTr);
+	    eD->eArrTr->Compress();
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eTr))
+	{
+	    eD->eArrTrSave->Remove(eTr);
+	    eD->eArrTr->Compress();
+	}
+	eD->Draw();
+	delete eD->eTrack;
+	eD->eTrack = 0;
+    }
+    else
+    {
+	printf("No intermediate track or this one fixed already!\n");
+	fflush(stdout);
+	return;
+    }
+}
+//_____________________________________________________________________________
+void EdbTrackG::UndoSplit()
+{
+    if (eD->eTrack1 && eD->eTrack2 && ((eD->eTrack1 == eTr) || (eD->eTrack2 == eTr)))
+    {
+	TObjArray *etr = 0;
+	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
+
+    	for(int is=0; is<eD->eTrack1->N(); is++) {
+	    EdbSegP *seg = eD->eTrack1->GetSegment(is);
+	    if (seg->Track() == -2) seg->SetTrack(-1);
+	    else if (seg->Track() < -2)
+	    {
+		int ind = -(seg->Track()+2) - 1;
+		if (!etr)
+		{
+		    printf("No information about tracks array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		int trind = etr->GetEntries();
+		if (ind >= trind)
+		{
+		    printf("Wrong track index in segment!\n");
+		    fflush(stdout);
+		    return;
+		}
+		EdbTrackP *tr = (EdbTrackP *)(etr->At(ind));
+		if (!tr)
+		{
+		    printf("Wrong track address in array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		tr->SetFlag(0);
+		tr->SetSegmentsTrack();
+		if(eD->eArrTr) if(!((eD->eArrTr)->FindObject(tr)))
+		{
+		    eD->eArrTr->Add(tr);
+		}
+		if(eD->eArrTrSave) if(!((eD->eArrTrSave)->FindObject(tr)))
+		{
+		    eD->eArrTrSave->Add(tr);
+		}
+	    }
+	}
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eD->eTrack1))
+	{
+	    eD->eArrTr->Remove(eD->eTrack1);
+	    eD->eArrTr->Compress();
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eD->eTrack1))
+	{
+	    eD->eArrTrSave->Remove(eD->eTrack1);
+	    eD->eArrTr->Compress();
+	}
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eD->eTrack2))
+	{
+	    eD->eArrTr->Remove(eD->eTrack2);
+	    eD->eArrTr->Compress();
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eD->eTrack2))
+	{
+	    eD->eArrTrSave->Remove(eD->eTrack2);
+	    eD->eArrTr->Compress();
+	}
+	eD->Draw();
+	delete eD->eTrack1;
+	eD->eTrack1 = 0;
+	delete eD->eTrack2;
+	eD->eTrack2 = 0;
+    }
+    else
+    {
+	printf("No parts of splitted track or these ones fixed already!\n");
+	fflush(stdout);
+	return;
+    }
+}
+//_____________________________________________________________________________
+void EdbTrackG::FixNewTrack()
+{
+  if (eTr && eD)
+  {
+	if (eD->eTrack)
+	{
+		if (eTr == eD->eTrack)
+		{
+		    TObjArray *etr = 0;
+		    if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
+		    int trind = 0;
+		    if (etr) trind = etr->GetEntries();
+		    (eD->eTrack)->SetID(trind);
+		    if (etr) etr->Add(eD->eTrack);
+		    (eD->eTrack)->SetSegmentsTrack();
+		    eD->eTrack = 0;
+		    eD->Draw();
+		}
+	}
+	if (eD->eTrack1)
+	{
+		if (eTr == eD->eTrack1)
+		{
+		    TObjArray *etr = 0;
+		    if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
+		    int trind = 0;
+		    if (etr) trind = etr->GetEntries();
+		    (eD->eTrack1)->SetID(trind);
+		    if (etr) etr->Add(eD->eTrack1);
+		    (eD->eTrack1)->SetSegmentsTrack();
+		    eD->eTrack1 = 0;
+		    eD->Draw();
+		}
+	}
+
+	if (eD->eTrack2)
+	{
+		if (eTr == eD->eTrack2)
+		{
+		    TObjArray *etr = 0;
+		    if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
+		    int trind = 0;
+		    if (etr) trind = etr->GetEntries();
+		    (eD->eTrack2)->SetID(trind);
+		    if (etr) etr->Add(eD->eTrack2);
+		    (eD->eTrack2)->SetSegmentsTrack();
+		    eD->eTrack2 = 0;
+		    eD->Draw();
+		}
+	}
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::UndoRemoveKink()
+{
+    if (eD && eTr)
+    {
+	if (!(eD->eTrack))
+	{
+	    printf("No joined track or this one fixed already!\n");
+	    fflush(stdout);
+	    return;
+	}
+	TObjArray *etr = 0;
+	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
+
+    	for(int is=0; is<eD->eTrack->N(); is++) {
+	    EdbSegP *seg = eD->eTrack->GetSegment(is);
+	    if (seg->Track() == -2) seg->SetTrack(-1);
+	    else if (seg->Track() < -2)
+	    {
+		int ind = -(seg->Track()+2) - 1;
+		if (!etr)
+		{
+		    printf("No information about tracks array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		int trind = etr->GetEntries();
+		if (ind >= trind)
+		{
+		    printf("Wrong track index in segment!\n");
+		    fflush(stdout);
+		    return;
+		}
+		EdbTrackP *tr = (EdbTrackP *)(etr->At(ind));
+		if (!tr)
+		{
+		    printf("Wrong track address in array!\n");
+		    fflush(stdout);
+		    return;
+		}
+		tr->SetFlag(0);
+		tr->SetSegmentsTrack();
+		if(eD->eArrTr) if(!((eD->eArrTr)->FindObject(tr)))
+		{
+		    eD->eArrTr->Add(tr);
+		}
+		if(eD->eArrTrSave) if(!((eD->eArrTrSave)->FindObject(tr)))
+		{
+		    eD->eArrTrSave->Add(tr);
+		}
+		EdbVertex *v = 0;
+		if (tr->VTAS())
+		{
+		    v = tr->VertexS();
+		    if (v) v->SetFlag(0);
+		    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+		    {
+			eD->eArrV->Add(v);
+		    }
+		    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
+		    {
+			eD->eArrVSave->Add(v);
+		    }
+		}
+		if (tr->VTAE())
+		{
+		    v = tr->VertexE();
+		    if (v) v->SetFlag(0);
+		    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+		    {
+			eD->eArrV->Add(v);
+		    }
+		    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
+		    {
+			eD->eArrVSave->Add(v);
+		    }
+		}
+	    }
+	}
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eD->eTrack))
+	{
+	    eD->eArrTr->Remove(eD->eTrack);
+	    eD->eArrTr->Compress();
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eD->eTrack))
+	{
+	    eD->eArrTrSave->Remove(eD->eTrack);
+	    eD->eArrTr->Compress();
+	}
+	eD->Draw();
+	delete eD->eTrack;
+	eD->eTrack = 0;
+    }
+    else
+    {
+	printf("No parts of splitted track or these ones fixed already!\n");
+	fflush(stdout);
+	return;
+    }
+}
+//_____________________________________________________________________________
+void EdbTrackG::DeleteTrack()
+{
+  if (eTr && eD)
+  {
+	if (eTr->VTAS() || eTr->VTAE())
+	{
+	    printf("Track belong to a vertex - impossible delete it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	eTr->SetFlag(-10);
+	eTr->SetSegmentsTrack(-1);
+	EdbSegP *seg = 0;
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eTr))
+	{
+	    eD->eArrTr->Remove(eTr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegP) if(!((eD->eArrSegP)->FindObject(seg))) eD->eArrSegP->Add(seg);
+	    }
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eTr))
+	{
+	    eD->eArrTrSave->Remove(eTr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegPSave) if(!((eD->eArrSegPSave)->FindObject(seg))) eD->eArrSegPSave->Add(seg);
+	    }
+	}
+	eD->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::AddToNewTrack()
+{
+  if (eTr && eD)
+  {
+	if (eTr->VTAS() || eTr->VTAE())
+	{
+	    printf("Track belong to a vertex - impossible destroy it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	if (eD->eTrack)
+	{
+	    if ((eD->eTrack)->NF())
+	    {
+		delete eD->eTrack;
+		eD->eTrack = 0;
+	    }
+	}
+	EdbSegP *seg = 0;
+	if (!eD->eTrack) eD->eTrack = new EdbTrackP();
+    	for(int is=0; is<eTr->N(); is++) {
+	    seg = eTr->GetSegment(is);
+	    (eD->eTrack)->AddSegment((EdbSegP *)seg);
+	}
+	eTr->SetFlag(-10);
+	eTr->SetSegmentsTrack(-2-(eTr->ID()+1));
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eTr))
+	{
+	    eD->eArrTr->Remove(eTr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegP) if(!((eD->eArrSegP)->FindObject(seg))) eD->eArrSegP->Add(seg);
+	    }
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eTr))
+	{
+	    eD->eArrTrSave->Remove(eTr);
+	    eD->eArrTrSave->Compress();
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegPSave) if(!((eD->eArrSegPSave)->FindObject(seg))) eD->eArrSegPSave->Add(seg);
+	    }
+	}
+	eD->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::AddToNewTrackAndFit()
+{
+  if (eTr && eD)
+  {
+	if (eTr->VTAS() || eTr->VTAE())
+	{
+	    printf("Track belong to a vertex - impossible destroy it!\n");
+	    fflush(stdout);
+	    return;
+	}
+	EdbSegP *seg = 0;
+	if (!eD->eTrack) eD->eTrack = new EdbTrackP();
+    	for(int is=0; is<eTr->N(); is++) {
+	    seg = eTr->GetSegment(is);
+	    (eD->eTrack)->AddSegment((EdbSegP *)seg);
+	}
+	eTr->SetFlag(-10);
+	eTr->SetSegmentsTrack(-2-(eTr->ID()+1));
+	if(eD->eArrTr) if((eD->eArrTr)->FindObject(eTr))
+	{
+	    eD->eArrTr->Remove(eTr);
+	    eD->eArrTr->Compress();
+	    if (!(eD->eArrSegP)) eD->eArrSegP = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegP) if(!((eD->eArrSegP)->FindObject(seg))) eD->eArrSegP->Add(seg);
+	    }
+	}
+	if(eD->eArrTrSave) if((eD->eArrTrSave)->FindObject(eTr))
+	{
+	    eD->eArrTrSave->Remove(eTr);
+	    eD->eArrTrSave->Compress();
+	    if (!(eD->eArrSegPSave)) eD->eArrSegPSave = new TObjArray();
+    	    for(int is=0; is<eTr->N(); is++) {
+		seg = eTr->GetSegment(is);
+		if(eD->eArrSegPSave) if(!((eD->eArrSegPSave)->FindObject(seg))) eD->eArrSegPSave->Add(seg);
+	    }
+	}
+	eD->Draw();
+	float mass = eTr->M();
+	float momentum = eTr->P();
+	if (eD->eP > 0.) momentum = eD->eP;
+	if (eD->eM > 0.) mass = eD->eM;
+	eD->eTrack->SetM(mass);
+	eD->eTrack->SetP(momentum);
+	float X0 = 0.;
+	if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+	eD->eTrack->FitTrackKFS(true, X0, 0);
+	if (!eD->eArrTr) eD->eArrTr = new TObjArray();
+	(eD->eArrTr)->Add(eD->eTrack);
+	if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack);
+	eD->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::RemoveTrackFromVertex()
 {
   char text[512];
   if (eTr && eD)
   {
     if (eD->eWait_Answer) return;
-    if (!(eD->eVertex)) return;
+    if (!(eD->eVertex))
+    {
+    
+	    printf("No working vertex selected!\n");
+	    fflush(stdout);
+	    return;
+    }
     EdbVTA *vta = 0;
     EdbVertex *ePreviousSaved = eD->ePrevious;
     int n = 0;
@@ -1123,7 +2128,13 @@ void EdbTrackG::RemoveTrack()
     if (eD->eWorking == 0)
     {
 	ntr = eD->eVertex->N();
-	if (ntr < 3) return;
+	if (ntr < 3)
+	{
+    
+	    printf("Working vertex has 2 prongs only!\n");
+	    fflush(stdout);
+	    return;
+	}
 	eD->eWorking = new EdbVertex();
 	int i = 0;
 	for(i=0; i<ntr; i++)
@@ -1143,7 +2154,13 @@ void EdbTrackG::RemoveTrack()
     else
     {
 	ntr = eD->eWorking->N();
-	if (ntr < 3) return;
+	if (ntr < 3)
+	{
+    
+	    printf("Working vertex has 2 prongs only!\n");
+	    fflush(stdout);
+	    return;
+	}
 	eD->ePrevious = eD->eWorking;
 	eD->eWorking = new EdbVertex();
 	int i = 0;
@@ -1214,15 +2231,15 @@ void EdbTrackG::RemoveTrack()
 //	    eD->eArrV->RemoveAt(eD->eIndVert);
 	    eD->eArrV->AddAt(eD->eWorking, eD->eIndVert);
 	}	
-	if ((eD->eCreatedTracks).FindObject(eTr))
-	{
-	    (eD->eCreatedTracks).Remove(eTr);
-	    if ( eD->eArrTr)
-		if ((eD->eArrTr)->FindObject(eTr)) (eD->eArrTr)->Remove(eTr);
-	    if ( eD->eArrTrSave)
-		if ((eD->eArrTrSave)->FindObject(eTr)) (eD->eArrTrSave)->Remove(eTr);
-	    delete eTr;
-	}
+//	if ((eD->eCreatedTracks).FindObject(eTr))
+//	{
+//	    (eD->eCreatedTracks).Remove(eTr);
+//	    if ( eD->eArrTr)
+//		if ((eD->eArrTr)->FindObject(eTr)) (eD->eArrTr)->Remove(eTr);
+//	    if ( eD->eArrTrSave)
+//		if ((eD->eArrTrSave)->FindObject(eTr)) (eD->eArrTrSave)->Remove(eTr);
+//	    delete eTr;
+//	}
 	eD->Draw();
 	if (ePreviousSaved) delete ePreviousSaved;
 	ePreviousSaved = 0;
@@ -1260,7 +2277,13 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
     if (eWorking == 0)
     {
 	ntr = eVertex->N();
-	if (ntr < 3) return;
+	if (ntr < 3)
+	{
+    
+	    printf("Working vertex has 2 prongs only!\n");
+	    fflush(stdout);
+	    return;
+	}
 	eWorking = new EdbVertex();
 	int i = 0;
 	etr = eVertex->GetTrack(ivt);
@@ -1281,7 +2304,13 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
     else
     {
 	ntr = eWorking->N();
-	if (ntr < 3) return;
+	if (ntr < 3)
+	{
+    
+	    printf("Working vertex has 2 prongs only!\n");
+	    fflush(stdout);
+	    return;
+	}
 	etr = eWorking->GetTrack(ivt);
 	ePrevious = eWorking;
 	eWorking = new EdbVertex();
@@ -1355,15 +2384,15 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 //	    eArrV->RemoveAt(eIndVert);
 	    eArrV->AddAt(eWorking, eIndVert);
 	}	
-	if (eCreatedTracks.FindObject(etr))
-	{
-	    eCreatedTracks.Remove(etr);
-	    if ( eArrTr)
-		if (eArrTr->FindObject(etr)) eArrTr->Remove(etr);
-	    if ( eArrTrSave)
-		if (eArrTrSave->FindObject(etr)) eArrTrSave->Remove(etr);
-	    delete etr;
-	} 
+//	if (eCreatedTracks.FindObject(etr))
+//	{
+//	    eCreatedTracks.Remove(etr);
+//	    if ( eArrTr)
+//		if (eArrTr->FindObject(etr)) eArrTr->Remove(etr);
+//	    if ( eArrTrSave)
+//		if (eArrTrSave->FindObject(etr)) eArrTrSave->Remove(etr);
+//	    delete etr;
+//	} 
 	fCanvas->cd();
 	Draw();
 	fPad->Update(); 
@@ -1390,7 +2419,7 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 }
 
 //_____________________________________________________________________________
-void EdbTrackG::AddTrack()
+void EdbTrackG::AddTrackToVertex()
 {
   char text[512];
   int zpos = 1;
@@ -1399,13 +2428,31 @@ void EdbTrackG::AddTrack()
   if (eTr && eD)
   {
     if (eD->eWait_Answer) return;
-    if (!(eD->eVertex)) return;
+    if (!(eD->eVertex))
+    {
+    
+	    printf("No working vertex selected!\n");
+	    fflush(stdout);
+	    return;
+    }
     if (GetMarkerColor() == kRed) zpos = 0;
-    if ((old = eTr->VertexS()) && (zpos == 1)) return;
+    if ((old = eTr->VertexS()) && (zpos == 1))
+    {
+    
+	    printf("Track alredy connected to a vertex by this edge!\n");
+	    fflush(stdout);
+	    return;
+    }
 //    {
 //	if (old != eD->eVertex && old != eD->ePrevious && old != eD->eWorking) return;
 //    } 
-    if ((old = eTr->VertexE()) && (zpos == 0)) return;
+    if ((old = eTr->VertexE()) && (zpos == 0))
+    {
+    
+	    printf("Track alredy connected to a vertex by this edge!\n");
+	    fflush(stdout);
+	    return;
+    }
 //    {
 //	if (old != eD->eVertex && old != eD->ePrevious && old != eD->eWorking) return;
 //    } 
@@ -1504,6 +2551,10 @@ void EdbTrackG::AddTrack()
 	    return;
 	}
     }
+    double ImpMaxSave = (eD->eVerRec)->eImpMax;
+    (eD->eVerRec)->eImpMax = eD->eTImpMax;
+    double ProbMinSave = (eD->eVerRec)->eProbMin;
+    (eD->eVerRec)->eProbMin = eD->eTProbMin;
     if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), eTr, zpos)))
     {
 	eTr->AddVTA(vta);
@@ -1544,9 +2595,13 @@ void EdbTrackG::AddTrack()
 	eD->Draw();
 	if (ePreviousSaved) delete ePreviousSaved;
 	ePreviousSaved = 0;
+	(eD->eVerRec)->eImpMax = ImpMaxSave;
+	(eD->eVerRec)->eProbMin = ProbMinSave;
     }
     else
     {
+	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	fflush(stdout);
 	delete eD->eWorking;
 	if (eD->ePrevious)
 	{
@@ -1559,6 +2614,8 @@ void EdbTrackG::AddTrack()
 	    eD->eWorking = 0;
 	    (eD->eVertex)->ResetTracks();
 	}
+	(eD->eVerRec)->eImpMax = ImpMaxSave;
+	(eD->eVerRec)->eProbMin = ProbMinSave;
 	return;
     }
   }
@@ -1567,6 +2624,12 @@ void EdbTrackG::AddTrack()
 void EdbTrackG::InfoTrackVert()
 {
   if (!(eD->eVertex)) return;
+  {
+    
+	    printf("No working vertex selected!\n");
+	    fflush(stdout);
+	    return;
+  }
   int zpos = 1;
   if (GetMarkerColor() == kRed) zpos = 0;
   EdbVertex *v = eD->eVertex;
@@ -1646,12 +2709,34 @@ void EdbTrackG::InfoTrackVert()
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
 
-  float dx   = v->VX() - tr->X();
-  float dy   = v->VY() - tr->Y();
-  float dz   = v->VZ() - tr->Z();
+  EdbSegP *seg = 0;
+  if   (zpos)
+    {
+      seg = (EdbSegP *)(tr->TrackZmin());
+    }
+  else
+    {
+      seg = (EdbSegP *)(tr->TrackZmax());
+    }
+  float dx   = v->VX() - seg->X();
+  float dy   = v->VY() - seg->Y();
+  float dz   = v->VZ() - seg->Z();
   float dist = TMath::Sqrt(dx*dx + dy*dy + dz*dz);
-  float chi2 = v->Chi2Track(tr, zpos);
-  float impa = v->DistTrack(tr, zpos);
+
+  float mass = tr->M();
+  float momentum = tr->P();
+  if (eD->eP > 0.) seg->SetP(eD->eP);
+  if (eD->eM > 0.) tr->SetM(eD->eM);
+
+  float X0 = 0.;
+  if (eD->eVerRec) if ((eD->eVerRec)->ePVR)  X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
+
+  float chi2 = v->Chi2Track(tr, zpos, X0);
+  float impa = v->DistTrack(tr, zpos, X0);
+
+  seg->SetP(momentum);
+  tr->SetM(mass);
+ 
   sprintf(line, "  Track - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
   t = (eD->fVTXTRKInfo)->AddText(line);
   t->SetTextColor(2);
@@ -1703,8 +2788,16 @@ void EdbDisplay::CancelModifiedVTX()
 	tr = (EdbTrackP *)eCreatedTracks.At(i);
 	if (tr)
 	{
-	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
-	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
+	    if (eArrTr) if (eArrTr->FindObject(tr))
+	    {
+		eArrTr->Remove(tr);
+		eArrTr->Compress();
+	    }
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr))
+	    {
+		eArrTrSave->Remove(tr);
+		eArrTrSave->Compress();
+	    }
 	    delete tr;
 	} 
     }
@@ -1752,8 +2845,16 @@ void EdbDisplay::DeleteModifiedVTX()
 	tr = (EdbTrackP *)eCreatedTracks.At(i);
 	if (tr)
 	{
-	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
-	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
+	    if (eArrTr) if (eArrTr->FindObject(tr))
+	    {
+		eArrTr->Remove(tr);
+		eArrTr->Compress();
+	    }
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr))
+	    {
+		eArrTrSave->Remove(tr);
+		eArrTrSave->Compress();
+	    }
 	    delete tr;
 	} 
     }
@@ -1783,17 +2884,41 @@ void EdbDisplay::DeleteModifiedVTX()
 void EdbDisplay::UndoModifiedVTX()
 {
     char text[512];
-    EdbTrackP *tr = eWorking->GetTrack(eWorking->N() - 1);
-    if (tr && eCreatedTracks.FindObject(tr))
-    {
-	    eCreatedTracks.Remove(tr);
-	    if (eArrTr) if (eArrTr->FindObject(tr)) eArrTr->Remove(tr);
-	    if (eArrTrSave) if (eArrTrSave->FindObject(tr)) eArrTrSave->Remove(tr);
-	    delete tr;
-    } 
+    EdbTrackP *LastCreated = 0;
+    int CreatedInd = eCreatedTracks.GetEntries();
+    if (CreatedInd > 0) LastCreated = (EdbTrackP *)eCreatedTracks.At(CreatedInd-1); 
     if (ePrevious)
     {
+	int InWork = 0;
+	if (LastCreated)
+	{
+	    for (int i=0; i<eWorking->N(); i++)
+		if (eWorking->GetTrack(i) == LastCreated)
+		    InWork = 1;
+	}
+	int InPrev = 0;
+	if (LastCreated)
+	{
+	    for (int i=0; i<ePrevious->N(); i++)
+		if (ePrevious->GetTrack(i) == LastCreated)
+		    InPrev = 1;
+	}
 	delete eWorking;
+	if (InWork && !InPrev)
+	{
+	    eCreatedTracks.Remove(LastCreated);
+	    if (eArrTr) if (eArrTr->FindObject(LastCreated))
+	    {
+		eArrTr->Remove(LastCreated);
+		eArrTr->Compress();
+	    }
+	    if (eArrTrSave) if (eArrTrSave->FindObject(LastCreated))
+	    {
+		eArrTrSave->Remove(LastCreated);
+		eArrTrSave->Compress();
+	    }
+	    delete LastCreated;
+	}
 	eWorking = ePrevious;
 	(eWorking)->ResetTracks();
 	EdbVertex *eW = eWorking;
@@ -1820,7 +2945,23 @@ void EdbDisplay::UndoModifiedVTX()
     }
     else if (eWorking)
     {
+	EdbTrackP *tr = eWorking->GetTrack(eWorking->N() - 1);
 	delete eWorking;
+	if (tr && eCreatedTracks.FindObject(tr))
+	{
+	    eCreatedTracks.Remove(tr);
+	    if (eArrTr) if (eArrTr->FindObject(tr))
+	    {
+		eArrTr->Remove(tr);
+		eArrTr->Compress();
+	    }
+	    if (eArrTrSave) if (eArrTrSave->FindObject(tr))
+	    {
+		eArrTrSave->Remove(tr);
+		eArrTrSave->Compress();
+	    }
+	    delete tr;
+	}
 	(eVertex)->ResetTracks();
 	EdbVertex *eW = eVertex;
 	eW->V()->rmsDistAngle();
@@ -1869,6 +3010,8 @@ void EdbDisplay::AcceptModifiedVTX()
     if (eWorking && eVertex)
     {
 	if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+	if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n"); return;}
+	if (eVerRec->IsA() != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n"); return;}
         EdbVertex *eW = eWorking;
 	int ind = eVertex->ID();
 	eW->SetID(ind);
@@ -1901,9 +3044,13 @@ void EdbDisplay::AcceptModifiedVTX()
 	    tr = (EdbTrackP *)(eCreatedTracks.At(i));
 	    if (tr)
 	    {
-		tr->SetID(trind++);
-		if (etr) etr->Add(tr);
-		if (eArrTr) eArrTr->Add(tr);
+		if (tr->VTAS() || tr->VTAE())
+		{
+		    tr->SetID(trind++);
+		    if (etr) etr->Add(tr);
+		    if (eArrTr) eArrTr->Add(tr);
+		}
+		else delete tr;
 	    } 
 	}
 	eCreatedTracks.Clear();
@@ -1970,7 +3117,8 @@ void EdbDisplay::DrawVertexEnvironment()
 	return;
     }
     if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
-    if (!eVerRec) return;
+    if (!eVerRec) {printf("Warning: EdbDisplay:DrawVertexEnvironment: EdbVertexRec not defined\n"); return;}
+    if ((eVerRec->IsA()) != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:DrawVertexEnvironment: EdbVertexRec not defined\n"); return;}
     if (!eVertex && !eSegment) return;
     
     fTrigPad->cd();
@@ -2092,7 +3240,7 @@ void EdbDisplay::DialogNeighborParameters()
     Double_t parinit[3] = {eRadMax, eDpat,  eImpMax};
     Double_t parmax[3] =  { 50000.,   25.,  100000.};
     Double_t parmin[3] =  {    10.,    0.,      10.};
-    if (eVerRec->ePVR) parmax[1] = (eVerRec->ePVR->Npatterns()-1);
+    if (eVerRec) if (eVerRec->ePVR) parmax[1] = ((eVerRec->ePVR)->Npatterns()-1);
     char *parlabel[3] = {"Maximal radius","+/- patterns", "Maximal impact"};
 
     TGGC myGC = *(gClient->GetResourcePool()->GetFrameGC());
@@ -2119,7 +3267,7 @@ void EdbDisplay::DialogNeighborParameters()
     TGHorizontalFrame *fFrame = new TGHorizontalFrame(fTra, 220, 30);
     char cmda[256];
     sprintf(cmda,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedParams()",fTitle);
+    "((EdbDisplay*)((gROOT->GetListOfSpecials())->FindObject(\"%s\")))->AcceptModifiedParams()",fTitle);
     TGTextButton *abut = new TGTextButton(fFrame, "&Accept", cmda);
     fFrame->AddFrame(abut,
 		     new TGLayoutHints(kLHintsCenterY | kLHintsLeft,
@@ -2127,7 +3275,7 @@ void EdbDisplay::DialogNeighborParameters()
 
     char cmdc[256];
     sprintf(cmdc,
-    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->CancelDialogModifiedParams()",fTitle);
+    "((EdbDisplay*)((gROOT->GetListOfSpecials())->FindObject(\"%s\")))->CancelDialogModifiedParams()",fTitle);
     TGTextButton *cbut = new TGTextButton(fFrame, "&Cancel", cmdc);
     fFrame->AddFrame(cbut,
 		     new TGLayoutHints(kLHintsCenterY | kLHintsRight,
@@ -2141,6 +3289,76 @@ void EdbDisplay::DialogNeighborParameters()
     fTra->MapSubwindows();
     fTra->Resize(260, fTra->GetDefaultHeight());
     fTra->SetWindowName("Neighborhood Parameters");
+    fTra->MapWindow();
+    gClient->WaitFor(fTra);
+}
+//_____________________________________________________________________________
+void EdbDisplay::DialogTrackParameters()
+{
+    eWait_Answer = true;
+
+    fMain = new TGMainFrame(gClient->GetRoot(), 280, 360);
+    TGMainFrame *fTra = fMain;
+
+//    fTra->Connect("CloseWindow()", "EdbDisplay", this, "CloseDialogModifiedParams()");
+
+   // use hierarchical cleaning
+//    fTra->SetCleanup(kDeepCleanup);
+
+    TGHorizontalFrame *fF[4] = {0,0,0,0};
+    TGLabel *fLabel[4] = {0,0,0,0};
+    Double_t parinit[4] = {    eP,    eM, eTImpMax, eTProbMin};
+    Double_t parmax[4] =  { 1000.,   10., 1000000.,        1.};
+    Double_t parmin[4] =  {    0.,    0.,       0.,        0.};
+    char *parlabel[4] = {"Momentum","Mass", "MaxImpact", "MinProb"};
+
+    TGGC myGC = *(gClient->GetResourcePool()->GetFrameGC());
+    TGFont *myfont = gClient->GetFont("-adobe-helvetica-bold-r-*-*-12-*-*-*-*-*-iso8859-1");
+    if (myfont) myGC.SetFont(myfont->GetFontHandle());
+
+    TGVerticalFrame *fF1 = new TGVerticalFrame(fTra, 260, 250);
+    TGLayoutHints *fL1 = new TGLayoutHints(kLHintsTop | kLHintsLeft, 2, 2, 2, 2);
+    fTra->AddFrame(fF1, fL1);
+    TGLayoutHints *fL2 = new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2);
+    for (int i = 0; i < 4; i++) {
+      fF[i] = new TGHorizontalFrame(fF1, 240, 35);
+      fF1->AddFrame(fF[i], fL2);
+      fNumericEntries[i] = new TGNumberEntry(fF[i], parinit[i], 12, i+2000,
+                                 TGNumberFormat::kNESReal,
+				 TGNumberFormat::kNEANonNegative,
+				 TGNumberFormat::kNELLimitMinMax,
+				 parmin[i], parmax[i]);
+      fF[i]->AddFrame(fNumericEntries[i], fL2);
+      fLabel[i] = new TGLabel(fF[i], parlabel[i], myGC(), myfont->GetFontStruct());
+      fF[i]->AddFrame(fLabel[i], fL2);
+    }
+
+    TGHorizontalFrame *fFrame = new TGHorizontalFrame(fTra, 240, 30);
+    char cmda[256];
+    sprintf(cmda,
+//    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject((TObject *)0x%08x)))->AcceptModifiedTrackParams()",this);
+    "((EdbDisplay*)((gROOT->GetListOfSpecials())->FindObject(\"%s\")))->AcceptModifiedTrackParams()",fTitle);
+    TGTextButton *abut = new TGTextButton(fFrame, "&Accept", cmda);
+    fFrame->AddFrame(abut,
+		     new TGLayoutHints(kLHintsCenterY | kLHintsLeft,
+		     5,5,3,4));
+
+    char cmdc[256];
+    sprintf(cmdc,
+    "((EdbDisplay*)((gROOT->GetListOfSpecials())->FindObject(\"%s\")))->CancelDialogModifiedTrackParams()",fTitle);
+    TGTextButton *cbut = new TGTextButton(fFrame, "&Cancel", cmdc);
+    fFrame->AddFrame(cbut,
+		     new TGLayoutHints(kLHintsCenterY | kLHintsRight,
+    		     5, 5, 4, 4));
+//    fFrame->Resize(220, 30);
+
+    fTra->AddFrame(fFrame,
+		   new TGLayoutHints(kLHintsCenterY | kLHintsCenterX,
+		   5, 5, 4, 4));
+
+    fTra->MapSubwindows();
+    fTra->Resize(280, fTra->GetDefaultHeight());
+    fTra->SetWindowName("Track Parameters");
     fTra->MapWindow();
     gClient->WaitFor(fTra);
 }
@@ -2170,6 +3388,38 @@ void EdbDisplay::CancelDialogModifiedParams()
     if(fNumericEntries[0]) delete fNumericEntries[0];  
     if(fNumericEntries[1]) delete fNumericEntries[1];  
     if(fNumericEntries[2]) delete fNumericEntries[2];  
+    fMain->SendCloseMessage();
+    fMain = 0;
+}
+//_____________________________________________________________________________
+void EdbDisplay::AcceptModifiedTrackParams()
+{
+    eWait_Answer = false;
+    if(fNumericEntries[0]) eP = fNumericEntries[0]->GetNumber();
+    if(fNumericEntries[1]) eM = fNumericEntries[1]->GetNumber();
+    if(fNumericEntries[2]) eTImpMax  = fNumericEntries[2]->GetNumber();
+    if(fNumericEntries[3]) eTProbMin = fNumericEntries[3]->GetNumber();
+    if(fNumericEntries[0]) delete fNumericEntries[0];  
+    if(fNumericEntries[1]) delete fNumericEntries[1];  
+    if(fNumericEntries[2]) delete fNumericEntries[2];  
+    if(fNumericEntries[3]) delete fNumericEntries[3];  
+    fMain->SendCloseMessage();
+    fMain = 0;
+}
+//_____________________________________________________________________________
+void EdbDisplay::CloseDialogModifiedTrackParams()
+{
+    eWait_Answer = false;
+    fMain = 0;
+}
+//_____________________________________________________________________________
+void EdbDisplay::CancelDialogModifiedTrackParams()
+{
+    eWait_Answer = false;
+    if(fNumericEntries[0]) delete fNumericEntries[0];  
+    if(fNumericEntries[1]) delete fNumericEntries[1];  
+    if(fNumericEntries[2]) delete fNumericEntries[2];  
+    if(fNumericEntries[3]) delete fNumericEntries[3];  
     fMain->SendCloseMessage();
     fMain = 0;
 }
