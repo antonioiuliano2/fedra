@@ -25,7 +25,7 @@ public:
   int   GenAlfaGrains(){return 0;}   // bg from alfa-particles
   int   GenDeltaGrains(){return 0;}  // bg from delta-electrons
   int   GenGrainClusters(EdbView &v, EdbCluster &g);
-  float GrainPathMip();
+  float GrainPathMip(float lambda=2.);
 
   ClassDef(EdbViewGen,1)  // Generation of one microscope view
 };

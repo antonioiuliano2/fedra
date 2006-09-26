@@ -35,7 +35,7 @@ int EdbViewGen::GenGrains(EdbView &v)
   for(int iseg=0; iseg<nseg; iseg++) {
     s = v.GetSegment(iseg);
     ngr = GenSegGrains( *s );
-    //printf("ngr = %d\n", ngr);
+    printf("ngr = %d\n", ngr);
     for(int igr=0; igr<ngr; igr++) grains.Add(s->GetElements()->At(igr));
     ngrseg+=ngr;
   }
@@ -77,11 +77,14 @@ int EdbViewGen::GenGrains(EdbView &v)
 //____________________________________________________________________________________
 int EdbViewGen::GenGrainClusters(EdbView &v, EdbCluster &g)
 {
+  // generate clusters for the input grain g
+
   int ncl=0;
   if( g.GetArea()==0 ) return ncl;
   int nfr= v.GetNframes();
   float z;
-  float dz = 0.5*eGrainSZ*TMath::Sqrt(g.GetArea())/3;  //ToDo
+  float dz = 0.5 * gRandom->Gaus(eClaSZ,eClaSZvar);
+  //eClaSZ*TMath::Sqrt(g.GetArea())/3;  //ToDo
   float dx,dy;
   EdbCluster *c;
   for(int i=0; i<nfr; i++) {
@@ -90,13 +93,14 @@ int EdbViewGen::GenGrainClusters(EdbView &v, EdbCluster &g)
       c= new EdbCluster(g);
       gRandom->Rannor(dx,dy);
       c->SetZ(z);
-      c->SetX( g.X()+ dx*eGrainSX );           // TODO: navesti nauku
-      c->SetY( g.Y()+ dy*eGrainSY );
+      c->SetX( g.X()+ dx*eClaSX );           // TODO: navesti nauku
+      c->SetY( g.Y()+ dy*eClaSY );
       c->SetFrame(i);
       v.AddCluster(c);
       ncl++;
     }
   }
+  //printf("ncl = %d\n",ncl);
   return ncl;
 }
 
@@ -130,8 +134,11 @@ int EdbViewGen::GenSegGrains(EdbSegment &s)
   float  step;
   int    ncl=0;
   int    nmax=10000;
+
+  float lambda = dz/s.GetPuls();
+
   for(int i=0; i<nmax; i++ ) {
-    step = GrainPathMip()*cs;
+    step = GrainPathMip(lambda)*cs;
     z += step;
     //printf("Zstep: %5.3f \n",step);
     x += s.GetTx()*step;
@@ -158,7 +165,7 @@ int EdbViewGen::GenSegGrains(EdbSegment &s)
  }
 
 //____________________________________________________________________________________
-float EdbViewGen::GrainPathMip()
+float EdbViewGen::GrainPathMip(float lambda)
 {
   //=========================================
   //
@@ -179,7 +186,8 @@ float EdbViewGen::GrainPathMip()
   //
   //=========================================
   
-  double lambda=2;    // mean path length
+  // lambda    // mean path length
+
   int    nstep=100;  
   double prob0 = 1./nstep;   //prob of grain after single ionization
   float  grsiz=gRandom->Uniform(0.9,1.1);

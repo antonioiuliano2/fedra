@@ -19,10 +19,15 @@ public:
 
   Float_t    eXmin,eXmax;    // limits of the view
   Float_t    eYmin,eYmax;    // limits of the view
-  Float_t    eX0,eY0;        // center of the view
+  Float_t    eX0,eY0;        // geometrical center of the view
 
-  Float_t    eSx,eSy,eSz;    // grain size
-  Float_t    eGrainSX,eGrainSY,eGrainSZ;    // grain size
+  Float_t    eX0opt,eY0opt;  // optical center of the view (the point vhere the grains are vertical)
+  Float_t    eTXopt,eTYopt;  // koeff of the slopes: t(x) = tx*(x-X0opt), 
+                             // x1=x+t(x)*(z1-z): valid for the clusters inside the grain
+
+  Float_t    eClaSX,eClaSY,eClaSZ;          // smearing for clusters position inside grain
+  Float_t    eClaSZvar;                     // variation (sigma) of the vertical grain size
+  Float_t    eGrainSX,eGrainSY,eGrainSZ;    // smearing og CoG of the grain in z (relevant for tracking!)
 
   Float_t    eFogDens;       // per 10x10x10 microns**3
   Float_t    eFogGrainArea;  // mean area of the fog grain

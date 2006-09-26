@@ -21,44 +21,76 @@ class EdbViewCell : public TObject {
 public:
   Float_t   eXmin,eXmax;
   Float_t   eYmin,eYmax;
-  Float_t   eSx;       // bin along x
-  Float_t   eSy;       // bin along y
-  Int_t     eNfr;      // number of frames (to be setted!)
+  Float_t   eZmin,eZmax;
+  Float_t   eBinZ;        // the distance between layers: eBinZ = (eZmax-eZmin)/eNfr
+  Float_t   eBinX;        // bin along x
+  Float_t   eBinY;        // bin along y
+  Int_t     eNfr;         // number of frames (to be setted!)
 
-  Int_t     eNx;       // "raw"    - divisions along x
-  Int_t     eNy;       // "column" - divisions along y
-  Int_t     eNcellXY;  // eNx*eNy
-  Int_t     eNcell;    // eNfr*eNx*eNy
-  Int_t     eNcl;      // total number of clusters
+  Int_t     eNx;          // "raw"    - divisions along x
+  Int_t     eNy;          // "column" - divisions along y
+  Int_t     eNcellXY;     // eNx*eNy
+  Int_t     eNcell;       // eNfr*eNx*eNy
+  Int_t     eNcl;         // total number of clusters
+
+  Int_t     eIFZ;         // cell filling flag: if IFZ=0 (default) use c->eFrame else use c->eZ
+
+
+  Int_t     *eNC;         //! [eNcell] number of clusters/cell
 
  private:
-  TObjArray **eCells;   //! array of clusters arrays
-  Int_t      eNeib[9];  // 3x3 neighborhood
+  Int_t    eNcellsLim;         // max number of cells (need for memory allocation)
+  Int_t    eCellLim;           // max number of clusters/cell
+
+  EdbCluster    **epC;        //! pointers to clusters [eNcellsLim*eCellLim]
+  EdbCluster   ***epCell;     //! pointers to cells    [eNcellsLim]
+  Int_t          *eFrame;     //! index of the first cell of the frame in epCell array
+
+  Int_t      eNeib[9];    // 3x3 neighborhood
 
  public:
   EdbViewCell();
   virtual ~EdbViewCell();
 
-  void SetLimits( float xmin, float xmax, float ymin, float ymax)
-    { eXmin=xmin; eXmax=xmax; eYmin=ymin; eYmax=ymax; }
-  void SetS( float sx, float sy)
-    {eSx=sx; eSy=sy;}
+  void SetLimits( float xmin, float xmax, float ymin, float ymax, float zmin, float zmax )
+    { eXmin=xmin; eXmax=xmax; eYmin=ymin; eYmax=ymax; eZmin=zmin; eZmax=zmax; }
+  void SetBin( float binx, float biny, float binz=-1)
+    {eBinX=binx; eBinY=biny; eBinZ=binz;}
+  void SetCellLimits(int ncell, int ncl) { eNcellsLim=ncell; eCellLim=ncl; }
+
+  void SetNfr(int nfr, float zmin, float zmax, int ifz=0);
+  void CalcN();
+  void InitMem();
   void Init();
-  void SetNfr(int nfr) {eNfr=nfr;}
-  
+
+  int  AddCluster(EdbCluster *c)
+    {
+      int j;
+      if(!eIFZ) j = Jcell(c->eX,c->eY,c->eFrame);
+      else      j = Jcell(c->eX,c->eY,c->eZ);
+      if( j<0 || j>eNcellsLim )                    return 0;
+      if( eNC[j] >= eCellLim )                     return 0;
+      epCell[j][eNC[j]] = c;
+      eNC[j]++;
+      return 1;
+    }
+
   int  FillCell( TClonesArray &v );
   void CleanCell();
+  void Delete();
 
-  int IXcell(float x) const {return (int)((x-eXmin)/eSx); }
-  int IYcell(float y) const {return (int)((y-eYmin)/eSy); }
+  void CalcStat();
+
+  int IXcell(float x) const {return (int)((x-eXmin)/eBinX); }
+  int IYcell(float y) const {return (int)((y-eYmin)/eBinY); }
   int JcellXY(float x, float y) const {return IYcell(y)*eNx+IXcell(x); }
-  int Jcell(int ifr, float x, float y) const {return ifr*eNcellXY + IYcell(y)*eNx+IXcell(x); }
+  int Jcell(float x, float y, int ifr ) const {return eFrame[ifr] + IYcell(y)*eNx+IXcell(x); }
+  int Jcell(float x, float y, float z ) const {return TMath::Nint((z-eZmin)/eBinZ)*eNcellXY + IYcell(y)*eNx+IXcell(x);}
+  int Jcell(int  ixy, int ifr)          const {return eFrame[ifr]+ixy;}
+  int Jcell(int  ix, int iy, int ifr)   const {return eFrame[ifr]+iy*eNx + ix;}
   int Jneib(int i) const {return eNeib[i];}
 
-  TObjArray *GetCell(int j) const {return eCells[j];}
-  TObjArray *GetCell(int ifr, float x, float y) const {return eCells[Jcell(ifr,x,y)];}
-  TObjArray *GetCell(int ifr, int ix, int iy) const {return eCells[ifr*eNcellXY + iy*eNx+ix];}
-  TObjArray *GetCell(int ifr, int j) const {return eCells[ifr*eNcellXY + j];}
+  EdbCluster  **GetCell(int j) const {return epCell[j];}
 
   void Print();
   ClassDef(EdbViewCell,1)  // service class for view reconstruction
@@ -72,6 +104,7 @@ public:
   bool        eDoGrainsProcessing; // if true: when reconstruct segments first find grains ->(eGCla)
   bool        eCheckSeedThres;     // if true: use adaptive seeds threshold (based on eNseedMax)
   bool        ePropagateToBase;    // if true: segments are propagated to base position
+  Float_t        eGrainNbin;       // acceptance for grain preprocessing = eGrainNbin*eGrainSX(Y)
 
 private:
   EdbView    *eView;               //! pointer to the input  view currently in processing
@@ -83,7 +116,7 @@ private:
   EdbViewCell eVCC;                //! cells with raw clusters
   EdbViewCell eVCG;                //! cells with grains
 
-  TClonesArray  *eGSeg;            //! [eNgrMax] array of grains represented as segments
+  //  TClonesArray  *eGSeg;            //! [eNgrMax] array of grains represented as segments
   TClonesArray  *eG;               //! pointer to eView->GetSegments() or to eGSeg as the output for grain search
 
   TClonesArray  *eGCla;            //! [eNgrMax] array of grains represented as clusters
@@ -118,6 +151,8 @@ private:
   TArrayI       eNseedMax;     // [enT] limit for the good seeds (segments) to be processed
   Int_t         ePulsMin;      // min threshold for the segment puls
   Int_t         ePulsMax;      // max threshold for the segment puls
+  Float_t       eSigmaMin;     // min and max values for segment acceptance
+  Float_t       eSigmaMax; 
 
   Float_t       eZcenter;      // estimated center of the emulsion layer (for segments rec)
 
@@ -155,7 +190,8 @@ public:
   void  SetPrimary();
   bool  Init();
   void  SetNclGrLim(int mincl, int maxcl) { eNclGrMin=mincl; eNclGrMax=maxcl; }
-  void  SetPulsThres(int minp, int maxp=100) { ePulsMin=minp; ePulsMax=maxp;  }
+  void  SetPulsThres(int minp, int maxp=500) { ePulsMin=minp; ePulsMax=maxp;  }
+  void  SetSigmaThres(float smin, float smax) { eSigmaMin=smin; eSigmaMax=smax;  }
   void  SetNgrMax0(Int_t ngr)             {eNgrMax=ngr;}
   void  SetAddGrainsToView(bool yesno)    {eAddGrainsToView=yesno;}
   void  InitR();

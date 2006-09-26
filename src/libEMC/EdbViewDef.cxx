@@ -9,6 +9,16 @@
 
 ClassImp(EdbViewDef)
 
+
+  //  TODO: take into account the pincushion distortion?
+  //
+  // h'- h = a*h^3 + b*h^5 + ... 
+  // Relatively, D varies as (h'-h)/h = ah2 + bh4.
+  // The coefficient a is positive for pincushion and negative for barrel distortion. 
+  // Usually the quadratic term outweighs the higher-order terms and D varies with h squared, 
+  // getting progressively worse toward the image corners. However, in certain wideangle designs 
+  // the quartic term is large enough to overcome the quadratic term
+
 //____________________________________________________________________________________
 EdbViewDef::EdbViewDef()
 {
@@ -29,6 +39,11 @@ void EdbViewDef::SetDef()
   eYmax= 200;    // limits of the view
   eX0=0;
   eY0=0;         // center of the view
+
+  eX0opt=0;
+  eY0opt=0;      // optical center of the view (the point vhere the grains are vertical)
+  eTXopt=0;      // koeff of the slopes: t(x) = tx*(x-X0opt), 
+  eTYopt=0;      // x1=x+t(x)*(z1-z): valid for the clusters inside the grain
 
   eGrainSX= 0.25;
   eGrainSY= 0.25;
