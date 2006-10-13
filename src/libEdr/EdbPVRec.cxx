@@ -15,6 +15,7 @@
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
 #include "EdbMath.h"
+#include "EdbTrackFitter.h"
 
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
@@ -270,6 +271,8 @@ int EdbPatCouple::FillCHI2P()
   float       chi2;
   int ncp = Ncouples();
 
+  eCHI2mode=3;
+  printf("eCHI2mode = %d\n",eCHI2mode);
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
 
@@ -277,6 +280,8 @@ int EdbPatCouple::FillCHI2P()
     else if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
     else if(eCHI2mode==3) chi2 = Chi2KF(scp);
     else                  chi2 = Chi2A(scp);
+
+    printf("chi2 = %f\n",chi2);
 
     scp->SetCHI2P(chi2);
   }
@@ -326,7 +331,7 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   // application: up/down linking, alignment (offset search)
   //
   // All calculation are done with full corellation matrix for both segments
-  // (dependency on the polar angle (phi))
+  // (dependency on the polar angle (phi) is taken into account)
 
   EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
   EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
@@ -1856,13 +1861,12 @@ float EdbPVRec::Chi2Fast(EdbSegP &s1, EdbSegP &s2)
 void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 {
   // measurement errors: TODO
-  // TODO: move gener logic out from EdbPVRec
+  // TODO: move gener logic out from EdbPVRec; i voobshe polnyi bardak v etoi funkzii
 
   float X0 =  GetScanCond()->RadX0();
   float pms = 0.;
   int nsegmatch = 0;
 
-  EdbTrackP *tr = 0, *trg = 0;
   int ntr = eTracks->GetEntries();
 
   if (p > 0. && mass > 0.)
@@ -1893,8 +1897,13 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 	printf("fit %d tracks with MS momentum, pre-defined mass and X0 = %f ...\n",
 	 ntr,X0);
 
-  int nseg;
-  int itrg;
+
+  EdbTrackFitter tf;
+  tf.eX0 = X0;
+  tf.eM  = mass;
+  EdbTrackP *tr = 0, *trg = 0;
+  int nseg, itrg;
+
   for(int itr=0; itr<ntr; itr++) {
     tr = (EdbTrackP*)(eTracks->At(itr));
 
@@ -1918,14 +1927,13 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
     {
 	if (tr->P() == 0.) 
 	{
-	    pms = tr->P_MS();
+	    pms = tf.P_MS(*tr);
 	    if      (pms < 0.05) pms = 0.05;
 	    else if (pms > 30.0) pms = 30.;
 	    tr->SetP(pms);
 	}
     }
     else tr->SetP(4.);
-
 
     if(mass>0) tr->SetM(mass);
     else if(mass<0 && gener)

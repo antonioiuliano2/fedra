@@ -370,8 +370,6 @@ class EdbTrackP : public EdbSegP {
   float CHI2();
   float CHI2F();
 
-  float P_MS( float X0 = 5810., float m = 0.13957, bool de_correction = false );
-
   void Clear() { if(eS) eS->Clear(); if(eSF) eSF->Clear(); }
 
   void ClearF() { if(eSF) eSF->Clear(); }

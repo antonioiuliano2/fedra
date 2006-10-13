@@ -13,6 +13,7 @@
 #pragma link C++ class EdbTrackP;
 #pragma link C++ class EdbPattern;
 #pragma link C++ class EdbPatternsVolume;
+#pragma link C++ class EdbTrackFitter;
 
 #pragma link C++ class EdbSegCouple;
 #pragma link C++ class EdbPatCouple;
