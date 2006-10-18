@@ -242,6 +242,7 @@ void EdbDisplay::Delete()
     if (eArrTrSave && eArrTr) delete eArrTr;
     eArrTr = 0;
 }
+
 //________________________________________________________________________
 void EdbDisplay::SetArrSegP(TObjArray *arr)
 {
@@ -410,6 +411,7 @@ void EdbDisplay::Refresh()
   EdbSegP *seg=0;
   if( eArrSegP ) {
     int nseg = eArrSegP->GetEntries();
+    printf("%d segments to draw...\n",nseg);
     for(int j=0;j<nseg;j++) {
       seg = (EdbSegP*)(eArrSegP->At(j));
       if (seg)
@@ -422,6 +424,7 @@ void EdbDisplay::Refresh()
   EdbTrackP *tr=0;
   if( eArrTr ) {
     int ntr = eArrTr->GetEntries();
+    printf("%d tracks to draw...\n",ntr);
     for(int j=0;j<ntr;j++) {
       tr = (EdbTrackP*)(eArrTr->At(j));
       if(tr)
@@ -434,6 +437,7 @@ void EdbDisplay::Refresh()
   EdbVertex *v=0;
   if( eArrV ) {
     int nv = eArrV->GetEntries();
+    printf("%d vertices to draw...\n",nv);
     for(int j=0;j<nv;j++) {
       v = (EdbVertex*)(eArrV->At(j));
       if (v)

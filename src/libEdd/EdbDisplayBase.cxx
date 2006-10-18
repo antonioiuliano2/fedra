@@ -41,6 +41,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 
    Set0();
    fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
+   printf("create display in limits: \nX = %f : %f   \nY = %f : %f   \nZ = %f : %f\n",x0,x1,y0,y1,z0,z1);
 
    // Set front view by default
 //   fTheta = 0;

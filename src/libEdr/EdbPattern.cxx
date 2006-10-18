@@ -339,12 +339,12 @@ void EdbSegP::MergeTo( EdbSegP &s )
 ///______________________________________________________________________________
 void EdbSegP::Print(Option_t *opt) const
 {
-  printf("EdbSegP: %d  PID = %d  Vid = %d  %d \t Aid = %d %d\n", 
-	 ID(),PID(),eVid[0],eVid[1],eAid[0],eAid[1] );
-  printf("x,y,tx,ty,w,flag = %f %f %f  %f %f  %f  %d\n", 
-	 X(),Y(),Z(),TX(),TY(),W(),Flag() );
-  printf("P= %f \t Prob = %f \t Chi2 = %f \t Track = %d \n", 
-	 P(),Prob(),Chi2(), Track() );
+  printf("EdbSegP: ID= %d  PID = %d  Vid = %d  %d \t Aid = %d %d  Flag = %d\n", 
+	 ID(),PID(),eVid[0],eVid[1],eAid[0],eAid[1], Flag() );
+  printf("x,y,z,dz,tx,ty,w,flag = %f %f %f   %f    %f %f\n", 
+	 X(),Y(),Z(),DZ(),TX(),TY() );
+  printf("W = %f    P= %f \t Prob = %f \t Chi2 = %f \t Track = %d \n", 
+	 W(),P(),Prob(),Chi2(), Track() );
 	
   if(eCOV) eCOV->Print();
 } 
