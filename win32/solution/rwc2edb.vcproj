@@ -37,16 +37,10 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\appl\rwc2edb\dataIO\dataIO.cpp">
-			</File>
-			<File
 				RelativePath="..\..\src\appl\rwc2edb\edb2rwc.cpp">
 			</File>
 			<File
 				RelativePath="..\..\src\appl\rwc2edb\getacqstatus.cpp">
-			</File>
-			<File
-				RelativePath="..\..\src\appl\rwc2edb\libDataConversion.cpp">
 			</File>
 			<File
 				RelativePath="..\..\src\appl\rwc2edb\rwc2edb.cpp">
@@ -64,12 +58,6 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath="..\..\src\appl\rwc2edb\dataIO\dataIO.h">
-			</File>
-			<File
-				RelativePath="..\..\src\appl\rwc2edb\libDataConversion.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

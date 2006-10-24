@@ -22,11 +22,11 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\libEOracle
-NMAKE "
+NMAKE /F Makefile.w32"
 				ReBuildCommandLine="cd ..\..\src\libEOracle
-NMAKE /a"
+NMAKE /F Makefile.w32 /a"
 				CleanCommandLine="cd ..\..\src\libEOracle
-NMAKE  clean"
+NMAKE  /F Makefile.w32 clean"
 				Output="..\..\lib\libEOracle.dll"/>
 		</Configuration>
 	</Configurations>
@@ -80,6 +80,9 @@ NMAKE  clean"
 		</Filter>
 		<File
 			RelativePath="..\..\src\libEOracle\Makefile">
+		</File>
+		<File
+			RelativePath="..\..\src\libeoracle\makefile.w32">
 		</File>
 	</Files>
 	<Globals>

@@ -51,6 +51,9 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\appl\bmatrix\deriv.cxx">
 			</File>
+			<File
+				RelativePath="..\..\src\appl\bmatrix\setSegment.C">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -66,6 +69,9 @@ NMAKE clean"
 			</File>
 			<File
 				RelativePath="..\..\src\appl\bmatrix\bitview.h">
+			</File>
+			<File
+				RelativePath="..\..\src\appl\bmatrix\bmatrixLinkDef.h">
 			</File>
 			<File
 				RelativePath="..\..\src\appl\bmatrix\bytematrix.h">

@@ -37,14 +37,44 @@ NMAKE clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath="..\..\src\libEMC\EdbBrick.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbBrickGen.cxx">
+			</File>
+			<File
 				RelativePath="..\..\src\libEMC\EdbPVGen.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewDef.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewGen.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewRec.cxx">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
+				RelativePath="..\..\src\libEMC\EdbBrick.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbBrickGen.h">
+			</File>
+			<File
 				RelativePath="..\..\src\libEMC\EdbPVGen.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewDef.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewGen.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEMC\EdbViewRec.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libEMC\EMCLinkDef.h">

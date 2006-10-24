@@ -37,6 +37,9 @@ NMAKE clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath="..\..\src\libEdr\EdbLayer.cxx">
+			</File>
+			<File
 				RelativePath="..\..\src\libEdr\EdbPattern.cxx">
 			</File>
 			<File
@@ -45,10 +48,16 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\libEdr\EdbVertex.cxx">
 			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbVertexSpace.cxx">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="..\..\src\libEdr\EdbLayer.h">
+			</File>
 			<File
 				RelativePath="..\..\src\libEdr\EdbPattern.h">
 			</File>
@@ -60,6 +69,9 @@ NMAKE clean"
 			</File>
 			<File
 				RelativePath="..\..\src\libEdr\EdbVertex.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdr\EdbVertexSpace.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libEdr\EdrLinkDef.h">

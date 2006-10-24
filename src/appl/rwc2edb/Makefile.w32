@@ -18,6 +18,9 @@ $(targets): $(@B).obj
 #------------------------------------------------------------------------------
 
 clean:
-    @del /q *.obj
-    @cd  "$(BIN_DIR)"
-    @del /q $(targets)
+    for %F IN (   *.obj    ) DO IF EXIST %F del /q %F
+    cd "$(BIN_DIR)"
+    for %F IN ( $(targets) ) DO IF EXIST %F del /q %F
+
+
+

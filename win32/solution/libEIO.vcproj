@@ -45,6 +45,9 @@ NMAKE  clean"
 			<File
 				RelativePath="..\..\src\libEIO\EdbRunAccess.cxx">
 			</File>
+			<File
+				RelativePath="..\..\src\libEIO\EdbTraceBack.cxx">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -57,6 +60,9 @@ NMAKE  clean"
 			</File>
 			<File
 				RelativePath="..\..\src\libEIO\EdbRunAccess.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEIO\EdbTraceBack.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libEIO\EIOLinkDef.h">

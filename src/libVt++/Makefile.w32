@@ -1,8 +1,8 @@
 all:
    cd vt++
-   nmake /F Makefile.w32
+   nmake /nologo /F Makefile.w32
 
 clean:
    cd vt++
-   nmake /F Makefile.w32 clean
+   nmake /nologo /F Makefile.w32 clean
 

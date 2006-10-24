@@ -1,5 +1,7 @@
 #------------------------------------------------------------------------------
 CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
+#CXXFLAGS    = $(CPPFLAGS) -I$(INC_DIR)
+CFLAGS       = $(CPPFLAGS) -I$(INC_DIR) /TP
 
 #OBJ       = $(NAME:.=.obj)
 
@@ -10,4 +12,4 @@ $(NAME).exe : $(NAME).obj
 
 #------------------------------------------------------------------------------
 clean:
-    @for %f in ($(NAME)) DO del /q $(NAME).obj "$(BIN_DIR)"\$(NAME).exe
+    @for %i in ($(NAME)) DO    FOR %F IN ( $(NAME).obj "$(BIN_DIR)"\$(NAME).exe ) DO IF EXIST %F del /q %F

@@ -39,12 +39,24 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\libEdd\EdbDisplay.cpp">
 			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplay.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplayBase.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\testd.C">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="..\..\src\libEdd\EdbDisplay.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplayBase.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libEdd\EddLinkDef.h">

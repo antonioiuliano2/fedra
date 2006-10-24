@@ -44,18 +44,16 @@ double FindConfig(IO_VS_Catalog* pCat, char* ConfigName, char* ConfigItem)
 	VS_Config* pConfigs =pCat->Config.pConfigs;
 
 	double dbl=0;
-	for (int j=0;j<CountOfConfigs;j++)
-	{
-		if(! strcmp(pConfigs[j].Config.Name, ConfigName) ) 
-			for(int k=0;k<pConfigs[j].Config.CountOfItems;k++) 
-			{
-				if(! strcmp(&pConfigs[j].Config.pItems[k*128],ConfigItem) )
-				{
+	for (int j=0;j<CountOfConfigs;j++) 	{
+    if(! strcmp(pConfigs[j].Config.Name, ConfigName) ) {
+			for(int k=0;k<pConfigs[j].Config.CountOfItems;k++) {
+        if(! strcmp(&pConfigs[j].Config.pItems[k*128],ConfigItem) ) {
 					char* stopchar;
 					dbl = strtod(&pConfigs[j].Config.pItems[k*128+64],&stopchar);
 					break;
 				}
 			}
+    }
 	}
 	return dbl;
 }
@@ -159,8 +157,9 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 			sprintf(temp, "%s", rwcname);
 			sprintf(temp+strlen(temp)-1, "d");
 			sprintf(rwdname, "%s.%08X", temp, f);
-			cout <<"(tot. fragm.:"<<nFragments<<")  ";
-			if (! AddRWD(run, rwdname,f,options) ) break;
+			cout <<"(tot. fragm.:"<<nFragments<<")  "; 
+			if (! AddRWD(run, rwdname, f, options) )
+        break;
 		}; //end of fragments (f)
 		cout <<endl;
 	}
@@ -169,109 +168,110 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 
 //______________________________________________________________________________
 int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
-{
+{ 
 	Bool_t addcl(true);
 	Bool_t addclframe(false);
+	Bool_t addareasum(false);
 	// OPTIONS
 	if (strstr(options,"NOCL") )    addcl=false;     // do not add clusters
 	if (strstr(options,"CLFRAME") ) addclframe=true; // fill clusters.eFrame branch
-   
+	if (strstr(options,"SUM") )     addareasum=true; // encode the sum of cluster areas in the segment puls
+                                                    // ePuls = (number of clusters) *1000 + (sum of clust areas)
 	EdbView*    edbView = run->GetView();
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
 
 	IO_VS_Fragment2* pFrag = 0;
  	if (ReadFragment((void**)&pFrag, (char*)rwdname) != 1)	return false;
 
-	int v, s, t, p;  // v=view, s=side, t=track, p=point
-	int tracks;		// number of tracks in the fragment
-	int fclusters;	// number of clusters in the fragment 
-	int vclusters;	// number of clusters in the view
-	float dz	;		// z-length of the track segment
-	int tr_clusters;		// number of cluster of the track
+	int v, s, t, p;   // v=view, s=side, t=track, p=point
+	int tracks;		   // number of tracks in the fragment
+	int fclusters;	   // number of clusters in the fragment 
+	int vclusters;	   // number of clusters in the view
+	float dz	;		   // z-length of the track segment
+	int tr_clusters;	// number of cluster of the track
+   int puls ;        // ePuls = (number of clusters ) OR (number of clusters) *1000 + (sum of clust areas)       
 
 	Track2* rwdTrack;
 	VS_View2* rwdView;
 
 	tracks = 0;
 	fclusters = 0;
-	for (s = 0; s < 2; s++)
-	{
-		for (v = 0; v < pFrag->Fragment.CountOfViews; v++)
-		{ 
-			rwdView = &(pFrag->Fragment.pViews[v]);
-   		vclusters=0;
-			tracks += rwdView->TCount[s];
+	for (s = 0; s < 2; s++) {
+		for (v = 0; v < pFrag->Fragment.CountOfViews; v++) { 
+      rwdView = &(pFrag->Fragment.pViews[v]);
+      vclusters=0;
+      tracks += rwdView->TCount[s];
 
-			edbView->Clear();
-			EdbViewHeader* edbViewHeader = edbView->GetHeader();
-			edbViewHeader->SetAffine(rwdView->ImageMat[s][0][0],
-											 rwdView->ImageMat[s][0][1],
-											 rwdView->ImageMat[s][1][0],
-											 rwdView->ImageMat[s][1][1],
-											 rwdView->MapX[s], 
-											 rwdView->MapY[s]); 
-			edbViewHeader->SetAreaID(fragID);
-			edbViewHeader->SetCoordXY(rwdView->X[s], rwdView->Y[s]); 
-			edbViewHeader->SetCoordZ(rwdView->RelevantZs.TopExt,rwdView->RelevantZs.TopInt,
-							rwdView->RelevantZs.BottomInt,rwdView->RelevantZs.BottomExt);
+      edbView->Clear();
+      EdbViewHeader* edbViewHeader = edbView->GetHeader();
+      edbViewHeader->SetAffine(rwdView->ImageMat[s][0][0],
+									      rwdView->ImageMat[s][0][1],
+									      rwdView->ImageMat[s][1][0],
+									      rwdView->ImageMat[s][1][1],
+									      rwdView->MapX[s], 
+									      rwdView->MapY[s]); 
+      edbViewHeader->SetAreaID(fragID);
+      edbViewHeader->SetCoordXY(rwdView->X[s], rwdView->Y[s]); 
+      edbViewHeader->SetCoordZ(rwdView->RelevantZs.TopExt,rwdView->RelevantZs.TopInt,
+				      rwdView->RelevantZs.BottomInt,rwdView->RelevantZs.BottomExt);
 
-			if(s)	edbViewHeader->SetNframes(0,rwdView->Layers[s].Count); // s==0 top , s==1 bottom
-			else	edbViewHeader->SetNframes(rwdView->Layers[s].Count,0);
+      if(s)	edbViewHeader->SetNframes(0,rwdView->Layers[s].Count); // s==0 top , s==1 bottom
+      else	edbViewHeader->SetNframes(rwdView->Layers[s].Count,0);
 
-			edbViewHeader->SetNsegments(rwdView->TCount[s]);
-			edbViewHeader->SetViewID(v);
-         edbViewHeader->SetColRow(rwdView->TileX  ,rwdView->TileY );
+      edbViewHeader->SetNsegments(rwdView->TCount[s]);
+      edbViewHeader->SetViewID(v);
+      edbViewHeader->SetColRow(rwdView->TileX  ,rwdView->TileY );
 
-         int nframes = rwdView->Layers[s].Count;
-			for( int nlvl=0; nlvl<nframes; nlvl++ )
-				edbView->AddFrame(nlvl,rwdView->Layers[s].pLayerInfo[nlvl].Z,
-											  rwdView->Layers[s].pLayerInfo[nlvl].Clusters);
+      int nframes = rwdView->Layers[s].Count;
+
+      for( int nlvl=0; nlvl<nframes; nlvl++ )
+	      edbView->AddFrame(nlvl,rwdView->Layers[s].pLayerInfo[nlvl].Z,
+									      rwdView->Layers[s].pLayerInfo[nlvl].Clusters);
+
+      for (t = 0; t < rwdView->TCount[s]; t++) {
+        rwdTrack = &(rwdView->pTracks[s][t]);
+        tr_clusters  = rwdTrack->Grains  ;
+        if (addareasum)   puls = rwdTrack->Grains * 1000 + rwdTrack->AreaSum ;
+        else              puls = rwdTrack->Grains ;
+        dz = rwdTrack->pGrains[0].Z - rwdTrack->pGrains[tr_clusters-1].Z;
+        edbSegment->Set(rwdTrack->Intercept.X,
+						        rwdTrack->Intercept.Y,
+						        rwdTrack->Intercept.Z,
+						        rwdTrack->Slope.X,
+						        rwdTrack->Slope.Y, 
+						        dz, s , puls, t);
+        
+        edbSegment->SetSigma(rwdTrack->Sigma,-999);
 
 
-			for (t = 0; t < rwdView->TCount[s]; t++)
-			{
-				rwdTrack = &(rwdView->pTracks[s][t]);
-				tr_clusters = rwdTrack->Grains;
-				dz = rwdTrack->pGrains[0].Z - rwdTrack->pGrains[tr_clusters-1].Z;
-				edbSegment->Set(rwdTrack->Intercept.X,
-									 rwdTrack->Intercept.Y,
-									 rwdTrack->Intercept.Z,
-									 rwdTrack->Slope.X,
-									 rwdTrack->Slope.Y, 
-									 dz, s , tr_clusters, t);
-				edbSegment->SetSigma(rwdTrack->Sigma,-999);
-				
-				// Add clusters 
-				if (addcl)
-            {
-               float volume = 0;
-               int frameId  = 0;
-	      		for ( p=0; p<tr_clusters;p++)
-					{
-                  if (addclframe)
-                  {
-	                  for(int nlvl=frameId;nlvl<nframes;nlvl++)
-                        if(rwdTrack->pGrains[p].Z == rwdView->Layers[s].pLayerInfo[nlvl].Z )
-                        {
-                           frameId=nlvl;
-                           break;
-                        }
+        // Add clusters 
+        if (addcl) {
+          float volume = 0;
+          int frameId  = 0;
+          for ( p=0; p<tr_clusters;p++)  {
+            if (addclframe) {
+              for(int nlvl=frameId;nlvl<nframes;nlvl++) {
+                  if(rwdTrack->pGrains[p].Z == rwdView->Layers[s].pLayerInfo[nlvl].Z ) {
+                      frameId=nlvl;
+                      break;
                   }
-						edbView->AddCluster(rwdTrack->pGrains[p].X,
-													rwdTrack->pGrains[p].Y,
-													rwdTrack->pGrains[p].Z,
-													rwdTrack->pGrains[p].Area,
-													volume,
-                                       frameId,
-                                       s,t);										
-					}
-            }	
-				edbViewHeader->SetNclusters(vclusters);
-				edbView->AddSegment(edbSegment) ;
-				vclusters += tr_clusters;
-			} // end of tracks (t)
-			run->AddView(edbView);
-			fclusters += vclusters;
+              }
+            }
+            edbView->AddCluster(rwdTrack->pGrains[p].X,
+							            rwdTrack->pGrains[p].Y,
+							            rwdTrack->pGrains[p].Z,
+							            rwdTrack->pGrains[p].Area,
+ 							            volume,
+                                        frameId,
+                                        s,t);										
+            }
+        }	
+        edbViewHeader->SetNclusters(vclusters);
+        edbView->AddSegment(edbSegment) ;
+        vclusters += tr_clusters;
+      } // end of tracks (t)
+      run->AddView(edbView);
+      fclusters += vclusters;
 		}; //end of views (v)
 	};//end of sides (s)
 
@@ -342,39 +342,55 @@ int AddGrainsTXT(EdbRun* run, char* txtname)
 	View->Clear();
 	float curv=0;
 	int curs=1;
-	int ngr=0;
+   int curf= -9 ;
+	int curTot=0;
+
+   int ngr=0;
+   int nfr=0;
+
 	if(fgets(instr,128,grfile)!=NULL)		//get initial side and viewID
 	{ 
 		sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
 	}
-	curs=gs;
-	curv=gv;
+	curs = gs ;
+	curv = gv ;
 	fseek(grfile,0,0);
    printf("Reading grains from %s..\n",txtname);
 	printf("Filling view %d side %d..",int(curv),curs);
+
 	while(fgets(instr,128,grfile)!=NULL)
 	{
 		sscanf(instr,"%f %d %d %f %d %d %f %f %f",&gv,&gs,&gf,&gZ,&gTot,&gn,&gX,&gY,&ga);
-		if((gv!=curv)||(gs!=curs))			//new view found
-		{
+      if ((gv!=curv)||(gs!=curs)) {		// new view found 	
+         // ADD VIEW
          View->GetHeader()->SetViewID((int) curv);
-		View->GetHeader()->SetNframes(curs,1-curs);
-		View->GetHeader()->SetNclusters(ngr);
-		View->GetHeader()->SetNsegments(-1);//grain view
+		   if(curs)  View->GetHeader()->SetNframes(nfr, 0 );     //curs==1 top  curs==0 bottom
+         else      View->GetHeader()->SetNframes(0  ,nfr);
+		   View->GetHeader()->SetNclusters(ngr);
+		   View->GetHeader()->SetNsegments(-1);//grain view
          run->AddView(View);
 
-		View->Clear();
-		curv=gv;
-		curs=gs;
-		printf("%d clusters.\nFilling view %d side %d..",ngr,int(curv),curs);
-		ngr=0;
-		}
-         View->AddCluster(gX,gY,gZ,ga,gv,gf,gs,-2);
+		   View->Clear();
+		   curv = gv ;
+		   curs = gs ;
+		   printf("%d clusters.\nFilling view %d side %d..",ngr,int(curv),curs);
+		   ngr=0;
+         nfr=0;
+		}    
+      if ( gf != curf) {  // new frame found
+	      View->AddFrame(curf, gZ, gTot);
+         curf = gf ;
+         curTot = gTot ;
+         nfr++;
+      }
+      View->AddCluster(gX,gY,gZ,ga,gv, nfr-1 ,gs,-2);
 		ngr++;
 	}
 
+   // ADD LAST VIEW
    View->GetHeader()->SetViewID((int) curv);
-	View->GetHeader()->SetNframes(curs,1-curs);
+	if(curs)  View->GetHeader()->SetNframes(nfr, 0 );     //curs==1 top  curs==0 bottom
+   else      View->GetHeader()->SetNframes(0  ,nfr);
 	View->GetHeader()->SetNclusters(ngr);
 	View->GetHeader()->SetNsegments(-1);	//grain view
    run->AddView(View);						//the last view

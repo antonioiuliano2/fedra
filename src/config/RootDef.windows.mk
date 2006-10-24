@@ -30,7 +30,8 @@ LDFLAGS       = -opt:ref  -nologo -pdb:none
 DLLFLAGS      = $(dlllflags:/PDB:NONE=) 
 ####SOFLAGS       = -shared
 
-CXXFLAGS     = $(CXXFLAGS) $(ROOTCFLAGS) -I$(INC_DIR)
+CXXFLAGS     = $(CXXFLAGS) $(ROOTCFLAGS) 
+#-I$(INC_DIR)
 LIBS         = $(ROOTLIBS)
 ####GLIBS       = $(ROOTGLIBS)
 

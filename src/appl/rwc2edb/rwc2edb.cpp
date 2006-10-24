@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
 	  else printusage=true; 
 	}
 	else if (!strcmp(argv[i], "-nocl"))    strcat(options,"NOCL") ;
+	else if (!strcmp(argv[i], "-asum"))    strcat(options,"SUM") ;
 	else if (!strcmp(argv[i], "-clframe")) strcat(options,"CLFRAME") ;
 	else  { // Process non-optional arguments here
       sprintf(rwcname,argv[i++]);
@@ -89,8 +90,10 @@ int main(int argc, char* argv[])
 		cout << "\n options: -nocl         = do not add the clusters" << endl;
 		cout <<   "          -clframe      = fill clusters.eFrame (default empty) -> +4% file size" << endl;
 		cout <<   "          -map filename = add the fiducial marks file (.map) (only mswindows)" << endl;
-		cout <<   "          -grs filename = convert both raw data (.rwd) and grains (.txt) " << endl;
+		cout <<   "          -grs filename = merge raw data (.rwd) and grains (.txt) " << endl;
       cout <<   "                          (if only grains: rwc2edb fname.txt fname.root)" << endl;
+      cout <<   "          -asum         = encode the sum of cluster areas in the segment puls" << endl;
+      cout <<   "                          (puls = (number of grains) *1000 + (sum of clust areas)" << endl;
 		return 0;
 	};
 
@@ -131,6 +134,7 @@ int main(int argc, char* argv[])
 	else 
 	{
 		// Add RWC and all RWDs
+      printf("options 1: %s\n", options);
 		AddRWC(outrun, rwcname, true,options);
 		if (addmap) AddMAP(outrun, mapname);
 	}

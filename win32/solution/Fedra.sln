@@ -1,20 +1,28 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bmatrix", "bmatrix.vcproj", "{5F30815E-D10A-4E65-B8B6-64770EB134E6}"
 	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "checkrun", "checkrun.vcproj", "{7CC97BD0-BF7C-4DAD-92FA-D96B4F847C3C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{C4BFA40A-6311-4899-B48E-F17C1769ED0A} = {C4BFA40A-6311-4899-B48E-F17C1769ED0A}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "edbtools", "edbtools.vcproj", "{EB1DF14F-08E2-49CB-9F1D-1D2F9813CD2B}"
 	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEdb", "libEdb.vcproj", "{787E0339-BD79-4C80-914C-84FBDF54D2DF}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
@@ -24,19 +32,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEdd", "libEdd.vcproj", "
 		{8A51EAF8-C292-4F49-8180-C20CA552B98D} = {8A51EAF8-C292-4F49-8180-C20CA552B98D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEdg", "libEdg.vcproj", "{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEdr", "libEdr.vcproj", "{2AFF0E65-856E-4A55-998A-A564942F6FDA}"
 	ProjectSection(ProjectDependencies) = postProject
-		{8A51EAF8-C292-4F49-8180-C20CA552B98D} = {8A51EAF8-C292-4F49-8180-C20CA552B98D}
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
 		{0527083D-B335-443C-9502-CB876BAC95A1} = {0527083D-B335-443C-9502-CB876BAC95A1}
 		{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4} = {C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}
+		{8A51EAF8-C292-4F49-8180-C20CA552B98D} = {8A51EAF8-C292-4F49-8180-C20CA552B98D}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEGA", "libEGA.vcproj", "{58C5119D-50A4-4B9B-9EAD-D16BD97B08C8}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
 		{8A51EAF8-C292-4F49-8180-C20CA552B98D} = {8A51EAF8-C292-4F49-8180-C20CA552B98D}
@@ -60,27 +66,21 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEMC", "libEMC.vcproj", "
 		{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4} = {C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEmr", "libEmr.vcproj", "{D7D6DF91-A6F4-49F6-B4A3-6E1A134516C0}"
-	ProjectSection(ProjectDependencies) = postProject
-		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
-		{2AFF0E65-856E-4A55-998A-A564942F6FDA} = {2AFF0E65-856E-4A55-998A-A564942F6FDA}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEoi", "libEoi.vcproj", "{EBEB853F-9E35-4145-9CC0-A8D7A0E48EDE}"
-	ProjectSection(ProjectDependencies) = postProject
-		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
-		{2AFF0E65-856E-4A55-998A-A564942F6FDA} = {2AFF0E65-856E-4A55-998A-A564942F6FDA}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEphys", "libEphys.vcproj", "{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libVt++", "libVt++.vcproj", "{0527083D-B335-443C-9502-CB876BAC95A1}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "recset", "recset.vcproj", "{F3C74FDC-A5BF-4F05-90D8-CB07C1182327}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{C4BFA40A-6311-4899-B48E-F17C1769ED0A} = {C4BFA40A-6311-4899-B48E-F17C1769ED0A}
 	EndProjectSection
@@ -88,9 +88,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rwc2edb", "rwc2edb.vcproj", "{5AB5F301-21B3-4774-A560-43EDCB23094D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
+		{8D7BD054-0D59-472D-9C9A-60FEA1351893} = {8D7BD054-0D59-472D-9C9A-60FEA1351893}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tracks2edb", "tracks2edb.vcproj", "{31A35B1D-E429-4344-95D1-D9764E6B8BB6}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
 		{C4BFA40A-6311-4899-B48E-F17C1769ED0A} = {C4BFA40A-6311-4899-B48E-F17C1769ED0A}
 		{787E0339-BD79-4C80-914C-84FBDF54D2DF} = {787E0339-BD79-4C80-914C-84FBDF54D2DF}
@@ -99,6 +102,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEOracle", "libEOracle.vcproj", "{1A51EAF8-C292-4F49-8180-C20CA552B98D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2AFF0E65-856E-4A55-998A-A564942F6FDA} = {2AFF0E65-856E-4A55-998A-A564942F6FDA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libDataConversion", "libdataconversion.vcproj", "{8D7BD054-0D59-472D-9C9A-60FEA1351893}"
+	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
 Global
@@ -127,10 +134,6 @@ Global
 		{E78D63BD-9E21-4AD6-915D-6BDA202F9F9E}.Debug.Build.0 = Release|Win32
 		{E78D63BD-9E21-4AD6-915D-6BDA202F9F9E}.Release.ActiveCfg = Release|Win32
 		{E78D63BD-9E21-4AD6-915D-6BDA202F9F9E}.Release.Build.0 = Release|Win32
-		{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}.Debug.ActiveCfg = Release|Win32
-		{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}.Debug.Build.0 = Release|Win32
-		{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}.Release.ActiveCfg = Release|Win32
-		{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}.Release.Build.0 = Release|Win32
 		{2AFF0E65-856E-4A55-998A-A564942F6FDA}.Debug.ActiveCfg = Release|Win32
 		{2AFF0E65-856E-4A55-998A-A564942F6FDA}.Debug.Build.0 = Release|Win32
 		{2AFF0E65-856E-4A55-998A-A564942F6FDA}.Release.ActiveCfg = Release|Win32
@@ -151,14 +154,6 @@ Global
 		{55C1B4C4-4188-4694-B441-A7BB73435897}.Debug.Build.0 = Release|Win32
 		{55C1B4C4-4188-4694-B441-A7BB73435897}.Release.ActiveCfg = Release|Win32
 		{55C1B4C4-4188-4694-B441-A7BB73435897}.Release.Build.0 = Release|Win32
-		{D7D6DF91-A6F4-49F6-B4A3-6E1A134516C0}.Debug.ActiveCfg = Release|Win32
-		{D7D6DF91-A6F4-49F6-B4A3-6E1A134516C0}.Debug.Build.0 = Release|Win32
-		{D7D6DF91-A6F4-49F6-B4A3-6E1A134516C0}.Release.ActiveCfg = Release|Win32
-		{D7D6DF91-A6F4-49F6-B4A3-6E1A134516C0}.Release.Build.0 = Release|Win32
-		{EBEB853F-9E35-4145-9CC0-A8D7A0E48EDE}.Debug.ActiveCfg = Release|Win32
-		{EBEB853F-9E35-4145-9CC0-A8D7A0E48EDE}.Debug.Build.0 = Release|Win32
-		{EBEB853F-9E35-4145-9CC0-A8D7A0E48EDE}.Release.ActiveCfg = Release|Win32
-		{EBEB853F-9E35-4145-9CC0-A8D7A0E48EDE}.Release.Build.0 = Release|Win32
 		{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}.Debug.ActiveCfg = Release|Win32
 		{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}.Debug.Build.0 = Release|Win32
 		{C73A8AA8-0AF2-4478-AA3A-84F1D2F054B4}.Release.ActiveCfg = Release|Win32
@@ -183,6 +178,10 @@ Global
 		{1A51EAF8-C292-4F49-8180-C20CA552B98D}.Debug.Build.0 = Release|Win32
 		{1A51EAF8-C292-4F49-8180-C20CA552B98D}.Release.ActiveCfg = Release|Win32
 		{1A51EAF8-C292-4F49-8180-C20CA552B98D}.Release.Build.0 = Release|Win32
+		{8D7BD054-0D59-472D-9C9A-60FEA1351893}.Debug.ActiveCfg = Release|Win32
+		{8D7BD054-0D59-472D-9C9A-60FEA1351893}.Debug.Build.0 = Release|Win32
+		{8D7BD054-0D59-472D-9C9A-60FEA1351893}.Release.ActiveCfg = Release|Win32
+		{8D7BD054-0D59-472D-9C9A-60FEA1351893}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionItems) = postSolution
 		..\..\src\appl\macros\check_cp.C = ..\..\src\appl\macros\check_cp.C
@@ -190,11 +189,14 @@ Global
 		..\..\src\appl\macros\check_tr.C = ..\..\src\appl\macros\check_tr.C
 		..\..\src\appl\macros\check_vertex.C = ..\..\src\appl\macros\check_vertex.C
 		..\..\src\appl\macros\distor.C = ..\..\src\appl\macros\distor.C
+		..\..\install.cmd = ..\..\install.cmd
+		..\..\src\makeall.cmd = ..\..\src\makeall.cmd
 		..\..\src\appl\macros\makepar.C = ..\..\src\appl\macros\makepar.C
 		..\..\src\config\ProjectDef.mk = ..\..\src\config\ProjectDef.mk
 		..\..\src\config\RootDef.mk = ..\..\src\config\RootDef.mk
 		..\..\src\appl\macros\rootlogon.C = ..\..\src\appl\macros\rootlogon.C
 		..\..\src\config\TargetsDef.mk = ..\..\src\config\TargetsDef.mk
+		..\..\src\config\TargetsDefAppl.mk = ..\..\src\config\TargetsDefAppl.mk
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
