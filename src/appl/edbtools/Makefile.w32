@@ -3,13 +3,9 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib  
+NAME         = edbtools
 
-CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR)
-
-edbtools.exe: edbtools.obj
-      $(LD) $**  $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
+PROJECT_LIBS = $(PROJECT_LIBS) -lEdb
 
 #------------------------------------------------------------------------------
-clean:
-    @del /q edbtools.obj "$(BIN_DIR)"\edbtools.exe
+include ../../config/TargetsDefAppl.mk
