@@ -271,10 +271,18 @@ void TIndexCell::PrintStat() const
   for(int i=1; i<nlvl; i++ ) {
     range = MaxV(i)-MinV(i)+1;
     phaseVol *= range;
+#ifdef _WINDOWS
+    printf(" %d \t %d \t\t %d \t %f %% \t %d \t %d\n",
+#else
     printf(" %d \t %d \t\t %d \t %f \%% \t %d \t %d\n",
+#endif
 	   i,N(i),range,100.*N(i)/phaseVol, MinN(i),MaxN(i) );
   }
+#ifdef _WINDOWS
+  printf(" %d \t %d \t\t %d \t %f %%\n",
+#else
   printf(" %d \t %d \t\t %d \t %f \%%\n",
+#endif
 	 Nlevels(),N(Nlevels()),1,100.*N(Nlevels())/phaseVol );
 }
 
