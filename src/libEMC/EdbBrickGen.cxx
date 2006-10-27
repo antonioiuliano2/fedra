@@ -31,7 +31,7 @@ EdbBeamGen::EdbBeamGen()
 //____________________________________________________________________________________
 EdbTrackP *EdbBeamGen::NextTrack(int id)
 {
-  float x,y,tx,ty;
+  float x,y,z,tx,ty;
   EdbTrackP *tr = new EdbTrackP();
 
   int maxcycle=10000;
@@ -40,6 +40,7 @@ EdbTrackP *EdbBeamGen::NextTrack(int id)
     gRandom->Rannor(x,y); 
     x = eX0 + eSigmaX*x; 
     y = eY0 + eSigmaY*y; 
+    z = eZ0 + eSigmaZ*gRandom->Rndm();
     if(!eLimits)               break;
     if(eLimits->IsInside(x,y)) break;
   }
@@ -55,7 +56,7 @@ EdbTrackP *EdbBeamGen::NextTrack(int id)
 
   tr->Set(id, x, y, tx, ty, 1, 0);
 
-  tr->SetZ(eZ0);
+  tr->SetZ(z);
   tr->SetP(eP0);
   tr->SetM(eMass);
   return tr;

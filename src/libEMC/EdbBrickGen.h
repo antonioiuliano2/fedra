@@ -31,8 +31,8 @@ class EdbBeamGen : public TObject {
   EdbBeamGen();
   ~EdbBeamGen(){}
 
-  void SetPositionGaus(float x0, float sx, float y0, float sy)
-    { eX0=x0; eSigmaX=sx; eY0=y0; eSigmaY=sy; }
+  void SetPositionGaus(float x0, float sx, float y0, float sy, float z0=0, float sz=0)
+    { eX0=x0; eSigmaX=sx; eY0=y0; eSigmaY=sy; eZ0=z0; eSigmaZ=sz; }
   void SetAngularGaus(float tx0, float stx, float ty0, float sty)
     { eTX0=tx0; eSigmaTX=stx; eTY0=ty0; eSigmaTY=sty; }
 
