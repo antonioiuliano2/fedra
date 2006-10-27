@@ -59,6 +59,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
+  void PropagateToCOV( float z );
   void MergeTo( EdbSegP &s );
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
   bool       IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
@@ -70,6 +71,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    Set(int id, float x, float y, float tx, float ty, float w, int flag)
     { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
   
+  void    SetErrors(){ SetErrors( 1.,1.,0.,.0001,.0001,1.); }
   void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );
 
   void    SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );

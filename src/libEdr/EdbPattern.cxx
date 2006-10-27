@@ -244,6 +244,34 @@ void EdbSegP::LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s)
 }
 
 //______________________________________________________________________________
+void EdbSegP::PropagateToCOV( float z ) 
+{
+  float dz = z-Z();
+  eX  = X() + TX()*dz;
+  eY  = Y() + TY()*dz;
+  eZ  = z;
+
+  VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
+  pred.clear();
+  pred(0,0) = 1.;
+  pred(1,1) = 1.;
+  pred(2,2) = 1.;
+  pred(3,3) = 1.;
+  pred(0,2) = dz;
+  pred(1,3) = dz;
+  
+  VtSymMatrix cov(4);             // covariance matrix for seg0
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) cov(k,l) = (COV())(k,l);
+  
+  VtSymMatrix covpred(4);         // covariation matrix for prediction
+  covpred = pred*(cov*(pred.T()));
+  
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) (COV())(k,l) = covpred(k,l);
+}
+
+//______________________________________________________________________________
 void EdbSegP::PropagateTo( float z ) 
 {
   float dz = z-Z();

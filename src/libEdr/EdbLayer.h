@@ -1,6 +1,7 @@
 #ifndef ROOT_EdbLayer
 #define ROOT_EdbLayer
 
+#include "TMatrixD.h"
 #include "TNamed.h"
 #include "TMath.h"
 #include "EdbAffine.h"
@@ -125,6 +126,7 @@ class EdbScanCond : public TNamed {
 
   Float_t eChi2Max;           //
   Float_t eChi2PMax;          //
+  Int_t   eChi2Mode;          // mode of coupling chi2 calculation (default is 0)
 
   Float_t eOffX, eOffY;       // maximal offsets in x and y - the accuracy of pattern 
                               // itself in respect to the upper level RS
@@ -165,6 +167,9 @@ class EdbScanCond : public TNamed {
   float Chi2Max()    const {return eChi2Max;}
   float Chi2PMax()   const {return eChi2PMax;}
 
+  void  SetChi2Mode(int mode)  {eChi2Mode=mode;}
+  int   Chi2Mode()       const {return eChi2Mode;}
+
   float StepX(float dz)   const;
   float StepY(float dz)   const;
   float StepTX(float tx)  const { return BinTX()*SigmaTX(tx); }
@@ -185,6 +190,8 @@ class EdbScanCond : public TNamed {
 
   float ProbSeg( float tx, float ty, float puls) const;
   float ProbSeg( float t, float puls) const; 
+
+  void FillErrorsCov( float tx,float ty, TMatrixD &cov );
 
   void Print() const;
 

@@ -5,6 +5,8 @@ ClassImp(EdbLayer)
 ClassImp(EdbSegmentCut)
 ClassImp(EdbScanCond)
 
+  using namespace TMath;
+
 ///==============================================================================
 EdbLayer::EdbLayer()
 {
@@ -141,6 +143,7 @@ void EdbScanCond::SetDefault()
 
   eChi2Max  = 3.5;
   eChi2PMax = 3.5;
+  eChi2Mode = 0;
   eOffX=0;
   eOffY=0;
 
@@ -168,14 +171,14 @@ void EdbScanCond::Print() const
 //______________________________________________________________________________
 float EdbScanCond::StepX(float dz) const
 {
-  float sigma = TMath::Sqrt( eSigmaX0*eSigmaX0 + eSigmaTX0*dz*eSigmaTX0*dz );
+  float sigma = Sqrt( eSigmaX0*eSigmaX0 + eSigmaTX0*dz*eSigmaTX0*dz );
   return eBinX*sigma;
 }
 
 //______________________________________________________________________________
 float EdbScanCond::StepY(float dz) const
 {
-  float sigma = TMath::Sqrt( eSigmaY0*eSigmaY0 + eSigmaTY0*dz*eSigmaTY0*dz );
+  float sigma = Sqrt( eSigmaY0*eSigmaY0 + eSigmaTY0*dz*eSigmaTY0*dz );
   return eBinY*sigma;
 }
 
@@ -196,7 +199,7 @@ float EdbScanCond::Ramp(float x, float x1, float x2) const
 //______________________________________________________________________________
 float EdbScanCond::ProbSeg(float tx, float ty, float puls) const
 {
-  float t = TMath::Sqrt(tx*tx + ty*ty);
+  float t = Sqrt(tx*tx + ty*ty);
   return ProbSeg(t, puls);
 }
 
@@ -209,3 +212,47 @@ float EdbScanCond::ProbSeg(float t, float puls) const
   return Ramp(puls,pa1,pa2);
 }
 
+//______________________________________________________________________________
+void EdbScanCond::FillErrorsCov( float tx,float ty, TMatrixD &cov )
+{
+  // Fill the non-diagonal covariance matrix of errors for the segment with angles tx,ty
+  // considering the input sigma being in the track plane (Y - is transversal axis)
+
+  //TODO: remove EdbSegP::SetErrorsCOV
+
+  float theta = Sqrt( tx*tx + ty*ty );
+  float sx    = SigmaX(theta);      //TODO the coord error can have different dependance on ang
+  float sy    = SigmaY(0);
+  float stx   = SigmaTX(theta);
+  float sty   = SigmaTY(0);
+
+  cov(0,0) = (double)(sx*sx);
+  cov(1,1) = (double)(sy*sy); 
+  cov(2,2) = (double)(stx*stx);
+  cov(3,3) = (double)(sty*sty);
+  cov(4,4) = 1L;                  //TODO sp
+  
+  double Phi = -ATan2(ty,tx);
+  TMatrixD t(5,5);
+  TMatrixD tt(5,5);
+  t(0,0) =  Cos(Phi);
+  t(0,1) = -Sin(Phi);
+  t(1,0) =  Sin(Phi);
+  t(1,1) =  Cos(Phi);
+  t(2,2) =  Cos(Phi);
+  t(2,3) = -Sin(Phi);
+  t(3,2) =  Sin(Phi);
+  t(3,3) =  Cos(Phi);
+  t(4,4) =  1.;
+  tt(0,0) =  t(0,0);
+  tt(1,0) =  t(0,1);
+  tt(0,1) =  t(1,0);
+  tt(1,1) =  t(1,1);
+  tt(2,2) =  t(2,2);
+  tt(3,2) =  t(2,3);
+  tt(2,3) =  t(3,2);
+  tt(3,3) =  t(3,3);
+  tt(4,4) =  t(4,4);
+  TMatrixD c(5,5);
+  cov = t*(cov*tt);
+}

@@ -271,7 +271,6 @@ int EdbPatCouple::FillCHI2P()
   float       chi2;
   int ncp = Ncouples();
 
-  eCHI2mode=3;
   printf("eCHI2mode = %d\n",eCHI2mode);
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
@@ -281,8 +280,7 @@ int EdbPatCouple::FillCHI2P()
     else if(eCHI2mode==3) chi2 = Chi2KF(scp);
     else                  chi2 = Chi2A(scp);
 
-    printf("chi2 = %f\n",chi2);
-
+    //    printf("chi2 = %f   mode=%d\n",chi2,eCHI2mode);
     scp->SetCHI2P(chi2);
   }
   return Ncouples();
@@ -327,34 +325,24 @@ int EdbPatCouple::FillCHI2()
 ///______________________________________________________________________________
 float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
 {
-  // exact estimation of chi2 with Kalman filtering procedure
-  // application: up/down linking, alignment (offset search)
+  // exact estimation of chi2 with full fitting procedure
+  // Applications: up/down linking, alignment (offset search)
   //
   // All calculation are done with full corellation matrix for both segments
   // (dependency on the polar angle (phi) is taken into account)
 
   EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
   EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
-
-  float tx,sx,sy,stx,sty;
-
-  tx = TMath::Sqrt(s1->TX()*s1->TX()+s1->TY()*s1->TY());
-  sx    = eCond->SigmaX(tx);
-  sy    = eCond->SigmaY(0);
-  stx   = eCond->SigmaTX(tx);
-  sty   = eCond->SigmaTY(0);
-  float sx2 = sx*sx, sy2 = sy*sy, sz2 = 0., stx2 = stx*stx, sty2= sty*sty;
-  s1->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 1.);
-
-  tx = TMath::Sqrt(s2->TX()*s2->TX()+s2->TY()*s2->TY());
-  sx    = eCond->SigmaX(tx);
-  stx   = eCond->SigmaTX(tx);
-  sx2 = sx*sx; stx2 = stx*stx;
-  s2->SetErrorsCOV(sx2, sy2, sz2, stx2, sty2, 1.);
+  s1->SetErrors();
+  s2->SetErrors();
+  eCond->FillErrorsCov( s1->TX(), s1->TY(), s1->COV() );
+  eCond->FillErrorsCov( s2->TX(), s2->TY(), s2->COV() );
 
   if(scp->eS) delete (scp->eS);
   scp->eS=new EdbSegP(*s2);
-  return EdbPVRec::Chi2Seg(scp->eS, s1);
+  float chi2 = EdbPVRec::Chi2Seg(scp->eS, s1);
+  scp->eS->PropagateToCOV( 0.5*(s1->Z()+s2->Z()) );
+  return chi2;
 }
 
 ///______________________________________________________________________________
