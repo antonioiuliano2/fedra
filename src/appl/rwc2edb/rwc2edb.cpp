@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 		cout <<   "          -grs filename = merge raw data (.rwd) and grains (.txt) " << endl;
       cout <<   "                          (if only grains: rwc2edb fname.txt fname.root)" << endl;
       cout <<   "          -asum         = encode the sum of cluster areas in the segment puls" << endl;
-      cout <<   "                          (puls = (number of grains) *1000 + (sum of clust areas)" << endl;
+      cout <<   "                          (puls = (sum of clust areas)*1000 + (number of grains)" << endl;
 		return 0;
 	};
 
