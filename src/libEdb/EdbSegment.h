@@ -85,7 +85,8 @@ public:
   float      GetSigmaY() const { return eSigmaY; }
 
   Int_t      GetSide()   const { return eSide; }
-  Int_t      GetPuls()   const { return ePuls; }
+  Int_t      GetPuls()   const { return ePuls%1000; }
+  Int_t      GetVolume() const { return ePuls/1000; }
   Int_t      GetID()     const { return eID; }
 
   void       SetSide(int side)   { eSide = side; }
