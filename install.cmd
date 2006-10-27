@@ -22,66 +22,59 @@
 
 :: Define links from include-dir to src-files; former "setlinks.sh"
 :: ----------------------------------------------------------------
- set fsutil=win32\tools\fsutil.exe
- for %%F in (%PROJECT_SRC%\libEdb\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEmath\*.h)  do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEphys\*.h)  do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEGA\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEdr\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEIO\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEdd\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEMC\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libEdg\*.h)    do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libDataConversion\*.h)        do %fsutil% hardlink create %PROJECT_INC%\%%~nF.h %%F
- for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %fsutil% hardlink create %PROJECT_INC%\dataio\%%~nF%%~xF    %%F
- for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %fsutil% hardlink create %PROJECT_INC%\vt++\%%~nF%%~xF    %%F
- for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %fsutil% hardlink create %PROJECT_INC%\smatrix\%%~nF%%~xF %%F
+ set ln=win32\tools\fsutil.exe hardlink create 
+
+ for /D %%D in (src\lib*) do for %%F in (%%D\*.h) do %ln% %PROJECT_INC%\%%~nxF %%F
+ 
+ for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %ln% %PROJECT_INC%\dataio\%%~nxF  %%F
+ for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %ln% %PROJECT_INC%\vt++\%%~nxF    %%F
+ for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %ln% %PROJECT_INC%\smatrix\%%~nxF %%F
 
 :: create ProjectDef.mk in ./config-directory
 :: ----------------------------------------------
- set ProjectDef=%installdir%\src\config\ProjectDef.mk
- echo PROJECT_ROOT=%installdir%> %ProjectDef%
- echo. >> %ProjectDef%
- echo BIN_DIR = $(PROJECT_ROOT)/bin>> %ProjectDef%
- echo LIB_DIR = $(PROJECT_ROOT)/lib>> %ProjectDef%
- echo INC_DIR = $(PROJECT_ROOT)/include>> %ProjectDef%
- echo. >> %ProjectDef%
- echo PROJECT_LIBS = -LIBPATH:$(LIB_DIR)>> %ProjectDef%
+(
+ echo PROJECT_ROOT=%installdir%
+ echo.
+ echo BIN_DIR = $^(PROJECT_ROOT^)/bin
+ echo LIB_DIR = $^(PROJECT_ROOT^)/lib
+ echo INC_DIR = $^(PROJECT_ROOT^)/include
+ echo.
+ echo PROJECT_LIBS = -LIBPATH:$^(LIB_DIR^)
+) > %installdir%\src\config\ProjectDef.mk
 
 :: create RootDef.mk and TargetsDef.mk links
 :: ----------------------------------------------
  set configdir=%installdir%\src\config
- if exist %configdir%\RootDef.mk    del /q %configdir%\RootDef.mk
- if exist %configdir%\TargetsDef.mk del /q %configdir%\TargetsDef.mk
- if exist %configdir%\TargetsDefAppl.mk del /q %configdir%\TargetsDefAppl.mk
- %fsutil% hardlink create %configdir%\RootDef.mk %configdir%\RootDef.windows.mk
- %fsutil% hardlink create %configdir%\TargetsDef.mk %configdir%\TargetsDef.windows.mk
- %fsutil% hardlink create %configdir%\TargetsDefAppl.mk %configdir%\TargetsDefAppl.windows.mk
+ if exist %configdir%\RootDef.mk         del /q %configdir%\RootDef.mk
+ if exist %configdir%\TargetsDef.mk      del /q %configdir%\TargetsDef.mk
+ if exist %configdir%\TargetsDefAppl.mk  del /q %configdir%\TargetsDefAppl.mk
+ %ln% %configdir%\RootDef.mk                    %configdir%\RootDef.windows.mk
+ %ln% %configdir%\TargetsDef.mk                 %configdir%\TargetsDef.windows.mk
+ %ln% %configdir%\TargetsDefAppl.mk             %configdir%\TargetsDefAppl.windows.mk
 
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
- set SetupNew=%installdir%\setup_new.cmd
- echo set FEDRA_ROOT=%installdir%>  %SetupNew%
- echo path %%FEDRA_ROOT%%\bin;%%FEDRA_ROOT%%\lib;%%PATH%%>>  %SetupNew%
- echo win32\tools\setenv.exe  -u FEDRA_ROOT %installdir%>>  %SetupNew%
- echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\bin>>  %SetupNew%
- echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\lib>>  %SetupNew%
- echo.                                              >>  %SetupNew%
- echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\bin>>  %SetupNew%
- echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\lib>>  %SetupNew%
- echo if DEFINED FEDRA win32\tools\setenv.exe  -u FEDRA -delete>>  %SetupNew%
+(
+ echo set FEDRA_ROOT=%installdir%
+ echo path %%FEDRA_ROOT%%\bin;%%FEDRA_ROOT%%\lib;%%PATH%%
+ echo win32\tools\setenv.exe  -u FEDRA_ROOT %installdir%
+ echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\bin
+ echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\lib
+ echo.
+ echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\bin
+ echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\lib
+ echo if DEFINED FEDRA win32\tools\setenv.exe  -u FEDRA -delete
+) > %installdir%\setup_new.cmd
 
 :: copy vsvars.bat into src directory
 :: ----------------------------------
  IF DEFINED VS71COMNTOOLS ( 
 	copy "%VS71COMNTOOLS%"\vsvars32.bat src 
- ) ELSE IF DEFINED VSCOMNTOOLS (
-        copy "%VSCOMNTOOLS%"\vsvars32.bat src
- ) ELSE echo "MS Visual Studio .NET or MS Visual Studio .NET 2003 not found" 
+ ) ELSE echo "MS Visual Studio .NET 2003 not found" 
 
 :: check SySalDataIO.dll registration
 :: ----------------------------------
- set regutil=win32\tools\reg.exe
+ set regutil=reg.exe
  ECHO Check SySalDataIO.dll registration ......
  @%regutil% query HKEY_LOCAL_MACHINE\SOFTWARE\SySal2\Classes\SySalDataIO
  IF '%ERRORLEVEL%'=='0' ( 

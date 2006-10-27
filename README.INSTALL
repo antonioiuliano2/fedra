@@ -1,6 +1,9 @@
 download fedra-vx-xx-xx.tgz  from
 http://ntslab01.na.infn.it/fedra/download/
 
+In order to compile libEOracle please read src/doc/oracle_access.txt to 
+install Oracle OCCI package 
+
 ---------------------------------------------------------------------
 Linux: 
 
@@ -24,37 +27,49 @@ at this point all libraries/binaries should be created and ready for use
 type "source ./setup_new.sh" to update PATH and LD_LIBRARY_PATH
 
 ---------------------------------------------------------------------
-Windows (new installation procedure):
-needs: MS Visual Studio .NET or MS Visual Studio .NET 2003
+Windows:
 
-How to compile FEDRA (standard procedure):
+Requirements: 
+  - MS Visual Studio .NET 2003 or more
+  - ROOT 4.04.02 or more
+  - NTFS file system
 
-1. download fedra-vx-xx-xx.tgz and unpack the fedra package
-2. register the SySalDataIO library (regsvr32 SysalDataIO.dll)
-3. click on the "install.cmd" icon.
-4. the environment variables are updated only for the current user. 
-   Other users must execute the "setup_new.cmd" to update their environments.
+Installation:
+ 1. in your fedra directory unpack fedra-vx-xx-xx.tgz
+ 2. register the SySalDataIO library (open the command prompt, change to
+    the SySalDataIO.dll folder and type "regsvr32 SysSalDataIO.dll").
+ 3. click on the "install.cmd" icon.
 
+NOTE: After the installation, the environment variables are updated only 
+ for the current user. Any other user must execute the "setup_new.cmd" to 
+ update its environment variables.
+
+---------------------------------------------------------------------
+Windows (for developers):
 
 How to compile FEDRA from the command prompt:
 
-- Open a Command Prompt and execute "%ProgramFiles%\Microsoft Visual Studio .NET 2003\Vc7
-  \bin\vsvars32.bat" or artenatively open a "Visual Studio .NET 2003 Command Prompt" from
-  the start menu (Visual Studio .NET Tools).
-- Change to the fedra directory and type install.cmd
-	Type "setup_new.cmd" to update PATH and environment variables.
-	Restart the command prompt to use the new environment variables.
-
+ - Open the command prompt and execute 
+   "%ProgramFiles%\Microsoft Visual Studio .NET 2003\Vc7\bin\vsvars32.bat" 
+   or artenatively open a "Visual Studio .NET 2003 Command Prompt" from
+   the start menu (Visual Studio .NET Tools).
+ - Change to the fedra directory and type install.cmd
+   Type "setup_new.cmd" to update PATH and environment variables.
+   Restart the command prompt to use new environment variables.
+ - change folder which contains the source code you want to compile
+   and type "nmake" or (if Makefile.w32 exists) "nmake /F Makefile.w32" 
 
 How to compile FEDRA from the Visual Studio Development Environment:
-
-Once you have set the environment variables and path, FEDRA can be compiled 
-also from the Visual Studio Development Environment.
-The MS Visual Studio solution is $(FEDRA_ROOT)\win32\solution\Fedra.sln
-Take care to set the $(ROOTSYS)\bin in the "executable" directories.
-	- from the menu toolbar: Tools -> Options -> Projects -> VC++ Directories 
-	- show directories for "Executables files" 
-	- add $(ROOTSYS)\bin otherwise rootcint cannot be executed
-
-
  
+ Once you have set the environment variables and path (run install.cmd,
+ don't compile libraries and then run setup_new.cmd), FEDRA can be compiled
+ also from the Visual Studio Development Environment.
+
+ The MS Visual Studio solution is $(FEDRA_ROOT)\win32\solution\Fedra.sln
+ Take care to set the $(ROOTSYS)\bin in the "executable" directories 
+ otherwise rootcint cannot be executed:
+	- from the menu toolbar: Tools->Options->Projects->VC++ Directories 
+	- show directories for "Executables files" 
+	- add $(ROOTSYS)\bin 
+
+
