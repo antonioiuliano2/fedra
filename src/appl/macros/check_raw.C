@@ -15,6 +15,8 @@ TTree *cr_tree=0;
 void init()
 {
   cr_tree = (TTree*)gDirectory->Get("Views");
+  cr_tree->SetAlias("puls","segments.GetPuls()");
+  cr_tree->SetAlias("volume","segments.GetVolume()");
 }
 
 //-------------------------------------------------------
@@ -52,10 +54,10 @@ void check_view()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1); cr_tree->Draw("eY0:eX0","eNframesTop==0&&ePuls>0","lego2");
-  c->cd(2); cr_tree->Draw("eY0:eX0","eNframesTop==0&&ePuls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
-  c->cd(3); cr_tree->Draw("eY0:eX0","eNframesBot==0&&ePuls>0","lego2");
-  c->cd(4); cr_tree->Draw("eY0:eX0","eNframesBot==0&&ePuls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
+  c->cd(1); cr_tree->Draw("eY0:eX0","eNframesTop==0&&puls>0","lego2");
+  c->cd(2); cr_tree->Draw("eY0:eX0","eNframesTop==0&&puls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
+  c->cd(3); cr_tree->Draw("eY0:eX0","eNframesBot==0&&puls>0","lego2");
+  c->cd(4); cr_tree->Draw("eY0:eX0","eNframesBot==0&&puls>0&&(abs(eTy)>.006||abs(eTx)>.006)","colZ");
 
   c->SaveAs("raw_view.gif");
 }
@@ -69,9 +71,9 @@ void check_surf()
   gStyle->SetPalette(1);
 
   c->cd(1);       cr_tree->Draw("eYview:eXview");
-  c->cd(1);       cr_tree->Draw("eYview+eY0:eXview+eX0","eNframesTop==0&&ePuls>0","samecontZ");
+  c->cd(1);       cr_tree->Draw("eYview+eY0:eXview+eX0","eNframesTop==0&&puls>0","samecontZ");
   c->cd(2);       cr_tree->Draw("eYview:eXview");
-  c->cd(2);       cr_tree->Draw("eYview+eY0:eXview+eX0","eNframesBot==0&&ePuls>0","samecontZ");
+  c->cd(2);       cr_tree->Draw("eYview+eY0:eXview+eX0","eNframesBot==0&&puls>0","samecontZ");
   c->cd(3);       cr_tree->Draw("eNsegments");
                   cr_tree->SetLineColor(kBlue);
                   cr_tree->Draw("eNsegments>>hbot","eNframesTop==0","same");
@@ -100,10 +102,10 @@ void check_puls()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1);       cr_tree->Draw("segments.ePuls","eNframesTop==0&&ePuls>0");
-  c->cd(2);       cr_tree->Draw("segments.ePuls","eNframesBot==0&&ePuls>0");
-  c->cd(3);       cr_tree->Draw("segments.eSigmaY","eNframesTop==0&&ePuls>0");
-  c->cd(4);       cr_tree->Draw("segments.eSigmaY","eNframesBot==0&&ePuls>0");
+  c->cd(1);       cr_tree->Draw("puls","eNframesTop==0&&puls>0");
+  c->cd(2);       cr_tree->Draw("puls","eNframesBot==0&&puls>0");
+  c->cd(3);       cr_tree->Draw("volume","eNframesTop==0&&puls>0");
+  c->cd(4);       cr_tree->Draw("volume","eNframesBot==0&&puls>0");
   c->SaveAs("raw_puls.gif");
 }
 
@@ -114,10 +116,10 @@ void check_ang()
   c->Clear();
   c->Divide(2,2);
   gStyle->SetPalette(1);
-  c->cd(1);  cr_tree->Draw("segments.eTx","ePuls>0");
-  c->cd(2);  cr_tree->Draw("segments.eTy","ePuls>0");
-  c->cd(3);  cr_tree->Draw("eTy:eTx","eNframesTop==0&&ePuls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
-  c->cd(4);  cr_tree->Draw("eTy:eTx","eNframesBot==0&&ePuls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
+  c->cd(1);  cr_tree->Draw("segments.eTx","puls>0");
+  c->cd(2);  cr_tree->Draw("segments.eTy","puls>0");
+  c->cd(3);  cr_tree->Draw("eTy:eTx","eNframesTop==0&&puls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
+  c->cd(4);  cr_tree->Draw("eTy:eTx","eNframesBot==0&&puls>0&&((abs(eTy)>.01||abs(eTx)>.01)) && abs(eTy)<.6 && abs(eTx)<.6","colZ");
 
   c->SaveAs("raw_ang.gif");
 }

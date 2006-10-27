@@ -176,7 +176,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 	if (strstr(options,"NOCL") )    addcl=false;     // do not add clusters
 	if (strstr(options,"CLFRAME") ) addclframe=true; // fill clusters.eFrame branch
 	if (strstr(options,"SUM") )     addareasum=true; // encode the sum of cluster areas in the segment puls
-                                                    // ePuls = (number of clusters) *1000 + (sum of clust areas)
+                                                    // ePuls = (sum of clust areas)*1000 + (number of clusters) 
 	EdbView*    edbView = run->GetView();
 	EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
 
@@ -189,7 +189,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 	int vclusters;	   // number of clusters in the view
 	float dz	;		   // z-length of the track segment
 	int tr_clusters;	// number of cluster of the track
-   int puls ;        // ePuls = (number of clusters ) OR (number of clusters) *1000 + (sum of clust areas)       
+   int puls ;        // ePuls = (number of clusters ) OR  (sum of clust areas)*1000 + (number of clusters)
 
 	Track2* rwdTrack;
 	VS_View2* rwdView;
@@ -231,7 +231,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
       for (t = 0; t < rwdView->TCount[s]; t++) {
         rwdTrack = &(rwdView->pTracks[s][t]);
         tr_clusters  = rwdTrack->Grains  ;
-        if (addareasum)   puls = rwdTrack->Grains * 1000 + rwdTrack->AreaSum ;
+        if (addareasum)   puls = rwdTrack->Grains + (2000000>rwdTrack->AreaSum?rwdTrack->AreaSum:2000000)*1000;
         else              puls = rwdTrack->Grains ;
         dz = rwdTrack->pGrains[0].Z - rwdTrack->pGrains[tr_clusters-1].Z;
         edbSegment->Set(rwdTrack->Intercept.X,
