@@ -154,8 +154,12 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
   int nrej=-1;
   int nseg = GetVolumeData(vol, ic, srt, nrej);
 
+#ifdef _WINDOWS
+  printf("Area:%3d (%3d%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+#else
   printf("Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
-  	 area, 100*area/eNareas, n1,n2, 
+#endif
+    area, 100*area/eNareas, n1,n2, 
 	 vol.GetPattern(0)->N(),
 	 vol.GetPattern(1)->N(),
 	 nrej );

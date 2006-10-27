@@ -277,7 +277,7 @@ int EdbDataPiece::ReadPiecePar(const char *file)
   }else
     printf( "\nRead piece parameters from file: %s\n\n", file );
 
-  int id;
+  int id,mode;
   float z,zmin,zmax,shr;
   float a11,a12,a21,a22,b1,b2;
   float x1,x2,x3,x4;
@@ -291,14 +291,14 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 	break;
       }
     
-   if( sscanf(buf,"%s",key)!=1 )                             continue;
+    if( sscanf(buf,"%s",key)!=1 )                             continue;
 
-   if      ( !strcmp(key,"INCLUDE")   )
+    if      ( !strcmp(key,"INCLUDE")   )
       {
 	sscanf(buf+strlen(key),"%s",name);
 	ReadPiecePar(name);
       }
-   else if ( !strcmp(key,"ZLAYER")   )
+    else if ( !strcmp(key,"ZLAYER")   )
       {
 	sscanf(buf+strlen(key),"%d %f %f %f",&id,&z,&zmin,&zmax);
 	GetMakeLayer(id)->SetZlayer(z,zmin,zmax);
@@ -352,6 +352,11 @@ int EdbDataPiece::ReadPiecePar(const char *file)
       {
 	sscanf(buf+strlen(key),"%d %f",&id,&x1);
 	GetMakeCond(id)->SetChi2PMax(x1);
+      }
+    else if ( !strcmp(key,"CHI2MODE")  )
+      {
+	sscanf(buf+strlen(key),"%d %d",&id,&mode);
+	GetMakeCond(id)->SetChi2Mode(mode);
       }
     else if ( !strcmp(key,"OFFSET")  )
       {
@@ -623,6 +628,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
+  segP.SetVolume( seg->GetVolume() );
   segP.SetChi2( seg->GetSigmaY() );   // make sence in case of fedra tracking 
 
   return 1;
@@ -1633,6 +1639,9 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 
       ali->SetCouplesAll();
       ali->SetChi2Max(cond->Chi2PMax());
+      for(int ic=0; ic<ali->Ncouples(); ic++) 
+	ali->GetCouple(ic)->SetCHI2mode(cond->Chi2Mode());
+
       ali->Link();
 
       if( ShrinkCorr() ) {
@@ -1711,7 +1720,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
   }
 
   // **** fill tree with found couples ****
-  //  if(patc->CHI2mode()!=3)   
+
   s = new EdbSegP();
 
   int nip=al->Ncouples();
@@ -1745,7 +1754,6 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
       s->SetVolume( s1->Volume()+s2->Volume() );
       
       EdbTraceBack::SetBaseTrackVid( *s, 0, 0, tree->GetEntries() );   //TODO: plate, piece if available
-      //EdbSegP::LinkMT(s1,s2,s);
 
       tree->Fill();
     }
@@ -2221,7 +2229,7 @@ int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int
 
   int       noProp=0;
   if(p<0)   noProp=1;
-  if(p<0.01) p=4.;
+  //if(p<0.01) p=4.;  //TODO: this protection should be out of this function?
 
   int ntr = ali->Ntracks();
   float X0 =  ali->GetScanCond()->RadX0();
