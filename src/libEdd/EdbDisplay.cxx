@@ -94,6 +94,7 @@ char *EdbTrackG::GetObjectInfo(int px, int py) const
     float tx = 0., ty = 0., z = 0.;
     int zpos = 1;
     if (GetMarkerColor() == kRed) zpos = 0;
+    //printf("nf = %d min = 0x%08x max = 0x%08x\n", eTr->NF(), (int)(eTr->TrackZmin()), (int)(eTr->TrackZmax()));
     if( zpos == 0 )
       {
              tx = (eTr->TrackZmax())->TX();
@@ -148,9 +149,9 @@ char *EdbSegG::GetObjectInfo(int px, int py) const
 //________________________________________________________________________
 void EdbDisplay::Set0()
 {
-  eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
-  if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n");}
-  if (eVerRec->IsA() != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n");}
+  //eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+  //if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+  //if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined, use SetVerRec(...)\n");}
   eArrSegP = 0;
   eArrTr   = 0;
   eArrV    = 0;
@@ -450,7 +451,7 @@ void EdbDisplay::Refresh()
   if (eSegment)
   {
     eSegPM = new TPolyMarker3D(1);
-    eSegPM->SetMarkerStyle(20);
+    eSegPM->SetMarkerStyle(kFullCircle);
     float dz = TMath::Abs(eSegment->DZ()/2.);
     eSegPM->SetPoint(0, 
 		        eSegment->X() + eSegment->TX()*dz,
@@ -479,7 +480,7 @@ void EdbDisplay::DrawRef(float start[3], float end[3])
   TPolyMarker3D *mark = new TPolyMarker3D(1);
   mark->SetPoint(0, start[0],start[1], start[2] );
   mark->SetMarkerColor(kGreen);
-  mark->SetMarkerStyle(5);
+  mark->SetMarkerStyle(kMultiply);
   mark->SetMarkerSize(1.2);
   mark->Draw();
 }
@@ -500,8 +501,9 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 	       xv, 
 	       yv, 
 	       zv );
-  v->SetMarkerStyle(20);
-  v->SetMarkerColor(kWhite);
+  v->SetMarkerStyle(kFullCircle);
+  if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
+  else               v->SetMarkerColor(kWhite);
 //  v->Draw();
 
   if (vv->V())
@@ -520,13 +522,18 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
     else if (eVertex == vv)
     {
 	if (!eWorking) v->SetMarkerColor(kGreen);
-	else	       v->SetMarkerColor(kWhite);
+	else
+	{
+	    if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
+	    else               v->SetMarkerColor(kWhite);
+	}
     }
     else
     {
-	v->SetMarkerColor(kWhite);
+	if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
+	else               v->SetMarkerColor(kWhite);
     }
-    v->SetMarkerStyle(29);
+    v->SetMarkerStyle(kFullStar);
     v->SetMarkerSize(1.2);
     v->Draw();
   }
@@ -556,7 +563,8 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       line = new TPolyLine3D(2);
       line->SetPoint(0, xv,yv,zv );
       line->SetPoint(1, seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
-      line->SetLineColor(kWhite);
+      if (fStyle/2 == 1) line->SetLineColor(kBlack);
+      else               line->SetLineColor(kWhite);
       line->SetLineWidth(fLineWidth);
       line->SetBit(kCannotPick);
       line->Draw();
@@ -622,7 +630,8 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 	}
       }
     }
-    line->SetLineColor(kWhite);
+    if (fStyle/2 == 1) line->SetLineColor(kBlack);
+    else               line->SetLineColor(kWhite);
     line->SetLineWidth(fLineWidth);
     line->SetBit(kCannotPick);
     if (tr->Flag() != -10)
@@ -652,7 +661,8 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 	if(seg) line->SetPoint(is, seg->X(), seg->Y(), seg->Z() );
       }
     }
-    line->SetLineColor(kWhite);
+    if (fStyle/2 == 1) line->SetLineColor(kBlack);
+    else               line->SetLineColor(kWhite);
     line->SetLineWidth(fLineWidth);
     line->SetLineStyle(1);
     line->Draw();
@@ -661,13 +671,14 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   if(eDrawTracks>1 && eDrawTracks<5) {
     EdbTrackG *pms = new EdbTrackG(1, this);
     pms->SetTrack( tr );
-    pms->SetMarkerStyle(24);
+    pms->SetMarkerStyle(kOpenCircle);
 
     if (tr->NF())      seg = tr->TrackZmin();
     else               seg = tr->GetSegmentFirst();
     if(seg) {
       pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
-      pms->SetMarkerColor(kWhite);
+      if (fStyle/2 == 1) pms->SetMarkerColor(kBlack);
+      else               pms->SetMarkerColor(kWhite);
       pms->SetMarkerSize(1.2);
       pms->Draw();
     }
@@ -676,7 +687,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   if(eDrawTracks>2 && eDrawTracks<5) {
     EdbTrackG *pme = new EdbTrackG(1, this);
     pme->SetTrack( tr );
-    pme->SetMarkerStyle(24);
+    pme->SetMarkerStyle(kOpenCircle);
 
     if (tr->NF())      seg = tr->TrackZmax();
     else               seg = tr->GetSegmentLast();
@@ -722,6 +733,8 @@ void EdbSegG::AddAsTrackToVertex()
   char text[512];
   EdbVTA *vta = 0;
 //  if (eD) if (!(eD->eVerRec)) eD->eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+  if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+  if (!eD->eVerRec) {printf("Error: EdbDisplay:AddAsTrackToVertex: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
   if (eSeg && eD)
   {
     if (eD->eWait_Answer) return;
@@ -766,6 +779,8 @@ void EdbSegG::AddAsTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
 
@@ -782,6 +797,8 @@ void EdbSegG::AddAsTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
     }
@@ -814,6 +831,8 @@ void EdbSegG::AddAsTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
 
@@ -831,6 +850,8 @@ void EdbSegG::AddAsTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
     }
@@ -980,6 +1001,8 @@ void EdbSegG::RemoveFromTrack()
 	    fflush(stdout);
 	    return;
 	}
+	if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+	if (!eD->eVerRec) {printf("Error: EdbDisplay:RemoveFromTrack: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	TObjArray *etr = 0;
 	if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
 	if (!etr)
@@ -1041,6 +1064,8 @@ void EdbSegG::SplitTrack()
 	    fflush(stdout);
 	    return;
 	}
+	if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+	if (!eD->eVerRec) {printf("Error: EdbDisplay:SplitTrack: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	TObjArray *etr = 0;
 	if (eD->eVerRec) etr = (eD->eVerRec)->eEdbTracks;
 	if (!etr)
@@ -1191,7 +1216,7 @@ void EdbSegG::SetAsWorking()
     eDs->eSegment = (EdbSegP *)eSegs;
     eDs->DrawEnv();
     eDs->eSegPM = new TPolyMarker3D(1);
-    eDs->eSegPM->SetMarkerStyle(20);
+    eDs->eSegPM->SetMarkerStyle(kFullCircle);
     if(eSegs) {
       float dz = TMath::Abs(eSegs->DZ()/2.);
       eDs->eSegPM->SetPoint(0, 
@@ -1251,7 +1276,7 @@ void EdbSegG::InfoSegVert()
 
   strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1260,20 +1285,20 @@ void EdbSegG::InfoSegVert()
 		      s->ID(), s->X(), s->Y(), s->Z(),
 		      s->TX(), s->TY());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
 
   strcpy(line, "  Vertex    ID    Mult  X          Y          Z          Dist   Chi2     Prob");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1282,13 +1307,13 @@ void EdbSegG::InfoSegVert()
     v->ID(), v->N(), v->VX(), v->VY(), v->VZ(), v->V()->dist(),
     v->V()->chi2()/v->V()->ndf(), v->V()->prob());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
@@ -1313,13 +1338,13 @@ void EdbSegG::InfoSegVert()
   delete tr;
   sprintf(line, "  Segment - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(2);
+  t->SetTextColor(kRed);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
   t = (eD->fVTXTRKInfo)->AddText("");
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1372,7 +1397,7 @@ void EdbSegG::InfoSegSeg()
 
   strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1381,20 +1406,20 @@ void EdbSegG::InfoSegSeg()
 		      s->ID(), s->X(), s->Y(), s->Z(),
 		      s->TX(), s->TY());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
 
   strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1403,14 +1428,14 @@ void EdbSegG::InfoSegSeg()
 		      eSeg->ID(), eSeg->X(), eSeg->Y(), eSeg->Z(),
 		      eSeg->TX(), eSeg->TY());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
@@ -1434,19 +1459,28 @@ void EdbSegG::InfoSegSeg()
   seg1->SetP(momentum);
   EdbSegP *seg2 = (EdbSegP *)(tr2->TrackZmax());
   seg2->SetP(momentum);
-  float chi2 = (eD->eVerRec)->TdistanceChi2(*seg1, *seg2, mass);
-  float impa = (eD->eVerRec)->Tdistance(*s, *eSeg);
+  if (eD->eVerRec)
+  {
+    float chi2 = (eD->eVerRec)->TdistanceChi2(*seg1, *seg2, mass);
+    float impa = (eD->eVerRec)->Tdistance(*s, *eSeg);
+    sprintf(line, "  Segment - Segment  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
+  }
+  else
+  {
+    sprintf(line, "  Impossible to calculate impact and chi2 - No eVerRec defined!");
+    printf("Error: EdbDisplay:AddAsTrackToVertex: EdbVertexRec not defined, use SetVerRec(...)\n");
+    fflush(stdout);
+  }
   delete tr1;
   delete tr2;
-  sprintf(line, "  Segment - Segment  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(2);
+  t->SetTextColor(kRed);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
   t = (eD->fVTXTRKInfo)->AddText("");
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -1675,6 +1709,8 @@ void EdbTrackG::UndoNewTrack()
 {
     if (eD->eTrack && eD->eTrack == eTr)
     {
+	if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+	if (!eD->eVerRec) {printf("Error: EdbDisplay:UndoNewTrack: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	TObjArray *etr = 0;
 	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
 
@@ -1742,6 +1778,8 @@ void EdbTrackG::UndoSplit()
 {
     if (eD->eTrack1 && eD->eTrack2 && ((eD->eTrack1 == eTr) || (eD->eTrack2 == eTr)))
     {
+	if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+	if (!eD->eVerRec) {printf("Error: EdbDisplay:UndoSplit: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	TObjArray *etr = 0;
 	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
 
@@ -1880,6 +1918,8 @@ void EdbTrackG::UndoRemoveKink()
 	    fflush(stdout);
 	    return;
 	}
+	if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+	if (!eD->eVerRec) {printf("Error: EdbDisplay:UndoRemoveKink: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	TObjArray *etr = 0;
 	if (eD->eVerRec) etr = eD->eVerRec->eEdbTracks;
 
@@ -2117,6 +2157,8 @@ void EdbTrackG::RemoveTrackFromVertex()
   char text[512];
   if (eTr && eD)
   {
+    if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+    if (!eD->eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromVertex: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
     if (eD->eWait_Answer) return;
     if (!(eD->eVertex))
     {
@@ -2196,6 +2238,8 @@ void EdbTrackG::RemoveTrackFromVertex()
 	    eD->eWorking = 0;
 	    (eD->eVertex)->ResetTracks();
 	}
+	printf("Can't create working copy of the vertex!\n");
+	fflush(stdout);
 	return;
     }
 
@@ -2262,6 +2306,8 @@ void EdbTrackG::RemoveTrackFromVertex()
 	    eD->eWorking = 0;
 	    (eD->eVertex)->ResetTracks();
 	}
+	printf("Can't create working copy of the vertex!\n");
+	fflush(stdout);
     }
   }
 }
@@ -2288,6 +2334,8 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	    fflush(stdout);
 	    return;
 	}
+	if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+	if (!eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	eWorking = new EdbVertex();
 	int i = 0;
 	etr = eVertex->GetTrack(ivt);
@@ -2315,6 +2363,8 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	    fflush(stdout);
 	    return;
 	}
+	if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+	if (!eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
 	etr = eWorking->GetTrack(ivt);
 	ePrevious = eWorking;
 	eWorking = new EdbVertex();
@@ -2347,6 +2397,8 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	    eWorking = 0;
 	    (eVertex)->ResetTracks();
 	}
+	printf("Can't create working copy of the vertex!\n");
+	fflush(stdout);
 	return;
     }
 
@@ -2419,6 +2471,8 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	    eWorking = 0;
 	    (eVertex)->ResetTracks();
 	}
+	printf("Can't create working copy of the vertex!\n");
+	fflush(stdout);
     }
 }
 
@@ -2460,6 +2514,8 @@ void EdbTrackG::AddTrackToVertex()
 //    {
 //	if (old != eD->eVertex && old != eD->ePrevious && old != eD->eWorking) return;
 //    } 
+    if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
+    if (!eD->eVerRec) {printf("Error: EdbDisplay:AddTrackToVertex: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
     EdbVertex *ePreviousSaved = eD->ePrevious;
     if (eD->eWorking == 0)
     {
@@ -2487,6 +2543,8 @@ void EdbTrackG::AddTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
 
@@ -2503,6 +2561,8 @@ void EdbTrackG::AddTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
     }
@@ -2535,6 +2595,8 @@ void EdbTrackG::AddTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
 
@@ -2552,6 +2614,8 @@ void EdbTrackG::AddTrackToVertex()
 		eD->eWorking = 0;
 		(eD->eVertex)->ResetTracks();
 	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
 	    return;
 	}
     }
@@ -2627,7 +2691,7 @@ void EdbTrackG::AddTrackToVertex()
 //_____________________________________________________________________________
 void EdbTrackG::InfoTrackVert()
 {
-  if (!(eD->eVertex)) return;
+  if (!(eD->eVertex))
   {
     
 	    printf("No working vertex selected!\n");
@@ -2671,7 +2735,7 @@ void EdbTrackG::InfoTrackVert()
 
   strcpy(line, " Track     ID   Nseg   Mass       P       Chi2/ndf    Prob");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -2680,20 +2744,20 @@ void EdbTrackG::InfoTrackVert()
 		      tr->ID(), tr->N(), tr->M(), tr->P(),
 		      tr->Chi2()/tr->N(), tr->Prob());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
 
   strcpy(line, "  Vertex    ID    Mult  X          Y          Z          Dist   Chi2     Prob");
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -2702,13 +2766,13 @@ void EdbTrackG::InfoTrackVert()
     v->ID(), v->N(), v->VX(), v->VY(), v->VZ(), v->V()->dist(),
     v->V()->chi2()/v->V()->ndf(), v->V()->prob());
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
 //  t = (eD->fVTXTRKInfo)->AddText("");
-//  t->SetTextColor(1);
+//  t->SetTextColor(kBlack);
 //  t->SetTextSize(0.03);
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
@@ -2743,13 +2807,13 @@ void EdbTrackG::InfoTrackVert()
  
   sprintf(line, "  Track - Vertex  impact = %-6.1f, chi2 = %-7.1f, distance = %-8.1f", impa, chi2, dist);
   t = (eD->fVTXTRKInfo)->AddText(line);
-  t->SetTextColor(2);
+  t->SetTextColor(kRed);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
   t = (eD->fVTXTRKInfo)->AddText("");
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -3013,9 +3077,9 @@ void EdbDisplay::AcceptModifiedVTX()
     }
     if (eWorking && eVertex)
     {
-	if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
-	if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n"); return;}
-	if (eVerRec->IsA() != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined\n"); return;}
+	//if (!eVerRec) eVerRec = ((EdbVertexRec*)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+	if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+	if (!eVerRec) {printf("Error: EdbDisplay:AcceptModifiedVTX: EdbVertexRec not defined, use SetVerRec(...)\n"); return;}
         EdbVertex *eW = eWorking;
 	int ind = eVertex->ID();
 	eW->SetID(ind);
@@ -3116,22 +3180,29 @@ void EdbDisplay::DrawVertexEnvironment()
 {
     if (eRadMax == 0)
     {
-	printf("No neighborhood in EdbPVGen object!\n");
+	printf("No neighborhood in EdbPVRec object!\n");
 	fflush(stdout);
 	return;
     }
-    if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
-    if (!eVerRec) {printf("Warning: EdbDisplay:DrawVertexEnvironment: EdbVertexRec not defined\n"); return;}
-    if ((eVerRec->IsA()) != EdbVertexRec::Class()) {printf("Warning: EdbDisplay:DrawVertexEnvironment: EdbVertexRec not defined\n"); return;}
-    if (!eVertex && !eSegment) return;
+    //if (!eVerRec) eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
+    if (eVerRec) if((eVerRec->IsA()) != EdbVertexRec::Class()) eVerRec = 0;
+    if (!eVerRec)
+       {printf("Error: EdbDisplay:DrawVertexEnvironment: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
+    if (!eVertex && !eSegment)
+       {printf("Error: EdbDisplay:DrawVertexEnvironment: Working vertex (or segment) not defined\n"); fflush(stdout); return;}
     
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Remove(fEnvButton);
+    if (fStyle/2 == 1)
+	fAllButton->SetFillColor(33);
+    else
+	fAllButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fAllButton);
-    fAllButton->SetPad(0.05,0.47,0.85,0.56);
+    fAllButton->SetPad(0.05,0.47,0.95,0.56);
     fAllButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 
     EdbVertex *eW = eVertex;
@@ -3192,11 +3263,16 @@ void EdbDisplay::DrawAllObjects()
 {
     fTrigPad->cd();
     fTrigPad->GetListOfPrimitives()->Remove(fAllButton);
+    if (fStyle/2 == 1)
+	fEnvButton->SetFillColor(33);
+    else
+	fEnvButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fEnvButton);
-    fEnvButton->SetPad(0.05,0.47,0.85,0.56);
+    fEnvButton->SetPad(0.05,0.47,0.95,0.56);
     fEnvButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 
     if (eArrVSave || eArrTrSave || eArrSegPSave)
@@ -3508,13 +3584,13 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
   int ntr = vv->N();
   sprintf(line, "           Tracks parameters for %s vertex", type);
   t = fVTXTracks->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
   strcpy(line, "    #   ID   Nseg   Mass       P       Chi2/ndf    Prob     Chi2Contrib     Impact");
   t = fVTXTracks->AddText(line);
-  t->SetTextColor(4);
+  t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
@@ -3525,13 +3601,13 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
 		   i, tr->ID(), tr->N(), tr->M(), tr->P(),
 		      tr->Chi2()/tr->N(), tr->Prob(), vv->V()->track_chi2(i), vv->Impact(i));
     t = fVTXTracks->AddText(line);
-    t->SetTextColor(1);
+    t->SetTextColor(kBlack);
     t->SetTextSize(0.03);
     t->SetTextAlign(12);
     t->SetTextFont(102);
   }
   t = fVTXTracks->AddText("");
-  t->SetTextColor(1);
+  t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);

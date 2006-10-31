@@ -77,7 +77,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fPad = new TPad(VPadName, "FEDRA Event Display",0.15,0.,1.,1.);
    fPad->Draw();
    fPad->Modified(kTRUE);
-   fPad->SetFillColor(1);
+   fPad->SetFillColor(kBlack);
    fPad->SetBorderSize(2);
 
    // Create view type control pad
@@ -92,48 +92,59 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fTrigPad = new TPad(TPadName, "Control Pad",0,0,dxtr,dytr);
    fTrigPad->Draw();
    fTrigPad->cd();
-   fTrigPad->SetFillColor(22);
+
+   if (fStyle/2 == 1)
+	fTrigPad->SetFillColor(38); // blue shades
+   else
+	fTrigPad->SetFillColor(22); // brown shades
+
    fTrigPad->SetBorderSize(2);
+
+   Int_t butcolor = 33; // blue shades
+   if (fStyle/2 == 1)
+	butcolor = 33; // blue shades
+   else
+	butcolor = 38; // blue shades
 
    char undov[256];
    sprintf(undov,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UndoModifiedVTX()",fTitle);
    Float_t db = 0.09;
-   fUndButton = new TButton("Undo  VTX",undov,0.05,0.85,0.85,0.85+db);
+   fUndButton = new TButton("Undo  VTX",undov,0.05,0.85,0.95,0.85+db);
    fUndButton->SetToolTipText("Undo last vertex modification");
-   fUndButton->SetFillColor(38);
+   fUndButton->SetFillColor(butcolor);
    fUndButton->Draw();
 
    char cancelv[256];
    sprintf(cancelv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->CancelModifiedVTX()",fTitle);
-   fCanButton = new TButton("Cancel VTX",cancelv,0.05,0.74,0.85,0.74+db);
+   fCanButton = new TButton("Cancel VTX",cancelv,0.05,0.74,0.95,0.74+db);
    fCanButton->SetToolTipText("Cancel vertex modifications");
-   fCanButton->SetFillColor(38);
+   fCanButton->SetFillColor(butcolor);
    fCanButton->Draw();
 
    char acceptv[256];
    sprintf(acceptv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->AcceptModifiedVTX()",fTitle);
-   fAccButton = new TButton("Accept VTX",acceptv,0.05,0.63,0.85,0.63+db);
+   fAccButton = new TButton("Accept VTX",acceptv,0.05,0.63,0.95,0.63+db);
    fAccButton->SetToolTipText("Accept vertex modifications");
-   fAccButton->SetFillColor(38);
+   fAccButton->SetFillColor(butcolor);
    fAccButton->Draw();
 
    char envv[256];
    sprintf(envv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawVertexEnvironment()",fTitle);
-   fEnvButton = new TButton("Neighbor",envv,0.05,0.47,0.85,0.47+db);
+   fEnvButton = new TButton("Neighbor",envv,0.05,0.47,0.95,0.47+db);
    fEnvButton->SetToolTipText("Draw vertex neighborhood");
-   fEnvButton->SetFillColor(38);
+   fEnvButton->SetFillColor(butcolor);
    fEnvButton->Draw();
 
    char allv[256];
    sprintf(allv,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawAllObjects()",fTitle);
-   fAllButton = new TButton("AllObjcts",allv,0.05,0.47,0.85,0.47+db);
+   fAllButton = new TButton("AllObjcts",allv,0.05,0.47,0.95,0.47+db);
    fAllButton->SetToolTipText("Draw all objects");
-   fAllButton->SetFillColor(38);
+   fAllButton->SetFillColor(butcolor);
    fAllButton->Draw();
 
    char pickmode[256];
@@ -141,7 +152,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetPickMode()",fTitle);
    fPickButton = new TButton("Pick",pickmode,0.05,0.32,0.65,0.32+db);
    fPickButton->SetToolTipText("Set Pickup mode");
-   fPickButton->SetFillColor(38);
+   fPickButton->SetFillColor(butcolor);
    strcpy(PickButName, "PickBut-");
    strcat(PickButName, title);
    fPickButton->SetName(PickButName);
@@ -152,7 +163,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetZoomMode()",fTitle);
    fZoomButton = new TButton("Zoom",zoommode,0.05,0.21,0.65,0.21+db);
    fZoomButton->SetToolTipText("Set Zooming mode");
-   fZoomButton->SetFillColor(38);
+   fZoomButton->SetFillColor(butcolor);
    strcpy(ZoomButName, "ZoomBut-");
    strcat(ZoomButName, title);
    fZoomButton->SetName(ZoomButName);
@@ -165,9 +176,9 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    char butUnzoom[256];
    sprintf(butUnzoom,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->UnZoom()",fTitle);
-   TButton *fUnZoomButton = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.15);
+   fUnZoomButton = new TButton("UnZoom",butUnzoom,0.05,0.05,0.95,0.14);
    fUnZoomButton->SetToolTipText("Undo previous zooming");
-   fUnZoomButton->SetFillColor(38);
+   fUnZoomButton->SetFillColor(butcolor);
    strcpy(UnZoomButName, "UnZoomBut-");
    strcat(UnZoomButName, title);
    fUnZoomButton->SetName(UnZoomButName);
@@ -240,20 +251,130 @@ void EdbDisplayBase::Set0()
 //=============================================================================
 void EdbDisplayBase::SetStyle(int Style)
 {
-
     if (Style == 0)
     {
 	fStyle = Style;
 	fLineWidth = 1;
+	fPad->SetFillColor(kBlack);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("NeighParms")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("TrackParms")))->SetFillColor(38);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetFillColor(50);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetTextColor(kYellow);
+	fButtons->Draw();
+	fUndButton->SetFillColor(38); // blue shades
+	fAccButton->SetFillColor(38);
+	fCanButton->SetFillColor(38);
+	fEnvButton->SetFillColor(38);
+	fAllButton->SetFillColor(38);
+	fPickButton->SetFillColor(38);
+	fZoomButton->SetFillColor(38);
+	fUnZoomButton->SetFillColor(38);
+	fTrigPad->SetFillColor(22); // brown shades
+	fTrigPad->Draw();
+	fPad->cd();
     }
     else if (Style == 1)
     {
 	fStyle = Style;
 	fLineWidth = 2;
+	fPad->SetFillColor(kBlack);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("NeighParms")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("TrackParms")))->SetFillColor(38);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetFillColor(50);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetTextColor(kYellow);
+	fButtons->Draw();
+	fUndButton->SetFillColor(38); // blue shades
+	fAccButton->SetFillColor(38);
+	fCanButton->SetFillColor(38);
+	fEnvButton->SetFillColor(38);
+	fAllButton->SetFillColor(38);
+	fPickButton->SetFillColor(38);
+	fZoomButton->SetFillColor(38);
+	fUnZoomButton->SetFillColor(38);
+	fTrigPad->SetFillColor(22); // brown shades
+	fTrigPad->Draw();
+	fPad->cd();
+    }
+    else if (Style == 2)
+    {
+	fStyle = Style;
+	fLineWidth = 1;
+	fPad->SetFillColor(kWhite);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("NeighParms")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("TrackParms")))->SetFillColor(33);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetFillColor(kYellow);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetTextColor(kRed);
+	fButtons->Draw();
+	fUndButton->SetFillColor(33); // blue shades
+	fAccButton->SetFillColor(33);
+	fCanButton->SetFillColor(33);
+	fEnvButton->SetFillColor(33);
+	fAllButton->SetFillColor(33);
+	fPickButton->SetFillColor(33);
+	fZoomButton->SetFillColor(33);
+	fUnZoomButton->SetFillColor(33);
+	fTrigPad->SetFillColor(38); // blue shades
+	fTrigPad->Draw();
+	fPad->cd();
+    }
+    else if (Style == 3)
+    {
+	fStyle = Style;
+	fLineWidth = 2;
+	fPad->SetFillColor(kWhite);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("NeighParms")))->SetFillColor(33);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("TrackParms")))->SetFillColor(33);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetFillColor(kYellow);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetTextColor(kRed);
+	fButtons->Draw();
+	fUndButton->SetFillColor(33); // blue shades
+	fAccButton->SetFillColor(33);
+	fCanButton->SetFillColor(33);
+	fEnvButton->SetFillColor(33);
+	fAllButton->SetFillColor(33);
+	fPickButton->SetFillColor(33);
+	fZoomButton->SetFillColor(33);
+	fUnZoomButton->SetFillColor(33);
+	fTrigPad->SetFillColor(38); // blue shades
+	fTrigPad->Draw();
+	fPad->cd();
     }
     else
     {
+	fStyle = Style;
 	fLineWidth = 1;
+	fPad->SetFillColor(kBlack);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("NeighParms")))->SetFillColor(38);
+	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("TrackParms")))->SetFillColor(38);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetFillColor(50);
+	((TDiamond *)(fButtons->GetListOfPrimitives()->FindObject("Diamond")))->SetTextColor(kYellow);
+	fButtons->Draw();
+	fUndButton->SetFillColor(38); // blue shades
+	fAccButton->SetFillColor(38);
+	fCanButton->SetFillColor(38);
+	fEnvButton->SetFillColor(38);
+	fAllButton->SetFillColor(38);
+	fPickButton->SetFillColor(38);
+	fZoomButton->SetFillColor(38);
+	fUnZoomButton->SetFillColor(38);
+	fTrigPad->SetFillColor(22); // brown shades
+	fTrigPad->Draw();
+	fPad->cd();
     }
 }
 //_____________________________________________________________________________
@@ -271,7 +392,7 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
    if (strlen(option) == 0) {
       TPaveText *title = new TPaveText(xmin +0.01*dx, ymax-0.09*dy, xmin +0.5*dx, ymax-0.01*dy);
       title->SetBit(kCanDelete);
-      title->SetFillColor(42);
+      title->SetFillColor(42); // red shades
       title->Draw();
       char ptitle[100];
       sprintf(ptitle,"OPERA emulsion view");
@@ -279,7 +400,7 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
    } else {
       TPaveLabel *label = new TPaveLabel(xmin +0.01*dx, ymax-0.07*dy, xmin +0.2*dx, ymax-0.01*dy,option);
       label->SetBit(kCanDelete);
-      label->SetFillColor(42);
+      label->SetFillColor(42); // red shades
       label->Draw();
    }
 }
@@ -294,11 +415,11 @@ void EdbDisplayBase::DisplayButtons()
    strcat(ViewTypePadName, fCanvasName);
    fButtons = new TPad(ViewTypePadName, "View Type Pad",0,0.45,0.15,1);
    fButtons->Draw();
-   fButtons->SetFillColor(38);
+   fButtons->SetFillColor(38); // blue shades
    fButtons->SetBorderSize(2);
    fButtons->cd();
 
-   Int_t butcolor = 33;
+   Int_t butcolor = 33; // blue shades
    Float_t dbutton = 0.07;
 //   Float_t y  = 0.96;
    Float_t y  = 1.044;
@@ -335,6 +456,11 @@ void EdbDisplayBase::DisplayButtons()
    button->SetFillColor(butcolor);
    button->Draw();
 
+   if (fStyle/2 == 1)
+	butcolor = 33; // blue shades
+   else
+	butcolor = 38; // blue shades
+
    y -= dbutton +dy;
 
    y -= dbutton +dy;
@@ -342,8 +468,9 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but6,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetRotate()",fTitle);
    button = new TButton("Rotate",but6,x0,y-dbutton,x1,y);
+   button->SetName("Rotate");
    button->SetToolTipText("Rotate 3-D view");
-   button->SetFillColor(38);
+   button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
@@ -351,8 +478,9 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but7,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewGL()",fTitle);
    button = new TButton("OpenGL",but7,x0,y-dbutton,x1,y);
+   button->SetName("OpenGL");
    button->SetToolTipText("Show 3-D view with OpenGL");
-   button->SetFillColor(38);
+   button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
@@ -360,8 +488,9 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but8,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DrawViewX3D()",fTitle);
    button = new TButton("X3D",but8,x0,y-dbutton,x1,y);
+   button->SetName("X3D");
    button->SetToolTipText("Show 3-D view with X3D");
-   button->SetFillColor(38);
+   button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
@@ -369,8 +498,9 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but9,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DialogNeighborParameters()",fTitle);
    button = new TButton("NeighParms",but9,x0,y-dbutton,x1,y);
+   button->SetName("NeighParms");
    button->SetToolTipText("Set Parameters for Neighborhood");
-   button->SetFillColor(38);
+   button->SetFillColor(butcolor);
    button->Draw();
 
    y -= dbutton +dy;
@@ -378,22 +508,24 @@ void EdbDisplayBase::DisplayButtons()
    sprintf(but10,
    "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->DialogTrackParameters()",fTitle);
    button = new TButton("TrackParms",but10,x0,y-dbutton,x1,y);
+   button->SetName("TrackParms");
    button->SetToolTipText("Set Mometum and Mas for tracks creation and propagation");
-   button->SetFillColor(38);
+   button->SetFillColor(butcolor);
    button->Draw();
 
    // display logo
-   TDiamond *diamond = new TDiamond(0.05,0.015,0.95,0.21);
-   diamond->SetFillColor(50);
-   diamond->SetTextAlign(22);
-   diamond->SetTextColor(5);
-   diamond->SetTextSize(0.11);
+   TDiamond *diamond = new TDiamond(0.05,0.017,0.95,0.21);
+   diamond->SetFillColor(50); // red shades
+   diamond->SetTextAlign(23);
+   diamond->SetTextColor(kYellow);
+   diamond->SetTextSize(0.09);
    diamond->Draw();
-   diamond->AddText(".. ");
+   diamond->AddText(".");
    diamond->AddText("ROOT");
-   diamond->AddText("OPERA");
-   diamond->AddText("... ");
-   diamond->AddText(" ");
+   diamond->AddText("- OPERA -");
+   diamond->AddText("FEDRA");
+   diamond->AddText(".");
+   diamond->SetName("Diamond");
 }
 
 //_____________________________________________________________________________
@@ -413,7 +545,8 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 //    Draw a view of DataSet
 
    gPad->SetCursor(kWatch);
-   gPad->SetFillColor(1);
+   if (fStyle/2 == 1) gPad->SetFillColor(kWhite);
+   else               gPad->SetFillColor(kBlack);
 
 //   TList *li = gPad->GetListOfPrimitives();
 //   int np = li->GetSize();
@@ -552,7 +685,7 @@ void EdbDisplayBase::DrawAllViews()
 
    fDrawAllViews = kTRUE;
    fPad->cd();
-   fPad->SetFillColor(15);
+   fPad->SetFillColor(15);  // gray shades
    fPad->Clear();
    fPad->Divide(2,2);
 
@@ -756,7 +889,7 @@ void EdbDisplayBase::DrawOldVTX(char *ptitle)
   {
     fOldVTX = new TText(0.05, 0.88, ptitle);
     fOldVTX->ResetBit(kCanDelete);
-    fOldVTX->SetTextColor(1);
+    fOldVTX->SetTextColor(kBlack);
     fOldVTX->SetTextSize(0.04);
     fOldVTX->SetTextAlign(12);
     fOldVTX->SetTextFont(102);
@@ -778,7 +911,7 @@ void EdbDisplayBase::DrawPreVTX(char *ptitle)
   {
     fPreVTX = new TText(0.05, 0.82, ptitle);
     fPreVTX->ResetBit(kCanDelete);
-    fPreVTX->SetTextColor(1);
+    fPreVTX->SetTextColor(kBlack);
     fPreVTX->SetTextSize(0.04);
     fPreVTX->SetTextAlign(12);
     fPreVTX->SetTextFont(102);
@@ -800,7 +933,7 @@ void EdbDisplayBase::DrawNewVTX(char *ptitle)
   {
     fNewVTX = new TText(0.05, 0.76, ptitle);
     fNewVTX->ResetBit(kCanDelete);
-    fNewVTX->SetTextColor(1);
+    fNewVTX->SetTextColor(kBlack);
     fNewVTX->SetTextSize(0.04);
     fNewVTX->SetTextAlign(12);
     fNewVTX->SetTextFont(102);
@@ -839,7 +972,7 @@ void EdbDisplayBase::CreateCanvasVTX()
     fHdrVTX = new TText(0.05, 0.94,
     "Vertex  ID    Mult  X          Y          Z          Dist   Chi2     Prob");
     fHdrVTX->ResetBit(kCanDelete);
-    fHdrVTX->SetTextColor(4);
+    fHdrVTX->SetTextColor(kBlue);
     fHdrVTX->SetTextSize(0.04);
     fHdrVTX->SetTextAlign(12);
     fHdrVTX->SetTextFont(102);
@@ -878,7 +1011,7 @@ void EdbDisplayBase::DrawOldBut(char *type)
     fOldBut = new TButton("TR",but,0.01,0.86,0.04,0.90);
     fOldBut->SetToolTipText("Show tracks table");
     fOldBut->ResetBit(kCanDelete);
-    fOldBut->SetFillColor(38);
+    fOldBut->SetFillColor(38); // blue shades
     fOldBut->SetName("DrawOldVTX");
   }
   else
@@ -908,7 +1041,7 @@ void EdbDisplayBase::DrawPreBut(char *type)
     fPreBut = new TButton("TR",but,0.01,0.80,0.04,0.84);
     fPreBut->SetToolTipText("Show tracks table");
     fPreBut->ResetBit(kCanDelete);
-    fPreBut->SetFillColor(38);
+    fPreBut->SetFillColor(38); // blue shades
     fPreBut->SetName("DrawPreVTX");
   }
   else
@@ -938,7 +1071,7 @@ void EdbDisplayBase::DrawNewBut(char *type)
     fNewBut = new TButton("TR",but,0.01,0.74,0.04,0.78);
     fNewBut->SetToolTipText("Show tracks table");
     fNewBut->ResetBit(kCanDelete);
-    fNewBut->SetFillColor(38);
+    fNewBut->SetFillColor(38); // blue shades
     fNewBut->SetName("DrawNewVTX");
   }
   else
@@ -958,44 +1091,64 @@ void EdbDisplayBase::DrawNewBut(char *type)
 void EdbDisplayBase::DrawUnd()
 {
     fTrigPad->cd();
+    if (fStyle/2 == 1)
+	fUndButton->SetFillColor(33);
+    else
+	fUndButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fUndButton);
-    fUndButton->SetPad(0.05,0.85,0.85,0.94);
+    fUndButton->SetPad(0.05,0.85,0.95,0.94);
     fUndButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 }
 //______________________________________________________________________________
 void EdbDisplayBase::DrawAcc()
 {
     fTrigPad->cd();
+    if (fStyle/2 == 1)
+	fAccButton->SetFillColor(33);
+    else
+	fAccButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fAccButton);
-    fAccButton->SetPad(0.05,0.63,0.85,0.72);
+    fAccButton->SetPad(0.05,0.63,0.95,0.72);
     fAccButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 }
 //______________________________________________________________________________
 void EdbDisplayBase::DrawCan()
 {
     fTrigPad->cd();
+    if (fStyle/2 == 1)
+	fCanButton->SetFillColor(33);
+    else
+	fCanButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fCanButton);
-    fCanButton->SetPad(0.05,0.74,0.85,0.83);
+    fCanButton->SetPad(0.05,0.74,0.95,0.83);
     fCanButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 }
 //______________________________________________________________________________
 void EdbDisplayBase::DrawEnv()
 {
     fTrigPad->cd();
+    if (fStyle/2 == 1)
+	fEnvButton->SetFillColor(33);
+    else
+	fEnvButton->SetFillColor(38);
     fTrigPad->GetListOfPrimitives()->Add(fEnvButton);
-    fEnvButton->SetPad(0.05,0.47,0.85,0.56);
+    fEnvButton->SetPad(0.05,0.47,0.95,0.56);
     fEnvButton->Draw();
     fTrigPad->Modified(kTRUE);
     fTrigPad->Update();
+    fTrigPad->Draw();
     fPad->cd();
 }
 //_____________________________________________________________________________
