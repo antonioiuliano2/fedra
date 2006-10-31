@@ -821,13 +821,25 @@ namespace VERTEX {
   //==============================================================================
   // distance: Chi2 distance to track
   //==============================================================================
+//  double Vertex::distance(Track& t) const {
+//    Vertex tmp(*this);
+//    tmp.push_back(t);
+//    tmp.use_momentum(false);
+//    tmp.back()->kalman.init();
+//    if (tmp.VtFilter() == false) return -10.;
+//    return tmp.chi2n();
+//  }
+
   double Vertex::distance(Track& t) const {
-    Vertex tmp(*this);
+    Vertex tmp;
+    const const_iterator last = end();
+    for(RelationList::const_iterator it = begin(); it != last; ++it) {
+        Track& tp = it->track;
+	tmp.push_back(tp);
+    }
     tmp.push_back(t);
-    tmp.use_momentum(false);
-    tmp.back()->kalman.init();
-    tmp.VtFilter();
-    return tmp.chi2n();
+    if (tmp.findVertexVt() == false) return -10.;
+    return tmp.track_chi2(tmp.ntracks()-1);
   }
 
   //==============================================================================
