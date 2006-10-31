@@ -1623,9 +1623,18 @@ void EdbVertexG::RemoveKink()
 	etr = eVs->GetTrack(it);
 	if (etr->VTAS() && etr->VTAE())
 	{
-	    printf("Vertex track belong to another vertex too - impossible delete it!\n");
-	    fflush(stdout);
-	    return;
+	    if (etr->VertexS() == eVs && etr->VertexE()->Flag() >= 0)
+	    {
+		printf("Vertex track (at zmax) belong to another vertex (ID=%d) too - impossible delete it!\n", etr->VertexE()->ID());
+		fflush(stdout);
+		return;
+	    }
+	    if (etr->VertexE() == eVs && etr->VertexS()->Flag() >= 0)
+	    {
+		printf("Vertex track (at zmin) belong to another vertex (ID=%d) too - impossible delete it!\n", etr->VertexS()->ID());
+		fflush(stdout);
+		return;
+	    }
 	}
     }
     if (eDs->eWorking == eVs)
@@ -1687,7 +1696,7 @@ void EdbVertexG::RemoveKink()
     }
     if(eD->eArrTr) eD->eArrTr->Compress();
     if(eD->eArrTrSave) eD->eArrTrSave->Compress();
-    eVs->SetFlag(-10);
+    eVs->SetFlag(-11);
     eDs->Draw();
     float mass = etr->M();
     float momentum = etr->P();
@@ -1963,27 +1972,39 @@ void EdbTrackG::UndoRemoveKink()
 		if (tr->VTAS())
 		{
 		    v = tr->VertexS();
-		    if (v) v->SetFlag(0);
-		    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+		    if (v)
 		    {
-			eD->eArrV->Add(v);
-		    }
-		    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
-		    {
-			eD->eArrVSave->Add(v);
+			if (v->Flag() == -11)
+			{
+			    v->SetFlag(0);
+			    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+			    {
+				eD->eArrV->Add(v);
+			    }
+			    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
+			    {
+				eD->eArrVSave->Add(v);
+			    }
+			}
 		    }
 		}
 		if (tr->VTAE())
 		{
 		    v = tr->VertexE();
-		    if (v) v->SetFlag(0);
-		    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+		    if (v)
 		    {
-			eD->eArrV->Add(v);
-		    }
-		    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
-		    {
-			eD->eArrVSave->Add(v);
+			if (v->Flag() == -11)
+			{
+			    v->SetFlag(0);
+			    if(eD->eArrV) if(!((eD->eArrV)->FindObject(v)))
+			    {
+				eD->eArrV->Add(v);
+			    }
+			    if(eD->eArrVSave) if(!((eD->eArrVSave)->FindObject(v)))
+			    {
+				eD->eArrVSave->Add(v);
+			    }
+			}
 		    }
 		}
 	    }
