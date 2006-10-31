@@ -607,9 +607,9 @@ EdbVertexRec::~EdbVertexRec()
 int EdbVertexRec::MakeV( EdbVertex &edbv )
 {
   // create new VtVertex and add (two) tracks to this one
-  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
-  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::MakeV: EdbPVRec not defined\n"); return 0;}
+  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Error: EdbVertexRec::MakeV: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
 
   float X0 =  ePVR->GetScanCond()->RadX0();
   Vertex *v=edbv.V();
@@ -765,9 +765,9 @@ int EdbVertexRec::FindVertex()
   // Note: in this function is assumed that all tracks selections are already done
   // ProbMin - minimal probability for chi2-distance between tracks
 
-  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
-  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::FindVertex: EdbPVRec not defined\n"); return 0;}
+  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Error: EdbVertexRec::FindVertex: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
 
   EdbVertex *edbv = 0;
   TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
@@ -1600,9 +1600,9 @@ int EdbVertexRec::SelSegNeighbor( EdbSegP *sin, int seltype, float RadMax, int D
 //______________________________________________________________________________
 int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 {
-  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
-  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined\n"); return 0;}
+  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
 
   int nn   = 0, iv = 0;
 //  int i = 0, nntr = 0;
@@ -1631,9 +1631,9 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 //______________________________________________________________________________
 int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float ImpMax)
 {
-  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
-  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined\n"); return 0;}
+  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
 
   EdbVTA    *vta = 0;
   EdbTrackP *tr  = 0;
@@ -1872,9 +1872,9 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 //______________________________________________________________________________
 int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray *arrs, TObjArray *arrt, TObjArray *arrv)
 {
-  if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
-  if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined\n"); return 0;}
+  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
+  if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
 
   EdbTrackP *tr  = 0, *trown = 0;
   const EdbSegP   *ss  = 0;
