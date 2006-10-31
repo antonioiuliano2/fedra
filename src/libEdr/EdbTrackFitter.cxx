@@ -170,7 +170,7 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta)
   ef1->Fit("f1","MQ");
   P=f1->GetParameter(0);
   dP=f1->GetParError(0);
-  P=fabs(P/1000.);
+  P=Abs(P/1000.);
 
   delete ef1;
   delete f1;
