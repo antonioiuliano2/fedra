@@ -48,8 +48,8 @@ class EdbRunAccess : public TObject {
 
   void Set0();
   bool InitRun();
-  bool InitRunFromRWC(char *rwcname);
-  bool AddRWDToRun(char *rwdname);
+  bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");
+  bool AddRWDToRun(char *rwdname, const char* options="");
   void PrintStat();
   void CheckRunLine();
   int CheckEmptyViews(EdbPattern &pat);
@@ -119,3 +119,4 @@ class EdbRunAccess : public TObject {
 };
 
 #endif /* ROOT_EdbRunAccess */
+

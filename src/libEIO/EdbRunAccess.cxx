@@ -77,7 +77,7 @@ bool EdbRunAccess::InitRun()
   return true;
 }
 ///_________________________________________________________________________
-bool EdbRunAccess::InitRunFromRWC(char *rwcname)
+bool EdbRunAccess::InitRunFromRWC(char *rwcname, bool bAddRWD, const char* options)
 {
   if(!eRun)
     if( gSystem->AccessPathName(rwcname, kFileExists) ) {
@@ -87,12 +87,12 @@ bool EdbRunAccess::InitRunFromRWC(char *rwcname)
   eRun=new EdbRun(eRunFileName.Data(),"RECREATE");
   if(!eRun) return false;
   
-  AddRWC(eRun, rwcname, true,""); 
+  AddRWC(eRun, rwcname, bAddRWD, options); 
   
   return true;
 }
 ///_________________________________________________________________________
-bool EdbRunAccess::AddRWDToRun(char *rwdname)
+bool EdbRunAccess::AddRWDToRun(char *rwdname, const char* options)
 {
   if(!eRun) return false;
   if( gSystem->AccessPathName(rwdname, kFileExists) ) {
@@ -103,7 +103,7 @@ bool EdbRunAccess::AddRWDToRun(char *rwdname)
   int f;//fragment index
   f=eRun->GetHeader()->GetNareas();
   f++;
-  if( !AddRWD(eRun, rwdname,f,"") ) return false;  
+  if( !AddRWD( eRun, rwdname, f, options) ) return false;  
   eRun->GetHeader()->SetNareas(f);
   return true;
 }
@@ -599,4 +599,5 @@ void EdbRunAccess::AddSegmentCut(int layer, int xi, float min[5], float max[5])
   cut->SetMax(max);
   eCuts[layer]->Add( cut );
 }
+
 

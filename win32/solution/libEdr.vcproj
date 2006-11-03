@@ -46,6 +46,9 @@ NMAKE clean"
 				RelativePath="..\..\src\libEdr\EdbPVRec.cxx">
 			</File>
 			<File
+				RelativePath="..\..\src\libEdr\EdbTrackFitter.cxx">
+			</File>
+			<File
 				RelativePath="..\..\src\libEdr\EdbVertex.cxx">
 			</File>
 			<File
@@ -68,6 +71,9 @@ NMAKE clean"
 				RelativePath="..\..\src\libEdr\EdbPVRec.h">
 			</File>
 			<File
+				RelativePath="..\..\src\libEdr\EdbTrackFitter.h">
+			</File>
+			<File
 				RelativePath="..\..\src\libEdr\EdbVertex.h">
 			</File>
 			<File
@@ -88,3 +94,4 @@ NMAKE clean"
 	<Globals>
 	</Globals>
 </VisualStudioProject>
+
