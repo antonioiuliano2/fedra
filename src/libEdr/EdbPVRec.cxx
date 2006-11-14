@@ -143,10 +143,10 @@ void EdbPatCouple::CalculateAffXYZ( float z, int flag )
   EdbSegP *s1, *s2;
   int   ncp=Ncouples();
   
-  Float_t *x1 = new Float_t[ncp];
-  Float_t *y1 = new Float_t[ncp];
-  Float_t *x2 = new Float_t[ncp];
-  Float_t *y2 = new Float_t[ncp];
+  TArrayF x1(ncp);
+  TArrayF y1(ncp);
+  TArrayF x2(ncp);
+  TArrayF y2(ncp);
 
   Float_t dz1,dz2;
 
@@ -161,12 +161,7 @@ void EdbPatCouple::CalculateAffXYZ( float z, int flag )
     x2[i] = s2->X() + dz2*s2->TX();
     y2[i] = s2->Y() + dz2*s2->TY();
   }
-  eAff->Calculate( ncp,x1,y1,x2,y2, flag);
-
-  delete[] x1;
-  delete[] y1;
-  delete[] x2;
-  delete[] y2;
+  eAff->Calculate( ncp,x1.fArray,y1.fArray,x2.fArray,y2.fArray, flag);
 }
 
 //______________________________________________________________________________
@@ -254,10 +249,10 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
 
   printf("\nOffset: %f %f   npat = %d \n\n", voff[0], voff[1], npat0 );
 
-  EdbAffine2D *aff  = new EdbAffine2D();
-  aff->ShiftX(voff[0]);
-  aff->ShiftY(voff[1]);
-  pat1->Transform(aff);
+  EdbAffine2D aff;
+  aff.ShiftX(voff[0]);
+  aff.ShiftY(voff[1]);
+  pat1->Transform(&aff);
 
   return npat0;
 }
@@ -587,8 +582,8 @@ int EdbPatCouple::SortByCHI2P()
 
   int np1 = ePat1->N();
   int np2 = ePat2->N();
-  int *found1 = new int[np1];
-  int *found2 = new int[np2];
+  TArrayI found1(np1);
+  TArrayI found2(np2);
   int i;
   for(i=0; i<np1; i++) found1[i]=0;
   for(i=0; i<np2; i++) found2[i]=0;
@@ -981,7 +976,9 @@ void EdbPVRec::SetCouples()
     pc->SetPat1( GetPattern(pc->ID1()) );
     pc->SetPat2( GetPattern(pc->ID2()) );
 
-    if( TMath::Abs(pc->Pat2()->Z() - pc->Pat1()->Z()) < 40. )  pc->SetCHI2mode(2); 
+    pc->SetCHI2mode(GetScanCond()->Chi2Mode());
+    //if( TMath::Abs(pc->Pat2()->Z() - pc->Pat1()->Z()) < 40. )  pc->SetCHI2mode(2);
+
     //pc->SetCHI2mode(3);  /// debug
   }
 }
@@ -1166,64 +1163,6 @@ int EdbPVRec::Link()
   //printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
   return npat;
 }
-
-/*
-//______________________________________________________________________________
-int EdbPVRec::LinkTracks()
-{
-  SetCouples();
-
-  EdbPatCouple *pc = 0;
-
-  int ncp=Ncouples();
-  for(int i=0; i<ncp; i++ ) {
-    pc = GetCouple(i);
-    pc->LinkFast();
-    pc->CutCHI2P(1.5);
-    pc->SortByCHI2P();
-    pc->SelectIsolated();
-  }
-  FillTracksCell();
-  SelectLongTracks( Npatterns());
-
-  AlignA();
-
-  //Align();
-  return 1;
-}
-
-
-//______________________________________________________________________________
-int EdbPVRec::AlignA(int alignFlag)
-{
-  // align patterns in volume
-  int npat=Npatterns();
-
-  TObjArray aKeep(Npatterns());  
-  EdbAffine2D *a0;
-  int i;
-  for(i=0; i<npat; i++ ) {
-    a0 = new EdbAffine2D();
-    GetPattern(i)->GetKeep(*a0);
-    aKeep[i]=a0;
-  }
-
-  int ncp = Ncouples();
-  for(i=0; i<ncp; i++ )   GetCouple(i)->CalculateAffXY(alignFlag);
-
-  EdbAffine2D a;
-  npat = Npatterns();
-  for(i=npat-1; i>0; i-- ) {
-    GetPattern(i)->GetKeep(a);
-    a0=(EdbAffine2D *)(aKeep.At(i));
-    a0->Invert();
-    a0->Transform(&a);
-    GetPattern(i-1)->Transform(a0);
-  }
-
-  return npat;
-}
-*/
 
 //______________________________________________________________________________
 int EdbPVRec::Align(int alignFlag)
