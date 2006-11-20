@@ -185,7 +185,7 @@ class EdbSegG : public TPolyLine3D {
  public:
   EdbSegG() {eSeg=0; eD=0;}
   EdbSegG(EdbDisplay *D) {eSeg=0; eD=D;}
-  EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0;}
+  EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0; eD=0;}
   EdbSegG(Int_t nhits, EdbDisplay *D):TPolyLine3D(nhits) {eSeg=0; eD=D;}
   virtual ~EdbSegG(){}
 

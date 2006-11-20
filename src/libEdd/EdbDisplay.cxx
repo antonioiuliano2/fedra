@@ -76,7 +76,8 @@ void EdbTrackG::InspectTrack()
 const char *EdbTrackG::GetTitle() const
 {
     static char title[80];
-    sprintf(title, "Track ID %d, Nseg %d, Prob %.4f, P %.3f", eTr->ID(), eTr->N(), eTr->Prob(), eTr->P());
+    if (eTr) sprintf(title, "Track ID %d, Nseg %d, Prob %.4f, P %.3f", eTr->ID(), eTr->N(), eTr->Prob(), eTr->P());
+    else strcpy(title, "Track address not defined");
     return title;
 }
 
@@ -127,7 +128,8 @@ void EdbSegG::InspectSegment()
 const char *EdbSegG::GetTitle() const
 {
     static char title[80];
-    sprintf(title, "Segment ID %d, PID %d, Track %d", eSeg->ID(), eSeg->PID(), eSeg->Track());
+    if (eSeg) sprintf(title, "Segment ID %d, PID %d, Track %d", eSeg->ID(), eSeg->PID(), eSeg->Track());
+    else strcpy(title, "Segment address not defined");
     return title;
 }
 
@@ -142,7 +144,8 @@ const char *EdbSegG::GetName() const
 char *EdbSegG::GetObjectInfo(int px, int py) const
 {
     static char coordinates[80];
-    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f", eSeg->X(), eSeg->Y(), eSeg->Z(), eSeg->TX(), eSeg->TY());
+    if (eSeg) sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f", eSeg->X(), eSeg->Y(), eSeg->Z(), eSeg->TX(), eSeg->TY());
+    else strcpy(coordinates, "Segment address not defined");
     return coordinates;
 }
 
