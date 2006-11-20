@@ -1672,7 +1672,6 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     }
   }
   CloseCouplesTree(cptree);
-
   return ntot;
 }
 
