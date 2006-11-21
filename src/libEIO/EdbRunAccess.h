@@ -54,6 +54,7 @@ class EdbRunAccess : public TObject {
   void CheckRunLine();
   int CheckEmptyViews(EdbPattern &pat);
 
+  EdbRun *GetRun() const {return eRun;}
   EdbLayer *GetMakeLayer(int id);
   EdbLayer *GetLayer(int id)
     { if(eLayers[id]) return (EdbLayer *)eLayers[id]; else return 0; }
