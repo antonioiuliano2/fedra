@@ -763,6 +763,10 @@ int EdbTrackP::CheckMaxGap()
 //______________________________________________________________________________
 int EdbTrackP::GetSegmentsMCTrack( int& nsegf ) const
 {
+  // return: ID of the MC track contributed to this reconstructed track 
+  //         with the maximal number of segments
+  // nsegf - return number of segments originated from the selected MC track
+
   int nseg = N();
   if (nseg < 2) return -1;
   if (nseg > 300) nseg = 300;
@@ -795,6 +799,8 @@ int EdbTrackP::GetSegmentsMCTrack( int& nsegf ) const
 //______________________________________________________________________________
 int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 {
+  printf(" EdbTrackP::GetSegmentsFlag: obsolete, to be deleted!  now replaced by GetSegmentsMCTrack\n");
+
   int nseg = N();
   if (nseg < 2) return -1;
   if (nseg > 300) nseg = 300;
