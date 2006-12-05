@@ -2,7 +2,8 @@ void rootlogon()
 {
   // project lib path should be setted in LD_LIBRARY_PATH
 
-  loadlib( "libvt"   , "CMatrix" );
+ if( strncmp(gSystem->GetName(),"Unix",4)==0 )
+     loadlib( "libvt"   , "CMatrix" );
   loadlib( "libEdb"  , "EdbView" );
   loadlib( "libEmath", "EdbMath" );
   loadlib( "libEphys", "EdbPhysics" );
@@ -13,10 +14,10 @@ void rootlogon()
   loadlib( "libGui"  , "TGNumberEntry" );  // required only in batch mode
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
-
   loadlibEOracle();                                //optional
+  if(gSystem->Load("libDataConversion")) printf("libDataConversion do NOT loaded!\n"); //optional
 
-  //loadlib( "EmrPoint", "libEmr" );
+  gStyle->SetPalette(1);
 }
 
 //----------------------------------------------------------
@@ -24,8 +25,7 @@ void loadlib(const char *lib, const char *key)
 {
   if (!TClassTable::GetDict(key)) { 
     if(gSystem->Load(lib)) printf("%s do NOT loaded!\n",lib);
-    //else                   printf("%s   \tloaded \n",lib);
-  }  
+  }
 }
 
 //----------------------------------------------------------
