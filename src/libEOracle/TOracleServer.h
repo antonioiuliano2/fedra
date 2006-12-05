@@ -1,4 +1,4 @@
-// @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleServer.h,v 1.1 2005-10-24 13:48:29 valeri Exp $
+// @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleServer.h,v 1.2 2006-12-05 13:01:44 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 
 /*************************************************************************
@@ -36,7 +36,15 @@ class TOracleServer : public TSQLServer {
 private:
    Environment  *fEnv;    // environment of Oracle access
    Connection   *fConn;   // connection to Oracle server
+#if ROOT_VERSION_CODE < ROOT_VERSION(5,11,0)
    Statement    *fStmt;   // resusable statement object
+#else
+#if !defined(__CINT__)
+   oracle::occi::Statement    *fStmt;   // resusable statement object
+#else
+   Statement    *fStmt;   // resusable statement object
+#endif
+#endif
 
 public:
    TOracleServer(const char *db, const char *uid, const char *pw);
