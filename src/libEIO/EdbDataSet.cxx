@@ -2273,20 +2273,18 @@ void EdbDataProc::LinkTracks( int alg, float p )
 
   printf("tracking:  alg = %d \t p= %f\n", alg, p);
 
-  if(alg==-1) {
-    TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
-    FillCouplesTree(cptree, ali,0);
-    CloseCouplesTree(cptree);
-  }
-
   ali->SetCouplesPeriodic(0,1);
   int ntr=0;
 
   ntr = LinkTracksWithFlag( ali, p, 0.05, 2, 3, 0 );
-
   //ntr = LinkTracksWithFlag( ali, p/4., 0.01, 2, 3, 1 );
-
   //if(merge>0) ali->MergeTracks(merge);
+
+  if(alg==-1) { // this is a test option produce couples tree from the first 2 linked patterns
+    TTree *cptree=EdbDataPiece::InitCouplesTree("linked_couples.root","RECREATE");
+    FillCouplesTree(cptree, ali,0);
+    CloseCouplesTree(cptree);
+  }
 
   float mass=0.139;                    //TODO!
   ali->FitTracks( p, mass );         // is important to call it before MakeTracksTree!
