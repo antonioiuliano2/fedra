@@ -1,9 +1,9 @@
 void rootlogon()
 {
   // project lib path should be setted in LD_LIBRARY_PATH
-
- if( strncmp(gSystem->GetName(),"Unix",4)==0 )
-     loadlib( "libvt"   , "CMatrix" );
+  
+  if( strncmp(gSystem->GetName(),"Unix",4)==0 )
+    loadlib( "libvt"   , "CMatrix" );
   loadlib( "libEdb"  , "EdbView" );
   loadlib( "libEmath", "EdbMath" );
   loadlib( "libEphys", "EdbPhysics" );
@@ -11,6 +11,7 @@ void rootlogon()
   loadlib( "libEIO"  , "EdbRunAccess" );
 
   loadlib( "libEGA"  , "EdbGA" );          //optional
+  loadlib( "libGeom" , "TGeoVolume" );     // required for VMC
   loadlib( "libGui"  , "TGNumberEntry" );  // required only in batch mode
   loadlib( "libEdd"  , "EdbDisplay" );     //optional
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
