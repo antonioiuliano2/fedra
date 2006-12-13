@@ -41,7 +41,7 @@ EdbViewCell::EdbViewCell()
 //____________________________________________________________________________________
 EdbViewCell::~EdbViewCell()
 {
-  printf("EdbViewCell::~EdbViewCell() \n");
+  //printf("EdbViewCell::~EdbViewCell() \n");
   Delete();
 }
 
@@ -168,11 +168,11 @@ EdbViewRec::EdbViewRec()
 //____________________________________________________________________________________
 EdbViewRec::~EdbViewRec()
 {
-  printf("EdbViewRec::~EdbViewRec()\n");
+  //printf("EdbViewRec::~EdbViewRec()\n");
   if(eGCla)        { delete eGCla;       eGCla=0;       }
-  printf("1\n");
+  //printf("1\n");
   if(eGrainsTree)  { delete eGrainsTree; eGrainsTree=0; }
-  printf("2\n");
+  //printf("2\n");
   
   if(epT)          { delete[] epT; epT=0; }
   if(epP)          { delete[] epP; epP=0; }
@@ -180,14 +180,14 @@ EdbViewRec::~EdbViewRec()
   if(ehX)          { delete[] ehX; ehX=0; }
   if(epS)          { delete[] epS; epS=0; }
   if(epC)          { delete[] epC; epC=0; }
-  printf("3\n");
+  //printf("3\n");
 
   if(eNsegMax>0)  {
     if(eSA!=eG)     if(eSA) {eSA->Clear(); delete eSA; eSA=0; }
-    printf("4\n");
+    //printf("4\n");
     if(eG) { eG->Clear(); delete eG; eG=0; }
   }
-  printf("5\n");
+  //printf("5\n");
 }
 
 //____________________________________________________________________________________
@@ -249,6 +249,13 @@ void EdbViewRec::SetPrimary()
   eGCla       = 0;
   eCL         = 0;
   eSA         = 0;
+
+  epT = 0;
+  epP = 0;
+  epY = 0;
+  ehX = 0;
+  epS = 0;
+  epC = 0;
 
 }
 

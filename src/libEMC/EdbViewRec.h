@@ -13,6 +13,7 @@
 #include "EdbView.h"
 #include "EdbViewDef.h"
 
+class TTree;
 class EdbView;
 
 //______________________________________________________________________________

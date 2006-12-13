@@ -62,13 +62,15 @@ class EdbBrickGen : public TObject {
 
   void Generate();
   void GenerateOperaBrick( int   npl=58,
-			   float dx=60000., float dy=50000.,
-			   float x0=0.,    float y0=0.,    float z0=0.
+			   float dx=60000.,  float dy=50000.,
+			   float x0=0.,      float y0=0.,  float z0=0.,
+			   float zbase=210., float zu=45., float zd=45., float zspacer=1000.
 			   );
   void GenerateOperaBrick( EdbBrickP &br,
 			   int   npl,
 			   float dx, float dy,
-			   float x0,    float y0,    float z0
+			   float x0,    float y0,    float z0,
+			   float zbase, float zu, float zd, float zspacer
 			   );
 
   void GeneratePatternsVolumeBT(EdbPatternsVolume &v);

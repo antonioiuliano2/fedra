@@ -31,6 +31,9 @@ EdbBeamGen::EdbBeamGen()
 //____________________________________________________________________________________
 EdbTrackP *EdbBeamGen::NextTrack(int id)
 {
+  // return the next track generated according to the given distribution and inside the limits
+  // id is assigned as track::eID
+
   float x,y,z,tx,ty;
   EdbTrackP *tr = new EdbTrackP();
 
@@ -44,7 +47,7 @@ EdbTrackP *EdbBeamGen::NextTrack(int id)
     if(!eLimits)               break;
     if(eLimits->IsInside(x,y)) break;
   }
-  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinit cycle\n");
+  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinite cycle\n");
 
   for(i=0; i<maxcycle; i++) {
     gRandom->Rannor(tx,ty); 
@@ -52,7 +55,7 @@ EdbTrackP *EdbBeamGen::NextTrack(int id)
     ty = eTY0 + eSigmaTY*ty; 
     if(tx*tx+ty*ty<1.)    break;
   }  
-  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinit cycle\n");
+  if(i>maxcycle-2) printf("WARNING: EdbBeamGen::NextTrack - infinite cycle\n");
 
   tr->Set(id, x, y, tx, ty, 1, 0);
 
@@ -94,24 +97,25 @@ void EdbBrickGen::Print()
 //____________________________________________________________________________________
 void EdbBrickGen::GenerateOperaBrick( int   npl,
 				      float dx, float dy,
-				      float x0, float y0, float z0
+				      float x0, float y0, float z0,
+				      float zbase, float zu, float zd, float zspacer
 				      )
 {
+  // Generate the typical OPERA brick with the given settings
+
   if(eBrick) delete eBrick;
   eBrick = new EdbBrickP();
-  GenerateOperaBrick( *eBrick, npl, dx, dy, x0, y0, z0 );
+  GenerateOperaBrick( *eBrick, npl, dx, dy, x0, y0, z0,zbase, zu, zd, zspacer );
 }
 
 //____________________________________________________________________________________
 void EdbBrickGen::GenerateOperaBrick( EdbBrickP &br,
 				      int   npl,
 				      float dx, float dy,
-				      float x0, float y0, float z0
+				      float x0, float y0, float z0,
+				      float zbase, float zu, float zd, float zspacer
 				      )
 {
-  float zspacer=1000;
-  float zbase=210, zu=45., zd=45.;
-
   float dzpl  = zbase+zu+zd;
   float zstep = zspacer+dzpl;
 
@@ -136,7 +140,7 @@ void EdbBrickGen::GenerateOperaBrick( EdbBrickP &br,
 //____________________________________________________________________________________
 void EdbBrickGen::GeneratePatternsVolumeBT(EdbPatternsVolume *v)
 {
-  // generate patterns corresponding to basetracks (1 pattern/plate)
+  // generate the patterns structure 1 pattern/plate (corresponding to basetracks)
 
   if(!ePVG)  ePVG = new EdbPVGen();
   if(!v) v = new EdbPatternsVolume();
