@@ -1,4 +1,4 @@
-// @(#)root/oracle:$Name: not supported by cvs2svn $:$Id: TOracleServer.cxx,v 1.3 2006-12-05 13:01:44 valeri Exp $
+// @(#)root/oracle:$Name: not supported by cvs2svn $:$Id: TOracleServer.cxx,v 1.4 2006-12-13 14:00:30 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 
 /*************************************************************************
@@ -43,10 +43,8 @@ TOracleServer::TOracleServer(const char *db, const char *uid, const char *pw)
    }
 
    const char *conn_str = 0;
-   if (strstr(url.GetFile(), "/"))           //GS
-      conn_str = url.GetFile()+1;            //GS
-   else                                      //GS
-      conn_str = url.GetFile();              //GS
+   if (strcmp(url.GetFile(), "/"))
+      conn_str = url.GetFile()+1;
 
    try {
       fEnv = Environment::createEnvironment();
