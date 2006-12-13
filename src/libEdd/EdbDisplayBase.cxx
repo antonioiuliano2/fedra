@@ -10,6 +10,7 @@
 
 #include "EdbDisplayBase.h"
 #include "TROOT.h"
+#include "TGeoManager.h"
 //Doesn't work in old versions of ROOT 
 //#include "TVirtualViewer3D.h"
 
@@ -86,7 +87,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    // Create Control pad
    fCanvas->cd();
    Float_t dxtr     = 0.15;
-   Float_t dytr     = 0.45;
+   Float_t dytr     = 0.35;
    strcpy(TPadName, "ControlPad-");
    strcat(TPadName, title);
    fTrigPad = new TPad(TPadName, "Control Pad",0,0,dxtr,dytr);
@@ -211,6 +212,8 @@ EdbDisplayBase::~EdbDisplayBase()
     fView = 0;
     if (fCanvas) delete fCanvas;
     fCanvas = 0;
+    if (fDetector) delete fDetector;
+    fDetector = 0;
 }
 //=============================================================================
 void EdbDisplayBase::Set0()
@@ -246,6 +249,8 @@ void EdbDisplayBase::Set0()
   fView      = 0;
   fStyle     = 0;
   fLineWidth = 1;
+  if(!fDetector){fDetector = 0;}
+  fDrawDet = 0;
   for (int i=0; i<50; i++) fRemBut[i] = 0;
 }
 //=============================================================================
@@ -413,17 +418,17 @@ void EdbDisplayBase::DisplayButtons()
 
    strcpy(ViewTypePadName, "ViewTypePad-");
    strcat(ViewTypePadName, fCanvasName);
-   fButtons = new TPad(ViewTypePadName, "View Type Pad",0,0.45,0.15,1);
+   fButtons = new TPad(ViewTypePadName, "View Type Pad",0,0.35,0.15,1);
    fButtons->Draw();
    fButtons->SetFillColor(38); // blue shades
    fButtons->SetBorderSize(2);
    fButtons->cd();
 
    Int_t butcolor = 33; // blue shades
-   Float_t dbutton = 0.07;
+   Float_t dbutton = 0.05;
 //   Float_t y  = 0.96;
    Float_t y  = 1.044;
-   Float_t dy = 0.014;
+   Float_t dy = 0.010;
    Float_t x0 = 0.05;
    Float_t x1 = 0.95;
 
@@ -461,7 +466,15 @@ void EdbDisplayBase::DisplayButtons()
    else
 	butcolor = 38; // blue shades
 
+   ////y -= dbutton +dy;  ????
    y -= dbutton +dy;
+   char butA[256];
+   sprintf(butA,
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SwDrawDet()",fTitle);
+   button=new TButton("Draw Detector",butA,x0,y-dbutton,x1,y);
+   button->SetToolTipText("Toggle drawing detector on/off");
+   button->SetFillColor(38);
+   button->Draw();
 
    y -= dbutton +dy;
    char but6[256];
@@ -526,6 +539,29 @@ void EdbDisplayBase::DisplayButtons()
    diamond->AddText("FEDRA");
    diamond->AddText(".");
    diamond->SetName("Diamond");
+}
+
+//_____________________________________________________________________________
+void EdbDisplayBase::SetDrawDet(Bool_t fflag)
+{
+  if(!fDetector) { printf("WARNING: EdbDisplayBase::SetDrawDet: fDetector do not defined!\n"); return; }
+  fDrawDet=fflag;
+  TGeoVolume* vol=(TGeoVolume*)fPad->GetListOfPrimitives()->FindObject(fDetector);
+  vol->SetVisibility(fDrawDet);
+  printf("\nDrawDet is %i\n",vol->IsVisible());
+  fPad->Modified(kTRUE);
+}
+void   EdbDisplayBase::SwDrawDet()  { SetDrawDet(!fDrawDet); }
+Bool_t EdbDisplayBase::GetDrawDet() {  return fDrawDet;      }
+//_____________________________________________________________________________
+void EdbDisplayBase::DrawDetector()
+{
+  //if(!fDrawDet){return;}
+  if(fDetector)
+    {
+      fPad->GetListOfPrimitives()->Add(fDetector);
+    }
+  else{printf("\nError:no Detector!\n");};
 }
 
 //_____________________________________________________________________________
@@ -720,7 +756,8 @@ void EdbDisplayBase::DrawViewGL()
    pad->cd();
    TView *view = pad->GetView();
    if (!view) return;
-   pad->x3d("OPENGL");
+   pad->GetViewer3D("OPENGL");
+   //pad->x3d("OPENGL");
 }
 
 //_____________________________________________________________________________
@@ -732,7 +769,8 @@ void EdbDisplayBase::DrawViewX3D()
    pad->cd();
    TView *view = pad->GetView();
    if (!view) return;
-   pad->x3d();
+   //pad->x3d();
+   pad->GetViewer3D("x3d");
 }
 
 

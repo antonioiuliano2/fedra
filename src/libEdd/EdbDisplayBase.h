@@ -34,6 +34,7 @@
 #include <TGaxis.h>
 #include <TVirtualX.h>
 #include <TMath.h>
+#include <TGeoVolume.h>
 
 static const int kMAXZOOMS=30;
 
@@ -104,7 +105,8 @@ protected:
    TButton	    *fPreBut;		    //Previous Vertex display button
    TButton          *fRemBut[50];           //track removing buttons
    char		    fCanvasName[128];       //Name of main canvas
-   
+   Bool_t	    fDrawDet;		    //True if drawing detector is on
+   TGeoVolume	    *fDetector;		    //detector geometry
 public:
 
    TPaveText        *fVTXTRKInfo;	    //Vertex - tracks information
@@ -156,8 +158,12 @@ public:
    virtual char *    GetObjectInfo(int px, int py) const;
    virtual void      SetRotate();
    virtual void      SetStyle(int Style = 0);
-
-  ClassDef(EdbDisplayBase,1) //basic class for FEDRA Event Display
+   virtual void	     SetDrawDet(Bool_t fflag);
+   virtual void	     SwDrawDet();
+   Bool_t 	     GetDrawDet();
+   virtual void	     DrawDetector();
+   virtual void	     SetDetector(TGeoVolume* det){fDetector=det;}
+   ClassDef(EdbDisplayBase,1) //basic class for FEDRA Event Display
 };
 
 #endif /* ROOT_EdbDisplayBase */
