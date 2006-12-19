@@ -551,8 +551,7 @@ void EdbDisplayBase::SetDrawDet(Bool_t fflag)
   printf("\nDrawDet is %i\n",vol->IsVisible());
   fPad->Modified(kTRUE);
 }
-void   EdbDisplayBase::SwDrawDet()  { SetDrawDet(!fDrawDet); }
-Bool_t EdbDisplayBase::GetDrawDet() {  return fDrawDet;      }
+
 //_____________________________________________________________________________
 void EdbDisplayBase::DrawDetector()
 {

@@ -159,8 +159,8 @@ public:
    virtual void      SetRotate();
    virtual void      SetStyle(int Style = 0);
    virtual void	     SetDrawDet(Bool_t fflag);
-   virtual void	     SwDrawDet();
-   Bool_t 	     GetDrawDet();
+   virtual void	     SwDrawDet()        { SetDrawDet(!fDrawDet); }
+   Bool_t 	     GetDrawDet() const { return fDrawDet; }
    virtual void	     DrawDetector();
    virtual void	     SetDetector(TGeoVolume* det){fDetector=det;}
    ClassDef(EdbDisplayBase,1) //basic class for FEDRA Event Display
