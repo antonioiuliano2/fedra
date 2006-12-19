@@ -227,7 +227,7 @@ void EdbViewRec::SetPrimary()
   eNsegMax=10000;       // limit for the segments number
 
   eNgr=0;
-  eNgrMax=100000;           // limit for the grains number
+  eNgrMax=200000;           // limit for the grains number
   //  eAddGrainsToView = false; // use a dedicated array for eG
   eNclGrMin = 1;
   eNclGrMax = 6;
