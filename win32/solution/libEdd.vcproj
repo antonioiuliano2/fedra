@@ -37,9 +37,6 @@ NMAKE clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\libEdd\EdbDisplay.cpp">
-			</File>
-			<File
 				RelativePath="..\..\src\libEdd\EdbDisplay.cxx">
 			</File>
 			<File

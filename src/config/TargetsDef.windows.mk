@@ -25,8 +25,7 @@ $(CINT_NAME).cxx: $(CINT)
     rootcint -f $(CINT_NAME).cxx -c -p -I$(INC_DIR) $(CINT)
 
 clean:
-    for %F IN ($(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).* ) DO IF EXIST %F del /q %F
-
+    for %F IN ($(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).* ) DO IF EXIST "%F" del /q "%F"
 
 depend:
         @makedepend -I$(INCLUDE) *.cxx >& /dev/null

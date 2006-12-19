@@ -40,9 +40,6 @@ NMAKE  clean"
 				RelativePath="..\..\src\libEIO\EdbDataSet.cxx">
 			</File>
 			<File
-				RelativePath="..\..\src\libEIO\EdbLayer.cxx">
-			</File>
-			<File
 				RelativePath="..\..\src\libEIO\EdbRunAccess.cxx">
 			</File>
 			<File
@@ -54,9 +51,6 @@ NMAKE  clean"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="..\..\src\libEIO\EdbDataSet.h">
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbLayer.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libEIO\EdbRunAccess.h">

@@ -35,5 +35,8 @@
 
 :: remove MSVS temporary files
  if exist %installdir%\win32\solution\Fedra.suo del /A:H %installdir%\win32\solution\Fedra.suo
- if exist %installdir%\win32\solution\Fedra.ncb del /A:H %installdir%\win32\solution\Fedra.ncb
+ if exist %installdir%\win32\solution\Fedra.ncb del      %installdir%\win32\solution\Fedra.ncb
+ if exist %installdir%\win32\solution\Debug     rd /S/Q  %installdir%\win32\solution\Debug
+ if exist %installdir%\win32\solution\Release   rd /S/Q  %installdir%\win32\solution\Release
+
 

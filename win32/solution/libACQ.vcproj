@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="libACQ"
+	ProjectGUID="{CFCA6C86-B5B9-465A-9F32-72C42F37134D}"
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="0">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libACQ
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\libACQ
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libACQ
+NMAKE clean"
+				Output="..\..\lib\libACQ.dll"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\src\libACQ\AcqCOM.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqMarksScanner.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqOdyssey.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqSerialPlateChanger.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqStage1.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqTrackReconstructor.cxx">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqTrackScanner.cxx">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\src\libACQ\AcqCOM.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqMarksScanner.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqOdyssey.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqSerialPlateChanger.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqStage1.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqTrackReconstructor.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\AcqTrackScanner.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="work"
+			Filter="">
+			<File
+				RelativePath="..\..\src\libACQ\work\grains.C">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\work\hwinit.C">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\work\init.C">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\work\rootlogon.C">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\work\run.C">
+			</File>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libACQ\Makefile">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>
