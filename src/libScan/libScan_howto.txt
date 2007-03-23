@@ -1,0 +1,172 @@
+==The directory structure==
+
+Starting from yhe top level directory setted as for example:
+ sproc.eProcDirClient="c:/work/ONLINE";
+the structure is the following:
+
+ b000009.map					- the map file with the fiducial marks for this brick
+ parset/						- general processing parameters
+ b000009/						- brick directories with all plates inside
+ b....../						- contents of the brick dir:
+         AFF/					- the affine transformations between the plates (pieces) of this brick
+         p001/					- plate directories with all scanning and processing data
+         p.../					- contents of the plate dir:
+              x.x.x.x.pred.root	- predictions for scanning of this plate as EdbPattern (TODO)
+              x.x.x.x.pred.txt	- ascii file with predictions for scan
+              x.x.x.x.found.txt	- ascii file with found predictions (TODO)
+              x.x.x.x.raw.root	- raw data (views tree)
+              x.x.x.x.cp.root	- linked data (couples tree)
+              x.x.x.x.par       - stored the correction parameters for this plate
+              x.x.x.x.in.par    - input parameter files assembled before each pass of processing
+               
+=== The data piece name definition ===
+Each file named as x.x.x.x.suffix corresponding to the scanned data piece x.x.x.x. This 4 numbers 
+has the following meaning: 
+
+ +--------- brick ID
+ | +------- plate ID
+ | | + ---- plate loading ID (same stage coordinates setting)
+ | | | +--- scanning piece ID (may be done >1 scan with the same plate settings)
+ | | | |
+ x.x.x.x
+
+This naming convention permits to have the complete and unambiguous address scheme for each 
+piece of scanning data and makes possible if necessary:
+
+* to have different correction parameters for the different zones of the emulsion plate (x.x.x.x)
+* to merge the processing (linking) results for the different zones if necessary (x.x.x.*)
+ 
+== The alignment and affine transformations ==
+
+The alignment of pieces will done on one-to-one approach:
+
+Align x.x.x.x to y.y.y.y => AFF/x.x.x.x_y.y.y.y.par where the output par file 
+contain the following information:
+
+* deltaZ of 2 pieces before (input) - must be prepared before alignment
+* affine transformations before (input) - may be missed
+* affine transformations after alignment (output) - if update is requested
+* deltaZ of 2 pieces after (output) - if update is requested
+
+This approach permit to do the alignment individually for each couple of pieces and 
+assemble them into the dataset later by request (in this case the reference piece for 
+the dataset may be selected later).
+
+== The data scanning and processing ==
+
+=== Before scanning ===
+* The brick directory and the correspondent map-file must be created
+
+Initialization in the script:
+
+ EdbScanClient scan;                           // data scanner object
+ EdbScanProc   sproc;                          // data processor object
+ scan.eServer="10.10.10.6";                    // address of the server
+ scan.eRawDirServer="o:/ScanBack";             // raw data will be written here by server
+ scan.eRawDirClient="/opera/data/ScanBack";    // the same raw data dir visible from client
+ sproc.eProcDirClient = "/opera/ana/ONLINE";   // processing data direcory visible from client
+ scan.InitializeSocket();                      // start the connection between client and server with BernScanDriver on
+ 
+All data: predictions and results stays in the eProcDirClient, in the directory tree corresponding to brick. 
+The eRawDirServer==eRawDirClient is the cache for raw data produced by Sysal. 
+The converted raw data goes to eProcDirClient in the file corresponding to piece ID: x.x.x.x.raw.root.
+
+=== Scanning ===
+
+Before each scan it is possible to set some sysal parameters as for example
+ scan.SetFragmentSize(3,3);
+ 
+If "EdbPattern areas" - the pattern with the predictions, the data taking should be done as following:
+
+ EdbRun *run = sproc.InitRun(ID);
+ scan.ScanAreas(ID,areas,*run,"NOCL");
+ run->Close();
+ 
+In this example:
+* areas - predictions pattern
+* ID - scanning piece identifier: the output file name will be x.x.x.x.raw.root
+* run - the reason to have run pointer available in the script is to have the possibility to add more then one scanning into the same file
+* "NOCL" - the options identical to one's in rwc2edb
+
+=== Linking with shrinkage correction ===
+
+Shrinkage correction can be done only for large enough areas and/or enough number of tracks (predictions)
+
+ sproc.MakeInPar(ID,"prelinking");  // make input par file (x.x.x.x.in.par) for the current ID including the prelinking par file
+ sproc.LinkRun(ID,0);               // will be done (pre)linking and updated x.x.x.x.par file
+ sproc.LinkRun(ID,0);               // repeate to improve shrinkage correction if necessary
+ sproc.LinkRun(ID,0);
+ sproc.MakeInPar(ID,"fulllinking"); // make input par file including the fulllinking par file
+ sproc.LinkRun(ID,1);               // will be done (full)linking and DO NOT updated x.x.x.x.par file
+
+=== Linking without shrinkage correction ===
+
+ sproc.CopyPar(IDC,IDP);             // copy x.x.x.x.par file (with corrections) from IDC(calibr) to IDP(predictions)
+ sproc.MakeInPar(IDP,"fulllinking"); // make input par file including the fulllinking par file
+ sproc.LinkRun(IDP,1);               // will be done (full)linking and DO NOT updated x.x.x.x.par file
+
+=== Alignment ===
+
+This function can be used in the script for alignment
+
+<pre> 
+void do_align(int ID1[4], int ID2[4], float off=0., bool makefile )
+{
+  if(makefile) {
+    TString str;
+    sproc.MakeAffName(str,ID1,ID2);
+    sproc.AddParLine(str.Data(),"ZLAYER 0 -1300 0 0");
+  }
+  if(off>100.) {
+    sproc.MakeInPar(ID1,"prealignment");
+    sproc.MakeInPar(ID2,"prealignment");
+    sproc.Align(ID1,ID2);	// find affine transformation from id1 to id2 and update par of id1
+  }
+  sproc.MakeInPar(ID1,"fullalignment");
+  sproc.MakeInPar(ID2,"fullalignment");
+  sproc.Align(ID1,ID2,"-z");	// find affine transformation from id1 to id2 and update par of id1
+}
+</pre>
+
+The output is the file AFF/x.x.x.x_y.y.y.y.par where x stay for ID1 and y for ID2.
+
+=== Predictions selection ===
+
+ sproc.ProjectFound(IDx,IDy, IDx1,IDy1);   // take x.x.x.x.found.root and using the AFF/x1_y1.par produce y.y.y.y.pred.root
+ sproc.FindPredictions(ID);                // find predictions of x.x.x.x.pred.root in x.x.x.x.cp.root and produce x.x.x.x.found.root
+ 
+== The full example of the automatic procedure for 1 plate ==
+
+Naming convension for this example:
+* x - previous plate (already scanned and with predictions found)
+* y - this plate  (to be loaded and scanned)
+* z - next plate  (to be scanned)
+* c - calibration
+* p - prediction
+
+The starting point are prediction files: 
+* yc.yc.yc.yc.pred.root   - calibration zones (most probably the same as for xc and zc)
+* xp.xp.xp.xp.found.root  - found predictions of previous plate
+
+ sproc.LoadPlate(scan,IDyc);                 // load plate y (use only first 2 numbers from ID - brick and plate)
+ sproc.ScanAreas(scan,IDyc,"NOCL");          // scan intercalibration zones on plate y
+ sproc.CopyPar(IDxc,IDyc);                   // copy x.x.x.x.par file (with corrections inside) from prevoius to this plate
+ sproc.LinkRunAll(IDxc);                     // will be done (pre+full)linking and updated xc.xc.xc.xc.par file
+ sproc.SetAFFDZ(IDxc,IDyc, -1300.);          // add ZLAYER card into AFF/xc_yc.par, create file if do not exist
+ sproc.AlignAll(IDxc,IDyc,1,3,"-z");         // align IDxc and IDyc (with z corr)
+ sproc.CopyAFFPar(IDxc,IDyc,IDxp,IDyp);      // copy AFF/xc_yc.par to AFF/xp_yp.par
+ sproc.ProjectFound(IDxp,IDyp);              // take xp.xp.xp.xp.found.root and produce yp.yp.yp.yp.pred.root using the AFF/xp_yp.par
+ sproc.ScanAreas(scan, IDyp,"NOCL");         // scan predictions on the plate y
+ sproc.CopyPar(IDyc,IDyp);                   // copy yc.yc.yc.yc.par file (with corrections) to yp.yp.yp.yp.par
+ sproc.LinkRunAll(IDyp,0,1);                 // will be done (full)linking and do not updated xp.xp.xp.xp.par file 
+ sproc.FindPredictions(IDyp);                // find predictions of yp.yp.yp.yp.pred.root in yp.yp.yp.yp.cp.root and produce yp.yp.yp.yp.found.root
+ sproc.CopyPred(IDyc,IDzc);                  // copy prediction file for intercalibration zones
+ 
+At the end of this procedure we have all data for plate y scanned and for the plate z prepared to scan:
+* zc.zc.zc.zc.pred.root  - intercalibration zones 
+* yp.yp.yp.yp.found.root - found predictions for plate y ready to be projected to z
+
+Additional functions:
+
+* sproc.CorrectAffWithPred(IDp1,IDp2); // take p1.found.root, apply AFF/p1_p2.par, align to p2 and update AFF/p1_p2.par
+
