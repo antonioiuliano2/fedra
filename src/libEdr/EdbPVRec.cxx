@@ -107,7 +107,11 @@ EdbPatCouple::EdbPatCouple()
 ///______________________________________________________________________________
 EdbPatCouple::~EdbPatCouple()
 {
-  if(eSegCouples) delete eSegCouples;
+  if(eSegCouples) {
+    eSegCouples->Delete();
+    delete eSegCouples;
+    eSegCouples=0;
+  }
 }
 
 ///______________________________________________________________________________
@@ -650,6 +654,7 @@ int EdbPatCouple::Align(int alignFlag)
   SortByCHI2P();
   CutCHI2P(1.5);
   SelectIsolated();
+  npat = Ncouples();                     // the selected couples for the final transformation
   CalculateAffXYZ(Zlink(),alignFlag);
   Pat1()->Transform(GetAff());
   Pat1()->SetNAff(npat);
@@ -902,9 +907,21 @@ EdbPVRec::EdbPVRec()
 ///______________________________________________________________________________
 EdbPVRec::~EdbPVRec()
 {
-  if(ePatCouples)     delete ePatCouples;
-  if(eTracks)         delete eTracks;
-  if(eVTX)            delete eVTX;
+  if(ePatCouples) {
+    ePatCouples->Delete();
+    delete ePatCouples;
+    ePatCouples=0;
+  }
+  if(eTracks) {
+    eTracks->Delete();
+    delete eTracks;
+    eTracks=0;
+  }
+  if(eVTX)    {
+    eVTX->Delete();
+    delete eVTX;
+    eVTX=0;
+  }
   if(eTracksCell)     delete eTracksCell;
   if (gROOT->GetListOfSpecials()->FindObject(this))
     {
@@ -1107,20 +1124,16 @@ void EdbPVRec::SetSegmentsErrors()
 {
   EdbPattern *pat;
   EdbSegP    *seg;
-
-  int npat, nseg;
-  npat =Npatterns();
+  int npat =Npatterns();
+  int nseg=0;
   for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
     nseg = pat->N();
     for(int j=0; j<nseg; j++ ) {
-      seg = pat->GetSegment(j);
-      
+      seg = pat->GetSegment(j);      
       SetSegmentErrors( *seg );
       SetSegmentProbability( *seg );
-
     }
-
   }
 }
 

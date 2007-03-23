@@ -24,6 +24,7 @@ ClassImp(EdbPattern)
 ClassImp(EdbPatternsVolume)
 
 using namespace MATRIX;
+using namespace TMath;
 
 EdbSegP:: EdbSegP(int id, float x, float y, float tx, float ty, float w, int flag)
 {
@@ -1402,6 +1403,20 @@ void EdbPattern::Set0()
 }
 
 //______________________________________________________________________________
+float EdbPattern::SummaryPath()
+{
+  // calculate the microscope path of the eventual prediction scan of this pattern
+  float sum=0,dx,dy;
+  if(N()<2) return sum;
+  for(int i=0; i<N()-1; i++ ) {
+    dx = GetSegment(i+1)->X()-GetSegment(i)->X();
+    dy = GetSegment(i+1)->Y()-GetSegment(i)->Y();
+    sum += Sqrt(dx*dx+dy*dy);
+  }
+  return sum;
+}
+
+//______________________________________________________________________________
 void EdbPattern::FillCell( float stepx, float stepy, float steptx, float stepty )
 {
   // fill cells with fixed size at z=zPat
@@ -1448,6 +1463,10 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
   if (stx <= 0.) stx = 1.;
   float sty = s.STY();
   if (sty <= 0.) sty = 1.;
+
+  //printf("Step: %f %f %f %f\n",StepX(),StepY(),StepTX(),StepTY());
+  //printf("Sigm: %f %f %f %f\n",sx,sy,TMath::Sqrt(stx),TMath::Sqrt(sty));
+
 
   long vcent[4] = { (long)(x/StepX()),
 		    (long)(y/StepY()),
@@ -1504,7 +1523,7 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
 	    dx=s.X()+s.TX()*dz-seg->X();
 	    if( dx*dx > sx*nsigx*nsigx )           continue;
 	    dy=s.Y()+s.TY()*dz-seg->Y();
-	    if( dy*dy > sy*nsigx*nsigx )           continue;	    
+	    if( dy*dy > sy*nsigx*nsigx )           continue;
 	    //if(!s.IsCompatible(*seg,nsigx,nsigt)) continue;
 	    arr.Add(seg);
 	    nseg++;

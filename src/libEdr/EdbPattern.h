@@ -425,6 +425,7 @@ class EdbPattern : public EdbSegmentsBox {
   int  ID() const {return eID;}
   int  PID() const {return ePID;}
 
+  float SummaryPath();
   void FillCell( float stepx, float stepy, float steptx, float stepty );
 
   int FindCompliments(EdbSegP &s, TObjArray &arr, float nsig, float nsigt);

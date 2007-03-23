@@ -133,6 +133,7 @@ void EdbScanCond::SetDefault()
 
   eSigmaX0  = 8.;   // [microns]
   eSigmaY0  = 8.;   // [microns]
+  eSigmaZ0  = 3.;   // [microns]
   eSigmaTX0 = .008; // [mrad]
   eSigmaTY0 = .008; // [mrad]
 
@@ -165,6 +166,7 @@ void EdbScanCond::Print() const
   printf( "Puls ramp at 0.4 angle: \t%f \t%f \n", ePuls04[0], ePuls04[1] );
   printf( "Chi2Max: \t %f\n",Chi2Max());
   printf( "Chi2PMax:\t %f\n",Chi2PMax());
+  printf( "eOffX = %f eOffY = %f\n",eOffX,eOffY);
   printf( "******************************************************\n");
 }
 
