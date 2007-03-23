@@ -69,79 +69,78 @@ int main(int argc, char* argv[])
 
   bool printusage=(argc<3)?true:false;
   for (int i = 1; i < argc; i++)  {  // Skip argv[0] (program name)
-	if (!strcmp(argv[i], "-map")) {   // Process optional arguments
-	  if (i + 1 <= argc - 1) { sprintf(mapname,argv[++i]); addmap=true; }
-	  else printusage=true; 
-	}
-	else if (!strcmp(argv[i], "-grs")) { // Process optional arguments
-	  if (i + 1 <= argc - 1) { sprintf(grsname,argv[++i]); addgrs=true; }
-	  else printusage=true; 
-	}
-	else if (!strcmp(argv[i], "-nocl"))    strcat(options,"NOCL") ;
-	else if (!strcmp(argv[i], "-asum"))    strcat(options,"SUM") ;
-	else if (!strcmp(argv[i], "-clframe")) strcat(options,"CLFRAME") ;
-	else  { // Process non-optional arguments here
+    if (!strcmp(argv[i], "-map")) {   // Process optional arguments
+      if (i + 1 <= argc - 1) { sprintf(mapname,argv[++i]); addmap=true; }
+      else printusage=true; 
+    }
+    else if (!strcmp(argv[i], "-grs")) { // Process optional arguments
+      if (i + 1 <= argc - 1) { sprintf(grsname,argv[++i]); addgrs=true; }
+      else printusage=true; 
+    }
+    else if (!strcmp(argv[i], "-nocl"))    strcat(options,"NOCL") ;
+    else if (!strcmp(argv[i], "-asum"))    strcat(options,"SUM") ;
+    else if (!strcmp(argv[i], "-clframe")) strcat(options,"CLFRAME") ;
+    else  { // Process non-optional arguments here
       sprintf(rwcname,argv[i++]);
       sprintf(edbname,argv[i]);
-	}
+    }
   }
   if(printusage) { 
-		cout<< "usage: rwc2edb <input file (.rwc|.rwd|.txt)> <output file (.root)> [options] "<<endl;
-		cout << "\n options: -nocl         = do not add the clusters" << endl;
-		cout <<   "          -clframe      = fill clusters.eFrame (default empty) -> +4% file size" << endl;
-		cout <<   "          -map filename = add the fiducial marks file (.map) (only mswindows)" << endl;
-		cout <<   "          -grs filename = merge raw data (.rwd) and grains (.txt) " << endl;
-      cout <<   "                          (if only grains: rwc2edb fname.txt fname.root)" << endl;
-      cout <<   "          -asum         = encode the sum of cluster areas in the segment puls" << endl;
-      cout <<   "                          (puls = (sum of clust areas)*1000 + (number of grains)" << endl;
-		return 0;
-	};
+    cout<< "usage: rwc2edb <input file (.rwc|.rwd|.txt)> <output file (.root)> [options] "<<endl;
+    cout << "\n options: -nocl         = do not add the clusters" << endl;
+    cout <<   "          -clframe      = fill clusters.eFrame (default empty) -> +4% file size" << endl;
+    cout <<   "          -map filename = add the fiducial marks file (.map) (only mswindows)" << endl;
+    cout <<   "          -grs filename = merge raw data (.rwd) and grains (.txt) " << endl;
+    cout <<   "                          (if only grains: rwc2edb fname.txt fname.root)" << endl;
+    cout <<   "          -asum         = encode the sum of cluster areas in the segment puls" << endl;
+    cout <<   "                          (puls = (sum of clust areas)*1000 + (number of grains)" << endl;
+    return 0;
+  };
+  
+  bool testrun = false;
+  bool txtrun = false ;
+  if(rwcname[strlen(rwcname)-1]=='d') testrun=true;  //if we have .rwd first 
+  if(rwcname[strlen(rwcname)-1]=='t') txtrun =true;  //if we have .txt first 
+  
+  EdbRun* outrun;
+  outrun = new EdbRun(edbname,"CREATE");
+  outrun->GetTree()->SetMaxTreeSize(15000000000);   //set 15 Gb file size limit
 
-   bool testrun = false;
-	bool txtrun = false ;
-	if(rwcname[strlen(rwcname)-1]=='d') testrun=true;  //if we have .rwd first 
-	if(rwcname[strlen(rwcname)-1]=='t') txtrun =true;  //if we have .txt first 
-
-   EdbRun* outrun;
-	outrun = new EdbRun(edbname,"CREATE");
-
-	if(testrun) 
+  if(testrun) 
+    {
+      // Add RWD 
+      cout<<"TestRun"<<endl;
+      int fragID = 0;
+      AddRWD(outrun, rwcname, fragID, options);
+      
+      if (addgrs)  // Add Clusters file (TXT) ....
 	{
-		// Add RWD 
-		cout<<"TestRun"<<endl;
-		int fragID = 0;
-		AddRWD(outrun, rwcname, fragID, options);
-
-		if (addgrs)  // Add Clusters file (TXT) ....
-		{
-			char grsoutname[256];
-			strncpy( grsoutname + strlen(rwcname)-3, "grs", 3);
-			sprintf( grsoutname,"%s.root",grsoutname);
-
-			EdbRun* outrun2;
-			outrun2 = new EdbRun(grsoutname,"CREATE");
-
-			AddGrainsTXT(outrun2,grsname);
-			outrun2->Print();
-			outrun2->Close();
-		}
+	  char grsoutname[256];
+	  strncpy( grsoutname + strlen(rwcname)-3, "grs", 3);
+	  sprintf( grsoutname,"%s.root",grsoutname);
+	  
+	  EdbRun* outrun2;
+	  outrun2 = new EdbRun(grsoutname,"CREATE");
+	  
+	  AddGrainsTXT(outrun2,grsname);
+	  outrun2->Print();
+	  outrun2->Close();
 	}
-	else if(txtrun)
-	{
-		 // Add clusters file (TXT) ....
-		AddGrainsTXT(outrun,rwcname);
-	}
-	else 
-	{
-		// Add RWC and all RWDs
+    }
+  else if(txtrun)
+    {
+      // Add clusters file (TXT) ....
+      AddGrainsTXT(outrun,rwcname);
+    }
+  else 
+    {
+      // Add RWC and all RWDs
       printf("options 1: %s\n", options);
-		AddRWC(outrun, rwcname, true,options);
-		if (addmap) AddMAP(outrun, mapname);
-	}
-	outrun->Print();
-	outrun->Close();
+      AddRWC(outrun, rwcname, true,options);
+      if (addmap) AddMAP(outrun, mapname);
+    }
+  outrun->Print();
+  outrun->Close();
 
-	if (testrun) 
-			
-	return 0;
+  if (testrun) return 0;
 }
