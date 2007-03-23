@@ -125,7 +125,7 @@ public:
 		  int level, 
 		  Bool_t dir = kIterForward);
    //TIndexCellIter(const TIndexCellIter &iter);
-   ~TIndexCellIter() { }
+   ~TIndexCellIter();
    //TIterator     &operator=(const TIterator &rhs);
    //TObjArrayIter &operator=(const TObjArrayIter &rhs);
 

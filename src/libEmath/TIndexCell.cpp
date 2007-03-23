@@ -652,6 +652,13 @@ TIndexCellIter::TIndexCellIter(const TIndexCell *cell, int level, Bool_t dir)
 }
 
 //______________________________________________________________________________
+TIndexCellIter::~TIndexCellIter()
+{
+  if(fVind) delete [] fVind;
+  fVind=0;
+}
+
+//______________________________________________________________________________
 TIndexCell const *TIndexCellIter::Next()
 {
    // Return next object in cell. Returns 0 when no more objects in cell.
