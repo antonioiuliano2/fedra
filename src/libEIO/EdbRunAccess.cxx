@@ -94,6 +94,7 @@ bool EdbRunAccess::InitRunFromRWC(char *rwcname, bool bAddRWD, const char* optio
 ///_________________________________________________________________________
 bool EdbRunAccess::AddRWDToRun(char *rwdname, const char* options)
 {
+  printf("Add RWD to run: %s\n",rwdname);
   if(!eRun) return false;
   if( gSystem->AccessPathName(rwdname, kFileExists) ) {
       printf("ERROR open file: %s\n",rwdname);

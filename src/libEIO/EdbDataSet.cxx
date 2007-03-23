@@ -46,8 +46,11 @@ EdbDataPiece::~EdbDataPiece()
   for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
   for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
   for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
+  for(i=0; i<3; i++)  if(eRCuts[i])    delete eRCuts[i];
   if(   eCouplesInd)                   delete eCouplesInd;
-
+  eRunFiles.Delete();
+  if(eRun) {delete eRun; eRun=0;}
+  if(eCouplesTree) {delete eCouplesTree; eCouplesTree=0;}
 }
 
 ///______________________________________________________________________________
@@ -2455,7 +2458,7 @@ void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
 }
 
 //______________________________________________________________________________
-int EdbDataProc::MakeTracksTree(EdbPVRec *ali, char *file)
+int EdbDataProc::MakeTracksTree(EdbPVRec *ali, const char *file)
 {
   if(!ali) return 0;
   TObjArray *trarr = ali->eTracks;
@@ -2466,7 +2469,7 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali, char *file)
 }
 
 //______________________________________________________________________________
-int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, char *file)
+int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char *file)
 {
   printf("write tracks into %s ... \n",file);
   TFile fil(file,"RECREATE");

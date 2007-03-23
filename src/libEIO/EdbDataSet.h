@@ -26,8 +26,6 @@ class EdbDataPiece : public TNamed {
   Int_t        eFlag;           // 0-do nothing, 1-do something
   TObjArray    eRunFiles;       //
   //  TString      eFileNameRaw;    // name of the raw data file (run)
-  TString      eFileNameCP;     // name of the couples data file
-  TString      eFileNamePar;    // name of the parameters file
   Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
   Int_t        eCLUST;          // 1-use clusters, 0 - do not
 
@@ -42,6 +40,8 @@ class EdbDataPiece : public TNamed {
   TCut        *eRCuts[3];       //! root-style text cuts
 
  public: 
+  TString      eFileNameCP;     // name of the couples data file
+  TString      eFileNamePar;    // name of the parameters file
   TIndexCell  *eCouplesInd;     //
 
   EdbRun      *eRun;            //!
@@ -226,8 +226,8 @@ class EdbDataProc : public TObject {
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
 
-  int   MakeTracksTree( EdbPVRec *ali=0, char *file="linked_tracks.root");
-  static int  MakeTracksTree( TObjArray &tracks, float xv=0, float yv=0, char *file="linked_tracks.root");
+  int   MakeTracksTree( EdbPVRec *ali=0, const char *file="linked_tracks.root");
+  static int  MakeTracksTree( TObjArray &tracks, float xv=0, float yv=0, const char *file="linked_tracks.root");
   int   ReadTracksTree( EdbPVRec &ali,
 			char *fname="linked_tracks.root",
 			int   nsegMin=3,
