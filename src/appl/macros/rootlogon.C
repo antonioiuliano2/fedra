@@ -17,6 +17,7 @@ void rootlogon()
   loadlib( "libEMC"  , "EdbPVGen" );       //optional
   loadlibEOracle();                                //optional
   if(gSystem->Load("libDataConversion")) printf("libDataConversion do NOT loaded!\n"); //optional
+  loadlib( "libScan"  , "EdbScanProc" );       //optional
 
   gStyle->SetPalette(1);
 }

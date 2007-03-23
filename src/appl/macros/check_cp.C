@@ -54,6 +54,14 @@ void init()
   couples->SetAlias("dsl1","sqrt(ds1*ds1-dst1*dst1)");                  // longitudinal slope diff    s1-s
   couples->SetAlias("dst2","(s2.eTX*s.eTY-s2.eTY*s.eTX)/ts");           // transverse slope diff      s2-s
   couples->SetAlias("dsl2","sqrt(ds2*ds2-dst2*dst2)");                  // longitudinal slope diff    s2-s
+
+
+  couples->SetAlias("dz","s2.eZ-s1.eZ");
+  couples->SetAlias("dx12","s2.eX-(s1.eX+dz*s1.eTX)");       // project s1 to s2 and calc dx
+  couples->SetAlias("dy12","s2.eY-(s1.eY+dz*s1.eTY)");       // project s1 to s2 and calc dy
+  couples->SetAlias("dx21","(s2.eX-dz*s2.eTX)-s1.eX");       // project s1 to s2 and calc dx
+  couples->SetAlias("dy21","(s2.eY-dz*s2.eTY)-s1.eY");       // project s1 to s2 and calc dx
+
 }
 
 //-----------------------------------------------------------------
