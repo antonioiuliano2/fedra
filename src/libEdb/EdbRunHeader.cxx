@@ -21,6 +21,7 @@ ClassImp(EdbPlate)
 EdbRunHeader::EdbRunHeader( int n )
 {
   eRunID       = n;
+  for(int i=0;i<10;i++) eFlag[i]=0;
   eStartTime.Set();
   eFinishTime.Set();
   // eComment     = 0;
