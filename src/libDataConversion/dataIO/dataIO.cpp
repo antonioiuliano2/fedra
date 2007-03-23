@@ -63,7 +63,7 @@ int ReadCatalog(void** ppData,  char* rwcname)
 
 #else
 //____________________________________________________________________LINUX
-
+#include <unistd.h>
 int FreeMemory(void** ppData)
 {
    return 1;
@@ -90,7 +90,11 @@ int ReadFragment(void** ppData,  char* name)
  {
  IO_Header Hdr;
  FILE *F,*HFile;
- F=fopen(name,"r");
+ for(int i=0; i<3; i++) {
+   F=fopen(name,"r");
+   if(!F) sleep(50);                   // attempt to solve slow  network problems (VT)
+   else break;
+ }
  HFile=F;
  fread(&Hdr.InfoType, 1, sizeof(Hdr.InfoType), F);
  fread(&Hdr.HeaderFormat, 1, sizeof(Hdr.HeaderFormat), F);

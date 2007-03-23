@@ -80,8 +80,8 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 									//  eFlag[0] = 2  - SySal data
 									//  eFlag[1] = 1  - Stage coordinates
 									//  eFlag[1] = 2  - Absolute (marks) coordinates
-                           //  eFlag[2] = 1  - real (stage) coordinates for clusters
-                           //  eFlag[2] = 2  - pixels coordinates for clusters
+									//  eFlag[2] = 1  - real (stage) coordinates for clusters
+									//  eFlag[2] = 2  - pixels coordinates for clusters
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,1);
 	Header->SetFlag(2,1);
@@ -94,7 +94,7 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 	Header->SetArea(pCat->Area.XViews*pCat->Area.YViews, 
 						 pCat->Area.XStep,pCat->Area.YStep, lys,lys,
 						 0); 
-	Header->SetNareas(pCat->Area.Fragments);
+	//Header->SetNareas(pCat->Area.Fragments);
 	Header->SetCCD((int) FindConfig(pCat,"Objective","Width"),
 						(int) FindConfig(pCat,"Objective","Height"),
 						-999,		// physical pixel size in microns along X
@@ -150,17 +150,15 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 	// loop on rwd files
    if(bAddRWD)
 	{
+	    char rwdname[256], temp[256];
 		for (int f = 1; f < nFragments+1; f++)
 		{
-			// build rwd name 
-	      char rwdname[256], temp[256];
 			sprintf(temp, "%s", rwcname);
 			sprintf(temp+strlen(temp)-1, "d");
 			sprintf(rwdname, "%s.%08X", temp, f);
 			cout <<"(tot. fragm.:"<<nFragments<<")  "; 
-			if (! AddRWD(run, rwdname, f, options) )
-        break;
-		}; //end of fragments (f)
+			if (! AddRWD(run, rwdname, f, options) )   break;
+		}
 		cout <<endl;
 	}
 	return true;
@@ -196,6 +194,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 
 	tracks = 0;
 	fclusters = 0;
+	run->GetHeader()->SetNareas(run->GetHeader()->GetNareas()+1);
 	for (s = 0; s < 2; s++) {
 		for (v = 0; v < pFrag->Fragment.CountOfViews; v++) { 
       rwdView = &(pFrag->Fragment.pViews[v]);
@@ -210,7 +209,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 									      rwdView->ImageMat[s][1][1],
 									      rwdView->MapX[s], 
 									      rwdView->MapY[s]); 
-      edbViewHeader->SetAreaID(fragID);
+      edbViewHeader->SetAreaID(run->GetHeader()->GetNareas());
       edbViewHeader->SetCoordXY(rwdView->X[s], rwdView->Y[s]); 
       edbViewHeader->SetCoordZ(rwdView->RelevantZs.TopExt,rwdView->RelevantZs.TopInt,
 				      rwdView->RelevantZs.BottomInt,rwdView->RelevantZs.BottomExt);
