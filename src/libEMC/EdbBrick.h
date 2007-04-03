@@ -17,7 +17,7 @@ class EdbPlateP : public EdbLayer {
 
  public:
   EdbPlateP();
-  ~EdbPlateP(){}
+  ~EdbPlateP(){eLayers.Delete();}
 
   void SetPlateLayout(float z0, float z1, float z2);
   EdbLayer *GetLayer(int i) {if(i<0) return 0; return (EdbLayer*)eLayers.At(i);}
@@ -35,7 +35,7 @@ class EdbBrickP : public EdbLayer {
 
  public:
   EdbBrickP();
-  ~EdbBrickP(){}
+  ~EdbBrickP(){ePlates.Delete(); eSpacers.Delete();}
 
   void SetPlatesLayout(float z0, float z1, float z2);
   void SetDXDY(float dx, float dy);
