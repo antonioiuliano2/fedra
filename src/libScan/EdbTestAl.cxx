@@ -31,6 +31,10 @@ EdbTestAl::EdbTestAl()
   HD=0;
   HDF=0;
   HDF2=0;
+
+  eMaxBin=0;
+  for(int i=0; i<4; i++) {eN[i]=0; eDmin[i]=0; eDmax[i]=0; eD0[i]=0;}
+
 }
 
 //---------------------------------------------------------------------
@@ -105,15 +109,20 @@ int EdbTestAl::CheckMaxBin()
 
   float binz = (eDmax[2]-eDmin[2])/eN[2];
   float binp = (eDmax[3]-eDmin[3])/eN[3];
-  float dz=0, dphi=0, mean=0;
-  int mbin=0;
+  float dz=0,  dphi=0, mean=0;
+  float xmax=0,ymax=0;
+  int   mbin=0;
   for(int iz=0; iz<eN[2]; iz++) {
     dz = eDmin[2] + iz*binz +binz/2;
     for(int ip=0; ip<eN[3]; ip++) {
       dphi = eDmin[3] + ip*binp + binp/2;
-      mbin = CheckMaxBin(dz,dphi,mean);
+      mbin = CheckMaxBin(dz,dphi,mean,xmax,ymax);
       h2->Fill(dphi,dz,mbin);
-      printf("dz=%f, dphi=%f,  mbin=%d,  mean=%f\n",dz,dphi,mbin,mean);
+      if(mbin>=eMaxBin) {
+	eD0[0] = xmax; eD0[1]=ymax; eD0[2]=dz; eD0[3]=dphi;
+	eMaxBin=mbin;
+	printf("dx,dy,dz,dphi = %f %f %f %f;  maxbin/mean= %d/%f = %f\n",xmax,ymax,dz,dphi, mbin,mean,  mbin/mean);
+      }
     }
   }
   h2->Draw("box");
@@ -130,7 +139,7 @@ int EdbTestAl::CheckMaxBin()
 }
 
 //---------------------------------------------------------------------
-int EdbTestAl::CheckMaxBin(float gdz, float phi, float &meanbin)
+int EdbTestAl::CheckMaxBin(float gdz, float phi, float &meanbin, float &xmax, float &ymax)
 {
   // Output: vmax - x,y,z,phi of the highest bin
 
@@ -153,6 +162,10 @@ int EdbTestAl::CheckMaxBin(float gdz, float phi, float &meanbin)
   }
 
   meanbin = h2.GetSum()/h2.GetNbinsX()/h2.GetNbinsY();
+  int mx,my,mz;
+  h2.GetMaximumBin(mx,my,mz);
+  xmax = h2.GetXaxis()->GetBinCenter(mx);
+  ymax = h2.GetYaxis()->GetBinCenter(my);
   return (int)(h2.GetMaximum());
 }
 

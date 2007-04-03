@@ -27,7 +27,8 @@ public:
   TH2F  *HDF2;
 
   Int_t    eN[4];                          // nx,ny,nz,nphi - number of divisions
-  Float_t  eDmin[4], eDmax[4], eD0[4];     // limits, and found value of the peak for dx,dy,dz
+  Float_t  eDmin[4], eDmax[4], eD0[4];     // limits, and found value of the peak for dx,dy,dz,phi
+  Float_t  eMaxBin;                        // the max value corresponding to eD0
   //TVector3 eVmin,  eVmax,  eVbin,  eV0;     
   //Float_t  ePHImin,ePHImax,ePHIbin,ePHI0;   // the same for the rotation
 
@@ -38,7 +39,7 @@ public:
   void  HDistance(EdbPattern &p1, EdbPattern &p2);
   int   FillTree(float gdz=0);
   int   MakeTrans(EdbAffine2D &aff, float dz=0, const char *ccut="abs(dy)<400&&abs(dx)<400");
-  int   CheckMaxBin(float dz, float phi, float &meanbin);
+  int   CheckMaxBin(float dz, float phi, float &meanbin, float &xmax, float &ymax);
   int   CheckMaxBin();
 
   ClassDef(EdbTestAl,1)  // alignment test class

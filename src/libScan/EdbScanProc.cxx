@@ -109,7 +109,7 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, int id[4], int flag, const char 
 {
   EdbPattern pred;
   ReadPred(pred, id, flag);
-  LogPrint(id[0],"ScanAreas","%d.%d.%d.%d  with %d predictions with flag %d", id[0],id[1],id[2],id[3],pred.N(),flag);
+  LogPrint(id[0],"ScanAreas","%d.%d.%d.%d  with %d predictions with flag: %d", id[0],id[1],id[2],id[3],pred.N(),flag);
   EdbPattern predopt;
   OptimizeScanPath(pred,predopt,id[0]);
   EdbRun *run = InitRun(id);
@@ -309,18 +309,34 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
   //ta.FillTree( -5000 );
 
   float bin[4]={20,20,100,0.001};
-  ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]= -2000; ta.eDmin[3]=-0.015;
-  ta.eDmax[0]= 5000; ta.eDmax[1]= 5000; ta.eDmax[2]= 2000; ta.eDmax[3]= 0.015;
+  ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]=  1200; ta.eDmin[3]=-0.015;
+  ta.eDmax[0]= 5000; ta.eDmax[1]= 5000; ta.eDmax[2]=  1500; ta.eDmax[3]= 0.015;
 
+  FILE *f = fopen("testal.par","r");
+  if(f) {
+    for(int i=0; i<4; i++) {
+      float min=0,max=0,b=0;
+      if(!(fscanf(f,"%f %f %f",&min,&max,&b )==3))  {printf("ERROR: read from testal.par"); return 0;}
+      else { 
+	ta.eDmin[i]=min; ta.eDmax[i]=max;  bin[i]=b; 
+      }
+    }
+    fclose(f);
+  }
   //float bin[4]={200,200,500,0.002};
   //ta.eDmin[0]=-15000; ta.eDmin[1]=-15000; ta.eDmin[2]= -20000; ta.eDmin[3]=-0.04;
   //ta.eDmax[0]= 15000; ta.eDmax[1]= 15000; ta.eDmax[2]=  10000; ta.eDmax[3]= 0.04;
   for(int i=0; i<4; i++) ta.eN[i] = (Int_t)((ta.eDmax[i]-ta.eDmin[i]-bin[i]/2.)/bin[i])+1;
   for(int i=0; i<4; i++) ta.eDmax[i] = ta.eDmin[i]+bin[i]*ta.eN[i];
+  for(int i=0; i<4; i++) printf("%d \t%f %f %f %d\n",i, ta.eDmin[i],ta.eDmax[i],bin[i],ta.eN[i]);
 
 
   ta.CheckMaxBin();
-
+  EdbAffine2D aff;
+  aff.Rotate(-ta.eD0[3]);
+  aff.ShiftX(ta.eD0[0]);
+  aff.ShiftY(ta.eD0[1]);
+  aff.Print();
   //ta.FillTree( piece2.GetLayer(0)->Z()-piece1.GetLayer(0)->Z() );
   return 0;
 }
@@ -367,7 +383,7 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
 	      s->ID(),s->X(),s->Y(),s->TX(),s->TY(),s->SX(),s->SY(),s->STX(),s->STY(),s->Flag());
   }
   fclose(f);
-  LogPrint(id[0],"WritePatTXT","%s with %d predictions with flag = %d", str.Data(),pred.N(), flag);
+  LogPrint(id[0],"WritePatTXT","%s with %d predictions with flag: %d", str.Data(),pred.N(), flag);
   return pred.N();
 }
 
@@ -403,7 +419,7 @@ int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int
     pred.AddSegment(s);		ic++;
   }
   fclose(f);
-  LogPrint(id[0],"ReadPatTXT","%s with %d predictions with flag = %d", str.Data(),pred.N(),flag0);
+  LogPrint(id[0],"ReadPatTXT","%s with %d predictions with flag: %d", str.Data(),pred.N(),flag0);
   return ic;
 }
 
@@ -417,7 +433,7 @@ int EdbScanProc::WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, i
   TFile f(str.Data(),"RECREATE");
   pred.Write("pat");
   f.Close();
-  LogPrint(id[0],"WritePatRoot","%s with %d predictions with flag = %d", str.Data(),pred.N(),flag);
+  LogPrint(id[0],"WritePatRoot","%s with %d predictions with flag: %d", str.Data(),pred.N(),flag);
   return pred.N();
 }
 
@@ -438,7 +454,7 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
   }
   f.Close();
   p->Delete();
-  LogPrint(id[0],"ReadPatRoot","%s with %d predictions with flag %d", str.Data(),n,flag);
+  LogPrint(id[0],"ReadPatRoot","%s with %d predictions with flag: %d", str.Data(),n,flag);
   return n;
 }
 
