@@ -49,6 +49,7 @@ class EdbLayer : public TObject {
   bool  IsInside(float x, float y, float z);
   bool  IsInside(float x, float y);
 
+  void SetID(int id )    {eID=id;}
   void SetXY(float x, float y )    { eX=x; eY=y; }
   void SetDXDY(float dx, float dy) { eDX=dx; eDY=dy; }
   void SetTXTY(float tx, float ty )    { eTX=tx; eTY=ty; }
