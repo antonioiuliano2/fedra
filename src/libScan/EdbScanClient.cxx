@@ -214,22 +214,26 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
   int n = areas.N();
   printf("ScanAreas: %d \n",n);
   EdbSegP *s = 0;
+  EdbSegP *sn = 0;
   char str[256];
   int ic=0;
   for(int i=0; i<n; i++) {
     //SetParameter("Tracker_#1(Top)","Max_Grains","200000");
     //SetParameter("Tracker_#2(Bottom)","Max_Grains","200000");
     s = areas.GetSegment(i);
+    if(i<n-1) sn = areas.GetSegment(i+1); 
+    else  sn = areas.GetSegment(i);
     sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());  //???
     gSystem->Exec(str);
     sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
-    if( !ScanAreaS( id[0], id[1], id[2], s->ID(),  
+    if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
 		    s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
-		    str ) )  {i--; break;}
+		    str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {i--; break;}
     sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
     AddRWC(&run,str,true,options);
     ic++;
   }
+  
   return ic;
 }
 

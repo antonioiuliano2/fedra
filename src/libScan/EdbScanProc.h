@@ -3,6 +3,7 @@
 
 #include "EdbDataSet.h"
 #include "EdbScanClient.h"
+#include "EdbScanSet.h"
 
 class EdbScanProc : public TNamed
 {
@@ -51,6 +52,12 @@ public:
   bool    ProjectFound(int id1[4],int id2[4]);
   int     FindPredictions(int id[4], int flag=-1);
   void    OptimizeScanPath(EdbPattern &pin, EdbPattern &pout,int brick, float fact=1.5);
+
+  void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
+			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
+
+  bool    AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4]);
+  bool    AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2);
 
   bool     CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z");
 

@@ -28,6 +28,84 @@ void EdbScanProc::Print()
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2)
+{
+  int id1[4]={b1,p1,s1,e1};
+  int id2[4]={b2,p2,s2,e2};
+  return AddAFFtoScanSet(sc,id1,id2);
+}
+//----------------------------------------------------------------
+bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
+{
+  // read affine tranformation from file, form "plate" and add it into EdbScanSet:ePC
+
+  EdbDataPiece piece;  
+  TString parfile;
+  MakeAffName(parfile,id1,id2);
+  piece.eFileNamePar = parfile;
+  if(piece.TakePiecePar() < 0) return false;
+  float       dz = piece.GetLayer(0)->Z();
+  EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
+  a->Print();
+
+  EdbPlateP *p = new EdbPlateP();   // 0-base, 1-up, 2-down
+
+  p->GetLayer(1)->SetID(id1[1]);
+  p->GetLayer(1)->SetZlayer(-dz,-dz,-dz);
+  p->GetLayer(1)->SetAffXY(a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
+
+  p->GetLayer(2)->SetID(id2[1]);
+  p->GetLayer(2)->SetZlayer(0,0,0);
+  p->GetLayer(2)->SetAffXY(1,0,0,1,0,0);
+
+  sc.ePC.Add(p);
+  return true;
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::PrepareVolumesPred( int idIN[4], EdbPattern &points,
+				      int before, int after, int pmin, int pmax, EdbScanSet *sc )
+{
+  // create prediction patterns for the stopping points in the segments of the pattern "points"
+  // should be correctly defined  (eID ePID eX eY eSX eSY)
+
+  TIndexCell cell;
+  Long_t  v[2];  // pl,id
+  EdbSegP *s=0;
+  for(int i=0; i<points.N(); i++) {
+    s = points.GetSegment(i);
+    for(int ip=Max(s->PID()-before,pmin); ip<=Min(s->PID()+after,pmax); ip++) {
+      v[0] = (Long_t)(ip);
+      v[1] = (Long_t)(i);
+      cell.Add(2,v);
+    }
+  }
+
+  cell.Sort();
+  int count=0;
+  int plate;
+  for(int ip=0; ip<cell.GetEntries(); ip++) {
+    plate = cell.At(ip)->Value();                             // current prediction plate
+    EdbPattern pat;
+    for(int iv=0; iv<cell.At(ip)->GetEntries(); iv++) {
+      s = points.GetSegment(cell.At(ip)->At(iv)->Value());    // s.PID() - stopping plate
+      pat.AddSegment(*s);
+      pat.GetSegment(iv)->SetPID(plate);
+      if(sc) {
+	EdbAffine2D aff;
+	if(sc->GetAffP2P(s->PID(), plate, aff) ) pat.GetSegment(iv)->Transform(&aff);
+      }
+    }
+    int id[4]={idIN[0],plate,idIN[2],idIN[3]};
+    WritePred(pat,id);
+    count += pat.N();
+  }
+  
+  LogPrint(idIN[0],"PrepareVolumesPred","%d.%d.%d.%d: for %d  volumes generated %d predictions with settings: before=%d after=%d pmin=%d pmax=%d\n",
+	   idIN[0],idIN[1],idIN[2],idIN[3],points.N(), count, before,after,pmin,pmax );
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc::FlashRawDir(EdbScanClient &scan, int id[4])
 {
   // move all rwc and rwd files from the raw scanning directory into the new subdir
@@ -860,8 +938,10 @@ void EdbScanProc::LogPrint(int brick, const char *rout, const char *fmt, ...)
   char str[256];
   sprintf(str,"%s/b%6.6d/b%6.6d.log", eProcDirClient.Data(), brick,brick);
   FILE *f = fopen(str,"a");
-  fprintf(f, "%s> ", t.AsSQLString());
-  fprintf(f, "%-15s: ", rout);
-  fprintf(f, "%s\n", buf);
-  fclose(f);
+  if(f) {
+    fprintf(f, "%s> ", t.AsSQLString());
+    fprintf(f, "%-15s: ", rout);
+    fprintf(f, "%s\n", buf);
+    fclose(f);
+  }
 }

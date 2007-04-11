@@ -170,3 +170,51 @@ Additional functions:
 
 * sproc.CorrectAffWithPred(IDp1,IDp2); // take p1.found.root, apply AFF/p1_p2.par, align to p2 and update AFF/p1_p2.par
 
+== To prepare the predictions for volume scan ==
+
+Assuming that we have the list of stopping points in the brick, the following function can be used to prepare the predictions for volume scan:
+
+  sproc.PrepareVolumesPred( ID, points );
+
+Input: ID[4]={brick,0,set,piece}; - all numbers will be kept apart of the plate which will be assigned
+       points                     - the "pattern" with segment per stopping point. 
+				    For segments the following variables must be defined: eID ePID eX eY eSX eSY 
+				    where: eID      - is volume ID
+					   ePID     - plate id
+					   eX, eY   - position
+					   eSX, eSY - the halthsize of the zone to be scanned
+
+Output: for each plate will be produced the prediction file named as 
+	b000146/p001/146.1.1.1001.pred.root
+		      ^  ^ ^  ^
+		      |  | |  +- piece id - will be unique for all files of this selection 
+		      |  | + --- setting  - the same for all files (defined in the input)
+		      |  +------ plate    - corresponding to current plate
+		      +--------- brick    - the same for all volumes
+
+The full list of parameters of this function (and default values): 
+PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, int pmin=1, int pmax=57);
+here: before,after - the plates to be scanned before and after the stopping point
+      pmin,pmax    - the first and the last plate of the brick
+
+NOTE: that called in this way this function do not take into account affine transformations and so the scanning zones in the volume will be shifted with the accuracy of brick assembling + fiducial marks printing.
+
+=== To take into account the affine transformations ===
+
+First of all EdbScanSet should be assembled with all plate-to-plate affine transformations as:
+
+  EdbScanSet sc;
+  int b = 146;
+  sc.eB.SetID(b);
+  sproc.AddAFFtoScanSet(sc,b,1,1,2, b,2,1,1);
+  sproc.AddAFFtoScanSet(sc,b,2,1,1, b,3,1,2);
+  sproc.AddAFFtoScanSet(sc,b,3,1,2, b,4,1,2);
+  ... for all plates ...
+  ... can be done in cycle if set and peace are the same: ...
+  for(int i=7; i<27; i++)  { if(!sproc.AddAFFtoScanSet(sc,b,i,1,1, b,i+1,1,1)) break; }
+  sc.AssembleBrickFromPC();
+  sc.Print();
+
+when sc is correctly assembled the predictions should be generated as following:
+  sproc.PrepareVolumesPred( ID, points, 5,5,1,57, &sc );
+In this case all affine transformations will be taken into account.
