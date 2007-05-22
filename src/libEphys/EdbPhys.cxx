@@ -52,7 +52,7 @@ double EdbPhysics::ThetaMS2( float pr, float mass, float dx, float X0 )
   double p4 = p2*p2;
   double e2 = mass*mass+p2;
   double dxx = TMath::Abs(dx/X0);
-  double fact = 1.+0.038*TMath::Log(dxx);
+  double fact = 1.+0.0383*TMath::Log(dxx);
   if (fact < 0.01) fact = 0.01;
   double teta2 = k*e2*dxx/p4*fact*fact;
   if (teta2 <= 1.) return teta2;
