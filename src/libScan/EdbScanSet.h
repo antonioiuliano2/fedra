@@ -19,6 +19,9 @@ public:
 
   int AssembleBrickFromPC();
   bool GetAffP2P(int p1, int p2, EdbAffine2D &aff);
+  EdbPlateP *GetPlate(int p) {if(ePID.Find(p)) return eB.GetPlate(ePID.Find(p)->At(0)->Value()); else return 0; }
+
+  int MakeParFiles(int piece=0, const char *dir=".");
 
   void   Print();
 

@@ -17,6 +17,29 @@ EdbScanSet::EdbScanSet()
 }
 
 //----------------------------------------------------------------
+int EdbScanSet::MakeParFiles(int piece, const char *dir)
+{
+  // prepare par files for the dataset for "recset-like" processing
+
+  TString name;
+  printf("MakeParFiles for brick %d with %d plates:\n", eB.ID(), eB.Npl());
+  EdbPlateP *p=0;
+  for(int i=0; i<eB.Npl(); i++) {
+    p = eB.GetPlate(i);
+    name.Form("%s/%2.2d_%3.3d.par",dir,p->ID(),piece);
+    printf("%s\n",name.Data());
+    FILE *f = fopen(name.Data(),"w");
+    EdbAffine2D *a=p->GetAffineXY();
+    fprintf(f,"INCLUDE default.par\n");
+    fprintf(f,"ZLAYER 0  %15.3f 0. 0.\n", p->Z());
+    fprintf(f,"AFFXY  0  %15.6f %9.6f %9.6f %9.6f %15.6f %15.6f\n",
+	    a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
+    fclose(f);
+  }
+  return eB.Npl();
+}
+
+//----------------------------------------------------------------
 int EdbScanSet::AssembleBrickFromPC()
 {
   eB.Clear();
