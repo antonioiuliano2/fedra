@@ -63,8 +63,8 @@
 //______________________________________________________________________________
 int main(int argc, char* argv[])
 {
-  char rwcname[256], edbname[256], mapname[256], grsname[256];
-  char options[256];
+  char rwcname[256]="\0", edbname[256]="\0", mapname[256]="\0", grsname[256]="\0";
+  char options[256]="\0";
   bool addmap(false),addgrs(false);
 
   bool printusage=(argc<3)?true:false;
