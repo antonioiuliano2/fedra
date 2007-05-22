@@ -49,8 +49,9 @@ EdbDataPiece::~EdbDataPiece()
   for(i=0; i<3; i++)  if(eRCuts[i])    delete eRCuts[i];
   if(   eCouplesInd)                   delete eCouplesInd;
   eRunFiles.Delete();
-  if(eRun) {delete eRun; eRun=0;}
-  if(eCouplesTree) {delete eCouplesTree; eCouplesTree=0;}
+  CloseRun();
+  CloseCPData();
+  //if(eCouplesTree) {delete eCouplesTree; eCouplesTree=0;}
 }
 
 ///______________________________________________________________________________
@@ -83,10 +84,16 @@ void EdbDataPiece::Set0()
 void EdbDataPiece::CloseCPData()
 {
   if(eCouplesTree) {
-    TFile *f = 0;
-    f = eCouplesTree->GetDirectory()->GetFile();
-    if(f) f->Close();
+    TFile *f = eCouplesTree->GetDirectory()->GetFile();
+    if(f) { f->Delete("*"); f->Close(); }
   }
+}
+
+///______________________________________________________________________________
+void EdbDataPiece::CloseRun()
+{
+  if(eRun) delete eRun;
+  eRun=0;
 }
 
 ///______________________________________________________________________________
@@ -136,13 +143,6 @@ int EdbDataPiece::GetLinkedSegEntr(int side, int aid, int vid, int sid, TArrayI 
   entr.Set(n);
   for(int i=0; i<n; i++) entr.AddAt( (int)(c->At(i)->Value()), i);
   return n;
-}
-
-///______________________________________________________________________________
-void EdbDataPiece::CloseRun()
-{
-  if(eRun) delete eRun;
-  eRun=0;
 }
 
 ///______________________________________________________________________________
@@ -633,7 +633,7 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   segP.SetW( puls );
   segP.SetVolume( seg->GetVolume() );
   segP.SetChi2( seg->GetSigmaY() );   // make sence in case of fedra tracking 
-
+  segP.SetMC( view->GetHeader()->GetEvent(),view->GetHeader()->GetTrack() );
   return 1;
 }
 
@@ -1372,7 +1372,7 @@ EdbDataSet::EdbDataSet(const char *file)
 ///______________________________________________________________________________
 EdbDataSet::~EdbDataSet()
 {
-  if(ePieces.GetEntriesFast()) ePieces.Delete();
+  if(ePieces.GetEntries()) ePieces.Delete();
 }
 
 ///______________________________________________________________________________
@@ -1674,8 +1674,9 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       if(!NoUpdate())   piece.UpdateShrPar(2);
     }
   }
+  int ncp = cptree->GetEntries();
   CloseCouplesTree(cptree);
-  return ntot;
+  return ncp;
 }
 
 ///______________________________________________________________________________
@@ -1754,7 +1755,8 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 
       s->SetDZ( s2->Z()-s1->Z() );
       s->SetVolume( s1->Volume()+s2->Volume() );
-      
+      s->SetMC(s1->MCEvt(),s1->MCTrack());
+
       EdbTraceBack::SetBaseTrackVid( *s, 0, 0, tree->GetEntries() );   //TODO: plate, piece if available
 
       tree->Fill();
