@@ -384,7 +384,11 @@ Bool_t EdbSegP::IsEqual(const TObject *obj) const
   const EdbSegP *s=(EdbSegP*)obj;
   if(s->ID()  != ID())  return false;
   if(s->PID() != PID()) return false;
-  if(s->Z()   != Z())   return false;
+  if(s->Vid(0) != Vid(0)) return false;
+  if(s->Vid(1) != Vid(1)) return false;
+  if(s->Aid(0) != Aid(0)) return false;
+  if(s->Aid(1) != Aid(1)) return false;
+  if( Abs(s->Z()- Z())>0.000001  )   return false;
   return true;
 }
 
@@ -426,7 +430,11 @@ EdbSegmentsBox::EdbSegmentsBox(float x0, float y0, float z0, int nseg)
 //______________________________________________________________________________
 EdbSegmentsBox::~EdbSegmentsBox( )
 {
-  if(eSegments) delete eSegments;
+  if(eSegments) {
+    eSegments->Delete();
+    delete eSegments;
+    eSegments=0;
+  }
 }
  
 //______________________________________________________________________________
@@ -1388,7 +1396,7 @@ EdbPattern::EdbPattern(float x0, float y0, float z0, int n) : EdbSegmentsBox(x0,
 //______________________________________________________________________________
 EdbPattern::~EdbPattern()
 {
-  if(eCell)     delete eCell;
+  if(eCell)  { delete eCell;  eCell=0; }
 }
 
 //______________________________________________________________________________
@@ -1608,6 +1616,7 @@ EdbPatternsVolume::EdbPatternsVolume()
 {
   ePatterns   = new TObjArray();
   eTracksCell = 0;
+  ePatternsCell = 0;
   Set0();
 }
 
@@ -1616,6 +1625,7 @@ EdbPatternsVolume::EdbPatternsVolume(EdbPatternsVolume &pvol)
 {
   ePatterns   = new TObjArray();
   eTracksCell = 0;
+  ePatternsCell = 0;
   Set0();
 
   pvol.PassProperties(*this);
@@ -1635,7 +1645,10 @@ EdbPatternsVolume::~EdbPatternsVolume()
   if(ePatterns) {
     ePatterns->Delete();
     delete ePatterns;
+    ePatterns=0;
   }
+  if(eTracksCell)   { delete eTracksCell;   eTracksCell=0; }
+  if(ePatternsCell) { delete ePatternsCell; ePatternsCell=0; }
 }
 
 //______________________________________________________________________________
