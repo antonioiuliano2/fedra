@@ -230,6 +230,8 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
 		    s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
 		    str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {i--; break;}
     sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+    run.GetHeader()->SetFlag(9, s->ID());
+    run.GetHeader()->SetFlag(8, s->MCEvt());
     AddRWC(&run,str,true,options);
     ic++;
   }
@@ -252,32 +254,33 @@ int EdbScanClient::ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, con
   char str[256];
   int ic=0;
   for(int i=0; i<=n; i++) {
-	if(s) {
-		if(AsyncWaitForScanResult()==1) {
-			sprintf(str,"%s\\raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
-			AddRWC(&run,str,true,options);
-		} else printf("Error: ScanAreasAsync: result %s didn't receaved!\n",str);
-	}
-	if(i>=n) break;
-	else {
-		s = areas.GetSegment(i);
-		if(i+1<n) s1=areas.GetSegment(i+1);
-		else      s1=0;
-	}
-	sprintf(str,"del %s\\raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
-	gSystem->Exec(str);
-	sprintf(str,"%s\\raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
-	if(s1) {
-		AsyncScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
-					s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), str,
-					s1->X()-s1->SX(), s1->X()+s1->SX(), s1->Y()-s1->SY(), s1->Y()+s1->SY());
-	} else {
-		AsyncScanAreaS( id[0], id[1], id[2], s->ID(),  
-					s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
-					str );
-	}
-	ic++;
-
+    if(s) {
+      if(AsyncWaitForScanResult()==1) {
+	sprintf(str,"%s\\raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+	run.GetHeader()->SetFlag(9, s->ID());
+	run.GetHeader()->SetFlag(8, s->MCEvt());
+	AddRWC(&run,str,true,options);
+      } else printf("Error: ScanAreasAsync: result %s didn't receaved!\n",str);
+    }
+    if(i>=n) break;
+    else {
+      s = areas.GetSegment(i);
+      if(i+1<n) s1=areas.GetSegment(i+1);
+      else      s1=0;
+    }
+    sprintf(str,"del %s\\raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+    gSystem->Exec(str);
+    sprintf(str,"%s\\raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
+    if(s1) {
+      AsyncScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
+			     s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), str,
+			     s1->X()-s1->SX(), s1->X()+s1->SX(), s1->Y()-s1->SY(), s1->Y()+s1->SY());
+    } else {
+      AsyncScanAreaS( id[0], id[1], id[2], s->ID(),  
+		      s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
+		      str );
+    }
+    ic++;    
   }
   return ic;
 }
@@ -293,9 +296,11 @@ int EdbScanClient::ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const
   int ic=0;
   for(int i=0; i<n; i++) {
     s = areas.GetSegment(i);
-	sprintf(str,"%s\\raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
-	AddRWC(&run,str,true,options);
-	ic++;
+    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+    run.GetHeader()->SetFlag(9, s->ID());
+    run.GetHeader()->SetFlag(8, s->MCEvt());
+    AddRWC(&run,str,true,options);
+    ic++;
   }
   return ic;
 }
