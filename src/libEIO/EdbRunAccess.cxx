@@ -17,6 +17,8 @@
 #include "libDataConversion.h"
 #endif
 
+using namespace TMath;
+
 ClassImp(EdbRunAccess)
 
 ///_________________________________________________________________________
@@ -56,21 +58,37 @@ void EdbRunAccess::Set0()
 }
 
 ///_________________________________________________________________________
-bool EdbRunAccess::InitRun()
+void EdbRunAccess::ClearCuts()
 {
-  if(!eRun)
-    if( gSystem->AccessPathName(eRunFileName.Data(), kFileExists) ) {
-      printf("ERROR open file: %s\n",eRunFileName.Data());
-      return false;
-    }
+  for(int i=0; i<3; i++) {
+    if(eCuts[i]) eCuts[i]->Clear();
+  }
+}
+
+///_________________________________________________________________________
+void EdbRunAccess::Print()
+{
+  printf(" EdbRunAccess: eAFID=%d  eCLUST=%d\n",eAFID, eCLUST );
+  printf("file: %s\n", eRunFileName.Data());
+  for(int i=0; i<3; i++) 
+    if(eLayers[i]) eLayers[i]->Print();
+ }
+
+///_________________________________________________________________________
+bool EdbRunAccess::InitRun(const char *runfile)
+{
+  if(eRun) {delete eRun; eRun=0;}
+  if(runfile) eRunFileName=runfile;
+  if( gSystem->AccessPathName(eRunFileName.Data(), kFileExists) ) {
+    printf("ERROR open file: %s\n",eRunFileName.Data());
+    return false;
+  }
   eRun=new EdbRun(eRunFileName.Data());
   if(!eRun) return false;
   if(!(eRun->GetTree())) return false;
   for(int i=0; i<3; i++) if(eLayers[i]==0) GetMakeLayer(i);
-
   if(FillVP()<1) return false;
-  
-  //PrintStat();
+  PrintStat();
 
   eXstep=400;  //TODO
   eYstep=400;
@@ -124,9 +142,56 @@ int EdbRunAccess::GetViewsXY(int ud, TArrayI &entr, float x, float y)
 }
 
 ///_________________________________________________________________________
+int EdbRunAccess::GetEntryXY(int ud, float x, float y)
+{
+  // find view with the center closest to x,y and return it's entry
+
+  int entry = -1;
+  EdbPattern *pat=GetVP(ud);
+  if(!pat)                             return -1;
+  EdbSegP *seg=0;
+  float r,rmin=9999999.;
+  int imin=-1;
+  for( int i=0; i<pat->N(); i++ ) {
+    seg = pat->GetSegment(i);
+    r = Sqrt( (seg->X()-x)*(seg->X()-x)+(seg->Y()-y)*(seg->Y()-y));
+    if( r>rmin ) continue;
+    rmin = r;
+    entry = seg->ID();
+    imin = i;
+  }
+  //if(imin>0) pat->GetSegment(imin)->Print();
+  return entry;
+}
+
+///_________________________________________________________________________
+int EdbRunAccess::GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol)
+{
+  // assuming s as the prediction in plate RS (also Z), fill vol with the segments 
+  // of closest up and down views
+  // todo: Z of layers must be setted!
+
+  TArrayI entr(2);
+  float x,y; 
+  x = s.X()+ (eLayers[1]->Z()-s.Z())*s.TX();
+  y = s.Y()+ (eLayers[1]->Z()-s.Z())*s.TY();
+  entr[0] = GetEntryXY(1,x,y);
+  //printf(":GetVolumeXY: 1 %f %f \n",x,y);
+
+  x = s.X()+ (eLayers[2]->Z()-s.Z())*s.TX();
+  y = s.Y()+ (eLayers[2]->Z()-s.Z())*s.TY();
+  entr[1] = GetEntryXY(2,x,y);
+  //printf(":GetVolumeXY: 2 %f %f \n",x,y);
+
+  //printf("EdbRunAccess::GetVolumeXY: entr = %d %d\n",entr[0],entr[1]);
+  int nrej=0;
+  return GetVolumeData(vol,2,entr,nrej);
+}
+
+///_________________________________________________________________________
 int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 {
-  //
+  // get raw segments as a volume for the given "area"
 
   int maxA=2000;            //TODO
   TArrayI entr1(maxA);
@@ -160,13 +225,12 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 #else
   printf("Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
 #endif
-    area, 100*area/eNareas, n1,n2, 
+	 area, 100*area/eNareas, n1,n2, 
 	 vol.GetPattern(0)->N(),
 	 vol.GetPattern(1)->N(),
 	 nrej );
   if(nseg != vol.GetPattern(0)->N()+vol.GetPattern(1)->N()) 
-    printf("WARNING!!! nseg\n");
-
+  printf("WARNING!!! nseg\n");
   return ic;
 }
 
@@ -176,7 +240,7 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
 				TArrayI &srt, 
 				int &nrej)
 {
-  // get raw segments as a volume for the given "Area"
+  // get raw segments as a volume for the given array of entries
 
   EdbSegP    segP;
   EdbView    *view = eRun->GetView();
@@ -197,6 +261,7 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
     nsegV = view->Nsegments();
     side = ViewSide(view);
 
+    //printf(" EdbRunAccess::GetVolumeData: %d nsegV = %d side=%d\n",iu, nsegV,side);
     if(side<1||side>2) continue;
 
     for(int j=0;j<nsegV;j++) {
@@ -207,7 +272,7 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
       nseg++;
       segP.SetVid(entry,j);
       segP.SetAid(view->GetAreaID(),view->GetViewID());
-
+      
       vol.GetPattern(side-1)->AddSegment( segP);
     }
   }
@@ -327,8 +392,8 @@ void EdbRunAccess::PrintStat()
 
   for(int ud=0; ud<3; ud++) {
     EdbPattern *pat=GetVP(ud);
-	int nempty=0;
-	if(pat) {
+    int nempty=0;
+    if(pat) {
       printf( "side:%d  xmin,xmax  = %f %f   ymin,ymax = %f %f\n", 
 	      ud,
 	      pat->Xmin(), 
@@ -336,9 +401,9 @@ void EdbRunAccess::PrintStat()
 	      pat->Ymin(),
 	      pat->Ymax()
 	      );
-		nempty = CheckEmptyViews(*pat);
-		if(nempty>0) printf("\t WARNING: %d empty views in layer %d\n",nempty,ud);
-	}
+      nempty = CheckEmptyViews(*pat);
+      if(nempty>0) printf("\t WARNING: %d empty views in layer %d\n",nempty,ud);
+    }
   }
   printf("\n");
 }
@@ -353,59 +418,59 @@ void EdbRunAccess::CheckRunLine()
   cerr<<"\tv: "<< nviews;
   eNareas=0;
   if(eRun->GetHeader()) {
-	eNareas =eRun->GetHeader()->GetNareas();
+    eNareas =eRun->GetHeader()->GetNareas();
   } else 
-	  cerr <<"  RUN HEADER is missing!";
-
+    cerr <<"  RUN HEADER is missing!";
+  
   cerr<<"  a: "<<eNareas;
   int var=0;
   if(eNareas>0) {
     var =  nviews/eNareas/2;
-	cerr<<"   v/a/s: "<<var;
+    cerr<<"   v/a/s: "<<var;
   }
   cerr<<endl;
-
+  
   if(eNareas>0) 
-	  if(var*2*eNareas != nviews) {
-		  cerr<<"\tWARNING: areas and views numbers are mismatching!\n";
-		  for(int ud=0; ud<3; ud++) {
-			EdbPattern *pat=GetVP(ud);
-			if(pat) {
-				int nv = pat->N();
-				cerr<<"\t\t views("<<ud<<"): "<<nv;
-				if(nv>0) {
-					cerr<<"  Areas in range: ";
-					cerr<<pat->GetSegment(0)->Aid(0)<<" : "<<pat->GetSegment(nv-1)->Aid(0);
-					cerr<<"    Views in range: ";
-					cerr<<pat->GetSegment(0)->Aid(1)<<" : "<<pat->GetSegment(nv-1)->Aid(1);
-				}
-				cerr<<endl;
-			}
-		  }
+    if(var*2*eNareas != nviews) {
+      cerr<<"\tWARNING: areas and views numbers are mismatching!\n";
+      for(int ud=0; ud<3; ud++) {
+	EdbPattern *pat=GetVP(ud);
+	if(pat) {
+	  int nv = pat->N();
+	  cerr<<"\t\t views("<<ud<<"): "<<nv;
+	  if(nv>0) {
+	    cerr<<"  Areas in range: ";
+	    cerr<<pat->GetSegment(0)->Aid(0)<<" : "<<pat->GetSegment(nv-1)->Aid(0);
+	    cerr<<"    Views in range: ";
+	    cerr<<pat->GetSegment(0)->Aid(1)<<" : "<<pat->GetSegment(nv-1)->Aid(1);
 	  }
-
+	  cerr<<endl;
+	}
+      }
+    }
+  
   for(int ud=0; ud<3; ud++) {
     EdbPattern *pat=GetVP(ud);
-	int nempty=0;
-	if(pat) {
- 		nempty = CheckEmptyViews(*pat);
-		if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
-	}
+    int nempty=0;
+    if(pat) {
+      nempty = CheckEmptyViews(*pat);
+      if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
+    }
   }
 }
 
 ///_________________________________________________________________________
 int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
 {
-	int nempty=0;
-	EdbSegP *s=0;
-	for(int i=0; i<pat.N(); i++) {
-		s = pat.GetSegment(i);
-		if( s->Vid(0)>0 )    continue;
-		if( s->Vid(1)>0 )    continue;
-		nempty++;
-	}
-	return nempty;
+  int nempty=0;
+  EdbSegP *s=0;
+  for(int i=0; i<pat.N(); i++) {
+    s = pat.GetSegment(i);
+    if( s->Vid(0)>0 )    continue;
+    if( s->Vid(1)>0 )    continue;
+    nempty++;
+  }
+  return nempty;
 }
 
 ///_________________________________________________________________________
@@ -419,7 +484,7 @@ int EdbRunAccess::FillVP()
   // segp->Y() - /
   // segp->Aid(areaID,viewID);
 
-
+  
   if(!eRun) { printf("ERROR: run is not opened\n"); return 0; }
   EdbView        *view = eRun->GetView();
   EdbViewHeader  *head = view->GetHeader();
@@ -439,9 +504,9 @@ int EdbRunAccess::FillVP()
   int nseg,ncl;
   for(int iv=0; iv<nentr; iv++ ) {
     view = eRun->GetEntry(iv,1,0,0,0,0);
-
-	nseg = head->GetNsegments();
-	ncl  = head->GetNclusters();
+    
+    nseg = head->GetNsegments();
+    ncl  = head->GetNclusters();
     if(eAFID) {
       segP.Set( iv,0,0, 0,0,ncl,nseg);
       segP.Transform( head->GetAffine() );
@@ -450,9 +515,9 @@ int EdbRunAccess::FillVP()
     }
     if( view->GetAreaID() < eFirstArea )  eFirstArea= view->GetAreaID();
     if( view->GetAreaID() > eLastArea )   eLastArea = view->GetAreaID();
-
+    
     segP.SetAid( view->GetAreaID()    , view->GetViewID() );
-	segP.SetVid( head->GetNframesTop(), head->GetNframesBot() );
+    segP.SetVid( head->GetNframesTop(), head->GetNframesBot() );
 
     side = ViewSide(view);
     if(side<1||side>2) continue;
@@ -600,5 +665,3 @@ void EdbRunAccess::AddSegmentCut(int layer, int xi, float min[5], float max[5])
   cut->SetMax(max);
   eCuts[layer]->Add( cut );
 }
-
-
