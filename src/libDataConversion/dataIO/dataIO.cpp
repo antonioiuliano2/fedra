@@ -324,6 +324,7 @@ int ReadCatalog(void** ppData,  char* name)
  FILE* F;
  int i;
 
+ printf("ReadCatalog: %s\n",name);
  F=fopen(name,"r");
  fread(&Hdr.InfoType,1,sizeof(Hdr.InfoType),F);
  fread(&Hdr.HeaderFormat,1,sizeof(Hdr.HeaderFormat),F);
