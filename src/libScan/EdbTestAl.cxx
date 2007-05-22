@@ -118,14 +118,14 @@ int EdbTestAl::CheckMaxBin()
       dphi = eDmin[3] + ip*binp + binp/2;
       mbin = CheckMaxBin(dz,dphi,mean,xmax,ymax);
       h2->Fill(dphi,dz,mbin);
+      printf("dx,dy,dz,dphi = %f %f %f %f;  maxbin/mean= %d/%f = %f\n",xmax,ymax,dz,dphi, mbin,mean,  mbin/mean);
       if(mbin>=eMaxBin) {
 	eD0[0] = xmax; eD0[1]=ymax; eD0[2]=dz; eD0[3]=dphi;
 	eMaxBin=mbin;
-	printf("dx,dy,dz,dphi = %f %f %f %f;  maxbin/mean= %d/%f = %f\n",xmax,ymax,dz,dphi, mbin,mean,  mbin/mean);
       }
     }
   }
-  h2->Draw("box");
+  h2->Draw("colz");
 
   int mx,my,mz;
   h2->GetMaximumBin(mx,my,mz);

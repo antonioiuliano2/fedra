@@ -170,6 +170,8 @@ Additional functions:
 
 * sproc.CorrectAffWithPred(IDp1,IDp2); // take p1.found.root, apply AFF/p1_p2.par, align to p2 and update AFF/p1_p2.par
 
+When ScanAreas() called if the raw data file with the same name is already exist it will be copied into x.x.x.x.raw.root.xxx.save - in this way it could be removed later or kept if the data are important.
+
 == To prepare the predictions for volume scan ==
 
 Assuming that we have the list of stopping points in the brick, the following function can be used to prepare the predictions for volume scan:
