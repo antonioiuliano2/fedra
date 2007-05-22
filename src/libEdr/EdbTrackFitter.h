@@ -27,11 +27,20 @@ class EdbTrackFitter : public TNamed {
   EdbTrackFitter();
   virtual ~EdbTrackFitter(){}
 
-  void  SetNsegMax(int nseg) {eNsegMax=nseg;}
-  void  SetDefaultBrick();
-  int   FitTrackLine(EdbTrackP &tr);
-  float PMS_Mag(EdbTrackP &tr, float detheta);
-  float P_MS(EdbTrackP &tr);
+  void    SetNsegMax(int nseg) {eNsegMax=nseg;}
+  void    SetDefaultBrick();
+  int     FitTrackLine(EdbTrackP &tr);
+  float   PMS_Mag(EdbTrackP &tr, float detheta);
+  float   P_MS(EdbTrackP &tr);
+  static float   MaxKink(EdbTrackP &tr);
+  static float   MeanKink(EdbTrackP &tr);
+  static float   Theta( EdbSegP &s, EdbSegP &s1 );
+  static float   Chi2Seg( EdbSegP *s1, EdbSegP *s2);
+  static float   MaxChi2Seg(EdbTrackP &tr);
+  static float   MeanChi2Seg(EdbTrackP &tr);
+  bool    SplitTrack( EdbTrackP &t, EdbTrackP &t1, int isplit );
+  int     SplitTrackByKink( EdbTrackP *t, TObjArray &tracks, float maxkink );
+  float   PMS_KF(EdbTrackP &t, float p0=10., float probbest=0.5);
 
   void Print();
 

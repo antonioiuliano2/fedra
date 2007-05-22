@@ -14,9 +14,17 @@
 #include "EdbPhys.h"
 #include "EdbTrackFitter.h"
 
+#include "vt++/CMatrix.hh"
+#include "vt++/VtVector.hh"
+#include "vt++/VtDistance.hh"
+#include "smatrix/Functions.hh"
+#include "smatrix/SVector.hh"
+
 ClassImp(EdbTrackFitter);
 
 using namespace TMath;
+using namespace MATRIX;
+using namespace VERTEX;
 
 //______________________________________________________________________________
 EdbTrackFitter::EdbTrackFitter()
@@ -33,7 +41,7 @@ void EdbTrackFitter::SetDefaultBrick()
   eM             = 0.13957;
   eDE_correction = false;
 
-  eNsegMax=60;
+  eNsegMax=160;
 }
 
 //______________________________________________________________________________
@@ -44,6 +52,185 @@ void EdbTrackFitter::Print()
   printf("eX0      = %f\n",eX0);
   printf("eM       = %f\n",eM);
   printf("\n");
+}
+
+//________________________________________________________________________
+float EdbTrackFitter::Chi2Seg( EdbSegP *tr, EdbSegP *s)
+{
+  // Return value:        Prob: is Chi2 probability (area of the tail of Chi2-distribution)
+  //                      If we accept couples with Prob >= ProbMin then ProbMin is the 
+  //                      probability to reject the good couple
+  //
+  // The mass and momentum of the tr are used for multiple scattering estimation
+
+  double dz;
+  float prob;
+  VtVector par( (double)(tr->X()), 
+		(double)(tr->Y()),  
+		(double)(tr->TX()), 
+		(double)(tr->TY()) );
+  VtSymMatrix cov(4);             // covariance matrix for seg0 (measurements errors)
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) cov(k,l) = (tr->COV())(k,l);
+
+  Double_t chi2=0.; 
+  dz = s->Z()-tr->Z();
+  VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
+  pred.clear();
+  pred(0,0) = 1.;
+  pred(1,1) = 1.;
+  pred(2,2) = 1.;
+  pred(3,3) = 1.;
+  pred(0,2) = dz;
+  pred(1,3) = dz;
+  VtVector parpred(4);            // prediction from seg0 to seg
+  parpred = pred*par;
+  VtSymMatrix covpred(4);         // covariance matrix for prediction
+  covpred = pred*(cov*pred.T());
+
+  VtSymMatrix dmeas(4);           // original covariance  matrix for seg2
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) dmeas(k,l) = (s->COV())(k,l);
+  
+  covpred = covpred.dsinv();
+  dmeas   = dmeas.dsinv();
+  cov = covpred + dmeas;
+  cov = cov.dsinv();
+  
+  VtVector meas( (double)(s->X()), 
+		 (double)(s->Y()),  
+		 (double)(s->TX()), 
+		 (double)(s->TY()) );
+
+  par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
+  chi2 = (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
+  prob = (float)TMath::Prob(chi2,4);
+
+  tr->Set(tr->ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr->W(),tr->Flag());
+  tr->SetCOV( cov.array(), 4 );
+  tr->SetChi2((float)chi2);
+  tr->SetProb(prob);
+  tr->SetZ(s->Z());
+  tr->SetW(tr->W()+s->W());
+  return TMath::Sqrt(chi2/4.);
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::MaxChi2Seg(EdbTrackP &t)
+{
+  // return the maximal seg-to-seg chi2 along the track
+  float chimax=0,chi=0;
+  if(t.N()<2) return chimax;
+  for(int i=0; i<t.N()-1; i++) {
+    EdbSegP s(*t.GetSegment(i));
+    chi =  Chi2Seg(&s,t.GetSegment(i+1));
+    chimax = chi > chimax ? chi : chimax;
+  }
+  return chimax;
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::MeanChi2Seg(EdbTrackP &t)
+{
+  float meanchi=0;
+  if(t.N()<2) return meanchi;
+  for(int i=0; i<t.N()-1; i++) {
+    EdbSegP s(*t.GetSegment(i));
+    meanchi +=  Chi2Seg(&s,t.GetSegment(i+1));
+  }
+  return meanchi /= (t.N()-1);
+}
+
+
+//______________________________________________________________________________
+float EdbTrackFitter::MaxKink(EdbTrackP &t)
+{
+  // return the maximal seg-to-seg kink theta angle
+  float kink=0,theta=0;
+  if(t.N()<2) return kink;
+  for(int i=0; i<t.N()-1; i++) {
+    theta =  Theta(*t.GetSegment(i),*t.GetSegment(i+1));
+    kink = theta > kink ? theta : kink;
+  }
+  return kink;
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::MeanKink(EdbTrackP &t)
+{
+  float meankink=0;
+  if(t.N()<2) return 0;
+  for(int i=0; i<t.N()-1; i++) 
+    meankink +=  Theta(*t.GetSegment(i),*t.GetSegment(i+1));
+  return meankink /= (t.N()-1);
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::Theta( EdbSegP &s, EdbSegP &s1 )
+{
+  return Sqrt( (s.TX()-s1.TX())*(s.TX()-s1.TX()) + (s.TY()-s1.TY())*(s.TY()-s1.TY()) );
+}
+
+//______________________________________________________________________________
+bool EdbTrackFitter::SplitTrack( EdbTrackP &t, EdbTrackP &t1, int isplit )
+{
+  // split track t in 2 at the point isplit - will be the first segment of of t1
+  if(t.N()<isplit) return false;
+  for(int i=t.N()-1; i>=isplit; i--) {
+    t1.AddSegment(   t.GetSegment(i) );
+    t.RemoveSegment( t.GetSegment(i) );
+  }
+  t.SetCounters();
+  //t1.FitTrackKFS(true, X0, 0);
+  t1.SetCounters();
+  t1.SetM(t.M());
+  t1.SetP(t.P());
+  //t1.FitTrackKFS(true, X0, 0);
+
+  return true;
+}
+
+//______________________________________________________________________________
+int EdbTrackFitter::SplitTrackByKink( EdbTrackP *t, TObjArray &tracks, float maxkink )
+{
+  // split track t in several tracks accourding to maxkink
+  // return total number of tracks after splitting; 
+  // after splitting all new tracks added to the array "tracks"
+
+  if(t->N()<1) return 0;
+  if(t->N()<2) return 1;
+  int nsplit=1;
+  for(int i=t->N()-1; i>0; i--) 
+    if( Theta(*t->GetSegment(i),*t->GetSegment(i-1)) >= maxkink ) {
+      EdbTrackP *t1 = new EdbTrackP();
+      SplitTrack(*t,*t1, i);
+      tracks.Add(t1);
+      nsplit++;
+    }
+  return nsplit;;
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::PMS_KF(EdbTrackP &t, float p0, float probbest)
+{
+  // select track momentum in a way to have the given chi2-probablity calculated by KF
+
+  if(t.N()<2) return 0;
+  float prob=0;
+  float pu=100., pl=0., p=p0;
+  int nstep = 0;
+  while( Abs(prob-probbest)>0.001 ) {
+    nstep++;
+    t.SetP(p);
+    t.FitTrackKFS(true);
+    prob = t.Prob();
+    if(prob<probbest) pu=p;
+    else pl=p;
+    if(nstep>30) break;
+    p = (pu+pl)/2.;
+  }
+  if(nstep>20) printf("Warning in EdbTrackFitter::PMS_KF: nstep=%d     nseg=%d  p=%f  prob=%f\n",nstep,t.N(),p,prob);
+  return t.P();
 }
 
 //______________________________________________________________________________
@@ -97,6 +284,7 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta)
 
   EdbSegP *s;
   int nseg = tr.N();
+  if(nseg<2)   return 0;
   int npl = tr.Npl();
 
   TArrayF theta2(eNsegMax),dtheta(eNsegMax),theta(eNsegMax);
@@ -124,10 +312,10 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta)
   double cor=Sqrt(slopecorx*slopecorx+slopecory*slopecory);
   double Zeff=(cor*cor/Sqrt(1+cor*cor));
 
-  for(int plate=0;plate<npl;plate++){
-    setx[plate]=setx[plate+lastci];
-    sety[plate]=sety[plate+lastci];
-  }	
+  for(int plate=0;plate<npl;plate++){         //??? 
+    //setx[plate]=setx[plate+lastci];
+    //sety[plate]=sety[plate+lastci];
+  }
   
   int Ncell=0;
   for (int m=0;m<npl-1;m++) {
