@@ -15,17 +15,17 @@
 //______________________________________________________________________________
 class EdbRunAccess : public TObject {
 
- private:
+ public:
+  Int_t     eAFID;        // if =1 - use affine transformations of the fiducial marks
+  Int_t     eCLUST;       // 1-use clusters, 0 - do not
 
+ private:
   TString  eRunFileName;
   EdbRun   *eRun;        // pointer to the run to be accessed
 
   Int_t eFirstArea;
   Int_t eLastArea;
   Int_t eNareas;
-
-  Int_t     eAFID;        // if =1 - use affine transformations of the fiducial marks
-  Int_t     eCLUST;       // 1-use clusters, 0 - do not
 
   EdbLayer    *eLayers[3]; // base(0),up(1),down(2)  layers
   EdbScanCond *eCond[3];   //
@@ -47,9 +47,11 @@ class EdbRunAccess : public TObject {
   virtual ~EdbRunAccess() {}
 
   void Set0();
-  bool InitRun();
+  void ClearCuts();
+  bool InitRun(const char *runfile=0);
   bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");
   bool AddRWDToRun(char *rwdname, const char* options="");
+  void Print();
   void PrintStat();
   void CheckRunLine();
   int CheckEmptyViews(EdbPattern &pat);
@@ -77,6 +79,8 @@ class EdbRunAccess : public TObject {
   int GetViewsAreaMarg(int ud, TArrayI &entr, int area, float xmarg, float ymarg);
 
   int GetViewsXY(int ud, TArrayI &entr, float x, float y);
+  int GetEntryXY(int ud, float x, float y);
+  int GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol);
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side);
 

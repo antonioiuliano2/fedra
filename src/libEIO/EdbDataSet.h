@@ -20,14 +20,16 @@
 //______________________________________________________________________________
 class EdbDataPiece : public TNamed {
 
+ public:
+  Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
+  Int_t        eCLUST;          // 1-use clusters, 0 - do not
+
  private:
   Int_t        ePlate;          // plate id
   Int_t        ePiece;          // piece id in this plate
   Int_t        eFlag;           // 0-do nothing, 1-do something
   TObjArray    eRunFiles;       //
   //  TString      eFileNameRaw;    // name of the raw data file (run)
-  Int_t        eAFID;           // 1-use fiducial marks transformations, 0 - do not
-  Int_t        eCLUST;          // 1-use clusters, 0 - do not
 
   EdbLayer    *eLayers[3];      // base(0),up(1),down(2)  layers
   EdbScanCond *eCond[3];        //
