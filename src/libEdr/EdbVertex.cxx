@@ -609,7 +609,7 @@ int EdbVertexRec::MakeV( EdbVertex &edbv )
   // create new VtVertex and add (two) tracks to this one
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Error: EdbVertexRec::MakeV: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
+  if(!ePVR) {printf("Error: EdbVertexRec::MakeV: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
 
   float X0 =  ePVR->GetScanCond()->RadX0();
   Vertex *v=edbv.V();
@@ -767,7 +767,7 @@ int EdbVertexRec::FindVertex()
 
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Error: EdbVertexRec::FindVertex: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
+  if(!ePVR) {printf("Error: EdbVertexRec::FindVertex: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
 
   EdbVertex *edbv = 0;
   TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
@@ -1602,7 +1602,7 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
 {
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
+  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
 
   int nn   = 0, iv = 0;
 //  int i = 0, nntr = 0;
@@ -1633,7 +1633,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 {
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
+  if(!ePVR) {printf("Warning: EdbVertexRec::VertexNeighbor: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
 
   EdbVTA    *vta = 0;
   EdbTrackP *tr  = 0;
@@ -1874,7 +1874,7 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, TObjArray 
 {
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined, use SetPVR(...)\n"); return 0;}
+  if(!ePVR) {printf("Warning: EdbVertexRec::SegmentNeighbor: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
 
   EdbTrackP *tr  = 0, *trown = 0;
   const EdbSegP   *ss  = 0;
