@@ -270,6 +270,8 @@ void EdbRun::AddView( EdbView *view )
 
   viewHeader->SetNclusters(eView->Nclusters());
   viewHeader->SetNsegments(eView->Nsegments());
+  viewHeader->SetEvent( GetHeader()->GetFlag(8) );
+  viewHeader->SetTrack( GetHeader()->GetFlag(9) );
 
   eTree->Fill();
   eView->Clear();

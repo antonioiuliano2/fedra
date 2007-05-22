@@ -30,7 +30,7 @@ class EdbViewHeader : public TObject {
 private:
 
   Int_t    eViewID;   // View ID in the Area
-  Int_t    eAreaID;   // Area ID in Run (prediction id)
+  Int_t    eAreaID;   // Area ID in Run (fragment id)
 
   Float_t  eXview;    // stage coord, top left corner
   Float_t  eYview;    // 
@@ -57,6 +57,9 @@ private:
   Int_t   eRow;          // starting from the reference angle (typically up-left)
 
   Int_t   eStatus;       // View scanning status
+  Int_t   eEvent;        // optional: the part of the tree may be associated with event. Setted via run->header->Flag(8)
+  Int_t   eTrack;        // optional: some view group may be associated with track. Setted via run->header->Flag(9)
+
 public:
   EdbViewHeader();
   virtual ~EdbViewHeader();
@@ -101,6 +104,8 @@ public:
   void     SetNframes( int top, int bot )  { eNframesTop=top; eNframesBot=bot; }
   void     SetColRow( int col, int row) { eCol=col; eRow=row; }
   void     SetStatus( int st) { eStatus=st; }
+  void     SetTrack( int track) { eTrack=track; }
+  void     SetEvent( int event) { eEvent=event; }
 
   Float_t  GetZ1()          const { return eZ1;  }
   Float_t  GetZ2()          const { return eZ2;  }
@@ -118,9 +123,11 @@ public:
   Int_t    GetCol()         const { return eCol; }
   Int_t    GetRow()         const { return eRow; }
   Int_t    GetStatus()      const { return eStatus; }
+  Int_t    GetTrack()       const { return eTrack; }
+  Int_t    GetEvent()       const { return eEvent; }
   void     Print() const;
 
-  ClassDef(EdbViewHeader,3)  // view identification
+  ClassDef(EdbViewHeader,4)  // view identification
 };
 
 //______________________________________________________________________________
