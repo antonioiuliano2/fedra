@@ -339,7 +339,7 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
 
   if(scp->eS) delete (scp->eS);
   scp->eS=new EdbSegP(*s2);
-  float chi2 = EdbPVRec::Chi2Seg(scp->eS, s1);
+  float chi2 = EdbTrackFitter::Chi2Seg(scp->eS, s1);
   scp->eS->PropagateToCOV( 0.5*(s1->Z()+s2->Z()) );
   return chi2;
 }
@@ -907,6 +907,7 @@ EdbPVRec::EdbPVRec()
 ///______________________________________________________________________________
 EdbPVRec::~EdbPVRec()
 {
+  
   if(ePatCouples) {
     ePatCouples->Delete();
     delete ePatCouples;
@@ -922,11 +923,12 @@ EdbPVRec::~EdbPVRec()
     delete eVTX;
     eVTX=0;
   }
-  if(eTracksCell)     delete eTracksCell;
+  if(eTracksCell) { delete eTracksCell; eTracksCell=0; }
   if (gROOT->GetListOfSpecials()->FindObject(this))
     {
       gROOT->GetListOfSpecials()->Remove(this);
     }
+  
 }
 
 ///______________________________________________________________________________
@@ -2747,78 +2749,6 @@ bool EdbPVRec::AttachSeg( EdbTrackP& tr, EdbSegP *s,
     return true;
   }
   return false;
-}
-
-//________________________________________________________________________
-float EdbPVRec::Chi2Seg( EdbSegP *tr, EdbSegP *s)
-{
-  // Return value:        Prob: is Chi2 probability (area of the tail of Chi2-distribution)
-  //                      If we accept couples with Prob >= ProbMin then ProbMin is the 
-  //                      probability to reject the good couple
-  //
-  // The mass and momentum of the tr are used for multiple scattering estimation
-
-  double dz;
-  float prob;
-
-  VtVector par( (double)(tr->X()), 
-		(double)(tr->Y()),  
-		(double)(tr->TX()), 
-		(double)(tr->TY()) );
-
-  VtSymMatrix cov(4);             // covariance matrix for seg0 (measurements errors)
-  for(int k=0; k<4; k++) 
-    for(int l=0; l<4; l++) cov(k,l) = (tr->COV())(k,l);
-
-  Double_t chi2=0.; 
-
-
-  dz = s->Z()-tr->Z();
-
-  VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
-  pred.clear();
-
-  pred(0,0) = 1.;
-  pred(1,1) = 1.;
-  pred(2,2) = 1.;
-  pred(3,3) = 1.;
-  pred(0,2) = dz;
-  pred(1,3) = dz;
-
-  VtVector parpred(4);            // prediction from seg0 to seg
-  parpred = pred*par;
-  
-  VtSymMatrix covpred(4);         // covariance matrix for prediction
-  covpred = pred*(cov*pred.T());
-
-  VtSymMatrix dmeas(4);           // original covariance  matrix for seg2
-  for(int k=0; k<4; k++) 
-    for(int l=0; l<4; l++) dmeas(k,l) = (s->COV())(k,l);
-  
-  covpred = covpred.dsinv();
-  dmeas   = dmeas.dsinv();
-  cov = covpred + dmeas;
-  cov = cov.dsinv();
-  
-  VtVector meas( (double)(s->X()), 
-		 (double)(s->Y()),  
-		 (double)(s->TX()), 
-		 (double)(s->TY()) );
-
-  par = cov*(covpred*parpred + dmeas*meas);   // new parameters for seg
-
-  chi2 = (par-parpred)*(covpred*(par-parpred)) + (par-meas)*(dmeas*(par-meas));
-
-  prob = (float)TMath::Prob(chi2,4);
-
-  tr->Set(tr->ID(),(float)par(0),(float)par(1),(float)par(2),(float)par(3),tr->W(),tr->Flag());
-  tr->SetCOV( cov.array(), 4 );
-  tr->SetChi2((float)chi2);
-  tr->SetProb(prob);
-  tr->SetZ(s->Z());
-  tr->SetW(tr->W()+s->W());
-
-  return TMath::Sqrt(chi2/4.);
 }
 
 ///______________________________________________________________________________
