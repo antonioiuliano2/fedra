@@ -779,7 +779,8 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 ///______________________________________________________________________________
 int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
 {
-  printf("z = %f \n", GetLayer(0)->Z());
+  printf("GetCPData_new: z = %f \n", GetLayer(0)->Z());
+  if(!eCouplesTree)  return  0;
   pat->SetID(0);
   EdbSegP    segP;
 
