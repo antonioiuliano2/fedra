@@ -225,6 +225,7 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
     else  sn = areas.GetSegment(i);
     sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());  //???
     gSystem->Exec(str);
+    printf("ScanAreas: scan progress: %d out of %d (%4.1f percent)\n",i,n,100.*i/n);
     sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
     if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
 		    s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
