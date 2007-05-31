@@ -137,7 +137,7 @@ int EdbScanProc::LoadPlate(EdbScanClient &scan, int id[4], int attempts)
   FlashRawDir(scan,id);
   TString map;
   if(!GetMap(id[0],map)) {
-    LogPrint(id[0],"LoadPlate","ERROR: map file do not exist! Stop here. *** %d.%d.%d  status = %d ***",
+    LogPrint(id[0],"LoadPlate","ERROR: map file does not exist! Stop here. *** %d.%d.%d  status = %d ***",
 	     id[0],id[1],id[2],status);
     return status;
   }
@@ -390,8 +390,20 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
   AddParLine(name.Data(),	parfileOUT.Data());
   
   EdbPattern p1,p2;
+
+  ReadPatCP(p2,id2);
+  p2.SetZ(0);
+  p2.SetSegmentsZ();
+
+  ReadPatCP(p1,id1);
+  EdbAffine2D aff1;
+  float dz;
+  GetAffZ(aff1,dz,id1,id2);
+  p1.SetZ(-dz);
+  p1.SetSegmentsZ();
+
+  /*
   EdbDataPiece piece1,piece2;
-  
   InitPiece(piece1, id1);
   piece1.GetLayer(0)->SetZlayer(-1*piece1.GetLayer(0)->Z(), 0,0);
   ReadPiece(piece1, p1);
@@ -403,8 +415,9 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
   ReadPiece(piece2, p2);
   p2.SetZ(piece2.GetLayer(0)->Z());
   p2.SetSegmentsZ();
+  */
 
-  printf("EdbScanProc::Align: Z1 = %f z2 = %f\n",piece1.GetLayer(0)->Z(),piece2.GetLayer(0)->Z());
+  //printf("EdbScanProc::Align: Z1 = %f z2 = %f\n",piece1.GetLayer(0)->Z(),piece2.GetLayer(0)->Z());
   EdbTestAl ta;
   ta.HDistance(p1,p2);
   //ta.FillTree( -5000 );
@@ -425,13 +438,9 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
     }
     fclose(f);
   }
-  //float bin[4]={200,200,500,0.002};
-  //ta.eDmin[0]=-15000; ta.eDmin[1]=-15000; ta.eDmin[2]= -20000; ta.eDmin[3]=-0.04;
-  //ta.eDmax[0]= 15000; ta.eDmax[1]= 15000; ta.eDmax[2]=  10000; ta.eDmax[3]= 0.04;
   for(int i=0; i<4; i++) ta.eN[i] = (Int_t)((ta.eDmax[i]-ta.eDmin[i]-bin[i]/2.)/bin[i])+1;
   for(int i=0; i<4; i++) ta.eDmax[i] = ta.eDmin[i]+bin[i]*ta.eN[i];
   for(int i=0; i<4; i++) printf("%d \t%f %f %f %d\n",i, ta.eDmin[i],ta.eDmax[i],bin[i],ta.eN[i]);
-
 
   ta.CheckMaxBin();
   EdbAffine2D aff;
@@ -439,7 +448,7 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
   aff.ShiftX(ta.eD0[0]);
   aff.ShiftY(ta.eD0[1]);
   aff.Print();
-  ta.FillTree( piece2.GetLayer(0)->Z()-piece1.GetLayer(0)->Z() );
+  //ta.FillTree( piece2.GetLayer(0)->Z()-piece1.GetLayer(0)->Z() );
   return 0;
 }
   
@@ -635,7 +644,7 @@ EdbRun *EdbScanProc::InitRun(int id[4])
   TString str;
   MakeFileName(str,id,"raw.root");   // the file will have the requested name 
 
-  if( !gSystem->AccessPathName(str.Data(), kFileExists) ) {   // if the file with the same name exist it will be saved as *root.xxx.save
+  if( !gSystem->AccessPathName(str.Data(), kFileExists) ) {   // if the file with the same name exists it will be saved as *root.xxx.save
     TString str2;
     for(int ic=0; ic<1000; ic++) {
       str2 = str; str2+="."; str2+=ic; str2+=".save";
@@ -667,6 +676,10 @@ bool EdbScanProc::MakeInPar(int id[4], const char *option)
   TString name;
   MakeFileName(name,id,"in.par");
   FILE *f = fopen(name.Data(),"w");
+  if(!f) {
+    LogPrint(id[0],"MakeInPar","ERROR! can't open file: %s", id[0],id[1],id[2],id[3],name.Data() );
+    return false;
+  }
   fprintf(f,"INCLUDE %s/parset/opera_emulsion.par\n",eProcDirClient.Data());
   fprintf(f,"INCLUDE %s/parset/%s.par\n",eProcDirClient.Data(),option);
   TString nm;
@@ -724,6 +737,20 @@ bool EdbScanProc::InitPiece(EdbDataPiece &piece, int id[4])
   piece.eFileNamePar = parfile;
   if(piece.TakePiecePar()<0) return false;
   return true;
+}
+
+//-------------------------------------------------------------------
+int EdbScanProc::ReadPatCP(EdbPattern &pat, int id[4])
+{
+  // read CP file ("base" segments) applying all cuts and transformations from x.x.x.x.in.par
+  // the Z of the pat and all segments will be z of layer 0 defined in the par file(s)
+  EdbDataPiece piece;
+  InitPiece(piece, id);
+  piece.GetLayer(0)->SetZlayer(piece.GetLayer(0)->Z(), 0,0);
+  int n = ReadPiece(piece, pat);
+  pat.SetZ(piece.GetLayer(0)->Z());
+  pat.SetSegmentsZ();
+  return n;
 }
 
 //-------------------------------------------------------------------
@@ -866,10 +893,12 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
 
     }
     cnsel[nsel]++;
-    if(nsel>0)                    found.AddSegment(*((EdbSegP *)arr.At(ind[0])));
-    else if(s->Flag()<maxholes)   found.AddSegment(*(s));                           //add itself in case of hole
+    if(nsel>0)                    found.AddSegment(*((EdbSegP *)arr.At(ind[0])));   // add best segment
+    else if(s->Flag()<maxholes)   found.AddSegment(*(s));                           // add itself in case of hole
+    else continue;                                                                  // no segments to add
 
     EdbSegP *slast=found.GetSegmentLast();
+    if(!slast) continue;
     slast->SetID(s->ID());         // todo!
     if(nsel>0) slast->SetFlag(0);            // reset flag if found good candidate
     else slast->SetFlag(slast->Flag()+1);    // flag is the number of missed plates
@@ -902,29 +931,39 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
 }
 
 //-------------------------------------------------------------------
-bool  EdbScanProc::ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4])
+bool  EdbScanProc::GetAffZ(EdbAffine2D &aff, float &dz, int id1[4],int id2[4])
 {
-  // read affine transformations and deltaZ from x.x.x.x_y.y.y.y.aff.par and apply it to pat
-  // 
+  // read affine transformations and deltaZ from x.x.x.x_y.y.y.y.aff.par
   TString parfile;
   MakeAffName(parfile,id1,id2);
   EdbDataPiece piece;
   piece.eFileNamePar = parfile;
   piece.TakePiecePar();
-  EdbAffine2D *aff = piece.GetLayer(0)->GetAffineXY();
-  float dz = piece.GetLayer(0)->Z();
+  EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
+  if(!a) return false;
+  aff.Copy(*a);
+  dz = piece.GetLayer(0)->Z();
+  return true;
+}
+
+//-------------------------------------------------------------------
+bool  EdbScanProc::ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4])
+{
+  // read affine transformations and deltaZ from x.x.x.x_y.y.y.y.aff.par and apply it to pat
+  EdbAffine2D aff;
+  float       dz;
+  if( !GetAffZ( aff, dz, id1, id2) ) return false;
   printf("ApplyAffZ: dz = %f\n",dz);
-  if(!aff) return false;
-  aff->Print();
+  aff.Print();
   pat.ProjectTo(dz);
-  pat.Transform(aff);
+  pat.Transform(&aff);
   return true;
 }
 
 //-------------------------------------------------------------------
 int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
 {
-  // Align 2 patterns, assumed that already exist file x.x.x.x_y.y.y.y.aff.par with deltaZ inside.
+  // Align 2 patterns, assumed that already exists file x.x.x.x_y.y.y.y.aff.par with deltaZ inside.
   // Convension about Z(setted while process): the z of id2 is 0, the z of id1 is (-deltaZ) where
   // deltaZ readed from aff.par file in a way that pattern of id1 projected 
   // to deltaZ correspond to pattern of id2
