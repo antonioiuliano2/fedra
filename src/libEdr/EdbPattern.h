@@ -208,7 +208,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Int_t  GetN()    const 
     {if(eSegments) return eSegments->GetEntriesFast(); else return 0;}
   EdbSegP      *GetSegment(int i) const { return (EdbSegP*)eSegments->At(i); }
-  EdbSegP      *GetSegmentLast()  const { return (EdbSegP*)eSegments->Last(); }
+  EdbSegP      *GetSegmentLast()  const { if(GetN()) return (EdbSegP*)eSegments->Last(); else return 0; }
   TClonesArray *GetSegments()     const { return eSegments; }
   void          *GetSegmentsAddr()  { return &eSegments; }
 
