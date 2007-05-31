@@ -190,7 +190,7 @@ void EdbRun::Create( const char *fname )
   if(!eMarks)       eMarks         = new EdbMarksSet();
 
   if( !gSystem->AccessPathName(fname, kFileExists) )
-    printf("WARNING : file %s  is already exist!\n", fname);
+    printf("WARNING : file %s already exists!\n", fname);
 
   printf("\nOpen new file %s \n\n", fname);
   eFile = new TFile(fname,"RECREATE");
@@ -402,11 +402,11 @@ void EdbRun::PrintBranchesStatus() const
   // not supported...
 
   EdbViewHeader *header   =  GetEntryHeader( 0 );
-  if(header)      printf("header branch exist\n");
+  if(header)      printf("header branch exists\n");
   TClonesArray  *clusters =  GetEntryClusters( 0 );
-  if(clusters)    printf("clusters branch exist\n");
+  if(clusters)    printf("clusters branch exists\n");
   TObjArray     *frames   =  GetEntryFrames( 0 );
-  if(frames)    printf("frames branch exist\n");
+  if(frames)    printf("frames branch exists\n");
 }
 
 //______________________________________________________________________________

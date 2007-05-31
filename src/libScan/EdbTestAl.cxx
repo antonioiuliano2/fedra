@@ -103,7 +103,7 @@ int EdbTestAl::CheckMaxBin()
 {
   // Output: vmax - x,y,z,phi of the highest bin
 
-  printf("CheckMaxBin: nz = %d nphi = %d\n",eN[2],eN[3]);
+  printf("CheckMaxBin:(z:nphi): %d %f %f  %d %f %f\n",eN[3],eDmin[3],eDmax[3],eN[2],eDmin[2],eDmax[2]);
 
   TH2F  *h2 = new TH2F("z_phi","z_phi",eN[3],eDmin[3],eDmax[3],eN[2],eDmin[2],eDmax[2]);
 
