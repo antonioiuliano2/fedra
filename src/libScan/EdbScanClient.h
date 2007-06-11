@@ -16,7 +16,7 @@ public:
 
 public:
   int       eMAXSCANATTEMPTS;
-  int       eMAXLOADATTEMPTS; 
+  int       eMAXFAILS;          // the max number for predictions failed to scan before break
   int       ePORT;              // port number where BernScanDriver expect connection (default 1777)
   TString   eServer;            // address of the scanning mashine
 
