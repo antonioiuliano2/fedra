@@ -41,17 +41,16 @@ EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
 ///______________________________________________________________________________
 EdbDataPiece::~EdbDataPiece()
 {
-  int i;
-  for(i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
-  for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
-  for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
-  for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
-  for(i=0; i<3; i++)  if(eRCuts[i])    delete eRCuts[i];
-  if(   eCouplesInd)                   delete eCouplesInd;
-  eRunFiles.Delete();
-  CloseRun();
-  CloseCPData();
-  //if(eCouplesTree) {delete eCouplesTree; eCouplesTree=0;}
+   int i;
+   for(i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
+   for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
+   for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
+   for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
+   for(i=0; i<3; i++)  if(eRCuts[i])    delete eRCuts[i];
+   if(   eCouplesInd)                   delete eCouplesInd;
+   eRunFiles.Delete();
+   CloseRun();
+   CloseCPData();
 }
 
 ///______________________________________________________________________________
@@ -72,9 +71,7 @@ void EdbDataPiece::Set0()
   for(i=0; i<3; i++) eCond[i]=0;
   for(i=0; i<3; i++) eAreas[i]=0;
   for(i=0; i<3; i++) eCuts[i]=0;
-
   for(i=0; i<3; i++) eRCuts[i]=0;
-  
   eRun    = 0;
   eCouplesTree=0;
   eCouplesInd=0;
@@ -85,7 +82,11 @@ void EdbDataPiece::CloseCPData()
 {
   if(eCouplesTree) {
     TFile *f = eCouplesTree->GetDirectory()->GetFile();
-    if(f) { f->Delete("*"); f->Close(); }
+    if(f) {
+      if(f->IsWritable()) eCouplesTree->AutoSave();
+      f->Close();
+    }
+    eCouplesTree=0;
   }
 }
 
@@ -1246,6 +1247,7 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
       //tree->SetAutoSave(2000000);
     }
   }
+  if(!tree) printf("ERROR!!! InitCouplesTree: can't initialize tree at %s as %s\n",file_name,mode);
   return tree;
 }
 
@@ -1616,12 +1618,14 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 {
   EdbPVRec  *ali;
 
-  const char *file_name=piece.GetNameCP();
-  TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
+  //const char *file_name=piece.GetNameCP();
+  //TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
+  //if(!cptree) return 0;
+
+  if(!piece.InitCouplesTree("RECREATE")) return 0;
+
   EdbScanCond *cond = piece.GetCond(1);
-
-  int ntot=0, nareas=0;
-
+  int    ntot=0, nareas=0;
   float  shr1=1,shr2=1;
   double shrtot1=0., shrtot2=0.;
   int    nshr=0,nshrtot=0;
@@ -1659,7 +1663,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 	}
       }
 
-      FillCouplesTree(cptree, ali,piece.GetOUTPUT());  //!!! 0
+      FillCouplesTree( piece.eCouplesTree, ali,piece.GetOUTPUT());  //!!! 0
 
       delete ali;
     }
@@ -1675,8 +1679,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       if(!NoUpdate())   piece.UpdateShrPar(2);
     }
   }
-  int ncp = cptree->GetEntries();
-  CloseCouplesTree(cptree);
+  int ncp = piece.eCouplesTree->GetEntries();
+  piece.CloseCPData();
   return ncp;
 }
 
@@ -1773,6 +1777,7 @@ void EdbDataProc::CloseCouplesTree(TTree *tree)
   TFile *f=0;
   f = tree->GetCurrentFile();
   if(f) f->Close();
+  tree=0;
 }
 
 ///______________________________________________________________________________
@@ -2129,7 +2134,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
   printf("npieces = %d\n",npieces);
   if(!npieces) return 0;
 
-  TTree *cptree=0;
+  //TTree *cptree=0;
   int i;
 
   EdbPattern *pat=0;
@@ -2139,9 +2144,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
   for(i=0; i<npieces; i++ ) {
     printf("\n");
     piece = eDataSet->GetPiece(i);
-    cptree=EdbDataPiece::InitCouplesTree(piece->GetNameCP(),"READ");
-    if( !cptree )  printf("no tree %d\n",i);
-    piece->SetCouplesTree(cptree);
+    if(!piece->InitCouplesTree("READ"))  printf("no tree %d\n",i);
 
     pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
     pat->SetPID(i);
@@ -2160,10 +2163,8 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
       ali->AddPattern( p1 );
       ali->AddPattern( p2 );
     }
-
-    CloseCouplesTree(cptree);
+    piece->CloseCPData();
   }
-
 
   float x0 = eDataSet->GetPiece(npieces-1)->GetLayer(0)->X();
   float y0 = eDataSet->GetPiece(npieces-1)->GetLayer(0)->Y();
