@@ -21,8 +21,8 @@ EdbScanClient::EdbScanClient()
   eMess[0]=0;
   eMess1[0]=0;
 
-  eMAXLOADATTEMPTS=1;
-  eMAXSCANATTEMPTS=3;
+  eMAXSCANATTEMPTS = 3; // max number of trials to scan an area 
+  eMAXFAILS        = 5; // max number of predictions (areas) failed before abort scanning
   ePORT=1777;
 }
 
@@ -206,38 +206,45 @@ int EdbScanClient::AsyncWaitForScanResult()
 //-------------------------------------------------------------------
 int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options)
 {
-  // this function scan the list of areas and save into the same EdbRun
+  // this function scan the list of areas and save into  EdbRun
   // the run should be already correctly opened, predictions are assumed to be in the stage coord
-  // prediction id will be used for the temporary file name construction
-  // return number of scanned areas
+  // prediction id will be used for the temporary file name construction and so should be unique
+  // return number of correctly scanned and converted areas
 
   int n = areas.N();
   printf("ScanAreas: %d \n",n);
+  int scanned=0, failed=0;
   EdbSegP *s = 0;
   EdbSegP *sn = 0;
   char str[256];
-  int ic=0;
   for(int i=0; i<n; i++) {
-    //SetParameter("Tracker_#1(Top)","Max_Grains","200000");
-    //SetParameter("Tracker_#2(Bottom)","Max_Grains","200000");
     s = areas.GetSegment(i);
     if(i<n-1) sn = areas.GetSegment(i+1); 
     else  sn = areas.GetSegment(i);
-    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());  //???
+    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
     gSystem->Exec(str);
-    printf("ScanAreas: scan progress: %d out of %d (%4.1f percent)\n",i,n,100.*i/n);
+    printf("ScanAreas: scan progress: %d out of %d (%4.1f%%)\n",i,n,100.*i/n);
     sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
-    if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
-		    s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
-		    str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {i--; break;}
+    if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),
+			   s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
+			   str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {
+      //      i--; //? Igor added this line?
+      printf("EdbScanClient::ScanAreas: WARNING!!! scanning failed for area %d (%d.%d.%d.%d)!\n",
+	     i,  id[0], id[1], id[2], s->ID());
+      if(++failed > eMAXFAILS)  {
+	printf("EdbScanClient::ScanAreas: ERROR!!! too many failures - stop scanning!\n");
+	break;
+      }
+      continue;  // still try to scan other predictions
+    }
     sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
     run.GetHeader()->SetFlag(9, s->ID());
     run.GetHeader()->SetFlag(8, s->MCEvt());
     AddRWC(&run,str,true,options);
-    ic++;
+    scanned++;
   }
   
-  return ic;
+  return scanned;
 }
 
 //-------------------------------------------------------------------
