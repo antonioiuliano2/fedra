@@ -47,17 +47,19 @@ public:
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
+  bool    SetAFF0(int id1[4], int id2[4]);
 
   int     ConvertAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
   int     LinkRun(int id[4], int noUpdate=1);
   int     LinkRunAll(int id[4], int npre=3, int nfull=1);
   int     Align(int id1[4], int id2[4], const char *option="");
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
-  bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z");
+  bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    ProjectFound(int id1[4],int id2[4]);
   int     FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found, int maxholes=3);
   int     FindPredictions(int id[4], int flag=-1, int maxholes=3);
   void    OptimizeScanPath(EdbPattern &pin, EdbPattern &pout,int brick);
+  int     RemoveDublets(EdbPattern &pin, EdbPattern &pout,int brick);
 
   bool    InitRunAccess(EdbRunAccess &ra, int id[4]);
   //int     FindPredictionsRaw(EdbPattern &pred, EdbPattern &found, EdbRunAccess &ra);

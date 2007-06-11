@@ -148,6 +148,32 @@ int EdbScanProc::LoadPlate(EdbScanClient &scan, int id[4], int attempts)
 }
 
 //------------------------------------------------------------------------------------------
+int EdbScanProc::RemoveDublets( EdbPattern &pin, EdbPattern &pout, int brick )
+{
+  // input:  pin  - predictions pattern
+  // output: pout - predictions pattern with dublets removed
+  if(pin.N()<2)     return 0;
+  float r,rt;
+  float rmin = 0.1;    // [micron] TODO - pass as parameter?
+  float rtmin= 0.0001; // [rad]    TODO - pass as parameter?
+  OptimizeScanPath(pin, pout,brick);
+  EdbSegP *s=0,*s1=0;
+  int n= pout.N();
+  for(int i=n-1; i>0; i--) {
+    s  = pout.GetSegment(i);
+    s1 = pout.GetSegment(i-1);
+    r  = Sqrt((s->X()-s1->X())*(s->X()-s1->X()) + (s->Y()-s1->Y())*(s->Y()-s1->Y()));
+    if( r>rmin   )   continue;
+    rt = Sqrt((s->TX()-s1->TX())*(s->TX()-s1->TX()) + (s->TY()-s1->TY())*(s->TY()-s1->TY()));
+    if( rt>rtmin )   continue;
+    pout.GetSegments()->RemoveAt(i);
+  }
+  pout.GetSegments()->Compress();
+  LogPrint(brick,"RemoveDublets","%d segments before -> %d segments after: %d dublets removed", n, pout.N(), n-pout.N());
+  return n-pout.N();
+}
+
+//------------------------------------------------------------------------------------------
 void EdbScanProc::OptimizeScanPath(EdbPattern &pin, EdbPattern &pout, int brick)
 {
   // input:  pin  - predictions pattern
@@ -155,7 +181,7 @@ void EdbScanProc::OptimizeScanPath(EdbPattern &pin, EdbPattern &pout, int brick)
 
   int n = pin.N();
   if(pout.N()) pout.GetSegments()->Delete();
-  if(n>3) {
+  if(n>2) {
     EdbSegP *s;
     TIndexCell cell;
     float xmin = pin.Xmin()-0.000001, xmax = pin.Xmax()+0.000001;
@@ -243,6 +269,17 @@ int EdbScanProc::CopyAFFPar(int id1c[4], int id2c[4], int id1p[4], int id2p[4], 
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::SetAFF0(int id1[4], int id2[4])
+{
+  TString str;
+  MakeAffName(str,id1,id2);
+  char card[64];
+  sprintf(card,"AFFXY 0 1. 0. 0. 1. 0. 0.");
+  LogPrint(id1[0],"SetAFF0","%s as %s", str.Data(),card);
+  return AddParLine(str.Data(),card);
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc::SetAFFDZ(int id1[4], int id2[4], float dz)
 {
   TString str;
@@ -290,43 +327,37 @@ bool EdbScanProc::ProjectFound(int id1[4],int id2[4])
 }
 
 //----------------------------------------------------------------
-bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt)
+bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int patmin)
 {
   // take p1.found.root, apply AFF/p1_p2.par, align to p2 and update AFF/p1_p2.par
-  LogPrint(id1[0],"CorrectAffWithPred","from %d.%d.%d.%d to %d.%d.%d.%d", id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3]);
   EdbPattern pat;
   ReadFound(pat,id1);
+  if(pat.N()<patmin)
+    LogPrint(id1[0],"CorrectAffWithPred","WARNING: unreliable correction - pattern is too small: %d < %d", pat.N(),patmin);
+  else if(pat.N()<2) {
+    LogPrint(id1[0],"CorrectAffWithPred","ERROR: correction is impossible - too small pattern: %d", pat.N());
+    return false;
+  }
 
-  MakeInPar(id1,"fullalignment");
-  MakeInPar(id2,"fullalignment");
-  TString name;
-  MakeFileName(name,id1,"in.par");
-  TString parfileOUT;
-  MakeAffName(parfileOUT,id1,id2);
-  parfileOUT.Prepend("INCLUDE ");
-  AddParLine(name.Data(),	parfileOUT.Data());
-
-  EdbPattern p2;
-  EdbDataPiece piece1,piece2;
-
-  InitPiece(piece1, id1);
-  piece1.GetLayer(0)->SetZlayer(-1*piece1.GetLayer(0)->Z(), 0,0);
-  pat.SetZ(piece1.GetLayer(0)->Z());
+  EdbAffine2D aff;
+  float dz; 
+  if(!GetAffZ(aff, dz, id1,id2))  return false;
+  pat.Transform(&aff);
+  pat.SetZ(-dz);
   pat.SetSegmentsZ();
-  pat.Transform(    piece1.GetLayer(0)->GetAffineXY()   );
-  pat.TransformA(   piece1.GetLayer(0)->GetAffineTXTY() );
-  pat.TransformShr( piece1.GetLayer(0)->Shr()  );
 
+  MakeInPar(id2,"fullalignment");
+  EdbPattern p2;
+  EdbDataPiece piece2;
   InitPiece(piece2, id2);
-  piece2.GetLayer(0)->SetZlayer(0, 0,0);
   ReadPiece(piece2, p2);
-  p2.SetZ(piece2.GetLayer(0)->Z());
+  p2.SetZ(0);
   p2.SetSegmentsZ();
 
   EdbPVRec ali;
   ali.AddPattern(&pat);
   ali.AddPattern(&p2);
-  EdbScanCond *cond = piece1.GetCond(0);
+  EdbScanCond *cond = piece2.GetCond(0);
   cond->SetChi2Mode(3);
   ali.SetScanCond( cond );
   ali.SetPatternsID();
@@ -335,20 +366,27 @@ bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt)
   ali.SetChi2Max(cond->Chi2PMax());
   ali.SetOffsetsMax(cond->OffX(),cond->OffY());
 
-  //ali.Align(2);
-  ali.Align(0);
-  ali.PrintAff();
+  ali.Align(2);
+  //ali.Align(0);
+  int nal = ali.GetCouple(0)->Ncouples();
 
+  if(nal<patmin) {
+    LogPrint(id1[0],"CorrectAffWithPred","WARNING: pattern is too small: %d < %d: do not update par file!", nal, patmin);
+    return false;
+  }
+
+  TString parfileOUT;
   MakeAffName(parfileOUT,id1,id2);
-  piece1.eFileNamePar = parfileOUT;
-  EdbAffine2D  aff;
+  piece2.eFileNamePar = parfileOUT;
   ali.GetPattern(0)->GetKeep(aff);
-  piece1.UpdateAffPar(0,aff);
+  piece2.UpdateAffPar(0,aff);
   if( strcmp(opt,"-z") >=0 ) {
     ali.FineCorrZnew();
-    piece1.UpdateZPar(0,-ali.GetPattern(0)->Z());
+    piece2.UpdateZPar(0,-ali.GetPattern(0)->Z());
   }
  
+  LogPrint(id1[0],"CorrectAffWithPred","from %d.%d.%d.%d to %d.%d.%d.%d: used %d (out of %d predictions) for correction", 
+	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3],  nal, pat.N() );
   return true;
 }
 
@@ -677,7 +715,7 @@ bool EdbScanProc::MakeInPar(int id[4], const char *option)
   MakeFileName(name,id,"in.par");
   FILE *f = fopen(name.Data(),"w");
   if(!f) {
-    LogPrint(id[0],"MakeInPar","ERROR! can't open file: %s", id[0],id[1],id[2],id[3],name.Data() );
+    LogPrint(id[0],"MakeInPar","ERROR! can't open file: %s",name.Data() );
     return false;
   }
   fprintf(f,"INCLUDE %s/parset/opera_emulsion.par\n",eProcDirClient.Data());
@@ -791,8 +829,8 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
   // scanned:
   InitPiece(piece, id);
   EdbPattern *patbt = new EdbPattern(0.,0., 0,100 );
-  EdbPattern *pat1 = new EdbPattern(0.,0., 0,100 );
-  EdbPattern *pat2 = new EdbPattern(0.,0., 0,100 );
+  EdbPattern *pat1  = new EdbPattern(0.,0., 0,100 );
+  EdbPattern *pat2  = new EdbPattern(0.,0., 0,100 );
 
   if(!piece.InitCouplesTree("READ")) return 0;
   piece.GetCPData_new( patbt,pat1,pat2,0 );
@@ -893,15 +931,16 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
 
     }
     cnsel[nsel]++;
-    if(nsel>0)                    found.AddSegment(*((EdbSegP *)arr.At(ind[0])));   // add best segment
-    else if(s->Flag()<maxholes)   found.AddSegment(*(s));                           // add itself in case of hole
-    else continue;                                                                  // no segments to add
-
-    EdbSegP *slast=found.GetSegmentLast();
-    if(!slast) continue;
-    slast->SetID(s->ID());         // todo!
-    if(nsel>0) slast->SetFlag(0);            // reset flag if found good candidate
-    else slast->SetFlag(slast->Flag()+1);    // flag is the number of missed plates
+    if(nsel>0) {
+      found.AddSegment(*((EdbSegP *)arr.At(ind[0])));   // add the best segment
+      found.GetSegmentLast()->SetFlag(0);               // reset flag if found good candidate
+      found.GetSegmentLast()->SetID(s->ID());
+    }
+    else if(s->Flag()<maxholes) {
+      found.AddSegment(*(s));                       // add itself in case of hole
+      found.GetSegmentLast()->SetFlag(s->Flag()+1); // flag is the number of missed plates
+      found.GetSegmentLast()->SetID(s->ID());
+    }
   }
   fclose(f);
   fclose(fmt);
@@ -924,8 +963,8 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
     }
   printf("sum = %d\n",sum );
 
-  LogPrint(id[0],"FindPredictions","%d.%d.%d.%d:  %d out of %d predictions are found (%d-zero, %d-single, %d-multy)", 
-	   id[0],id[1],id[2],id[3],sum-cnsel[0],pred.N(),cnsel[0],cnsel[1], sum-cnsel[0]-cnsel[1] );
+  LogPrint(id[0],"FindPredictions","%d.%d.%d.%d:  %d out of %d predictions are found (%d-zero, %d-single, %d-multy),  maxholes=%d", 
+	   id[0],id[1],id[2],id[3],sum-cnsel[0],pred.N(),cnsel[0],cnsel[1], sum-cnsel[0]-cnsel[1], maxholes);
 
   return sum-cnsel[0];
 }
@@ -941,7 +980,7 @@ bool  EdbScanProc::GetAffZ(EdbAffine2D &aff, float &dz, int id1[4],int id2[4])
   piece.TakePiecePar();
   EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
   if(!a) return false;
-  aff.Copy(*a);
+  aff.Set( a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2() );
   dz = piece.GetLayer(0)->Z();
   return true;
 }
