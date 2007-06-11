@@ -147,6 +147,7 @@ void do_vertex()
   gEVR = new EdbVertexRec();
   gEVR->eEdbTracks = gAli->eTracks;
   gEVR->eVTX       = gAli->eVTX;
+  gEVR->SetPVRec(gAli);
 
   gEVR->eDZmax=DZmax;
   gEVR->eProbMin=ProbMinV;
@@ -173,7 +174,7 @@ void td()
   const char *dsname="display-t";
   ds = EdbDisplay::EdbDisplayExist(dsname);
   if(!ds)  ds=new EdbDisplay(dsname,-50000.,50000.,-50000.,50000.,-4000.,80000.);
-  
+  ds->SetVerRec(gEVR);
   ds->SetDrawTracks(4);
   ds->SetArrTr( trarr );
   printf("%d tracks to display\n", trarr->GetEntries() );
@@ -205,7 +206,7 @@ void sd()
   const char *dsname="display-s";
   ds = EdbDisplay::EdbDisplayExist(dsname);
   if(!ds)  ds=new EdbDisplay(dsname,-50000.,50000.,-50000.,50000.,-4000.,80000.);
-  
+  ds->SetVerRec(gEVR);
   ds->SetDrawTracks(4);
   ds->SetArrSegP( sarr );
   ds->SetArrTr( trarr );
@@ -242,7 +243,7 @@ void vd( int trmin=2, float amin=.0)
   const char *dsname="display-v";
   ds = EdbDisplay::EdbDisplayExist(dsname);
   if(!ds)  ds=new EdbDisplay(dsname,-100000.,100000.,-100000.,100000.,-40000., 0.);
-  
+  ds->SetVerRec(gEVR);
   ds->SetArrTr( tarr );
   printf("%d tracks to display\n", tarr->GetEntries() );
   ds->SetArrV( varr );
