@@ -227,6 +227,7 @@ int EdbScanProc::ConvertAreas(EdbScanClient &scan, int id[4], int flag, const ch
   LogPrint(id[0],"ConvertAreas","%d.%d.%d.%d  with %d predictions with flag %d; %d views stored", 
 	   id[0],id[1],id[2],id[3],pred.N(),flag,run->GetEntries());
   run->Close();
+  delete run;
   return scanned;
 }
 
@@ -243,6 +244,7 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, int id[4], int flag, const char 
   int scanned = scan.ScanAreas(id,predopt,*run,opt);
   LogPrint(id[0],"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, run->GetEntries() );
   run->Close();
+  delete run;
   return scanned;
 }
 
@@ -608,7 +610,7 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
   TFile f(str.Data());
   EdbPattern *p=0;
   f.GetObject("pat",p);
-  if(!p) return 0;
+  if(!p) { f.Close(); return 0;}
   for(int i=0; i<p->N(); i++) {
     if(flag>-1) if(flag != p->GetSegment(i)->Flag() ) continue;
     pred.AddSegment(*(p->GetSegment(i))); n++;
@@ -624,14 +626,25 @@ bool EdbScanProc::CheckProcDir(int id[4], bool create)
 {
   //return true if dir ../bXXXXXX/pXXX exist, if create==true (default) create it if necessary 
   char str[256];
+  void *dirp=0; // pointer to the directory
   sprintf(str,"%s/b%6.6d", eProcDirClient.Data(),id[0]);
-  if(!gSystem->OpenDirectory(str))   
+  dirp = gSystem->OpenDirectory(str);
+  if(!dirp) {
     if(create) gSystem->MakeDirectory(str);
+    else return false;
+  } else  { gSystem->FreeDirectory(dirp); dirp=0;}
+
   sprintf(str,"%s/b%6.6d/p%3.3d", eProcDirClient.Data(),id[0],id[1]);
-  if(!gSystem->OpenDirectory(str))
+  dirp = gSystem->OpenDirectory(str);
+  if(!dirp) {
     if(create) gSystem->MakeDirectory(str);
-  if(!gSystem->OpenDirectory(str)) return false;
-  else                             return true;
+    else return false;
+  } else  { gSystem->FreeDirectory(dirp); dirp=0;}
+  dirp = gSystem->OpenDirectory(str);
+  if(!dirp) return false;
+  gSystem->FreeDirectory(dirp);
+  dirp=0;
+  return true;
 }
 
 //----------------------------------------------------------------
