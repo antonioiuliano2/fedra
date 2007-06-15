@@ -10,14 +10,15 @@ void rootlogon()
   loadlib( "libEdr"  , "EdbPattern" );
   loadlib( "libEIO"  , "EdbRunAccess" );
 
-  loadlib( "libEGA"  , "EdbGA" );          //optional
-  loadlib( "libGeom" , "TGeoVolume" );     // required for VMC
-  loadlib( "libGui"  , "TGNumberEntry" );  // required only in batch mode
-  loadlib( "libEdd"  , "EdbDisplay" );     //optional
-  loadlib( "libEMC"  , "EdbPVGen" );       //optional
-  loadlibEOracle();                                //optional
-  if(gSystem->Load("libDataConversion")) printf("libDataConversion do NOT loaded!\n"); //optional
-  loadlib( "libScan"  , "EdbScanProc" );       //optional
+  loadlib( "libEGA"  , "EdbGA" );                 // optional
+  loadlib( "libGeom" , "TGeoVolume" );            // required for VMC
+  loadlib( "libGui"  , "TGNumberEntry" );         // required only in batch mode
+  loadlib( "libEdd"  , "EdbDisplay" );            // optional
+  loadlib( "libEMC"  , "EdbPVGen" );              // optional
+  loadlibEOracle();                               // optional
+  if(gSystem->Load("libDataConversion"))          // optional
+    printf("libDataConversion do NOT loaded!\n"); 
+  loadlib( "libScan"  , "EdbScanProc" );          // optional
 
   gStyle->SetPalette(1);
 }
