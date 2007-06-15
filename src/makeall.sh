@@ -4,7 +4,7 @@
 #       ./makeall.sh  depend - create all dependencies
 #
 
-LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libEOracle libScan"
+LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libEOracle libScan libShower"
 for lib in ${LIBS} ; do
     echo 
     echo "make $1 in ${lib} ............."

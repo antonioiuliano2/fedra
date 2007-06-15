@@ -19,6 +19,7 @@ void rootlogon()
   if(gSystem->Load("libDataConversion"))          // optional
     printf("libDataConversion do NOT loaded!\n"); 
   loadlib( "libScan"  , "EdbScanProc" );          // optional
+  loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
 
   gStyle->SetPalette(1);
 }
