@@ -111,8 +111,6 @@ bool EdbScanProc::FlashRawDir(EdbScanClient &scan, int id[4])
 {
   // move all rwc and rwd files from the raw scanning directory into the new subdir
 
-  // todo: Linux only yet!
-
   char str[256];
   TDatime dt;
   sprintf(str,"%s/rw_%u",scan.eRawDirClient.Data(),dt.Get());
@@ -125,7 +123,13 @@ bool EdbScanProc::FlashRawDir(EdbScanClient &scan, int id[4])
 	return false;
       }
   char str2[256];
+
+#ifdef WIN32
+  sprintf(str2,"ren %s/raw.* %s",scan.eRawDirClient.Data(),str);
+#else
   sprintf(str2,"mv %s/raw.* %s",scan.eRawDirClient.Data(),str);
+#endif
+
   gSystem->Exec(str2);
   return true;
 }
@@ -255,8 +259,11 @@ int EdbScanProc::CopyFile(int id1[4], int id2[4], const char *suffix, bool overw
   TString name1, name2;
   MakeFileName(name1,id1,suffix);
   MakeFileName(name2,id2,suffix);
-  LogPrint(id1[0],"CopyFile","from %s to %s", name1.Data(),name2.Data() );
-  return gSystem->CopyFile(name1.Data(), name2.Data(), overwrite);
+  int status = gSystem->CopyFile(name1.Data(), name2.Data(), overwrite);
+  LogPrint(id1[0],"CopyFile","status=%d from %s to %s", status, name1.Data(),name2.Data() );
+  //sleep(10);
+  if( gSystem->AccessPathName(name2, kReadPermission) ) return 0; //can not access file!
+  return 1;
 }
 
 //----------------------------------------------------------------
@@ -320,8 +327,9 @@ bool EdbScanProc::ProjectFound(int id1[4],int id2[4])
   ReadFound(pat,id1);
   //pat.SetZ(0);
   //pat.SetSegmentsZ();
-  for(int i=0; i<pat.N(); i++) 
+  for(int i=0; i<pat.N(); i++) {
     pat.GetSegment(i)->SetErrors(50., 50., 0., .1, .1);  // area to be scanned for this prediction
+  }
   ApplyAffZ(pat,id1,id2);
   WritePred(pat,id2);
   WritePatTXT(pat,id2,"man.pred.txt");
@@ -442,28 +450,16 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
   p1.SetZ(-dz);
   p1.SetSegmentsZ();
 
-  /*
-  EdbDataPiece piece1,piece2;
-  InitPiece(piece1, id1);
-  piece1.GetLayer(0)->SetZlayer(-1*piece1.GetLayer(0)->Z(), 0,0);
-  ReadPiece(piece1, p1);
-  p1.SetZ(piece1.GetLayer(0)->Z());
-  p1.SetSegmentsZ();
+  return TestAl(p1,p2);
+}
 
-  InitPiece(piece2, id2);
-  piece2.GetLayer(0)->SetZlayer(0, 0,0);
-  ReadPiece(piece2, p2);
-  p2.SetZ(piece2.GetLayer(0)->Z());
-  p2.SetSegmentsZ();
-  */
-
-  //printf("EdbScanProc::Align: Z1 = %f z2 = %f\n",piece1.GetLayer(0)->Z(),piece2.GetLayer(0)->Z());
+//----------------------------------------------------------------
+int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
+{
   EdbTestAl ta;
   ta.HDistance(p1,p2);
-  //ta.FillTree( -5000 );
-  //ta.FillTree( 0 );
 
-  float bin[4]={20,20,100,0.001};
+  float bin[4]={20,20, 25,0.001};                  // default values for normal alignment (expected dz=1300)
   ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]=  1200; ta.eDmin[3]=-0.015;
   ta.eDmax[0]= 5000; ta.eDmax[1]= 5000; ta.eDmax[2]=  1500; ta.eDmax[3]= 0.015;
 
@@ -754,10 +750,254 @@ int EdbScanProc::LinkRun(int id[4], int noUpdate)
   return proc.Link(piece);
 }
 
-//-------------------------------------------------------------------
-//bool EdbScanProc::FindPredictionsRaw(EdbPattern &pred, EdbPattern &found, EdbRunAccess &ra)/
-//{
-//}
+//----------------------------------------------------------------------------------------
+int EdbScanProc::FindPredictionsRaw(int idp[4], int idr[4])
+{
+  // find raw microtracks for the predictions of idp in raw data of idr
+  // Input:  idp.pred.root, idr.raw.root
+  // Output: idp.found.root, idp.found.raw.txt
+
+  EdbPattern pred;
+  EdbPattern found;
+  ReadPred(pred,idp);
+  EdbRunAccess ra;
+  InitRunAccess(ra,idr);
+
+  EdbScanCond condBT;
+  EdbScanCond condMT;
+  SetDefaultCondBT(condBT);
+  SetDefaultCondMT(condMT);
+  float delta_theta = 0.1;
+  float puls_min    = 7;
+  float chi2max     = 1.6;
+  int nfound = FindPredictionsRaw(pred,found,ra, condBT,condMT, delta_theta, puls_min, chi2max);
+
+  return nfound;
+}
+
+//----------------------------------------------------------------------------------------
+int EdbScanProc::FindPredictionsRaw( EdbPattern &pred, EdbPattern &fnd, EdbRunAccess &ra, 
+				     EdbScanCond &condBT, EdbScanCond &condMT, 
+				     float delta_theta, float puls_min, float puls_mt, float chi2max )
+{
+  // find raw microtracks for the predictions "pred" in run "ra"
+  // Input:  pred,ra
+  // Output: fnd - basetracks with position taken from the best microtrack (if any) and the angle of the predicted basetrack
+
+  printf("FindPredictionsRaw: search for %d predictions \n", pred.N());
+
+  TFile ftree("micro.root","RECREATE");
+  EdbSegP      *s_b    = new EdbSegP();
+  EdbSegP      *sf_b  = new EdbSegP();
+  TClonesArray *pat1_b = new TClonesArray("EdbSegP");
+  TClonesArray *pat2_b = new TClonesArray("EdbSegP");
+  TTree micro("micro","micro");
+  micro.Branch("s.","EdbSegP",&s_b,32000,99);
+  micro.Branch("sf.","EdbSegP",&sf_b,32000,99);
+  micro.Branch("s1.",&pat1_b,32000,99);
+  micro.Branch("s2.",&pat2_b,32000,99);
+
+  FILE *out = fopen("micro.txt","w");
+  if(!out) return 0;
+  ra.Print();
+  
+  for(int i=0; i<pred.N(); i++) {
+    ra.ClearCuts();
+    EdbSegP s;
+    s.Copy( *(pred.GetSegment(i)) );
+    s.SetZ(107.);                                      // TODO!
+    s.SetErrors();
+    float xmin[5]={-500, -500, s.TX()-delta_theta, s.TY()-delta_theta,  puls_min };         //TODO!!
+    float xmax[5]={ 500,  500, s.TX()+delta_theta, s.TY()+delta_theta,  50       };
+    condBT.FillErrorsCov( s.TX(), s.TY(), s.COV() );
+    fprintf(out,"\n%8.8d   %11.2f %11.2f %7.4f %7.4f\n",s.ID(),s.X(),s.Y(),s.TX(),s.TY());
+
+    EdbPVRec aview; //with 2 patterns of preselected microtracks
+    aview.AddPattern( new EdbPattern(0,0,214));  // TODO! sequence??
+    aview.AddPattern( new EdbPattern(0,0,0)  );
+
+    for(int side=1; side<=2; side++) {
+      printf("side = %d\n",side);
+      EdbPattern pat;
+      ra.AddSegmentCut(side,1,xmin,xmax);
+      ra.AddSegmentCut(side,1,xmin,xmax);
+      ra.GetPatternXY( s, side,  pat );
+
+      for(int i=0; i<pat.N(); i++) {
+	EdbSegP *ss = pat.GetSegment(i);
+	ss->SetErrors();
+	condMT.FillErrorsCov( s.TX(), s.TY(), ss->COV() );
+      }
+      pat.FillCell(10,10,0.01,0.01);  //divide view on this cells
+      
+      TArrayF   chi2arr(1000);  //TODO!
+      TObjArray found;
+      int nf= FindCompliments(s,pat,found, chi2max, chi2arr);
+      for(int j=0; j<found.GetEntries(); j++) {
+	EdbSegP *s2 = (EdbSegP *)(found.At(j));
+	s2->SetChi2(chi2arr[j]);                        // TODO -???
+	aview.GetPattern(side-1)->AddSegment(*s2);
+	float offx=s2->X()-(s.X()+s.TX()*(s2->Z()-s.Z()));
+	float offy=s2->Y()-(s.Y()+s.TY()*(s2->Z()-s.Z()));
+	fprintf(out,"s%1d(%2d)%4d %11.2f %11.2f %7.4f %7.4f %6.1f %7.2f %7.2f %7.4f %7.4f %6.3f %3.0f\n",
+		side,nf,s2->ID(),s2->X(),s2->Y(),s2->TX(),s2->TY(),s2->Z(),
+		offx,offy,
+		s2->TX()-s.TX(),s2->TY()-s.TY(),chi2arr[j],s2->W());
+      }
+    }
+
+    EdbSegP sfmt;      // container for the found mt
+    sfmt.SetChi2(100.);
+
+    float rlim   = 20;        // TODO
+    float chi, chimin = 1.5;  // TODO
+    EdbSegP *s1b=0, *s2b=0;   // the best bt
+    EdbSegP s3;
+    for(int is1=0; is1<aview.GetPattern(0)->N(); is1++) {
+      for(int is2=0; is2<aview.GetPattern(1)->N(); is2++) {
+	EdbSegP *s1 = aview.GetPattern(0)->GetSegment(is1);
+	EdbSegP *s2 = aview.GetPattern(1)->GetSegment(is2);
+
+
+	if( sfmt.Chi2() > s1->Chi2() && s1->W() >= puls_mt )   sfmt.Copy(*s1);            // select the best mt here
+	if( sfmt.Chi2() > s2->Chi2() && s2->W() >= puls_mt )   sfmt.Copy(*s2);
+	float dx1=s1->X()-(s.X()+s.TX()*(s1->Z()-s.Z()));
+	float dy1=s1->Y()-(s.Y()+s.TY()*(s1->Z()-s.Z()));
+	float dx2=s2->X()-(s.X()+s.TX()*(s2->Z()-s.Z()));
+	float dy2=s2->Y()-(s.Y()+s.TY()*(s2->Z()-s.Z()));
+	float r = Sqrt( (dx1-dx2)*(dx1-dx2) + (dy1-dy2)*(dy1-dy2) ); 
+	fprintf(out,"r = %f\n",r);
+	if(r<rlim) {  // has good BT
+	  s3.Copy(s);
+	  s3.SetX( 0.5*(s1->X() + s2->X()) );
+	  s3.SetY( 0.5*(s1->Y() + s2->Y()) );
+	  s3.SetZ( 0.5*(s1->Z() + s2->Z()) );
+	  s3.SetTX( (s2->X() - s1->X()) / (s2->Z() - s1->Z()) );
+	  s3.SetTY( (s2->Y() - s1->Y()) / (s2->Z() - s1->Z()) );
+	  s3.SetFlag(0);
+
+	  s3.Print();
+	  s.Print();
+	  chi = EdbTrackFitter::Chi2Seg(&s3, &s);
+	  printf("chi = %f\n",chi);
+	  fprintf(out,"chi = %f\n",chi);
+	  if(chi<chimin) {                           //select the best basetrack
+	    chimin = chi;
+	    s1b = s1;
+	    s2b = s2;
+	  }
+	}
+      }
+    }
+
+    EdbSegP sf;                // container for the found track
+
+    sf.Copy(s);
+    if(s1b&&s2b) {
+      sf.SetX( 0.5*(s1b->X() + s2b->X()) );
+      sf.SetY( 0.5*(s1b->Y() + s2b->Y()) );
+      sf.SetZ( 0.5*(s1b->Z() + s2b->Z()) );
+      sf.SetTX( (s2b->X() - s1b->X()) / (s2b->Z() - s1b->Z()) );
+      sf.SetTY( (s2b->Y() - s1b->Y()) / (s2b->Z() - s1b->Z()) );
+      sf.SetFlag(0);
+      sf.SetChi2(chimin);
+    } else if(sfmt.Chi2()<chi2max) {  // found good microtrack
+      //float zmean = ra.GetLayer(0)->Z();
+      float zmean = s.Z();
+      printf("Zmt = %f  zmean = %f   Zs = %f \n",sfmt.Z(),zmean,s.Z());
+      sf.SetX( sfmt.X() + s.TX()*(zmean-sfmt.Z()) );
+      sf.SetY( sfmt.Y() + s.TY()*(zmean-sfmt.Z()) );
+      sf.SetZ(zmean);
+      sf.SetFlag(1);                   // mt used
+    } else {
+      sf.SetFlag(s.Flag()+10);         // hole
+    }
+
+    s_b->Copy(s);
+    sf_b->Copy(sf);
+    pat1_b = aview.GetPattern(0)->GetSegments();
+    pat2_b = aview.GetPattern(1)->GetSegments();
+    micro.SetBranchAddress("s1."  , &pat1_b );
+    micro.SetBranchAddress("s2."  , &pat2_b );
+    micro.Fill();
+
+    fnd.AddSegment(sf);
+  }
+  
+  //ftree.cd();
+  micro.Write();
+  ftree.Close();
+  fclose(out);
+  return 1; //TODO!
+}
+
+//----------------------------------------------------------------------------------------
+int EdbScanProc::FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found, float chi2max, TArrayF &chiarr )
+{
+  // return found sorted by increasing chi2
+
+  int nfound=0;
+  int maxcand=chiarr.GetSize();
+  TArrayF   chi2arr(maxcand);
+  TObjArray arr(maxcand);
+  TArrayI   ind(maxcand);
+  
+  int nseg = pat.FindCompliments(s,arr,30,200);  // acceptance (prelim): s.SX()*30; s.STX*200
+  printf("\nnseg = %d\n",nseg);
+  if(nseg>maxcand)  {
+    printf("Warning!: Too many segments %d, accept only the first %d \n", nseg, maxcand);
+    nseg = maxcand;
+  }
+  if(nseg<=0) return 0;
+
+  EdbSegP *s2=0;
+  for(int j=0; j<nseg; j++) {
+    s2 = (EdbSegP *)arr.At(j);
+    EdbSegP s3;
+    s3.Copy(s);
+    chi2arr[j] = EdbTrackFitter::Chi2Seg(&s3, s2);
+  }
+  TMath::Sort(nseg,chi2arr.GetArray(),ind.GetArray(),0);
+  for(int j=0; j<nseg; j++) {
+    s2 = (EdbSegP *)arr.At(ind[j]);
+    if(chi2arr[ind[j]] > chi2max ) break;
+    chiarr[j] = chi2arr[ind[j]];
+    s2->SetMC(s.MCEvt(),s.MCTrack());
+    found.Add(s2);
+    nfound++;
+  }
+
+  printf("nfound = %d\n",nfound);
+  return nfound;
+}
+
+//----------------------------------------------------------------------------------------
+void EdbScanProc::SetDefaultCondBT(EdbScanCond &cond)
+{
+  cond.SetSigma0( 10., 10., 0.007, 0.007 );   // sigma0 "x, y, tx, ty" at zero angle
+  cond.SetDegrad( 5. );                       // sigma(tx) = sigma0*(1+degrad*tx)
+  cond.SetBins(0, 0, 0, 0); //???                  // bins in [sigma] for checks
+  cond.SetPulsRamp0(  5., 5. );               // in range (Pmin:Pmax) Signal/All is nearly linear
+  cond.SetPulsRamp04( 5., 5. );
+  cond.SetChi2Max( 6.5 );
+  cond.SetChi2PMax( 6.5 );
+  cond.SetRadX0( 5810. );
+  cond.SetName("OPERA_basetrack");
+}
+
+//----------------------------------------------------------------------------------------
+void EdbScanProc::SetDefaultCondMT(EdbScanCond &cond)
+{
+  cond.SetSigma0( 1., 1., 0.025, 0.025 );   // sigma0 "x, y, tx, ty" at zero angle
+  cond.SetDegrad( 5. );                       // sigma(tx) = sigma0*(1+degrad*tx)
+  cond.SetBins(0, 0, 0, 0);  //???                 // bins in [sigma] for checks
+  cond.SetPulsRamp0(  5., 5. );               // in range (Pmin:Pmax) Signal/All is nearly linear
+  cond.SetPulsRamp04( 5., 5. );
+  cond.SetChi2Max( 6.5 );
+  cond.SetChi2PMax( 6.5 );
+  cond.SetRadX0( 5810. );
+  cond.SetName("OPERA_microtrack");
+}
 
 //-------------------------------------------------------------------
 bool EdbScanProc::InitRunAccess(EdbRunAccess &ra, int id[4])
@@ -957,6 +1197,8 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
   }
   fclose(f);
   fclose(fmt);
+  delete pat1; pat1=0;
+  delete pat2; pat2=0;
 
   printf("Total: %d predictions, %d basetracks in scanned pattern\n",pred.N(), pat->N() );
   int sum=0;
@@ -1059,7 +1301,11 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   ali.SetChi2Max(cond->Chi2PMax());
   ali.SetOffsetsMax(cond->OffX(),cond->OffY());
   
-  ali.Align(2);
+  if( strstr( option,"-a")> 0 && strstr( option,"-a2")==0 )
+    ali.Align(0);                                              //GS: 25-07-07
+  else
+    ali.Align(2); 
+//ali.Align(2);
   ali.PrintAff();
   npat = ali.GetCouple(0)->Ncouples();
 
@@ -1080,7 +1326,7 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   //ali.FitTracks( 10, 0.139 );         // is important to call it before MakeTracksTree!
   //MakeFileName(cpfile,id1,"al.tr.root");
   //proc.MakeTracksTree(&ali,cpfile.Data());
-  if( strcmp(option,"-z") >=0 ) {
+  if( strstr(option,"-z") ) {
     ali.FineCorrZnew();
     piece1.UpdateZPar(0,-ali.GetPattern(0)->Z());
   }

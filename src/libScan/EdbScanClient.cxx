@@ -24,6 +24,11 @@ EdbScanClient::EdbScanClient()
   eMAXSCANATTEMPTS = 3; // max number of trials to scan an area 
   eMAXFAILS        = 5; // max number of predictions (areas) failed before abort scanning
   ePORT=1777;
+
+  eNXview = 1;
+  eNYview = 1;
+  eXstep = 360; // This numbers should be equal or a bit smalle then the correspondent sysal settings
+  eXstep = 275;
 }
 
 //----------------------------------------------------------------
@@ -120,6 +125,8 @@ void  EdbScanClient::SetClusterThresholds(int TOP, int BOT)
 //----------------------------------------------------------------
 int EdbScanClient::SetFragmentSize(int X, int Y)
 {
+  eNXview = X;
+  eNYview = Y;
   eCMD[0]=0;
   sprintf(eCMD,"203 VertigoScanner XFields %d\n",X);
   printf("%s",eCMD);
@@ -219,9 +226,19 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
   char str[256];
   for(int i=0; i<n; i++) {
     s = areas.GetSegment(i);
+
+    if( (s->SX() < 0.5*eNXview*eXstep) || (s->SY() < 0.5*eNYview*eYstep) )  // set the fragments size for sysal
+      s->SetErrors(0.5*eNXview*eXstep, 0.5*eNYview*eYstep, 0., .1, .1);
+
     if(i<n-1) sn = areas.GetSegment(i+1); 
     else  sn = areas.GetSegment(i);
+
+#ifdef WIN32
+    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+#else
     sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+#endif
+
     gSystem->Exec(str);
     printf("ScanAreas: scan progress: %d out of %d (%4.1f%%)\n",i,n,100.*i/n);
     sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
@@ -276,7 +293,13 @@ int EdbScanClient::ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, con
       if(i+1<n) s1=areas.GetSegment(i+1);
       else      s1=0;
     }
-    sprintf(str,"del %s\\raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+
+#ifdef WIN32
+    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+#else
+    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+#endif
+
     gSystem->Exec(str);
     sprintf(str,"%s\\raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
     if(s1) {

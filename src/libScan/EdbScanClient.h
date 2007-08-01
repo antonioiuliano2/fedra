@@ -15,6 +15,9 @@ public:
   char      eMess1[256];    // message line
 
 public:
+  float       eNXview, eNYview;   // the fragment size in view
+  float       eXstep, eYstep;     // between views in the fragment - to calculate the fragment size
+
   int       eMAXSCANATTEMPTS;
   int       eMAXFAILS;          // the max number for predictions failed to scan before break
   int       ePORT;              // port number where BernScanDriver expect connection (default 1777)

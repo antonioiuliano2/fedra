@@ -56,13 +56,22 @@ public:
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    ProjectFound(int id1[4],int id2[4]);
+
   int     FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found, int maxholes=3);
   int     FindPredictions(int id[4], int flag=-1, int maxholes=3);
-  void    OptimizeScanPath(EdbPattern &pin, EdbPattern &pout,int brick);
-  int     RemoveDublets(EdbPattern &pin, EdbPattern &pout,int brick);
+
 
   bool    InitRunAccess(EdbRunAccess &ra, int id[4]);
-  //int     FindPredictionsRaw(EdbPattern &pred, EdbPattern &found, EdbRunAccess &ra);
+  int     FindPredictionsRaw(int idp[4], int idr[4]);
+  int     FindPredictionsRaw(EdbPattern &pred, EdbPattern &found, EdbRunAccess &ra, 
+			     EdbScanCond &condBT, EdbScanCond &condMT, 
+			     float delta_theta=0.1, float puls_min=5., float puls_mt=9., float chi2max=1.6 );
+  int     FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found, float chi2max, TArrayF &chiarr );
+  void    SetDefaultCondBT(EdbScanCond &cond);
+  void    SetDefaultCondMT(EdbScanCond &cond);
+
+  void    OptimizeScanPath(EdbPattern &pin, EdbPattern &pout,int brick);
+  int     RemoveDublets(EdbPattern &pin, EdbPattern &pout,int brick);
 
   bool    AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4]);
   bool    AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2);
@@ -71,6 +80,7 @@ public:
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
 
   int     TestAl(int id1[4], int id2[4]);
+  int     TestAl(EdbPattern &p1, EdbPattern &p2);
 
   void    LogPrint(int brick, const char *rout, const char *fmt, ...);
   void    Print();
