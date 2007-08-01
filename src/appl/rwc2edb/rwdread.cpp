@@ -64,11 +64,10 @@ int main(int argc, char *argv[])
 	cout<<"  |\t   \t  |-- float MapX[1] = "	<< vw->MapX[1] <<endl;
 	cout<<"  |\t   \t  |-- float MapY[1] = "	<< vw->MapY[1] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[0][0][0] = "<< vw->ImageMat[0][0][0] <<endl;
-	cout<<"  |\t   \t  |-- float ImageMat[0][0][1] = "<< vw->ImageMat[0][0][0] <<endl;
+	cout<<"  |\t   \t  |-- float ImageMat[0][0][1] = "<< vw->ImageMat[0][0][1] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[0][1][0] = "<< vw->ImageMat[0][1][0] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[0][1][1] = "<< vw->ImageMat[0][1][1] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[1][0][0] = "<< vw->ImageMat[1][0][0] <<endl;
-	cout<<"  |\t   \t  |-- float ImageMat[1][1][0] = "<< vw->ImageMat[1][1][0] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[1][0][1] = "<< vw->ImageMat[1][0][1] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[1][1][0] = "<< vw->ImageMat[1][1][0] <<endl;
 	cout<<"  |\t   \t  |-- float ImageMat[1][1][1] = "<< vw->ImageMat[1][1][1] <<endl;
