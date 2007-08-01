@@ -1226,7 +1226,8 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
 
       f->cd();
       tree = new TTree(tree_name,tree_name);
-      tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
+      tree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
+      //tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
 
       int pid1=0,pid2=0;
       float xv=0,yv=0;
@@ -1343,6 +1344,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
       }
 
       cly = downc.Find(xx)->Find(yy);
+      if(!cly) continue;
       nie=cly->N(1);
       for(ie=0; ie<nie; ie++) {
         v[0] = areac;
