@@ -35,6 +35,17 @@ EdbRunAccess::EdbRunAccess(const char *fname)
 }
 
 ///_________________________________________________________________________
+EdbRunAccess::~EdbRunAccess()
+{
+  for(int i=0; i<3; i++) {
+    if(eVP[i])     { delete eVP[i];     eVP[i]=0;     }
+    if(eLayers[i]) { delete eLayers[i]; eLayers[i]=0; }
+    if(eCuts[i])   { delete eCuts[i];   eCuts[i]=0;   }
+    if(eCond[i])   { delete eCond[i];   eCond[i]=0;   }
+  }
+}
+
+///_________________________________________________________________________
 EdbRunAccess::EdbRunAccess(EdbRun *r)
 {
   Set0();
@@ -48,6 +59,8 @@ void EdbRunAccess::Set0()
   for(int i=0; i<3; i++) {
     eVP[i]=0;
     eLayers[i]=0;
+    eCuts[i]=0;
+    eCond[i]=0;
   }
   eAFID=0;
   eCLUST=0;
@@ -136,9 +149,23 @@ EdbLayer *EdbRunAccess::GetMakeLayer(int id)
 }
 
 ///_________________________________________________________________________
-int EdbRunAccess::GetViewsXY(int ud, TArrayI &entr, float x, float y)
+int EdbRunAccess::GetViewsXY( int ud, TArrayI &entr, 
+			      float x, float y, float rv)
 {
-  return 0;
+  // return all views in rv-surrounds of the x-y point
+  int nv=0;
+  if(ud<0||ud>2) return nv;
+  EdbPattern *pat=GetVP(ud);
+  if(!pat)                             return nv;
+  EdbSegP *seg=0;
+  float r;
+  for( int i=0; i<pat->N(); i++ ) {
+    seg = pat->GetSegment(i);
+    r = Sqrt( (seg->X()-x)*(seg->X()-x)+(seg->Y()-y)*(seg->Y()-y));
+    if( r>rv ) continue;
+    entr[nv++] = seg->ID();
+  }
+  return nv;
 }
 
 ///_________________________________________________________________________
@@ -186,6 +213,25 @@ int EdbRunAccess::GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol)
   //printf("EdbRunAccess::GetVolumeXY: entr = %d %d\n",entr[0],entr[1]);
   int nrej=0;
   return GetVolumeData(vol,2,entr,nrej);
+}
+
+///_________________________________________________________________________
+int EdbRunAccess::GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin)
+{
+  // assuming s as the prediction in plate RS (also Z), fill vol with the segments 
+  // of closest up and down views
+  // todo: Z of layers must be setted!
+
+  if(side<1||side>2) return 0;
+  TArrayI entr(1000);
+  float x,y; 
+  x = s.X()+ (eLayers[side]->Z()-s.Z())*s.TX();
+  y = s.Y()+ (eLayers[side]->Z()-s.Z())*s.TY();
+  //entr[0] = GetEntryXY(side,x,y);
+  int nv = GetViewsXY(side,entr,x,y, rmin);
+  pat.SetZ(eLayers[side]->Z());
+  int nrej=0;
+  return GetPatternData(pat,side,nv,entr,nrej);
 }
 
 ///_________________________________________________________________________
@@ -281,6 +327,46 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
 
   vol.GetPattern(0)->SetSegmentsZ();
   vol.GetPattern(1)->SetSegmentsZ();
+  return nseg;
+}
+
+///_________________________________________________________________________
+int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
+				  int nviews, 
+				  TArrayI &srt, 
+				  int &nrej    )
+{
+  // get raw segments as a pattern for the given array of entries and given side
+
+  EdbSegP    segP;
+  EdbView    *view = eRun->GetView();
+  int   nseg=0;
+  nrej=0;
+  int   entry;
+  int   nsegV;
+  
+  for(int iu=0; iu<nviews; iu++) {
+    entry = srt[iu];
+    if(eCLUST)       {
+      view = eRun->GetEntry(entry,1,1,1);
+      view->AttachClustersToSegments();
+    }
+    else view = eRun->GetEntry(entry);
+
+    nsegV = view->Nsegments();
+    if( ViewSide(view) != side )   continue;
+
+    for(int j=0;j<nsegV;j++) {
+      if(!AcceptRawSegment(view,j,segP,side)) {
+	nrej++;
+	continue;
+      }
+      nseg++;
+      segP.SetVid(entry,j);
+      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      pat.AddSegment( segP);
+    }
+  }
   return nseg;
 }
 

@@ -44,7 +44,7 @@ class EdbRunAccess : public TObject {
   EdbRunAccess();
   EdbRunAccess(EdbRun *run);
   EdbRunAccess(const char *fname);
-  virtual ~EdbRunAccess() {}
+  virtual ~EdbRunAccess();
 
   void Set0();
   void ClearCuts();
@@ -78,9 +78,12 @@ class EdbRunAccess : public TObject {
 		   float xmin, float xmax, float ymin, float ymax );
   int GetViewsAreaMarg(int ud, TArrayI &entr, int area, float xmarg, float ymarg);
 
-  int GetViewsXY(int ud, TArrayI &entr, float x, float y);
+  int GetViewsXY(int ud, TArrayI &entr, float x, float y, float r=200.);
   int GetEntryXY(int ud, float x, float y);
   int GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol);
+
+  int GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin=200);
+  int GetPatternData(EdbPattern &pat, int side, int nviews, TArrayI &srt, int &nrej);
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side);
 
