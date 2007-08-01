@@ -104,7 +104,8 @@ int main(int argc, char* argv[])
   
   EdbRun* outrun;
   outrun = new EdbRun(edbname,"CREATE");
-  outrun->GetTree()->SetMaxTreeSize(15000000000);   //set 15 Gb file size limit
+  outrun->GetTree()->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit
+  cout << "set maxtreesize as:" << outrun->GetTree()->GetMaxTreeSize()  << endl;
 
   if(testrun) 
     {
