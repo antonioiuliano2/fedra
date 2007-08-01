@@ -54,6 +54,9 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\libACQ\AcqTrackScanner.cxx">
 			</File>
+			<File
+				RelativePath="..\..\src\libACQ\serialport.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -79,6 +82,9 @@ NMAKE clean"
 			</File>
 			<File
 				RelativePath="..\..\src\libACQ\AcqTrackScanner.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\serialport.h">
 			</File>
 		</Filter>
 		<Filter
