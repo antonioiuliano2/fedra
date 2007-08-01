@@ -31,7 +31,7 @@ TEventList* GetCPListFromTracks(const char* fname, Int_t pid, const char* cutstr
 {
   // OPEN TRACKS FILE
   cout << "   ... open the volume tracks file " << fname << endl;
-  TFile* trfile = new TFile(fname);
+  //  TFile* trfile = new TFile(fname);
   TTree* tracks = (TTree*) gDirectory->Get("tracks");
   Int_t   nseg=0;
   EdbSegP *trk=0;
@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
   char cutstr_tr[256];           sprintf(cutstr_tr,"1");
   char options[256];
   bool printusage=(argc<3)?true:false;
-  bool writebck(false);
+  //bool writebck(false);
   for (int i = 1; i < argc; i++)  {  // Skip argv[0] (program name)
 	if (!strcmp(argv[i], "-f")) { // Process optional arguments
    	  if (i + 1 <= argc - 1) sprintf(outfilename,argv[++i]);

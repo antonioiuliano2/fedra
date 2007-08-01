@@ -11,7 +11,7 @@ void check_cp(char *signal_cut="1")
   printf("Check couples with the general selection as: %s\n",signal_cut);
   printf("s1: Red  line\n");
   printf("s2: Blue line\n");
-  printf("functions: check_surf, check_sigma, check_shrinkage, check_distortion, check_view, correct_shrinkage\n");
+  printf("functions: check_surf, check_sigma, check_shrinkage, check_distorsion, check_view, correct_shrinkage\n");
   init();
   check_all();
 }
@@ -142,7 +142,7 @@ void check_sigma()
     gStyle->SetOptStat("ne");
   }
 
-  surf->cd(5); {
+  cs->cd(5); {
     surf->GetPad(4)->SetGrid(1,1);
     couples->Project("hs" ,"s.eW:ts" , signal, "prof");
     couples->Project("hs1","s1.eW:ts", signal, "prof");
@@ -154,7 +154,7 @@ void check_sigma()
     hs2->Draw("same");
     gStyle->SetOptStat("nemr");
   }
-  surf->cd(6); {
+  cs->cd(6); {
     couples->SetLineColor(kBlue);
     couples->Draw("eN1tot:ts", signal, "prof");
     couples->SetLineColor(kRed);
@@ -181,7 +181,7 @@ void check_view()
   couples->Draw("eCHI2P", signal&&diffarea,"same");
   cs->cd(2);
   couples->SetMarkerStyle(20);
-  couples->Draw("s.eTY:samevew",signal,"prof");
+  couples->Draw("s.eTY:sameview",signal,"prof");
   cs->cd(3);
   couples->Draw("s.eTX:sameview",signal,"prof");
   cs->cd(4);
