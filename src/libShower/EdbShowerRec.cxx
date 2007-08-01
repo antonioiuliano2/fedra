@@ -5,7 +5,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include <math.h>
+#include "smatrix/Functions.hh"
 #include "EdbTrackFitter.h"
 #include "EdbShowerRec.h"
 
