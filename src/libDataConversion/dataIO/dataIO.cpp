@@ -95,6 +95,7 @@ int ReadFragment(void** ppData,  char* name)
     if(!F) sleep(50);                   // attempt to solve slow  network problems (VT)
     else break;
   }
+  if(!F) return 0;
   HFile=F;
   fread(&Hdr.InfoType, 1, sizeof(Hdr.InfoType), F);
   fread(&Hdr.HeaderFormat, 1, sizeof(Hdr.HeaderFormat), F);
@@ -325,7 +326,12 @@ int ReadCatalog(void** ppData,  char* name)
   int i;
 
   printf("ReadCatalog: %s\n",name);
-  F=fopen(name,"r");
+  for(int i=0; i<3; i++) {
+    F=fopen(name,"r");
+    if(!F) sleep(50);                   // attempt to solve slow  network problems (VT)
+    else break;
+  }
+  if(!F) return 0;
   fread(&Hdr.InfoType,1,sizeof(Hdr.InfoType),F);
   fread(&Hdr.HeaderFormat,1,sizeof(Hdr.HeaderFormat),F);
  
