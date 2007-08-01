@@ -1,4 +1,3 @@
-
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // EdbShowerRec                                                         //
@@ -6,12 +5,14 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include <math.h>
 #include "EdbTrackFitter.h"
 #include "EdbShowerRec.h"
 
+
 ClassImp(EdbShowerRec)
-//----------------------------------------------------------------
-EdbShowerRec::EdbShowerRec()
+  //----------------------------------------------------------------
+  EdbShowerRec::EdbShowerRec()
 {
 }
 EdbShowerRec::~EdbShowerRec()
@@ -35,10 +36,10 @@ void EdbShowerRec::initproc( const char *def, int iopt,   const char *rcut="1" )
 }    
 //-------------------------------------------------------------------
 void EdbShowerRec::SaveResults()
-{
-  fileout->cd();
-  treesaveb->Write();
-  fileout->Close();
+{    fileout->cd();
+ treesaveb->Write();
+ fileout->Close();
+ fileout->Delete();
 }
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
@@ -104,21 +105,21 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
   TArrayF  zbb(eNTM*eNSM);  
   TArrayF  txbb(eNTM*eNSM);  
   TArrayF  tybb(eNTM*eNSM); 
-  TArrayF  deltarbb(eNTM*eNSM);
+  //    TArrayF  deltarbb(eNTM*eNSM);
   TArrayI  sigbb(eNTM*eNSM);
   TArrayI add(eNTM*eNSM);  
 
-  for(int i=0; i<eNTM; i++)
+  for(int i=0; i<eNSM; i++)
     {
-      for(int j=0; j<eNSM; j++)  
+      for(int j=0; j<eNTM; j++)  
 	{
-	  ind = i*eNSM+j;
+	  ind = i*eNTM+j;
 	  xbb[ind];
 	  ybb[ind];
 	  zbb[ind];
 	  txbb[ind];
 	  tybb[ind];
-	  deltarbb[ind];
+	  //	    deltarbb[ind];
 	  sigbb[ind];
 
 	}
@@ -163,17 +164,12 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
     
   EdbShowerRec* a=0;
   // save the Z position of the first sheet
-  ZZ0[0]= z0[0];
-    
-  for (int i=0;i<eNTM; i++)
-    {
-      for (int j=0;j<eNSM; j++)
-	{
-	  ind = i*eNSM+j;
-	  deltarbb[ind]= 200.;
-	}
-    }
-    
+  if(num<10) {sprintf(nme,"%s/0%d_00%d.par","par",num,piece2par);}
+  else {sprintf(nme,"%s/%d_00%d.par","par",num,piece2par);}
+  ReadAffAndZ(nme,&Zoff,&a11,&a12,&a21,&a22,&bb1,&bb2 );
+  //  ZZ0[0]= z0[0];
+  ZZ0[0]= Zoff;
+
   int nntr;
   int ok;
   int max=0 ;
@@ -182,6 +178,9 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 
   float Rcut = 100.;
   float  Tcut = 0.05;
+  //    float Rcut = 150.;
+  //    float  Tcut = 0.15;
+
 
   float mini[5] ={-20000.,-20000.,-1,-1,0};
   float maxi[5] ={20000.,20000.,1,1,100};
@@ -209,11 +208,14 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
     ReadPiece(Piece, *pat2);
 
     ReadAffAndZ(nme,&Zoff,&a11,&a12,&a21,&a22,&bb1,&bb2 );
+    Z0 =  Zoff;
+    ZZ0[index] =  Zoff;
 
     int ii =0;
     TIter next(eS);
-    while (a=(EdbShowerRec*)next())
+    while ((a=(EdbShowerRec*)next()))
       {
+	if(a->GetZ0()>Z0) ii++;
 	if(a->GetZ0()>Z0) continue;
 	Xss =  a->GetX0() + fabs(Z0-a->GetZ0())*a->GetTx();
 	Yss =  a->GetY0() + fabs(Z0-a->GetZ0())*a->GetTy();
@@ -227,7 +229,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 	maxi[1] = Yss+450.;
 	maxi[2] = 0.45;
 	maxi[3] = 0.45;
-	maxi[4] = 100.;
+	maxi[4] = 100;
 	    
 	pat = pat2->ExtractSubPattern(mini,maxi);	    
 	ali.AddPattern(pat);
@@ -242,11 +244,6 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 	  {	    
 	    ss = ali.GetPattern(incr)->GetSegment(i);
 	    ok = 0;
-	    //Z0 =  ss->Z()+Zoff;
-	    //ZZ0[d-1] =  ss->Z()+Zoff;
-	    Z0 =  Zoff;
-	    ZZ0[index] =  Zoff;
-	
 	    if (DATA ==1){
 	      X0 = a11*ss->X() + a12*ss->Y() + bb1;
 	      Y0 = a21*ss->X() + a22*ss->Y() + bb2;
@@ -288,14 +285,14 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 			for (int l2=0;l2<nntr;l2++) 
 			  {
 			    ind = l2 + ii*eNTM;
-			    if (fabs(zbb[ind]-(Z0-(el+1)*1300))<500)
+
+			    if (fabs(a->GetZb(l2)-(Z0-(el+1)*1300))<500)
 			      {
-				rayon2 = sqrt((Xe[el]-xbb[ind])*(Xe[el]-xbb[ind])+((Ye[el]-ybb[ind])*(Ye[el]-ybb[ind])));  
-
-				delta = sqrt((SX0-txbb[ind])*(SX0-txbb[ind])+((SY0-tybb[ind])*(SY0-tybb[ind])));
-
+				rayon2 = sqrt((Xe[el]-a->GetXb(l2))*(Xe[el]-a->GetXb(l2))+((Ye[el]-a->GetYb(l2))*(Ye[el]-a->GetYb(l2))));  
+				delta = sqrt((SX0-a->GetTXb(l2))*(SX0-a->GetTXb(l2))+((SY0-a->GetTYb(l2))*(SY0-a->GetTYb(l2))));
 				if (rayon2<Rcut&&delta<Tcut)
 				  {
+
 				    if (ok==0)
 				      {
 					ind = add[ii] + ii*eNTM;
@@ -316,16 +313,18 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 					//a->SetNFilmb( index+1,add[ii]);
 					rr =  (Z0-a->GetZ0())/1300;
 					a->SetNFilmb(int(round(rr)+1),add[ii]);
-
-					if (ss->MCEvt()<0) sigbb[ind] = 0;
 					if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
+					if (ss->MCEvt()<0) sigbb[ind] = 0;
+					    
 					ok =1;
+					    
 					add[ii]++;
 				      } 					    
 				    else if (ok==1&&rayon2<a->GetDeltarb(add[ii]-1)) 
 				      {
 					a->SetDeltarb(rayon2,add[ii]-1);
 					a->SetDelthetab(delta,add[ii]-1);
+
 				      }					    
 				  }
 			      }
@@ -340,15 +339,18 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 	
   int  i = 0;
   TIter next(eS);
-  while (a=(EdbShowerRec*)next())
+  while ((a=(EdbShowerRec*)next()))
     {	
-      number_eventb = a->GetID();
+      //	number_eventb = a->GetID();
+      number_eventb = a->GetTrID();
+
       sizeb = add[i];
       a->SetSize(add[i]);
       sizeb15 = 0;
       sizeb20 = 0;
       sizeb30 = 0;     
       isizeb = 0;
+
 
       for (int j=0;j<add[i]; j++) 
 	{ 
@@ -373,8 +375,6 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 	  deltathetab[j] = a->GetDeltathetab(j);	 
 	  nfilmb[j] = a->GetNFilmb(j);
 	  tagprimary[j] = 0;
-
-	  //	    printf("txb[j]  %f\n", a->GetTXb(j));		    
 
 	  if (j==0) tagprimary[j] = 1; 
 	  if (j==0) chi2btkb[j] = 1; 
@@ -442,11 +442,11 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
   TArrayF  tybb(eNTM*eNSM); 
   TArrayI  sigbb(eNTM*eNSM);
   TArrayI add(eNTM*eNSM);    
-  for(int i=0; i<eNTM; i++)
+  for(int i=0; i<eNSM; i++)
     {
-      for(int j=0; j<eNSM; j++)  
+      for(int j=0; j<eNTM; j++)  
 	{
-	  ind = i*eNSM+j;
+	  ind = i*eNTM+j;
 	  xbb[ind];
 	  ybb[ind];
 	  zbb[ind];
@@ -497,8 +497,21 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     
   EdbShowerRec* a=0;
   // save the Z position of the first sheet
-  ZZ0[0]= z0[0];
-
+  if(num<10) {sprintf(nme,"%s/0%d_00%d.par","par",num,piece2par);}
+  else {sprintf(nme,"%s/%d_00%d.par","par",num,piece2par);}
+  ReadAffAndZ(nme,&Zoff,&a11,&a12,&a21,&a22,&bb1,&bb2 );
+  //  ZZ0[0]= z0[0];
+  ZZ0[0]= Zoff;
+  /*    
+	for (int i=0;i<eNSM; i++)
+	{
+	for (int j=0;j<eNTM; j++)
+	{
+	ind = i*eNTM+j;
+	deltarbb[ind]= 200.;
+	}
+	}
+  */    
   int nntr;
   int ok;
   int max=0 ;
@@ -537,11 +550,14 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     ReadPiece(Piece, *pat2);
 
     ReadAffAndZ(nme,&Zoff,&a11,&a12,&a21,&a22,&bb1,&bb2 );
+    Z0 =  Zoff;
+    ZZ0[index] =  Zoff;
 
     int ii =0;
     TIter next(eS);
-    while (a=(EdbShowerRec*)next())
+    while ((a=(EdbShowerRec*)next()))
       {
+	if(a->GetZ0()>Z0) ii++;
 	if(a->GetZ0()>Z0) continue;
 	Xss =  a->GetX0() + fabs(Z0-a->GetZ0())*a->GetTx();
 	Yss =  a->GetY0() + fabs(Z0-a->GetZ0())*a->GetTy();
@@ -570,11 +586,6 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 	  {	    
 	    ss = ali.GetPattern(incr)->GetSegment(i);
 	    ok = 0;
-	    //Z0 =  ss->Z()+Zoff;
-	    //ZZ0[d-1] =  ss->Z()+Zoff;
-	    Z0 =  Zoff;
-	    ZZ0[index] =  Zoff;
-	
 	    if (DATA ==1){
 	      X0 = a11*ss->X() + a12*ss->Y() + bb1;
 	      Y0 = a21*ss->X() + a22*ss->Y() + bb2;
@@ -643,8 +654,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 					rr =  (Z0-a->GetZ0())/1300;
 					a->SetNFilmb(int(round(rr)+1),add[ii]);
 
-					if (ss->MCEvt()<0) sigbb[ind] = 0;
 					if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
+					if (ss->MCEvt()<0) sigbb[ind] = 0;
 					ok =1;
 					add[ii]++;
 				      } 					    
@@ -666,7 +677,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 	
   int  i = 0;
   TIter next(eS);
-  while (a=(EdbShowerRec*)next())
+  while ((a=(EdbShowerRec*)next()))
     {	
       number_eventb = a->GetID();
       sizeb = add[i];
@@ -717,7 +728,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 //-------------------------------------------------------------------
 
 //void EdbShowerRec::remove(char *shfname, char *def,float Rcut=100., float Tcut=0.05)
-void EdbShowerRec::remove(char *shfname, char *def)
+void EdbShowerRec::remove(char *shfname, char *def, int MAXPLATE, int piece2par)
 {
 
   treesaveb = new TTree("treebranch","tree of branchtrack");
@@ -744,7 +755,7 @@ void EdbShowerRec::remove(char *shfname, char *def)
   fileout = new TFile("shower.root","RECREATE");
 
   //    vert(shfname,def,Rcut,Tcut);
-  vert(shfname,def);
+  vert(shfname,def,MAXPLATE,piece2par);
 
   SaveResults();
 
@@ -752,10 +763,13 @@ void EdbShowerRec::remove(char *shfname, char *def)
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 // void EdbShowerRec::vert(const char *name2,const char *def,float Rcut=100., float Tcut=0.05)
-void EdbShowerRec::vert(const char *name2,const char *def)
+void EdbShowerRec::vert(const char *name2,const char *def, int MAXPLATE, int piece2par)
 {
   double ZZ0[50];
+  char nme[64];
   int ind;
+  float  a11, a12, a21, a22, bb1, bb2;
+  float Zoff;
   const Int_t eNSM = 10000;
   const Int_t eNTM = 1000;
 
@@ -770,12 +784,13 @@ void EdbShowerRec::vert(const char *name2,const char *def)
   TArrayI  nfilmbb(eNTM*eNSM);
   TArrayI Flag(eNTM*eNSM); 
   TArrayI add(eNTM*eNSM);  
+  TArrayI EvNum(eNSM);
 
-  for(int i=0; i<eNTM; i++)
+  for(int i=0; i<eNSM; i++)
     {
-      for(int j=0; j<eNSM; j++)  
+      for(int j=0; j<eNTM; j++)  
 	{
-	  ind = i*eNSM+j;
+	  ind = i*eNTM+j;
 	  xbb[ind];
 	  ybb[ind];
 	  zbb[ind];
@@ -792,7 +807,7 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 
   file = new TFile(name2 ,"READ");
   TTree *treebranch_e = (TTree *) file->Get("treebranch");
-    
+  treebranch_e->SetBranchAddress("number_eventb", &number_eventb);
   treebranch_e->SetBranchAddress("nfilmb", nfilmb);
   treebranch_e->SetBranchAddress("sizeb", &sizeb);   
   treebranch_e->SetBranchAddress("tagprimary", tagprimary);
@@ -817,7 +832,7 @@ void EdbShowerRec::vert(const char *name2,const char *def)
       shower->SetZ0(zb[0]);
       shower->SetTx(txb[0]);
       shower->SetTy(tyb[0]);
-      //	shower->SetTrID(TRid[0]);
+      shower->SetTrID(number_eventb);
 	
       shower->SetDeltarb(200.,0);
       shower->SetDelthetab(0.5,0);
@@ -853,11 +868,11 @@ void EdbShowerRec::vert(const char *name2,const char *def)
   float Xe[4], Ye[4];
   int  nseg;      
 
-  for(int jj=0;jj<eNTM;jj++)
+  for(int jj=0;jj<eNSM;jj++)
     {
-      for(int ii=0;ii<eNSM;ii++)
+      for(int ii=0;ii<eNTM;ii++)
 	{
-	  ind = jj*eNSM +ii;
+	  ind = jj*eNTM +ii;
 	  Flag[ind] = 0;
 	}
     }
@@ -894,7 +909,7 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 	// loop over the shower
 	int  ii=0;
 	TIter next(eS);
-	while (a=(EdbShowerRec*)next())
+	while ((a=(EdbShowerRec*)next()))
 	  {
 	    for (Int_t ibtke = 1; ibtke < a->GetSize(); ibtke++)
 	      { 
@@ -920,7 +935,7 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 		    if ( (diff<rayon&&diff<Delta)&&(diff2>Delta2||diff2>rayon) )  // (the BT must be in the cone)&&(the first BT of the track must be outside the cone)
 		      {
 			printf( "%f %f %f %f %d %f\n", Z1, Delta2,diff2,Z0,ii,chi2btkb[ibtke]);
-			Flag[ii+ibtke*eNTM] = 1;			    
+			Flag[ibtke+ii*eNTM] = 1;			    
 		      }
 		  }
 	      }
@@ -928,38 +943,45 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 	  }	    
       }	
   }    
+  file->Close();
+  gAli->Delete();
+
   // get Z value for each plate
-  for (Int_t iii = 0; iii<nentries_e; iii++)
-    { 
-      treebranch_e->GetEntry(iii); 
-      for ( int ibtke = 0; ibtke < sizeb; ibtke++)
-	{
-	  ZZ0[nfilmb[ibtke]-1] = zb[ibtke];
-	}
+  ZZ0[0] = 0.;
+  for (Int_t iii = 1; iii<MAXPLATE; iii++)
+    { 	if(iii<10) {sprintf(nme,"%s/0%d_00%d.par","par",iii,piece2par);}
+    else {sprintf(nme,"%s/%d_00%d.par","par",iii,piece2par);}
+
+    ReadAffAndZ(nme,&Zoff,&a11,&a12,&a21,&a22,&bb1,&bb2);
+    ZZ0[iii] = Zoff;
+
     }
-    
+
+  float zpos,rr;
   int nntr, d, max =0;
   int ok;
   float Rcut = 100.;
   float  Tcut = 0.05;
+  //    float Rcut = 150.;
+  //    float  Tcut = 0.15;
+   
   int ige =0; 
-    
+
   TIter next(eS);
-  while (a=(EdbShowerRec*)next())
+  while ((a=(EdbShowerRec*)next()))
     {
       ind = 0 + ige*eNTM;
       add[ige] = 1;
-      xbb[ind] =  a->GetX0(); 
+      EvNum[ige] = a->GetTrID();
+      xbb[ind] =  a->GetX0();
       ybb[ind] =  a->GetY0(); 
       zbb[ind] =  a->GetZ0(); 
       txbb[ind] = a->GetTx(); 
       tybb[ind] = a->GetTy();
-	
       deltarbb[ind]= 200. ;
       deltatbb[ind]= 0.5;
 	
       nfilmbb[ind] = 1;
-	
       for ( int ibtke = 1; ibtke < a->GetSize() ; ibtke++)
 	{ 	
 	  ok = 0;
@@ -970,27 +992,46 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 	  rayon = 400.; // cylinder with 400 microns radius
 	  diff = sqrt((a->GetXb(ibtke)-Xss)*(a->GetXb(ibtke)-Xss)+(a->GetYb(ibtke)-Yss)*(a->GetYb(ibtke)-Yss));
 	    
-	  if ( diff<rayon&&diff<Delta&&Flag[ige+ibtke*eNTM]==0 )  //BT must be in the cone and does not belong to a track which starts outside the cone volume
-	    {		
+	  if ( diff<rayon&&diff<Delta&&Flag[ibtke+ige*eNTM]==0 )  //BT must be in the cone and does not belong to a track which starts outside the cone volume
+	    {
+
 	      d = a->GetNFilmb(ibtke);
-	      if (d==2) max = 1;
-	      if (d==3) max = 2;
-	      if (d>3) max = 3;
+	      zpos = a->GetZb(ibtke);
+	      if (zpos>1000&&zpos<1500.)
+		{
+		  max = 1;
+		} else if (zpos<3000)
+		  { 
+		    max = 2;
+		  }
+	      else
+		{ 
+		  max = 3;
+		}
 	      for (int el=0;el<max;el++)
 		{
-		  Xe[el] =  a->GetXb(ibtke) -(a->GetZb(ibtke)-ZZ0[d-el-2])*a->GetTXb(ibtke);
-		  Ye[el] =  a->GetYb(ibtke) -(a->GetZb(ibtke)-ZZ0[d-el-2])*a->GetTYb(ibtke);
+
+		  rr =  a->GetZb(ibtke)/1300;
+		  d = int(round(rr));
+
+		  Xe[el] =  a->GetXb(ibtke) -(a->GetZb(ibtke)-ZZ0[d-el])*a->GetTXb(ibtke);
+		  Ye[el] =  a->GetYb(ibtke) -(a->GetZb(ibtke)-ZZ0[d-el])*a->GetTYb(ibtke);
 		  nntr = add[ige];
-		    
+		   
 		  for (int l2=0;l2<nntr;l2++) {			
+
 		    if (fabs(a->GetZb(l2)-(a->GetZb(ibtke)-(el+1)*1300))<500)  
-		      {			  
+		      {
+
 			rayon2 = sqrt((Xe[el]-a->GetXb(l2))*(Xe[el]-a->GetXb(l2))+((Ye[el]-a->GetYb(l2))*(Ye[el]-a->GetYb(l2))));  
-			delta = sqrt((a->GetTXb(ibtke)-a->GetTXb(l2))*(a->GetTXb(ibtke)-a->GetTXb(l2))+((a->GetTYb(ibtke)-a->GetTYb(l2))*(a->GetTYb(ibtke)-a->GetTYb(l2))));			  
-			if (rayon2<Rcut&&delta<Tcut&&Flag[ige+l2*eNTM]==0)  // connection criteria with  a BT which does not belong to a track which starts outside the cone volume
+			delta = sqrt((a->GetTXb(ibtke)-a->GetTXb(l2))*(a->GetTXb(ibtke)-a->GetTXb(l2))+((a->GetTYb(ibtke)-a->GetTYb(l2))*(a->GetTYb(ibtke)-a->GetTYb(l2))));
+
+			  
+			if (rayon2<Rcut&&delta<Tcut&&Flag[ige+l2*eNSM]==0)  // connection criteria with  a BT which does not belong to a track which starts outside the cone volume
 			  {				
 			    if (ok==0)
 			      {
+				//ind = ige + add[ige]*eNSM;
 				ind = add[ige] + ige*eNTM;
 				xbb[ind] =   a->GetXb(ibtke);
 				ybb[ind] =   a->GetYb(ibtke);
@@ -999,19 +1040,20 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 				tybb[ind] =  a->GetTYb(ibtke);
 				deltarbb[ind] =  rayon2 ;
 				deltatbb[ind] =  delta ;
+				EvNum[ige]= a->GetTrID();
 				    
-				nfilmbb[ind] =  d ;		 
+				nfilmbb[ind] =  a->GetNFilmb(ibtke);		 
 				    
-				sigbb[ind] = chi2btkb[ibtke];
+				sigbb[ind] = (int)chi2btkb[ibtke];   //bug here?
 				ok =1;
-				    
 				add[ige]++;   
+				    
 			      }
-			    else if (ok==1&&rayon2<deltarbb[add[ige]-1+ige*eNTM]) 
+			    else if (ok==1&&rayon2<deltarbb[(add[ige]-1)+ige*eNTM]) 
 			      {
-				ind = add[ige]-1+ige*eNTM;
+				ind = (add[ige]-1) + ige*eNTM;
 				deltarbb[ind] =  rayon2 ;
-				deltatbb[ind] =  delta ;    
+				deltatbb[ind] =  delta ;  
 			      }			      
 			  }	          
 		      }
@@ -1024,7 +1066,9 @@ void EdbShowerRec::vert(const char *name2,const char *def)
     
   for (int i=0;i<nentries_e; i++) 
     {
-      number_eventb = i;
+      //	number_eventb = i;
+      number_eventb = EvNum[i];
+
       sizeb = add[i];
       sizeb15 = 0;
       sizeb20 = 0;
@@ -1034,31 +1078,32 @@ void EdbShowerRec::vert(const char *name2,const char *def)
 	
       for (int j=0;j<sizeb; j++) 
 	{ 
-	  if (zbb[j+i*eNTM]>zb[0]+5000) isizeb = 1;
-	  if (nfilmbb[j+i*eNTM]<16)  sizeb15++;
-	  if (nfilmbb[j+i*eNTM]<21)  sizeb20++;
-	  if (nfilmbb[j+i*eNTM]<31)  sizeb30++;	  
-	}      
+	  ind = j + i*eNTM;
+	  if (zbb[ind]>zb[0]+5000) isizeb = 1;
+	  if (nfilmbb[ind]<16)  sizeb15++;
+	  if (nfilmbb[ind]<21)  sizeb20++;
+	  if (nfilmbb[ind]<31)  sizeb30++;	  
+	  //	}      
 	
-      for (int j=0;j<sizeb; j++) 
-	{    
-	  xb[j] = xbb[j+i*eNTM];
-	  yb[j] = ybb[j+i*eNTM];
-	  zb[j] = zbb[j+i*eNTM];
-	  txb[j] = txbb[j+i*eNTM];
-	  tyb[j] = tybb[j+i*eNTM];
-	  deltarb[j]  = deltarbb[j+i*eNTM] ;
-	  deltathetab[j] = deltatbb[j+i*eNTM];
+	  //	for (int j=0;j<sizeb; j++) 
+	  //	{    
+	  xb[j] = xbb[ind];
+	  yb[j] = ybb[ind];
+	  zb[j] = zbb[ind];
+	  txb[j] = txbb[ind];
+	  tyb[j] = tybb[ind];
+	  deltarb[j]  = deltarbb[ind] ;
+	  deltathetab[j] = deltatbb[ind];
 	    
-	  nfilmb[j] = nfilmbb[j+i*eNTM];
+	  nfilmb[j] = nfilmbb[ind];
 	  tagprimary[j] = 0;
 	  if (j==0) tagprimary[j] = 1;  
 	  if (j==0) chi2btkb[j] = 1; 
-	  if (j>0)  chi2btkb[j] = sigbb[j+i*eNTM];
+	  if (j>0)  chi2btkb[j] = sigbb[ind];
 	}       
       if (isizeb == 1)treesaveb->Fill();
     }
-    
+ 
 }
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
@@ -1076,7 +1121,7 @@ void EdbShowerRec::ReadAffAndZ(char *fname, Float_t *pZoffs,  Float_t *a11, Floa
     return;
   }else
     // printf( "Read affine transformation from file: %s\n", fname );
-    while( fgets(buf,256,fp)!=NULL ) {
+    while( (fgets(buf,256,fp)!=NULL) ) {
 
       for( int i=0; i<(int)strlen(buf); i++ ) 
 	if( buf[i]=='#' )  {

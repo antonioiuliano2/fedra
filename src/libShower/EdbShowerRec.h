@@ -50,7 +50,7 @@ class EdbShowerRec : public TObject
    
     EdbShowerRec(); 
 //    EdbShowerRec(float x, float y, float z, float tx, float ty, int trid, int size=0, float dz=0, float output=0, int id=0);
-    EdbShowerRec(float x, float y, float z, float tx, float ty, int trid);
+//    EdbShowerRec(float x, float y, float z, float tx, float ty, int trid);
 
     virtual ~EdbShowerRec();
 
@@ -126,6 +126,7 @@ EdbDataProc *dproc;
     Float_t    GetOutput30() const { return eOutput30; }
 
     void    SetID(int id)    { eID = id; }
+
     void    SetX0( float x ) { eX0 = x; }
     void    SetY0( float y ) { eY0 = y; }
     void    SetZ0( float z ) { eZ0 = z; }
@@ -172,8 +173,9 @@ EdbDataProc *dproc;
 
 //    void remove(char *shfname, char *def,float Rcut, float Tcut);
 //    void vert(const char *name2,const char *def,float Rcut, float Tcut);
-    void remove(char *shfname, char *def);
-    void vert(const char *name2,const char *def);
+    void remove(char *shfname, char *def,int MAXPLATE, int piece2par);
+    void vert(const char *name2,const char *def,int MAXPLATE, int piece2par);
+
     void SaveResults();
     void initproc( const char *def, int iopt,   const char *rcut);    
     void ReadAffAndZ( char *fname,  Float_t *pZoffs, Float_t *a11,  Float_t *a12,  Float_t *a21,  Float_t *a22, Float_t *b1,  Float_t *b2);
