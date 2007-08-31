@@ -6,6 +6,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TROOT.h"
 #include "TFile.h"
 #include "TVector3.h"
 #include "TIndexCell.h"

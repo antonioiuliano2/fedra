@@ -15,6 +15,7 @@
 #include "TArrayL.h"
 #include "TMatrixD.h"
 #include "EdbVirtual.h"
+#include "TClonesArray.h"
 
 class EdbAffine2D;
 class TIndexCell;

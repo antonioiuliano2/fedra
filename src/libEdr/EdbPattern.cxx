@@ -7,6 +7,7 @@
 // Segments pattern                                                     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TMath.h"
 #include "TIndexCell.h"
 #include "TPolyLine.h"
 #include "EdbAffine.h"
@@ -15,7 +16,6 @@
 #include "EdbPhys.h"
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
-
 
 ClassImp(EdbSegP)
 ClassImp(EdbSegmentsBox)
