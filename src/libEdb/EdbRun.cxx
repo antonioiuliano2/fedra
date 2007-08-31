@@ -39,18 +39,13 @@
 #include "TBranchClones.h"
 #include "TSystem.h"
 #include "TObjString.h"
-
-#ifndef ROOT_EdbRun
 #include "EdbRun.h"
-#endif
-
-#ifndef ROOT_EdbAffine
 #include "EdbAffine.h"
-#endif
+#include "EdbLog.h"
+
 
 ClassImp(EdbRun)
-
-EdbRun      *gRUN;         // global pointer to the current Run
+EdbRun      *gRUN=0;         // global pointer to the current Run
 
 //______________________________________________________________________________
 EdbRun::EdbRun()
@@ -94,7 +89,7 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
     eMarks  = new EdbMarksSet(*(run.GetMarks()));
   if(run.GetPredictions())  
     ePredictions  = new EdbPredictionsBox(*(run.GetPredictions()));
-  printf("Run headers are copied\n");
+  Log(3,"EdbRun::EdbRun","Run headers are copied\n");
   SelectOpenMode( fname, "RECREATE" );
 }
 
@@ -133,18 +128,18 @@ void EdbRun::SelectOpenMode( const char *fname, const char *status )
     else                                               Create(fname);
   }
 
-  printf("root file version: %d \n",eFile->GetVersion());
+  Log(3,"EdbRun::SelectOpenMode","root file version: %d \n",eFile->GetVersion());
 }
 
 //______________________________________________________________________________
 void EdbRun::Open( const char *fname )
 {
-  printf("\nOpen an existing file %s \n", fname);
+  Log(3,"EdbRun::Open","\nOpen an existing file %s \n", fname);
   eFile = new TFile(fname);
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
   if(!eTree) {
-    printf("ERROR: %s has no Views tree\n",fname);
+    Log(1,"EdbRun::Open","ERROR: %s has no Views tree\n",fname);
     return;
   }
 
@@ -159,13 +154,13 @@ void EdbRun::Open( const char *fname )
   if(eMarks) delete eMarks;
   eMarks = (EdbMarksSet*)eFile->Get("Marks");
 
-  Print();
+  if(gEDBDEBUGLEVEL>2) Print();
 }
 
 //______________________________________________________________________________
 void EdbRun::OpenUpdate( const char *fname )
 {
-  printf("\nOpen an existing file for update %s \n", fname);
+  Log(3,"EdbRun::OpenUpdate","\nOpen an existing file for update %s \n", fname);
   eFile = new TFile(fname,"UPDATE");
 
   eTree = (TTree*)eFile->Get("Views");
@@ -180,7 +175,7 @@ void EdbRun::OpenUpdate( const char *fname )
   if(eMarks) delete eMarks;
   eMarks = (EdbMarksSet*)eFile->Get("Marks");
 
-  Print();
+  if(gEDBDEBUGLEVEL>2) Print();
 }
 
 //______________________________________________________________________________
@@ -190,9 +185,9 @@ void EdbRun::Create( const char *fname )
   if(!eMarks)       eMarks         = new EdbMarksSet();
 
   if( !gSystem->AccessPathName(fname, kFileExists) )
-    printf("WARNING : file %s already exists!\n", fname);
+    Log(2,"EdbRun::Create","WARNING : file %s already exists!\n", fname);
 
-  printf("\nOpen new file %s \n\n", fname);
+  Log(2,"EdbRun::Create","\nOpen new file %s \n\n", fname);
   eFile = new TFile(fname,"RECREATE");
 
   eFile->SetCompressionLevel(2);
@@ -215,7 +210,7 @@ void EdbRun::Create( const char *fname )
 //______________________________________________________________________________
 void EdbRun::SetView( EdbView *view )
 {
-  if(!view) { printf("ERROR: EdbRun::SetView: *view=0\n");    return; }
+  if(!view) { Log(1,"EdbRun::SetView","ERROR: EdbRun::SetView: *view=0\n");    return; }
 
   if(eView != view) {
     if(eView) { eView->Clear(); delete eView; }
@@ -229,15 +224,15 @@ void EdbRun::SetView( EdbView *view )
 void EdbRun::SetView()
 {
   if(!eView) { 
-    printf("WARNING: EdbRun::SetView: *eView=0\n");    
+    Log(2,"EdbRun::SetView","WARNING: *eView=0\n");    
     eView = new EdbView();
   } 
   else if( !eView->GetClusters() ) {
-    printf("ERROR: EdbRun::SetView: eView was deleted!\n");
+    Log(1,"EdbRun::SetView","ERROR: eView was deleted!\n");
     eView = new EdbView();
   }
 
-  printf("Note: EdbRun::SetView \n");
+  Log(3,"EdbRun::SetView","Note: EdbRun::SetView \n");
 
   if(eView->GetHeader())   eTree->SetBranchAddress("headers",  eView->GetHeaderAddr()   );
   if(eView->GetClusters()) eTree->SetBranchAddress("clusters", eView->GetClustersAddr() );
@@ -257,7 +252,7 @@ void EdbRun::AddView( EdbView *view )
 {
 
   if( view != eView ) { 
-    printf("WARNING: EdbRun::AddView: view!=eView - inefficient cycle!\n");
+    Log(2," EdbRun::AddView","WARNING: view!=eView - inefficient cycle!\n");
     SetView(view);
   }
 
@@ -295,9 +290,6 @@ void EdbRun::Close()
 
   GetFile()->cd();
   eHeader->GetFinishTime()->Set();
-  //*** eHeader->SetCPU( TStopwatch::GetCPUTime() );
-
-  //  printf("real time: %f CPU: %f\n", timer->GetRealTime(),timer->GetCPUTime() );
 
   if( strcmp(status,"READ") ) {             // file is in "write" mode
     if( !strcmp(status,"CREATE") ) {        // save header in CREATE mode only
@@ -402,7 +394,7 @@ void EdbRun::PrintBranchesStatus() const
   // not supported...
 
   EdbViewHeader *header   =  GetEntryHeader( 0 );
-  if(header)      printf("header branch exists\n");
+  if(header)     printf("header branch exists\n");
   TClonesArray  *clusters =  GetEntryClusters( 0 );
   if(clusters)    printf("clusters branch exists\n");
   TObjArray     *frames   =  GetEntryFrames( 0 );
