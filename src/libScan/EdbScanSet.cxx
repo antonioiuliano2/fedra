@@ -7,6 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "EdbLog.h"
 #include "EdbScanSet.h"
 
 ClassImp(EdbScanSet)
@@ -22,12 +23,12 @@ int EdbScanSet::MakeParFiles(int piece, const char *dir)
   // prepare par files for the dataset for "recset-like" processing
 
   TString name;
-  printf("MakeParFiles for brick %d with %d plates:\n", eB.ID(), eB.Npl());
+  Log(2,"MakeParFiles","for brick %d with %d plates:\n", eB.ID(), eB.Npl());
   EdbPlateP *p=0;
   for(int i=0; i<eB.Npl(); i++) {
     p = eB.GetPlate(i);
     name.Form("%s/%2.2d_%3.3d.par",dir,p->ID(),piece);
-    printf("%s\n",name.Data());
+    Log(3,"MakeParFiles","%s\n",name.Data());
     FILE *f = fopen(name.Data(),"w");
     EdbAffine2D *a=p->GetAffineXY();
     fprintf(f,"INCLUDE default.par\n");
@@ -87,7 +88,7 @@ bool EdbScanSet::GetAffP2P(int p1, int p2, EdbAffine2D &aff)
 {
   // input:  p1 - id of the "from-plate"
   //         p2 - id of the "to-plate"
-  // output: aff - the transformation
+  // output: aff - the transformation - applied to "from" segment became 'to"-segment
   int ip1,ip2;
   if(ePID.Find(p1)) ip1 = ePID.Find(p1)->At(0)->Value();  else return false;
   if(ePID.Find(p2)) ip2 = ePID.Find(p2)->At(0)->Value();  else return false;
@@ -96,6 +97,18 @@ bool EdbScanSet::GetAffP2P(int p1, int p2, EdbAffine2D &aff)
   aff.Invert();
   aff.Transform( eB.GetPlate(ip1)->GetAffineXY() );
   return true;
+}
+
+//----------------------------------------------------------------
+float EdbScanSet::GetDZP2P(int p1, int p2)
+{
+  // input:  p1 - id of the "from-plate"
+  //         p2 - id of the "to-plate"
+  // return: dz - segment of from-plate propagated to dz become in to-plate 
+  int ip1,ip2;
+  if(ePID.Find(p1)) ip1 = ePID.Find(p1)->At(0)->Value();  else return false;
+  if(ePID.Find(p2)) ip2 = ePID.Find(p2)->At(0)->Value();  else return false;
+  return  eB.GetPlate(ip2)->Z() - eB.GetPlate(ip1)->Z();
 }
 
 //----------------------------------------------------------------

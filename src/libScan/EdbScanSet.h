@@ -18,6 +18,8 @@ public:
   virtual ~EdbScanSet(){}
 
   int AssembleBrickFromPC();
+
+  float GetDZP2P(int p1, int p2);
   bool GetAffP2P(int p1, int p2, EdbAffine2D &aff);
   EdbPlateP *GetPlate(int p) {if(ePID.Find(p)) return eB.GetPlate(ePID.Find(p)->At(0)->Value()); else return 0; }
 

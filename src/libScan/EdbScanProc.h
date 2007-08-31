@@ -61,11 +61,11 @@ public:
   int     FindPredictions(int id[4], int flag=-1, int maxholes=3);
 
 
-  bool    InitRunAccess(EdbRunAccess &ra, int id[4]);
+  bool    InitRunAccess(EdbRunAccess &ra, int id[4], bool do_update=false);
   int     FindPredictionsRaw(int idp[4], int idr[4]);
   int     FindPredictionsRaw(EdbPattern &pred, EdbPattern &found, EdbRunAccess &ra, 
 			     EdbScanCond &condBT, EdbScanCond &condMT, 
-			     float delta_theta=0.1, float puls_min=5., float puls_mt=9., float chi2max=1.6 );
+			     float delta_theta=0.1, float puls_min=5., float puls_mt=9., float chi2max=1.6, FILE *out=0 );
   int     FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found, float chi2max, TArrayF &chiarr );
   void    SetDefaultCondBT(EdbScanCond &cond);
   void    SetDefaultCondMT(EdbScanCond &cond);
@@ -82,7 +82,7 @@ public:
   int     TestAl(int id1[4], int id2[4]);
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
 
-  void    LogPrint(int brick, const char *rout, const char *fmt, ...);
+  void    LogPrint(int brick, int level, const char *rout, const char *fmt, ...);
   void    Print();
   ClassDef(EdbScanProc,1)  // scanned data processing
 };
