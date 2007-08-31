@@ -13,6 +13,7 @@
 #include "EdbSegment.h"
 #include "EdbCluster.h"
 #include "EdbRunAccess.h"
+#include "EdbLog.h"
 #ifndef __CINT__
 #include "libDataConversion.h"
 #endif
@@ -88,20 +89,42 @@ void EdbRunAccess::Print()
  }
 
 ///_________________________________________________________________________
-bool EdbRunAccess::InitRun(const char *runfile)
+bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
 {
   if(eRun) {delete eRun; eRun=0;}
   if(runfile) eRunFileName=runfile;
   if( gSystem->AccessPathName(eRunFileName.Data(), kFileExists) ) {
-    printf("ERROR open file: %s\n",eRunFileName.Data());
+    Log(1,"EdbRunAccess::InitRun","ERROR open file: %s\n",eRunFileName.Data());
     return false;
   }
-  eRun=new EdbRun(eRunFileName.Data());
+  if(do_update) eRun=new EdbRun(eRunFileName.Data(),"UPDATE");
+  else          eRun=new EdbRun(eRunFileName.Data());
   if(!eRun) return false;
   if(!(eRun->GetTree())) return false;
   for(int i=0; i<3; i++) if(eLayers[i]==0) GetMakeLayer(i);
-  if(FillVP()<1) return false;
-  PrintStat();
+  if(do_update) {
+    if(FillVP()<1) return false;
+    eVP[1]->Write("views_s1");
+    eVP[2]->Write("views_s2");
+  } else {
+    if( eVP[1] ) delete  eVP[1];
+    if( eVP[2] ) delete  eVP[2];
+    eVP[1] = dynamic_cast<EdbPattern*>(gDirectory->Get("views_s1"));
+    eVP[2] = dynamic_cast<EdbPattern*>(gDirectory->Get("views_s2"));
+  }
+
+  int nn=0;
+  if( eVP[1] && eVP[2] ) nn = eVP[1]->N()+eVP[2]->N();
+  if(nn != eRun->GetEntries()) if(FillVP()<1) return false;
+
+  eVP[1]->Transform(eLayers[1]->GetAffineXY());
+  eVP[2]->Transform(eLayers[2]->GetAffineXY());
+  eXmin = eVP[1]->Xmin();
+  eXmax = eVP[1]->Xmax();
+  eYmin = eVP[1]->Ymin();
+  eYmax = eVP[1]->Ymax();
+
+  if(gEDBDEBUGLEVEL>1) PrintStat();
 
   eXstep=400;  //TODO
   eYstep=400;
@@ -112,7 +135,7 @@ bool EdbRunAccess::InitRunFromRWC(char *rwcname, bool bAddRWD, const char* optio
 {
   if(!eRun)
     if( gSystem->AccessPathName(rwcname, kFileExists) ) {
-      printf("ERROR open file: %s\n",rwcname);
+      Log(1,"EdbRunAccess::InitRunFromRWC","ERROR open file: %s\n",rwcname);
       return false;
     }
   eRun=new EdbRun(eRunFileName.Data(),"RECREATE");
@@ -125,10 +148,10 @@ bool EdbRunAccess::InitRunFromRWC(char *rwcname, bool bAddRWD, const char* optio
 ///_________________________________________________________________________
 bool EdbRunAccess::AddRWDToRun(char *rwdname, const char* options)
 {
-  printf("Add RWD to run: %s\n",rwdname);
+  Log(2,"EdbRunAccess::AddRWDToRun"," %s\n",rwdname);
   if(!eRun) return false;
   if( gSystem->AccessPathName(rwdname, kFileExists) ) {
-      printf("ERROR open file: %s\n",rwdname);
+      Log(1,"EdbRunAccess::AddRWDToRun","ERROR open file: %s\n",rwdname);
       return false;
   }
 
@@ -267,16 +290,16 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
   int nseg = GetVolumeData(vol, ic, srt, nrej);
 
 #ifdef _WINDOWS
-  printf("Area:%3d (%3d%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+  Log(2,"GetVolumeArea","Area:%3d (%3d%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
 #else
-  printf("Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+  Log(2,"GetVolumeArea","Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
 #endif
 	 area, 100*area/eNareas, n1,n2, 
 	 vol.GetPattern(0)->N(),
 	 vol.GetPattern(1)->N(),
 	 nrej );
   if(nseg != vol.GetPattern(0)->N()+vol.GetPattern(1)->N()) 
-  printf("WARNING!!! nseg\n");
+  Log(2,"GetVolumeArea","WARNING!!! nseg = %d != %d\n", nseg,vol.GetPattern(0)->N()+vol.GetPattern(1)->N());
   return ic;
 }
 
@@ -571,7 +594,7 @@ int EdbRunAccess::FillVP()
   // segp->Aid(areaID,viewID);
 
   
-  if(!eRun) { printf("ERROR: run is not opened\n"); return 0; }
+  if(!eRun) { Log(1,"EdbRunAccess::FillVP","ERROR: run is not opened\n"); return 0; }
   EdbView        *view = eRun->GetView();
   EdbViewHeader  *head = view->GetHeader();
 
@@ -609,16 +632,7 @@ int EdbRunAccess::FillVP()
     if(side<1||side>2) continue;
     eVP[side]->AddSegment(segP);
   }
-
-  eVP[1]->Transform(eLayers[1]->GetAffineXY());  //TODO a nujno-li eto zdes'?
-  eVP[2]->Transform(eLayers[2]->GetAffineXY());
-
-  eXmin = eVP[1]->Xmin();
-  eXmax = eVP[1]->Xmax();
-  eYmin = eVP[1]->Ymin();
-  eYmax = eVP[1]->Ymax();
-
-  printf("fillVP: %d entries\n", nentr);
+  Log(2,"EdbRunAccess::FillVP"," %d entries\n", nentr);
   return nentr;
 }
 

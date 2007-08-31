@@ -48,7 +48,7 @@ class EdbRunAccess : public TObject {
 
   void Set0();
   void ClearCuts();
-  bool InitRun(const char *runfile=0);
+  bool InitRun(const char *runfile=0, bool do_update=false);
   bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");
   bool AddRWDToRun(char *rwdname, const char* options="");
   void Print();

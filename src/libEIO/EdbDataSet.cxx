@@ -15,6 +15,7 @@
 #include "EdbCluster.h"
 #include "EdbMath.h"
 #include "EdbTraceBack.h"
+#include "EdbLog.h"
 
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
@@ -276,10 +277,10 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 
   FILE *fp=fopen(file,"r");
   if (fp==NULL)   {
-    printf("ERROR open file: %s \n", file);
+    Log(2,"ReadPiecePar","ERROR open file: %s \n", file);
     return(-1);
   }else
-    printf( "\nRead piece parameters from file: %s\n\n", file );
+    Log(3,"ReadPiecePar","\nRead piece parameters from file: %s\n\n", file );
 
   int id,mode;
   float z,zmin,zmax,shr;
@@ -1607,7 +1608,7 @@ int EdbDataProc::Link()
   for(int i=0; i<np; i++) {
     piece = eDataSet->GetPiece(i);
     piece->TakePiecePar();
-    piece->Print();
+    if(gEDBDEBUGLEVEL>2) piece->Print();
     piece->WriteCuts();
     if(piece->Flag()==1)    Link(*piece);
     piece->CloseRun();
@@ -1946,7 +1947,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolumeF( EdbTrackP &tr, float binx, float bint
   ss.SetY(tr.Y());
   ss.SetZ(tr.Z());
 
-  ss.Print();
+  if(gEDBDEBUGLEVEL>2) ss.Print();
 
   EdbPattern *pat  = 0;
   EdbPattern *spat = 0;
@@ -2199,7 +2200,7 @@ void EdbDataProc::Align(int doAlign)
 
   ali->Align(doAlign);
 
-  ali->PrintAff();
+  if(gEDBDEBUGLEVEL>1) ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
     ali->GetPattern(i)->GetKeep(aff);
@@ -2403,7 +2404,7 @@ void EdbDataProc::FineAlignment(int doFine)
   for( i=0; i<ali.Npatterns(); i++ ) {
     fctr = ali.FineCorrTXTY(i,aff);
     if(fctr<=fcMin) break;
-    aff.Print();
+    if(gEDBDEBUGLEVEL>2) aff.Print();
     if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateAffTPar(0,aff);
   }
 
@@ -2438,7 +2439,7 @@ void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
   InitVolume(ali);
 
   ali->Align(doAlign);
-  ali->PrintAff();
+  if(gEDBDEBUGLEVEL>1) ali->PrintAff();
   EdbAffine2D  aff;
   for(int i=0; i<ali->Npatterns(); i++) {
     ali->GetPattern(i)->GetKeep(aff);
