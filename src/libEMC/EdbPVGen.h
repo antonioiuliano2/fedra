@@ -8,6 +8,8 @@
 //  collection of agorithms                                             //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TROOT.h"
+#include "TMath.h"
 #include "TGenPhaseSpace.h"
 #include "EdbPVRec.h"
 #include "EdbVertex.h"

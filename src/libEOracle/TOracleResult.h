@@ -1,4 +1,4 @@
-// @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleResult.h,v 1.1 2005-10-24 13:48:29 valeri Exp $
+// @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleResult.h,v 1.2 2007-08-31 12:14:00 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 
 /*************************************************************************
@@ -11,6 +11,8 @@
 
 #ifndef ROOT_TOracleResult
 #define ROOT_TOracleResult
+
+#include <vector>
 
 #ifndef ROOT_TSQLResult
 #include "TSQLResult.h"

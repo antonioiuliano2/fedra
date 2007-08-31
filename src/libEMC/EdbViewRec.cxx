@@ -5,6 +5,7 @@
 // EdbViewRec - one microscope view reconstruction                      //
 //              "hedgehog" tracking                                     //
 //////////////////////////////////////////////////////////////////////////
+#include "TMath.h"
 #include "TH2F.h"
 #include "TNtuple.h"
 #include "TFile.h"

@@ -5,9 +5,9 @@
 // EdbViewGen - one microscope view simulation                          //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TMath.h"
 #include "TH2F.h"
 #include "TNtuple.h"
-
 #include "TRandom.h"
 #include "EdbViewGen.h"
 #include "EdbCluster.h"
