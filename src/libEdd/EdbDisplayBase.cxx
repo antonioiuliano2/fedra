@@ -556,11 +556,11 @@ void EdbDisplayBase::SetDrawDet(Bool_t fflag)
 void EdbDisplayBase::DrawDetector()
 {
   //if(!fDrawDet){return;}
-  if(fDetector)
-    {
+  if(fDetector){
       fPad->GetListOfPrimitives()->Add(fDetector);
-    }
-  else{printf("\nError:no Detector!\n");};
+  } else {
+    printf("\nError:no Detector!\n");
+  }
 }
 
 //_____________________________________________________________________________
@@ -736,12 +736,12 @@ void EdbDisplayBase::DrawAllViews()
 
    // draw top view
    fPad->cd(3);
-   DrawView(90, -90, 90);
+   DrawView(90, 90, 90);
    DrawTitle("Top");
 
    // draw side view
    fPad->cd(4);
-   DrawView(90, 0, -90);
+   DrawView(90, 180, 90);
    DrawTitle("Side");
 
    fPad->cd(2);

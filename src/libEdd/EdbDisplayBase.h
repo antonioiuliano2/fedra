@@ -8,7 +8,8 @@
 // Class to display pattern volume in 3D                                //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-#include <TObject.h>
+#include "TObject.h"
+#include "TMath.h"
 #include "TCanvas.h"
 #include "TSlider.h"
 #include "TView.h"
@@ -18,23 +19,16 @@
 #include "TArrayF.h"
 #include "TArrayI.h"
 #include "TButton.h"
+#include "TPaveLabel.h"
 
-#include <TGClient.h>
-#include <TGButton.h>
-
-#include <TTree.h>
-#include <TButton.h>
-#include <TCanvas.h>
-#include <TView.h>
-#include <TPaveLabel.h>
-#include <TPaveText.h>
-#include <TDiamond.h>
-#include <TArc.h>
-#include <TSliderBox.h>
-#include <TGaxis.h>
-#include <TVirtualX.h>
-#include <TMath.h>
-#include <TGeoVolume.h>
+#include "TGClient.h"
+#include "TGFrame.h"
+#include "TDiamond.h"
+#include "TArc.h"
+#include "TSliderBox.h"
+#include "TGaxis.h"
+#include "TVirtualX.h"
+#include "TGeoVolume.h"
 
 static const int kMAXZOOMS=30;
 
