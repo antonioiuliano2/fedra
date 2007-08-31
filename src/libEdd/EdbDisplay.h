@@ -77,6 +77,7 @@ class EdbDisplay: public EdbDisplayBase {
   static EdbDisplay *EdbDisplayExist(const char *title);
   void Delete();
   void Set0();
+  void GuessRange();
   void SetVerRec(EdbVertexRec *evr) { eVerRec = evr; };
 
   void Refresh();
