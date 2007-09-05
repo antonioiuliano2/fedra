@@ -14,6 +14,7 @@ R__EXTERN FILE   *gEDBLOGFILE;
 /*    kDebAll          = 4 */
 /* }; */
 
+extern void Log0(Int_t level, const char *location, const char *msgfmt, va_list va);
 extern void Log(Int_t level, const char *location, const char *msgfmt, ...);
 
 #endif /* ROOT_EdbLog */

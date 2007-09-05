@@ -8,6 +8,7 @@
 
 //#pragma link C++ class EdbOnline;
 
+#pragma link C++ function Log0;
 #pragma link C++ function Log;
 #pragma link C++ global gEDBDEBUGLEVEL;
 #pragma link C++ global gEDBLOGFILE;
