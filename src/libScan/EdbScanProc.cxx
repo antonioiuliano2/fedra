@@ -240,7 +240,24 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, int id[4], int flag, const char 
 {
   EdbPattern pred;
   ReadPred(pred, id, flag);
-  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions with flag %d", id[0],id[1],id[2],id[3],pred.N(),flag);
+  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions with flag %d", 
+	   id[0],id[1],id[2],id[3],pred.N(),flag);
+  EdbPattern predopt;
+  OptimizeScanPath(pred,predopt,id[0]);
+  EdbRun *run = InitRun(id);
+  if(!run) return 0;
+  int scanned = scan.ScanAreas(id,predopt,*run,opt);
+  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", 
+	   id[0],id[1],id[2],id[3],scanned, run->GetEntries() );
+  run->Close();
+  delete run;
+  return scanned;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt) // NEW!!!
+{
+  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions", id[0],id[1],id[2],id[3],pred.N());
   EdbPattern predopt;
   OptimizeScanPath(pred,predopt,id[0]);
   EdbRun *run = InitRun(id);
@@ -519,6 +536,7 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
   TString str;
   MakeFileName(str,id,suffix);
   FILE *f = fopen(str.Data(),"w");
+  if(!f) { LogPrint(id[0],1,"WritePatTXT","ERROR! can not open file %s", str.Data()); return 0; }
   for(int i=0; i<pred.N(); i++) {
     s = pred.GetSegment(i);
     if(flag>-1) if(flag!=s->Flag())  continue;
@@ -546,6 +564,7 @@ int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int
   TString str;
   MakeFileName(str,id,suffix);
   FILE *f = fopen(str.Data(),"r");
+  if(!f) { LogPrint(id[0],1,"ReadPatTXT","ERROR! can not open file %s", str.Data()); return 0; }
   char  buffer[256]="";
   int ic=0;
   for( int i=0; i<100000; i++ ) {
@@ -699,9 +718,9 @@ EdbRun *EdbScanProc::InitRun(int id[4])
       else                                                     break;
     }
     gSystem->CopyFile(str.Data(), str2.Data());
-    LogPrint(id[1], 3,"EdbScanProc::InitRun"," %s\n",str2.Data());
+    LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str2.Data());
   }
-  LogPrint(id[1], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
+  LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
   return new EdbRun(str.Data(),"RECREATE");
 }
 
@@ -849,7 +868,7 @@ int EdbScanProc::FindPredictionsRaw( EdbPattern &pred, EdbPattern &fnd, EdbRunAc
     sfmt.SetChi2(10.*chi2max);
 
     float rlim   = 20;        // TODO
-    float chi, chimin = 1.5;  // TODO
+    float chi, chimin = 1.5;  // TODO  for bt selection
     EdbSegP *s1b=0, *s2b=0;   // the best bt
     EdbSegP s3;
 
@@ -1205,7 +1224,7 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
     }
     else if(s->Flag()<maxholes) {
       found.AddSegment(*(s));                       // add itself in case of hole
-      found.GetSegmentLast()->SetFlag(s->Flag()+1); // flag is the number of missed plates
+      found.GetSegmentLast()->SetFlag(s->Flag()+1); // flag is the number of missed plates // OLD FLAG DEFINITION
       found.GetSegmentLast()->SetID(s->ID());
     }
   }
@@ -1352,15 +1371,19 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
 void EdbScanProc::LogPrint(int brick, int level, const char *location, const char *va_(fmt), ...)
 {
 // Print message to the logfile and to stdout.
-
+  if(gEDBLOGFILE) {
+    printf("WARNING in LogPrint! logfile seems to be opened. Trying to close it...\n");
+    fclose(gEDBLOGFILE);
+    gEDBLOGFILE=0;
+  }
   char str[512];
   sprintf(str,"%s/b%6.6d/b%6.6d.log", eProcDirClient.Data(), brick,brick);
-  if(gEDBLOGFILE) fclose(gEDBLOGFILE);
   gEDBLOGFILE = fopen(str,"a");
+  if(!gEDBLOGFILE) printf("ERROR in LogPrint! can not open logfile: %s\n",str);
   
   va_list ap;
   va_start(ap,va_(fmt));
-  Log(level, location, va_(fmt), ap);
+  Log0(level, location, va_(fmt), ap);
   va_end(ap);
 
   fclose(gEDBLOGFILE);

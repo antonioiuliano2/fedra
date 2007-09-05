@@ -40,6 +40,7 @@ public:
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
   int     LoadPlate(EdbScanClient &scan, int id[4], int attempts=1);
   int     ScanAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
+  int     ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt="NOCLCLFRAMESUM"); // NEW!!!
 
   bool    InitPiece(EdbDataPiece &piece, int id[4]);
   int     ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
@@ -82,7 +83,7 @@ public:
   int     TestAl(int id1[4], int id2[4]);
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
 
-  void    LogPrint(int brick, int level, const char *rout, const char *fmt, ...);
+  void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();
   ClassDef(EdbScanProc,1)  // scanned data processing
 };
