@@ -10,5 +10,6 @@
 
 #pragma link C++ class EdbTraceBack;
 #pragma link C++ class EdbRunAccess;
+#pragma link C++ class EdbRunTracking;
 
 #endif
