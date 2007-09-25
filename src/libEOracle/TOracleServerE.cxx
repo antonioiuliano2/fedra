@@ -593,12 +593,11 @@ Int_t  TOracleServerE::AddBasetracks(EdbPattern &pat, char *id_eventbrick, char 
       {
 	EdbSegP *s = pat.GetSegment(i);
 	sprintf(query,"\
- INSERT INTO OPERA.TB_MIPBASETRACKS (ID_EVENTBRICK, ID_ZONE, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA, ID_SOWNSIDE, ID_DOWNTRACK, ID_UPSIDE, ID_UPTRACK) \
- VALUES (%s, %s, %.2f, %.2f, %.2f, %.2f, %d, %d, %d, %f, %d, %d, %d, %d)",
-		id_eventbrick, id_zone, s->X(), s->Y(), s->TX(), s->TY(), s->W(), s->Volume(), 0, 0, 0, 0, 0);
+  INSERT INTO OPERA.TB_MIPBASETRACKS (ID_EVENTBRICK, ID_ZONE, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA, ID_SOWNSIDE, ID_DOWNTRACK, ID_UPSIDE, ID_UPTRACK) \
+  VALUES (%s, %s, %.2f, %.2f, %.2f, %.2f, %d, %d, %d, %d, %d, %d, %d, %d)",
+		id_eventbrick, id_zone, s->X(), s->Y(), s->TX(), s->TY(), 
+		(int)s->W(), (int)s->Volume(), 0, 0, 0, 0, 0, 0);
 	fStmt->setSQL(query);
-	//	printf("\nexecute sql query: %s ...\n",query);
-	//	fStmt->execute();
       }
 
     Query(commit);
