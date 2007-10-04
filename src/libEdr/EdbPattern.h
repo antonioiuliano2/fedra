@@ -55,7 +55,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
  public:
   EdbSegP() {Set0();}
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0);
-  EdbSegP(EdbSegP &s) { Set0(); Copy(s); }
+  EdbSegP(const EdbSegP &s) { Set0(); Copy(s); }
   virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
@@ -157,6 +157,8 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    SetTY( float ty ) { eTY=ty; }
  
  //other functions
+  Float_t    Phi() const  { return TMath::ATan2(eTY,eTX); }
+  Float_t  Theta() const  { return TMath::Sqrt(eTY*eTY+eTX*eTX); }
  
   void       Print( Option_t *opt="") const;
 
