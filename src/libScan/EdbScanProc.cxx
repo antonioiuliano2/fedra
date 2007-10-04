@@ -1040,7 +1040,11 @@ bool EdbScanProc::InitRunAccess(EdbRunAccess &ra, int id[4], bool do_update)
   if(!InitPiece(p,id)) return false;
   if(gEDBDEBUGLEVEL>2) p.Print();
   ra.eAFID = p.eAFID;
-  if( !ra.InitRun(p.GetRunFile(0), do_update)) return false;
+  LogPrint(id[0],2,"InitRunAccess","open file %s",p.GetRunFile(0));
+  if( !ra.InitRun(p.GetRunFile(0), do_update) ) {
+    LogPrint(id[0],1,"InitRunAccess","ERROR open file %s !!!",p.GetRunFile(0));
+    return false;
+  }
   ra.GetLayer(1)->SetZlayer( p.GetLayer(1)->Z(),p.GetLayer(1)->Zmin(),p.GetLayer(1)->Zmax());
   ra.GetLayer(2)->SetZlayer( p.GetLayer(2)->Z(),p.GetLayer(2)->Zmin(),p.GetLayer(2)->Zmax());
   ra.GetLayer(1)->SetShrinkage( p.GetLayer(1)->Shr());
@@ -1386,6 +1390,6 @@ void EdbScanProc::LogPrint(int brick, int level, const char *location, const cha
   Log0(level, location, va_(fmt), ap);
   va_end(ap);
 
-  fclose(gEDBLOGFILE);
+  if(gEDBLOGFILE) fclose(gEDBLOGFILE);
   gEDBLOGFILE=0;
 }

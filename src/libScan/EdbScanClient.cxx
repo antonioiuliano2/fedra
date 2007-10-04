@@ -28,7 +28,7 @@ EdbScanClient::EdbScanClient()
   eNXview = 1;
   eNYview = 1;
   eXstep = 360; // This numbers should be equal or a bit smalle then the correspondent sysal settings
-  eXstep = 275;
+  eYstep = 275;
 }
 
 //----------------------------------------------------------------
