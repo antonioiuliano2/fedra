@@ -329,22 +329,4 @@ class EdbPVRec : public EdbPatternsVolume {
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };
- 
-//______________________________________________________________________________
-class EdbAlignment : public TObject {
- 
- private:
-
-  EdbScanCond *eScanCond;   // segments (scanning) properties
-
-  EdbPVRec    *ePV;     // patterns volume to be processed
-
- public:
-  EdbAlignment(){}
-  ~EdbAlignment(){}
-
-  ClassDef(EdbAlignment,1)  // alignment class
-};
- 
-//______________________________________________________________________________
 #endif /* ROOT_EdbPVRec */

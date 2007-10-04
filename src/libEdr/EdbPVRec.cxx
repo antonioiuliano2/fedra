@@ -27,11 +27,8 @@
 ClassImp(EdbSegCouple)
 ClassImp(EdbPatCouple)
 ClassImp(EdbPVRec)
-ClassImp(EdbAlignment)
 
 int EdbSegCouple::egSortFlag=0;
-
-
 ///______________________________________________________________________________
 EdbSegCouple::EdbSegCouple() 
 { 
