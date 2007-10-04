@@ -234,7 +234,8 @@ void EdbScanCond::FillErrorsCov( float tx,float ty, TMatrixD &cov )
   cov(3,3) = (double)(sty*sty);
   cov(4,4) = 1L;                  //TODO sp
   
-  double Phi = -ATan2(ty,tx);
+  //double Phi = -ATan2(ty,tx);    // "-" seems to be a bug
+  double Phi = ATan2(ty,tx);
   TMatrixD t(5,5);
   TMatrixD tt(5,5);
   t(0,0) =  Cos(Phi);

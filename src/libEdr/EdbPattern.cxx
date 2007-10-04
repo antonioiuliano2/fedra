@@ -76,7 +76,8 @@ void EdbSegP::SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float s
 
   SetErrors( sx2, sy2, sz2, stx2, sty2, sp2 );
 
-  double Phi = -(TMath::ATan2((double)TY(),(double)TX()));
+  //double Phi = -(TMath::ATan2((double)TY(),(double)TX()));
+  double Phi = (TMath::ATan2((double)TY(),(double)TX()));
   TMatrixD t(5,5);
   TMatrixD tt(5,5);
   t(0,0) =  TMath::Cos(Phi);
