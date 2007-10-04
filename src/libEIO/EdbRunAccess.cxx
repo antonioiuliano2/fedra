@@ -38,6 +38,7 @@ EdbRunAccess::EdbRunAccess(const char *fname)
 ///_________________________________________________________________________
 EdbRunAccess::~EdbRunAccess()
 {
+  if(eRun) { delete eRun; eRun=0; }
   for(int i=0; i<3; i++) {
     if(eVP[i])     { delete eVP[i];     eVP[i]=0;     }
     if(eLayers[i]) { delete eLayers[i]; eLayers[i]=0; }
@@ -106,6 +107,7 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
     if(FillVP()<1) return false;
     eVP[1]->Write("views_s1");
     eVP[2]->Write("views_s2");
+    eRun->GetTree()->GetCurrentFile()->Purge();
   } else {
     if( eVP[1] ) delete  eVP[1];
     if( eVP[2] ) delete  eVP[2];
