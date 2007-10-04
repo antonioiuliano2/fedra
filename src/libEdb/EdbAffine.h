@@ -47,6 +47,7 @@ class EdbAffine2D : public TObject{
   //EdbAffine2D     operator*( const EdbAffine2D& rhs ) const;
 
   void     Transform( const EdbAffine2D *a );
+  void     Transform( const EdbAffine2D &a ) {Transform(&a);}
 
   void Reset();
   void Invert();

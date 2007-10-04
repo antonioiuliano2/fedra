@@ -127,7 +127,7 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
   else {
 
     Double_t  
-      sx0   =0,  
+      sx0   =0,
       sy0   =0,
       sx1   =0,  
       sy1   =0,
@@ -160,7 +160,7 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     Double_t    sq0 = sx0y1 - sx0*sy1;
     Double_t    sq1 = sy0y1 - sy0*sy1;
 
-    //    printf("%f %f \t %f %f\n", sp0,sp1, sq0,sq1);
+    //        printf(" sp0,sp1, sq0,sq1: %f %f \t %f %f\n", sp0,sp1, sq0,sq1);
  
     Double_t    sar = sx0x0 - sx0*sx0;
     Double_t    sbr = sx0y0 - sx0*sy0;
@@ -168,7 +168,7 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     Double_t    sdr = sy0y0 - sy0*sy0;
     Double_t    det = sar*sdr-sbr*scr;
 
-    //    printf("%f %f %f %f \t %f\n", sar,sbr,scr,sdr, det);
+    //        printf(" sar,sbr,scr,sdr, det: %f %f %f %f \t %f\n", sar,sbr,scr,sdr, det);
 
     if ( det == 0 )                           return 0;
 
@@ -177,7 +177,7 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     Double_t    sc = -scr/det;
     Double_t    sd =  sar/det;
 
-    //    printf("%f %f %f %f \n\n", sa,sb,sc,sd);
+    //        printf(" sa,sb,sc,sd: %f %f %f %f \n\n", sa,sb,sc,sd);
 
     a = sa*sp0+sb*sp1;
     b = sc*sp0+sd*sp1;
