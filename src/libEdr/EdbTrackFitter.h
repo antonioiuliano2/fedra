@@ -10,6 +10,8 @@
 //////////////////////////////////////////////////////////////////////////
 #include "EdbPattern.h"
 
+class EdbScanCond;
+
 //______________________________________________________________________________
 class EdbTrackFitter : public TNamed {
  
@@ -41,6 +43,9 @@ class EdbTrackFitter : public TNamed {
   bool    SplitTrack( EdbTrackP &t, EdbTrackP &t1, int isplit );
   int     SplitTrackByKink( EdbTrackP *t, TObjArray &tracks, float maxkink );
   float   PMS_KF(EdbTrackP &t, float p0=10., float probbest=0.5);
+
+  //  static EdbSegP   Chi2SegM( EdbSegP s1, EdbSegP s2, EdbScanCond &cond1, EdbScanCond &cond2);
+  static float Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
 
   void Print();
 

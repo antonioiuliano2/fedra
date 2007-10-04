@@ -12,6 +12,8 @@
 #include "TGraphErrors.h"
 
 #include "EdbPhys.h"
+#include "EdbAffine.h"
+#include "EdbLayer.h"
 #include "EdbTrackFitter.h"
 
 #include "vt++/CMatrix.hh"
@@ -113,6 +115,93 @@ float EdbTrackFitter::Chi2Seg( EdbSegP *tr, EdbSegP *s)
   tr->SetZ(s->Z());
   tr->SetW(tr->W()+s->W());
   return TMath::Sqrt(chi2/4.);
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2)
+{
+  // full estimation of chi2 without covariance matrix - the result seems to be identical to Chi2Seg 
+  // VT: 19-Sep-2007
+  //
+  // Input: 2 segments passed by value because them will be modified during calculations
+  // Return value - the result of the fit - passed by value
+  // TODO: remove in this function the dependency of the COV
+
+  // 1) calcualte the mean direction vector for the 2-seg group
+
+  float dz = s2.Z() - s1.Z(); 
+  float tbx=0, tby=0, wbx=0, wby=0;
+  if(Abs(dz) > 0.1 ) {
+    tbx = (s2.X() - s1.X())/(s2.Z() - s1.Z());
+    tby = (s2.Y() - s1.Y())/(s2.Z() - s1.Z());
+    wbx = Sqrt(s1.SX() + s2.SX())/dz;                  
+    wby = Sqrt(s1.SY() + s2.SY())/dz;
+  }
+  float w1x = 1./s1.STX();
+  float w1y = 1./s1.STY();
+  float w2x = 1./s2.STX();
+  float w2y = 1./s2.STY();
+
+  float TX = (s1.TX()*w1x + s2.TX()*w2x + tbx*wbx)/(w1x+w2x+wbx);
+  float TY = (s1.TY()*w1y + s2.TY()*w2y + tby*wby)/(w1y+w2y+wby);
+
+  // 2) calcualte the COG of the 2-seg group
+
+  w1x = 1./s1.SX();  w1y = 1./s1.SY();
+  w2x = 1./s2.SX();  w2y = 1./s2.SY();
+  float Z = (s1.Z()*(w1x+w1y) + s2.Z()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
+  float X = (s1.X()*(w1x+w1y) + s2.X()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
+  float Y = (s1.Y()*(w1x+w1y) + s2.Y()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
+  //printf("COG: x %f  y %f z %f\n",X,Y,Z);
+
+  s.SetX(X);
+  s.SetY(Y);
+  s.SetTX(TX);
+  s.SetTY(TY);
+  s.SetW(s1.W()+s2.W());
+  s.SetZ(Z);
+
+  float PHI = ATan2(TY,TX);   // angle of the 2-seg group plane
+  float T = Sqrt(TX*TX+TY*TY);
+
+  EdbAffine2D aff;
+  aff.Rotate(PHI);
+  //aff.ShiftX(X);
+  //aff.ShiftY(Y);
+  aff.Invert();
+  s1.Transform(&aff);
+  s2.Transform(&aff);
+  s.Transform(&aff);
+
+  float stx1   = cond1.SigmaTX(T), sty1   = cond1.SigmaTY(0);
+  float stx2   = cond2.SigmaTX(T), sty2   = cond2.SigmaTY(0);
+  w1x = 1./(stx1*stx1);  w1y = 1./(sty1*sty1);
+  w2x = 1./(stx2*stx2);  w2y = 1./(sty2*sty2);
+
+  //printf("w1x %f w2x %f w1y %f w2y %f\n",w1x,w2x,w1y,w2y);
+  float chi2t = TMath::Sqrt( ( (s1.TX()-T)*(s1.TX()-T)*w1x +
+			       s1.TY()*s1.TY()        *w1y +
+			       (s2.TX()-T)*(s2.TX()-T)*w2x +
+			       s2.TY()*s2.TY()        *w2y )/4.
+			     );
+  //printf("angular component of chi2 = %f\n",chi2t);
+
+  float sx1   = cond1.SigmaX(T), sy1   = cond1.SigmaY(0);
+  float sx2   = cond2.SigmaX(T), sy2   = cond2.SigmaY(0);
+
+  float dx1 = s1.X()-(s.X()+(s1.Z()-s.Z())*s.TX());  
+  float dy1 = s1.Y()-(s.Y()+(s1.Z()-s.Z())*s.TY());  
+  float dx2 = s2.X()-(s.X()+(s2.Z()-s.Z())*s.TX());  
+  float dy2 = s2.Y()-(s.Y()+(s2.Z()-s.Z())*s.TY());  
+
+  float chi2pos = Sqrt(dx1*dx1/sx1/sx1+dy1*dy1/sy1/sy1+dx2*dx2/sx2/sx2+dy2*dy2/sy2/sy2)/2.;
+  //printf("position component of chi2 = %f\n",chi2pos);
+  s.SetChi2( Sqrt(chi2t*chi2t+chi2pos*chi2pos));
+  aff.Invert();
+  s.Transform(&aff);
+  //s.Print();
+
+  return s.Chi2();
 }
 
 //______________________________________________________________________________
