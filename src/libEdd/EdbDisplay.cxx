@@ -187,7 +187,7 @@ void EdbDisplay::Set0()
   fNumericEntries[1] = 0;
   fNumericEntries[2] = 0;
   
-  fCanvas->Connect("Closed()", "EdbDisplay", this, "Delete()");
+  if (fCanvas) fCanvas->Connect("Closed()", "EdbDisplay", this, "Delete()");
 }
 //________________________________________________________________________
 EdbDisplay *EdbDisplay::EdbDisplayExist(const char *title)
