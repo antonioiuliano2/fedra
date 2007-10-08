@@ -98,7 +98,6 @@ void EdbSegP::SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float s
   tt(2,3) =  t(3,2);
   tt(3,3) =  t(3,3);
   tt(4,4) =  t(4,4);
-  TMatrixD c(5,5);
   (*eCOV) = t*((*eCOV)*tt);
 }
 

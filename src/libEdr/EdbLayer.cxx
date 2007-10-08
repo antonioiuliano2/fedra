@@ -256,6 +256,5 @@ void EdbScanCond::FillErrorsCov( float tx,float ty, TMatrixD &cov )
   tt(2,3) =  t(3,2);
   tt(3,3) =  t(3,3);
   tt(4,4) =  t(4,4);
-  TMatrixD c(5,5);
   cov = t*(cov*tt);
 }
