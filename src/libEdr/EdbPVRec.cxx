@@ -916,11 +916,11 @@ EdbPVRec::~EdbPVRec()
     delete eTracks;
     eTracks=0;
   }
-  if(eVTX)    {
-    eVTX->Delete();
-    delete eVTX;
-    eVTX=0;
-  }
+//  if(eVTX)    {
+//    eVTX->Delete();
+//    delete eVTX;
+//    eVTX=0;
+//  }
   if(eTracksCell) { delete eTracksCell; eTracksCell=0; }
   if (gROOT->GetListOfSpecials()->FindObject(this))
     {

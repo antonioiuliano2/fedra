@@ -95,8 +95,10 @@ EdbVertex::EdbVertex()
 EdbVertex::~EdbVertex()
 {
   if(eV) { eV->clear(); delete eV; eV=0; }
-  for(int i=0; i<N();  i++) delete GetVTa(i);
-  for(int i=0; i<Nn(); i++) delete GetVTn(i);
+  //for(int i=0; i<N();  i++) delete GetVTa(i);
+  //for(int i=0; i<Nn(); i++) delete GetVTn(i);
+  eVTa.Delete("slow");
+  eVTn.Delete("slow");
 }
 
 //______________________________________________________________________________
@@ -137,10 +139,10 @@ float EdbVertex::MaxAperture()
 //________________________________________________________________________
 void EdbVertex::Clear()
 {
-  for(int i=0; i<N();  i++) delete GetVTa(i);
-  for(int i=0; i<Nn(); i++) delete GetVTn(i);
-  eVTa.Clear();
-  eVTn.Clear();
+  //for(int i=0; i<N();  i++) delete GetVTa(i);
+  //for(int i=0; i<Nn(); i++) delete GetVTn(i);
+  eVTa.Delete("slow");
+  eVTn.Delete("slow");
   if(eV) { eV->clear(); delete eV; eV=0; }
   eX = 0.;
   eY = 0.;
@@ -602,6 +604,8 @@ EdbVertexRec::~EdbVertexRec()
   {
     (gROOT->GetListOfSpecials())->Remove(this);
   }
+  if (eVTX) {eVTX->Delete(); delete eVTX; eVTX = 0;}
+  eVTA.Clear("nodelete");
 }
 
 //________________________________________________________________________
