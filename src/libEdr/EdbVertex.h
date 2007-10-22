@@ -130,11 +130,13 @@ class EdbVertex: public TObject {
   //  EdbVTA *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
   EdbTrackP *GetTrack(int i) { return GetVTa(i)->GetTrack(); }
   Int_t      Zpos(int i)     { return GetVTa(i)->Zpos(); }
-  EdbVertex *GetConnectedVertex(int i);
+  EdbVertex *GetConnectedVertex(int nv);
+  EdbVertex *GetConnectedVertexForTrack(int it);
   EdbVTA *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   float Impact(int i);
   float Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
   float DistTrack(EdbTrackP *tr, int zpos, float X0 = 0.);
+  float DistSeg(EdbSegP *seg, float X0 = 0.);
   float ImpTrack(int i);
   float MaxAperture();
 
@@ -196,6 +198,9 @@ class EdbVertexRec: public TObject {
   int ProbVertex( EdbTrackP *tr1,   EdbTrackP *tr2,
 		  int zpos1,        int zpos2,    float pv[3] = 0  );
 
+  EdbVertex *ProbVertex1( EdbTrackP *tr1,   EdbTrackP *tr2,
+		  int zpos1,        int zpos2,    float pv[3] = 0  );
+
   void AddVertex(EdbVertex *vtx) {
     if(!eVTX) eVTX = new TObjArray();
     eVTX->Add((TObject*)vtx);
@@ -208,11 +213,20 @@ class EdbVertexRec: public TObject {
   int     ProbVertexN();
   void    StatVertexN();
   int	  LinkedVertexes();
+
+  int	  VertexTuning(int seltype = 0);
+  EdbVertex *AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, int zpos);
+  EdbVertex *RemoveTrackFromVertex(EdbVertex *eVertex, int itr);
+  void	  AcceptModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
+  void    CancelModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
+  double  MoveTrackToOtherVertex(EdbVertex *v2, int it2max, EdbVertex *v1, int seltype,
+				 EdbVertex **v2n, EdbVertex **v1n);
+
   int	  VertexNeighbor(float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  VertexNeighbor(EdbVertex *v, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.);
   int	  SelVertNeighbor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao);
   int	  SelSegNeighbor( EdbSegP *s, int seltype, float RadMax, int Dpat, TObjArray *ao);
-  int	  SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1,
+  int	  SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000.,
 			  TObjArray *aseg = 0, TObjArray *atr = 0, TObjArray *arv = 0);
 
   TTree *init_tracks_tree(const char *file_name, EdbTrackP *track);
