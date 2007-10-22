@@ -159,6 +159,7 @@ class EdbTrackG : public TPolyMarker3D {
 
   virtual void          DumpTrack();       // *MENU*
   virtual void          InspectTrack();    // *MENU*
+  virtual void		SetAsWorkingVertex();        // *MENU*
   virtual void		RemoveTrackFromVertex();     // *MENU*
   virtual void		AddTrackToVertex();          // *MENU*
   virtual void		FixNewTrack();     // *MENU*
@@ -168,7 +169,7 @@ class EdbTrackG : public TPolyMarker3D {
   virtual void		UndoRemoveKink();  // *MENU*
   virtual void		AddToNewTrack();      // *MENU*
   virtual void		AddToNewTrackAndFit();// *MENU*
-  virtual void		InfoTrackVert();   // *MENU*
+  virtual void		InfoTrackVert();      // *MENU*
   virtual const char *	GetTitle() const;
   virtual const char *	GetName() const;
   virtual char *	GetObjectInfo(int px, int py) const;

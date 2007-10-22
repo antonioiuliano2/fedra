@@ -41,7 +41,10 @@ void EdbVertexG::InspectVertex()
 const char *EdbVertexG::GetTitle() const
 {
     static char title[80];
-    sprintf(title, "Vertex ID %d, Prongs %d, Prob %f", eV->ID(), eV->N(), eV->V()->prob());
+    if (eV->V())
+	sprintf(title, "Vertex ID %d, Prongs %d, Prob %f", eV->ID(), eV->N(), eV->V()->prob());
+    else
+	sprintf(title, "Vertex ID %d, Prongs %d, Prob %f", eV->ID(), eV->N(), 1.);
     return title;
 }
 
@@ -56,7 +59,10 @@ const char *EdbVertexG::GetName() const
 char *EdbVertexG::GetObjectInfo(int px, int py) const
 {
     static char coordinates[80];
-    sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eV->VX(), eV->VY(), eV->VZ());
+    if (eV->V())
+	sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eV->VX(), eV->VY(), eV->VZ());
+    else
+	sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f", eV->X(), eV->Y(), eV->Z());
     return coordinates;
 }
 
@@ -535,7 +541,7 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
   float xv,yv,zv;
   if (!vv) return;
   if (vv->Flag() == -10) return;
-  EdbVertexG *v = new EdbVertexG();
+  EdbVertexG *v = new EdbVertexG(this);
   v->SetVertex( vv );
 
   xv = vv->X();
@@ -552,35 +558,35 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 
   if (vv->V())
   {
-    v = new EdbVertexG(this);
-    v->SetVertex( vv );
+//    v = new EdbVertexG(this);
+//    v->SetVertex( vv );
 
     xv = vv->VX();
     yv = vv->VY();
     zv = vv->VZ();
     v->SetPoint(0, xv, yv, zv);
-    if (eWorking == vv)
-    {
+  }
+  if (eWorking == vv)
+  {
 	v->SetMarkerColor(kGreen);
-    }
-    else if (eVertex == vv)
-    {
+  }
+  else if (eVertex == vv)
+  {
 	if (!eWorking) v->SetMarkerColor(kGreen);
 	else
 	{
 	    if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
 	    else               v->SetMarkerColor(kWhite);
 	}
-    }
-    else
-    {
+  }
+  else
+  {
 	if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
 	else               v->SetMarkerColor(kWhite);
-    }
-    v->SetMarkerStyle(kFullStar);
-    v->SetMarkerSize(1.2);
-    v->Draw();
   }
+  v->SetMarkerStyle(kFullStar);
+  v->SetMarkerSize(1.2);
+  v->Draw();
 
 
   if(eDrawVertex>0) {
@@ -725,6 +731,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       else               pms->SetMarkerColor(kWhite);
       pms->SetMarkerSize(1.2);
       pms->Draw();
+      //printf("White track edge, Id %d, Nseg %d.\n", tr->ID(), tr->N());
     }
   }
 
@@ -743,6 +750,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       pme->SetMarkerColor(kRed);
       pme->SetMarkerSize(1.2);
       pme->Draw();
+      //printf("Red track edge, Id %d, Nseg %d, dz %f.\n", tr->ID(), tr->N(), dz);
     }
   }
 
@@ -917,6 +925,7 @@ void EdbSegG::AddAsTrackToVertex()
 	else vta->SetZpos(0);
 //	printf(" tr  id %d x %f y %f z %f\n", Tr->ID(), Tr->X(), Tr->Y(), Tr->Z());
 	Tr->AddVTA(vta);
+//	(eD->eWorking)->ResetTracks();
 	(eD->eArrTr)->Add(Tr);
 	EdbVertex *eW = eD->eWorking;
 	eW->SetID(eD->eVertex->ID());
@@ -941,9 +950,12 @@ void EdbSegG::AddAsTrackToVertex()
 	{
 	    eD->DrawPreVTX(text);
 	    eD->DrawPreBut("Modified");
-	    eD->DrawAcc();
-	    eD->DrawCan();
-	    eD->DrawUnd();
+	    if (eD->eVertex->ID() >= 0)
+	    {
+		eD->DrawAcc();
+		eD->DrawCan();
+		eD->DrawUnd();
+	    }
 	}
 //	eD->DrawOldBut("Original");
 	eD->DrawVTXTracks("Modified", eD->eWorking);
@@ -1017,7 +1029,7 @@ void EdbSegG::AddToNewTrackAndFit()
 	    return;
 	}
 	if (!eD->eTrack) eD->eTrack = new EdbTrackP();
-	eD->eTrack->AddSegment((EdbSegP *)eSeg);
+	(eD->eTrack)->AddSegment((EdbSegP *)eSeg);
 	float mass = 0.139; //pion
 	float momentum = 1.; // 1000 MeV
 	if (eD->eP > 0.) momentum = eD->eP;
@@ -1026,10 +1038,12 @@ void EdbSegG::AddToNewTrackAndFit()
 	eD->eTrack->SetP(momentum);
 	float X0 = 0.;
 	if (eD->eVerRec) if ((eD->eVerRec)->ePVR) X0 = (((eD->eVerRec)->ePVR)->GetScanCond())->RadX0();
-	eD->eTrack->FitTrackKFS(true, X0, 0);
+	(eD->eTrack)->FitTrackKFS(true, X0, 0);
 	if (!eD->eArrTr) eD->eArrTr = new TObjArray();
 	(eD->eArrTr)->Add(eD->eTrack);
 	if (eD->eArrTrSave) (eD->eArrTrSave)->Add(eD->eTrack);
+	//if (eD->eArrSegP) (eD->eArrSegP)->Remove((TObject *)eSeg);
+	//if (eD->eArrSegPSave) (eD->eArrSegPSave)->Remove((TObject *)eSeg);
 	eD->Draw();
   }
 }
@@ -1602,6 +1616,126 @@ void EdbVertexG::SetAsWorking()
     else            eDs->eIndVert = -1;
     (eDs->eCreatedTracks).Clear();
     eDs->Draw();
+  }
+}
+//_____________________________________________________________________________
+void EdbTrackG::SetAsWorkingVertex()
+{
+  EdbTrackP *tr = 0;
+  EdbDisplay *eDs = 0;
+  EdbVTA *vta = 0;
+  EdbVertex  *eVs = 0, *old = 0;
+  int zpos = 1;
+  eDs = eD;
+  if (eDs && eTr)
+  {
+    if (eDs->eWait_Answer) return;
+    if (eDs->eWorking)
+    {
+	eDs->DialogModifiedVTX();
+	return;
+    }
+    if (eDs->eVertex)
+    {
+	if (eDs->eVertex->ID()<0 && eDs->eVertex->N() >= 2)
+	{
+	    eDs->DialogModifiedVTX();
+	    return;
+	}
+    }
+    if (eDs->eVertex)
+    {
+    	eDs->CancelModifiedVTX();
+    }
+    if (eDs->eSegPM)
+    { 
+	eDs->ClearSegmentEnv();
+    }
+    if (GetMarkerColor() == kRed) zpos = 0;
+    if ((old = eTr->VertexS()) && (zpos == 1))
+    {
+    
+	    printf("Track alredy connected to a vertex by this edge!\n");
+	    fflush(stdout);
+	    return;
+    }
+    if ((old = eTr->VertexE()) && (zpos == 0))
+    {
+    
+	    printf("Track alredy connected to a vertex by this edge!\n");
+	    fflush(stdout);
+	    return;
+    }
+    eVs = new EdbVertex();
+    if ((vta = (eD->eVerRec)->AddTrack(*eVs, eTr, zpos)))
+    {
+	eTr->AddVTA(vta);
+    }
+    else
+    {
+	delete eVs;
+	printf("Can't connect track to a vertex!\n");
+	fflush(stdout);
+	return;
+    }
+    double dz = 0.;
+    EdbSegP *seg = 0;
+    if( zpos == 0 )
+    {
+             seg = eTr->TrackZmax();
+	     dz = TMath::Abs(seg->DZ());
+    }
+    else
+    {
+	     seg = eTr->TrackZmin();
+    }
+    if(!seg)
+    {
+	eVs->SetXYZ(eTr->X(), eTr->Y(), eTr->Z());
+    }
+    else
+    {
+	eVs->SetXYZ(seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
+    }
+    eVs->SetID(-1);
+    SetMarkerColor(kGreen);
+    eDs->eSegment = 0;
+    eDs->eVertex = eVs;
+    eDs->eWorking = 0;
+    eDs->ePrevious = 0;
+    eDs->eIndVert = -1;
+    (eDs->eCreatedTracks).Clear();
+    if (!(eDs->eArrV)) 
+    {
+	eDs->eArrV = new TObjArray(20);
+	eDs->eArrV->Add((TObject *)eVs);
+	if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+	for (int i=0; i<eVs->N(); i++)
+	{
+	    tr = eVs->GetTrack(i);
+	    if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
+	}
+	eDs->Draw();
+    }
+    else
+    {
+	if (!((eDs->eArrV)->FindObject(eVs)))
+	{
+	    eDs->eArrV->Add(eVs);
+	    if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+	    for (int i=0; i<eVs->N(); i++)
+	    {
+		tr = eVs->GetTrack(i);
+		if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
+	    }
+	    eDs->Draw();
+	}
+    }
+    //eD->DrawEnv();
+    eD->DrawAcc();
+    eD->DrawCan();
+    eD->DrawUnd();
+    eD->Draw();
   }
 }
 
@@ -2333,9 +2467,12 @@ void EdbTrackG::RemoveTrackFromVertex()
 	{
 	    eD->DrawPreVTX(text);
 	    eD->DrawPreBut("Modified");
-	    eD->DrawAcc();
-	    eD->DrawCan();
-	    eD->DrawUnd();
+	    if (eD->eVertex->ID() >= 0)
+	    {
+		eD->DrawAcc();
+		eD->DrawCan();
+		eD->DrawUnd();
+	    }
 	}
 //	eD->DrawOldBut("Original");
 	eD->DrawVTXTracks("Modified", eD->eWorking);
@@ -2492,9 +2629,12 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	{
 	    DrawPreVTX(text);
 	    DrawPreBut("Modified");
-	    DrawAcc();
-	    DrawCan();
-	    DrawUnd();
+	    if (eVertex->ID() >= 0)
+	    {
+		DrawAcc();
+		DrawCan();
+		DrawUnd();
+	    }
 	}
 //	DrawOldBut("Original");
 	TButton *rm = fRemBut[ivt];
@@ -2536,7 +2676,7 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 	    eWorking = 0;
 	    (eVertex)->ResetTracks();
 	}
-	printf("Can't create working copy of the vertex!\n");
+	printf("Can't create new vertex after track removing!\n");
 	fflush(stdout);
     }
 }
@@ -2545,9 +2685,10 @@ void EdbDisplay::RemoveTrackFromTable(int ivt)
 void EdbTrackG::AddTrackToVertex()
 {
   char text[512];
-  int zpos = 1;
+  int zpos = 1, zpos2 = 1;
   EdbVTA *vta = 0;
-  EdbVertex *old = 0;
+  EdbVertex *old = 0, *eVs = 0;
+  EdbTrackP *eTr2 = 0;
   if (eTr && eD)
   {
     if (eD->eWait_Answer) return;
@@ -2581,6 +2722,47 @@ void EdbTrackG::AddTrackToVertex()
 //    } 
     if (eD->eVerRec) if (eD->eVerRec->IsA() != EdbVertexRec::Class()) eD->eVerRec = 0;
     if (!eD->eVerRec) {printf("Error: EdbDisplay:AddTrackToVertex: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
+    double ImpMaxSave = 0.;
+    double ProbMinSave = 0.;
+    if (eD->eVertex->N() == 1 && eD->eVertex->ID() < 0)
+    {
+	ImpMaxSave = (eD->eVerRec)->eImpMax;
+	(eD->eVerRec)->eImpMax = eD->eTImpMax;
+	ProbMinSave = (eD->eVerRec)->eProbMin;
+	(eD->eVerRec)->eProbMin = eD->eTProbMin;
+	eTr2 = (eD->eVertex)->GetTrack(0);
+	zpos2 = (eD->eVertex)->Zpos(0);
+	if((eVs = eD->eVerRec->ProbVertex1(eTr2, eTr, zpos2, zpos)))
+	{
+	    if (eD->eArrV) 
+	    {
+		if (eD->eArrV->FindObject(eD->eVertex))
+		{
+		    eD->eArrV->Remove(eD->eVertex);
+		    eD->eArrV->Add(eVs);
+		}
+	    }
+	    delete eD->eVertex;
+	    eVs->SetID(-1);
+	    eD->eVertex = eVs;
+	    eD->CreateCanvasVTX();
+	    eVs->V()->rmsDistAngle();
+	    sprintf(text,"Creat   %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	    eVs->ID(), eVs->N(), eVs->VX(), eVs->VY(), eVs->VZ(), eVs->V()->dist(),
+	    eVs->V()->chi2()/eVs->V()->ndf(), eVs->V()->prob());
+	    eD->DrawOldVTX(text);
+	    eD->DrawVTXTracks("Created", eD->eVertex);
+	    eD->DrawEnv();
+	    eD->Draw();
+	}
+	else
+	{
+	    printf("New vertex not created! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	}
+	(eD->eVerRec)->eImpMax = ImpMaxSave;
+	(eD->eVerRec)->eProbMin = ProbMinSave;
+	return;
+    }
     EdbVertex *ePreviousSaved = eD->ePrevious;
     if (eD->eWorking == 0)
     {
@@ -2684,9 +2866,9 @@ void EdbTrackG::AddTrackToVertex()
 	    return;
 	}
     }
-    double ImpMaxSave = (eD->eVerRec)->eImpMax;
+    ImpMaxSave = (eD->eVerRec)->eImpMax;
     (eD->eVerRec)->eImpMax = eD->eTImpMax;
-    double ProbMinSave = (eD->eVerRec)->eProbMin;
+    ProbMinSave = (eD->eVerRec)->eProbMin;
     (eD->eVerRec)->eProbMin = eD->eTProbMin;
     if ((vta = (eD->eVerRec)->AddTrack(*(eD->eWorking), eTr, zpos)))
     {
@@ -2714,9 +2896,12 @@ void EdbTrackG::AddTrackToVertex()
 	{
 	    eD->DrawPreVTX(text);
 	    eD->DrawPreBut("Modified");
-	    eD->DrawAcc();
-	    eD->DrawCan();
-	    eD->DrawUnd();
+	    if (eD->eVertex->ID() >= 0)
+	    {
+		eD->DrawAcc();
+		eD->DrawCan();
+		eD->DrawUnd();
+	    }
 	}
 //	eD->DrawOldBut("Original");
 	eD->DrawVTXTracks("Modified", eD->eWorking);
@@ -2903,7 +3088,20 @@ void EdbDisplay::CancelModifiedVTX()
     }
     if (eVertex)
     {
-	(eVertex)->ResetTracks();
+	if (eVertex->ID() < 0)
+	{
+	    if (eArrV) 
+	    {
+	    	eArrV->Remove(eVertex);
+		eArrV->Compress();
+	    }	
+	    delete eVertex;
+	    eVertex = 0;
+	}
+	else
+	{
+	    (eVertex)->ResetTracks();
+	}
     }
     TList *li = fTrigPad->GetListOfPrimitives();
     if (li)
@@ -2968,7 +3166,20 @@ void EdbDisplay::DeleteModifiedVTX()
     }
     if (eVertex)
     {
-	(eVertex)->ResetTracks();
+	if (eVertex->ID() < 0)
+	{
+	    if (eArrV) 
+	    {
+	    	eArrV->Remove(eVertex);
+		eArrV->Compress();
+	    }	
+	    delete eVertex;
+	    eVertex = 0;
+	}
+	else
+	{
+	    (eVertex)->ResetTracks();
+	}
     }
 
     EdbTrackP *tr = 0;
@@ -3147,18 +3358,35 @@ void EdbDisplay::AcceptModifiedVTX()
 	if (!eVerRec) {printf("Error: EdbDisplay:AcceptModifiedVTX: EdbVertexRec not defined, use SetVerRec(...)\n"); return;}
         EdbVertex *eW = eWorking;
 	int ind = eVertex->ID();
+	if (ind < 0)
+	{
+	    if (eVerRec->eVTX)
+	    {
+		ind = eVerRec->eVTX->GetEntries();
+	    }
+	    else
+	    {
+	        eVerRec->eVTX = new TObjArray(10);
+	    	ind = 0;
+	    }
+	}
 	eW->SetID(ind);
 	eW->SetQuality(eW->V()->prob()/
 			   (eW->V()->vtx_cov_x()+eW->V()->vtx_cov_y()));
 	if (eVerRec)
 	{
 	    int ntr = eVertex->N();
+//	    printf("ind %d ntr %d\n", ind, ntr);
+//	    fflush(stdout);
 	    for(int i=0; i<ntr; i++)
 	    {
+//		printf("    %d\n", i);
+//		fflush(stdout);
 		(eVerRec->eVTA).Remove(eVertex->GetVTa(i));
 	    }
 	}
 	int indd = -1;
+//	if (!eArrV) eArrV = new TObjArray(10);
 	if (eArrV) indd = eArrV->IndexOf(eVertex);
 	if (indd >= 0)
 	{
@@ -3177,25 +3405,48 @@ void EdbDisplay::AcceptModifiedVTX()
 	    tr = (EdbTrackP *)(eCreatedTracks.At(i));
 	    if (tr)
 	    {
-		if (tr->VTAS() || tr->VTAE())
-		{
+//		    printf("i %d id %d\n", i, tr->ID());
+//		    fflush(stdout);
+//		if (tr->VTAS() || tr->VTAE())
+//		{
 		    tr->SetID(trind++);
 		    if (etr) etr->Add(tr);
 		    if (eArrTr) eArrTr->Add(tr);
-		}
-		else delete tr;
+//		    printf("     id %d\n", tr->ID());
+//		    fflush(stdout);
+//		}
+//		else delete tr;
 	    } 
 	}
 	eCreatedTracks.Clear();
 
+	delete eVertex; //?????????
+	eVertex = 0;
+
 	eW->ResetTracks();
+
 	int ntr = eW->N();
 	int ifl = 0;
 	for(int i=0; i<ntr; i++)
 	{
+		tr = eW->GetTrack(i);
+		if (eTrack)
+		{
+		  if (tr == eTrack)
+		  {
+		    TObjArray *etr = 0;
+		    if (eVerRec) etr = eVerRec->eEdbTracks;
+		    int trind = 0;
+		    if (etr) trind = etr->GetEntries();
+		    eTrack->SetID(trind);
+		    if (etr) etr->Add(eTrack);
+		    eTrack->SetSegmentsTrack();
+		    eTrack = 0;
+		  }
+		}
 		if (eW->Zpos(i)) ifl = ifl | 1; 
 		else		 ifl = ifl | 2; 
-		if ((tr = eW->GetTrack(i)) && eArrTr)
+		if (tr && eArrTr)
 		{
 		    indd = eArrTr->IndexOf(tr);
 		    if (indd < 0)
@@ -3217,8 +3468,91 @@ void EdbDisplay::AcceptModifiedVTX()
 		eVerRec->AddVTA(eW->GetVTa(i));
 	    }
 	}
-	eWorking = 0;
     }
+    if (eVertex && eVertex->ID() < 0 && !eWorking)
+    {
+	int ind = 0;
+	if (eVerRec->eVTX)
+	    {
+		ind = eVerRec->eVTX->GetEntries();
+	    }
+	else
+	    {
+	        eVerRec->eVTX = new TObjArray(10);
+	    	ind = 0;
+	    }
+	eVertex->SetID(ind);
+//	if (!eArrV) eArrV = new TObjArray(10);
+	if (eArrV) eArrV->Add(eVertex);
+	EdbTrackP *tr = 0;
+	TObjArray *etr = 0;
+	if (eVerRec) etr = eVerRec->eEdbTracks;
+	int trind = 0;
+	if (etr) trind = etr->GetEntries();
+	for (int i = 0; i < eCreatedTracks.GetSize(); i++)
+	{
+	    tr = (EdbTrackP *)(eCreatedTracks.At(i));
+	    if (tr)
+	    {
+//		if (tr->VTAS() || tr->VTAE())
+//		{
+		    tr->SetID(trind++);
+		    if (etr) etr->Add(tr);
+		    if (eArrTr) eArrTr->Add(tr);
+//		}
+//		else delete tr;
+	    } 
+	}
+	eCreatedTracks.Clear();
+
+	eVertex->ResetTracks();
+	int ntr = eVertex->N();
+	int ifl = 0;
+	int indd = 0;
+	for(int i=0; i<ntr; i++)
+	{
+		tr = eVertex->GetTrack(i);
+		if (eTrack)
+		{
+		  if (tr == eTrack)
+		  {
+		    TObjArray *etr = 0;
+		    if (eVerRec) etr = eVerRec->eEdbTracks;
+		    int trind = 0;
+		    if (etr) trind = etr->GetEntries();
+		    eTrack->SetID(trind);
+		    if (etr) etr->Add(eTrack);
+		    eTrack->SetSegmentsTrack();
+		    eTrack = 0;
+		  }
+		}
+		if (eVertex->Zpos(i)) ifl = ifl | 1; 
+		else		      ifl = ifl | 2; 
+		if (tr && eArrTr)
+		{
+		    indd = eArrTr->IndexOf(tr);
+		    if (indd < 0)
+		    {
+			eArrTr->Add(tr);
+		    }
+		}
+	}
+	ifl = 4 - ifl;
+	if (ifl == 3) ifl = 0;
+	if (eVertex->Nv()) ifl += 3;
+	eVertex->SetFlag(ifl);
+	if (eVerRec)
+	{
+//	    eVerRec->eVTX->RemoveAt(ind);
+	    if (!(eVerRec->eVTX)) eVerRec->eVTX = new TObjArray(10);
+	    eVerRec->eVTX->Add(eVertex);
+	    for(int i=0; i<ntr; i++)
+	    {
+		eVerRec->AddVTA(eVertex->GetVTa(i));
+	    }
+	}
+    }
+    eWorking = 0;
     eVertex = 0;
     TList *li = fTrigPad->GetListOfPrimitives();
     if (li)
@@ -3237,7 +3571,7 @@ void EdbDisplay::AcceptModifiedVTX()
     if (fCanvasVTX) fCanvasVTX->Close();
     fCanvasVTX = 0;
     Draw();
-    if (eVe) delete eVe;
+    //if (eVe) delete eVe;
     eIndVert = -1;
 }
 //_____________________________________________________________________________
@@ -3318,7 +3652,7 @@ void EdbDisplay::DrawVertexEnvironment()
     else if (eSegment)
     {
 	eIndVert = -1;
-	eVerRec->SegmentNeighbor(eSegment, Rmax, Dpat, eArrSegP, eArrTr, eArrV);
+	eVerRec->SegmentNeighbor(eSegment, Rmax, Dpat, ImpMax, eArrSegP, eArrTr, eArrV);
 	if (eArrV->GetEntries()) eDrawVertex = 1;
     }
     Draw();
