@@ -366,7 +366,7 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
   // Output:  fill associated volume with segments
   //          tr - add generated segments to the tr
 
-  bool exact_angles = false;   // exact new angles calculation after MS  
+  bool exact_angles = true;   // exact new angles calculation after MS  
   bool x_y_correlation = true; // take into account x-y measurement correlation
   Float_t eTPb = 1000./1300.;
   Float_t x0  =tr.X();
@@ -493,23 +493,26 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
     if ( y < lim[1] ) break; 
     if ( x > lim[2] ) break; 
     if ( y > lim[3] ) break;
+    double theta = TMath::Sqrt(tx*tx + ty*ty);
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    sxd = eScanCond->SigmaX(tx);
+    if (!x_y_correlation) sxd = eScanCond->SigmaX(tx);
+    else		  sxd = eScanCond->SigmaX(theta);
     dxs = sxd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
     if (!x_y_correlation) syd = eScanCond->SigmaY(ty);
-    else		  syd = sy;
+    else		  syd = eScanCond->SigmaY(0.);
     dys = syd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
-    stxd = eScanCond->SigmaTX(tx);
+    if (!x_y_correlation) stxd = eScanCond->SigmaTX(ty);
+    else		  stxd = eScanCond->SigmaTX(theta);
     dtxs = stxd*r1;
     do  { r1 = gRandom->Gaus();} while (TMath::Abs(r1) > 50.);
     if (!x_y_correlation) styd = eScanCond->SigmaTY(ty);
-    else		  styd = sty;
+    else		  styd = eScanCond->SigmaTY(0.);
     dtys = styd*r1;
     if (x_y_correlation)
     {
-	Phi = -TMath::ATan2(ty,tx);          // azimuthal angle of the track
+	Phi =  TMath::ATan2(ty,tx);          // azimuthal angle of the track
 	CPhi = TMath::Cos(Phi);
 	SPhi = TMath::Sin(Phi);
 	xs = x + dxs*CPhi - dys*SPhi;        // smearing of track parameters with corellation 
@@ -519,9 +522,9 @@ void EdbPVGen::TrackMC( float zlim[2], float lim[4],
     }
     else
     {
-	xs = x + dxs;        // smearing of track parameters with corellation 
-	ys = y + dys;        // along the track projection to XY plane 
-	txs = tx + dtxs;    // (regression line)
+	xs = x + dxs;        // smearing of track parameters 
+	ys = y + dys;     
+	txs = tx + dtxs; 
 	tys = ty + dtys;
     }
     seg->Set(segnum++, xs, ys, txs, tys, 25., tr.ID());
@@ -749,7 +752,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	pp = TMath::Sqrt(p2);
 	mp = TMath::Sqrt(es*es - p2); 
 	tr = new EdbTrackP();
-	tr->Set(numt++, x, y, 0., 0., 1, iv+1);
+	tr->Set(numt++, x, y, 0., 0., 1, numv+1);
 	tr->SetZ(0);
 	tr->SetP(pp);
 //	tr->SetP(1000000.);
@@ -778,7 +781,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     {
 	delete vedb;
 	vedb = 0;
-	nvmod++;
+//	nvmod++;
     }
     else
     if (ntrgood == 1)
@@ -786,7 +789,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	delete vedb;
 	vedb = 0;
 	if (tr) tr->SetFlag(0);
-	nvmod++;
+//	nvmod++;
     }
     else
     {
@@ -794,6 +797,212 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
 	numv++;
     }
   }
+}
+//______________________________________________________________________________
+void EdbPVGen::GeneratePhaseSpaceEventsWithDecay( int nv,
+					 TGenPhaseSpace *pDecay,
+					 TGenPhaseSpace *pSecond,
+					 float vzlim[2],   float vlim[4],
+					 float lim[4],     float ProbGap,
+					 int eloss_flag,   int *charges )
+{
+  // Phase Space event generation
+  float x, xd = 0.;
+  float y, yd = 0.;
+  float z, zd = 0.;
+  float zlimt[2];
+  TGenPhaseSpace *pCurrent = 0;
+  EdbVertex *vedb = 0;
+  EdbTrackP *tr = 0, *trdec = 0; 
+  Double_t    weight, tx, ty;
+  TLorentzVector *pi = 0;
+  int numt = 0, numv = 0, nt = 0, ntrgood = 0, nts = 0, zposprim = -1;
+  double pxs,pys,pzs,es, p2, masses[18];
+  float mp, pp;
+
+  if (eTracks) numt = eTracks->GetEntries();
+
+  int nvmod = nv;
+
+  if (eVTX) numv = eVTX->GetEntries();
+
+  
+  pSecond->Generate();
+  nts = pSecond->GetNt();
+  for(int ip=0; ip<nts; ip++) {
+	pi = pSecond->GetDecay(ip);
+	masses[ip] = pi->M();
+  }
+ 
+  for(int iv=0; iv<nvmod; iv++) {
+
+   pCurrent = pDecay;
+   x = vlim[0] + (vlim[2] - vlim[0])*gRandom->Rndm();
+   y = vlim[1] + (vlim[3] - vlim[1])*gRandom->Rndm();
+   z = vzlim[0] + (vzlim[1] - vzlim[0])*gRandom->Rndm();
+
+   trdec = 0;
+
+   zposprim = -1;
+
+   for(int ic=0; ic<2; ic++) {
+
+    ntrgood = 0;
+
+    if (ic == 1)
+    {
+	pCurrent = pSecond;
+	x = xd;
+	y = yd;
+	z = zd;
+    }
+
+    vedb = new EdbVertex();
+    vedb->SetXYZ(x, y, z);
+
+    weight = pCurrent->Generate();
+
+    nt = pCurrent->GetNt();
+    pxs = 0.;
+    pys = 0.;
+    pzs = 0.;
+    es = 0.;
+    ntrgood = 0;
+
+    for(int ip=0; ip<nt; ip++) {
+	pi = pCurrent->GetDecay(ip);
+	pxs += pi->Px();
+	pys += pi->Py();
+	pzs += pi->Pz();
+	es  += pi->E();
+	if ((charges[ip] == 0 && ic == 0) || pi->M() == .135) continue;
+	tx = pi->Px()/pi->Pz();
+	ty = pi->Py()/pi->Pz();
+	if (charges[ip] > 0 || ic == 1)
+	{
+	  tr = new EdbTrackP();
+	  tr->Set(numt++, x, y, (float)tx, (float)ty, 1, numv+1);
+	  tr->SetZ(z);
+	  tr->SetP(pi->P());
+	  tr->SetM(pi->M());
+	  if (pi->Pz() >= 0.)
+	  {
+	    zlimt[0] = z;
+	    zlimt[1] = 200000.;
+	  }
+	  else
+	  {
+	    zlimt[0] = z;
+	    zlimt[1] = -1000.;
+	  }
+	}
+	// generation of track segments for secondary particles
+
+	if (TMath::Abs((double)charges[ip]) > 10. && ic == 0)
+	{
+	    double mpath = (pi->E()/pi->M())*TMath::Abs((double)charges[ip]);
+	    double path  = gRandom->Exp(mpath);
+	    path = path*(pi->Pz()/pi->P());
+	    if (pi->Pz() >= 0.)
+	    {
+		zlimt[0] = z;
+		zlimt[1] = z+path;
+		zd = zlimt[1];
+		xd = x + tx*path;
+		yd = y + ty*path;
+	    }
+	    else
+	    {
+		zlimt[0] = z;
+		zlimt[1] = z+path;
+		zd = zlimt[1];
+		xd = x - tx*path;
+		yd = y - ty*path;
+	    }
+	    pSecond->SetDecay(*pi, nts, (double *)&masses[0]);
+	    if (charges[ip] < 0) continue;
+	}
+	TrackMC( zlimt, lim, *tr, eloss_flag, ProbGap);
+	if (tr->N() > 0)
+	{
+	    if (pi->Pz() < 0.)
+		eEVR->AddTrack(*vedb, tr, 0);
+	    else
+		eEVR->AddTrack(*vedb, tr, 1);
+	    AddTrack(tr);
+	    ntrgood++;
+	    if (TMath::Abs((double)charges[ip]) > 10. && ic == 0)
+	    {
+		trdec = tr;
+		if (pi->Pz() < 0.)
+		    zposprim = 1;
+		else
+		    zposprim = 0;
+	    }
+	}
+	else
+	{
+	    delete tr;
+	    tr = 0;
+	    numt--;
+	}
+    }
+
+    // generate primary track
+    if (z > 300. && charges[nt] && ic == 0)
+    {
+	p2 = pxs*pxs + pys*pys + pzs*pzs;
+	pp = TMath::Sqrt(p2);
+	mp = TMath::Sqrt(es*es - p2); 
+	tr = new EdbTrackP();
+	tr->Set(numt++, x, y, 0., 0., 1, numv+1);
+	tr->SetZ(0);
+	tr->SetP(pp);
+//	tr->SetP(1000000.);
+	tr->SetM(mp);
+
+	// generation of track segments for primary particle
+
+	zlimt[0] = z;
+	zlimt[1] = -1000.;
+	TrackMC( zlimt, lim, *tr, 0, ProbGap );
+	if (tr->N() > 0)
+	{
+	    eEVR->AddTrack(*vedb, tr, 0);
+	    AddTrack(tr);
+	    ntrgood++;
+	}
+	else
+	{
+	    delete tr;
+	    tr = 0;
+	    numt--;
+	}
+    }
+
+    if (ntrgood == 0)
+    {
+	delete vedb;
+	vedb = 0;
+//	nvmod++;
+    }
+    else
+    if (ntrgood == 1)
+    {
+	delete vedb;
+	vedb = 0;
+	if (tr) tr->SetFlag(0);
+//	nvmod++;
+    }
+    else
+    {
+	AddVertex(vedb);
+	numv++;
+	if (ic==1 && trdec) 	eEVR->AddTrack(*vedb, trdec, zposprim);
+	if (ic==1 && trdec) 	trdec->SetMC(numv, 0);
+    }
+   } // primary, secondary vertexes loop
+  } // loop on vertexes pairs
 }
 //______________________________________________________________________________
 int EdbPVGen::MakeTracksMC(int nsegments, TObjArray *tracks)

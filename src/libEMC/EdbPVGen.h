@@ -76,6 +76,12 @@ class EdbPVGen : public TObject {
   void GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay, float vzlim[2],
 				 float vlim[4],  float lim[4], float ProbGap,
 				 int eloss_flag, int *charges );
+  void GeneratePhaseSpaceEventsWithDecay( int nv,
+					 TGenPhaseSpace *pDecay,
+					 TGenPhaseSpace *pSecond,
+					 float vzlim[2],   float vlim[4],
+					 float lim[4],     float ProbGap,
+					 int eloss_flag,   int *charges );
 
   int MakeTracksMC(int nsegmin, TObjArray *tracks);
 
