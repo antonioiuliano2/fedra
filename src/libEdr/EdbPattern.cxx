@@ -965,14 +965,14 @@ int  EdbTrackP::FitTrackKFS( bool zmax, float X0, int design )
     EdbSegP *s = GetSegment(0);
     EdbSegP segf(*s);
 
-    segf.Set(ID(),X(),Y(),TX(),TY(),1.,Flag());
-    segf.SetZ(Z());
+    segf.Set(s->ID(),s->X(),s->Y(),s->TX(),s->TY(),1.,s->Flag());
+    segf.SetZ(s->Z());
     segf.SetErrorP ( SP() );
     segf.SetChi2(0.);
     segf.SetProb(1.);
     segf.SetP( P() );
-    segf.SetPID( PID() );
-    segf.SetDZ(DZ());
+    segf.SetPID( s->PID() );
+    segf.SetDZ(s->DZ());
 
     AddSegmentF(new EdbSegP(segf));
     return 0;
