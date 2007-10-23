@@ -1068,13 +1068,14 @@ bool EdbScanProc::InitPiece(EdbDataPiece &piece, int id[4])
 }
 
 //-------------------------------------------------------------------
-int EdbScanProc::ReadPatCP(EdbPattern &pat, int id[4])
+int EdbScanProc::ReadPatCP(EdbPattern &pat, int id[4], TCut cut)
 {
   // read CP file ("base" segments) applying all cuts and transformations from x.x.x.x.in.par
   // the Z of the pat and all segments will be z of layer 0 defined in the par file(s)
   EdbDataPiece piece;
   InitPiece(piece, id);
   piece.GetLayer(0)->SetZlayer(piece.GetLayer(0)->Z(), 0,0);
+  piece.AddRCut(0,cut);
   int n = ReadPiece(piece, pat);
   pat.SetZ(piece.GetLayer(0)->Z());
   pat.SetSegmentsZ();

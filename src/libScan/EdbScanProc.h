@@ -44,7 +44,7 @@ public:
 
   bool    InitPiece(EdbDataPiece &piece, int id[4]);
   int     ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
-  int     ReadPatCP(EdbPattern &pat, int id[4]);
+  int     ReadPatCP(EdbPattern &pat, int id[4], TCut c="1");
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
