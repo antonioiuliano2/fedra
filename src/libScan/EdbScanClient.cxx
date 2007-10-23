@@ -31,6 +31,9 @@ EdbScanClient::EdbScanClient()
   eYstep = 275;
 }
 
+int    EdbScanClient::AddRWC_(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
+    { return AddRWC(run,rwcname, bAddRWD, options); }
+
 //----------------------------------------------------------------
 void EdbScanClient::Print()
 {

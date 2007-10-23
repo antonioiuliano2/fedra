@@ -53,6 +53,8 @@ public:
   int   ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
   int   ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
 
+  static int     AddRWC_(EdbRun* run, char* rwcname, int bAddRWD=true, const char* options="");
+
   void   Print();
 
   ClassDef(EdbScanClient,1)  // remote scanning from Bern
