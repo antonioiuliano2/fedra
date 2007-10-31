@@ -10,6 +10,7 @@
 #include "EdbLog.h"
 #include "EdbScanSet.h"
 
+ClassImp(EdbID)
 ClassImp(EdbScanSet)
 //----------------------------------------------------------------
 EdbScanSet::EdbScanSet()
@@ -60,7 +61,7 @@ int EdbScanSet::AssembleBrickFromPC()
     plate = new EdbPlateP();
     plate->SetID(pc->GetLayer(2)->ID());
     float z = eB.GetPlate(eB.Npl()-1)->Z() - pc->GetLayer(1)->Z();
-    plate->SetZlayer(z,z-150,z+150);
+    plate->SetZlayer(z,z-150,z+150);              // TODO! probably  z, z-105, z+105????
 
     aff.Reset();
     aff.Transform( pc->GetLayer(1)->GetAffineXY() );
@@ -130,4 +131,37 @@ void EdbScanSet::Print()
     printf("%3d  %12.2f       %9.6f %9.6f %9.6f %9.6f %15.6f %15.6f\n",
 	   p->ID(), p->Z(), a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
   }
+}
+
+//----------------------------------------------------------------
+int EdbScanSet::ReadIDS(const char *file)
+{
+  char line[256];
+  FILE *f = fopen (file, "rt");
+  int b,p,mi,ma;
+  int cnt=0;
+  while(fgets(line, 256, f) != NULL)
+    {
+      if( sscanf(line, "%d, %d, %d, %d", &b, &p, &mi, &ma) != 4 )  break;
+      eIDS.Add(new EdbID(b,p,mi,ma));
+      cnt++;
+    }
+  fclose(f);
+  return cnt;
+}
+
+//----------------------------------------------------------------
+int EdbScanSet::WriteIDS(const char *file)
+{
+  FILE *f = 0;
+  if(file) f = fopen (file, "n");
+  EdbID *id;
+  for( int i=0; i<eIDS.GetEntries(); i++ ) {
+    id = (EdbID *)eIDS.At(i);
+    if(file) fprintf(f,"%d, %d, %d, %d\n", id->eBrick, id->ePlate, id->eMajor, id->eMinor );
+    else      printf("%d, %d, %d, %d\n", id->eBrick, id->ePlate, id->eMajor, id->eMinor );
+  }
+
+  if(file) fclose(f);
+  return eIDS.GetEntries();
 }
