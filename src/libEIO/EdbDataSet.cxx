@@ -277,10 +277,10 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 
   FILE *fp=fopen(file,"r");
   if (fp==NULL)   {
-    Log(2,"ReadPiecePar","ERROR open file: %s \n", file);
+    Log(1,"ReadPiecePar","ERROR open file: %s", file);
     return(-1);
   }else
-    Log(3,"ReadPiecePar","\nRead piece parameters from file: %s\n\n", file );
+    Log(2,"ReadPiecePar","Read piece parameters from file: %s", file );
 
   int id,mode;
   float z,zmin,zmax,shr;
@@ -1761,10 +1761,10 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 	tree->SetBranchAddress("s."  ,&s );
       }
 
+      s->SetID(tree->GetEntries());             // basetrack id will be the tree entry number
       s->SetDZ( s2->Z()-s1->Z() );
       s->SetVolume( s1->Volume()+s2->Volume() );
       s->SetMC(s1->MCEvt(),s1->MCTrack());
-
       EdbTraceBack::SetBaseTrackVid( *s, 0, 0, tree->GetEntries() );   //TODO: plate, piece if available
 
       tree->Fill();
