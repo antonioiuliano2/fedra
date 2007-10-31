@@ -236,7 +236,28 @@ void EdbDisplay::GuessRange()
 
   float xmin=0,xmax=0,ymin=0,ymax=0,zmin=0,zmax=0;
   float marg=300;
-  if (eArrSegP) {}
+
+  if (eArrSegP) {
+    EdbSegP *s=0;
+    for(int i=0; i<eArrSegP->GetEntries(); i++) {
+      s = (EdbSegP *)(eArrSegP->At(i));
+      if(xmax-xmin<marg) {
+	xmax=xmax=s->X()+marg;
+	xmin=xmin=s->X()-marg;
+	ymax=ymax=s->Y()+marg;
+	ymin=ymin=s->Y()-marg;
+	zmax=zmax=s->Z()+marg;
+	zmin=zmin=s->Z()-marg;
+      }
+      if(xmax<s->X()+marg) xmax=s->X()+marg;
+      if(xmin>s->X()-marg) xmin=s->X()-marg;
+      if(ymax<s->Y()+marg) ymax=s->Y()+marg;
+      if(ymin>s->Y()-marg) ymin=s->Y()-marg;
+      if(zmax<s->Z()+marg) zmax=s->Z()+marg;
+      if(zmin>s->Z()-marg) zmin=s->Z()-marg;
+    }
+  }
+
   if (eArrV) {}
   if (eArrTr) {
     EdbTrackP *t;
