@@ -350,6 +350,194 @@ int EdbTrackFitter::FitTrackLine(EdbTrackP &tr)
 }
 
 //________________________________________________________________________________________
+float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
+{
+  // Momentum resolution by Multiple scattering (Annecy implementation Oct-2007)
+  //
+  // Input: tr      - track
+  //        detheta - average basetrack Theta angle resolution. Must be evaluated before.
+  //                  this parameter has effects only for small angle tracks.
+  //        x0 - the radiation length of the media [mm]. The deafault is lead.
+  //        flag - 0 : return 3D calculation of P.
+  //                1 : returns 2D calculation in XZ plane.
+  //                2 : returns 2D calculation of P in YZ plane.
+
+  // detheta angular dependance : the dependance in this code has been made with 7GeV pion
+  // reference brick from july 2006 scanned in Lyon. This can be used as it is, but the dependance is
+  // microscope dependant. For precise measurements, you have to parametrise the detheta dependance
+  // with your microscope (or the one used ro scan the data you want to analyse).
+
+  // The constant term im the scattering formula is not 13.6 but 14.64, which
+  // is the right reevaluated number, due to a calculation with the moliere
+  // distribution. 13.6 is an approximation. See Geant3 or 4 references for more explanations.
+
+  float x0 = 5.6;// eX0/1000.;
+  float k = 14.64*14.64/x0;                 //rad length in [mm]
+
+  detheta = (detheta*Sqrt(2.)/1000.);
+  if (Sqrt(tr.TX()*tr.TX()+tr.TY()*tr.TY())>0.1)
+    detheta=0.00171*(1+3.5*Sqrt(tr.TX()*tr.TX()+tr.TY()*tr.TY())-2.1*(tr.TX()*tr.TX()+tr.TY()*tr.TY()));
+  float dty=0., dtx=0.;
+  if (fabs(tr.TY())>0.1) dty=0.00156*(1+7.3*tr.TY()-3.6*(tr.TY()*tr.TY()));
+  else  dty=detheta;
+  dty*=dty;
+  if (fabs(tr.TX())>0.1) dtx=0.00156*(1+7.3*tr.TX()-3.6*(tr.TX()*tr.TX()));
+  else dtx=detheta;
+  dtx*=dtx;
+  detheta *= detheta;
+
+  TF1 *f1=new TF1("f1",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,detheta),0,14);  // 0-14 the fitting range (cells)
+  f1->SetParameter(0,4000.);                             // strating value for momentum in MeV
+  TF1 *f1x=new TF1("f1x",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dtx),0,14);  // 0-14 the fitting range (cells)
+  f1x->SetParameter(0,4000.);                             // strating value for momentum in MeV
+  TF1 *f1y=new TF1("f1y",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dty),0,14);  // 0-14 the fitting range (cells)
+  f1y->SetParameter(0,4000.);                             // strating value for momentum in MeV
+
+  EdbSegP *s, *st;
+  int nseg = tr.N();
+  int npl = tr.Npl();
+
+  TArrayF theta2(eNsegMax),dtheta(eNsegMax),theta(eNsegMax);
+  TArrayF theta2x(eNsegMax),dthetax(eNsegMax),thetax(eNsegMax);
+  TArrayF theta2y(eNsegMax),dthetay(eNsegMax),thetay(eNsegMax);
+  TArrayF thick(eNsegMax);
+  TArrayF dx(eNsegMax);
+
+  TArrayI sPID(eNsegMax);
+  TArrayF setx(eNsegMax), sety(eNsegMax);
+  double   P=0, dP=0, Px=0, dPx=0, Py=0, dPy=0;
+  double   slopecorx=0, slopecory=0;
+  int      lastci=0;
+
+  st=tr.GetSegment(0);
+
+
+  for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	  sPID[ci]=s->PID();
+	  setx[sPID[ci]]=s->TX();
+	  sety[sPID[ci]]=s->TY();
+
+	  slopecorx=slopecorx+s->TX();
+	  slopecory=slopecory+s->TY();
+	  lastci=sPID[ci];
+	}
+    }
+  slopecorx=slopecorx/nseg;
+  slopecory=slopecory/nseg;
+  double cor=slopecorx*slopecorx+slopecory*slopecory;
+  double Zeff=Sqrt(1+cor);
+
+  for(int plate=0;plate<npl;plate++)
+    {
+      setx[plate]=setx[plate+lastci];
+      sety[plate]=sety[plate+lastci];
+    }
+  int Ncell=0;
+  for (int m=0;m<tr.Npl()-1;m++)
+    {
+      Ncell++;
+
+      theta2[Ncell-1]=0;dtheta[Ncell-1]=0;theta[Ncell-1]=0;
+      theta2x[Ncell-1]=0;dthetax[Ncell-1]=0;thetax[Ncell-1]=0;
+      theta2y[Ncell-1]=0;dthetay[Ncell-1]=0;thetay[Ncell-1]=0;
+
+      int dim=0;
+      int nshift=Ncell-1;
+      if(nshift>npl-Ncell-1){ nshift=npl-Ncell-1; }
+
+      int nhole=0;
+      for(int j=0;j<nshift+1;j++)
+	{
+	  double x = (npl-(j+1))/Ncell;
+	  int nmes = (int)x;
+	  nhole=0;
+	  for (int i=0;i<nmes;i++)
+	    {
+	      if ( (setx[Ncell*i+j+Ncell]!=0&&setx[Ncell*i+j]!=0)&&(sety[Ncell*i+j+Ncell]!=0&&sety[Ncell*i+j]!=0))
+		{
+		  theta2[Ncell-1] =
+		    theta2[Ncell-1] +
+		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 ) +
+		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
+		  theta2x[Ncell-1] =
+		    theta2x[Ncell-1] +
+		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 );
+		  theta2y[Ncell-1] =
+		    theta2y[Ncell-1] +
+		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
+		  dim++;
+		}
+	      else nhole++;
+	    }
+	}//end loop on shifts
+
+      if (dim!=0)
+	{
+	  theta[Ncell-1]=Sqrt(theta2[Ncell-1]/(Zeff*2*dim));
+	  double errstat=theta[Ncell-1]/Sqrt(4*dim);
+	  dtheta[Ncell-1]=errstat;
+	  thetax[Ncell-1]=Sqrt(theta2x[Ncell-1]/(Zeff*dim));
+	  dthetax[Ncell-1]=thetax[Ncell-1]/Sqrt(2*dim);
+	  thetay[Ncell-1]=Sqrt(theta2y[Ncell-1]/(Zeff*dim));
+	  dthetay[Ncell-1]=thetay[Ncell-1]/Sqrt(2*dim);
+	}
+
+
+      else{ P=0.5; break;}
+
+      thick[Ncell-1]=Ncell;
+      dx[Ncell-1]=0.25;                // not important
+
+    } //end loop on Ncell
+
+  TGraphErrors *ef1=new TGraphErrors(npl-1,thick.GetArray(),theta.GetArray(),dx.GetArray(),dtheta.GetArray());
+  ef1->Fit("f1","MRQ");
+  P=f1->GetParameter(0);
+  dP=f1->GetParError(0);
+
+  P=fabs(P/1000.);
+
+  if (P>20.) P=20.;
+
+  delete ef1;
+  delete f1;
+
+  TGraphErrors *ef1x=new TGraphErrors(npl-1,thick.GetArray(),thetax.GetArray(),dx.GetArray(),dthetax.GetArray());
+  ef1x->Fit("f1x","MRQ");
+  Px=f1x->GetParameter(0);
+  dPx=f1x->GetParError(0);
+
+  Px=fabs(Px/1000.);
+
+  if (Px>20.) Px=20.;
+
+  delete ef1x;
+  delete f1x;
+
+  TGraphErrors *ef1y=new TGraphErrors(npl-1,thick.GetArray(),thetay.GetArray(),dx.GetArray(),dthetay.GetArray());
+  ef1y->Fit("f1y","MRQ");
+  Py=f1y->GetParameter(0);
+  dPy=f1y->GetParError(0);
+
+  Py=fabs(Py/1000.);
+
+  if (Py>20.) Py=20.;
+
+  delete ef1y;
+  delete f1y;
+
+  if (flag==0) return (float)P;
+  if (flag==1) return (float)Px;
+  if (flag==2) return (float)Py;
+
+  return 0.;
+}
+
+//________________________________________________________________________________________
 float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta)
 {
   // Momentum resolution by Multiple scattering (Annecy implementation Sep-2006)

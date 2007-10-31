@@ -33,6 +33,8 @@ class EdbTrackFitter : public TNamed {
   void    SetDefaultBrick();
   int     FitTrackLine(EdbTrackP &tr);
   float   PMS_Mag(EdbTrackP &tr, float detheta);
+  float   PMS_Mag2(EdbTrackP &tr, float detheta, int flag);
+
   float   P_MS(EdbTrackP &tr);
   static float   MaxKink(EdbTrackP &tr);
   static float   MeanKink(EdbTrackP &tr);
