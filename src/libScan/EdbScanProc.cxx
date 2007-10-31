@@ -35,6 +35,15 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e
   int id2[4]={b2,p2,s2,e2};
   return AddAFFtoScanSet(sc,id1,id2);
 }
+
+//----------------------------------------------------------------
+bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, EdbID eid1, EdbID eid2)
+{
+  int id1[4]; eid1.Get(id1);
+  int id2[4]; eid2.Get(id2);
+  return AddAFFtoScanSet(sc,id1,id2);
+}
+
 //----------------------------------------------------------------
 bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 {
@@ -61,6 +70,116 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 
   sc.ePC.Add(p);
   return true;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
+{
+  //make couples in a given order
+
+  EdbID *id1=0, *id2=0;
+  for( int i=1; i<sc.eIDS.GetEntries(); i++ ) {
+    id1 = (EdbID *)(sc.eIDS.At(i-1));
+    id2 = (EdbID *)(sc.eIDS.At(i));
+    AddAFFtoScanSet(sc, *id1, *id2);
+  }
+  return sc.AssembleBrickFromPC();
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadFoundSegment(EdbID id,  EdbSegP &s, int flag)
+{
+  EdbPattern pat;
+  int id4[4], count=0;
+  id.Get(id4);
+  ReadFound(pat, id4, flag);
+  EdbSegP *ss;
+  for(int i=0; i<pat.N(); i++) {
+    ss = pat.GetSegment(i);
+    if(ss->ID()!=s.ID())  continue;
+    count++;
+    s.Copy(*ss);
+  }
+  return count;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
+{
+  // read track.ID() from pieces in sc.IDS .found.root and apply transformations from sc
+
+  EdbPlateP  *plate;
+  int count=0;
+  int n = sc.eIDS.GetEntries();
+  EdbPattern pat;
+  pat.AddSegment(track.ID(), 0,0,0,0);
+  EdbSegP *s = pat.GetSegment(0);
+  for(int i=0; i<n; i++) {
+    EdbID *id    = (EdbID *)(sc.eIDS.At(i));
+    if(ReadFoundSegment(*id,*s)<=0) continue;
+    count++;
+    plate = sc.GetPlate(id->ePlate);
+    pat.Transform(    plate->GetAffineXY()   );
+    pat.TransformA(   plate->GetAffineTXTY() );
+    pat.TransformShr( plate->Shr() );
+    s->SetZ(plate->Z());
+    s->SetDZ(-214);                            //TODO!!!
+    s->SetPID(id->ePlate);
+    track.AddSegment( new EdbSegP(*s) );
+  }
+  return count;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c)
+{
+  // read data from scanset sc with cut c and fill ali
+  // sc.eIDS is used as an id list
+  // sc.eB   is used to get the brick geometry and affine transformations - must be filled before
+
+  int cnt=0;
+  int n = sc.eIDS.GetEntries();    // number of pieces to get
+  EdbID      *id;
+  EdbPlateP  *plate;
+  EdbPattern *pat;
+  for(int i=0; i<n; i++) {
+    id    = (EdbID *)(sc.eIDS.At(i));
+    plate = sc.GetPlate(id->ePlate);
+    pat   = new EdbPattern();
+    cnt += ReadPatCPnopar( *pat, *id, c );
+
+    pat->SetPID(id->ePlate);
+    pat->SetSegmentsPID();
+    pat->SetZ(plate->Z());
+    pat->SetSegmentsZ();
+    pat->Transform(    plate->GetAffineXY()   );
+    pat->TransformA(   plate->GetAffineTXTY() );
+    pat->TransformShr( plate->Shr() );
+    ali.AddPattern( pat );
+  }
+
+  ali.SetPatternsID();
+  //if(!ali.GetScanCond()) ali.SetScanCond( new EdbScanCond() );   //TODO: bad solution
+
+  ali.SetSegmentsErrors();
+  ali.SetCouplesAll();
+  ali.SetChi2Max(ali.GetScanCond()->Chi2PMax());
+  ali.SetOffsetsMax(ali.GetScanCond()->OffX(),ali.GetScanCond()->OffY());
+
+  return cnt;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut)
+{
+  // read couples tree ignoring any par files
+  TString cpfile;
+  MakeFileName(cpfile,id,"cp.root");
+  EdbDataPiece piece;
+  piece.eFileNameCP  = cpfile;
+  piece.AddRCut(0,cut);
+  if(!piece.InitCouplesTree("READ")) return 0;
+  return piece.GetCPData_new( &pat,0,0,0 );
 }
 
 //----------------------------------------------------------------

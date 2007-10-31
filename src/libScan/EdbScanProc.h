@@ -18,6 +18,7 @@ public:
 
   bool    CheckProcDir(int id[4], bool create=true);
   void    MakeFileName(TString &s, int id[4], const char *suffix);
+  void    MakeFileName(TString &s, EdbID id, const char *suffix) {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix);}
   void    MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix="aff.par");
   bool    GetMap(int brick, TString &map);
   bool    AddParLine(const char *file, const char *line);
@@ -43,8 +44,11 @@ public:
   int     ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt="NOCLCLFRAMESUM"); // NEW!!!
 
   bool    InitPiece(EdbDataPiece &piece, int id[4]);
+  bool    InitPiece(EdbDataPiece &piece, EdbID id) {int id4[4]; id.Get(id4); return InitPiece(piece,id4);}
   int     ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
   int     ReadPatCP(EdbPattern &pat, int id[4], TCut c="1");
+  int     ReadPatCP(EdbPattern &pat, EdbID id, TCut c="1") {int id4[4]; id.Get(id4); return ReadPatCP(pat,id4,c);}
+  int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1");
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
@@ -74,8 +78,14 @@ public:
   void    OptimizeScanPath(EdbPattern &pin, EdbPattern &pout,int brick);
   int     RemoveDublets(EdbPattern &pin, EdbPattern &pout,int brick);
 
+  bool    AddAFFtoScanSet(EdbScanSet &sc, EdbID id1, EdbID id2);
   bool    AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4]);
   bool    AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2);
+
+  int     AssembleScanSet(  EdbScanSet &ss);
+  int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1");
+  int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
+  int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
 
   void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
