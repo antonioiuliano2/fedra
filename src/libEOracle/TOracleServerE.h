@@ -24,6 +24,12 @@ public:
    Int_t       ReadMicrotracksPattern(char *selection, EdbPattern &pat);
    Int_t       ReadCalibration(int id_brick, EdbPatternsVolume &vol);
 
+   Int_t       ReadVolume_NI(char *id_volume, EdbPatternsVolume &vol);
+   Int_t       ReadVolume_NI(char *id_volume, EdbPatternsVolume &vol, Int_t min, Int_t max);
+   Int_t       ReadVolume_NI(ULong64_t id_volume, EdbPatternsVolume &vol);
+   Int_t       ReadVolume_NI(ULong64_t id_volume, EdbPatternsVolume &vol, Int_t min_pl, Int_t max_pl);
+   bool        ReadZplate_NI(int id_plate, int id_eventbrick, EdbPattern &pat);
+
    Int_t       GetProcessOperationID(char *id_eventbrick, char *id);
    Int_t       GetProcessOperationID(char *id_programsettings, char *id_eventbrick, char *id_plate, char *id);
 
@@ -36,7 +42,7 @@ public:
    Int_t       AddBasetracks(EdbPattern &pat, char *id_eventbrick, char *id_zone);
    Int_t       AddProcessOperation(char *id_machine, char *id_programsettings, char *id_requester, char *id_parent_operation, char *id_eventbrick, char *id_plate, char *driverlevel, char *templatemarks, char *starttime, char *finishtime, char *success);
 
-   ClassDef(TOracleServerE,0)  // Connection to Oracle server
+   ClassDef(TOracleServerE,1)  // Connection to Oracle server
 };
 
 #endif
