@@ -11,6 +11,7 @@
 #include "TArrayF.h"
 #include "TGraphErrors.h"
 
+#include "EdbLog.h"
 #include "EdbPhys.h"
 #include "EdbAffine.h"
 #include "EdbLayer.h"
@@ -350,7 +351,7 @@ int EdbTrackFitter::FitTrackLine(EdbTrackP &tr)
 }
 
 //________________________________________________________________________________________
-float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
+float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
 {
   // Momentum resolution by Multiple scattering (Annecy implementation Oct-2007)
   //
@@ -359,8 +360,8 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
   //                  this parameter has effects only for small angle tracks.
   //        x0 - the radiation length of the media [mm]. The deafault is lead.
   //        flag - 0 : return 3D calculation of P.
-  //                1 : returns 2D calculation in XZ plane.
-  //                2 : returns 2D calculation of P in YZ plane.
+  //               1 : returns 2D calculation in XZ plane.
+  //               2 : returns 2D calculation of P in YZ plane.
 
   // detheta angular dependance : the dependance in this code has been made with 7GeV pion
   // reference brick from july 2006 scanned in Lyon. This can be used as it is, but the dependance is
@@ -396,28 +397,32 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
   EdbSegP *s, *st;
   int nseg = tr.N();
   int npl = tr.Npl();
+  if(nseg<2)   { Log(1,"PMS_Mag","Warning! nseg<2 (%d)- impossible estimate momentum!",nseg);            return 0;}
+  if(npl<nseg) { Log(1,"PMS_Mag","Warning! npl<nseg (%d, %d) - use track.SetCounters() first",npl,nseg); return 0;}
+  int plmax = Max( tr.GetSegmentFirst()->PID(), tr.GetSegmentLast()->PID() ) + 1;
+  if(plmax<1||plmax>1000)   { Log(1,"PMS_Mag","Warning! plmax = %d - correct the segments PID's!",plmax); return 0;}
 
-  TArrayF theta2(eNsegMax),dtheta(eNsegMax),theta(eNsegMax);
-  TArrayF theta2x(eNsegMax),dthetax(eNsegMax),thetax(eNsegMax);
-  TArrayF theta2y(eNsegMax),dthetay(eNsegMax),thetay(eNsegMax);
-  TArrayF thick(eNsegMax);
-  TArrayF dx(eNsegMax);
+  TArrayF theta2(plmax),dtheta(plmax),theta(plmax);
+  TArrayF theta2x(plmax),dthetax(plmax),thetax(plmax);
+  TArrayF theta2y(plmax),dthetay(plmax),thetay(plmax);
+  TArrayF thick(plmax);
+  TArrayF dx(plmax);
 
-  TArrayI sPID(eNsegMax);
-  TArrayF setx(eNsegMax), sety(eNsegMax);
+  TArrayI sPID(plmax);
+  TArrayF setx(plmax), sety(plmax);
   double   P=0, dP=0, Px=0, dPx=0, Py=0, dPy=0;
   double   slopecorx=0, slopecory=0;
-  int      lastci=0;
+  int      lastci=0, firstci=0;
+  int control=-1;
 
   st=tr.GetSegment(0);
-
-
   for(int ci=0;ci<nseg;ci++)
     {
       s=tr.GetSegment(ci);
       if(s!=NULL)
 	{
 	  sPID[ci]=s->PID();
+	  if (control==-1) {control=1; firstci=s->PID();}
 	  setx[sPID[ci]]=s->TX();
 	  sety[sPID[ci]]=s->TY();
 
@@ -426,6 +431,9 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
 	  lastci=sPID[ci];
 	}
     }
+    
+  if (firstci<lastci) lastci=firstci; 
+    
   slopecorx=slopecorx/nseg;
   slopecory=slopecory/nseg;
   double cor=slopecorx*slopecorx+slopecory*slopecory;
@@ -437,6 +445,10 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
       sety[plate]=sety[plate+lastci];
     }
   int Ncell=0;
+  
+  //printf("track %i : npl=%i, lastci=%i, firstci=%i \n", tr.ID(), npl, lastci, firstci);
+
+  
   for (int m=0;m<tr.Npl()-1;m++)
     {
       Ncell++;
@@ -485,9 +497,11 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
 	  thetay[Ncell-1]=Sqrt(theta2y[Ncell-1]/(Zeff*dim));
 	  dthetay[Ncell-1]=thetay[Ncell-1]/Sqrt(2*dim);
 	}
-
-
+   
       else{ P=0.5; break;}
+
+      //printf("%i : theta= %f\n",Ncell-1,theta[Ncell-1]);
+ 
 
       thick[Ncell-1]=Ncell;
       dx[Ncell-1]=0.25;                // not important
@@ -538,7 +552,7 @@ float EdbTrackFitter::PMS_Mag2(EdbTrackP &tr, float detheta, int flag)
 }
 
 //________________________________________________________________________________________
-float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta)
+float EdbTrackFitter::PMS_Mag_old(EdbTrackP &tr, float detheta)
 {
   // Momentum resolution by Multiple scattering (Annecy implementation Sep-2006)
   // 
