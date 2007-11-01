@@ -690,6 +690,7 @@ void EdbPVGen::GeneratePhaseSpaceEvents( int nv, TGenPhaseSpace *pDecay,
     y = vlim[1] + (vlim[3] - vlim[1])*gRandom->Rndm();
     z = vzlim[0] + (vzlim[1] - vzlim[0])*gRandom->Rndm();
     vedb->SetXYZ(x, y, z);
+    vedb->SetFlag(1);
 
     weight = pDecay->Generate();
 
@@ -859,6 +860,7 @@ void EdbPVGen::GeneratePhaseSpaceEventsWithDecay( int nv,
 
     vedb = new EdbVertex();
     vedb->SetXYZ(x, y, z);
+    if (ic==0) vedb->SetFlag(1);
 
     weight = pCurrent->Generate();
 
