@@ -1854,7 +1854,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
     if(p>0)    tr->SetP(p);
     else if(p<0 && gener)
     {
-	if ((itrg = tr->GetSegmentsFlag(nsegmatch)) >= 0)
+	if ((itrg = tr->GetSegmentsMCTrack(nsegmatch)) >= 0)
 	{
 	    trg = (EdbTrackP*)(gener->At(itrg));
 	    if (trg)
@@ -1878,7 +1878,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
     if(mass>0) tr->SetM(mass);
     else if(mass<0 && gener)
     {
-	if ((itrg = tr->GetSegmentsFlag(nsegmatch)) >= 0)
+	if ((itrg = tr->GetSegmentsMCTrack(nsegmatch)) >= 0)
 	{
 	    trg = (EdbTrackP*)(gener->At(itrg));
 	    if (trg)

@@ -1796,13 +1796,15 @@ int EdbVertexRec::VertexTuning(int seltype)
 
   for (iv=0; iv<nvt; iv++) {  // loop on all vertexes
     v1 = (EdbVertex*)(eVTX->At(iv));
-    if (v1 && v1->Flag() != -10)
+    if (v1)
     {
+	    if (v1->Flag() < 0) continue;
+	    if ((!(v1->V()))) continue;
 	    ntr1 = v1->N();
 	    imp1max = -1.;
 	    chi1max = -1.;
 	    it1max  = -1;
-	    for(int it1=0; it1<ntr1 && it1<50; it1++)
+	    for(int it1=0; it1<v1->N() && it1<50; it1++)
 	    {
 		tr1 = v1->GetTrack(it1);
 		impa1[it1] = v1->ImpTrack(it1);
@@ -1829,7 +1831,6 @@ int EdbVertexRec::VertexTuning(int seltype)
 	    nntr = v1->Nn();
 	    v1chiorig = v1->V()->chi2();
 	    v1distorig = v1->V()->rmsDistAngle();
-//	    if (nntr && v1->Flag()>=0)
 	    if (nntr)
 	    {
 	      for(int i=0; i<nntr; i++)
@@ -1847,7 +1848,7 @@ int EdbVertexRec::VertexTuning(int seltype)
                 {
                        v2 = (EdbVertex *)vta->GetTrack();
 		       if ((!v2) || v2->Flag() == -10) continue;
-		       v2->SetFlag(-v2->Flag()-11);
+		       if ((!(v2->V()))) continue;
 		       ntr2 = v2->N();
 		       v2chiorig = v2->V()->chi2();
 		       v2distorig = v2->V()->rmsDistAngle();
@@ -1898,6 +1899,33 @@ int EdbVertexRec::VertexTuning(int seltype)
 		       }
 		       else if (ntr1>2 && ntr2==2)
 		       {
+			    imp1max = 0.;
+			    chi1max = 0.;
+			    it1max  = -1;
+			    for(int it1=0; it1<ntr1 && it1<50; it1++)
+			    {
+				tr1 = v1->GetTrack(it1);
+				impa1[it1] = v1->ImpTrack(it1);
+				if (impa1[it1] > imp1max)
+				{
+				    imp1max = impa1[it1];
+				    it1impmax = it1;
+				}
+				chia1[it1] = v1->Chi2Track(tr1, v1->Zpos(it1), 0.);
+				if (chia1[it1] > chi1max)
+				{
+				    chi1max = chia1[it1];
+				    it1chimax = it1;
+				}
+			    }
+			    if (seltype == 0)
+			    {
+				it1max = it1impmax;
+			    }
+			    else
+			    {
+				it1max = it1chimax;
+			    }
 			    if (it1max < 0) continue;
 			    if (v1->GetConnectedVertexForTrack(it1max)==v2) continue;
 			    crit = MoveTrackToOtherVertex(v1, it1max, v2, seltype, &v2n, &v1n);
@@ -1951,13 +1979,17 @@ int EdbVertexRec::VertexTuning(int seltype)
 				was = 1;
 			    } // variants of changing 
 		       } // multiplicities
-		       if (was && v1n && v2n)
+		       if (was)
 		       {
-		        if (crit < critorig)
+		        if ((crit < critorig) && v1n && v2n)
 		        {
 			    AcceptModifiedVTX(v1,v1n);
 			    AcceptModifiedVTX(v2,v2n);
+			    v1 = v1n;
+			    v2 = v2n;
+		    	    if (v2->Flag() > -11) v2->SetFlag(-v2->Flag()-11);
 			    nn++;
+			    //break;
 		        }
 		        else
 		        {
@@ -1990,9 +2022,12 @@ int EdbVertexRec::VertexTuning(int seltype)
 double EdbVertexRec::MoveTrackToOtherVertex(EdbVertex *v2, int it2max, EdbVertex *v1, int seltype,
                                             EdbVertex **v2no, EdbVertex **v1no)
 {
-    printf("Rearrange vertexies %d and %d\n",v1->ID(),v2->ID());
+//    printf("Rearrange vertexies %d and %d\n",v1->ID(),v2->ID());
     *v1no = 0;
     *v2no = 0;
+    if (!v1 || !v2) return 0.;
+    if (v2->N() < 3) return 0.;
+    if (it2max >= v2->N()) return 0.;
     EdbVertex *v1n = 0, *v2n = 0;
     EdbTrackP *tr2 = 0;
     int zpos = 0;
@@ -2022,7 +2057,7 @@ double EdbVertexRec::MoveTrackToOtherVertex(EdbVertex *v2, int it2max, EdbVertex
 	v1n = AddTrackToVertex(v1, tr2, zpos);
 	if (!v1n)
 	{
-	    CancelModifiedVTX(v2,v2n);
+//	    CancelModifiedVTX(v2,v2n);
 	    return 0.;
 	}
 	*v1no = v1n;
@@ -2111,8 +2146,8 @@ EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, in
     }
     else
     {
-	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
-	fflush(stdout);
+//	printf("Track not added! May be Prob < ProbMin.\n");
+//	fflush(stdout);
 	delete eWorking;
 	eVertex->ResetTracks();
 	return 0;
@@ -2149,21 +2184,22 @@ EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
 	{
 	    if (i == itr)
 	    {
+		(eVertex->GetTrack(i))->ClearVTA(eVertex->GetVTa(i));
 		continue;
 	    }
 	    if ((vta = AddTrack( *eWorking, eVertex->GetTrack(i), eVertex->Zpos(i))))
 	    {
-		(eVertex->GetTrack(i))->AddVTA(vta);
+		(eWorking->GetTrack(n))->AddVTA(vta);
 		n++;
 	    }
 	}
     }
     if ((n < 2)||(n == ntr))
     {
-	delete eWorking;
-	eVertex->ResetTracks();
 	printf("Can't create working copy of the vertex!\n");
 	fflush(stdout);
+	delete eWorking;
+	eVertex->ResetTracks();
 	return 0;
     }
 
@@ -2175,10 +2211,10 @@ EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
     }
     else
     {
-	delete eWorking;
-	eVertex->ResetTracks();
 	printf("Can't create working copy of the vertex!\n");
 	fflush(stdout);
+	delete eWorking;
+	eVertex->ResetTracks();
 	return 0;
     }
     return eWorking;
@@ -2216,8 +2252,14 @@ void EdbVertexRec::AcceptModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking)
 	{
 	    AddVTA(eW->GetVTa(i));
 	}
+	ntr = eVertex->Nn();
+	for(int i=0; i<ntr; i++)
+	{
+	    eW->AddVTA(eVertex->GetVTn(i));
+	}
+//	if (eVertex) delete eVertex;
+	eW->ResetTracks();
     }
-    if (eVertex) delete eVertex;
 }
 //_____________________________________________________________________________
 void EdbVertexRec::CancelModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking)
