@@ -633,6 +633,8 @@ EdbVertexRec::EdbVertexRec()
   eEdbTracks = 0;
   eVTX       = 0;
   ePVR       = 0;
+  eVertex    = 0;
+  eWorking   = 0;
 
   eZbin       = 100.;      // microns
   eAbin       = 0.01;      // rad
@@ -1764,7 +1766,224 @@ int EdbVertexRec::SelSegNeighbor( EdbSegP *sin, int seltype, float RadMax, int D
 
   return nadd;
 }
+//______________________________________________________________________________
+int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, float Mom)
+{
+    EdbVTA *vta = 0;
+    EdbVertex *ePrevious = 0;
 
+    if (eWorking == 0)
+    {
+	eWorking = new EdbVertex();
+	int ntr = eVertex->N();
+	int i = 0, n = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if ((vta = AddTrack(*(eWorking), eVertex->GetTrack(i), eVertex->Zpos(i))))
+	    {
+		eVertex->GetTrack(i)->AddVTA(vta);
+		n++;
+	    }
+	}
+	if (n < 2)
+	{
+	    delete eWorking;
+	    eWorking = 0;
+	    eVertex->ResetTracks();
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
+	    return 0;
+	}
+
+	if (!MakeV(*(eWorking)))
+	{
+	    delete eWorking;
+	    eWorking = 0;
+	    eVertex->ResetTracks();
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
+	    return 0;
+	}
+    }
+    else
+    {
+	ePrevious = eWorking;
+	eWorking = new EdbVertex();
+	int ntr = ePrevious->N();
+	int i = 0, n = 0;
+	for(i=0; i<ntr; i++)
+	{
+	    if ((vta = AddTrack(*(eWorking),(ePrevious)->GetTrack(i), (ePrevious)->Zpos(i))))
+	    {
+		(ePrevious->GetTrack(i))->AddVTA(vta);
+		n++;
+	    }
+	}
+	if (n < 2)
+	{
+	    delete eWorking;
+	    if (ePrevious)
+	    {
+		eWorking = ePrevious;
+		eWorking->ResetTracks();
+	    }
+	    else
+	    {
+		eWorking = 0;
+		eVertex->ResetTracks();
+	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
+	    return 0;
+	}
+
+	if (!MakeV(*(eWorking)))
+	{
+	    delete eWorking;
+	    if (ePrevious)
+	    {
+		eWorking = ePrevious;
+		eWorking->ResetTracks();
+	    }
+	    else
+	    {
+		eWorking = 0;
+		eVertex->ResetTracks();
+	    }
+	    printf("Can't create working copy of the vertex!\n");
+	    fflush(stdout);
+	    return 0;
+	}
+    }
+    float mass = 0.139; //pion
+    EdbTrackP *Tr = new EdbTrackP(s, mass);
+    Tr->SetP(Mom);
+    Tr->FitTrackKFS();
+    float ImpMaxSave = eImpMax;
+    eImpMax = ImpMax;
+    float ProbMinSave = eProbMin;
+    eProbMin = ProbMin;
+    if ((vta = AddTrack(*(eWorking), Tr, 1)))
+    {
+	if ( Tr->Z() >= eWorking->VZ() ) vta->SetZpos(1);
+	else vta->SetZpos(0);
+	Tr->AddVTA(vta);
+	EdbVertex *eW = eWorking;
+	eW->SetID(eVertex->ID());
+	eW->V()->rmsDistAngle();
+	int trind = eEdbTracks->GetEntries();
+	Tr->SetID(trind);
+	eEdbTracks->Add(Tr);
+	Tr->SetSegmentsTrack();
+	eImpMax = ImpMaxSave;
+	eProbMin = ProbMinSave;
+    }
+    else
+    {
+	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	fflush(stdout);
+	delete Tr;
+	delete eWorking;
+	if (ePrevious)
+	{
+	    eWorking = ePrevious;
+	    eWorking->ResetTracks();
+	}
+	else
+	{
+	    eWorking = 0;
+	    eVertex->ResetTracks();
+	}
+	eImpMax = ImpMaxSave;
+	eProbMin = ProbMinSave;
+	return 0;
+    }
+    return 1;
+}
+//______________________________________________________________________________
+int EdbVertexRec::VertexPolish(EdbVertex *v, int refill, float RadMax, int Dpat, float ImpMax, float ProbMin, float Mom)
+{
+    if (refill) if (!VertexNeighbor(v, RadMax, Dpat, ImpMax)) return 0;
+
+    EdbVTA *vta = 0;
+    EdbTrackP *tn = 0;
+    EdbSegP *sn = 0;
+    EdbVertex *w = 0;
+
+    int nt = v->N();
+    int nn = v->Nn();
+    int naddtot = 0, nmod = 0;
+    int news = 0;
+    if (nn)
+    {
+	// first of all try to propagate existing tracks with new momentum
+	double p = Mom;
+	int nadd = 0;
+	for(int i=0; i<nt; i++)
+	{
+	    nadd = 0;
+	    tn = v->GetTrack(i);
+	    for (int ip=0; ip<2; ip++)
+	    {
+	     p = Mom/(ip+1);
+	     tn->SetErrorP(0.2*0.2*p*p);
+	     tn->SetP(p);
+	     if (v->Zpos(i)) nadd += ePVR->PropagateTrack( *tn, true,  0.01, 3, 0 );
+	     else            nadd += ePVR->PropagateTrack( *tn, false, 0.01, 3, 0 );
+	    }
+	    if (nadd) nmod++;
+	    naddtot += nadd;
+	}
+
+	// then attach single segments with small impact to the vertex
+	eVertex = v;
+	for(int i=0; i<nn; i++)
+	{
+	    vta = eVertex->GetVTn(i);
+            if (vta->Flag()  == 1) // neighbour segment
+            {
+        	sn = (EdbSegP *)vta->GetTrack();
+		news += AddSegmentToVertex(sn, ImpMax, ProbMin, Mom);
+            }
+	}
+	w = eVertex;
+	if (eWorking != 0) w = eWorking;
+	nt = w->N();
+	p = Mom;
+	nadd = 0;
+	// then try to propagate one-segment tracks with new momentum
+	for(int i=0; i<nt; i++)
+	{
+	    nadd = 0;
+	    tn = w->GetTrack(i);
+	    if (tn->N() > 1) continue;
+	    for (int ip=0; ip<2; ip++)
+	    {
+	     p = Mom/(ip+1);
+	     tn->SetErrorP(0.2*0.2*p*p);
+	     tn->SetP(p);
+	     if (w->Zpos(i)) nadd += ePVR->PropagateTrack( *tn, true,  0.01, 3, 0 );
+	     else            nadd += ePVR->PropagateTrack( *tn, false, 0.01, 3, 0 );
+	    }
+	    if (nadd) nmod++;
+	    naddtot += nadd;
+	}
+    }
+    printf("%d single segments are attached, %d tracks are propagated (total %d segments are added).\n",
+           news, nmod, naddtot);
+    fflush(stdout);
+    return (news+nmod);
+}
+//______________________________________________________________________________
+void EdbVertexRec::AcceptPolish()
+{
+    AcceptModifiedVTX(eVertex, eWorking);
+}
+//______________________________________________________________________________
+void EdbVertexRec::RejectPolish()
+{
+    CancelModifiedVTX(eVertex, eWorking);
+}
 //______________________________________________________________________________
 int EdbVertexRec::VertexTuning(int seltype)
 {

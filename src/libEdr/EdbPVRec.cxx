@@ -2516,16 +2516,22 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
       printf("TRACK LOOP: %d %d \n",trind, tr.ID());
       //printf("ipat=%d followz=%d  patZ: %f trackZ: %f %f  \n",
       //     i, followZ,pat->Z(), tr.Zmin(), tr.Zmax());
+      goto GAP;
     }
     ttt=0;
     if( trind >= 0 && trind<ntr )    {
       ttt = ((EdbTrackP*)eTracks->At(trind));
-      if(!ttt)  printf("BAD TRACK POINTER: %d\n", trind);
+      if(!ttt)  { printf("BAD TRACK POINTER: %d\n", trind); goto GAP;};
       
-      if(ttt->Flag()>=0) {
-	if( ttt->N() > tr.N() )                                   goto GAP;
-	else if( segmax->Z() > (ttt->TrackZmin()->Z()+300.) && 
-		 segmax->Z() < (ttt->TrackZmax()->Z()-300.) )     goto GAP; // do not attach in-middle segments
+      if(ttt->VertexS() || ttt->VertexE()) goto GAP;
+
+      if(!(tr.VertexS()) && !(tr.VertexE()))
+      {
+        if(ttt->Flag()>=0) {
+	    if( ttt->N() > tr.N() )                                goto GAP;
+	    else if( segmax->Z() > (ttt->TrackZmin()->Z()+300.) && 
+		     segmax->Z() < (ttt->TrackZmax()->Z()-300.) )  goto GAP; // do not attach in-middle segments
+        }
       }
     }
 

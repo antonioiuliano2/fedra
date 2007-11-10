@@ -159,6 +159,9 @@ class EdbVertexRec: public TObject {
 
  private:
 
+  EdbVertex   *eVertex;
+  EdbVertex   *eWorking;
+
  public:
   TList        eVTA;          // vertex-track associations
 
@@ -214,6 +217,10 @@ class EdbVertexRec: public TObject {
   void    StatVertexN();
   int	  LinkedVertexes();
 
+  int     AddSegmentToVertex(EdbSegP *s, float ImpMax = 25., float ProbMin = 0.01, float Mom = 0.3);
+  int     VertexPolish(EdbVertex *v, int refill = 0, float RadMax = 1000., int Dpat = 2, float ImpMax = 25., float ProbMin = 0.01, float Mom = 0.3);
+  void    AcceptPolish();
+  void    RejectPolish();
   int	  VertexTuning(int seltype = 0);
   EdbVertex *AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, int zpos);
   EdbVertex *RemoveTrackFromVertex(EdbVertex *eVertex, int itr);
