@@ -1789,7 +1789,7 @@ void EdbVertexG::DeleteVertex()
     {
 	if ((eDs->eArrV)->FindObject(eVs))
 	{
-	    eDs->eArrV->Remove(eVs);
+	    eDs->eArrV->Remove((TObject *)eVs);
 	    eDs->eArrV->Compress();
 	    eDs->eVertex = 0;
 	    eDs->Draw();
@@ -1855,7 +1855,7 @@ void EdbVertexG::RemoveKink()
     {
 	if ((eDs->eArrV)->FindObject(eVs))
 	{
-	    eDs->eArrV->Remove(eVs);
+	    eDs->eArrV->Remove((TObject *)eVs);
 	    eDs->eArrV->Compress();
 	    eDs->eVertex = 0;
 	    eDs->Draw();
@@ -3271,7 +3271,7 @@ void EdbDisplay::UndoModifiedVTX()
 	delete eWorking;
 	if (InWork && !InPrev)
 	{
-	    eCreatedTracks.Remove(LastCreated);
+	    eCreatedTracks.Remove((TObject *)LastCreated);
 	    if (eArrTr) if (eArrTr->FindObject(LastCreated))
 	    {
 		eArrTr->Remove(LastCreated);
@@ -3314,7 +3314,7 @@ void EdbDisplay::UndoModifiedVTX()
 	delete eWorking;
 	if (tr && eCreatedTracks.FindObject(tr))
 	{
-	    eCreatedTracks.Remove(tr);
+	    eCreatedTracks.Remove((TObject *)tr);
 	    if (eArrTr) if (eArrTr->FindObject(tr))
 	    {
 		eArrTr->Remove(tr);
@@ -3401,9 +3401,9 @@ void EdbDisplay::AcceptModifiedVTX()
 //	    fflush(stdout);
 	    for(int i=0; i<ntr; i++)
 	    {
-//		printf("    %d\n", i);
+//		printf("    %d %x\n", i, eVertex->GetVTa(i));
 //		fflush(stdout);
-		(eVerRec->eVTA).Remove(eVertex->GetVTa(i));
+		(eVerRec->eVTA).Remove((TObject *)(eVertex->GetVTa(i)));
 	    }
 	}
 	int indd = -1;
@@ -3433,6 +3433,7 @@ void EdbDisplay::AcceptModifiedVTX()
 		    tr->SetID(trind++);
 		    if (etr) etr->Add(tr);
 		    if (eArrTr) eArrTr->Add(tr);
+		    tr->SetSegmentsTrack();
 //		    printf("     id %d\n", tr->ID());
 //		    fflush(stdout);
 //		}
