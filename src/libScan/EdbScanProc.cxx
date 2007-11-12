@@ -436,14 +436,16 @@ bool EdbScanProc::SetAFFDZ(int id1[4], int id2[4], float dz)
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull )
+int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull, int correct_ang )
 {
   LogPrint(id[0],1,"LinkRunAll","%d.%d.%d.%d  %d prelinking + %d fullinking", id[0],id[1],id[2],id[3],npre,nfull);
   int nc=0;
   if(npre>0) {
     MakeInPar(id,"prelinking");    // make input par file (x.x.x.x.in.par) for the current ID including the prelinking par file
-    for(int i=0; i<npre; i++)
-      nc = LinkRun(id,0);        // will be done (pre)linking and updated x.x.x.x.par file
+    for(int i=0; i<npre; i++) {
+      nc = LinkRun(id,0);          // will be done (pre)linking and updated x.x.x.x.par file
+      if(correct_ang)  CorrectAngles(id);
+    }
   }
   if(nfull>0) {
     MakeInPar(id,"fulllinking");   // make input par file including the fulllinking par file
@@ -872,6 +874,17 @@ bool EdbScanProc::MakeInPar(int id[4], const char *option)
   fprintf(f,"INCLUDE %s\n",nm.Data());
   fclose(f);
   return true;
+}
+
+//-------------------------------------------------------------------
+int EdbScanProc::CorrectAngles(int id[4])
+{
+  EdbDataPiece piece;
+  InitPiece(piece,id);
+  TString parfileOUT;
+  MakeFileName(parfileOUT,id,"par");
+  piece.eFileNamePar = parfileOUT;
+  return piece.CorrectAngles();
 }
 
 //-------------------------------------------------------------------

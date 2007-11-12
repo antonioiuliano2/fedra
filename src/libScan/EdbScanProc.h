@@ -55,8 +55,9 @@ public:
   bool    SetAFF0(int id1[4], int id2[4]);
 
   int     ConvertAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
+  int     CorrectAngles(int id[4]);
   int     LinkRun(int id[4], int noUpdate=1);
-  int     LinkRunAll(int id[4], int npre=3, int nfull=1);
+  int     LinkRunAll(int id[4], int npre=3, int nfull=1, int correct_ang=1);
   int     Align(int id1[4], int id2[4], const char *option="");
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
