@@ -43,7 +43,10 @@ class EdbScanSet : public TNamed
   EdbScanSet();
   virtual ~EdbScanSet(){}
 
-  int AssembleBrickFromPC();
+  int  AssembleBrickFromPC();
+  bool SetAsReferencePlate(int pid);
+  int  TransformBrick(EdbAffine2D aff);
+  int  ShiftBrickZ(float z);
 
   float GetDZP2P(int p1, int p2);
   bool GetAffP2P(int p1, int p2, EdbAffine2D &aff);

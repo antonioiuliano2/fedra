@@ -85,6 +85,38 @@ int EdbScanSet::AssembleBrickFromPC()
 }
 
 //----------------------------------------------------------------
+bool EdbScanSet::SetAsReferencePlate(int pid)
+{
+  EdbPlateP *p = GetPlate(pid);
+  if(!p) return false;
+  float  z = p->Z();
+  EdbAffine2D aff( *(p->GetAffineXY()) );
+  aff.Invert();
+  TransformBrick(aff);
+  ShiftBrickZ(-z);
+  return true;
+}
+
+//----------------------------------------------------------------
+int EdbScanSet::TransformBrick(EdbAffine2D aff)
+{
+  int npl=eB.Npl();
+  if(npl>0)
+    for(int i=0; i<npl; i++)  eB.GetPlate(i)->GetAffineXY()->Transform(aff);
+  return npl;
+}
+
+//----------------------------------------------------------------
+int EdbScanSet::ShiftBrickZ(float z)
+{
+  int npl=eB.Npl();
+  if(npl>0)
+    for(int i=0; i<npl; i++)
+      eB.GetPlate(i)->SetZlayer( eB.GetPlate(i)->Z() + z, eB.GetPlate(i)->Zmin()+z, eB.GetPlate(i)->Zmax()+z );
+  return npl;
+}
+
+//----------------------------------------------------------------
 bool EdbScanSet::GetAffP2P(int p1, int p2, EdbAffine2D &aff)
 {
   // input:  p1 - id of the "from-plate"
