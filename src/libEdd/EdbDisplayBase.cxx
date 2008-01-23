@@ -260,7 +260,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 1;
-	fPad->SetFillColor(kBlack);
+	fColorBG=kBlack;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
@@ -285,7 +285,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 2;
-	fPad->SetFillColor(kBlack);
+	fColorBG=12;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
@@ -310,7 +310,8 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 1;
-	fPad->SetFillColor(kWhite);
+	fColorBG=12;
+	fPad->SetFillColor(18);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(33);
@@ -335,7 +336,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 2;
-	fPad->SetFillColor(kWhite);
+	fColorBG = 18;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(33);
@@ -360,7 +361,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 1;
-	fPad->SetFillColor(kBlack);
+	fColorBG=kBlack;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
@@ -381,6 +382,7 @@ void EdbDisplayBase::SetStyle(int Style)
 	fTrigPad->Draw();
 	fPad->cd();
     }
+    fPad->SetFillColor(fColorBG);
 }
 //_____________________________________________________________________________
 void EdbDisplayBase::DrawTitle(Option_t *option)
@@ -580,8 +582,7 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 //    Draw a view of DataSet
 
    gPad->SetCursor(kWatch);
-   if (fStyle/2 == 1) gPad->SetFillColor(kWhite);
-   else               gPad->SetFillColor(kBlack);
+   gPad->SetFillColor(fColorBG);
 
 //   TList *li = gPad->GetListOfPrimitives();
 //   int np = li->GetSize();

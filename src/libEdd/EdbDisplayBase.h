@@ -75,6 +75,7 @@ protected:
 					    // 1 - presentation
 					    // ...
    Width_t           fLineWidth;            //Line width for tracks and segments
+   Int_t             fColorBG;              //color for the display BG
    Edb3DView        *fView;                 //Main View object
    char       	    fTitle[128];            //EdbDisplay Object Name
    TPad             *fTrigPad;              //Pointer to the trigger pad
@@ -152,6 +153,8 @@ public:
    virtual char *    GetObjectInfo(int px, int py) const;
    virtual void      SetRotate();
    virtual void      SetStyle(int Style = 0);
+   virtual void      SetLineWidth(int width = 1) {fLineWidth=width;}
+   virtual void      SetColorBG(int color = 1) {fColorBG=color;}
    virtual void	     SetDrawDet(Bool_t fflag);
    virtual void	     SwDrawDet()        { SetDrawDet(!fDrawDet); }
    Bool_t 	     GetDrawDet() const { return fDrawDet; }
