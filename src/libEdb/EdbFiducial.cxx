@@ -163,9 +163,9 @@ void   EdbArea::Scale( float dx, float dy )
 }
 
 //______________________________________________________________________________
-//______________________________________________________________________________
 EdbMarksSet::EdbMarksSet()
 {
+  eXmin=eXmax=eYmin=eYmax=0;  eBrick=0;
   eAbsolute     = new EdbMarksBox();
   eStage        = new EdbMarksBox();
 }
@@ -411,8 +411,7 @@ void EdbMarksBox::AddMark(int id, float x, float y)
 }
 
 //______________________________________________________________________________
-//______________________________________________________________________________
 void EdbMark::Print(Option_t *opt) const
 {
-  printf("EdbMark: %d %f %f\n", GetID(), GetX(), GetY() );
+  printf("EdbMark: %d %f %f %d\n", GetID(), GetX(), GetY(), Flag() );
 }

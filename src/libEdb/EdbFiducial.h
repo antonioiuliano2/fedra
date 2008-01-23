@@ -23,6 +23,7 @@ class EdbMark : public TObject, public EdbPoint2D {
  private:
   Int_t      eID;              // fiducial mark id
   Float_t    eX, eY;           // coordinates
+  Int_t      eFlag;            // reserved for information top/bottom/lateral/damaged/etc
 
  public: 
   EdbMark(){}
@@ -34,6 +35,8 @@ class EdbMark : public TObject, public EdbPoint2D {
   Float_t GetX()    const { return eX;  }
   Float_t GetY()    const { return eY;  }
   void    Set(int id, float x, float y) { eID=id; eX=x; eY=y; }
+  void    SetFlag(int flag) { eFlag=flag; }
+  Int_t   Flag() const { return eFlag; }
 
   // mandatory virtual functions:
   Float_t    X() const  { return GetX(); }
@@ -45,7 +48,7 @@ class EdbMark : public TObject, public EdbPoint2D {
 
   void       Print( Option_t *opt="") const;
 
-  ClassDef(EdbMark,1)  // fiducial mark
+  ClassDef(EdbMark,2)  // fiducial mark
 };
 
 //______________________________________________________________________________
@@ -89,6 +92,11 @@ class EdbMarksSet : public TObject {
   EdbMarksBox   *eAbsolute;       // fiducial marks in absolute coord ($b)
   EdbMarksBox   *eStage;          // fiducial marks in stage    coord ($a)
 
+ public:
+  Float_t  eXmin,  eXmax;
+  Float_t  eYmin,  eYmax;
+  Long_t   eBrick;
+
  public: 
   EdbMarksSet();
   EdbMarksSet( EdbMarksSet &ms );
@@ -113,7 +121,7 @@ class EdbMarksSet : public TObject {
 
   void            Print( Option_t *opt="") const;
 
-  ClassDef(EdbMarksSet,1)  // $b and $a
+  ClassDef(EdbMarksSet,2)  // $b and $a
 };
 
 //______________________________________________________________________________
