@@ -24,6 +24,7 @@ class EdbID : public TObject
   void Set(int id[4]) { eBrick=id[0]; ePlate=id[1]; eMajor=id[2]; eMinor=id[3]; }
   void Get(int id[4]) { id[0]=eBrick; id[1]=ePlate; id[2]=eMajor; id[3]=eMinor; }
 
+  void Print() { printf("%d %d %d %d\n",eBrick,ePlate,eMajor,eMinor); }
   ClassDef(EdbID,1)  // definition of the identifier of the data piece
 };
 
@@ -43,6 +44,8 @@ class EdbScanSet : public TNamed
   EdbScanSet();
   virtual ~EdbScanSet(){}
 
+  void MakePIDList();
+  void MakeNominalSet( int from_plate, int to_plate, float z0, float dz, int vmi, int vma );
   int  AssembleBrickFromPC();
   bool SetAsReferencePlate(int pid);
   int  TransformBrick(EdbAffine2D aff);
@@ -51,6 +54,8 @@ class EdbScanSet : public TNamed
   float GetDZP2P(int p1, int p2);
   bool GetAffP2P(int p1, int p2, EdbAffine2D &aff);
   EdbPlateP *GetPlate(int p) {if(ePID.Find(p)) return eB.GetPlate(ePID.Find(p)->At(0)->Value()); else return 0; }
+
+  EdbID *FindPlateID(int p);
 
   int MakeParFiles(int piece=0, const char *dir=".");
 

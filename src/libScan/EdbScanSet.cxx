@@ -19,6 +19,27 @@ EdbScanSet::EdbScanSet()
 }
 
 //----------------------------------------------------------------
+void EdbScanSet::MakeNominalSet( int from_plate, int to_plate, float z0, float dz, int vmi, int vma )
+{
+  // assumed that brick eB.ID is already set
+
+  int step= (from_plate>to_plate)?-1:1;
+  int p=from_plate;
+  float z=z0;
+  do {
+    EdbPlateP *plate = new EdbPlateP();
+    plate->SetID(p);
+    plate->SetZlayer(z,z-150,z+150);
+    eB.AddPlate(plate);
+    eIDS.Add(new EdbID(eB.ID(),p,vmi,vma));
+    p += step;
+    z += dz;
+  } while( p!=(to_plate+step) );
+  MakePIDList();
+  Print();
+}
+
+//----------------------------------------------------------------
 int EdbScanSet::MakeParFiles(int piece, const char *dir)
 {
   // prepare par files for the dataset for "recset-like" processing
@@ -44,44 +65,56 @@ int EdbScanSet::MakeParFiles(int piece, const char *dir)
 //----------------------------------------------------------------
 int EdbScanSet::AssembleBrickFromPC()
 {
+  ePID.Delete();
   eB.Clear();
   EdbPlateP *plate=0;
 
+  float dz0=214,dz1=45,dz2=45;  //TODO!
   EdbAffine2D aff;
   int npc = ePC.GetEntries();
   EdbPlateP *pc=0;                    //the couple of plates
-  for(int i=0; i<npc; i++) {
-    pc = (EdbPlateP *)(ePC.At(i));
-    if(i==0) {                       //the first plate is the reference
-      plate = new EdbPlateP();
-      plate->SetID(pc->GetLayer(1)->ID());
-      plate->SetZlayer(0,-150,150);
-      eB.AddPlate(plate);
-    }
+  float z;
+  for(int i=-1; i<npc; i++) {
     plate = new EdbPlateP();
-    plate->SetID(pc->GetLayer(2)->ID());
-    float z = eB.GetPlate(eB.Npl()-1)->Z() - pc->GetLayer(1)->Z();
-    plate->SetZlayer(z,z-150,z+150);              // TODO! probably  z, z-105, z+105????
-
-    aff.Reset();
-    aff.Transform( pc->GetLayer(1)->GetAffineXY() );
-    aff.Invert();
-    aff.Transform( eB.GetPlate(eB.Npl()-1)->GetAffineXY() );
-    plate->GetAffineXY()->Transform(&aff);
+    
+    if(i==-1) {
+      pc = (EdbPlateP *)(ePC.At(0));
+      plate->SetID(pc->GetLayer(1)->ID());
+      z=0; 
+    }
+    else {
+      pc = (EdbPlateP *)(ePC.At(i));
+      plate->SetID(pc->GetLayer(2)->ID());
+      z = eB.GetPlate(eB.Npl()-1)->Z() - pc->GetLayer(1)->Z();
+      aff.Reset();
+      aff.Transform( pc->GetLayer(1)->GetAffineXY() );
+      aff.Invert();
+      aff.Transform( eB.GetPlate(eB.Npl()-1)->GetAffineXY() );
+      plate->GetAffineXY()->Transform(&aff);
+    }
+    plate->SetZlayer(z, z - dz0/2 + dz1, z+dz0/2+dz2);                
+    plate->GetLayer(0)->SetZlayer(0,-dz0/2,dz0/2);       // internal plate coord
+    plate->GetLayer(2)->SetZlayer(-dz0/2,-dz0/2-dz2,-dz0/2);
+    plate->GetLayer(1)->SetZlayer( dz0/2, dz0/2, dz0/2+dz1);
 
     eB.AddPlate(plate);    
   }
+  MakePIDList();
 
-  //ePID.Clear();
+  return eB.Npl();
+}
+
+//----------------------------------------------------------------
+void EdbScanSet::MakePIDList()
+{
+  ePID.Clear();
   Long_t v[2];
   for(int i=0; i<eB.Npl(); i++) {
     v[0]= eB.GetPlate(i)->ID();
     v[1]= i;
     ePID.Add(2,v);
   }
-  //ePID.Sort();
-
-  return eB.Npl();
+  ePID.Sort();
 }
 
 //----------------------------------------------------------------
@@ -163,6 +196,8 @@ void EdbScanSet::Print()
     printf("%3d  %12.2f       %9.6f %9.6f %9.6f %9.6f %15.6f %15.6f\n",
 	   p->ID(), p->Z(), a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
   }
+  printf("for this brick %d identifiers are defined:\n", eIDS.GetEntries());
+  for(int i=0; i<eIDS.GetEntries(); i++)  ((EdbID*)eIDS.At(i))->Print();
 }
 
 //----------------------------------------------------------------
@@ -196,4 +231,15 @@ int EdbScanSet::WriteIDS(const char *file)
 
   if(file) fclose(f);
   return eIDS.GetEntries();
+}
+
+//----------------------------------------------------------------
+EdbID *EdbScanSet::FindPlateID(int plate)
+{
+  EdbID *id;
+  for( int i=0; i<eIDS.GetEntries(); i++ ) {
+    id = (EdbID *)eIDS.At(i);
+    if(id->ePlate ==plate ) return id;
+  }
+  return 0;
 }
