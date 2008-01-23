@@ -24,6 +24,16 @@ class EdbTrackFitter : public TNamed {
   float eTPb;            // ?
   float ePcut;           // minimal momentum?
   bool  eDE_correction;  // take into account the energy loss or not
+
+  // input parameters for PMS_Mag
+  int eflagt;                // if eflagt=0, returns P, if =1 returns Px, if =2 returns Py (set in the function)
+  float  eDT0,  eDT1,  eDT2; // detheta  = eDT0 *(1+ eDT1*theta0- eDT2*theta0*theta0);
+  float eDTx0, eDTx1, eDTx2; // dethetaX = eDTx0*(1+eDTx1*theta0-eDTx2*theta0*theta0);
+  float eDTy0, eDTy1, eDTy2; // dethetaY = eDTy0*(1+eDTy1*theta0-eDTy2*theta0*theta0);
+
+  //the output of PMS_Mag
+  float eP;
+  float ePmin, ePmax;    // momentum and 90% (?)  errors range
   
  public:
   EdbTrackFitter();
@@ -32,8 +42,11 @@ class EdbTrackFitter : public TNamed {
   void    SetNsegMax(int nseg) {eNsegMax=nseg;}
   void    SetDefaultBrick();
   int     FitTrackLine(EdbTrackP &tr);
-  float   PMS_Mag_old(EdbTrackP &tr, float detheta);
-  float   PMS_Mag(EdbTrackP &tr, float detheta, int flag);
+  int     FitTrackLine(const EdbTrackP &tr, float &x,float &y,float &z,float &tx,float &ty,float &w);
+  void    SetParPMS_Mag();
+  float   PMS_Mag(EdbTrackP &tr);
+  float*  GetDP(float P, int npl, float ang);
+  double   Mat(float P, int npl, float ang);
 
   float   P_MS(EdbTrackP &tr);
   static float   MaxKink(EdbTrackP &tr);

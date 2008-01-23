@@ -43,15 +43,12 @@ void EdbTrackFitter::SetDefaultBrick()
   ePcut          = 0.050;
   eM             = 0.13957;
   eDE_correction = false;
-
-  eNsegMax=160;
 }
 
 //______________________________________________________________________________
 void EdbTrackFitter::Print()
 {
   printf("EdbTrackFitter seetings:\n");
-  printf("eNsegMax = %d\n",eNsegMax);
   printf("eX0      = %f\n",eX0);
   printf("eM       = %f\n",eM);
   printf("\n");
@@ -326,10 +323,21 @@ float EdbTrackFitter::PMS_KF(EdbTrackP &t, float p0, float probbest)
 //______________________________________________________________________________
 int EdbTrackFitter::FitTrackLine(EdbTrackP &tr)
 {
-  // track fit by averaging of segments parameters
+  // track fit by averaging of segments parameters and put them as the track parameters
+  float x,y,z,tx,ty,w;
+  FitTrackLine(tr,x,y,z,tx,ty,w);
+  tr.Set(tr.ID(),x,y,tx,ty,w,tr.Flag());
+  tr.SetZ(z);
+  return tr.N();
+}
+
+//______________________________________________________________________________
+int EdbTrackFitter::FitTrackLine(const EdbTrackP &tr, float &x, float &y, float &z, float &tx, float &ty, float &w)
+{
+  // track fit by averaging of segments parameters and return the mean values
   
   int nseg=tr.N();
-  float x=0,y=0,z=0,tx=0,ty=0,w=0;
+  x=0; y=0; z=0; tx=0; ty=0; w=0;
   EdbSegP *seg=0;
   for(int i=0; i<nseg; i++) {
     seg = tr.GetSegment(i);
@@ -345,54 +353,62 @@ int EdbTrackFitter::FitTrackLine(EdbTrackP &tr)
   z  /= nseg;
   tx /= nseg;
   ty /= nseg;
-  tr.Set(tr.ID(),x,y,tx,ty,w,tr.Flag());
-  tr.SetZ(z);
   return nseg;
 }
 
 //________________________________________________________________________________________
-float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
+void EdbTrackFitter::SetParPMS_Mag()
+{
+  // set the default values for parameters used in PMS_Mag
+  eX0 = 5600;
+  eflagt=0;
+
+  eDT0  = 0.0021;
+  eDT1  = 0.0054; 
+  eDT2  = 0.;
+
+ // eDTx0 =  0.00156;
+  eDTx0 =  0.0021;
+  eDTx1 =  0.0093;
+  eDTx2 = 0.;
+
+ // eDTy0 =  0.00156;
+  eDTy0 =  0.0021;
+  eDTy1 =  0.0093;
+  eDTy2 = 0.;
+
+//  printf("The default parameters for the PMS_Mag:\n");
+//  printf("eX0 = %f \n", eX0);
+//  printf(" eDT0,  eDT1,  eDT2 = %f %f %f\n", eDT0, eDT1, eDT2);
+//  printf("eDTx0, eDTx1, eDTx2 = %f %f %f\n", eDTx0, eDTx1, eDTx2);
+//  printf("eDTy0, eDTy1, eDTy2 = %f %f %f\n", eDTy0, eDTy1, eDTy2);
+  
+}
+
+//________________________________________________________________________________________
+float EdbTrackFitter::PMS_Mag(EdbTrackP &tr)
 {
   // Momentum resolution by Multiple scattering (Annecy implementation Oct-2007)
   //
-  // Input: tr      - track
-  //        detheta - average basetrack Theta angle resolution. Must be evaluated before.
-  //                  this parameter has effects only for small angle tracks.
-  //        x0 - the radiation length of the media [mm]. The deafault is lead.
-  //        flag - 0 : return 3D calculation of P.
-  //               1 : returns 2D calculation in XZ plane.
-  //               2 : returns 2D calculation of P in YZ plane.
-
-  // detheta angular dependance : the dependance in this code has been made with 7GeV pion
-  // reference brick from july 2006 scanned in Lyon. This can be used as it is, but the dependance is
-  // microscope dependant. For precise measurements, you have to parametrise the detheta dependance
-  // with your microscope (or the one used ro scan the data you want to analyse).
+  // Input: tr       - track
+ 
+  // detheta angular dependance : 
+  // To avoid angular dependance, the transverse coordinate is used for track angles more than 0.1 rad. 
+  // This gives a worse resolution as the 3D angle (used with angular dependance parametrisation),
+  // but gives right momentum measurement, biased in the 3D case.
 
   // The constant term im the scattering formula is not 13.6 but 14.64, which
   // is the right reevaluated number, due to a calculation with the moliere
   // distribution. 13.6 is an approximation. See Geant3 or 4 references for more explanations.
 
-  float x0 = 5.6;// eX0/1000.;
+  float x0 = eX0/1000.;
   float k = 14.64*14.64/x0;                 //rad length in [mm]
+  float x,y,z,tx,ty,w;
+  FitTrackLine(tr,x,y,z,tx,ty,w);  
+  float theta0 = Sqrt(tx*tx+ty*ty);
 
-  detheta = (detheta*Sqrt(2.)/1000.);
-  if (Sqrt(tr.TX()*tr.TX()+tr.TY()*tr.TY())>0.1)
-    detheta=0.00171*(1+3.5*Sqrt(tr.TX()*tr.TX()+tr.TY()*tr.TY())-2.1*(tr.TX()*tr.TX()+tr.TY()*tr.TY()));
-  float dty=0., dtx=0.;
-  if (fabs(tr.TY())>0.1) dty=0.00156*(1+7.3*tr.TY()-3.6*(tr.TY()*tr.TY()));
-  else  dty=detheta;
-  dty*=dty;
-  if (fabs(tr.TX())>0.1) dtx=0.00156*(1+7.3*tr.TX()-3.6*(tr.TX()*tr.TX()));
-  else dtx=detheta;
-  dtx*=dtx;
-  detheta *= detheta;
+// cout<<"track "<<tr.ID()<<" -> txy3D fedra"<<tx<<" "<<ty<<" "<<theta0<<endl;
 
-  TF1 *f1=new TF1("f1",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,detheta),0,14);  // 0-14 the fitting range (cells)
-  f1->SetParameter(0,4000.);                             // strating value for momentum in MeV
-  TF1 *f1x=new TF1("f1x",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dtx),0,14);  // 0-14 the fitting range (cells)
-  f1x->SetParameter(0,4000.);                             // strating value for momentum in MeV
-  TF1 *f1y=new TF1("f1y",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dty),0,14);  // 0-14 the fitting range (cells)
-  f1y->SetParameter(0,4000.);                             // strating value for momentum in MeV
 
   EdbSegP *s, *st;
   int nseg = tr.N();
@@ -405,13 +421,14 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
   TArrayF theta2(plmax),dtheta(plmax),theta(plmax);
   TArrayF theta2x(plmax),dthetax(plmax),thetax(plmax);
   TArrayF theta2y(plmax),dthetay(plmax),thetay(plmax);
-  TArrayF thick(plmax);
+  TArrayF thick(plmax), thickx(plmax), thicky(plmax);
   TArrayF dx(plmax);
 
   TArrayI sPID(plmax);
   TArrayF setx(plmax), sety(plmax);
   double   P=0, dP=0, Px=0, dPx=0, Py=0, dPy=0;
   double   slopecorx=0, slopecory=0;
+  double   sigx=0, sigy=0;
   int      lastci=0, firstci=0;
   int control=-1;
 
@@ -423,31 +440,77 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
 	{
 	  sPID[ci]=s->PID();
 	  if (control==-1) {control=1; firstci=s->PID();}
-	  setx[sPID[ci]]=s->TX();
-	  sety[sPID[ci]]=s->TY();
-
 	  slopecorx=slopecorx+s->TX();
 	  slopecory=slopecory+s->TY();
 	  lastci=sPID[ci];
 	}
-    }
-    
+    }    
   if (firstci<lastci) lastci=firstci; 
     
   slopecorx=slopecorx/nseg;
   slopecory=slopecory/nseg;
   double cor=slopecorx*slopecorx+slopecory*slopecory;
   double Zeff=Sqrt(1+cor);
+  float PHI=atan2( slopecorx, slopecory);
+  
+   for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	 setx[s->PID()]=s->TY()*cos(-PHI)-s->TX()*sin(-PHI);   // longitudinal coordinate
+	 sety[s->PID()]=s->TX()*cos(-PHI)+ s->TY()*sin(-PHI);  // transversal coordinate	
+	}
+    }
+    
+    float tl=st->TY()*cos(-PHI)-st->TX()*sin(-PHI); 
+    float tt=st->TX()*cos(-PHI)+ st->TY()*sin(-PHI); 
+  float theta0b=Sqrt(tl*tl+tt*tt);  
+  float detheta=0, dty=0, dtx=0;
+  detheta = eDT0  + eDT1*Abs(theta0b)+eDT2*theta0b*theta0b;   detheta*=detheta;
+  dtx     = eDTx0 + eDTx1*Abs(tl) + eDTx2*tl*tl ;             dtx*=dtx;
+  dty     = eDTy0 + eDTy1*Abs(tt) + eDTy2*tt*tt ;             dty*=dty;
+  TF1 *f1=new TF1("f1",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,detheta),0,14);  // 0-14 the fitting range (cells)
+  f1->SetParameter(0,1000.);                             // strating value for momentum in MeV
+  TF1 *f1x=new TF1("f1x",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dtx),0,14);  // 0-14 the fitting range (cells)
+  f1x->SetParameter(0,1000.);                             // strating value for momentum in MeV
+  TF1 *f1y=new TF1("f1y",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dty),0,14);  // 0-14 the fitting range (cells)
+  f1y->SetParameter(0,1000.);                             // strating value for momentum in MeV
 
-  for(int plate=0;plate<npl;plate++)
+
+
+//-_-_-_-_-_-_-_-_-_  disable to large angles compared to rms
+
+  for(int ci=0;ci<npl;ci++)
+     {
+     if (setx[ci]!=0)
+      {
+       sigx=sigx+(setx[ci]-slopecorx)*(setx[ci]-slopecorx);
+       sigy=sigy+(sety[ci]-slopecory)*(sety[ci]-slopecory);
+      }
+     }
+   sigx=sqrt(sigx/nseg);
+   sigy=sqrt(sigy/nseg); 
+  for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	 sPID[ci]=s->PID();
+	 if(fabs(s->TX()-slopecorx)>3*sigx) setx[sPID[ci]]=0;
+	 if(fabs(s->TY()-slopecory)>3*sigy) sety[sPID[ci]]=0;
+	}
+    }    
+//-_-_-_-_-_-_-_-_-_  
+
+
+for(int plate=0;plate<npl;plate++)
     {
       setx[plate]=setx[plate+lastci];
       sety[plate]=sety[plate+lastci];
     }
-  int Ncell=0;
+  int Ncell=0, NcellA=0, Ncellx=0, Ncelly=0;
   
-  //printf("track %i : npl=%i, lastci=%i, firstci=%i \n", tr.ID(), npl, lastci, firstci);
-
   
   for (int m=0;m<tr.Npl()-1;m++)
     {
@@ -457,7 +520,7 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
       theta2x[Ncell-1]=0;dthetax[Ncell-1]=0;thetax[Ncell-1]=0;
       theta2y[Ncell-1]=0;dthetay[Ncell-1]=0;thetay[Ncell-1]=0;
 
-      int dim=0;
+      int dim=0, dimx=0, dimy=0;
       int nshift=Ncell-1;
       if(nshift>npl-Ncell-1){ nshift=npl-Ncell-1; }
 
@@ -475,35 +538,56 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
 		    theta2[Ncell-1] +
 		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 ) +
 		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
+		  dim++;
+		 }
+		if ( (setx[Ncell*i+j+Ncell]!=0&&setx[Ncell*i+j]!=0) )
+		 {
 		  theta2x[Ncell-1] =
 		    theta2x[Ncell-1] +
 		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 );
+		  dimx++;
+		 }
+	        if ( (sety[Ncell*i+j+Ncell]!=0&&sety[Ncell*i+j]!=0) )
+		 {
 		  theta2y[Ncell-1] =
 		    theta2y[Ncell-1] +
 		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
-		  dim++;
-		}
+		  dimy++;
+		 }
+		
 	      else nhole++;
 	    }
 	}//end loop on shifts
 
       if (dim!=0)
 	{
-	  theta[Ncell-1]=Sqrt(theta2[Ncell-1]/(Zeff*2*dim));
-	  double errstat=theta[Ncell-1]/Sqrt(4*dim);
-	  dtheta[Ncell-1]=errstat;
-	  thetax[Ncell-1]=Sqrt(theta2x[Ncell-1]/(Zeff*dim));
-	  dthetax[Ncell-1]=thetax[Ncell-1]/Sqrt(2*dim);
-	  thetay[Ncell-1]=Sqrt(theta2y[Ncell-1]/(Zeff*dim));
-	  dthetay[Ncell-1]=thetay[Ncell-1]/Sqrt(2*dim);
+	 NcellA++;
+	  theta[NcellA-1]=Sqrt(theta2[Ncell-1]/(Zeff*2*dim));
+	  double errstat=theta[NcellA-1]/Sqrt(4*dim);
+	  dtheta[NcellA-1]=errstat;
+	 thick[NcellA-1]=Ncell;
 	}
+      if (dimx!=0&&dimx!=1)
+	{
+	 Ncellx++;
+	  thetax[Ncellx-1]=Sqrt(theta2x[Ncell-1]/(Zeff*dimx));
+	  dthetax[Ncellx-1]=thetax[Ncellx-1]/Sqrt(2*dimx);
+	 thickx[Ncellx-1]=Ncell;
+	 if (dimx<3) dthetax[Ncellx-1]=detheta*1000/2;	  
+	}
+      if (dimy!=0&&dimy!=1)
+	{
+	 Ncelly++;
+	  thetay[Ncelly-1]=Sqrt(theta2y[Ncell-1]/(Zeff*dimy));
+	  dthetay[Ncelly-1]=thetay[Ncelly-1]/Sqrt(2*dimy);
+	 thicky[Ncelly-1]=Ncell;
+	 if (dimy<3) dthetay[Ncelly-1]=detheta*1000/2;
+	}
+	
    
-      else{ P=0.5; break;}
+    //  else{ P=0.5; break;}
 
-      //printf("%i : theta= %f\n",Ncell-1,theta[Ncell-1]);
- 
-
-      thick[Ncell-1]=Ncell;
+     // thick[Ncell-1]=Ncell;
       dx[Ncell-1]=0.25;                // not important
 
     } //end loop on Ncell
@@ -515,147 +599,154 @@ float EdbTrackFitter::PMS_Mag(EdbTrackP &tr, float detheta, int flag)
 
   P=fabs(P/1000.);
 
-  if (P>20.) P=20.;
+  if (P>50.||P==1) P=-99.;
 
   delete ef1;
   delete f1;
 
-  TGraphErrors *ef1x=new TGraphErrors(npl-1,thick.GetArray(),thetax.GetArray(),dx.GetArray(),dthetax.GetArray());
+  TGraphErrors *ef1x=new TGraphErrors(npl-1,thickx.GetArray(),thetax.GetArray(),dx.GetArray(),dthetax.GetArray());
   ef1x->Fit("f1x","MRQ");
   Px=f1x->GetParameter(0);
   dPx=f1x->GetParError(0);
 
   Px=fabs(Px/1000.);
 
-  if (Px>20.) Px=20.;
+  if (Px>50.||Px==1) Px=-99.;
 
   delete ef1x;
   delete f1x;
 
-  TGraphErrors *ef1y=new TGraphErrors(npl-1,thick.GetArray(),thetay.GetArray(),dx.GetArray(),dthetay.GetArray());
+  TGraphErrors *ef1y=new TGraphErrors(npl-1,thicky.GetArray(),thetay.GetArray(),dx.GetArray(),dthetay.GetArray());
   ef1y->Fit("f1y","MRQ");
   Py=f1y->GetParameter(0);
   dPy=f1y->GetParError(0);
 
   Py=fabs(Py/1000.);
 
-  if (Py>20.) Py=20.;
+  if (Py>50.||Py==1) Py=-99.;
 
   delete ef1y;
-  delete f1y;
+  delete f1y; 
+  
+//  cout<<" p=" <<P<<" px="<< Px<<" py=" <<Py<<endl;
 
-  if (flag==0) return (float)P;
-  if (flag==1) return (float)Px;
-  if (flag==2) return (float)Py;
+
+
+//----------------------------
+  float *DP;
+  if (theta0<0.1) 
+   {
+    eP=P;
+    DP=GetDP(P,nseg,theta0); 
+    eflagt=0;   
+   }
+  else
+   {
+      eP=Py;
+      DP=GetDP(Py,nseg,Abs(ty));
+      eflagt=2;
+     
+   }
+   if (eP>0) 
+   {   
+    ePmin=DP[0];
+    ePmax=DP[1];
+   }
+    else {ePmin=-99; ePmax=-99;}
+   
+  if (eflagt==0) return (float)P;
+  if (eflagt==1) return (float)Px;
+  if (eflagt==2) return (float)Py;
+
 
   return 0.;
 }
-
-//________________________________________________________________________________________
-float EdbTrackFitter::PMS_Mag_old(EdbTrackP &tr, float detheta)
+//______________________________________________________________________________________
+float *EdbTrackFitter::GetDP(float P, int npl, float ang)
 {
-  // Momentum resolution by Multiple scattering (Annecy implementation Sep-2006)
-  // 
-  // Input: tr      - track
-  //        detheta - average basetrack Theta angle resolution. Must be evaluated before.
-  //        x0 - the radiation length of the media [mm]. The deafault is lead.
+ float *p90= new float[2];
+ float pinv=1./P;
+ 
+ float  DP=Mat(P, npl, ang );
+       // float DP=0.25; 
+      
+ float pinvmin=pinv*(1-DP*1.64);
+ float pinvmax=pinv*(1+DP*1.64);
 
-  // TODO: take into account the angular dependance of detheta
+ p90[0]=(1./pinvmax);   //90%CL minimum momentum
+ p90[1]=(1./pinvmin);   //90%CL maximum momentum
 
-  // The constant term im the scattering formula is not 13.6 but 14.64, which 
-  // is the right reevaluated number, due to a calculation with the moliere 
-  // distribution. 13.6 is an approximation. See Geant3 or 4 references for more explanations.
+if (P>10.) p90[1]=1000000.;
 
-  float x0 = eX0/1000.;                 //rad length in [mm]
-  detheta = (detheta*Sqrt(2.)/1000.);
-  detheta *= detheta;
-  float k = 14.64*14.64/x0;                              // approx 38.3
-  TF1 *f1=new TF1("f1",Form("sqrt(%f*x/([0])**2+%f)",k,detheta),0,14);  // 0-14 the fitting range (cells)
-  f1->SetParameter(0,4000.);                             // strating value for momentum in MeV
-
-  EdbSegP *s;
-  int nseg = tr.N();
-  if(nseg<2)   return 0;
-  int npl = tr.Npl();
-
-  TArrayF theta2(eNsegMax),dtheta(eNsegMax),theta(eNsegMax);
-  TArrayF thick(eNsegMax);
-  TArrayF dx(eNsegMax);
-  TArrayI sPID(eNsegMax);
-  TArrayF setx(eNsegMax), sety(eNsegMax);
-  double   P=0, dP=0;
-  double   slopecorx=0, slopecory=0;
-  int      lastci=0;
-  
-  for(int ci=0;ci<nseg;ci++){
-    s=tr.GetSegment(ci);
-    if(s!=NULL){
-      sPID[ci]=s->PID(); 
-      lastci=sPID[ci];
-      setx[sPID[ci]]=s->TX();
-      sety[sPID[ci]]=s->TY();
-      slopecorx=slopecorx+s->TX();
-      slopecory=slopecory+s->TY();    
-    }
-  }
-  slopecorx=slopecorx/nseg;
-  slopecory=slopecory/nseg;
-  double cor=Sqrt(slopecorx*slopecorx+slopecory*slopecory);
-  double Zeff=(cor*cor/Sqrt(1+cor*cor));
-
-  for(int plate=0;plate<npl;plate++){         //??? 
-    //setx[plate]=setx[plate+lastci];
-    //sety[plate]=sety[plate+lastci];
-  }
-  
-  int Ncell=0;
-  for (int m=0;m<npl-1;m++) {
-    theta2[m]=0;dtheta[m]=0;theta[m]=0;
-    Ncell++;
-    int dim=0;
-    int nshift=Ncell-1;
-    if(nshift>npl-Ncell-1){ nshift=npl-Ncell-1; }
-    
-    for(int j=0;j<nshift+1;j++){	     	
-      double x = (npl-(j+1))/Ncell;
-      int nmes = (int)x;
-      int nhole=0;
-      for (int i=0;i<nmes;i++){		   
-	if ( (setx[Ncell*i+j+Ncell]!=0&&setx[Ncell*i+j]!=0)&&(sety[Ncell*i+j+Ncell]!=0&&sety[Ncell*i+j]!=0))
-	  {
-	    theta2[m] = 
-	      theta2[m] + 
-	      Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 ) +
-	      Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
-	    dim++;
-	  }
-	else nhole++; 	  	 
-      }
-     }//end loop on shifts            
-    
-    if (dim!=0){
-      theta[m]=sqrt(theta2[m]/(2*dim));
-      double errstat=theta[m]/Sqrt(2*dim);
-      dtheta[m]=errstat;
-    }
-    else{ P=0.5; break;}
-   
-    thick[m]=Ncell*(Zeff+1);
-    dx[m]=0.25;                // not important
-    
-  } //end loop on Ncell 
-
-  TGraphErrors *ef1=new TGraphErrors(npl-1,thick.GetArray(),theta.GetArray(),dx.GetArray(),dtheta.GetArray());
-  ef1->Fit("f1","MQ");
-  P=f1->GetParameter(0);
-  dP=f1->GetParError(0);
-  P=Abs(P/1000.);
-
-  delete ef1;
-  delete f1;
-  return (float)P;
+return p90;
 }
+//_______________________________________________________________________________________
+double EdbTrackFitter::Mat(float P, int npl, float ang)
+{
+ double DP=0.;
 
+ TMatrixD m57(2,3);
+ TMatrixD m20(2,3);
+ TMatrixD m14(2,3);
+ TMatrixD m10(2,3);
+ TMatrixD m6(2,3);
+ 
+ m57[0][0]=0.15;
+ m57[0][1]=0.19;
+ m57[0][2]=0.21;
+ m57[1][0]=0.22;
+ m57[1][1]=0.26;
+ m57[1][2]=0.28;
+ 
+ m20[0][0]=0.26;
+ m20[0][1]=0.31;
+ m20[0][2]=0.36;
+ m20[1][0]=0.36;
+ m20[1][1]=0.44;
+ m20[1][2]=0.49;
+ 
+ 
+ m14[0][0]=0.29;
+ m14[0][1]=0.38;
+ m14[0][2]=0.42;
+ m14[1][0]=0.45;
+ m14[1][1]=0.51;
+ m14[1][2]=0.54;
+ 
+ 
+ m10[0][0]=0.37;
+ m10[0][1]=0.40;
+ m10[0][2]=0.44;
+ m10[1][0]=0.60;
+ m10[1][1]=0.60;
+ m10[1][2]=0.60;
+
+ 
+ m6[0][0]=0.41;
+ m6[0][1]=0.43;
+ m6[0][2]=0.47;
+ m6[1][0]=0.60;
+ m6[1][1]=0.60;
+ m6[1][2]=0.60;
+
+  
+ int i=0, j=0;
+ 
+ if(Abs(ang)<0.1) i=0;
+ if(Abs(ang)>=0.1) i=1;
+
+ if (P<=3.) j=0;
+ if (P>3.&&P<=5) j=1;
+ if (P>5.) j=2;
+ 
+ if(npl>=20) DP=m57(i,j);
+ if(npl<20&&npl>=14) DP=m20(i,j);
+ if(npl<14&&npl>=10) DP=m14(i,j);
+ if(npl<10&&npl>=6) DP=m10(i,j);
+ if(npl<6&&npl>=2) DP=m6(i,j);
+ 
+ return DP;
+}
 //________________________________________________________________________________________
 float EdbTrackFitter::P_MS(EdbTrackP &tr)
 {
