@@ -12,8 +12,10 @@
 #include "EdbDisplayBase.h"
 #include "EdbPVRec.h"
 #include "EdbVertex.h"
+#include "EdbBrick.h"
 
 class EdbSegG;
+//class EdbBrickP;
 
 //_________________________________________________________________________
 class EdbDisplay: public EdbDisplayBase {
@@ -31,6 +33,10 @@ class EdbDisplay: public EdbDisplayBase {
 
  public:
 
+  Int_t        eFromPlate; // plates range (for colors normalization)
+  Int_t        eToPlate;
+
+  //EdbBrickP    *eB;        // brick object with the plates geometry inside
   EdbVertexRec *eVerRec;
   TObjArray *eArrSegP;     // array of segments to be drawn
   TObjArray *eArrTr;       // array of tracks to be drawn
