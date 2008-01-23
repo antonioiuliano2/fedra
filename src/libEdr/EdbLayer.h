@@ -41,6 +41,7 @@ class EdbLayer : public TObject {
   float Zmax() const {return eZmax;}
   float DX()   const {return eDX;}
   float DY()   const {return eDY;}
+  float DZ()   const {return eZmax-eZmin;}
   float Xmin() const {return X()-DX();}
   float Xmax() const {return X()+DX();}
   float Ymin() const {return Y()-DY();}
