@@ -16,6 +16,24 @@
 #include "EdbPVRec.h"
 #include "EdbLayer.h"
 #include "TMatrix.h"
+#include "TArrayC.h"
+
+//______________________________________________________________________________
+class EdbMask : public TObject {
+
+ private:
+  TArrayC    eBuffer;           // body of the mask
+
+ public:
+  EdbMask() {}
+  EdbMask(int n) {eBuffer.Set(n);}
+  ~EdbMask() {}
+
+  int  At(int i) { if(i<0||i>=eBuffer.fN) return 0; else return (int)(eBuffer[i]); }
+  void SetAt(int i, int val) { eBuffer.AddAt((Char_t)val, i);  }
+
+  ClassDef(EdbMask,1)  // mask service class
+};
 
 //______________________________________________________________________________
 class EdbDataPiece : public TNamed {
@@ -48,6 +66,8 @@ class EdbDataPiece : public TNamed {
 
   EdbRun      *eRun;            //!
   TTree       *eCouplesTree;    //!
+
+  EdbMask     *eEraseMask;      // id's (entries) of segments to be erased when read couples tree
 
  public:
   EdbDataPiece();
@@ -101,6 +121,7 @@ class EdbDataPiece : public TNamed {
 
   int  AcceptViewHeader(const EdbViewHeader *head);
   void MakeNamePar(const char *dir);
+  int  CorrectAngles();
   int  CorrectAngles(TTree *tree);
   void CorrectShrinkage( int layer, float shr );
   int  UpdateShrPar( int layer );
@@ -128,7 +149,7 @@ class EdbDataPiece : public TNamed {
   static TTree *InitCouplesTree( const char *file, const char *mode );
   void CloseCPData();
 
-  ClassDef(EdbDataPiece,1)  // Edb raw data unit (scanned plate) associated with run file
+  ClassDef(EdbDataPiece,2)  // Edb raw data unit (scanned plate) associated with run file
 };
 
 

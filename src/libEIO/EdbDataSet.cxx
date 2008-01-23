@@ -17,6 +17,7 @@
 #include "EdbTraceBack.h"
 #include "EdbLog.h"
 
+ClassImp(EdbMask)
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
 ClassImp(EdbDataProc)
@@ -43,12 +44,13 @@ EdbDataPiece::EdbDataPiece(int plate, int piece, char* file, int flag)
 EdbDataPiece::~EdbDataPiece()
 {
    int i;
-   for(i=0; i<3; i++)  if(eLayers[i])   delete eLayers[i];
-   for(i=0; i<3; i++)  if(eAreas[i])    delete eAreas[i];
-   for(i=0; i<3; i++)  if(eCond[i])     delete eCond[i];
-   for(i=0; i<3; i++)  if(eCuts[i])     delete eCuts[i];
-   for(i=0; i<3; i++)  if(eRCuts[i])    delete eRCuts[i];
-   if(   eCouplesInd)                   delete eCouplesInd;
+   for(i=0; i<3; i++)  if(eLayers[i])   {delete eLayers[i]; eLayers[i]=0;}
+   for(i=0; i<3; i++)  if(eAreas[i])    {delete eAreas[i];  eAreas[i] =0;}
+   for(i=0; i<3; i++)  if(eCond[i])     {delete eCond[i];   eCond[i]  =0;}
+   for(i=0; i<3; i++)  if(eCuts[i])     {delete eCuts[i];   eCuts[i]  =0;}
+   for(i=0; i<3; i++)  if(eRCuts[i])    {delete eRCuts[i];  eRCuts[i] =0;}
+   if( eCouplesInd) { delete eCouplesInd; eCouplesInd=0;}
+   if( eEraseMask ) { delete eEraseMask;  eEraseMask=0; }
    eRunFiles.Delete();
    CloseRun();
    CloseCPData();
@@ -76,6 +78,7 @@ void EdbDataPiece::Set0()
   eRun    = 0;
   eCouplesTree=0;
   eCouplesInd=0;
+  eEraseMask=0;
 }
 
 ///______________________________________________________________________________
@@ -823,6 +826,8 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
 	//{printf("exclude seg %d of pat %d\n",entr,ePlate); continue;}
     }
 
+    if(eEraseMask) if(eEraseMask->At(entr)) continue;
+
     b_cp->GetEntry(entr);                            // !!!
     b_s->GetEntry(entr);                             // !!!
     if( !TakeCPSegment(*cp,*s) )      continue;
@@ -856,6 +861,17 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
 }
 
 ///______________________________________________________________________________
+int EdbDataPiece::CorrectAngles()
+{
+  int n=0;
+  TTree *cptree=0;
+  cptree=EdbDataPiece::InitCouplesTree(GetNameCP(),"READ");
+  if( cptree )  n = CorrectAngles(cptree);
+  Log(2,"CorrectAngles","in piece: %s  using %d basetracks\n",GetNameCP(),n);
+  return n;
+}
+
+///______________________________________________________________________________
 int EdbDataPiece::CorrectAngles(TTree *tree)
 {
   EdbSegCouple    *cp = 0;
@@ -870,12 +886,12 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   EdbAffine2D *aff = new EdbAffine2D();
 
   int nentr = (int)(tree->GetEntries());
-  float *x  = new float[nentr];
-  float *y  = new float[nentr];
-  float *x1 = new float[nentr];
-  float *y1 = new float[nentr];
-  float *x2 = new float[nentr];
-  float *y2 = new float[nentr];
+  TArrayF x(nentr);
+  TArrayF y(nentr);
+  TArrayF x1(nentr);
+  TArrayF y1(nentr);
+  TArrayF x2(nentr);
+  TArrayF y2(nentr);
 
   int nseg = 0;
   printf("nentr = %d\n",nentr);
@@ -895,17 +911,10 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
     nseg++;
   }
 
-  aff->CalculateTurn( nseg,x1,y1,x,y );
+  aff->CalculateTurn( nseg,x1.fArray,y1.fArray,x.fArray,y.fArray );
   UpdateAffTPar(1,*aff);
-  aff->CalculateTurn( nseg,x2,y2,x,y );
+  aff->CalculateTurn( nseg,x2.fArray,y2.fArray,x.fArray,y.fArray );
   UpdateAffTPar(2,*aff);
-
-  delete[] x;
-  delete[] y;
-  delete[] x1;
-  delete[] y1;
-  delete[] x2;
-  delete[] y2;
 
   return nseg;
 }
@@ -1833,13 +1842,9 @@ void EdbDataProc::CorrectAngles()
   printf("npieces = %d\n",npieces);
   if(!npieces) return;
 
-  TTree *cptree=0;
   for(int i=0; i<npieces; i++ ) {
     piece = eDataSet->GetPiece(i);
-    printf("piece: %s\n",piece->GetNameCP());
-    cptree=EdbDataPiece::InitCouplesTree(piece->GetNameCP(),"READ");
-    if( !cptree )  printf("no tree %d\n",i);
-    piece->CorrectAngles(cptree);
+    if(piece) piece->CorrectAngles();
   }
 }
 
