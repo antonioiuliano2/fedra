@@ -28,6 +28,7 @@ using namespace TMath;
 
 EdbSegP:: EdbSegP(int id, float x, float y, float tx, float ty, float w, int flag)
 {
+  eEMULDigitArray =0;
   Set0();
   Set(id,x,y,tx,ty,w,flag);
 }
@@ -119,6 +120,10 @@ void EdbSegP::Copy(const EdbSegP &s)
   SetChi2(s.Chi2());
   SetTrack(s.Track());
   SetMC( s.MCEvt(), s.MCTrack() );
+  if(s.eEMULDigitArray) {
+    eEMULDigitArray = new TRefArray(*s.eEMULDigitArray);
+    printf("copy: %d %d\n",s.eEMULDigitArray->GetEntries(),eEMULDigitArray->GetEntries());
+  }
 }
 
 ///______________________________________________________________________________
@@ -1330,6 +1335,27 @@ void EdbTrackP::Print()
 //        ((EdbSegP*)(eSF->At(i)))->Print();
 }
 
+//______________________________________________________________________________
+void EdbTrackP::PrintNice() 
+{
+  int nseg=0, nsegf=0;
+  nseg = N();
+  nsegf = NF();
+
+  printf("EdbTrackP with %d segments and %d fitted segments:\n", nseg, nsegf );
+  printf("  N     ID           X              Y               Z         TX       TY    W       P       Track   Chi2    Prob     Mass\n");
+  printf("    %8d %14.3f %14.3f %14.3f %7.4f  %7.4f %5.1f  %7.2f %7d   %7.4f  %7.4f   %5.3f\n",
+	   ID(),X(),Y(),Z(),     TX(),   TY(),  W(),  P(),Track(), Chi2(), Prob(),   M());
+
+  EdbSegP *s=0;
+  if(nseg) 
+    for(int i=0; i<nseg; i++) {
+      s = GetSegment(i);
+      printf("%3d %8d %14.3f %14.3f %14.3f %7.4f  %7.4f %5.1f  %7.2f %7d   %7.4f  %7.4f\n",
+	     i, s->ID(),s->X(),s->Y(),s->Z(), s->TX(),s->TY(),  s->W(),  s->P(),s->Track(),s->Chi2(),s->Prob());
+    }
+}
+
 
 //______________________________________________________________________________
 EdbVertex  *EdbTrackP::VertexS()
@@ -1391,6 +1417,19 @@ EdbPattern::EdbPattern(float x0, float y0, float z0, int n) : EdbSegmentsBox(x0,
 {
   Set0();
   eCell     = new TIndexCell();
+}
+
+//______________________________________________________________________________
+EdbPattern::EdbPattern(EdbPattern &p):EdbSegmentsBox(p)
+{
+  eID = p.eID;
+  ePID = p.ePID;
+  eFlag = p.eFlag;
+  eNAff = p.eNAff;
+  eStepX = p.eStepX;  eStepY = p.eStepY;
+  eStepTX = p.eStepTX;  eStepTY = p.eStepTY;
+  for(int i=0; i<4; i++) eSigma[i] = p.eSigma[i];
+  if(p.eCell) eCell = new TIndexCell(*(p.eCell));
 }
  
 //______________________________________________________________________________

@@ -16,6 +16,7 @@
 #include "TMatrixD.h"
 #include "EdbVirtual.h"
 #include "TClonesArray.h"
+#include "TRefArray.h"
 
 class EdbAffine2D;
 class TIndexCell;
@@ -52,11 +53,21 @@ class EdbSegP : public TObject, public EdbTrack2D {
  protected: 
   TMatrixD   *eCOV;            // covariance matrix of the parameters (x,y,tx,ty,p)
 
+ private:
+  TRefArray* eEMULDigitArray; //! AM+AC 27/07/07
+
  public:
-  EdbSegP() {Set0();}
+  EdbSegP() {
+    eEMULDigitArray =0;
+    Set0();}
   EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0);
-  EdbSegP(const EdbSegP &s) { Set0(); Copy(s); }
-  virtual ~EdbSegP() { if(eCOV){delete eCOV; eCOV=0;} }
+  EdbSegP(const EdbSegP &s) {  
+    eEMULDigitArray =0;
+    Set0(); Copy(s); }
+  virtual ~EdbSegP() { 
+    if(eCOV){delete eCOV; eCOV=0;} 
+    if(eEMULDigitArray){ delete eEMULDigitArray; eEMULDigitArray=0;}
+  }
 
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void PropagateTo( float z );
@@ -64,6 +75,12 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void MergeTo( EdbSegP &s );
   Float_t    ProbLink( EdbSegP &s1, EdbSegP &s2 );
   bool       IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
+
+  void addEMULDigit(TObject* a) {
+    if(!eEMULDigitArray) eEMULDigitArray = new TRefArray();
+    eEMULDigitArray->Add(a);
+  }
+  TRefArray*    EMULDigitArray() const  { return eEMULDigitArray;}
 
   void    Set0();
   void    Copy(const EdbSegP &s);
@@ -167,7 +184,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t   Compare(const TObject *obj) const;
 
  
-  ClassDef(EdbSegP,15)  // segment
+  ClassDef(EdbSegP,16)  // segment
 };
 
 //______________________________________________________________________________
@@ -380,6 +397,7 @@ class EdbTrackP : public EdbSegP {
   void ClearF() { if(eSF) eSF->Clear(); }
 
   void Print();
+  void PrintNice();
 
   ClassDef(EdbTrackP,6)  // track consists of segments
 };
@@ -402,6 +420,7 @@ class EdbPattern : public EdbSegmentsBox {
 
  public:
   EdbPattern();
+  EdbPattern( EdbPattern &p );
   EdbPattern(float x0, float y0, float z0, int n=0 );
   virtual ~EdbPattern();
  
