@@ -8,6 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "EdbRunTracking.h"
+#include "EdbBrick.h"
 #include "EdbLog.h"
 #include "EdbTrackFitter.h"
 
@@ -523,6 +524,39 @@ bool  EdbRunTracking::UpdateSBtree( TTree &tsbt, int idp[4], int idf[4])
   return true;
 }
 
+
+//----------------------------------------------------------------------------------------
+bool  EdbRunTracking::GetSBtreeEntry( int entry, TTree &tsbt)
+{
+  EdbSegP *s_pred = &ePred, *s_bt = &eS, *s_mt1=&eS1, *s_mt2=&eS2, *s_next=&eNext;
+
+  tsbt.SetBranchAddress("idpred",eIdp);
+  tsbt.SetBranchAddress("idfound",eIdf);
+  tsbt.SetBranchAddress("stat",&eStatus);
+  tsbt.SetBranchAddress("pred.", &s_pred);
+  tsbt.SetBranchAddress("s.", &s_bt);
+  tsbt.SetBranchAddress("s1.", &s_mt1);
+  tsbt.SetBranchAddress("s2.", &s_mt2);
+  tsbt.SetBranchAddress("next.", &s_next);
+
+  TClonesArray *s_cnd = eScnd.GetSegments();
+  tsbt.SetBranchAddress("scnd", &s_cnd);
+  TClonesArray *s1_cnd = eS1cnd.GetSegments();
+  tsbt.SetBranchAddress("s1cnd", &s1_cnd);
+  TClonesArray *s2_cnd = eS2cnd.GetSegments();
+  tsbt.SetBranchAddress("s2cnd", &s2_cnd);
+
+  TClonesArray *s_pre = eSpre.GetSegments();
+  tsbt.SetBranchAddress("spre", &s_pre);
+  TClonesArray *s1_pre = eS1pre.GetSegments();
+  tsbt.SetBranchAddress("s1pre", &s1_pre);
+  TClonesArray *s2_pre = eS2pre.GetSegments();
+  tsbt.SetBranchAddress("s2pre", &s2_pre);
+
+  tsbt.GetEntry(entry);
+  return true;
+}
+
 //______________________________________________________________________________
 void EdbRunTracking::CloseSBtree(TTree *tree)
 {
@@ -534,4 +568,107 @@ void EdbRunTracking::CloseSBtree(TTree *tree)
     f->Close();
   }
   tree=0;
+}
+
+//______________________________________________________________________________
+float EdbRunTracking::TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps)
+{
+  if     (z<=t.Zmin()) ps.Copy(*t.GetSegmentFFirst());
+  else if(z>=t.Zmax()) ps.Copy(*t.GetSegmentFLast());
+  else         // z is inside the track
+    { printf("EdbRunTracking::TrackExtrapolationToZ: TODO!/n"); }
+  float dz = Abs(ps.Z() - z);
+  ps.PropagateTo( z );
+  return dz;
+}
+
+//______________________________________________________________________________
+int EdbRunTracking::FindTrack(EdbTrackP &track, EdbPlateP &plate)
+{
+  // look for tracks in this plate
+  // track - input track in brick RS - will be updated on output
+  // plate  - all plate parameters including affine transformation plate-to-brick
+
+  int status=-100;
+  float DZmax = 1350*100;
+
+  EdbAffine2D p2b(*(plate.GetAffineXY()));   // from plate to brick
+  EdbAffine2D b2p(p2b); b2p.Invert();        // from brick to plate
+
+  EdbSegP ps;
+  float dz = TrackExtrapolationToZ( track, plate.Z(), ps );   //TODO
+  if(Abs(dz)>DZmax)              return status;
+  if(GetBTHoles(track.Flag())>5) return status;
+  if(GetMTHoles(track.Flag())>3) return status;
+
+  ps.SetFlag(track.Flag());
+  ps.Transform(&b2p);                     // plate.Transoform(seg) ???
+ 
+  EdbSegP fndbt, fnds1, fnds2, snewpred;
+  status = FindPrediction( ps, fndbt, fnds1, fnds2, snewpred ); // -1: not found; 0-bt, 1-bot, 2-top
+  track.SetFlag(snewpred.Flag());
+
+  TransformFromPlateRS(plate);      // transform all components into brick RS
+
+  if(status>=0) {
+    track.AddSegment(  new EdbSegP(eNext) );
+    track.AddSegmentF( new EdbSegP(ePred) );   // add prediction as "fitted segment" because it is an extrapolation
+    track.SetSegmentsTrack();
+  }
+
+  Log(2,"EdbRunTracking::FindTracks","status = %d",status);
+  return status;
+}
+
+//______________________________________________________________________________
+void EdbRunTracking::TransformFromPlateRS(EdbPlateP &plate)
+{
+  EdbAffine2D p2b(*(plate.GetAffineXY()));   // from plate to brick
+
+  ePred.Transform(&p2b);
+  eNext.Transform(&p2b);
+  eS.Transform(&p2b);
+  eS1.Transform(&p2b);
+  eS2.Transform(&p2b);
+  eScnd.Transform(&p2b);
+  eS1cnd.Transform(&p2b);
+  eS2cnd.Transform(&p2b);
+  eSpre.Transform(&p2b);
+  eS1pre.Transform(&p2b);
+  eS2pre.Transform(&p2b);
+  
+  ePred.SetPID( plate.ID() );
+  eNext.SetPID( plate.ID() );
+  eS.SetPID(    plate.ID() );
+  eS1.SetPID(   plate.ID() );
+  eS2.SetPID(   plate.ID() );
+  for(int i=0; i<eScnd.N(); i++)  eScnd.GetSegment(i)->SetPID( plate.ID() );
+  for(int i=0; i<eS1cnd.N(); i++) eS1cnd.GetSegment(i)->SetPID( plate.ID() );
+  for(int i=0; i<eS2cnd.N(); i++) eS2cnd.GetSegment(i)->SetPID( plate.ID() );
+  for(int i=0; i<eSpre.N(); i++)  eSpre.GetSegment(i)->SetPID( plate.ID() );
+  for(int i=0; i<eS1pre.N(); i++) eS1pre.GetSegment(i)->SetPID( plate.ID() );
+  for(int i=0; i<eS2pre.N(); i++) eS2pre.GetSegment(i)->SetPID( plate.ID() );
+
+  ePred.SetZ( plate.Z() );
+  eNext.SetZ( plate.Z() );
+  eS.SetZ(    plate.Z() );
+  eS1.SetZ(   plate.GetLayer(1)->Z() + plate.Z() );
+  eS2.SetZ(   plate.GetLayer(2)->Z() + plate.Z() );
+  for(int i=0; i<eScnd.N(); i++)  eScnd.GetSegment(i)->SetZ( plate.Z() );
+  for(int i=0; i<eS1cnd.N(); i++) eS1cnd.GetSegment(i)->SetZ( plate.GetLayer(1)->Z() + plate.Z() );
+  for(int i=0; i<eS2cnd.N(); i++) eS2cnd.GetSegment(i)->SetZ( plate.GetLayer(2)->Z() + plate.Z() );
+  for(int i=0; i<eSpre.N(); i++)  eSpre.GetSegment(i)->SetZ( plate.Z() );
+  for(int i=0; i<eS1pre.N(); i++) eS1pre.GetSegment(i)->SetZ( plate.GetLayer(1)->Z() + plate.Z() );
+  for(int i=0; i<eS2pre.N(); i++) eS2pre.GetSegment(i)->SetZ( plate.GetLayer(2)->Z() + plate.Z() );
+  
+  eNext.SetDZ( plate.GetLayer(0)->DZ() );
+  eS.SetDZ(    plate.GetLayer(0)->DZ() );
+  eS1.SetDZ(   plate.GetLayer(1)->DZ());
+  eS2.SetDZ(   plate.GetLayer(2)->DZ());
+  for(int i=0; i<eScnd.N(); i++)  eScnd.GetSegment(i)->SetDZ( plate.GetLayer(0)->DZ() );
+  for(int i=0; i<eS1cnd.N(); i++) eS1cnd.GetSegment(i)->SetDZ( plate.GetLayer(1)->DZ() );
+  for(int i=0; i<eS2cnd.N(); i++) eS2cnd.GetSegment(i)->SetDZ( plate.GetLayer(2)->DZ() );
+  for(int i=0; i<eSpre.N(); i++)  eSpre.GetSegment(i)->SetDZ( plate.GetLayer(0)->DZ() );
+  for(int i=0; i<eS1pre.N(); i++) eS1pre.GetSegment(i)->SetDZ( plate.GetLayer(1)->DZ() );
+  for(int i=0; i<eS2pre.N(); i++) eS2pre.GetSegment(i)->SetDZ( plate.GetLayer(2)->DZ() );
 }

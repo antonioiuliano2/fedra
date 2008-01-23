@@ -12,6 +12,8 @@
 #include "EdbLayer.h"
 #include "EdbRunAccess.h"
 
+class EdbPlateP;
+
 //______________________________________________________________________________
 class EdbRunTracking : public EdbRunAccess {
 
@@ -51,6 +53,10 @@ class EdbRunTracking : public EdbRunAccess {
   Float_t eDegradPos;            // SigmaX  = SigmaX(0)  + degradPos   * mth
   Float_t eDegradSlope;          // SigmaTX = SigmaTX(0) + degradSlope * bth
 
+  Int_t   eIdp[4];               // to read from sbt 
+  Int_t   eIdf[4];
+
+
  public:
 
   EdbRunTracking() : EdbRunAccess() { Set0(); };
@@ -77,6 +83,13 @@ class EdbRunTracking : public EdbRunAccess {
   //  int FindCandidateBT(EdbPattern &fndbt, EdbSegP &fnd );
   int FindBestCandidate(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float chi2max);
   int FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred );
+
+  //void TransformToPlateRS( EdbPlateP &plate);
+  void TransformFromPlateRS( EdbPlateP &plate);
+
+  int FindTrack(EdbTrackP &track, EdbPlateP &plate);
+  float TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps);
+
   void Print();
 
   //void Transform(const EdbAffine2D &aff);
@@ -84,6 +97,7 @@ class EdbRunTracking : public EdbRunAccess {
   static void   CloseSBtree(TTree *tree);
   static TTree *InitSBtree(const char *file_name="sbt.root", const char *mode="RECREATE");
   bool   UpdateSBtree( TTree &tsbt, int idp[4], int idf[4]);
+  bool   GetSBtreeEntry( int entry, TTree &tsbt);
     // int stat, 
     //	       EdbSegP &ps, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &nextpred, 
     //	       EdbPattern *scnd=0, EdbPattern *s1cnd=0, EdbPattern *s2cnd=0 );
