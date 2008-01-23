@@ -42,6 +42,7 @@ class EdbBrickP : public EdbLayer {
   int Npl() const {return ePlates.GetEntries();}
   void AddPlate(EdbPlateP *pl) { ePlates.Add(pl); }
   EdbPlateP *GetPlate(int i) {return (EdbPlateP*)ePlates.At(i);}
+  void Clear() { ePlates.Clear(); eSpacers.Clear(); }
   void Print();
 
   ClassDef(EdbBrickP,1)  // OPERA Brick structure definition
