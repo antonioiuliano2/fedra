@@ -76,13 +76,13 @@ export LD_LIBRARY_PATH=$FEDRA_ROOT/lib:${LD_LIBRARY_PATH}
 export PATH=${PATH}:$FEDRA_ROOT/bin
 
 # compilation of libraries
-echo "Do you want to compile the libraries: [y/n]"
-read yesno
-if [[ $yesno == 'y' ]] ; then
+#echo "Do you want to compile the libraries: [y/n]"
+#read yesno
+#if [[ $yesno == 'y' ]] ; then
   chmod u+x $installdir/src/makeall.sh
   cd $installdir/src
   $installdir/src/makeall.sh
-fi
+#fi
 
 # install fedra macros
 cp -r $PROJECT_SRC/appl/macros $installdir/macros
