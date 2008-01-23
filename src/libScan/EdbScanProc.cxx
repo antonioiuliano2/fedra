@@ -131,7 +131,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c)
+int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_erase)
 {
   // read data from scanset sc with cut c and fill ali
   // sc.eIDS is used as an id list
@@ -146,10 +146,10 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c)
     id    = (EdbID *)(sc.eIDS.At(i));
     plate = sc.GetPlate(id->ePlate);
     pat   = new EdbPattern();
-    cnt += ReadPatCPnopar( *pat, *id, c );
+    cnt += ReadPatCPnopar( *pat, *id, c, do_erase);
 
     pat->SetPID(id->ePlate);
-    pat->SetSegmentsPID();
+    for(int j=0; j<pat->N(); j++) pat->GetSegment(j)->SetVid( id->ePlate, pat->GetSegment(j)->Vid(1) );
     pat->SetZ(plate->Z());
     pat->SetSegmentsZ();
     pat->Transform(    plate->GetAffineXY()   );
@@ -159,7 +159,7 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c)
   }
 
   ali.SetPatternsID();
-  //if(!ali.GetScanCond()) ali.SetScanCond( new EdbScanCond() );   //TODO: bad solution
+  for(int i=0; i<n; i++)  ali.GetPattern(i)->SetSegmentsPID();  // PID of the segment must be ID of the pattern!
 
   ali.SetSegmentsErrors();
   ali.SetCouplesAll();
@@ -170,15 +170,96 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c)
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut)
+bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
 {
-  // read couples tree ignoring any par files
+  if(sc.eIDS.GetEntries()<2) return 0;
+  EdbID *id1,*id2;
+  for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
+    id1 = (EdbID *)(sc.eIDS.At(i));
+    id2 = (EdbID *)(sc.eIDS.At(i+1));
+    EdbAffine2D aff;
+    sc.GetAffP2P(id1->ePlate,id2->ePlate, aff);
+    float dz = sc.GetDZP2P(id1->ePlate,id2->ePlate);
+    TString str;
+    MakeAffName(str,*id1,*id2);
+  
+    char card[128];
+    sprintf(card,"ZLAYER 0 %f 0 0",dz);
+    LogPrint(id1->eBrick,2,"MakeAFFSet","%s as %s", str.Data(),card);
+    AddParLine(str.Data(),card);
+    sprintf(card,"AFFXY 0 %f %f %f %f %f %f", aff.A11(), aff.A12(), aff.A21(), aff.A22(), aff.B1(), aff.B2() );
+    LogPrint(id1->eBrick,2,"MakeAFFSet","%s as %s", str.Data(),card);
+    AddParLine(str.Data(),card);
+  }
+  return 1;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::AlignSet(EdbScanSet &sc, int npre, int nfull, const char *opt )
+{
+  if(sc.eIDS.GetEntries()<2) return 0;
+  int n=0;
+  EdbID *id1,*id2;
+  for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
+    id1 = (EdbID *)(sc.eIDS.At(i));
+    id2 = (EdbID *)(sc.eIDS.At(i+1));
+    int id14[4]; id1->Get(id14);
+    int id24[4]; id2->Get(id24);
+    n += AlignAll(id14, id24, npre, nfull, opt);
+  }
+  return n;
+}
+
+
+//----------------------------------------------------------------
+int EdbScanProc::LinkSet(EdbScanSet &sc, int npre, int nfull, int correct_ang)
+{
+  int n=0;
+  EdbID *id;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++) {
+    id = (EdbID *)(sc.eIDS.At(i));
+    n += LinkRunAll(*id,npre,nfull,correct_ang);
+  }
+  return n;
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::CheckFiles( EdbScanSet &sc, const char *suffix )
+{
+  EdbID *id;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++)  {
+    id = (EdbID*)sc.eIDS.At(i);
+    TString str;
+    MakeFileName(str,*id,suffix);
+    gSystem->Exec(Form("ls -l %s",str.Data()));
+  }
+}
+
+//----------------------------------------------------------------
+EdbMask *EdbScanProc::ReadEraseMask(EdbID id)
+{
+  TString str;
+  MakeFileName(str,id,"er.root");
+  TFile f(str.Data());
+  if(!f.IsOpen()) return 0;
+
+  EdbMask *m = 0;
+  f.GetObject("mask",m);
+  f.Close();
+  return m;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut, bool do_erase)
+{
   TString cpfile;
   MakeFileName(cpfile,id,"cp.root");
   EdbDataPiece piece;
   piece.eFileNameCP  = cpfile;
   piece.AddRCut(0,cut);
   if(!piece.InitCouplesTree("READ")) return 0;
+
+  if(do_erase) piece.eEraseMask = ReadEraseMask(id);
   return piece.GetCPData_new( &pat,0,0,0 );
 }
 
@@ -403,6 +484,19 @@ int EdbScanProc::CopyFile(int id1[4], int id2[4], const char *suffix, bool overw
 }
 
 //----------------------------------------------------------------
+int EdbScanProc::RemoveFile(EdbID id, const char *suffix)
+{
+  // remove file
+  TString name;
+  MakeFileName(name,id,suffix);
+  char str[256];
+  sprintf(str,"%s/file_to_remove",eProcDirClient.Data());
+  int status = gSystem->Rename(name.Data(), str);
+  LogPrint(id.eBrick,2,"RemoveFile","status=%d from %s to %s", status, name.Data(), str );
+  return status;
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::CopyAFFPar(int id1c[4], int id2c[4], int id1p[4], int id2p[4], bool overwrite)
 {
   // copy AFF/xc_yc.par to AFF/xp_yp.par
@@ -471,6 +565,72 @@ bool EdbScanProc::ProjectFound(int id1[4],int id2[4])
   ApplyAffZ(pat,id1,id2);
   WritePred(pat,id2);
   WritePatTXT(pat,id2,"man.pred.txt");
+  return true;
+}
+
+//----------------------------------------------------------------
+bool EdbScanProc::CorrectPredWithFound(int id1[4],int id2[4], const char *opt, int patmin)
+{
+  // take p1.found.root, apply AFF/p1_p2.par, read p2.found.root, align and update AFF/p1_p2.par
+
+  EdbPattern p1;   ReadFound(p1,id1);
+  EdbPattern p2;   ReadFound(p2,id2);
+
+  if(p1.N()<2||p2.N()<2) {
+    LogPrint(id1[0],1,"CorrectPredWithFound","ERROR: correction is impossible - too small pattern: %d", p1.N(), p2.N());
+    return false;
+  }
+  else   if(p1.N()<patmin || p2.N()<patmin) 
+    LogPrint(id1[0],1,"CorrectPredWithFound","WARNING: unreliable correction - pattern is too small: %d < %d", p1.N(), p2.N(),patmin);
+  
+  EdbAffine2D aff;  float dz; 
+  if(!GetAffZ(aff, dz, id1,id2))  return false;
+  p1.Transform(&aff);
+  p1.SetZ(-dz);   p1.SetSegmentsZ();
+  p2.SetZ(0);     p2.SetSegmentsZ();
+
+  MakeInPar(id2,"fullalignment");
+  EdbDataPiece piece2;
+  InitPiece(piece2, id2);
+
+  EdbPVRec ali;
+  ali.AddPattern(&p1);
+  ali.AddPattern(&p2);
+  EdbScanCond *cond = piece2.GetCond(0);
+  cond->SetChi2Mode(3);
+  ali.SetScanCond( cond );
+  ali.SetPatternsID();
+  ali.SetSegmentsErrors();
+  ali.SetCouplesAll();
+  ali.SetChi2Max(cond->Chi2PMax());
+  ali.SetOffsetsMax(cond->OffX(),cond->OffY());
+
+  ali.Align(2);
+  //ali.Align(0);
+  int nal = ali.GetCouple(0)->Ncouples();
+
+  if(nal<patmin) {
+    LogPrint(id1[0],1,"CorrectAffWithPred","WARNING: pattern is too small: %d < %d: do not update par file!", nal, patmin);
+    return false;
+  }
+
+  TString parfileOUT;
+  MakeAffName(parfileOUT,id1,id2);
+  piece2.eFileNamePar = parfileOUT;
+  ali.GetPattern(0)->GetKeep(aff);
+  piece2.UpdateAffPar(0,aff);
+
+  if( strstr(opt,"-z")) {
+    EdbDataProc proc;
+    proc.LinkTracksWithFlag( &ali, 10., 0.05, 2, 3, 0 );
+    printf("befire corr z: z1=%f z2=%f \n",ali.GetPattern(0)->Z(), ali.GetPattern(1)->Z());
+    ali.FineCorrZnew();
+    printf("after corr z: z1=%f z2=%f \n",ali.GetPattern(0)->Z(), ali.GetPattern(1)->Z());
+    piece2.UpdateZPar(0,-ali.GetPattern(0)->Z());
+  }
+ 
+  LogPrint(id1[0],1,"CorrectPredWithFound","from %d.%d.%d.%d to %d.%d.%d.%d: used %d (out of %d predictions and %d found) for correction", 
+	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3],  nal, p1.N(), p2.N() );
   return true;
 }
 

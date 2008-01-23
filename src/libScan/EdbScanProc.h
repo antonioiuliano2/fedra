@@ -17,9 +17,12 @@ public:
   virtual ~EdbScanProc(){}
 
   bool    CheckProcDir(int id[4], bool create=true);
+  bool    CheckProcDir( EdbID id, bool create=true) {int id4[4]; id.Get(id4); return CheckProcDir(id4,create); }
   void    MakeFileName(TString &s, int id[4], const char *suffix);
   void    MakeFileName(TString &s, EdbID id, const char *suffix) {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix);}
   void    MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix="aff.par");
+  void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); 
+  return MakeAffName(s,id14,id24,suffix); }
   bool    GetMap(int brick, TString &map);
   bool    AddParLine(const char *file, const char *line);
   bool    MakeInPar(int id[4], const char *option);
@@ -27,6 +30,9 @@ public:
   int     CopyPar(int id1[4], int id2[4], bool overwrite=true) {return CopyFile(id1,id2,"par",overwrite);}
   int     CopyPred(int id1[4],int id2[4], bool overwrite=true) {return CopyFile(id1,id2,"pred.root",overwrite);}
   int     CopyAFFPar(int id1c[4],int id2c[4], int id1p[4], int id2p[4], bool overwrite=true);
+  int     RemoveFile(EdbID id, const char *suffix);
+
+  void    CheckFiles( EdbScanSet &sc, const char *suffix );
 
   int     ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
@@ -48,18 +54,24 @@ public:
   int     ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
   int     ReadPatCP(EdbPattern &pat, int id[4], TCut c="1");
   int     ReadPatCP(EdbPattern &pat, EdbID id, TCut c="1") {int id4[4]; id.Get(id4); return ReadPatCP(pat,id4,c);}
-  int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1");
+  int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1", bool do_erase=true);
+  EdbMask* ReadEraseMask(EdbID id);
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
   bool    SetAFF0(int id1[4], int id2[4]);
+  bool    MakeAFFSet(EdbScanSet &sc);
 
   int     ConvertAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
   int     CorrectAngles(int id[4]);
   int     LinkRun(int id[4], int noUpdate=1);
   int     LinkRunAll(int id[4], int npre=3, int nfull=1, int correct_ang=1);
+  int     LinkRunAll(EdbID id, int npre=3, int nfull=1, int correct_ang=1)  {int id4[4]; id.Get(id4); return LinkRunAll(id4,npre,nfull,correct_ang);}
+  int     LinkSet(EdbScanSet &sc, int npre=3, int nfull=1, int correct_ang=1);
   int     Align(int id1[4], int id2[4], const char *option="");
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
+  int     AlignSet( EdbScanSet &sc, int npre=1, int nfull=3, const char *opt="-z");
+  bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    ProjectFound(int id1[4],int id2[4]);
 
@@ -84,7 +96,7 @@ public:
   bool    AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2);
 
   int     AssembleScanSet(  EdbScanSet &ss);
-  int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1");
+  int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1", bool do_erase=true);
   int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
   int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
 
@@ -92,6 +104,7 @@ public:
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
 
   int     TestAl(int id1[4], int id2[4]);
+  int     TestAl(EdbID id1, EdbID id2)   {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return TestAl(id14,id24); }
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
 
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
