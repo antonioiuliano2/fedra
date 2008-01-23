@@ -192,7 +192,8 @@ void EdbDisplay::Set0()
   fNumericEntries[0] = 0;
   fNumericEntries[1] = 0;
   fNumericEntries[2] = 0;
-  
+  eFromPlate=1;
+  eToPlate=57;
   if (fCanvas) fCanvas->Connect("Closed()", "EdbDisplay", this, "Delete()");
 }
 //________________________________________________________________________
@@ -781,16 +782,20 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
 EdbSegG *EdbDisplay::SegLine(const EdbSegP *seg)
 {
   if (!seg) return 0;
-  float dz = TMath::Abs(seg->DZ());
+  float dz = TMath::Abs(seg->DZ())/2.;
   EdbSegG *line = new EdbSegG(2, this);
-  line->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+  //line->SetPoint(0, seg->X(), seg->Y(), seg->Z()-dz );
+  line->SetPoint(0,
+                 seg->X() - seg->TX()*dz,
+                 seg->Y() - seg->TY()*dz,
+                 seg->Z() -           dz);
   line->SetPoint(1,
                  seg->X() + seg->TX()*dz,
                  seg->Y() + seg->TY()*dz,
                  seg->Z() +           dz);
 
-  int eNpieces=30;
-  line->SetLineColor(gStyle->GetColorPalette(int(46.*(1.-1.*seg->PID()/eNpieces))));  
+  int npieces=eToPlate-eFromPlate;
+  line->SetLineColor(gStyle->GetColorPalette(150+int(46.*(1.-1.*(seg->PID()-eFromPlate)/npieces))));  
   //line->SetLineColor( 2+seg->PID()%7 );
   Width_t lwf = int(seg->W()/10.);
   if (lwf > 3) lwf = 2;
@@ -1789,7 +1794,7 @@ void EdbVertexG::DeleteVertex()
     {
 	if ((eDs->eArrV)->FindObject(eVs))
 	{
-	    eDs->eArrV->Remove((TObject *)eVs);
+	    eDs->eArrV->Remove(eVs);
 	    eDs->eArrV->Compress();
 	    eDs->eVertex = 0;
 	    eDs->Draw();
@@ -1855,7 +1860,7 @@ void EdbVertexG::RemoveKink()
     {
 	if ((eDs->eArrV)->FindObject(eVs))
 	{
-	    eDs->eArrV->Remove((TObject *)eVs);
+	    eDs->eArrV->Remove(eVs);
 	    eDs->eArrV->Compress();
 	    eDs->eVertex = 0;
 	    eDs->Draw();
@@ -3271,7 +3276,7 @@ void EdbDisplay::UndoModifiedVTX()
 	delete eWorking;
 	if (InWork && !InPrev)
 	{
-	    eCreatedTracks.Remove((TObject *)LastCreated);
+	    eCreatedTracks.Remove(LastCreated);
 	    if (eArrTr) if (eArrTr->FindObject(LastCreated))
 	    {
 		eArrTr->Remove(LastCreated);
@@ -3314,7 +3319,7 @@ void EdbDisplay::UndoModifiedVTX()
 	delete eWorking;
 	if (tr && eCreatedTracks.FindObject(tr))
 	{
-	    eCreatedTracks.Remove((TObject *)tr);
+	    eCreatedTracks.Remove(tr);
 	    if (eArrTr) if (eArrTr->FindObject(tr))
 	    {
 		eArrTr->Remove(tr);
@@ -3401,9 +3406,9 @@ void EdbDisplay::AcceptModifiedVTX()
 //	    fflush(stdout);
 	    for(int i=0; i<ntr; i++)
 	    {
-//		printf("    %d %x\n", i, eVertex->GetVTa(i));
+//		printf("    %d\n", i);
 //		fflush(stdout);
-		(eVerRec->eVTA).Remove((TObject *)(eVertex->GetVTa(i)));
+		(eVerRec->eVTA).Remove(eVertex->GetVTa(i));
 	    }
 	}
 	int indd = -1;
@@ -3433,7 +3438,6 @@ void EdbDisplay::AcceptModifiedVTX()
 		    tr->SetID(trind++);
 		    if (etr) etr->Add(tr);
 		    if (eArrTr) eArrTr->Add(tr);
-		    tr->SetSegmentsTrack();
 //		    printf("     id %d\n", tr->ID());
 //		    fflush(stdout);
 //		}
