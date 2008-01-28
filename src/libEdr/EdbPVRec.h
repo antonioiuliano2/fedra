@@ -158,7 +158,6 @@ class EdbPatCouple : public TObject {
   void         SetCHI2mode(int m) { eCHI2mode=m; }
   int          CHI2mode() const { return eCHI2mode; }
   float        Chi2Pz0(EdbSegCouple *scp);
-  float        Chi2Pn(EdbSegCouple *scp);
   float        Chi2A(EdbSegCouple *scp, int iprob=1);
   float        Chi2A(EdbSegP *s1, EdbSegP *s2, int iprob=1);
   float        Chi2KF(EdbSegCouple *scp);
@@ -324,8 +323,6 @@ class EdbPVRec : public EdbPatternsVolume {
 
   static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
 			  const float X0, const float ProbMin, float &prob );
-
-  int MakePatternsFromTracks();
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };
