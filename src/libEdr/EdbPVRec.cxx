@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // EdbPVRec                                                             //
 //                                                                      //
@@ -272,8 +272,8 @@ int EdbPatCouple::FillCHI2P()
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
 
-    if     (eCHI2mode==1) chi2 = Chi2Pn(scp);
-    else if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
+    //if     (eCHI2mode==1) chi2 = Chi2Pn(scp);  //deprecated
+    if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
     else if(eCHI2mode==3) chi2 = Chi2KF(scp);
     else                  chi2 = Chi2A(scp);
 
@@ -282,26 +282,6 @@ int EdbPatCouple::FillCHI2P()
   }
   return Ncouples();
 }
-
-//______________________________________________________________________________
-/* TODO
-bool EdbPatCouple::IsCompatible( EdbSegP *s1, EdbSegP *s2, EdbScanCond *cond ) const
-{
-  // return true if segments are compatible with acceptance defined in cond 
-
-  float dtx=s2->TX()-s1->TX();
-  float stx = cond->SigmaTX( TMath::Max( TMath::Abs(s2->TX()),TMath::Abs(s1->TX())) );
-  if( dtx > BinTX()*stx )    return false;
-  float dty=TY()-s.TY();
-  if( dty*dty > STY()*nsigt*nsigt )    return false;
-  float dz=s.Z()-Z();
-  float dx=X()+TX()*dz-s.X();
-  if( dx*dx > SX()*nsigx*nsigx )       return false;
-  float dy=Y()+TY()*dz-s.Y();
-  if( dy*dy > SY()*nsigx*nsigx )       return false;
-  return true;
-}
-*/
 
 ///______________________________________________________________________________
 int EdbPatCouple::FillCHI2()
@@ -347,37 +327,25 @@ float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
 {
   EdbSegP *s1 = Pat1()->GetSegment(scp->ID1());
   EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
-  return Chi2A(s1,s2, iprob);
-}
+  float chi2 = Chi2A(s1,s2, iprob);
 
-/*
-///______________________________________________________________________________
-float EdbPatCouple::Chi2Aold(EdbSegP *s1, EdbSegP *s2, int iprob)
-{
-  // fast estimation of chi2 in the special case when the position 
-  // errors of segments are negligible in respect to angular errors: 
-  // sigmaXY/dz << sigmaTXY
-  // application: up/down linking, alignment (offset search)
-  //
-  // badness: generate combinatorical peaks in 4 quadrants
-  //
-  float dz  = s2->Z() - s1->Z();
-  float tx  = (s2->X() - s1->X())/dz;
-  float ty  = (s2->Y() - s1->Y())/dz;
-  float stx   = eCond->SigmaTX(tx);
-  float sty   = eCond->SigmaTY(ty);
-  float prob1=1., prob2=1.;
-  if(iprob) {
-    prob1 = eCond->ProbSeg(tx,ty,s1->W());
-    prob2 = eCond->ProbSeg(tx,ty,s2->W());
-  }
-  float dtx1 = (s1->TX()-tx)*(s1->TX()-tx)/stx/stx/prob1;
-  float dty1 = (s1->TY()-ty)*(s1->TY()-ty)/sty/sty/prob1;
-  float dtx2 = (s2->TX()-tx)*(s2->TX()-tx)/stx/stx/prob2;
-  float dty2 = (s2->TY()-ty)*(s2->TY()-ty)/sty/sty/prob2;
-  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+  if(scp->eS) delete (scp->eS);
+  EdbSegP *s = scp->eS=new EdbSegP();
+  s->Set( 0,                              // id will be assigned on writing into the tree
+	  (s1->X()+s2->X())/2.,
+	  (s1->Y()+s2->Y())/2.,
+	  (s1->X()-s2->X())/(s1->Z()-s2->Z()),
+	  (s1->Y()-s2->Y())/(s1->Z()-s2->Z()),
+	  s1->W()+s2->W(),0
+	  );
+  s->SetZ( (s2->Z()+s1->Z())/2 );
+  s->SetChi2( chi2 );
+  s->SetDZ( s2->Z()-s1->Z() );
+  s->SetVolume( s1->Volume()+s2->Volume() );
+  s->SetMC(s1->MCEvt(),s1->MCTrack());
+
+  return chi2;
 }
-*/
 
 ///______________________________________________________________________________
 float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
@@ -423,87 +391,6 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   return chi2a;
 }
 
-/*
-///______________________________________________________________________________
-float EdbPatCouple::Chi2full( EdbSegP *s1, EdbSegP *s2, int iprob  )
-{
-  // full estimation of chi2  
-  //
-  // All calculation are done in the track plane which remove the 
-  // dependancy of the polar angle (phi)
-
-  float tx,ty;
-
-  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
-  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
-
-  TVector3 v1,v2,v;  // values
-  TVector3 s1,s2,s;  // sigmas
-  s1.SetXYZ( 
-
-
-  v1.SetXYZ( s1->TX(), s1->TY() , -1. );
-  v2.SetXYZ( s2->TX(), s2->TY() , -1. );
-  v.SetXYZ(  -( s2->X() - s1->X() ),
-	     -( s2->Y() - s1->Y() ),
-	     -( s2->Z() - s1->Z() ) );
-
-  float phi = v.Phi();
-  v.RotateZ(  -phi );
-  v1.RotateZ( -phi );
-  v2.RotateZ( -phi );
-
-  float dz  = v.Z();
-  tx  = v.X()/dz;
-  ty  = v.Y()/dz;
-  float stx   = eCond->SigmaTX(tx);
-  float sty   = eCond->SigmaTY(ty);
-  float prob1=1., prob2=1.;
-  if(iprob) {
-    prob1 = eCond->ProbSeg(tx,ty,s1->W());
-    prob2 = eCond->ProbSeg(tx,ty,s2->W());
-  }
-  float dtx1 = (v1.X()-tx)*(v1.X()-tx)/stx/stx/prob1;
-  float dty1 = (v1.Y()-ty)*(v1.Y()-ty)/sty/sty/prob1;
-  float dtx2 = (v2.X()-tx)*(v2.X()-tx)/stx/stx/prob2;
-  float dty2 = (v2.Y()-ty)*(v2.Y()-ty)/sty/sty/prob2;
-  return TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
-}
-
-*/
-
-///______________________________________________________________________________
-float EdbPatCouple::Chi2Pn( EdbSegCouple *scp )
-{
-  //use grain parameters for segment errors estimation
-
-  EdbSegP *s1=0, *s2=0;
-  float sx=.5, sy=.5, sz=3., dz=44.;
-  float sa;
-  float a1,a2;
-  float tx,ty;
-
-  TVector3 v1,v2,v;
-
-  s1 = Pat1()->GetSegment(scp->ID1());
-  s2 = Pat2()->GetSegment(scp->ID2());
-
-  tx = (s2->X() - s1->X())/(s2->Z() - s1->Z());
-  ty = (s2->Y() - s1->Y())/(s2->Z() - s1->Z());
-
-  v1.SetXYZ( s1->TX()/sx, s1->TY()/sy , 1./sz );
-  v2.SetXYZ( s2->TX()/sx, s2->TY()/sy , 1./sz );
-  v.SetXYZ(  -( s2->X() - s1->X() )/sx , 
-	     -( s2->Y() - s1->Y() )/sy , 
-	     -( s2->Z() - s1->Z() )/sz   );
-  a1 = v.Angle(v1);
-  a2 = v.Angle(v2);
-  sa = sz/dz*TMath::Cos(v.Theta());
-  
-  return TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
-    eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
-}
-
 ///______________________________________________________________________________
 float EdbPatCouple::Chi2Pz0(EdbSegCouple *scp)
 {
@@ -531,8 +418,25 @@ float EdbPatCouple::Chi2Pz0(EdbSegCouple *scp)
 
   sa = sz/dz*TMath::Cos(v.Theta());
 
-  return TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
+  float chi2 =  TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
     eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
+
+  if(scp->eS) delete (scp->eS);
+  EdbSegP *s = scp->eS=new EdbSegP();
+  s->Set( 0,                              // id will be assigned on writing into the tree
+	  (s1->X()+s2->X())/2.,
+	  (s1->Y()+s2->Y())/2.,
+	  tx,
+	  ty,
+	  s1->W()+s2->W(),0
+	  );
+  s->SetZ( (s2->Z()+s1->Z())/2 );
+  s->SetDZ( (s2->DZ()+s1->DZ())/2. );
+  s->SetChi2( chi2 );
+  s->SetVolume( s1->Volume()+s2->Volume() );
+  s->SetMC(s1->MCEvt(),s1->MCTrack());
+
+  return chi2;
 }
 
 ///______________________________________________________________________________
@@ -930,40 +834,6 @@ EdbPVRec::~EdbPVRec()
 }
 
 ///______________________________________________________________________________
-int EdbPVRec::MakePatternsFromTracks()
-{
-  //TODO - remove it?
-  // starting from the tracks array regenerate patterns to make the 
-  // volume consistent. Assuming all pattern parameters setted correctly and pid's 
-  // are in agreement with 
-  /*
-  if(!eTracks)  return 0;
-  int ntr = eTracks->GetEntries();
-  if(ntr<=0)    return 0;
-  int npat = Npatterns();
-  if(npat<=0)   return 0;
-
-  DropCell();
-  for(int i=0; i<npat; i++)
-    if(GetPattern(i)->GetSegments()) 
-      GetPattern(i)->GetSegments()->Clear();
-
-  EdbTrackP *tr; 
-  EdbSegP  *seg;
-  int nseg;
-  for(int i=0; i<ntr; i++) {
-    tr = GetTrack(i);
-    nseg = tr.N();
-    for(int j=0; j<nseg; j++) {
-      seg = tr->GetSegment(j);
-    }
-  }
-
-  */
-  return 0;
-}
-
-///______________________________________________________________________________
 EdbPatCouple *EdbPVRec::AddCouple(int id1, int id2)
 {
   EdbPatCouple *c = new EdbPatCouple();
@@ -994,9 +864,6 @@ void EdbPVRec::SetCouples()
     pc->SetPat2( GetPattern(pc->ID2()) );
 
     pc->SetCHI2mode(GetScanCond()->Chi2Mode());
-    //if( TMath::Abs(pc->Pat2()->Z() - pc->Pat1()->Z()) < 40. )  pc->SetCHI2mode(2);
-
-    //pc->SetCHI2mode(3);  /// debug
   }
 }
 
@@ -1665,7 +1532,6 @@ int EdbPVRec::MergeTracks(int maxgap)
   return merged;
 }
 
-
 //______________________________________________________________________________
 int EdbPVRec::MergeTracks1(int maxgap)
 {
@@ -1696,49 +1562,49 @@ int EdbPVRec::MergeTracks1(int maxgap)
       if(!cs) continue;
 
       for(int iee=0; iee<ce->GetEntries(); iee++) {
-	itre = ce->At(iee)->Value();
-	tre  = (EdbTrackP*)((*eTracks)[itre]);
-	if(!tre)             continue;
-	if(tre->Flag()==-10) continue;
-	s1 = tre->GetSegmentF(tre->N()-1);
+        itre = ce->At(iee)->Value();
+        tre  = (EdbTrackP*)((*eTracks)[itre]);
+        if(!tre)             continue;
+        if(tre->Flag()==-10) continue;
+        s1 = tre->GetSegmentF(tre->N()-1);
 
-	for(int iss=0; iss<cs->GetEntries(); iss++) {
-	  itrs = cs->At(iss)->Value();
-	  trs  = (EdbTrackP*)((*eTracks)[itrs]);
-	  if(!trs)             continue;
-	  if(trs->Flag()==-10) continue;
-	  s2 = trs->GetSegmentF(0);
+        for(int iss=0; iss<cs->GetEntries(); iss++) {
+          itrs = cs->At(iss)->Value();
+          trs  = (EdbTrackP*)((*eTracks)[itrs]);
+          if(!trs)             continue;
+          if(trs->Flag()==-10) continue;
+          s2 = trs->GetSegmentF(0);
 
-	  if( TMath::Abs(s2->TX()-s1->TX()) > stx )                 continue;
-	  if( TMath::Abs(s2->TY()-s1->TY()) > sty )                 continue;
-	  dz = s2->Z()-s1->Z();
-	  tx = (s2->TX() + s1->TX())/2.;
-	  dx =  (s2->X() - tx*dz/2.) - (s1->X() + tx*dz/2.);
-	  if(TMath::Abs(dx) > sx+stx*TMath::Abs(dz)/2. )            continue;
-	  ty = (s2->TY() + s1->TY())/2.;
-	  dy =  (s2->Y() - ty*dz/2.) - (s1->Y() + ty*dz/2.);
-	  if( TMath::Abs(dy)> sy+sty*TMath::Abs(dz)/2. )            continue;
+          if( TMath::Abs(s2->TX()-s1->TX()) > stx )                 continue;
+          if( TMath::Abs(s2->TY()-s1->TY()) > sty )                 continue;
+          dz = s2->Z()-s1->Z();
+          tx = (s2->TX() + s1->TX())/2.;
+          dx =  (s2->X() - tx*dz/2.) - (s1->X() + tx*dz/2.);
+          if(TMath::Abs(dx) > sx+stx*TMath::Abs(dz)/2. )            continue;
+          ty = (s2->TY() + s1->TY())/2.;
+          dy =  (s2->Y() - ty*dz/2.) - (s1->Y() + ty*dz/2.);
+          if( TMath::Abs(dy)> sy+sty*TMath::Abs(dz)/2. )            continue;
 
-	  //if(tre->N()+trs->N()>npat)
-	  printf("%f \t%f %f \t%f %f %d  %d \n",
-		 dz , dx,dy, 
-		 s2->TX()-s1->TX(), s2->TY()-s1->TY(),
-		 tre->N(),trs->N() );
+          //if(tre->N()+trs->N()>npat)
+          printf("%f \t%f %f \t%f %f %d  %d \n",
+                 dz , dx,dy,
+                 s2->TX()-s1->TX(), s2->TY()-s1->TY(),
+                 tre->N(),trs->N() );
 
-	  printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(s1,s2, 5810., tre->M()) );
+          printf( "prob = %15.13f\n", EdbVertexRec::ProbeSeg(s1,s2, 5810., tre->M()) );
 
-	  tre->AddTrack(*trs);
-	  tre->FitTrackKFS(true,X0);
-	  tre->SetFlag(-10);
-	  tre->SetN0( tre->N0() + trs->N0() + igap-1 );
-	  tre->SetNpl( tre->Npl() + trs->Npl() + igap-1 );
+          tre->AddTrack(*trs);
+          tre->FitTrackKFS(true,X0);
+          tre->SetFlag(-10);
+          tre->SetN0( tre->N0() + trs->N0() + igap-1 );
+          tre->SetNpl( tre->Npl() + trs->Npl() + igap-1 );
 
-	  (*eTracks)[itrs]=0;    delete trs; trs = 0;
+          (*eTracks)[itrs]=0;    delete trs; trs = 0;
 
-	  imerged++;
-	  break;
+          imerged++;
+          break;
 
-	}
+        }
       }
     }
   }
