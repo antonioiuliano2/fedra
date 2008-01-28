@@ -86,3 +86,4 @@ export PATH=${PATH}:$FEDRA_ROOT/bin
 
 # install fedra macros
 cp -r $PROJECT_SRC/appl/macros $installdir/macros
+cd $installdir
