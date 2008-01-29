@@ -249,6 +249,7 @@ void EdbDisplayBase::Set0()
   fView      = 0;
   fStyle     = 0;
   fLineWidth = 1;
+  fColorBG   = kBlack;
   if(!fDetector){fDetector = 0;}
   fDrawDet = 0;
   for (int i=0; i<50; i++) fRemBut[i] = 0;
@@ -285,7 +286,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 2;
-	fColorBG=12;
+	fColorBG=kBlack;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(38);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(38);
@@ -310,7 +311,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 1;
-	fColorBG=12;
+	fColorBG=kWhite;
 	fPad->SetFillColor(18);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
@@ -336,7 +337,7 @@ void EdbDisplayBase::SetStyle(int Style)
     {
 	fStyle = Style;
 	fLineWidth = 2;
-	fColorBG = 18;
+	fColorBG = kWhite;
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("Rotate")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("OpenGL")))->SetFillColor(33);
 	((TButton *)(fButtons->GetListOfPrimitives()->FindObject("X3D")))->SetFillColor(33);
