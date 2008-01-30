@@ -19,7 +19,7 @@ $(LIB_TGT): $(OBJ)
 
 $(CINT_NAME).cxx: $(CINT)
 	@echo "Generating dictionary $@..."
-	rootcint   -f $@ -c -I$(INC_DIR) $^
+	rootcint   -f $@ -c -p -I$(INC_DIR) $^
 
 clean:
 	@rm -fr core *.bak *.o $(LIB_TGT) *.log *.out *Cint.cxx *Cint.h *~ $(depfile) .*.bak

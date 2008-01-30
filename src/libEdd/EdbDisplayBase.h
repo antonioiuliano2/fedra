@@ -12,7 +12,7 @@
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TSlider.h"
-#include "TView.h"
+
 #include "TPolyLine3D.h"
 #include "TPolyMarker3D.h"
 #include "TClonesArray.h"
@@ -30,18 +30,33 @@
 #include "TVirtualX.h"
 #include "TGeoVolume.h"
 
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,15,0)
+#include "TView3D.h"
+#else
+#include "TView.h"
+#endif
+
 static const int kMAXZOOMS=30;
 
 //_________________________________________________________________________
-class Edb3DView: public TView {
-
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,15,0)
+class Edb3DView: public TView3D
+#else
+class Edb3DView: public TView
+#endif
+ {
 protected:
 
    bool fRotateMode;
 
 public:
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,15,0)
+   Edb3DView() : TView3D(1)
+#else
+   Edb3DView() : TView(1) 
+#endif
+{ fRotateMode = false;};
 
-   Edb3DView() : TView(1) { fRotateMode = false;};
    ~Edb3DView() {};
 
    virtual const char *	GetTitle() const;

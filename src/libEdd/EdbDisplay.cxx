@@ -9,6 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TROOT.h"
 #include "TStyle.h"
 #include "TSystem.h"
 #include "TGButton.h"
