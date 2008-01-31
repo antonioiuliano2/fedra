@@ -51,7 +51,7 @@ protected:
 
 public:
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5,15,0)
-   Edb3DView() : TView3D(1)
+   Edb3DView() : TView3D()
 #else
    Edb3DView() : TView(1) 
 #endif
