@@ -251,6 +251,7 @@ void EdbDisplay::GuessRange()
 	zmax=s->Z()+marg;
 	zmin=s->Z()-marg;
       }
+
       if(xmax<s->X()+marg) xmax=s->X()+marg;
       if(xmin>s->X()-marg) xmin=s->X()-marg;
       if(ymax<s->Y()+marg) ymax=s->Y()+marg;
