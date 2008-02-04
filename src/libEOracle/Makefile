@@ -9,7 +9,7 @@ ORALIB        = $(ORA)
 
 NAME          = EOracle
 
-headers       = TOracleServerE.h TOracleServer.h TOracleResult.h TOracleRow.h
+headers       = TOracleServerE2W.h TOracleServerE2.h TOracleServerE.h TOracleServer.h TOracleResult.h TOracleRow.h
 
 PROJECT_LIBS += -L$(ORACLE_HOME)/lib -lclntsh -locci 
 PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lEdb -lEmath -lEphys -lvt -lEdr

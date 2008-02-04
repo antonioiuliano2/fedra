@@ -4,6 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class TOracleServerE2W;
+#pragma link C++ class TOracleServerE2;
 #pragma link C++ class TOracleServerE;
 #pragma link C++ class TOracleServer;
 #pragma link C++ class TOracleResult;

@@ -12,6 +12,7 @@
 #include "TOracleServer.h"
 #include "TOracleResult.h"
 #include "TUrl.h"
+#include "TTree.h"
 
 ClassImp(TOracleServer)
 
@@ -310,4 +311,79 @@ const char *TOracleServer::ServerInfo()
       return 0;
    }
    return "Oracle";
+}
+
+//______________________________________________________________________________
+Int_t TOracleServer::QueryTree(char *query, TTree *tree, char *leafs)
+{
+  // read from database the given query and fill the tree with the results
+  // example: db->QueryTree("select * from tb_plates",t);
+  // VT(2004)
+
+  if (!IsConnected()) {
+    Error("QueryTree", "not connected");
+    return 0;
+  }
+  if (!tree) {
+    Error("QueryTree", "tree is not valid");
+    return 0;
+  }
+ 
+  try {
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    fStmt->setSQL(query);
+    fStmt->setPrefetchRowCount(2000);
+    printf("\nexecute sql query: %s ...\n",query);
+    fStmt->execute();
+    
+    ResultSet *rset = fStmt->getResultSet();
+    vector<MetaData> cmd = rset->getColumnListMetaData();
+    const int  nlmax=cmd.size();
+    printf("Number of metadata fields: %d\n", nlmax);
+    if(nlmax<1) return 0;
+    
+    TString leaflist(nlmax*64);
+    int ind=0;
+    int *ifields = new int[nlmax];
+    int dtype=0;
+     
+    for (int i = 0; i < nlmax; i++) {
+      dtype = cmd[i].getInt(MetaData::ATTR_DATA_TYPE);
+      printf("\nocci field type: %d \t",dtype);
+      string s = cmd[i].getString(MetaData::ATTR_NAME);
+      if (dtype == OCCI_SQLT_NUM )
+	{
+	  ifields[ind++] = i + 1;
+	  if (ind > 1) leaflist+=":";
+	  leaflist+= s.c_str();
+	  leaflist+="/F";
+	  printf("%s added", s.c_str());
+	} else printf("%s skipped", s.c_str());
+    }
+    
+    leaflist.ToLower();
+    printf("\n\nleaflist=%s\n", leaflist.Data());
+    if(leafs) {
+      leaflist=leafs;
+      printf("\n\nleaflist=%s\n", leaflist.Data());
+    }
+    Float_t *data = new Float_t[ind];
+    tree->Branch("query", data, leaflist.Data() );
+    
+    while (rset->next() == 1)
+      {
+	for (int i = 0; i < ind; i++)
+	  data[i] = rset->getFloat(ifields[i]);
+	tree->Fill();
+      }
+    
+    delete rset;
+    delete[] ifields;
+    delete[] data;
+    return tree->GetEntries();
+  } catch (SQLException &oraex)  {
+    Error("TOracleServer", "QueryTree failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
 }

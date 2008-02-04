@@ -1,5 +1,6 @@
 // @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleServer.h,v 1.5 2007-08-31 12:14:00 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
+// Modified and adopted to OPERA by Valeri Tioukov 
 
 /*************************************************************************
  * Copyright (C) 1995-2005, Rene Brun and Fons Rademakers.               *
@@ -31,9 +32,13 @@ class Connection;
 class Statement;
 #endif
 
+class TTree;
+
 class TOracleServer : public TSQLServer {
 
   friend class TOracleServerE;
+  friend class TOracleServerE2;
+  friend class TOracleServerE2W;
 
 private:
    Environment  *fEnv;    // environment of Oracle access
@@ -64,6 +69,9 @@ public:
    Int_t       Reload();
    Int_t       Shutdown();
    const char *ServerInfo();
+
+   // new functions in respect to basic root class (VT)
+   Int_t       QueryTree(char *query, TTree *tree, char *leafs=0);
 
    ClassDef(TOracleServer,0)  // Connection to Oracle server
 };
