@@ -4,7 +4,7 @@
 #       ./makeall.sh  depend - create all dependencies
 #
 
-LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libEOracle libScan libShower"
+LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libEOracle libScan libShower libEGraphTool"
 for lib in ${LIBS} ; do
     echo 
     echo "make $1 in ${lib} ............."
@@ -13,7 +13,7 @@ for lib in ${LIBS} ; do
     cd ..
 done
 
-APPLS="appl/recset appl/rwc2edb appl/tracks2edb appl/bmatrix appl/checkrun"
+APPLS="appl/recset appl/rwc2edb appl/tracks2edb appl/bmatrix appl/checkrun appl/display"
 for appl in ${APPLS} ; do
     echo 
     echo "make $1 in ${appl} ............"
