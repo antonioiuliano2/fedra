@@ -57,6 +57,9 @@ NMAKE clean"
 			<File
 				RelativePath="..\..\src\libACQ\serialport.cpp">
 			</File>
+			<File
+				RelativePath="..\..\src\libACQ\StdAfx.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -64,6 +67,9 @@ NMAKE clean"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\src\libACQ\AcqCOM.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\ACQLinkDef.h">
 			</File>
 			<File
 				RelativePath="..\..\src\libACQ\AcqMarksScanner.h">
@@ -85,6 +91,9 @@ NMAKE clean"
 			</File>
 			<File
 				RelativePath="..\..\src\libACQ\serialport.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libACQ\StdAfx.h">
 			</File>
 		</Filter>
 		<Filter

@@ -122,7 +122,7 @@ Int_t RemoveViews(const char* infile, const char* outfname,
 
 int main(int argc, char* argv[])
 {
-  char fname[9][256], 
+  char fname[9][256] ;
   char* outname;
   char cutstr[256];
   char options[256];

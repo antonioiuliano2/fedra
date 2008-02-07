@@ -16,6 +16,7 @@ PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lEdb -lEmath -lEphys -lvt -lEdr
 
 INC_DIR      += -I$(ORAINC)
 CXXFLAGS     += -I$(INC_DIR) -DNOTROOTCINT
+
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk
 #------------------------------------------------------------------------------

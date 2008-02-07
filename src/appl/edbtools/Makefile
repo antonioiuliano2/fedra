@@ -1,14 +1,12 @@
 #------------------------------------------------------------------------------
- include $(FEDRA_ROOT)/src/config/ProjectDef.mk
- include $(FEDRA_ROOT)/src/config/RootDef.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdb
 
-CXXFLAGS  += -I$(INC_DIR)
+TARGET  =       $(BIN_DIR)/edbtools$(ExeSuf)
 
-edbtools: edbtools.o
-	$(LD) $^ $(LIBS) $(PROJECT_LIBS) -o $(BIN_DIR)/edbtools;
+PROJECT_LIBS = -lEdb
 
-clean:
-	@rm -fr core *.bak *.o *.log *.out $(BIN_DIR)/edbtools*~
-
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#------------------------------------------------------------------------------

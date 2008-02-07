@@ -56,8 +56,8 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fZoomMode      = 1;
    fZooms         = 0;
 
-   if ((pres = strstr(title, "Presentation"))) SetStyle(1); // presentation style
-   else if ((pres = strstr(title, "presentation"))) SetStyle(1);
+   if ((pres = strstr((char*)title, "Presentation"))) SetStyle(1); // presentation style
+   else if ((pres = strstr((char*)title, "presentation"))) SetStyle(1);
    strcpy(fTitle, title);
    ptitle = fTitle;
    while (*ptitle) { if (*ptitle == ' ') *ptitle = '_'; ptitle++; }

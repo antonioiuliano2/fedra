@@ -49,7 +49,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\checkrun\Makefile.w32">
+			RelativePath="..\..\src\appl\checkrun\Makefile">
 		</File>
 	</Files>
 	<Globals>

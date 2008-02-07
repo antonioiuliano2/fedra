@@ -1,13 +1,13 @@
 #------------------------------------------------------------------------------
- include ../../config/ProjectDef.mk
- include ../../config/RootDef.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-PROJECT_LIBS = -L$(LIB_DIR) -lEdr -lEdb -lEmath
+APPL = aln
 
-CXXFLAGS  += -I$(INC_DIR)
+PROJECT_LIBS = -lEdr -lEdb -lEmath
 
-aln : aln.o
-	$(LD) aln.o $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o aln;
-clean: 
-	rm *.o aln
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#------------------------------------------------------------------------------
+

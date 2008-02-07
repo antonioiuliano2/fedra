@@ -216,7 +216,6 @@ Global
 		..\..\src\config\RootDef.mk = ..\..\src\config\RootDef.mk
 		..\..\src\appl\macros\rootlogon.C = ..\..\src\appl\macros\rootlogon.C
 		..\..\src\config\TargetsDef.mk = ..\..\src\config\TargetsDef.mk
-		..\..\src\config\TargetsDefAppl.mk = ..\..\src\config\TargetsDefAppl.mk
 		..\..\src\appl\macros\test_oracle.C = ..\..\src\appl\macros\test_oracle.C
 		..\..\src\appl\macros\traceback.C = ..\..\src\appl\macros\traceback.C
 		..\..\uninstall.cmd = ..\..\uninstall.cmd

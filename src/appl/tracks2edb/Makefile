@@ -1,14 +1,12 @@
 #------------------------------------------------------------------------------
- include $(FEDRA_ROOT)/src/config/ProjectDef.mk
- include $(FEDRA_ROOT)/src/config/RootDef.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdb -lDataConversion -lEmath -lEphys -lvt -lEdr -lEIO
 
-CXXFLAGS  += -I$(INC_DIR)
+TARGET       = $(BIN_DIR)/tracks2edb$(ExeSuf)
 
-tracks2edb: tracks2edb.o
-	$(LD) $^ $(LIBS) $(PROJECT_LIBS) -o $(BIN_DIR)/tracks2edb;
+PROJECT_LIBS = -lEdb -lEIO -lEmath -lEdr -lvt -lDataConversion -lEphys
 
-clean:
-	@rm -fr core *.bak *.o *.log *.out $(BIN_DIR)/tracks2edb*~
-
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#------------------------------------------------------------------------------

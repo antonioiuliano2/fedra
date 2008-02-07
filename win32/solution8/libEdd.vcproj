@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="libEdd"
+	ProjectGUID="{E78D63BD-9E21-4AD6-915D-6BDA202F9F9E}"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEdd&#x0D;&#x0A;NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEdd&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEdd&#x0D;&#x0A;NMAKE clean"
+				Output="..\..\lib\libEdd.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplay.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplayBase.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\testd.C"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplay.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EdbDisplayBase.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEdd\EddLinkDef.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libEdd\Makefile"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

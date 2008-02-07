@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="rwc2edb"
+	ProjectGUID="{5AB5F301-21B3-4774-A560-43EDCB23094D}"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\appl\rwc2edb&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;"
+				ReBuildCommandLine="cd ..\..\src\appl\rwc2edb&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; /a"
+				CleanCommandLine="cd ..\..\src\appl\rwc2edb&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; clean"
+				Output="..\..\bin\rwc2edb.exe"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\edb2rwc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\getacqstatus.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwc2edb.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwcread.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwdcomp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\appl\rwc2edb\rwdread.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="..\..\src\appl\rwc2edb\Makefile.w32"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

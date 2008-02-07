@@ -37,9 +37,6 @@ NMAKE  /F Makefile.w32 clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\libEOracle\EOracleCint.cxx">
-			</File>
-			<File
 				RelativePath="..\..\src\libEOracle\TOracleResult.cxx">
 			</File>
 			<File
@@ -55,9 +52,6 @@ NMAKE  /F Makefile.w32 clean"
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
-			<File
-				RelativePath="..\..\src\libEOracle\EOracleCint.h">
-			</File>
 			<File
 				RelativePath="..\..\src\libEOracle\EOracleLinkDef.h">
 			</File>

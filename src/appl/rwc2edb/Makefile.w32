@@ -3,24 +3,18 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
+TARGET  =       $(BIN_DIR)/rwc2edb$(ExeSuf)      \
+     		$(BIN_DIR)/rwdread$(ExeSuf)      \
+		$(BIN_DIR)/rwcread$(ExeSuf)      \
+		$(BIN_DIR)/rwdcomp$(ExeSuf)      \
+		$(BIN_DIR)/getacqstatus$(ExeSuf) \
+		$(BIN_DIR)/edb2rwc$(ExeSuf)
+    
+PROJECT_LIBS  = -lEdb -lDataConversion \
+                ole32.lib ../../libDataConversion/libDataConversion.$(ObjSuf)
 
-PROJECT_LIBS = $(PROJECT_LIBS) libEdb.lib libDataConversion.lib \
-                               ole32.lib ..\..\libDataConversion\libDataConversion.obj
 # ole32.lib libDataConversion.obj are needed by edb2rwc.exe
 
-CPPFLAGS     = $(CPPFLAGS) -I$(INC_DIR) -D_USESYSAL 
-
-targets = edb2rwc.exe rwc2edb.exe rwdread.exe rwcread.exe rwdcomp.exe getacqstatus.exe 
-
-$(targets): $(@B).obj 
-	$(LD) $** $(LIBS) $(PROJECT_LIBS) -out:$(BIN_DIR)/$@
-
 #------------------------------------------------------------------------------
-
-clean:
-    for %F IN (   *.obj    ) DO IF EXIST %F del /q %F
-    cd "$(BIN_DIR)"
-    for %F IN ( $(targets) ) DO IF EXIST %F del /q %F
-
-
-
+include ../../config/TargetsDef.mk
+#--------------------------------------------------------------------------

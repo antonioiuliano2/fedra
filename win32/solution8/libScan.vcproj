@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="libScan"
+	ProjectGUID="{EB404908-0A20-4D1D-8ECB-C3028E1B0599}"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libScan&#x0A;NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libScan&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libScan&#x0A;NMAKE clean"
+				Output="..\..\lib\libScan.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanClient.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanProc.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanSet.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbTestAl.cxx"
+				>
+			</File>
+			<Filter
+				Name="Header Files"
+				Filter="h;hpp;hxx;hm;inl"
+				>
+				<File
+					RelativePath="..\..\src\libScan\EdbScanClient.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\libScan\EdbScanProc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\libScan\EdbScanSet.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\libScan\EdbTestAl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\libScan\ScanLinkDef.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libScan\Makefile"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

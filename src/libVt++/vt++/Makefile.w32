@@ -3,12 +3,12 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-LIB_NAME      = libVt++
-LIB_NAME2     = libvt
+NAME      = Vt++
+NAME2     = vt
 CINT_NAME     = vtCint
 LINKDEF_NAME  = cintdict\LinkDef.hh
 
-LIB_TGT       = $(LIB_DIR)/$(LIB_NAME).dll
+TARGETSO       = $(LIB_DIR)/lib$(NAME).$(DllSuf)
 
 #------------------------------------------------------------------------------
 headers =  CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
@@ -18,6 +18,7 @@ headers =  CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
 SrcSuf    = C
   
 classes   = $(headers:.hh=.c)
+
 CINT    =  include\CMatrix.hh        include\VtDistance.hh \
            include\VtIni.hh          include\VtKalman.hh   \
            include\VtMassC.hh        include\VtMatrix.hh   \
@@ -26,21 +27,26 @@ CINT    =  include\CMatrix.hh        include\VtDistance.hh \
            include\VtSymMatrix.hh    include\VtTrack.hh    \
            include\VtVector.hh       include\VtVertex.hh cintdict\LinkDef.hh
 SRC       = $(classes) $(CINT_NAME).cxx
-OBJ       = $(SRC:.cxx=.obj)
-OBJ       = $(OBJ:.c=.obj)
+OBJS      = $(SRC:.cxx=.obj)
+OBJS      = $(OBJS:.c=.obj)
 
 CXXFLAGS = $(CXXFLAGS) -I$(INC_DIR)
+CXXFLAGS      =  $(CXXFLAGS)  -D_USESYSAL -DUSE_ROOT
+
 #------------------------------------------------------------------------------
 
-all: $(LIB_TGT) $(LIB_DIR)/libvt.lib $(LIB_DIR)/libvt.dll  
+all: $(TARGETSO) $(LIB_DIR)/libvt.lib $(LIB_DIR)/libvt.dll  
 
 #includes: $(headers)
 #	cp $(headers) $(INC_DIR)
 
-$(LIB_TGT): $(OBJ)
-    BINDEXPLIB  $* $(OBJ) > $*.def
-    lib /nologo /MACHINE:IX86 $(OBJ) /def:$*.def      $(OutPutOpt)$(LIB_TGT:.dll=.lib)
-    $(LD) $(DLLFLAGS) $(LDDEBUG) $(PROJECT_LIBS) $(OBJ) $*.exp $(LIBS) $(OutPutOpt)$(LIB_TGT) 
+$(TARGETSO): $(OBJS)
+    BINDEXPLIB  $* $(OBJS) > $*.def
+    lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
+#    $(LD) $(DLLFLAGS) $(LDDEBUG) $(PROJECT_LIBS) $(OBJS) $*.exp $(LIBS) $(OutPutOpt)$(TARGETSO) 
+    $(LD) $(SOFLAGS)  $(LDFLAGS) $(OBJS) $*.exp  $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+    $(MT_DLL)
+    @echo "$@ done"
 
 $(CINT_NAME).cxx: $(CINT)
     @echo "Generating dictionary Cint..."
@@ -50,19 +56,36 @@ $(CINT_NAME).obj: $(CINT_NAME).cxx
     $(CXX) $(CXXFLAGS) -DCINTOBJECT -c $(CINT_NAME).cxx
 
 clean:
-    del /q $(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).* "$(LIB_DIR)"\$(LIB_NAME2).*
+    del /q $(OBJS) *Cint.* *.pdb *.def "$(LIB_DIR)"\lib$(NAME).* "$(LIB_DIR)"\lib$(NAME2).*
 
 depend:
         @makedepend -I$(INCLUDE) *.cxx >& /dev/null
 
-.SUFFIXES: .$(SrcSuf)
+###
+.$(ObjSuf): .$(SrcSuf)
 
-.$(SrcSuf).$(ObjSuf):
-    $(CXX) $(CXXFLAGS) -c $<
+# -p option to request the use of the compiler's preprocessor
+# instead of CINT's preprocessor.  This is useful to handle header
+# files with macro construct not handled by CINT.
+#
+$(NAME)Dict.$(SrcSuf): $(headers) $(NAME)LinkDef.h
+   @echo "Generating dictionary $@..."
+   rootcint -f $@ -c -p -I$(INC_DIR) $(headers) $(NAME)LinkDef.h 
+
+.cxx.$(ObjSuf):
+   $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -c $<
+
+.cpp.$(ObjSuf):
+   $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -c $<
+
+# /TP compile all files as C++ even if they have *.C extension
+.C.$(ObjSuf):
+   $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -TP -c $<
+
 
 #------------------------------------------------------------------------------
 # create hardlinks
-$(LIB_DIR)/$(LIB_NAME2).lib $(LIB_DIR)/$(LIB_NAME2).dll  :$(LIB_TGT) 
-    if exist "$(LIB_DIR)"\$(LIB_NAME2).lib del "$(LIB_DIR)"\$(LIB_NAME2).*
-    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).lib  "$(LIB_TGT:.dll=.lib)"
-    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\$(LIB_NAME2).dll  "$(LIB_TGT)"
+$(LIB_DIR)/lib$(NAME2).lib $(LIB_DIR)/lib$(NAME2).dll  :$(TARGETSO) 
+    if exist "$(LIB_DIR)"\lib$(NAME2).lib del "$(LIB_DIR)"\lib$(NAME2).*
+    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\lib$(NAME2).lib  "$(TARGETSO:.dll=.lib)"
+    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\lib$(NAME2).dll  "$(TARGETSO)"

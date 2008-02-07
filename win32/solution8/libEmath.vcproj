@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="libEmath"
+	ProjectGUID="{8A51EAF8-C292-4F49-8180-C20CA552B98D}"
+	Keyword="MakeFileProj"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  clean"
+				Output="..\..\lib\libEmath.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\..\src\libEmath\EdbMath.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEmath\TIndexCell.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="..\..\src\libEmath\EdbMath.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEmath\EmathLinkDef.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEmath\EmathVer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEmath\TIndexCell.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libEmath\Makefile"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

@@ -51,7 +51,7 @@ echo 'BIN_DIR = $(PROJECT_ROOT)/bin' >> $ProjectDef
 echo 'LIB_DIR = $(PROJECT_ROOT)/lib' >> $ProjectDef
 echo 'INC_DIR = $(PROJECT_ROOT)/include' >> $ProjectDef
 echo >> $ProjectDef
-echo 'PROJECT_LIBS = -L$(LIB_DIR)' >> $ProjectDef
+#echo 'PROJECT_LIBS = -L$(LIB_DIR)' >> $ProjectDef
 
 # create RootDef.mk and TargetsDef.mk links
 configdir="$installdir/src/config"

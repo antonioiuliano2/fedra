@@ -1,22 +1,18 @@
 #------------------------------------------------------------------------------
- include $(FEDRA_ROOT)/src/config/ProjectDef.mk
- include $(FEDRA_ROOT)/src/config/RootDef.mk
+include $(FEDRA_ROOT)/src/config/ProjectDef.mk
+include $(FEDRA_ROOT)/src/config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdb -lDataConversion
 
-CXXFLAGS  += -I$(INC_DIR) 
-CPPFLAGS  += $(CXXFLAGS)
+TARGET	=	$(BIN_DIR)/rwc2edb$(ExeSuf)      \
+     		$(BIN_DIR)/rwdread$(ExeSuf)      \
+		$(BIN_DIR)/rwcread$(ExeSuf)      \
+		$(BIN_DIR)/rwdcomp$(ExeSuf)      
 
-all: rwc2edb rwdread rwcread
+#		$(BIN_DIR)/getacqstatus$(ExeSuf)
+#		$(BIN_DIR)/edb2rwc$(ExeSuf)    
 
-rwc2edb: rwc2edb.o 
-	$(LD) rwc2edb.o   -Wall -fPIC $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o $(FEDRA_ROOT)/bin/rwc2edb ;
+PROJECT_LIBS  = -lEdb -lDataConversion
 
-rwdread: rwdread.o 
-	$(LD) rwdread.o   -Wall -fPIC $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o $(FEDRA_ROOT)/bin/rwdread ;
-
-rwcread: rwcread.o 
-	$(LD) rwcread.o   -Wall -fPIC $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o $(FEDRA_ROOT)/bin/rwcread;
-
-clean:
-	@rm -fr $(FEDRA_ROOT)/bin/rwc2edb $(FEDRA_ROOT)/bin/rwcread $(FEDRA_ROOT)/bin/rwdread core *.bak *.o *.log *.out *~
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#--------------------------------------------------------------------------

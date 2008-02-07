@@ -8,7 +8,7 @@ ORAINC        = $(OCCIHOME)/sdk/include
 
 NAME          = EOracle
 
-headers       = TOracleServerE.h TOracleServer.h TOracleResult.h TOracleRow.h
+headers       = TOracleServerE2W.h TOracleServerE2.h TOracleServerE.h TOracleServer.h TOracleResult.h TOracleRow.h
 
 PROJECT_LIBS  = $(PROJECT_LIBS)     -LIBPATH:$(OCCIHOME)/sdk/lib/msvc        \
                 /DEFAULTLIB:ociw32  /DEFAULTLIB:oci  /DEFAULTLIB:oraocci10   \
@@ -16,6 +16,9 @@ PROJECT_LIBS  = $(PROJECT_LIBS)     -LIBPATH:$(OCCIHOME)/sdk/lib/msvc        \
 
 INC_DIR       = $(INC_DIR)   -I$(ORAINC)
 CXXFLAGS      = $(CXXFLAGS)  -DNOTROOTCINT
+
+# rootcint needs -p option
+
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk
 #------------------------------------------------------------------------------

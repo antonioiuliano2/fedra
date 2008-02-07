@@ -1,11 +1,12 @@
 #------------------------------------------------------------------------------
- include ../../config/ProjectDef.mk
- include ../../config/RootDef.mk
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdb
 
-CXXFLAGS  += -I$(INC_DIR)
-CPPFLAGS  += $(CXXFLAGS)
+APPL         = rfxx
 
-rfxx : rfxx.o
-	$(LD) rfxx.o $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o rfxx;
+PROJECT_LIBS = $(PROJECT_LIBS) -lEdb
+
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#------------------------------------------------------------------------------

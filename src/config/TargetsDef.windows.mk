@@ -1,36 +1,80 @@
+# TargetDef.windows.mk
+# author: G. Sirri - INFN BO
+#
+# the following code is partially based on $(ROOTSYS)\test\makefile.win32, 
+
+# FEDRA MACRO DEFINITIONS
+
+PROJECT_LIBS  = $(PROJECT_LIBS) -LIBPATH:$(LIB_DIR)
+PROJECT_LIBS  = $(PROJECT_LIBS) ole32.lib  # ole32 needed by libDataConversion
+
+CXXFLAGS      = $(CXXFLAGS)  -D_USESYSAL -DUSE_ROOT
+
 #------------------------------------------------------------------------------
-LIB_NAME      = lib$(NAME)
-CINT_NAME     = $(NAME)Cint
-LINKDEF_NAME  = $(NAME)LinkDef
 
-LIB_TGT       = $(LIB_DIR)/$(LIB_NAME).$(DllSuf)
-#classes	  = $(headers:.h=.$(SrcSuf))
-classes   = $(headers:.h=.cxx)
-CINT          = $(headers) $(LINKDEF_NAME).h
-SRC           = $(classes) $(CINT_NAME).$(SrcSuf)
-#OBJ           = $(SRC:.$(SrcSuf)=.$(ObjSuf))
-OBJ       = $(SRC:.cxx=.obj)
+!IF DEFINED(NAME)
 
-#------------------------------------------------------------------------------
+OBJS          = $(headers:.h=.obj) $(NAME)Dict.$(ObjSuf)
+TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
 
-CXXFLAGS      = $(CXXFLAGS) -I$(INC_DIR)
+all: $(TARGETSO)
 
-$(LIB_TGT): $(OBJ)
-    BINDEXPLIB  $* $(OBJ) > $*.def
-    lib /nologo /MACHINE:IX86 $(OBJ) /def:$*.def      $(OutPutOpt)$(LIB_TGT:.dll=.lib)
-    $(LD) $(DLLFLAGS) $(LDDEBUG) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OBJ) $*.exp $(LIBS) $(OutPutOpt)$(LIB_TGT)
-
-$(CINT_NAME).cxx: $(CINT)
-    @echo "Generating dictionary Cint..."
-    rootcint -f $(CINT_NAME).cxx -c -p -I$(INC_DIR) $(CINT)
+$(TARGETSO):  $(OBJS)
+    BINDEXPLIB  $* $(OBJS) > $*.def
+    lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
+    $(LD) $(SOFLAGS) $(LDFLAGS) $(OBJS) $*.exp $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+    $(MT_DLL)
+    @echo "$@ done"
 
 clean:
-    for %F IN ($(OBJ) *Cint.* *.pdb *.def "$(LIB_DIR)"\$(LIB_NAME).* ) DO IF EXIST "%F" del /q "%F"
+    for %F IN ($(OBJS) *Dict.* *.pdb *.def "$(LIB_DIR)"\lib$(NAME).* ) DO IF EXIST "%F" del /q "%F"
 
-depend:
-        @makedepend -I$(INCLUDE) *.cxx >& /dev/null
- 
-.SUFFIXES: .$(SrcSuf)
+!ENDIF
 
-.$(SrcSuf).$(ObjSuf):
-    $(CXX) $(CXXFLAGS) -c $<
+#------------------------------------------------------------------------------
+
+!IF DEFINED(TARGET)
+
+all: $(TARGET)
+
+$(TARGET) : $(*B).obj 
+#   $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+#   $(MT_EXE)
+#   @echo "$@ done"
+
+clean:
+    @for %F in ($(TARGET)) DO FOR %F IN ( %~nF.obj "$(BIN_DIR)"\%~nF.exe "$(BIN_DIR)"\%~nF.exe.manifest ) DO IF EXIST %F del /q %F
+
+!ENDIF
+
+#------------------------------------------------------------------------------
+
+distclean:      clean
+       @del *.exe *.root *.ps *.lib *.dll
+
+{.}.obj{$(BIN_DIR)}.exe:
+   $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+   $(MT_EXE)
+   @echo "$@ done"
+
+###
+.$(ObjSuf): .$(SrcSuf)
+
+# -p option to request the use of the compiler's preprocessor
+# instead of CINT's preprocessor.  This is useful to handle header
+# files with macro construct not handled by CINT.
+#
+$(NAME)Dict.$(SrcSuf): $(headers) $(NAME)LinkDef.h
+   @echo "Generating dictionary $@..."
+   rootcint -f $@ -c -p -I$(INC_DIR) $(headers) $(NAME)LinkDef.h 
+
+.cxx.$(ObjSuf):
+        $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -c $<
+
+.cpp.$(ObjSuf):
+        $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -c $<
+
+# /TP compile all files as C++ even if they have *.C extension
+.C.$(ObjSuf):
+        $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -TP -c $<
+

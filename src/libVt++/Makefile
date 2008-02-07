@@ -125,6 +125,12 @@ cleandoc:
 	done
 
 check:
-	@echo " projects   :" $(projects)
-	@echo " instproj   :" $(instproj)
-	@echo " MAKE       :" $(MAKE)
+#	@echo " projects   :" $(projects)
+#	@echo " instproj   :" $(instproj)
+#	@echo " MAKE       :" $(MAKE)
+	@if [ -e ../../lib/libvt.so ]; then \
+	  echo "libvt...ok";\
+	else\
+	  echo "libvt..ERROR!";\
+	fi
+

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="libEdg"
+	ProjectGUID="{988735A4-20E8-4B5C-A7F5-F01AB6F0F952}"
+	SccProjectName=""
+	SccLocalPath=""
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEdg
+NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEdg
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEdg
+NMAKE clean"
+				Output="..\..\lib\libEdg.dll"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\..\src\libEdg\EdbBrickGeometry.cxx">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		</Filter>
+		<Filter
+			Name="Header Files">
+			<File
+				RelativePath="..\..\src\libEdg\EdbBrickGeometry.h">
+			</File>
+			<File
+				RelativePath="..\..\src\libEdg\EdgLinkDef.h">
+			</File>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libEdg\Makefile">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

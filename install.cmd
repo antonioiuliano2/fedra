@@ -39,7 +39,6 @@
  echo LIB_DIR = $^(PROJECT_ROOT^)/lib
  echo INC_DIR = $^(PROJECT_ROOT^)/include
  echo.
- echo PROJECT_LIBS = -LIBPATH:$^(LIB_DIR^)
 ) > %installdir%\src\config\ProjectDef.mk
 
 :: create RootDef.mk and TargetsDef.mk links
@@ -47,10 +46,8 @@
  set configdir=%installdir%\src\config
  if exist %configdir%\RootDef.mk         del /q %configdir%\RootDef.mk
  if exist %configdir%\TargetsDef.mk      del /q %configdir%\TargetsDef.mk
- if exist %configdir%\TargetsDefAppl.mk  del /q %configdir%\TargetsDefAppl.mk
  %ln% %configdir%\RootDef.mk                    %configdir%\RootDef.windows.mk
  %ln% %configdir%\TargetsDef.mk                 %configdir%\TargetsDef.windows.mk
- %ln% %configdir%\TargetsDefAppl.mk             %configdir%\TargetsDefAppl.windows.mk
 
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
@@ -68,9 +65,14 @@
 
 :: copy vsvars.bat into src directory
 :: ----------------------------------
- IF DEFINED VS71COMNTOOLS ( 
+ IF DEFINED VS80COMNTOOLS ( 
+	copy "%VS80COMNTOOLS%"\vsvars32.bat src 
+ ) ELSE (
+   echo "MS Visual Studio 2005 not found" 
+   IF DEFINED VS71COMNTOOLS ( 
 	copy "%VS71COMNTOOLS%"\vsvars32.bat src 
- ) ELSE echo "MS Visual Studio .NET 2003 not found" 
+   ) ELSE echo "MS Visual Studio .NET 2003 not found" 
+)
 
 :: check SySalDataIO.dll registration
 :: ----------------------------------
@@ -89,6 +91,11 @@
 :: ------------
  copy /Y "%PROJECT_SRC%"\appl\macros\* "%installdir%"\macros
 
+:: load environment variables
+:: --------------------------
+ cd %installdir%
+ call setup_new.cmd
+
 :: compilation of libraries
 :: ------------------------
  set /P YesNo=Do you want to compile the libraries: [y/n]?
@@ -98,9 +105,5 @@
 		call makeall.cmd
 	)
 
-:: load environment variables
-:: --------------------------
- cd %installdir%
- call setup_new.cmd
-
- pause
+cd %installdir%
+pause
