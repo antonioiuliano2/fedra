@@ -5,7 +5,6 @@
 #include <TString.h>
 #include <TSystem.h>
 
-
 ClassImp(EGraphTool)
 
 enum EGraphToolCommandIdentifiers {
@@ -50,7 +49,6 @@ EGraphTool::EGraphTool(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p, w
   InitDrawVariables();
 
   fEmGraphRec = new EGraphRec(); // Init Graph Reconstruction Toolkit
-
   DrawFrame();                   // drawing main frame
 
   SetWindowName("Emulsion Graphical Tool");
@@ -70,7 +68,8 @@ EGraphTool::~EGraphTool()
 //----------------------------------------------------------------------------
 void EGraphTool::ProcessEvent()
 {
-  if (fEvtTree) fEmGraphRec->ProcessEvent(fEvtNumber);
+  // if (fEvtTree) fEmGraphRec->ProcessEvent(fEvtNumber);
+  fEmGraphRec->ProcessEvent(fEvtNumber);
 }
 
 
@@ -93,28 +92,43 @@ void EGraphTool::DrawFrame()
 
   // buttons frame
 
-  TGVerticalFrame *buttonframe = new TGVerticalFrame(workframe);
+  TGVerticalFrame *ButtonFrame = new TGVerticalFrame(workframe);
+
+  // create Brick Id frame
+
+  fEmGraphRec->AddProcBrickFrame(ButtonFrame);
 
   // create tab for options frame
 
-  TGTab *OptTab = new TGTab(buttonframe);
+  TGTab *OptTab = new TGTab(ButtonFrame);
   fEmGraphRec->AddRecOptFrame(OptTab); // Create a button frame
-  buttonframe->AddFrame(OptTab, fLayout2);
+  ButtonFrame->AddFrame(OptTab, fLayout2);
+
+  // create process list frame
+
+  fEmGraphRec->AddProcListFrame(ButtonFrame);
 
   // Process Event
 
-  TGTextButton *process = new TGTextButton(buttonframe, "Execute event");
+  TGTextButton *process = new TGTextButton(ButtonFrame, "Execute event");
   process->Connect("Clicked()", "EGraphTool", this, "ProcessEvent()");
   process->Associate(this);
-  buttonframe->AddFrame(process, fLayout1);
-  workframe->AddFrame(buttonframe, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  ButtonFrame->AddFrame(process, fLayout1);
+  workframe->AddFrame(ButtonFrame, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+
+  TGVerticalFrame *CanvasFrame = new TGVerticalFrame(workframe);
 
   // create tab for canvas frame
 
-  TGTab *CanvasTab = new TGTab(workframe);
+  TGTab *CanvasTab = new TGTab(CanvasFrame);
   fEmGraphRec->AddCanvasFrame(CanvasTab); // Create a canvas frame
-  workframe->AddFrame(CanvasTab, fLayout3);
+  CanvasFrame->AddFrame(CanvasTab, fLayout3);
 
+  // create text info frame
+
+  fEmGraphRec->AddInfoFrame(CanvasFrame);
+
+  workframe->AddFrame(CanvasFrame, fLayout3);
   fMainFrame->AddFrame(workframe, fLayout3);
   AddFrame(fMainFrame, fLayout3);
 }
@@ -257,7 +271,6 @@ void EGraphTool::InitInputFile(TString inputFileName)
   if (fEvtTree) {
     fEmGraphRec->SetTree(fEvtTree);
     fEvtNumber = fEvtTree->GetEntries() - 1;
-    ProcessEvent();
     cout << "number of events " << fEvtNumber << endl;
   }
   else 

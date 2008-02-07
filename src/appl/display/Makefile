@@ -2,7 +2,7 @@
  include ../../config/ProjectDef.mk
  include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
-PROJECT_LIBS = -L$(LIB_DIR) -lEdr -lEdb -lEIO -lEmath -lEphys -lvt -lDataConversion -lEGraphTool
+PROJECT_LIBS = -L$(LIB_DIR) -lEdr -lEdb -lEIO -lEmath -lEphys -lScan -lEMC -lvt -lDataConversion -lEGraphTool
 
 CXXFLAGS  += -I$(INC_DIR) 
 CPPFLAGS  += $(CXXFLAGS)

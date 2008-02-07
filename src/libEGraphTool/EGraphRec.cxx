@@ -7,15 +7,19 @@
 //----------------------------------------------------------------------------
 
 #include "EGraphRec.h"
+#include <TEnv.h>
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TGTextView.h>
+#include <TGButtonGroup.h>
 #include <TBranchClones.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TCanvas.h>
 #include <TGLSAViewer.h>
 #include <TView.h>
 #include <iostream>
+
+#include "EdbScanProc.h"
 
 using namespace std;
 
@@ -25,6 +29,7 @@ EGraphRec::EGraphRec()
 {
   InitVariables();
   InitDrawVariables();
+  ReadCmdConfig();
 }
 
 
@@ -36,9 +41,66 @@ EGraphRec::~EGraphRec()
 
 
 //----------------------------------------------------------------------------
+void EGraphRec::ReadCmdConfig()
+{
+  TString configDir  = (TString)getenv("FEDRA_ROOT") + "/config/";
+  TString configFile = configDir + "EGraphRec";
+
+  if (gEnv->ReadFile(configFile + ".cfg", kEnvChange) == -1) 
+    if (gEnv->ReadFile(configFile + "_default.cfg", kEnvChange) == -1) return;
+
+  if (fDataDir == "")
+    fDataDir = gEnv->GetValue("EGraphRec.DataDir", "");
+
+  // brick Id
+
+  if (fProcBrick.brickId < 0)
+    fProcBrick.brickId = gEnv->GetValue("EGraphRec.ProcBrick.brickId", 0);
+  if (fProcBrick.firstPlate < 0)
+    fProcBrick.firstPlate = gEnv->GetValue("EGraphRec.ProcBrick.firstPlate", 0);
+  if (fProcBrick.lastPlate < 0)
+    fProcBrick.lastPlate = gEnv->GetValue("EGraphRec.ProcBrick.lastPlate", 0);
+  if (fProcBrick.ver < 0)
+    fProcBrick.ver = gEnv->GetValue("EGraphRec.ProcBrick.ver", 0);
+
+  // processes Ids
+
+  if (fProcId.interCalib < 0)
+    fProcId.interCalib = gEnv->GetValue("EGraphRec.ProcId.interCalib", 0);
+  if (fProcId.volumeScan < 0)
+    fProcId.volumeScan = gEnv->GetValue("EGraphRec.ProcId.volumeScan", 0);
+  if (fProcId.predScan < 0)
+    fProcId.predScan = gEnv->GetValue("EGraphRec.ProcId.predScan", 0);
+  if (fProcId.scanForth < 0)
+    fProcId.scanForth = gEnv->GetValue("EGraphRec.ProcId.scanForth", 0);
+}
+
+
+//----------------------------------------------------------------------------
 void EGraphRec::ProcessEvent(Int_t nentries) 
 {
-  DrawEvent(nentries);
+  // DrawEvent(nentries);
+  
+  fSproc->eProcDirClient = fDataDir;
+
+  Int_t ID[4] = {fProcBrick.brickId,  fProcBrick.firstPlate, 
+		 fProcBrick.ver, fProcId.interCalib};
+
+  Int_t step = (fProcBrick.lastPlate - fProcBrick.firstPlate)/
+    TMath::Abs(fProcBrick.lastPlate - fProcBrick.firstPlate);
+
+  for (Int_t plate = fProcBrick.firstPlate; plate != fProcBrick.lastPlate;
+       plate += step) {
+    ID[1] = plate;
+    if (fCheckProcLink->IsDown()) LinkProcess(ID); // linking
+  }
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::LinkProcess(Int_t ID[])
+{
+  fSproc->LinkRunAll(ID);
 }
 
 
@@ -81,6 +143,86 @@ void EGraphRec::SetTree(TTree *tree)
   segmentsBranch->SetAddress(fEvent->GetSegmentsAddr());
   tracksBranch->SetAddress(fEvent->GetTracksAddr());
   framesBranch->SetAddress(fEvent->GetFramesAddr());
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::AddProcBrickFrame(TGVerticalFrame *workframe)
+{
+  TGLabel *label;
+  TGHorizontalFrame *frame;
+
+  TGVButtonGroup *GroupProcBrick = new TGVButtonGroup(workframe,
+						      "Processing brick");
+
+  // BrickId
+
+  frame = new TGHorizontalFrame(GroupProcBrick);
+  label = new TGLabel(frame, "Brick Id");
+  fProcBrickEntry[0] = new TGNumberEntry(frame, fProcBrick.brickId, 7, 0, 
+					 TGNumberEntry::kNESInteger,
+					 TGNumberEntry::kNEANonNegative,
+					 TGNumberEntry::kNELLimitMin, 0, 1);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fProcBrickEntry[0], fLayoutRightExpY);
+  GroupProcBrick->AddFrame(frame, fLayout1);
+
+  // First plate to process
+
+  frame = new TGHorizontalFrame(GroupProcBrick);
+  label = new TGLabel(frame, "First plate");
+  fProcBrickEntry[1] = new TGNumberEntry(frame, fProcBrick.firstPlate, 3, 1, 
+					 TGNumberEntry::kNESInteger,
+					 TGNumberEntry::kNEANonNegative,
+					 TGNumberEntry::kNELLimitMinMax, 0, 58);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fProcBrickEntry[1], fLayoutRightExpY);
+  GroupProcBrick->AddFrame(frame, fLayout1);
+
+  // Last plate to process
+
+  frame = new TGHorizontalFrame(GroupProcBrick);
+  label = new TGLabel(frame, "Last plate");
+  fProcBrickEntry[2] = new TGNumberEntry(frame, fProcBrick.lastPlate, 3, 2, 
+					 TGNumberEntry::kNESInteger,
+					 TGNumberEntry::kNEANonNegative,
+					 TGNumberEntry::kNELLimitMinMax,0,58);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fProcBrickEntry[2], fLayoutRightExpY);
+  GroupProcBrick->AddFrame(frame, fLayout1);
+
+  // Version
+
+  frame = new TGHorizontalFrame(GroupProcBrick);
+  label = new TGLabel(frame, "Base version");
+  fProcBrickEntry[3] = new TGNumberEntry(frame, fProcBrick.ver, 3, 3, 
+					 TGNumberEntry::kNESInteger,
+					 TGNumberEntry::kNEANonNegative,
+					 TGNumberEntry::kNELLimitMin, 0, 1);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fProcBrickEntry[3], fLayoutRightExpY);
+  GroupProcBrick->AddFrame(frame, fLayout1);
+
+  workframe->AddFrame(GroupProcBrick, fLayout1);
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::AddProcListFrame(TGVerticalFrame *workframe)
+{
+  TGVButtonGroup *GroupProcList = new TGVButtonGroup(workframe,"Process list");
+  fCheckProcScan = new TGCheckButton(GroupProcList, "Scanning");
+  fCheckProcLink = new TGCheckButton(GroupProcList, "Linking tracks");
+  fCheckProcAlgn = new TGCheckButton(GroupProcList, "Alignment plates");
+  fCheckProcTrks = new TGCheckButton(GroupProcList, "Reconstruct tracks");
+  fCheckProcVrtx = new TGCheckButton(GroupProcList, "Reconstruct vertex");
+
+  fCheckProcScan->SetEnabled(kFALSE);
+  fCheckProcAlgn->SetEnabled(kFALSE);
+  fCheckProcTrks->SetEnabled(kFALSE);
+  fCheckProcVrtx->SetEnabled(kFALSE);
+
+  workframe->AddFrame(GroupProcList, fLayout1);
 }
 
 
@@ -222,6 +364,17 @@ void EGraphRec::AddCanvasFrame(TGTab *worktab)
 
 
 //----------------------------------------------------------------------------
+void EGraphRec::AddInfoFrame(TGVerticalFrame *workframe)
+{
+  fTextInfo = new TGTextView(workframe, 900, 200, kFixedHeight);
+  const TGFont *font = gClient->GetFont("-*-courier-bold-r-*-*-18-*-*-*-*-*-*-*");
+  fTextInfo->SetFont(font->GetFontStruct());
+  workframe->AddFrame(fTextInfo, fLayout1);
+
+  WriteInfo();
+}
+
+//----------------------------------------------------------------------------
 void EGraphRec::Set3DViewer()
 {
   fGLViewer = (TGLSAViewer*)fDisplayHits->GetCanvas()->GetViewer3D("ogl");
@@ -250,10 +403,26 @@ void EGraphRec::ZoomOut()
 
 
 //----------------------------------------------------------------------------
+void EGraphRec::WriteInfo()
+{
+  fTextInfo->Clear();
+  fTextInfo->AddLine("");
+  fTextInfo->AddLine(" Read data from directory: " + fDataDir);
+}
+
+//----------------------------------------------------------------------------
 void EGraphRec::InitVariables()
 {
-  fEvent = NULL;
+  fEvent     = NULL;
+  fDataDir   = "";
+
+  fProcBrick.brickId = fProcBrick.firstPlate = fProcBrick.lastPlate = 
+    fProcBrick.ver = -1;
+  fProcId.interCalib = fProcId.volumeScan = fProcId.predScan = 
+    fProcId.scanForth = -1;
+
   fGraphHits = new EGraphHits();
+  fSproc     = new EdbScanProc();
 }
 
 //----------------------------------------------------------------------------
