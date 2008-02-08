@@ -26,10 +26,10 @@ Int_t  TOracleServerE2::ReadDataSet(ULong64_t id_parent_op, int id_brick, ULong6
       fStmt = fConn->createStatement();
 
     sprintf(query,"\
-select to_char(op.id), op.id_plate, pl.z, op.success \
-from tb_proc_operations op, tb_plates pl \
-where op.id_eventbrick=%d and pl.id_eventbrick=%d and pl.id=op.id_plate and op.id_parent_operation=%lld \
-order by op.id_plate",
+ select to_char(op.id), op.id_plate, pl.z, op.success \
+ from tb_proc_operations%s op, tb_plates%s pl \
+ where op.id_eventbrick=%d and pl.id_eventbrick=%d and pl.id=op.id_plate and op.id_parent_operation=%lld \
+ order by op.id_plate", eRTS.Data(), eRTS.Data(),
 	    id_brick, id_brick, id_parent_op);
 
     fStmt->setSQL(query);
@@ -61,7 +61,7 @@ order by op.id_plate",
     pat = (EdbPattern*)patterns.At(i);
     if( !ReadZplate(id_brick, pat->PID(), *pat ) )
       { printf("skip plate %d %d !\n", id_brick,pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id from tb_zones where id_processoperation=%lld and id_plate=%d and series=%lld)", 
+    sprintf(query,"id_zone in (select id from tb_zones%s where id_processoperation=%lld and id_plate=%d and series=%lld)",eRTS.Data(),
 	    proc_list[i],pat->PID(), path);
     nsegtot  += ReadBasetracksPattern( query, *pat);
     vol.AddPattern(pat);
@@ -98,7 +98,7 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
     if (!fStmt)
       fStmt = fConn->createStatement();
     sprintf(query,"\
-    select id_plate,id_eventbrick from TB_VOLUME_SLICES where id_volume=%s order by id_plate", id_volume);
+    select id_plate,id_eventbrick from TB_VOLUME_SLICES%s where id_volume=%s order by id_plate",eRTS.Data(), id_volume);
     fStmt->setSQL(query);
     printf("\nexecute sql query: %s ...\n",query);
     fStmt->execute();
@@ -121,7 +121,7 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
     pat = (EdbPattern*)patterns.At(i);
     if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
       { printf("skip plate %d %d !\n", pat->ID(),pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%s and id_plate=%d)", id_volume,pat->PID());
+    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES%s where id_volume=%s and id_plate=%d)",eRTS.Data(), id_volume,pat->PID());
     nsegtot  += ReadBasetracksPattern(query, *pat);
     vol.AddPattern(pat);
   }
@@ -140,7 +140,8 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol, Int_
     if (!fStmt)
       fStmt = fConn->createStatement();
     sprintf(query,"\
-    select id_plate,id_eventbrick from TB_VOLUME_SLICES where (id_volume=%s and id_plate > %d-1 and id_plate < %d+1) order by id_plate", 
+    select id_plate,id_eventbrick from TB_VOLUME_SLICES%s where (id_volume=%s and id_plate > %d-1 and id_plate < %d+1) order by id_plate", 
+	    eRTS.Data(),
 	    id_volume,min,max);
     fStmt->setSQL(query);
     printf("\nexecute sql query: %s ...\n",query);
@@ -164,7 +165,8 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol, Int_
     pat = (EdbPattern*)patterns.At(i);
     if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
       { printf("skip plate %d %d !\n", pat->ID(),pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES where id_volume=%s and id_plate=%d)", id_volume,pat->PID());
+    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES%s where id_volume=%s and id_plate=%d)",eRTS.Data(),
+	    id_volume,pat->PID());
     nsegtot  += ReadBasetracksPattern(query, *pat);
     vol.AddPattern(pat);
   }
@@ -186,8 +188,8 @@ bool  TOracleServerE2::ReadZplate_nominal(int id_eventbrick, int id_plate, EdbPa
       fStmt = fConn->createStatement();
 
     sprintf(query,
-            "select z from tb_plates \
-             where id_eventbrick=%d and id=%d",
+            "select z from tb_plates%s \
+             where id_eventbrick=%d and id=%d",eRTS.Data(),
             id_eventbrick, id_plate);
 
     fStmt->setSQL(query);
@@ -222,8 +224,8 @@ bool  TOracleServerE2::ReadZplate(int id_eventbrick, int id_plate, EdbPattern &p
       fStmt = fConn->createStatement();
 
     sprintf(query,
-            "select z,MAPXX,MAPXY,MAPYX,MAPYY,MAPDX,MAPDY from tb_plate_calibrations \
-             where id_eventbrick=%d and id_plate=%d",
+            "select z,MAPXX,MAPXY,MAPYX,MAPYY,MAPDX,MAPDY from tb_plate_calibrations%s \
+             where id_eventbrick=%d and id_plate=%d", eRTS.Data(),
             id_eventbrick, id_plate);
     fStmt->setSQL(query);
     printf("\nexecute sql query: %s ...\n",query);
@@ -261,7 +263,7 @@ Int_t  TOracleServerE2::ReadBasetracksPattern(char *selection, EdbPattern &pat)
       fStmt = fConn->createStatement();
     sprintf(query, "SELECT \
   ID_EVENTBRICK, id_zone, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA \
-  from tb_mipbasetracks where %s",
+  from tb_mipbasetracks%s where %s",eRTS.Data(),
 	    selection);
     fStmt->setSQL(query);
     fStmt->setPrefetchRowCount(2000);
@@ -306,7 +308,7 @@ Int_t  TOracleServerE2::ReadViewsZone(ULong64_t id_zone, int side, TObjArray &ed
       fStmt = fConn->createStatement();
     sprintf(query, "SELECT \
   id_eventbrick, side, id, downz, upz, posx, posy \
-  from TB_VIEWS where id_zone=%lld and side=%d order by id",
+  from TB_VIEWS%s where id_zone=%lld and side=%d order by id", eRTS.Data(),
 	    id_zone,side);
     fStmt->setSQL(query);
     fStmt->setPrefetchRowCount(2000);
@@ -347,12 +349,12 @@ Int_t  TOracleServerE2::ConvertMicrotracksZoneToEdb(Int_t id_eventbrick, ULong64
   int nviews=0;
   TObjArray edbviews1;
   nviews += ReadViewsZone(id_zone,1,edbviews1);
-  ReadMicrotracksZone( 1043186, 6000000000030481LL, 1, edbviews1 );
+  ReadMicrotracksZone( id_eventbrick, id_zone, 1, edbviews1 );
   for(int i=0; i<edbviews1.GetEntries(); i++)    run.AddView( (EdbView *)(edbviews1.At(i)) );
 
   TObjArray edbviews2;
   nviews += ReadViewsZone(id_zone,2,edbviews2);
-  ReadMicrotracksZone( 1043186, 6000000000030481LL, 2, edbviews2 );
+  ReadMicrotracksZone( id_eventbrick, id_zone, 2, edbviews2 );
   for(int i=0; i<edbviews2.GetEntries(); i++)    run.AddView( (EdbView *)(edbviews2.At(i)) );
 
   run.Save();
@@ -405,7 +407,7 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
       fStmt = fConn->createStatement();
     sprintf(query, "SELECT \
   ID_EVENTBRICK, id_zone, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA, SIDE, ID_VIEW\
-  from TB_MIPMICROTRACKS where id_eventbrick=%d and %s",
+  from TB_MIPMICROTRACKS%s where id_eventbrick=%d and %s",eRTS.Data(),
 	    id_eventbrick, selection);
     fStmt->setSQL(query);
     fStmt->setPrefetchRowCount(2000);
@@ -449,7 +451,7 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id)
     if (!fStmt)
       fStmt = fConn->createStatement();
 
-    sprintf(query,"select ID from tb_proc_operations where id_eventbrick=%s",id_eventbrick);
+    sprintf(query,"select ID from tb_proc_operations%s where id_eventbrick=%s",eRTS.Data(), id_eventbrick);
 
     fStmt->setSQL(query);
     printf("\nexecute sql query: %s ...\n",query);
@@ -477,8 +479,8 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_programsettings, char *id_
       fStmt = fConn->createStatement();
 
     sprintf(query,"\
- select ID from tb_proc_operations \
- where id_programsettings=%s and id_eventbrick=%s and id_plate=%s",
+ select ID from tb_proc_operations%s \
+ where id_programsettings=%s and id_eventbrick=%s and id_plate=%s",eRTS.Data(),
 	    id_programsettings,id_eventbrick,id_plate);
 
     fStmt->setSQL(query);
@@ -500,7 +502,7 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_programsettings, char *id_
 //------------------------------------------------------------------------------------
 Int_t TOracleServerE2::GetProcessType(char *IDPROCESS)
 {
-  // GL: strange function; probably can be useful as example of the complex query
+  // GL: strange function; probably can be useful as an example of the complex query
 
   char *query= new char[2048];
   int scanback=-1;

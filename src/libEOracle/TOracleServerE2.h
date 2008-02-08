@@ -11,6 +11,9 @@ class EdbRun;
 class TOracleServerE2 : public TOracleServer {
 
 public:
+  TString eRTS; // "Remote Tables Suffix" for example "@opita"
+
+public:
   TOracleServerE2(const char *db, const char *uid, const char *pw):
     TOracleServer(db, uid, pw){}
   ~TOracleServerE2(){}

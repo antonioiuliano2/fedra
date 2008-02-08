@@ -1,4 +1,4 @@
-// @(#)root/physics:$Name: fedra-v2-04-00 $:$Id: TOracleServer.h,v 1.5 2007/08/31 12:14:00 valeri Exp $
+// @(#)root/physics:$Name: not supported by cvs2svn $:$Id: TOracleServer.h,v 1.5 2007-08-31 12:14:00 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 // Modified and adopted to OPERA by Valeri Tioukov 
 
@@ -14,21 +14,22 @@
 #define ROOT_TOracleServer
 
 #ifndef ROOT_TSQLServer
-#   include "TSQLServer.h"
+#include "TSQLServer.h"
 #endif
 
 #if !defined(__CINT__)
-#   ifndef R__WIN32
-#      include <sys/time.h>
-#   endif
-#   include <occi.h>
-#   include "RVersion.h"
-	using namespace std;
-	using namespace oracle::occi;
+#ifndef R__WIN32
+#include <sys/time.h>
+#endif
+#include <occi.h>
+#include "RVersion.h"
+
+using namespace std;
+using namespace oracle::occi;
 #else
-	class Environment;
-	class Connection;
-	class Statement;
+class Environment;
+class Connection;
+class Statement;
 #endif
 
 class TTree;
@@ -43,26 +44,14 @@ private:
    Environment  *fEnv;    // environment of Oracle access
    Connection   *fConn;   // connection to Oracle server
 
-#ifndef R__WIN32
-#   if !defined(__CINT__)
-#      if ROOT_VERSION_CODE >= ROOT_VERSION(5,11,0)
-          oracle::occi::Statement *fStmt; // reusable statement object
-#      else
-          Statement    *fStmt;   // reusable statement object
-#      endif
-#   else
-       Statement    *fStmt;   // reusable statement object
-#   endif
+#if !defined(__CINT__)
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5,11,0)
+   oracle::occi::Statement *fStmt; // reusable statement object
 #else
-#   if ROOT_VERSION_CODE < ROOT_VERSION(5,11,0)
-		Statement    *fStmt;   // reusable statement object
-#	else
-#		if !defined(__CINT__)
-			oracle::occi::Statement *fStmt; // reusable statement object
-#		else
-			Statement    *fStmt;   // reusable statement object
-#		endif
-#	endif
+   Statement    *fStmt;   // reusable statement object
+#endif
+#else
+   Statement    *fStmt;   // reusable statement object
 #endif
 
 public:

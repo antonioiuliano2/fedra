@@ -1,4 +1,4 @@
-// @(#)root/oracle:$Name: fedra-v2-04-00 $:$Id: TOracleServer.cxx,v 1.5 2007/08/01 14:20:21 valeri Exp $
+// @(#)root/oracle:$Name: not supported by cvs2svn $:$Id: TOracleServer.cxx,v 1.6 2008-01-30 18:47:24 valeri Exp $
 // Author: Yan Liu and Shaowen Wang   23/11/04
 
 /*************************************************************************
@@ -43,13 +43,8 @@ TOracleServer::TOracleServer(const char *db, const char *uid, const char *pw)
       return;
    }
 
-   const char *conn_str = 0;
-   if (strcmp(url.GetFile(), "/"))
-     conn_str = url.GetFile()+1;
-#ifdef R__WIN32
-   else                                     //GS
-     conn_str = url.GetFile();              //GS
-#endif
+   const char *conn_str = url.GetFile();
+   if (conn_str[0]=='/')   conn_str++;   // in new root versions  url.GetFile() return name without '/'
 
    try {
       fEnv = Environment::createEnvironment();
