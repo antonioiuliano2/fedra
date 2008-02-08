@@ -34,7 +34,7 @@ EdbTrackP *EdbBeamGen::NextTrack(int id)
   // return the next track generated according to the given distribution and inside the limits
   // id is assigned as track::eID
 
-  float x,y,z,tx,ty;
+  float x=0,y=0,z=0,tx=0,ty=0;
   EdbTrackP *tr = new EdbTrackP();
 
   int maxcycle=10000;
