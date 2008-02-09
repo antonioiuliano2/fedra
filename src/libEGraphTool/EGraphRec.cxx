@@ -11,13 +11,17 @@
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TGTextView.h>
+#include <TGButton.h>
 #include <TGButtonGroup.h>
 #include <TBranchClones.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TCanvas.h>
 #include <TGLSAViewer.h>
 #include <TView.h>
+#include <TThread.h>
+#include <TPosixThread.h>
 #include <iostream>
+#include <Riostream.h>
 
 #include "EdbScanProc.h"
 
@@ -25,6 +29,34 @@ using namespace std;
 
 ClassImp(EGraphRec)
 
+
+//----------------------------------------------------------------------------
+void *LinkProcess(void *ptr)
+{
+  // Run link process in thread mode
+
+  EGraphRec   *egraph = (EGraphRec*) ptr;
+  Int_t       *procId = egraph->GetBrickToProc();
+  EdbScanProc *sproc  = egraph->GetScanProc();
+
+  sproc->LinkRunAll(procId);
+  return 0;
+}
+
+
+//----------------------------------------------------------------------------
+void *CheckLinkProcess(void *ptr)
+{
+  // Set enable "Execute Event" button after finishing link process
+
+  EGraphRec *egraph = (EGraphRec*) ptr;
+  egraph->GetThLinkProcess()->Join();             // Join LinkProcess
+  egraph->GetTextProcEvent()->SetEnabled(kTRUE);  // Enable button
+  return 0;
+}
+
+
+//----------------------------------------------------------------------------
 EGraphRec::EGraphRec()
 {
   InitVariables();
@@ -37,6 +69,8 @@ EGraphRec::EGraphRec()
 EGraphRec::~EGraphRec() 
 {
   SafeDelete(fGraphHits);
+  SafeDelete(fThLinkProcess);
+  SafeDelete(fThCheckLinkProcess);
 }
 
 
@@ -77,32 +111,39 @@ void EGraphRec::ReadCmdConfig()
 
 
 //----------------------------------------------------------------------------
-void EGraphRec::ProcessEvent(Int_t nentries) 
+void EGraphRec::ProcessEvent()
 {
   // DrawEvent(nentries);
   
   fSproc->eProcDirClient = fDataDir;
 
-  Int_t ID[4] = {fProcBrick.brickId,  fProcBrick.firstPlate, 
-		 fProcBrick.ver, fProcId.interCalib};
+//   Int_t step = (fProcBrick.lastPlate - fProcBrick.firstPlate)/
+//     TMath::Abs(fProcBrick.lastPlate - fProcBrick.firstPlate);
 
-  Int_t step = (fProcBrick.lastPlate - fProcBrick.firstPlate)/
-    TMath::Abs(fProcBrick.lastPlate - fProcBrick.firstPlate);
+//   for (Int_t plate = fProcBrick.firstPlate; plate != fProcBrick.lastPlate;
+//        plate += step) {
+//     ID[1] = plate;
 
-  for (Int_t plate = fProcBrick.firstPlate; plate != fProcBrick.lastPlate;
-       plate += step) {
-    ID[1] = plate;
-    if (fCheckProcLink->IsDown()) LinkProcess(ID); // linking
+  // Sarting link process in thread mode
+
+  if (fCheckProcLink->IsDown()) {
+    fBrickToProc[0] = fProcBrick.brickId;
+    fBrickToProc[1] = fProcBrick.firstPlate;
+    fBrickToProc[2] = fProcBrick.ver;
+    fBrickToProc[3] = fProcId.interCalib;
+
+    fThLinkProcess->Run();              // Running LinkProcess in Thread mode
+    fThCheckLinkProcess->Run();         // Check the end of job
+    fTextProcEvent->SetEnabled(kFALSE); // Disable Execution button
   }
 }
 
 
 //----------------------------------------------------------------------------
-void EGraphRec::LinkProcess(Int_t ID[])
+void EGraphRec::ResetProcess()
 {
-  fSproc->LinkRunAll(ID);
+  // Reset process
 }
-
 
 //----------------------------------------------------------------------------
 void EGraphRec::DrawEvent(Int_t nentries)
@@ -217,12 +258,27 @@ void EGraphRec::AddProcListFrame(TGVerticalFrame *workframe)
   fCheckProcTrks = new TGCheckButton(GroupProcList, "Reconstruct tracks");
   fCheckProcVrtx = new TGCheckButton(GroupProcList, "Reconstruct vertex");
 
+  fCheckProcLink->SetState(kButtonDown);
   fCheckProcScan->SetEnabled(kFALSE);
   fCheckProcAlgn->SetEnabled(kFALSE);
   fCheckProcTrks->SetEnabled(kFALSE);
   fCheckProcVrtx->SetEnabled(kFALSE);
 
   workframe->AddFrame(GroupProcList, fLayout1);
+
+  // Break process
+
+  TGTextButton *endprocess = new TGTextButton(workframe, "Reset process");
+  endprocess->Connect("Clicked()", "EGraphRec", this, "ResetProcess()");
+  // endprocess->Associate(this);
+  workframe->AddFrame(endprocess, fLayout1);
+
+  // Running process
+
+  fTextProcEvent = new TGTextButton(workframe, "Execute event");
+  fTextProcEvent->Connect("Clicked()", "EGraphRec", this, "ProcessEvent()");
+
+  workframe->AddFrame(fTextProcEvent, fLayout1);
 }
 
 
@@ -413,8 +469,10 @@ void EGraphRec::WriteInfo()
 //----------------------------------------------------------------------------
 void EGraphRec::InitVariables()
 {
-  fEvent     = NULL;
-  fDataDir   = "";
+  fEvent              = NULL;
+  fThLinkProcess      = NULL;
+  fThCheckLinkProcess = NULL;
+  fDataDir            = "";
 
   fProcBrick.brickId = fProcBrick.firstPlate = fProcBrick.lastPlate = 
     fProcBrick.ver = -1;
@@ -423,6 +481,12 @@ void EGraphRec::InitVariables()
 
   fGraphHits = new EGraphHits();
   fSproc     = new EdbScanProc();
+
+  // TThread functions
+
+  fThLinkProcess      = new TThread("LinkProcess", LinkProcess, (void*) this);
+  fThCheckLinkProcess = new TThread("CheckLinkProcess", 
+				    CheckLinkProcess, (void*) this);
 }
 
 //----------------------------------------------------------------------------

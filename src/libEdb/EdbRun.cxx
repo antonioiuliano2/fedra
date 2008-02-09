@@ -43,6 +43,9 @@
 #include "EdbAffine.h"
 #include "EdbLog.h"
 
+#include <iostream>
+
+using namespace std;
 
 ClassImp(EdbRun)
 EdbRun      *gRUN=0;         // global pointer to the current Run
@@ -96,6 +99,7 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
 //______________________________________________________________________________
 EdbRun::~EdbRun()
 {
+  if(eTree)        delete eTree;
   if(eFile)        delete eFile;
   if(eHeader)      delete eHeader;
   if(ePredictions) delete ePredictions;
@@ -107,20 +111,19 @@ EdbRun::~EdbRun()
 void EdbRun::Init( )
 {
   eView        = new EdbView();      //each run has his own view
-
   eHeader      = 0;
   eTree        = 0;
   eFile        = 0;
   ePath        = "";
   ePredictions = 0;
   eMarks       = 0;
-  gRUN      = this;
+  gRUN         = this;
 }
 
 //______________________________________________________________________________
 void EdbRun::SelectOpenMode( const char *fname, const char *status )
 {
-  if     ( !strcmp(status, "RECREATE") )  Create(fname);
+  if     ( !strcmp(status,"RECREATE") )   Create(fname);
   else if( !strcmp(status,"READ") )       Open(fname);
   else if( !strcmp(status,"UPDATE") )     OpenUpdate(fname);
   else{
@@ -135,7 +138,9 @@ void EdbRun::SelectOpenMode( const char *fname, const char *status )
 void EdbRun::Open( const char *fname )
 {
   Log(3,"EdbRun::Open","\nOpen an existing file %s \n", fname);
+ 
   eFile = new TFile(fname);
+
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
   if(!eTree) {

@@ -69,7 +69,7 @@ EGraphTool::~EGraphTool()
 void EGraphTool::ProcessEvent()
 {
   // if (fEvtTree) fEmGraphRec->ProcessEvent(fEvtNumber);
-  fEmGraphRec->ProcessEvent(fEvtNumber);
+  // fEmGraphRec->ProcessEvent(fEvtNumber);
 }
 
 
@@ -110,10 +110,10 @@ void EGraphTool::DrawFrame()
 
   // Process Event
 
-  TGTextButton *process = new TGTextButton(ButtonFrame, "Execute event");
-  process->Connect("Clicked()", "EGraphTool", this, "ProcessEvent()");
-  process->Associate(this);
-  ButtonFrame->AddFrame(process, fLayout1);
+//   TGTextButton *process = new TGTextButton(ButtonFrame, "Execute event");
+//   process->Connect("Clicked()", "EGraphTool", this, "ProcessEvent()");
+//   process->Associate(this);
+//   ButtonFrame->AddFrame(process, fLayout1);
   workframe->AddFrame(ButtonFrame, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
 
   TGVerticalFrame *CanvasFrame = new TGVerticalFrame(workframe);

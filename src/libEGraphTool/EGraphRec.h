@@ -8,6 +8,7 @@
 #include "EdbView.h"
 #include "EGraphHits.h"
 
+class TThread;
 class TGTab;
 class TGTextView;
 class TRootEmbeddedCanvas;
@@ -38,17 +39,23 @@ class EGraphRec {
   EGraphRec();
   virtual ~EGraphRec();
 
-  void ProcessEvent(Int_t nentries);
+  void ProcessEvent();
   void AddProcBrickFrame(TGVerticalFrame *workframe);
   void AddProcListFrame(TGVerticalFrame *workframe);
   void AddRecOptFrame(TGTab *worktab);
   void AddCanvasFrame(TGTab *worktab);
   void AddInfoFrame(TGVerticalFrame *workframe);
+  void ResetProcess();
   void SetTree(TTree *tree);
   void Set3DViewer();
   void ZoomIn();
   void ZoomOut();
   void ClearEvent();
+
+  Int_t        *GetBrickToProc()             {return fBrickToProc;}
+  EdbScanProc  *GetScanProc()      const     {return fSproc;}
+  TThread      *GetThLinkProcess() const     {return fThLinkProcess;}
+  TGTextButton *GetTextProcEvent()           {return fTextProcEvent;}
 
   void SetDataDir(TString &dataDir)         {fDataDir = dataDir;}
   void SetProcId(ProcId_t &procId)          {fProcId = procId;}
@@ -56,6 +63,7 @@ class EGraphRec {
 
  private:
 
+  Int_t                fBrickToProc[4];
   TTree               *fEvtTree;
   TString              fDataDir;
   EdbView             *fEvent;
@@ -63,6 +71,8 @@ class EGraphRec {
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;
+  TThread             *fThLinkProcess;
+  TThread             *fThCheckLinkProcess;
 
   TGLayoutHints       *fLayout1;
   TGLayoutHints       *fLayout2;
@@ -77,6 +87,7 @@ class EGraphRec {
   TGCheckButton       *fCheckProcAlgn;
   TGCheckButton       *fCheckProcTrks;
   TGCheckButton       *fCheckProcVrtx;
+  TGTextButton        *fTextProcEvent;
 
   TRootEmbeddedCanvas *fDisplayHits;
   TRootEmbeddedCanvas *fDisplayHitsGL;
@@ -85,7 +96,6 @@ class EGraphRec {
   void InitVariables();
   void ReadCmdConfig();
   void InitDrawVariables();
-  void LinkProcess(Int_t ID[]);
   void ReconstructionOptionsDlg(TGCompositeFrame *DlgRec);
   void DrawEvent(Int_t nentries);
   void WriteInfo();

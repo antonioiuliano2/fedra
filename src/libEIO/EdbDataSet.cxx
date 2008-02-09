@@ -16,11 +16,15 @@
 #include "EdbMath.h"
 #include "EdbTraceBack.h"
 #include "EdbLog.h"
+#include <iostream>
+
+using namespace std;
 
 ClassImp(EdbMask)
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
 ClassImp(EdbDataProc)
+
 
 ///==============================================================================
 EdbDataPiece::EdbDataPiece()
@@ -84,13 +88,14 @@ void EdbDataPiece::Set0()
 ///______________________________________________________________________________
 void EdbDataPiece::CloseCPData()
 {
-  if(eCouplesTree) {
+  if (eCouplesTree) {
     TFile *f = eCouplesTree->GetDirectory()->GetFile();
-    if(f) {
+    if (f) {
       if(f->IsWritable()) eCouplesTree->AutoSave();
-      f->Close();
+      SafeDelete(eCouplesTree);
+      SafeDelete(f);
     }
-    eCouplesTree=0;
+    eCouplesTree=NULL;
   }
 }
 
@@ -916,6 +921,14 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   aff->CalculateTurn( nseg,x2.fArray,y2.fArray,x.fArray,y.fArray );
   UpdateAffTPar(2,*aff);
 
+  delete aff;
+
+  // Closing tree and file. A.C.
+
+  TFile *f = tree->GetDirectory()->GetFile();
+  SafeDelete(tree);
+  if (f) SafeDelete(f);
+
   return nseg;
 }
 
@@ -1226,39 +1239,39 @@ int EdbDataPiece::InitCouplesTree(const char *mode)
 ///______________________________________________________________________________
 TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
 {
-  const char *tree_name="couples";
+  static TString tree_name("couples");
   TTree *tree=0;
 
-  if (!tree) {
-    TFile *f = new TFile(file_name,mode);
-    if (f)  tree = (TTree*)f->Get(tree_name);
-    if(!tree) {
+  TFile *f = new TFile(file_name, mode);
+  if (f)  tree = (TTree*)f->Get(tree_name);
 
-      f->cd();
-      tree = new TTree(tree_name,tree_name);
-      tree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
-      //tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
+  if(!tree) {
+    f->cd();
+    tree = new TTree(tree_name, tree_name);
+    tree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
+    //tree->SetMaxVirtualSize( 512 * 1024 * 1024 ); // default is 64000000
 
-      int pid1=0,pid2=0;
-      float xv=0,yv=0;
-      EdbSegCouple *cp=0;
-      EdbSegP      *s1=0;
-      EdbSegP      *s2=0;
-      EdbSegP      *s=0;
+    int pid1=0,pid2=0;
+    float xv=0,yv=0;
+    EdbSegCouple *cp=0;
+    EdbSegP      *s1=0;
+    EdbSegP      *s2=0;
+    EdbSegP      *s=0;
       
-      tree->Branch("pid1",&pid1,"pid1/I");
-      tree->Branch("pid2",&pid2,"pid2/I");
-      tree->Branch("xv",&xv,"xv/F");
-      tree->Branch("yv",&yv,"yv/F");
-      tree->Branch("cp","EdbSegCouple",&cp,32000,99);
-      tree->Branch("s1.","EdbSegP",&s1,32000,99);
-      tree->Branch("s2.","EdbSegP",&s2,32000,99);
-      tree->Branch("s." ,"EdbSegP",&s,32000,99);
-      tree->Write();
-      //tree->SetAutoSave(2000000);
-    }
+    tree->Branch("pid1",&pid1,"pid1/I");
+    tree->Branch("pid2",&pid2,"pid2/I");
+    tree->Branch("xv",&xv,"xv/F");
+    tree->Branch("yv",&yv,"yv/F");
+    tree->Branch("cp","EdbSegCouple",&cp,32000,99);
+    tree->Branch("s1.","EdbSegP",&s1,32000,99);
+    tree->Branch("s2.","EdbSegP",&s2,32000,99);
+    tree->Branch("s." ,"EdbSegP",&s,32000,99);
+    tree->Write();
+    // tree->SetAutoSave(2000000);
   }
+
   if(!tree) printf("ERROR!!! InitCouplesTree: can't initialize tree at %s as %s\n",file_name,mode);
+
   return tree;
 }
 
@@ -1270,6 +1283,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
   eRun =  new EdbRun( GetRunFile(irun),"READ" );
   if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
 
+  
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
     eAreas[i]= new TIndexCell();
@@ -1634,7 +1648,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   //TTree *cptree=EdbDataPiece::InitCouplesTree(file_name,"RECREATE");
   //if(!cptree) return 0;
 
-  if(!piece.InitCouplesTree("RECREATE")) return 0;
+  if (!piece.InitCouplesTree("RECREATE")) return 0;
 
   EdbScanCond *cond = piece.GetCond(1);
   int    ntot=0, nareas=0;
@@ -1692,7 +1706,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     }
   }
   int ncp = piece.eCouplesTree->GetEntries();
-  piece.CloseCPData();
+  piece.CloseCPData(); // closing root file. A.C.
   return ncp;
 }
 
@@ -1771,7 +1785,7 @@ void EdbDataProc::CloseCouplesTree(TTree *tree)
   tree->AutoSave();
   TFile *f=0;
   f = tree->GetCurrentFile();
-  if(f) f->Close();
+  if (f) SafeDelete(f);
   tree=0;
 }
 
