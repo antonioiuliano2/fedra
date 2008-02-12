@@ -12,27 +12,26 @@
 #include <TObject.h>
 #include <TString.h>
 
-// class TPolyMarker3D;
-// class TPolyLine3D;
-// class TList;
-// class TH1;
 class EdbView;
-
+class EdbPattern;
 
 class EGraphHits: public TObject {
  public:
   EGraphHits();
-  virtual         ~EGraphHits();
+  virtual ~EGraphHits();
 
-  void             DrawHits();
-  void             BuildEvent(EdbView *event);
-  void             ClearEvent();
+  // void DrawHits();
+  void DrawTracks(const TString status = "all");
+  void BuildEvent(EdbPattern *tracks, const TString status);
+  // void BuildEvent(EdbView *event);
+  // void ClearEvent();
 
  private:
   
-  //    TPolyMarker3D   *fAllHits;                          // collection of middle points of each hit
-  TObjArray       *fAllSegments;                      // array of lines between two points (begin and end) of each hit
-  //    TList           *fList;                             // list of histos to be done
+  // TObjArray       *fAllSegments;
+  TObjArray       *fAllPredTracks;
+  TObjArray       *fAllFoundTracks;
+
   ClassDef(EGraphHits,1)
 };
 

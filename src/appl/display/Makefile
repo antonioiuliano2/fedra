@@ -4,8 +4,8 @@ include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
 TARGET        = $(BIN_DIR)/display$(ExeSuf)
-GLIBS        += -lThread
-PROJECT_LIBS  = $(GLIBS) -lEdr -lEdb -lEIO -lEmath -lEphys -lvt \
+EXTRALIBS     = -lThread -lGui
+PROJECT_LIBS  = $(EXTRALIBS) -lEdr -lEdb -lEIO -lEmath -lEphys -lvt \
 		-lDataConversion -lEGraphTool -lScan -lEMC
 
 #------------------------------------------------------------------------------

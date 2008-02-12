@@ -76,7 +76,7 @@ depend:
 	fi
 
 $(BIN_DIR)/% : ./%.$(ObjSuf)
-	$(LD) $< $(LIBS) $(ROOTLIBS) $(PROJECT_LIBS) -o $@;
+	$(LD) $< $(LIBS) $(PROJECT_LIBS) -o $@
 
 .SUFFIXES: .$(SrcSuf)
 

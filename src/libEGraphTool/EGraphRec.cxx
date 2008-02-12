@@ -19,9 +19,7 @@
 #include <TGLSAViewer.h>
 #include <TView.h>
 #include <TThread.h>
-#include <TPosixThread.h>
 #include <iostream>
-#include <Riostream.h>
 
 #include "EdbScanProc.h"
 
@@ -31,26 +29,85 @@ ClassImp(EGraphRec)
 
 
 //----------------------------------------------------------------------------
-void *LinkProcess(void *ptr)
+void *ThProcessEvent(void *ptr)
 {
-  // Run link process in thread mode
+  EGraphRec   *egraph      = (EGraphRec*) ptr;
+  EdbScanProc *sproc       = egraph->GetScanProc();
+  Int_t       *brickToProc = egraph->GetBrickToProc();
+  ProcId_t     procId      = egraph->GetProcId();
 
-  EGraphRec   *egraph = (EGraphRec*) ptr;
-  Int_t       *procId = egraph->GetBrickToProc();
-  EdbScanProc *sproc  = egraph->GetScanProc();
+  Int_t brickCalibCurr[4], brickCalibPrev[4];
+  Int_t brickPredCurr[4],  brickPredPrev[4];
 
-  sproc->LinkRunAll(procId);
+  brickPredCurr[0] = brickPredPrev[0] = brickCalibCurr[0] = 
+    brickCalibPrev[0] = brickToProc[0]; // brick Id
+  brickPredCurr[2] = brickPredPrev[2] = brickCalibCurr[2] = 
+    brickCalibPrev[2] = brickToProc[2]; // version
+  
+  Int_t firstPlate = brickToProc[1];
+  Int_t lastPlate  = brickToProc[3];
+
+  Int_t step = (lastPlate >= firstPlate) ? 1 : -1;
+
+  EdbPattern *predP = egraph->GetPredTracks();
+  EdbPattern *foundP = egraph->GetFoundTracks();
+
+  predP->Reset();
+  foundP->Reset();
+
+  for (Int_t plate = firstPlate; plate != lastPlate + step; plate += step) {
+
+    brickPredCurr[1]  = brickCalibCurr[1] = plate;
+    brickPredPrev[1]  = brickCalibPrev[1] = plate - step;
+    brickCalibPrev[3] = brickCalibCurr[3] = procId.interCalib;
+    brickPredPrev[3]  = brickPredCurr[3]  = procId.predScan;
+
+    // linking process
+
+    if (egraph->IsToProcLink()) {
+      brickCalibCurr[3] = procId.interCalib;
+      sproc->LinkRunAll(brickCalibCurr);
+    }
+
+    // alignment process
+
+    if (egraph->IsToProcAlgn() && plate != firstPlate) {
+      brickCalibCurr[3] = brickCalibPrev[3] = procId.interCalib;
+      sproc->SetAFFDZ(brickCalibPrev, brickCalibCurr, 1300.*step);
+      sproc->AlignAll(brickCalibPrev, brickCalibCurr, 1, 4, "-z");
+    }
+
+    // Scan back mode. Search predictions.
+
+    sproc->CopyPar(brickCalibCurr, brickPredCurr);
+
+    if (plate != firstPlate) {
+      sproc->CopyAFFPar(brickCalibPrev, brickCalibCurr, 
+			brickPredPrev,  brickPredCurr);
+      sproc->ProjectFound(brickPredPrev, brickPredCurr);
+    }
+
+    // Put the reset according plate number!
+
+    sproc->ReadPred(*predP, brickPredCurr);
+
+    // after scann
+    
+    sproc->ReadFound(*foundP, brickPredCurr);
+
+    egraph->DrawEvent();
+  }
   return 0;
 }
 
 
 //----------------------------------------------------------------------------
-void *CheckLinkProcess(void *ptr)
+void *ThCheckProcessEvent(void *ptr)
 {
-  // Set enable "Execute Event" button after finishing link process
+  // Set enable "Execute Event" button after finishing process
 
   EGraphRec *egraph = (EGraphRec*) ptr;
-  egraph->GetThLinkProcess()->Join();             // Join LinkProcess
+  egraph->GetThProcessEvent()->Join();            // Join ThProcessEvent
   egraph->GetTextProcEvent()->SetEnabled(kTRUE);  // Enable button
   return 0;
 }
@@ -61,7 +118,7 @@ EGraphRec::EGraphRec()
 {
   InitVariables();
   InitDrawVariables();
-  ReadCmdConfig();
+  ReadCmdConfig();      // reading config file
 }
 
 
@@ -69,44 +126,10 @@ EGraphRec::EGraphRec()
 EGraphRec::~EGraphRec() 
 {
   SafeDelete(fGraphHits);
-  SafeDelete(fThLinkProcess);
-  SafeDelete(fThCheckLinkProcess);
-}
-
-
-//----------------------------------------------------------------------------
-void EGraphRec::ReadCmdConfig()
-{
-  TString configDir  = (TString)getenv("FEDRA_ROOT") + "/config/";
-  TString configFile = configDir + "EGraphRec";
-
-  if (gEnv->ReadFile(configFile + ".cfg", kEnvChange) == -1) 
-    if (gEnv->ReadFile(configFile + "_default.cfg", kEnvChange) == -1) return;
-
-  if (fDataDir == "")
-    fDataDir = gEnv->GetValue("EGraphRec.DataDir", "");
-
-  // brick Id
-
-  if (fProcBrick.brickId < 0)
-    fProcBrick.brickId = gEnv->GetValue("EGraphRec.ProcBrick.brickId", 0);
-  if (fProcBrick.firstPlate < 0)
-    fProcBrick.firstPlate = gEnv->GetValue("EGraphRec.ProcBrick.firstPlate", 0);
-  if (fProcBrick.lastPlate < 0)
-    fProcBrick.lastPlate = gEnv->GetValue("EGraphRec.ProcBrick.lastPlate", 0);
-  if (fProcBrick.ver < 0)
-    fProcBrick.ver = gEnv->GetValue("EGraphRec.ProcBrick.ver", 0);
-
-  // processes Ids
-
-  if (fProcId.interCalib < 0)
-    fProcId.interCalib = gEnv->GetValue("EGraphRec.ProcId.interCalib", 0);
-  if (fProcId.volumeScan < 0)
-    fProcId.volumeScan = gEnv->GetValue("EGraphRec.ProcId.volumeScan", 0);
-  if (fProcId.predScan < 0)
-    fProcId.predScan = gEnv->GetValue("EGraphRec.ProcId.predScan", 0);
-  if (fProcId.scanForth < 0)
-    fProcId.scanForth = gEnv->GetValue("EGraphRec.ProcId.scanForth", 0);
+  SafeDelete(fThProcessEvent);
+  SafeDelete(fThCheckProcessEvent);
+  SafeDelete(fPredTracks);
+  SafeDelete(fFoundTracks);
 }
 
 
@@ -117,25 +140,14 @@ void EGraphRec::ProcessEvent()
   
   fSproc->eProcDirClient = fDataDir;
 
-//   Int_t step = (fProcBrick.lastPlate - fProcBrick.firstPlate)/
-//     TMath::Abs(fProcBrick.lastPlate - fProcBrick.firstPlate);
+  fBrickToProc[0] = fProcBrickEntry[0]->GetIntNumber(); // Brick Id
+  fBrickToProc[1] = fProcBrickEntry[1]->GetIntNumber(); // first plate
+  fBrickToProc[2] = fProcBrickEntry[3]->GetIntNumber(); // version
+  fBrickToProc[3] = fProcBrickEntry[2]->GetIntNumber(); // last plate
 
-//   for (Int_t plate = fProcBrick.firstPlate; plate != fProcBrick.lastPlate;
-//        plate += step) {
-//     ID[1] = plate;
-
-  // Sarting link process in thread mode
-
-  if (fCheckProcLink->IsDown()) {
-    fBrickToProc[0] = fProcBrick.brickId;
-    fBrickToProc[1] = fProcBrick.firstPlate;
-    fBrickToProc[2] = fProcBrick.ver;
-    fBrickToProc[3] = fProcId.interCalib;
-
-    fThLinkProcess->Run();              // Running LinkProcess in Thread mode
-    fThCheckLinkProcess->Run();         // Check the end of job
-    fTextProcEvent->SetEnabled(kFALSE); // Disable Execution button
-  }
+  fThProcessEvent->Run();              // Running Event Process in Thread mode
+  fThCheckProcessEvent->Run();         // Check the end of job
+  fTextProcEvent->SetEnabled(kFALSE);  // Disable Execution button
 }
 
 
@@ -143,22 +155,48 @@ void EGraphRec::ProcessEvent()
 void EGraphRec::ResetProcess()
 {
   // Reset process
+
+//   cout << "Reset Process" << endl;
+  
+//   if (fThProcessEvent) {
+//     TThread::Delete(fThProcessEvent);
+//     SafeDelete(fThProcessEvent);
+//     fThProcessEvent      = new TThread("ThProcessEvent", 
+//  				       ThProcessEvent, (void*) this);
+//   }
 }
 
+
 //----------------------------------------------------------------------------
-void EGraphRec::DrawEvent(Int_t nentries)
+void EGraphRec::DrawEvent()
 {
   TCanvas *canvasHits = fDisplayHits->GetCanvas();
   canvasHits->cd(); canvasHits->Clear();
 
-  fGraphHits->ClearEvent();
+//   fGraphHits->ClearEvent();
 
-  for (Int_t evt = 0; evt < 2; evt++) {
-    fEvtTree->GetEntry(evt);
-    fGraphHits->BuildEvent(fEvent);
+//   for (Int_t evt = 0; evt < 2; evt++) {
+//     fEvtTree->GetEntry(evt);
+//     fGraphHits->BuildEvent(fEvent);
+//   }
+
+  // fGraphHits->DrawHits();
+
+
+  // recalculation Z position of found segments
+
+  Int_t Nseg = fPredTracks->N();
+
+  for (Int_t iseg = 0; iseg < Nseg; iseg++) {
+    EdbSegP *segP = fPredTracks->GetSegment(iseg);
+    EdbSegP *segF = fFoundTracks->GetSegment(iseg);
+    if (segF->Flag() > -1) segF->SetZ(segP->Z());
   }
 
-  fGraphHits->DrawHits();
+  fGraphHits->BuildEvent(fPredTracks,  "predicted");
+  fGraphHits->BuildEvent(fFoundTracks, "found");
+  fGraphHits->DrawTracks("all");
+
   canvasHits->Update();
 }
 
@@ -258,9 +296,9 @@ void EGraphRec::AddProcListFrame(TGVerticalFrame *workframe)
   fCheckProcTrks = new TGCheckButton(GroupProcList, "Reconstruct tracks");
   fCheckProcVrtx = new TGCheckButton(GroupProcList, "Reconstruct vertex");
 
-  fCheckProcLink->SetState(kButtonDown);
+//   fCheckProcLink->SetState(kButtonDown);
+//   fCheckProcAlgn->SetState(kButtonDown);
   fCheckProcScan->SetEnabled(kFALSE);
-  fCheckProcAlgn->SetEnabled(kFALSE);
   fCheckProcTrks->SetEnabled(kFALSE);
   fCheckProcVrtx->SetEnabled(kFALSE);
 
@@ -469,24 +507,27 @@ void EGraphRec::WriteInfo()
 //----------------------------------------------------------------------------
 void EGraphRec::InitVariables()
 {
-  fEvent              = NULL;
-  fThLinkProcess      = NULL;
-  fThCheckLinkProcess = NULL;
-  fDataDir            = "";
+  fEvent               = NULL;
+  fThProcessEvent      = NULL;
+  fThCheckProcessEvent = NULL;
+  fDataDir             = "";
 
   fProcBrick.brickId = fProcBrick.firstPlate = fProcBrick.lastPlate = 
     fProcBrick.ver = -1;
   fProcId.interCalib = fProcId.volumeScan = fProcId.predScan = 
     fProcId.scanForth = -1;
 
-  fGraphHits = new EGraphHits();
-  fSproc     = new EdbScanProc();
+  fGraphHits   = new EGraphHits();
+  fSproc       = new EdbScanProc();
+  fPredTracks  = new EdbPattern();
+  fFoundTracks = new EdbPattern();
 
   // TThread functions
 
-  fThLinkProcess      = new TThread("LinkProcess", LinkProcess, (void*) this);
-  fThCheckLinkProcess = new TThread("CheckLinkProcess", 
-				    CheckLinkProcess, (void*) this);
+  fThProcessEvent      = new TThread("ThProcessEvent", 
+				     ThProcessEvent, (void*) this);
+  fThCheckProcessEvent = new TThread("ThCheckProcessEvent",
+				     ThCheckProcessEvent, (void*) this);
 }
 
 //----------------------------------------------------------------------------
@@ -497,6 +538,42 @@ void EGraphRec::InitDrawVariables()
   fLayout3 = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2);
   fLayoutLeftExpY  = new TGLayoutHints(kLHintsLeft|kLHintsExpandY, 2, 4, 0, 0);
   fLayoutRightExpY = new TGLayoutHints(kLHintsRight|kLHintsExpandY,4, 2, 0, 0);
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::ReadCmdConfig()
+{
+  TString configDir  = (TString)getenv("FEDRA_ROOT") + "/config/";
+  TString configFile = configDir + "EGraphRec";
+
+  if (gEnv->ReadFile(configFile + ".cfg", kEnvChange) == -1) 
+    if (gEnv->ReadFile(configFile + "_default.cfg", kEnvChange) == -1) return;
+
+  if (fDataDir == "")
+    fDataDir = gEnv->GetValue("EGraphRec.DataDir", "");
+
+  // brick Id
+
+  if (fProcBrick.brickId < 0)
+    fProcBrick.brickId = gEnv->GetValue("EGraphRec.ProcBrick.brickId", 0);
+  if (fProcBrick.firstPlate < 0)
+    fProcBrick.firstPlate = gEnv->GetValue("EGraphRec.ProcBrick.firstPlate", 0);
+  if (fProcBrick.lastPlate < 0)
+    fProcBrick.lastPlate = gEnv->GetValue("EGraphRec.ProcBrick.lastPlate", 0);
+  if (fProcBrick.ver < 0)
+    fProcBrick.ver = gEnv->GetValue("EGraphRec.ProcBrick.ver", 0);
+
+  // processes Ids
+
+  if (fProcId.interCalib < 0)
+    fProcId.interCalib = gEnv->GetValue("EGraphRec.ProcId.interCalib", 0);
+  if (fProcId.volumeScan < 0)
+    fProcId.volumeScan = gEnv->GetValue("EGraphRec.ProcId.volumeScan", 0);
+  if (fProcId.predScan < 0)
+    fProcId.predScan = gEnv->GetValue("EGraphRec.ProcId.predScan", 0);
+  if (fProcId.scanForth < 0)
+    fProcId.scanForth = gEnv->GetValue("EGraphRec.ProcId.scanForth", 0);
 }
 
 

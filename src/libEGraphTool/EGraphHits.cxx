@@ -25,6 +25,7 @@
 
 #include "EdbView.h"
 #include "EdbSegment.h"
+#include "EdbPattern.h"
 
 #include <iostream>
 
@@ -39,9 +40,9 @@ EGraphHits::EGraphHits()
   // Constructor
   //
 
-//   fAllHits = new TPolyMarker3D;
-//   fList = new TList;
-  fAllSegments = new TObjArray();
+  // fAllSegments    = new TObjArray();
+  fAllPredTracks  = new TObjArray();
+  fAllFoundTracks = new TObjArray();
 }
 
 //----------------------------------------------------------------------------
@@ -51,36 +52,36 @@ EGraphHits::~EGraphHits()
   // Destructor
   //
 
-//   fList->Delete();
-//   SafeDelete(fList);
-  SafeDelete(fAllSegments);
+  // SafeDelete(fAllSegments);
+  SafeDelete(fAllPredTracks);
+  SafeDelete(fAllFoundTracks);
 }
 
 
 //----------------------------------------------------------------------------
-void EGraphHits::BuildEvent(EdbView *event)
-{
-  //
-  // 
-  //
+// void EGraphHits::BuildEvent(EdbView *event)
+// {
+//   //
+//   // 
+//   //
 
-  // fill the array by 3D line segments
+//   // fill the array by 3D line segments
 
-  for (Int_t iseg = 0; iseg < event->Nsegments(); iseg++) {
-    EdbSegment *seg = event->GetSegment(iseg);
+//   for (Int_t iseg = 0; iseg < event->Nsegments(); iseg++) {
+//     EdbSegment *seg = event->GetSegment(iseg);
 
-    Double_t x1 = seg->GetX0();
-    Double_t y1 = seg->GetY0();
-    Double_t z1 = seg->GetZ0();
-    Double_t x2 = seg->GetX0() + seg->GetDz()*seg->GetTx();
-    Double_t y2 = seg->GetY0() + seg->GetDz()*seg->GetTy();
-    Double_t z2 = seg->GetZ0() + seg->GetDz();
+//     Double_t x1 = seg->GetX0();
+//     Double_t y1 = seg->GetY0();
+//     Double_t z1 = seg->GetZ0();
+//     Double_t x2 = seg->GetX0() + seg->GetDz()*seg->GetTx();
+//     Double_t y2 = seg->GetY0() + seg->GetDz()*seg->GetTy();
+//     Double_t z2 = seg->GetZ0() + seg->GetDz();
 
-    TPolyLine3D *segment = new TPolyLine3D;
-    segment->SetPoint(0, x1, y1, z1);
-    segment->SetPoint(1, x2, y2, z2);
-    fAllSegments->Add(segment);
-  }
+//     TPolyLine3D *segment = new TPolyLine3D;
+//     segment->SetPoint(0, x1, y1, z1);
+//     segment->SetPoint(1, x2, y2, z2);
+//     fAllSegments->Add(segment);
+//   }
 
 
 
@@ -154,12 +155,12 @@ void EGraphHits::BuildEvent(EdbView *event)
 //   }
 
 //   if (!fEvent->GetTracks()) Warning("BuildEvent()", "No Tracks is found");
-}
+// }
 
 
 //----------------------------------------------------------------------------
-void EGraphHits::DrawHits()
-{
+// void EGraphHits::DrawHits()
+// {
   //
   // 
   //
@@ -170,27 +171,81 @@ void EGraphHits::DrawHits()
 
   // draw segments
 
-  for (Int_t i = 0; i < fAllSegments->GetEntries(); i++) {
-    TPolyLine3D *segment = (TPolyLine3D*)fAllSegments->At(i);
-    if (segment) segment->Draw();
+//   for (Int_t i = 0; i < fAllSegments->GetEntries(); i++) {
+//     TPolyLine3D *segment = (TPolyLine3D*)fAllSegments->At(i);
+//     if (segment) segment->Draw();
+//   }
+// }
+
+
+//----------------------------------------------------------------------------
+void EGraphHits::BuildEvent(EdbPattern *tracks, const TString status)
+{
+  // fill the array by 3D line segments
+
+  if (status == "predicted") fAllPredTracks->Delete();
+  if (status == "found")     fAllFoundTracks->Delete();
+
+  Int_t Nseg = tracks->N();
+  Double_t Z = 0.;
+  Double_t DZ = 250.;
+
+  for (Int_t iseg = 0; iseg < Nseg; iseg++) {
+    EdbSegP *seg = tracks->GetSegment(iseg);
+    
+    Z += seg->Z(); // Temporary solution!
+
+    Double_t x1 = seg->X() - 0.5*DZ*seg->TX();
+    Double_t y1 = seg->Y() - 0.5*DZ*seg->TX();
+    Double_t z1 = Z - 0.5*DZ;
+    Double_t x2 = seg->X() + 0.5*DZ*seg->TX();
+    Double_t y2 = seg->Y() + 0.5*DZ*seg->TY();
+    Double_t z2 = Z + 0.5*DZ;
+
+    TPolyLine3D *segment = new TPolyLine3D;
+    segment->SetPoint(0, x1, y1, z1);
+    segment->SetPoint(1, x2, y2, z2);
+    if (status == "predicted") fAllPredTracks->Add(segment);
+    if (status == "found")     fAllFoundTracks->Add(segment);
   }
 }
 
 
 //----------------------------------------------------------------------------
-void EGraphHits::ClearEvent() 
+void EGraphHits::DrawTracks(const TString status)
 {
+  if (status == "all" || status == "predicted") {
+    for (Int_t i = 0; i < fAllPredTracks->GetEntries(); i++) {
+      TPolyLine3D *segment = (TPolyLine3D*)fAllPredTracks->At(i);
+      if (segment) {
+	segment->SetLineWidth(3);
+	segment->SetLineColor(8);
+	segment->Draw();
+      }
+    }
+  }
+
+  if (status == "all" || status == "found") {
+    for (Int_t i = 0; i < fAllFoundTracks->GetEntries(); i++) {
+      TPolyLine3D *segment = (TPolyLine3D*)fAllFoundTracks->At(i);
+      if (segment) {
+	segment->SetLineWidth(3);
+	segment->SetLineColor(2);
+	segment->Draw();
+      }
+    }
+  }
+}
+
+
+//----------------------------------------------------------------------------
+// void EGraphHits::ClearEvent() 
+// {
   //
   // Clear
   //
 
-//   SafeDelete(fAllHits); fAllHits = new TPolyMarker3D;
-
-//   for (Int_t i = 0; i < fList->GetEntries(); i++) {
-//     TH1 *h = (TH1*)fList->At(i);
-//     h->Reset();
-//   }
-
-  fAllSegments->Delete();
-}
+  // fAllSegments->Delete();
+  // fAllPredTracks->Delete();
+// }
 

@@ -16,9 +16,6 @@
 #include "EdbMath.h"
 #include "EdbTraceBack.h"
 #include "EdbLog.h"
-#include <iostream>
-
-using namespace std;
 
 ClassImp(EdbMask)
 ClassImp(EdbDataPiece)
@@ -1706,7 +1703,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     }
   }
   int ncp = piece.eCouplesTree->GetEntries();
-  piece.CloseCPData(); // closing root file. A.C.
+  piece.CloseCPData();
   return ncp;
 }
 

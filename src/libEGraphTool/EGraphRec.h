@@ -14,6 +14,7 @@ class TGTextView;
 class TRootEmbeddedCanvas;
 class TGLSAViewer;
 class EdbScanProc;
+class EdbPattern;
 
 // brick to process
 
@@ -45,6 +46,7 @@ class EGraphRec {
   void AddRecOptFrame(TGTab *worktab);
   void AddCanvasFrame(TGTab *worktab);
   void AddInfoFrame(TGVerticalFrame *workframe);
+  void DrawEvent();
   void ResetProcess();
   void SetTree(TTree *tree);
   void Set3DViewer();
@@ -52,10 +54,15 @@ class EGraphRec {
   void ZoomOut();
   void ClearEvent();
 
-  Int_t        *GetBrickToProc()             {return fBrickToProc;}
-  EdbScanProc  *GetScanProc()      const     {return fSproc;}
-  TThread      *GetThLinkProcess() const     {return fThLinkProcess;}
-  TGTextButton *GetTextProcEvent()           {return fTextProcEvent;}
+  Bool_t        IsToProcLink()      const   {return fCheckProcLink->IsDown();}
+  Bool_t        IsToProcAlgn()      const   {return fCheckProcAlgn->IsDown();}
+  Int_t        *GetBrickToProc()            {return fBrickToProc;}
+  ProcId_t      GetProcId()         const   {return fProcId;}
+  EdbScanProc  *GetScanProc()       const   {return fSproc;}
+  EdbPattern   *GetPredTracks()     const   {return fPredTracks;}
+  EdbPattern   *GetFoundTracks()    const   {return fFoundTracks;}
+  TThread      *GetThProcessEvent() const   {return fThProcessEvent;}
+  TGTextButton *GetTextProcEvent()          {return fTextProcEvent;}
 
   void SetDataDir(TString &dataDir)         {fDataDir = dataDir;}
   void SetProcId(ProcId_t &procId)          {fProcId = procId;}
@@ -68,11 +75,13 @@ class EGraphRec {
   TString              fDataDir;
   EdbView             *fEvent;
   EdbScanProc         *fSproc;
+  EdbPattern          *fPredTracks;
+  EdbPattern          *fFoundTracks;
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;
-  TThread             *fThLinkProcess;
-  TThread             *fThCheckLinkProcess;
+  TThread             *fThProcessEvent;
+  TThread             *fThCheckProcessEvent;
 
   TGLayoutHints       *fLayout1;
   TGLayoutHints       *fLayout2;
@@ -97,7 +106,6 @@ class EGraphRec {
   void ReadCmdConfig();
   void InitDrawVariables();
   void ReconstructionOptionsDlg(TGCompositeFrame *DlgRec);
-  void DrawEvent(Int_t nentries);
   void WriteInfo();
 
   ClassDef(EGraphRec,0)

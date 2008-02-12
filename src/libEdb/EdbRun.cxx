@@ -43,10 +43,6 @@
 #include "EdbAffine.h"
 #include "EdbLog.h"
 
-#include <iostream>
-
-using namespace std;
-
 ClassImp(EdbRun)
 EdbRun      *gRUN=0;         // global pointer to the current Run
 
@@ -138,9 +134,7 @@ void EdbRun::SelectOpenMode( const char *fname, const char *status )
 void EdbRun::Open( const char *fname )
 {
   Log(3,"EdbRun::Open","\nOpen an existing file %s \n", fname);
- 
   eFile = new TFile(fname);
-
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
   if(!eTree) {
