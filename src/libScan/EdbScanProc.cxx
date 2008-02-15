@@ -75,7 +75,7 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 //----------------------------------------------------------------
 int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
-  if (sc.GetListIDS().GetSize() == 1) return 1;
+  if (sc.eIDS.GetSize() == 1) return 1;
 
   // make couples in a given order
 
