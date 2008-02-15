@@ -179,7 +179,7 @@ EGraphHits::~EGraphHits()
 
 
 //----------------------------------------------------------------------------
-void EGraphHits::BuildEvent(EdbPattern *tracks, const TString status)
+void EGraphHits::BuildEvent(EdbTrackP *tracks, const TString status)
 {
   // fill the array by 3D line segments
 
@@ -187,20 +187,32 @@ void EGraphHits::BuildEvent(EdbPattern *tracks, const TString status)
   if (status == "found")     fAllFoundTracks->Delete();
 
   Int_t Nseg = tracks->N();
-  Double_t Z = 0.;
-  Double_t DZ = 250.;
+
+  cout << Nseg << endl;
+
+//   Double_t Z = 0.;
+//   Double_t DZ = 250.;
 
   for (Int_t iseg = 0; iseg < Nseg; iseg++) {
     EdbSegP *seg = tracks->GetSegment(iseg);
     
-    Z += seg->Z(); // Temporary solution!
+    cout << seg->DZ() << endl;
 
-    Double_t x1 = seg->X() - 0.5*DZ*seg->TX();
-    Double_t y1 = seg->Y() - 0.5*DZ*seg->TX();
-    Double_t z1 = Z - 0.5*DZ;
-    Double_t x2 = seg->X() + 0.5*DZ*seg->TX();
-    Double_t y2 = seg->Y() + 0.5*DZ*seg->TY();
-    Double_t z2 = Z + 0.5*DZ;
+    // Z += seg->Z(); // Temporary solution!
+
+    Double_t x1 = seg->X() - 0.5*seg->DZ()*seg->TX();
+    Double_t y1 = seg->Y() - 0.5*seg->DZ()*seg->TX();
+    Double_t z1 = seg->Z() - 0.5*seg->DZ();
+    Double_t x2 = seg->X() + 0.5*seg->DZ()*seg->TX();
+    Double_t y2 = seg->Y() + 0.5*seg->DZ()*seg->TY();
+    Double_t z2 = seg->Z() + 0.5*seg->DZ();
+
+//     Double_t x1 = seg->X() - 0.5*DZ*seg->TX();
+//     Double_t y1 = seg->Y() - 0.5*DZ*seg->TX();
+//     Double_t z1 = Z - 0.5*DZ;
+//     Double_t x2 = seg->X() + 0.5*DZ*seg->TX();
+//     Double_t y2 = seg->Y() + 0.5*DZ*seg->TY();
+//     Double_t z2 = Z + 0.5*DZ;
 
     TPolyLine3D *segment = new TPolyLine3D;
     segment->SetPoint(0, x1, y1, z1);

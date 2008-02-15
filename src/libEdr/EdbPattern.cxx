@@ -715,7 +715,7 @@ void EdbTrackP::ClearVTA(EdbVTA *vta)
 void EdbTrackP::Copy(const EdbTrackP &tr)
 {
   // do the physical copy of segments
-  Reset();
+  Clear();
   ((EdbSegP*)(this))->Copy( *((EdbSegP*)(&tr)) );
   SetM(tr.M());
   SetPDG(tr.PDG());

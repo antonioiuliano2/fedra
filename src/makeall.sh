@@ -4,7 +4,12 @@
 #       ./makeall.sh  depend - create all dependencies
 #
 
-LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libEOracle libScan libShower libEGraphTool"
+LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libScan libShower libEGraphTool"
+
+if [ "${ORACLE_HOME}" != "" ]; then
+LIBS+=" libEOracle"
+fi
+
 for lib in ${LIBS} ; do
     if [ "$1" != "check" ]; then 
        echo 

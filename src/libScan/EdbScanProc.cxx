@@ -75,7 +75,9 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 //----------------------------------------------------------------
 int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
-  //make couples in a given order
+  if (sc.GetListIDS().GetSize() == 1) return 1;
+
+  // make couples in a given order
 
   EdbID *id1=0, *id2=0;
   for( int i=1; i<sc.eIDS.GetEntries(); i++ ) {
@@ -114,6 +116,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
   EdbPattern pat;
   pat.AddSegment(track.ID(), 0,0,0,0);
   EdbSegP *s = pat.GetSegment(0);
+
   for(int i=0; i<n; i++) {
     EdbID *id    = (EdbID *)(sc.eIDS.At(i));
     if(ReadFoundSegment(*id,*s)<=0) continue;
@@ -127,6 +130,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
     s->SetPID(id->ePlate);
     track.AddSegment( new EdbSegP(*s) );
   }
+
   return count;
 }
 

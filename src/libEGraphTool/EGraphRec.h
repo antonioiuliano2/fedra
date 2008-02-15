@@ -15,6 +15,7 @@ class TRootEmbeddedCanvas;
 class TGLSAViewer;
 class EdbScanProc;
 class EdbPattern;
+class EdbScanSet;
 
 // brick to process
 
@@ -46,6 +47,7 @@ class EGraphRec {
   void AddRecOptFrame(TGTab *worktab);
   void AddCanvasFrame(TGTab *worktab);
   void AddInfoFrame(TGVerticalFrame *workframe);
+  void ReconstructTracks();
   void DrawEvent();
   void ResetProcess();
   void SetTree(TTree *tree);
@@ -60,7 +62,8 @@ class EGraphRec {
   ProcId_t      GetProcId()         const   {return fProcId;}
   EdbScanProc  *GetScanProc()       const   {return fSproc;}
   EdbPattern   *GetPredTracks()     const   {return fPredTracks;}
-  EdbPattern   *GetFoundTracks()    const   {return fFoundTracks;}
+  EdbTrackP    *GetFoundTracks()    const   {return fFoundTracks;}
+  EdbScanSet   *GetPredScanProc()   const   {return fPredScanProc;}
   TThread      *GetThProcessEvent() const   {return fThProcessEvent;}
   TGTextButton *GetTextProcEvent()          {return fTextProcEvent;}
 
@@ -76,7 +79,8 @@ class EGraphRec {
   EdbView             *fEvent;
   EdbScanProc         *fSproc;
   EdbPattern          *fPredTracks;
-  EdbPattern          *fFoundTracks;
+  EdbTrackP           *fFoundTracks;
+  EdbScanSet          *fPredScanProc;
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;

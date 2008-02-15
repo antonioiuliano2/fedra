@@ -50,12 +50,12 @@ class EdbLayer : public TObject {
   bool  IsInside(float x, float y, float z);
   bool  IsInside(float x, float y);
 
-  void SetID(int id )    {eID=id;}
-  void SetXY(float x, float y )    { eX=x; eY=y; }
-  void SetDXDY(float dx, float dy) { eDX=dx; eDY=dy; }
-  void SetTXTY(float tx, float ty )    { eTX=tx; eTY=ty; }
-  void SetShrinkage(float shr) {eShr=shr;}
-  void SetZlayer(float z,float zmin,float zmax) { eZ=z; eZmin=zmin; eZmax=zmax; }
+  void SetID(int id )               {eID=id;}
+  void SetXY(float x, float y )     {eX=x; eY=y;}
+  void SetDXDY(float dx, float dy)  {eDX=dx; eDY=dy;}
+  void SetTXTY(float tx, float ty ) {eTX=tx; eTY=ty;}
+  void SetShrinkage(float shr)      {eShr=shr;}
+  void SetZlayer(float z,float zmin,float zmax) { eZ=z;eZmin=zmin;eZmax=zmax; }
   void SetAffXY(float a11,float a12,float a21,float a22,float b1,float b2) 
     {eAffXY.Set(a11,a12,a21,a22,b1,b2);}
   void SetAffTXTY(float a11,float a12,float a21,float a22,float b1,float b2) 

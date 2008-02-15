@@ -310,8 +310,8 @@ class EdbTrackP : public EdbSegP {
 
   //int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
 
-  int      N()  const  { return (eS)?  eS->GetSize()  : 0; }
-  int      NF() const  { return (eSF)? eSF->GetSize() : 0; }
+  int      N()  const  { return (eS) ?  eS->GetSize()  : 0; }
+  int      NF() const  { return (eSF)?  eSF->GetSize() : 0; }
 
   float    Wgrains() const;
   int	   GetSegmentsFlag( int &nseg ) const;
@@ -372,7 +372,6 @@ class EdbTrackP : public EdbSegP {
   float CHI2F();
   void  FitTrack();
   void  Copy(const EdbTrackP &tr);
-  void  Reset()  { if(eS)  eS->Clear(); if(eSF) eSF->Clear(); }
   void  Clear()  { if(eS)  eS->Clear(); if(eSF) eSF->Clear(); }
   void  ClearF() { if(eSF) eSF->Clear(); }
   void  Print();
