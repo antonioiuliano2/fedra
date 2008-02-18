@@ -533,6 +533,15 @@ void EdbSegmentsBox::SetSegmentsZ()
 }
 
 //______________________________________________________________________________
+void EdbSegmentsBox::SetSegmentsDZ(float dz)
+{
+  int nseg = N();
+  for(int i=0; i<nseg; i++ )    {
+    GetSegment(i)->SetDZ( dz );
+  }
+}
+
+//______________________________________________________________________________
 void EdbSegmentsBox::ProjectTo(const float dz)
 {
   eZ += dz;  eDZkeep += dz;

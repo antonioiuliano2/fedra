@@ -77,12 +77,14 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
   if (sc.eIDS.GetSize() == 1) {  // add nominal plate
     EdbPlateP *plate = new EdbPlateP();
-    Float_t dz0=214,dz1=45,dz2=45;  //TODO!
+    plate->SetID(sc.GetID(0)->ePlate);
+    Float_t z=0, dz0=214,dz1=45,dz2=45;  //TODO!
     plate->SetZlayer(z, z - dz0/2 + dz1, z+dz0/2+dz2);                
     plate->GetLayer(0)->SetZlayer(0,-dz0/2,dz0/2);       // internal plate coord
     plate->GetLayer(2)->SetZlayer(-dz0/2,-dz0/2-dz2,-dz0/2);
     plate->GetLayer(1)->SetZlayer( dz0/2, dz0/2, dz0/2+dz1);
     sc.eB.AddPlate(plate);
+    sc.MakePIDList();
     return 1;
   }
   // make couples in a given order
@@ -152,21 +154,25 @@ int EdbScanProc::ReadFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
     ReadFound(pat, *id, flag);
     plate = sc.GetPlate(id->ePlate);
     pat.SetPID(id->ePlate);
+    pat.SetID(id->ePlate);
     pat.SetSegmentsPID();
     pat.Transform(    plate->GetAffineXY()   );
     pat.TransformA(   plate->GetAffineTXTY() );
     pat.TransformShr( plate->Shr() );
     pat.SetZ(plate->Z());
     pat.SetSegmentsZ();
-    //    s->SetDZ(-214);                            //TODO!!!
+    pat.SetSegmentsDZ(plate->DZ());  // to check the direction!
     
     for(int j=0; j<pat.N(); j++) {
       EdbSegP *s = pat.GetSegment(j);
       EdbTrackP *track = ali.FindTrack(s->ID());
       if(track)  track->AddSegment( new EdbSegP(*s) );
       else       ali.AddTrack( new EdbTrackP(new EdbSegP(*s)) );
+      count++;
     }
   }
+
+  LogPrint(sc.eB.ID(),2,"ReadFoundTracks","%d  segments read\n",count );
 
   return count;
 }

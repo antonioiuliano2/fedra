@@ -222,6 +222,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   void          *GetSegmentsAddr()  { return &eSegments; }
 
   void SetSegmentsZ();
+  void SetSegmentsDZ(float dz);
   // mandatory virtual functions:
   void       SetX(float x) { eX=x; }
   void       SetY(float y) { eY=y; }
