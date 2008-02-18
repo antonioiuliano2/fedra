@@ -292,6 +292,7 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetSegmentProbability( EdbSegP &seg );
 
   EdbTrackP* GetTrack(int i) const { if(eTracks) return (EdbTrackP*)(eTracks->At(i)); else return 0; }
+  EdbTrackP* FindTrack(int id) const;
 
   void AddTrack(EdbTrackP *track) {
     if(!eTracks) eTracks = new TObjArray();

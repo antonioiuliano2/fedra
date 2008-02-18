@@ -92,17 +92,11 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 int EdbScanProc::ReadFoundSegment(EdbID id,  EdbSegP &s, int flag)
 {
   EdbPattern pat;
-  int id4[4], count=0;
-  id.Get(id4);
-  ReadFound(pat, id4, flag);
-  EdbSegP *ss;
-  for(int i=0; i<pat.N(); i++) {
-    ss = pat.GetSegment(i);
-    if(ss->ID()!=s.ID())  continue;
-    count++;
-    s.Copy(*ss);
-  }
-  return count;
+  ReadFound(pat, id, flag);
+  EdbSegP *ss = pat.FindSegment(s.ID());
+  if(!ss) return 0;
+  s.Copy(*ss);
+  return 1;
 }
 
 //----------------------------------------------------------------
@@ -129,6 +123,41 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
     s->SetDZ(-214);                            //TODO!!!
     s->SetPID(id->ePlate);
     track.AddSegment( new EdbSegP(*s) );
+  }
+
+  return count;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
+{
+  // read all tracks  from found.root listed in sc.IDS and apply transformations from sc.eB
+  // return the total number of segments added
+
+  EdbPlateP  *plate;
+  int n = sc.eIDS.GetEntries();
+  int count=0;
+
+  for(int i=0; i<n; i++) {
+    EdbID *id  = sc.GetID(i);
+    EdbPattern pat;
+    ReadFound(pat, *id, flag);
+    plate = sc.GetPlate(id->ePlate);
+    pat.SetPID(id->ePlate);
+    pat.SetSegmentsPID();
+    pat.Transform(    plate->GetAffineXY()   );
+    pat.TransformA(   plate->GetAffineTXTY() );
+    pat.TransformShr( plate->Shr() );
+    pat.SetZ(plate->Z());
+    pat.SetSegmentsZ();
+    //    s->SetDZ(-214);                            //TODO!!!
+    
+    for(int j=0; j<pat.N(); j++) {
+      EdbSegP *s = pat.GetSegment(j);
+      EdbTrackP *track = ali.FindTrack(s->ID());
+      if(track)  track->AddSegment( new EdbSegP(*s) );
+      else       ali.AddTrack( new EdbTrackP(new EdbSegP(*s)) );
+    }
   }
 
   return count;

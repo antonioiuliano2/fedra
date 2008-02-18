@@ -662,7 +662,6 @@ EdbTrackP::EdbTrackP(int nseg)
 //______________________________________________________________________________
 EdbTrackP::EdbTrackP(EdbSegP *seg, float m) : EdbSegP( *seg )
 {
-//  Set0();
   eS=0;
   eSF=0;
   eM=0;
@@ -1447,6 +1446,13 @@ void EdbPattern::Set0()
   eNAff = 0;
   eStepX=eStepY=eStepTX=eStepTY=0;
   for(int i=0; i<4; i++) eSigma[i]=0;
+}
+
+//______________________________________________________________________________
+EdbSegP *EdbPattern::FindSegment(int id)
+{
+  for(int i=0; i<N(); i++) if(GetSegment(i)->ID()==id) return GetSegment(i);
+  return 0;
 }
 
 //______________________________________________________________________________

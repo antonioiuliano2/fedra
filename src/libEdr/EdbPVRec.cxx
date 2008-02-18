@@ -834,6 +834,14 @@ EdbPVRec::~EdbPVRec()
 }
 
 ///______________________________________________________________________________
+EdbTrackP* EdbPVRec::FindTrack(int id) const
+{
+  for(int i=0; i<Ntracks(); i++) 
+    if(GetTrack(i)->ID()==id) return GetTrack(i);
+  return 0;
+}
+
+///______________________________________________________________________________
 EdbPatCouple *EdbPVRec::AddCouple(int id1, int id2)
 {
   EdbPatCouple *c = new EdbPatCouple();

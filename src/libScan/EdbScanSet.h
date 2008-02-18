@@ -58,6 +58,7 @@ class EdbScanSet : public TNamed
   Bool_t   GetAffP2P(Int_t p1, Int_t p2, EdbAffine2D &aff);
   Float_t  GetDZP2P(Int_t p1, Int_t p2);
   EdbID   *FindPlateID(Int_t p);
+  EdbID   *GetID(Int_t i) {return (EdbID *)(eIDS.At(i));}
 
   const EdbBrickP& Brick()   const {return eB;}
   EdbBrickP&       Brick()         {return eB;}

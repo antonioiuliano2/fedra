@@ -271,7 +271,7 @@ class EdbTrackP : public EdbSegP {
  public:
 
   EdbTrackP(int nseg=0);
-  EdbTrackP(EdbSegP *seg, float m);
+  EdbTrackP(EdbSegP *seg, float m=0.12);
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) ) {Copy(track);}
   virtual ~EdbTrackP();
 
@@ -425,7 +425,7 @@ class EdbPattern : public EdbSegmentsBox {
   int         ID()     const {return eID;}
   int         PID()    const {return ePID;}
   TIndexCell *Cell()   const {return eCell;}
-
+  EdbSegP    *FindSegment(int id);
 
 
   ClassDef(EdbPattern,1)  // pattern of segments

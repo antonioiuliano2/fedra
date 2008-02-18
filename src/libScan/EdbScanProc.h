@@ -21,8 +21,8 @@ public:
   void    MakeFileName(TString &s, int id[4], const char *suffix);
   void    MakeFileName(TString &s, EdbID id, const char *suffix) {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix);}
   void    MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix="aff.par");
-  void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); 
-  return MakeAffName(s,id14,id24,suffix); }
+  void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") 
+    { int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return MakeAffName(s,id14,id24,suffix); }
   bool    GetMap(int brick, TString &map);
   bool    AddParLine(const char *file, const char *line);
   bool    MakeInPar(int id[4], const char *option);
@@ -42,6 +42,8 @@ public:
   int     WritePred(EdbPattern &pred, int id[4], int flag=-1) {return WritePatRoot(pred,id,"pred.root",flag);}
   int     ReadFound(EdbPattern &pred, int id[4], int flag=-1) {return ReadPatRoot(pred,id,"found.root",flag);}
   int     WriteFound(EdbPattern &pred, int id[4], int flag=-1) {return WritePatRoot(pred,id,"found.root",flag);}
+  int     ReadFound(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadFound(pred,id4,flag);}
+  int     ReadPred(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadPred(pred,id4,flag);}
 
   EdbRun *InitRun(int id[4]);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
@@ -99,6 +101,7 @@ public:
   int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1", bool do_erase=true);
   int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
   int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
+  int     ReadFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
 
   void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
