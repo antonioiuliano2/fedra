@@ -75,8 +75,16 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 //----------------------------------------------------------------
 int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
-  if (sc.eIDS.GetSize() == 1) return 1;
-
+  if (sc.eIDS.GetSize() == 1) {  // add nominal plate
+    EdbPlateP *plate = new EdbPlateP();
+    Float_t dz0=214,dz1=45,dz2=45;  //TODO!
+    plate->SetZlayer(z, z - dz0/2 + dz1, z+dz0/2+dz2);                
+    plate->GetLayer(0)->SetZlayer(0,-dz0/2,dz0/2);       // internal plate coord
+    plate->GetLayer(2)->SetZlayer(-dz0/2,-dz0/2-dz2,-dz0/2);
+    plate->GetLayer(1)->SetZlayer( dz0/2, dz0/2, dz0/2+dz1);
+    sc.eB.AddPlate(plate);
+    return 1;
+  }
   // make couples in a given order
 
   EdbID *id1=0, *id2=0;
