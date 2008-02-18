@@ -206,6 +206,14 @@ void EdbView::DeleteClustersFog()
 }
 
 //______________________________________________________________________________
+EdbSegment* EdbView::AddSegment( EdbSegment &s )
+{
+  // return directly pointer to the segment
+  int i = eSegments->GetLast()+1;
+  return new((*eSegments)[i++])  EdbSegment( s );
+}
+
+//______________________________________________________________________________
 void EdbView::AddSegment( EdbSegment *s )
 {
   int i = eSegments->GetLast()+1;

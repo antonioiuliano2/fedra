@@ -224,6 +224,7 @@ public:
 			   float a,  float v, int f, int s, int seg=-1) 
     {return (EdbCluster*)(new((*eClusters)[eClusters->GetLast()+1])  EdbCluster(x,y,z, a,v,f,s,seg)); }
 
+  EdbSegment*  AddSegment( EdbSegment &s   );
   void         AddSegment( EdbSegment *s   );
   void         AddTrack(   EdbTrack   *t   );
   void         AddFrame(   int id, float z, int ncl=0, int npix=0 );
