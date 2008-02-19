@@ -319,6 +319,10 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   scp->eS=new EdbSegP(*s2);
   float chi2 = EdbTrackFitter::Chi2Seg(scp->eS, s1);
   scp->eS->PropagateToCOV( 0.5*(s1->Z()+s2->Z()) );
+
+  if(s1->EMULDigitArray()) 
+    for(int i=0; i<s1->EMULDigitArray()->GetEntries(); i++) scp->eS->addEMULDigit(s1->EMULDigitArray()->At(i));
+
   return chi2;
 }
 
@@ -343,6 +347,11 @@ float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
   s->SetDZ( s2->Z()-s1->Z() );
   s->SetVolume( s1->Volume()+s2->Volume() );
   s->SetMC(s1->MCEvt(),s1->MCTrack());
+
+  if(s1->EMULDigitArray()) 
+    for(int i=0; i<s1->EMULDigitArray()->GetEntries(); i++) s->addEMULDigit(s1->EMULDigitArray()->At(i));
+  if(s2->EMULDigitArray()) 
+    for(int i=0; i<s2->EMULDigitArray()->GetEntries(); i++) s->addEMULDigit(s2->EMULDigitArray()->At(i));
 
   return chi2;
 }
