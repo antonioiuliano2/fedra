@@ -89,8 +89,7 @@ void *ThProcessEvent(void *ptr)
 
     // adding plate to the brick
 
-    if (!predScan->FindPlateID(plate)) {
-      predScan->AddPlate(new EdbID(brickPredCurr), step);
+    if (predScan->AddID(new EdbID(brickPredCurr), step)) {
 
       // read affine and assemble "EdbBrickP" object
 

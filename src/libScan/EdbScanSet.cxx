@@ -250,17 +250,20 @@ EdbID *EdbScanSet::FindPlateID(Int_t plate)
 
 
 //----------------------------------------------------------------------------
-void EdbScanSet::AddPlate(EdbID *id, Int_t step)
+Bool_t EdbScanSet::AddID(EdbID *id, Int_t step)
 {
+  if (FindPlateID(id->GetPlate())) return kFALSE;
+
   for (EdbID *it = (EdbID*)eIDS.First(); it ; it = (EdbID*)eIDS.After(it)) {
     if (step < 0 && id->GetPlate() > it->GetPlate()) {
       eIDS.AddBefore(it, id);
-      return;
+      return kTRUE;
     }
     if (step > 0 && id->GetPlate() < it->GetPlate()) {
       eIDS.AddBefore(it, id);
-      return;
+      return kTRUE;
     }
   }
   eIDS.Add(id);
+  return kTRUE;
 }

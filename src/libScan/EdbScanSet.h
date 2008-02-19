@@ -49,13 +49,13 @@ class EdbScanSet : public TNamed
   void     MakeNominalSet(Int_t from_plate, Int_t to_plate, 
 			  Float_t z0, Float_t dz, Int_t vmi, Int_t vma);
   void     Print();
-  void     AddPlate(EdbID *id, Int_t step);
   Int_t    AssembleBrickFromPC();
   Int_t    TransformBrick(EdbAffine2D aff);
   Int_t    ShiftBrickZ(Float_t z);
   Int_t    MakeParFiles(Int_t piece=0, const char *dir=".");
   Int_t    ReadIDS(const char *file);
   Int_t    WriteIDS(const char *file=0);
+  Bool_t   AddID(EdbID *id, Int_t step);
   Bool_t   SetAsReferencePlate(Int_t pid);
   Bool_t   GetAffP2P(Int_t p1, Int_t p2, EdbAffine2D &aff);
   Float_t  GetDZP2P(Int_t p1, Int_t p2);
