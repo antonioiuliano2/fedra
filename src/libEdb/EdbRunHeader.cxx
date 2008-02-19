@@ -24,14 +24,14 @@ EdbRunHeader::EdbRunHeader( int n )
   for(int i=0;i<10;i++) eFlag[i]=0;
   eStartTime.Set();
   eFinishTime.Set();
-  // eComment     = 0;
-
   eArea        = new EdbArea();
   ePlate       = new EdbPlate();
   eStage       = new EdbStage();
-
   eSystemStartTime = gSystem->Now();
   eCPU = 0;
+  eNareas=0;
+  eXmin=0; eXmax=0;
+  eYmin=0; eYmax=0;
 }
 
 //______________________________________________________________________________
