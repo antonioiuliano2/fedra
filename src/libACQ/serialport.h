@@ -8,7 +8,7 @@ Copyright (c) 1999 by PJ Naughter.
 All rights reserved.
 
 */
-//#ifndef __CINT__
+#ifndef __CINT__
 
 
 ///////////////////// Macros / Structs etc //////////////////////////
@@ -170,4 +170,4 @@ protected:
 
 #endif //__SERIALPORT_H__
 
-//#endif //__CINT__
+#endif //__CINT__

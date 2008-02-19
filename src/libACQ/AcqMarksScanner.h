@@ -7,12 +7,10 @@
 // Interface to Fiducial Marks Scanner							        //
 //								                                        //
 //////////////////////////////////////////////////////////////////////////
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <conio.h>
-
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <ctime>
 
 #include "AcqStage1.h"
 #include "TObject.h"

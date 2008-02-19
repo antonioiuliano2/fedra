@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="checkrun"
-	ProjectGUID="{7CC97BD0-BF7C-4DAD-92FA-D96B4F847C3C}"
+	Name="edbtools"
+	ProjectGUID="{EB1DF14F-08E2-49CB-9F1D-1D2F9813CD2B}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -21,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\checkrun
-NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\checkrun
-NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\checkrun
-NMAKE /f &quot;Makefile.w32&quot; clean"
-				Output="..\..\bin\checkrun.exe"/>
+				BuildCommandLine="cd ..\..\src\appl\edbtools
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\edbtools
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\edbtools
+NMAKE clean"
+				Output="..\..\bin\edbtools.exe"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -37,7 +37,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\appl\checkrun\checkrun.cpp">
+				RelativePath="..\..\src\appl\edbtools\edbtools.C">
 			</File>
 		</Filter>
 		<Filter
@@ -49,7 +49,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\checkrun\Makefile">
+			RelativePath="..\..\src\appl\edbtools\Makefile">
 		</File>
 	</Files>
 	<Globals>

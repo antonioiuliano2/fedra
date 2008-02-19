@@ -19,20 +19,17 @@
 //////////////////////////////////////////////////////////////////////////
 //#endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <conio.h>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <ctime>
 
 #include "TH1.h"
-
-
 #include "TObject.h"
 #ifndef __CINT__
-#include "Mil.h"
-# include "imapi.h"
-//#include "mconvol.h"
+#  include "Mil.h"
+#  include "imapi.h"
+//#   include "mconvol.h"
 #endif
 
 #include "EdbView.h"
@@ -41,7 +38,6 @@
 #include "EdbCluster.h"
 #include "TClonesArray.h"
 #include "EdbIP.h"
-
 
 
 /* Max Number of buffers in the sequence. */

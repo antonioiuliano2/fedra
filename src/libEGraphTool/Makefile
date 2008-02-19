@@ -7,7 +7,9 @@ NAME          = EGraphTool
 
 headers       = EGraphTool.h EGraphRec.h EGraphHits.h
 
-PROJECT_LIBS  = $(GLIBS) -lEdb -lScan
+EXTRALIBS     = -lThread -lGui
+
+PROJECT_LIBS  = $(EXTRALIBS) -lEdb -lScan -lEdr
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

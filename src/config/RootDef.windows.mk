@@ -11,7 +11,7 @@
 
 !IF "$(CFG)" == ""
 CFG = Release
-!MESSAGE No configuration specified. Defaulting to Win32 "$(CFG)".
+#!MESSAGE No configuration specified. Defaulting to Win32 "$(CFG)".
 !ENDIF 
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
@@ -78,21 +78,18 @@ LDFLAGS       = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
 SOFLAGS       = $(dlllflags:-pdb:none=)
 
 # - pre-processing to define ROOTLIBS (dependent on root version)
-ROOTLIBS      = $(ROOTSYS)/lib/libCore.lib \
-                $(ROOTSYS)/lib/libCint.lib $(ROOTSYS)/lib/libHist.lib \
-                $(ROOTSYS)/lib/libGraf.lib $(ROOTSYS)/lib/libGraf3d.lib \
-                $(ROOTSYS)/lib/libGpad.lib $(ROOTSYS)/lib/libTree.lib \
-                $(ROOTSYS)/lib/libRint.lib $(ROOTSYS)/lib/libPostscript.lib \
-                $(ROOTSYS)/lib/libMatrix.lib $(ROOTSYS)/lib/libPhysics.lib \
+ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib   libCore.lib libCint.lib libHist.lib \
+                libGraf.lib libGraf3d.lib libGpad.lib libTree.lib libRint.lib \
+                libPostscript.lib libMatrix.lib libPhysics.lib \
 !IF EXISTS("$(ROOTSYS)/lib/libNet.lib ")
-                $(ROOTSYS)/lib/libNet.lib \
+                libNet.lib \
 !ENDIF
 !IF EXISTS("$(ROOTSYS)/lib/libRIO.lib ")
-                 $(ROOTSYS)/lib/libRIO.lib
+                libRIO.lib
 !ENDIF  
 #
 
 LIBS          = $(ROOTLIBS)
-GLIBS         = $(LIBS) $(ROOTSYS)/lib/libGui.lib $(ROOTSYS)/lib/libGraf.lib \
-                $(ROOTSYS)/lib/libGpad.lib
+GLIBS         = $(LIBS) libGui.lib libGraf.lib libGpad.lib
 LIBSALL       = $(ROOTLIBS) 
+

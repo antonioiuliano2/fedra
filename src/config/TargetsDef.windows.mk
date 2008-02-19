@@ -10,14 +10,17 @@ PROJECT_LIBS  = $(PROJECT_LIBS) ole32.lib  # ole32 needed by libDataConversion
 
 CXXFLAGS      = $(CXXFLAGS)  -D_USESYSAL -DUSE_ROOT
 
+
+#------------------------------------------------------------------------------
+!IF !DEFINED(EXTRAOBJS)
+EXTRAOBJS   =
+!ENDIF
 #------------------------------------------------------------------------------
 
 !IF DEFINED(NAME)
 
-OBJS          = $(headers:.h=.obj) $(NAME)Dict.$(ObjSuf)
+OBJS          = $(headers:.h=.obj) $(NAME)Dict.$(ObjSuf) $(EXTRAOBJS)
 TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
-
-all: $(TARGETSO)
 
 $(TARGETSO):  $(OBJS)
     BINDEXPLIB  $* $(OBJS) > $*.def
@@ -26,8 +29,10 @@ $(TARGETSO):  $(OBJS)
     $(MT_DLL)
     @echo "$@ done"
 
-clean:
-    for %F IN ($(OBJS) *Dict.* *.pdb *.def "$(LIB_DIR)"\lib$(NAME).* ) DO IF EXIST "%F" del /q "%F"
+!ELSE
+
+OBJS         =
+TARGETSO     =
 
 !ENDIF
 
@@ -35,30 +40,37 @@ clean:
 
 !IF DEFINED(TARGET)
 
-all: $(TARGET)
+$(TARGET) : $(*B).obj $(EXTRAOBJS)
 
-$(TARGET) : $(*B).obj 
-#   $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
-#   $(MT_EXE)
-#   @echo "$@ done"
+!ELSE
 
-clean:
-    @for %F in ($(TARGET)) DO FOR %F IN ( %~nF.obj "$(BIN_DIR)"\%~nF.exe "$(BIN_DIR)"\%~nF.exe.manifest ) DO IF EXIST %F del /q %F
+TARGET    =
 
 !ENDIF
 
 #------------------------------------------------------------------------------
 
+all: $(TARGETSO) $(TARGET)
+
+clean:
+    @for %F IN ($(OBJS) *Dict.* *.pdb ) DO IF EXIST "%F" del /q "%F"
+    @for %F in ($(TARGETSO)) DO @FOR %F IN ( %~dpnF.def %~dpnF.exp %~dpnF.lib %~dpnF.dll.*  ) DO IF EXIST "%F" del /q "%F"
+    @for %F in ($(TARGET))   DO @FOR %F IN ( %~nF.obj %~dpnF.exe.* ) DO IF EXIST "%F" del /q "%F"
+
 distclean:      clean
        @del *.exe *.root *.ps *.lib *.dll
+
+
+###
+
+.$(ObjSuf): .$(SrcSuf)
+
 
 {.}.obj{$(BIN_DIR)}.exe:
    $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
    $(MT_EXE)
    @echo "$@ done"
 
-###
-.$(ObjSuf): .$(SrcSuf)
 
 # -p option to request the use of the compiler's preprocessor
 # instead of CINT's preprocessor.  This is useful to handle header

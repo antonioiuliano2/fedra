@@ -61,36 +61,36 @@
 				RelativePath="..\..\src\libScan\EdbTestAl.cxx"
 				>
 			</File>
-			<Filter
-				Name="Header Files"
-				Filter="h;hpp;hxx;hm;inl"
-				>
-				<File
-					RelativePath="..\..\src\libScan\EdbScanClient.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\libScan\EdbScanProc.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\libScan\EdbScanSet.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\libScan\EdbTestAl.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\libScan\ScanLinkDef.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanClient.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanProc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbScanSet.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\EdbTestAl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libScan\ScanLinkDef.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath="..\..\src\libScan\Makefile"

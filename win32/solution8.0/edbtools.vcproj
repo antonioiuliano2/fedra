@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="recset"
-	ProjectGUID="{F3C74FDC-A5BF-4F05-90D8-CB07C1182327}"
-	RootNamespace="recset"
+	Name="edbtools"
+	ProjectGUID="{EB1DF14F-08E2-49CB-9F1D-1D2F9813CD2B}"
+	RootNamespace="edbtools"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +26,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; clean"
-				Output="..\..\bin\recset.exe"
+				BuildCommandLine="cd ..\..\src\appl\edbtools&#x0D;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\edbtools&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\edbtools&#x0D;&#x0A;NMAKE clean"
+				Output="..\..\bin\edbtools.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -47,7 +47,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\appl\recset\recset.cpp"
+				RelativePath="..\..\src\appl\edbtools\edbtools.C"
 				>
 			</File>
 		</Filter>
@@ -62,7 +62,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\recset\Makefile"
+			RelativePath="..\..\src\appl\edbtools\Makefile"
 			>
 		</File>
 	</Files>

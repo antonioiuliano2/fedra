@@ -10,12 +10,12 @@
 //////////////////////////////////////////////////////////////////////////
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <conio.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <ctime>
+
+#include <cmath>
 
 
 #include "TObject.h"

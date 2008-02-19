@@ -26,9 +26,9 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; clean"
+				BuildCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\checkrun&#x0D;&#x0A;NMAKE clean"
 				Output="..\..\bin\checkrun.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""

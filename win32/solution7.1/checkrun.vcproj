@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="tracks2edb"
-	ProjectGUID="{31A35B1D-E429-4344-95D1-D9764E6B8BB6}"
+	Name="checkrun"
+	ProjectGUID="{7CC97BD0-BF7C-4DAD-92FA-D96B4F847C3C}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -21,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\tracks2edb
-NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\tracks2edb
-NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\tracks2edb
-NMAKE /f &quot;Makefile.w32&quot; clean"
-				Output="..\..\bin\tracks2edb.exe"/>
+				BuildCommandLine="cd ..\..\src\appl\checkrun
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\checkrun
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\checkrun
+NMAKE clean"
+				Output="..\..\bin\checkrun.exe"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -37,7 +37,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\appl\tracks2edb\tracks2edb.C">
+				RelativePath="..\..\src\appl\checkrun\checkrun.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -49,7 +49,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\tracks2edb\Makefile">
+			RelativePath="..\..\src\appl\checkrun\Makefile">
 		</File>
 	</Files>
 	<Globals>

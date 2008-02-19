@@ -13,6 +13,8 @@ All rights reserved.
 
 */
 
+#ifndef __CINT__
+
 /////////////////////////////////  Includes  //////////////////////////////////
 #include "serialport.h"
 #include "winerror.h"
@@ -825,3 +827,5 @@ void CSerialPort::WaitEvent(DWORD& dwMask, OVERLAPPED& overlapped)
     }
   }
 }
+
+#endif //__CINT__

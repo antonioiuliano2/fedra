@@ -4,7 +4,7 @@
 //                                                                      //
 // AcqStage1                                                            //
 //                                                                      //
-// Interface to the stage controller									//
+// Interface to the stage controller				         					//
 // These classes manage Micos stages X,Y,Z
 // Althow the code is based on SySal, the preference is made
 // for NI native functions executed on board of NI7344 controller, rather than 
@@ -20,25 +20,33 @@
 //  DB9 Male		DB25 Female
 //  Pin Signal		Pin Signal
 //  1   "Trig0"		5   "Breakpoint3"
-//  6   "GND"       16  "GND"
-//								                                        //
+//  6   "GND"       16  "GND"            
+//								                                                //
 //////////////////////////////////////////////////////////////////////////
-//#endif
 
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <ctime>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <conio.h>
+// fix rootcint errors with Visual C++ 2005
+#ifndef __CINT__     
+#  include <conio.h>
+#endif
+
+// kbhit, getch POSIX functions are deprecated beginning in Visual C++ 2005. 
+// Use the ISO C++ conformant _kbhit and _getch instead.
+#if MSC_VER >= 1400        // Visual C++ 2005      MSC_VER=1400 
+#  define kbhit _kbhit
+#  define getch _getch
+#endif
 
 #include "TObject.h"
 #include "TCanvas.h"
 #include "EdbAffine.h"
 #include "EdbFiducial.h"
+
 #include "NI/include/flexmotn.h"
-
-
 
 //______________________________________________________________________________
 class AcqAxis : public TObject {

@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="edbtools"
-	ProjectGUID="{EB1DF14F-08E2-49CB-9F1D-1D2F9813CD2B}"
+	Name="recset"
+	ProjectGUID="{F3C74FDC-A5BF-4F05-90D8-CB07C1182327}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -21,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\edbtools
-NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\edbtools
-NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\edbtools
-NMAKE /f &quot;Makefile.w32&quot; clean"
-				Output="..\..\bin\edbtools.exe"/>
+				BuildCommandLine="cd ..\..\src\appl\recset
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\recset
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\recset
+NMAKE clean"
+				Output="..\..\bin\recset.exe"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -37,7 +37,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\appl\edbtools\edbtools.C">
+				RelativePath="..\..\src\appl\recset\recset.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -49,7 +49,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\edbtools\Makefile">
+			RelativePath="..\..\src\appl\recset\Makefile">
 		</File>
 	</Files>
 	<Globals>

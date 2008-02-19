@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="recset"
-	ProjectGUID="{F3C74FDC-A5BF-4F05-90D8-CB07C1182327}"
+	Name="tracks2edb"
+	ProjectGUID="{31A35B1D-E429-4344-95D1-D9764E6B8BB6}"
 	SccProjectName=""
 	SccLocalPath=""
 	Keyword="MakeFileProj">
@@ -21,13 +21,13 @@
 			ATLMinimizesCRunTimeLibraryUsage="FALSE">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\appl\recset
-NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\appl\recset
-NMAKE /f &quot;Makefile.w32&quot; /a"
-				CleanCommandLine="cd ..\..\src\appl\recset
-NMAKE /f &quot;Makefile.w32&quot; clean"
-				Output="..\..\bin\recset.exe"/>
+				BuildCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\tracks2edb
+NMAKE clean"
+				Output="..\..\bin\tracks2edb.exe"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -37,7 +37,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\src\appl\recset\recset.cpp">
+				RelativePath="..\..\src\appl\tracks2edb\tracks2edb.C">
 			</File>
 		</Filter>
 		<Filter
@@ -49,7 +49,7 @@ NMAKE /f &quot;Makefile.w32&quot; clean"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\src\appl\recset\Makefile">
+			RelativePath="..\..\src\appl\tracks2edb\Makefile">
 		</File>
 	</Files>
 	<Globals>
