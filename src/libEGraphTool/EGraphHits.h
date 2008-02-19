@@ -13,7 +13,7 @@
 #include <TString.h>
 
 class EdbView;
-class EdbTrackP;
+class EdbPVRec;
 
 class EGraphHits: public TObject {
  public:
@@ -22,7 +22,7 @@ class EGraphHits: public TObject {
 
   // void DrawHits();
   void DrawTracks(const TString status = "all");
-  void BuildEvent(EdbTrackP *tracks, const TString status);
+  void BuildEvent(EdbPVRec *tracks, const TString status);
   // void BuildEvent(EdbView *event);
   // void ClearEvent();
 

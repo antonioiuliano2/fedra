@@ -19,10 +19,11 @@ class EdbID : public TObject
   EdbID(Int_t id[]) {Set(id);}
   virtual ~EdbID() {}
 
-  void Set(Int_t b = 0, Int_t p = 0, Int_t ma = 0, Int_t mi = 0) 
-       {eBrick = b; ePlate = p; eMajor = ma; eMinor = mi;}
-  void Set(Int_t id[]) {eBrick=id[0];ePlate=id[1];eMajor=id[2];eMinor=id[3];}
-  void Get(Int_t id[]) {id[0]=eBrick;id[1]=ePlate;id[2]=eMajor;id[3]=eMinor;}
+  void  Set(Int_t b = 0, Int_t p = 0, Int_t ma = 0, Int_t mi = 0) 
+        {eBrick = b; ePlate = p; eMajor = ma; eMinor = mi;}
+  void  Set(Int_t id[]) {eBrick=id[0];ePlate=id[1];eMajor=id[2];eMinor=id[3];}
+  void  Get(Int_t id[]) {id[0]=eBrick;id[1]=ePlate;id[2]=eMajor;id[3]=eMinor;}
+  Int_t GetPlate() const {return ePlate;}
 
   void Print() { printf("%d %d %d %d\n",eBrick,ePlate,eMajor,eMinor); }
   ClassDef(EdbID,1)  // definition of the identifier of the data piece
@@ -48,6 +49,7 @@ class EdbScanSet : public TNamed
   void     MakeNominalSet(Int_t from_plate, Int_t to_plate, 
 			  Float_t z0, Float_t dz, Int_t vmi, Int_t vma);
   void     Print();
+  void     AddPlate(EdbID *id, Int_t step);
   Int_t    AssembleBrickFromPC();
   Int_t    TransformBrick(EdbAffine2D aff);
   Int_t    ShiftBrickZ(Float_t z);
@@ -62,9 +64,6 @@ class EdbScanSet : public TNamed
 
   const EdbBrickP& Brick()   const {return eB;}
   EdbBrickP&       Brick()         {return eB;}
-
-  const TList&     ListIDS() const {return eIDS;}
-  TList&           ListIDS()       {return eIDS;}
 
   EdbPlateP *GetPlate(Int_t p) {
     if (ePID.Find(p)) 

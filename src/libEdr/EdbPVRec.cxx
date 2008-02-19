@@ -900,8 +900,8 @@ void EdbPVRec::ResetCouples()
 //______________________________________________________________________________
 void EdbPVRec::ResetTracks()
 {
-  if(eTracks)     { delete eTracks; eTracks=0; }
-  if(eTracksCell) { delete eTracksCell; eTracksCell=0; }
+  SafeDelete(eTracks);
+  SafeDelete(eTracksCell);
 }
 
 //______________________________________________________________________________

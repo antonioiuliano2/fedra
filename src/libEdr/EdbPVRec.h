@@ -239,8 +239,7 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetChi2Max(float chi)
     { eChi2Max=chi; }
 
-  int  Ncouples() const { if(ePatCouples) return ePatCouples->GetEntriesFast(); 
-                          else return 0; }
+  Int_t  Ncouples() const {return ePatCouples?ePatCouples->GetEntriesFast():0;}
 
   EdbPatCouple  *GetCouple(int i) const { if(ePatCouples) 
                                return (EdbPatCouple  *)(ePatCouples->At(i));
@@ -255,8 +254,7 @@ class EdbPVRec : public EdbPatternsVolume {
   int   MakeTracks(int nsegments=2, int flag=0);
   void  FitTracks(float p=10., float mass=0.139, TObjArray *gener = 0,
 		  int design=0);
-  int  Ntracks() const { if(eTracks) return eTracks->GetEntriesFast(); 
-                         else return 0; }
+  Int_t Ntracks() const {return eTracks ? eTracks->GetEntriesFast() : 0;}
 
   int    LinkSlow();
   int    Link();

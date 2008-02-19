@@ -20,7 +20,7 @@ class EdbPlateP : public EdbLayer {
   ~EdbPlateP(){eLayers.Delete();}
 
   void SetPlateLayout(float z0, float z1, float z2);
-  EdbLayer *GetLayer(int i) {if(i<0) return 0; return (EdbLayer*)eLayers.At(i);}
+  EdbLayer *GetLayer(int i) {return (i < 0) ? 0 : (EdbLayer*)eLayers.At(i);}
   void SetDXDY(float dx, float dy);
 
   ClassDef(EdbPlateP,1)  // OPERA Plate structure definition

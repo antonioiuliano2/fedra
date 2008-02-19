@@ -9,6 +9,9 @@
 
 #include "EdbLog.h"
 #include "EdbScanSet.h"
+#include <iostream>
+
+using namespace std;
 
 ClassImp(EdbID)
 ClassImp(EdbScanSet)
@@ -243,4 +246,21 @@ EdbID *EdbScanSet::FindPlateID(Int_t plate)
     if (id->ePlate == plate) return id;
   }
   return 0;
+}
+
+
+//----------------------------------------------------------------------------
+void EdbScanSet::AddPlate(EdbID *id, Int_t step)
+{
+  for (EdbID *it = (EdbID*)eIDS.First(); it ; it = (EdbID*)eIDS.After(it)) {
+    if (step < 0 && id->GetPlate() > it->GetPlate()) {
+      eIDS.AddBefore(it, id);
+      return;
+    }
+    if (step > 0 && id->GetPlate() < it->GetPlate()) {
+      eIDS.AddBefore(it, id);
+      return;
+    }
+  }
+  eIDS.Add(id);
 }

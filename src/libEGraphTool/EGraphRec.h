@@ -16,6 +16,7 @@ class TGLSAViewer;
 class EdbScanProc;
 class EdbPattern;
 class EdbScanSet;
+class EdbPVRec;
 
 // brick to process
 
@@ -62,7 +63,7 @@ class EGraphRec {
   ProcId_t      GetProcId()         const   {return fProcId;}
   EdbScanProc  *GetScanProc()       const   {return fSproc;}
   EdbPattern   *GetPredTracks()     const   {return fPredTracks;}
-  EdbTrackP    *GetFoundTracks()    const   {return fFoundTracks;}
+  EdbPVRec     *GetFoundTracks()    const   {return fFoundTracks;}
   EdbScanSet   *GetPredScanProc()   const   {return fPredScanProc;}
   TThread      *GetThProcessEvent() const   {return fThProcessEvent;}
   TGTextButton *GetTextProcEvent()          {return fTextProcEvent;}
@@ -79,7 +80,7 @@ class EGraphRec {
   EdbView             *fEvent;
   EdbScanProc         *fSproc;
   EdbPattern          *fPredTracks;
-  EdbTrackP           *fFoundTracks;
+  EdbPVRec            *fFoundTracks;
   EdbScanSet          *fPredScanProc;
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;

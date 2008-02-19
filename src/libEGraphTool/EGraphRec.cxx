@@ -51,11 +51,10 @@ void *ThProcessEvent(void *ptr)
   Int_t step = (lastPlate >= firstPlate) ? 1 : -1;
 
   EdbPattern *predP = egraph->GetPredTracks();
-  EdbTrackP  *foundP = egraph->GetFoundTracks();
+  EdbPVRec   *foundTracks = egraph->GetFoundTracks();
 
   predP->Reset();
-  foundP->Clear();
-
+  
   for (Int_t plate = firstPlate; plate != lastPlate + step; plate += step) {
 
     brickPredCurr[1]  = brickCalibCurr[1] = plate;
@@ -91,11 +90,11 @@ void *ThProcessEvent(void *ptr)
     // adding plate to the brick
 
     if (!predScan->FindPlateID(plate)) {
-      predScan->ListIDS().Add(new EdbID(brickPredCurr));
+      predScan->AddPlate(new EdbID(brickPredCurr), step);
 
       // read affine and assemble "EdbBrickP" object
 
-      sproc->AssembleScanSet(*predScan); 
+      sproc->AssembleScanSet(*predScan);
       predScan->SetAsReferencePlate(firstPlate);
     }
 
@@ -104,12 +103,13 @@ void *ThProcessEvent(void *ptr)
     // sproc->ReadPred(*predP, brickPredCurr);
 
     // after scann
-    
 
-//     sproc->ReadFoundTrack(*predScan, *foundP);
+    foundTracks->ResetTracks();
+    sproc->ReadFoundTracks(*predScan, *foundTracks);
+    egraph->DrawEvent();
 
-//     egraph->DrawEvent();
   }
+
   return 0;
 }
 
@@ -205,17 +205,6 @@ void EGraphRec::DrawEvent()
 //   }
 
   // fGraphHits->DrawHits();
-
-
-  // recalculation Z position of found segments
-
-//   Int_t Nseg = fPredTracks->N();
-
-//   for (Int_t iseg = 0; iseg < Nseg; iseg++) {
-//     EdbSegP *segP = fPredTracks->GetSegment(iseg);
-//     EdbSegP *segF = fFoundTracks->GetSegment(iseg);
-//     if (segF->Flag() > -1) segF->SetZ(segP->Z());
-//   }
 
   // fGraphHits->BuildEvent(fPredTracks,  "predicted");
   fGraphHits->BuildEvent(fFoundTracks, "found");
@@ -603,7 +592,7 @@ void EGraphRec::InitVariables()
   fGraphHits    = new EGraphHits();
   fSproc        = new EdbScanProc();
   fPredTracks   = new EdbPattern();
-  fFoundTracks  = new EdbTrackP();
+  fFoundTracks  = new EdbPVRec();
 
   // TThread functions
 

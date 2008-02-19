@@ -13,7 +13,9 @@
 #include "EdbTrackFitter.h"
 #include "EdbScanProc.h"
 #include "EdbTestAl.h"
+#include <iostream>
 
+using namespace std;
 using namespace TMath;
 
 ClassImp(EdbScanProc)
@@ -57,18 +59,16 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
   float       dz = piece.GetLayer(0)->Z();
   EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
   if(gEDBDEBUGLEVEL>2) a->Print();
-
   EdbPlateP *p = new EdbPlateP();   // 0-base, 1-up, 2-down
-
   p->GetLayer(1)->SetID(id1[1]);
   p->GetLayer(1)->SetZlayer(-dz,-dz,-dz);
   p->GetLayer(1)->SetAffXY(a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
-
   p->GetLayer(2)->SetID(id2[1]);
   p->GetLayer(2)->SetZlayer(0,0,0);
   p->GetLayer(2)->SetAffXY(1,0,0,1,0,0);
 
   sc.ePC.Add(p);
+
   return true;
 }
 
@@ -87,14 +87,19 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
     sc.MakePIDList();
     return 1;
   }
+
   // make couples in a given order
 
+  sc.ePC.Delete();  // clear plate array
+
   EdbID *id1=0, *id2=0;
-  for( int i=1; i<sc.eIDS.GetEntries(); i++ ) {
+  
+  for (Int_t i = 1; i < sc.eIDS.GetEntries(); i++) {
     id1 = (EdbID *)(sc.eIDS.At(i-1));
     id2 = (EdbID *)(sc.eIDS.At(i));
     AddAFFtoScanSet(sc, *id1, *id2);
   }
+
   return sc.AssembleBrickFromPC();
 }
 
