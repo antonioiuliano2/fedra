@@ -1716,6 +1716,20 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   return npat;
  }
 
+
+//______________________________________________________________________________
+int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename)
+{
+  // read marks file and copy its informations into an EdbMarksSet object
+  char str[256];
+  sprintf(str,"%s/b%6.6d/b%6.6d%s",
+	  eProcDirClient.Data(),brick,brick,filename);
+
+  ms.ReadMap(str);
+
+  return(1);
+}
+
 //______________________________________________________________________________
 void EdbScanProc::LogPrint(int brick, int level, const char *location, const char *va_(fmt), ...)
 {

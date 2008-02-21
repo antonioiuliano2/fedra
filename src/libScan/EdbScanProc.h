@@ -110,6 +110,8 @@ public:
   int     TestAl(EdbID id1, EdbID id2)   {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return TestAl(id14,id24); }
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
 
+  int     ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename);
+
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();
   ClassDef(EdbScanProc,1)  // scanned data processing
