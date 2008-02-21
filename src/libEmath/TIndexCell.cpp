@@ -243,19 +243,21 @@ void TIndexCell::Drop()
 //____________________________________________________________________________
 void TIndexCell::PrintPopulation( int level ) const
 {
-  TIndexCellIter itr(this,level);
-  const TIndexCell *c=0;
-  TIndexCell *cn=0;
-  TIndexCell hist;
-  while( (c=itr.Next()) ) {
-    cn = hist.FindAdd((Long_t)(c->N(1)));
-    if(!cn->At(0)) cn->Add(0);
-    cn->At(0)->SetValue(cn->At(0)->Value()+1); 
-  }
-  hist.Sort();
-  hist.SetName("N:entries");
   printf("Population on the level %d\n",level);
-  hist.Print("");
+  if(GetEntries()>0) {
+    TIndexCellIter itr(this,level);
+    const TIndexCell *c=0;
+    TIndexCell *cn=0;
+    TIndexCell hist;
+    while( (c=itr.Next()) ) {
+      cn = hist.FindAdd((Long_t)(c->N(1)));
+      if(!cn->At(0)) cn->Add(0);
+      cn->At(0)->SetValue(cn->At(0)->Value()+1); 
+    }
+    hist.Sort();
+    hist.SetName("N:entries");
+    hist.Print("");
+  }
 }
 
 //____________________________________________________________________________

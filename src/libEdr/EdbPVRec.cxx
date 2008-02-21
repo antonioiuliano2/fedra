@@ -622,8 +622,9 @@ int EdbPatCouple::LinkFast()
   // to link segments of already aligned patterns
   // fast - because check couples by cells
 
+  if(Pat1()->N()<1) return 0;
+  if(Pat2()->N()<1) return 0;
   int npat =0;
-
   SetZlink( (Pat2()->Z()+Pat1()->Z())/2. );
 
   printf("Couple: link patterns: %d (%d)  and  %d (%d) at Z = %f\n",
@@ -1139,7 +1140,6 @@ void EdbPVRec::FillTracksCell()
     }
   }
   tracksCell->Sort();
-  printf(" ok\n");
   tracksCell->PrintPopulation(1);
 }
 
