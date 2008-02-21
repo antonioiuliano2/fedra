@@ -116,6 +116,8 @@ class EdbMarksSet : public TObject {
   Int_t           ReadDB( char *file );
   Int_t           ReadDollar( char *file, EdbMarksBox *mbox );
 
+  Int_t           ReadMap( char *file );
+
   void            DrawA( Option_t *opt="") const;
   void            DrawS( Option_t *opt="") const;
 

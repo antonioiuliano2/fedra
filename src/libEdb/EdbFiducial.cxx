@@ -25,6 +25,8 @@
 #include "EdbAffine.h"
 #endif
 
+#include "EdbLog.h"
+
 ClassImp(EdbArea)
 ClassImp(EdbMark)
 ClassImp(EdbMarksBox)
@@ -331,8 +333,41 @@ Int_t  EdbMarksSet::ReadDollar( char *file, EdbMarksBox *mbox )
 }
 
 //______________________________________________________________________________
+Int_t  EdbMarksSet::ReadMap( char *file )
+{ 
+  // Read map file and add informations to eAbsolute
+  Int_t nmarks;
+  Int_t mark;
+  Float_t x,y;
+
+  FILE *fp = fopen( file,"r");
+
+  if(!fp)
+    { Log(1,"EdbMarksSet::ReadMap","ERROR: can not open file %s\n", file); return 0; }
+
+  if ( fscanf(fp,"mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f",
+	      &eBrick,&nmarks,&eXmin,&eXmax,&eYmin,&eYmax) != 6 )
+    { Log(1,"EdbMarksSet::ReadMap","ERROR: file %s is empty or wrong format\n", file); return 0; }
+
+  for (int imarks=0;imarks<nmarks;imarks++)
+    {
+      if (fscanf(fp,";_%d_%f_%f_%*f_%*f_%*d_%*d_%*d",&mark,&x,&y) != 3)
+	{ Log(1,"EdbMarksSet::ReadMap","ERROR: file %s is empty or wrong format\n", file); return 0; }
+      GetAbsolute()->AddMark(mark,x,y);
+    }
+
+  fclose(fp);
+
+  Log(3,"EdbMarksSet::ReadMap","%d marks are read from file %s\n", nmarks, file);
+  return nmarks;
+}
+
+
+//______________________________________________________________________________
 void EdbMarksSet::Print(Option_t *opt) const
 {
+  printf("EdbMarksSet: eBrick = %ld\n", eBrick);
+  printf("EdbMarksSet: eXmin, eXmax, eYmin, eYmax = %f %f %f %f\n", eXmin, eXmax, eYmin, eYmax);
   if(eAbsolute)      eAbsolute->Print();
   if(eStage)         eStage->Print();
 }
