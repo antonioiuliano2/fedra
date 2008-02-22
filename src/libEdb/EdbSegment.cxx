@@ -8,13 +8,9 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_EdbSegment
+#include <TClass.h>
 #include "EdbSegment.h"
-#endif
-
-#ifndef ROOT_EdbAffine
 #include "EdbAffine.h"
-#endif
  
 ClassImp(EdbSeg3D)
 ClassImp(EdbSegment)
@@ -29,6 +25,33 @@ void EdbSeg3D::Set(float x,  float y,  float z,  float tx,  float ty, float dz)
   eTx = tx;
   eTy = ty;
   eDz = dz;
+}
+
+//______________________________________________________________________________
+void EdbSeg3D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbSeg3D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbSeg3D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      TObject::Streamer(R__b);
+      R__b >> eX0;
+      R__b >> eY0;
+      R__b >> eZ0;
+      R__b >> eTx;
+      R__b >> eTy;
+      R__b >> eDz;
+      R__b.CheckByteCount(R__s, R__c, EdbSeg3D::IsA());
+      //====end of old versions
+   } else {
+     EdbSeg3D::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________
@@ -73,6 +96,32 @@ void EdbSegment::Set(float x,  float y,  float z,  float tx,  float ty,
   eSide = side;
   ePuls = puls;
   eID   = id;
+}
+
+//______________________________________________________________________________
+void EdbSegment::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbSegment.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 2) {
+	EdbSegment::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbSeg3D::Streamer(R__b);
+      R__b >> eSide;
+      R__b >> ePuls;
+      R__b >> eID;
+      R__b >> eSigmaX;
+      R__b >> eSigmaY;
+      R__b.CheckByteCount(R__s, R__c, EdbSegment::IsA());
+      //====end of old versions
+   } else {
+     EdbSegment::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________
@@ -130,6 +179,28 @@ void EdbTrack::Set(float x,  float y,  float z,  float tx,  float ty,
 {
   EdbSeg3D::Set(x,y,z,tx,ty,dz);
   eID   = id;
+}
+
+//______________________________________________________________________________
+void EdbTrack::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbTrack.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 2) {
+	EdbTrack::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      EdbSeg3D::Streamer(R__b);
+      R__b >> eID;
+      R__b.CheckByteCount(R__s, R__c, EdbTrack::IsA());
+      //====end of old versions
+   } else {
+     EdbTrack::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

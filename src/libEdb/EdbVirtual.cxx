@@ -8,34 +8,20 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_TH2
 #include "TH2.h"
-#endif
- 
-#ifndef ROOT_TGraph
 #include "TGraph.h"
-#endif
- 
-#ifndef ROOT_TCanvas
 #include "TCanvas.h"
-#endif
- 
-#ifndef ROOT_EdbVirtual
-#include "EdbVirtual.h"
-#endif
+#include "TClass.h"
 
-#ifndef ROOT_EdbAffine
+#include "EdbVirtual.h"
 #include "EdbAffine.h"
-#endif
 
 ClassImp(EdbPoint)
 ClassImp(EdbPoint2D)
 ClassImp(EdbPoint3D)
 ClassImp(EdbPointsBox2D)
 ClassImp(EdbPointsBox3D)
-
 ClassImp(EdbAngle2D)
-
 ClassImp(EdbTrack2D)
 
 //_____________________________________________________________________________
@@ -288,3 +274,155 @@ void EdbPointsBox2D::Print( Option_t *opt ) const
   printf("EdbPointsBox2D: %d elements \n", N() );
 }
 
+//_____________________________________________________________________________
+void EdbPoint2D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPoint2D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPoint2D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbPoint::Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbPoint2D::IsA());
+      //====end of old versions
+   } else {
+     EdbPoint2D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//_____________________________________________________________________________
+void EdbPoint::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPoint.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPoint::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      R__b.CheckByteCount(R__s, R__c, EdbPoint::IsA());
+      //====end of old versions
+   } else {
+     EdbPoint::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//_____________________________________________________________________________
+void EdbPointsBox2D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPointsBox2D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPointsBox2D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbPoint3D::Streamer(R__b);
+      R__b >> eKeep;
+      R__b.CheckByteCount(R__s, R__c, EdbPointsBox2D::IsA());
+      //====end of old versions
+   } else {
+     EdbPointsBox2D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+
+//_____________________________________________________________________________
+void EdbPointsBox3D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPointsBox3D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPointsBox3D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbPointsBox2D::Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbPointsBox3D::IsA());
+      //====end of old versions
+   } else {
+     EdbPointsBox3D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+
+//_____________________________________________________________________________
+void EdbPoint3D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPoint3D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPoint3D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbPoint2D::Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbPoint3D::IsA());
+      //====end of old versions
+   } else {
+     EdbPoint3D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+
+//_____________________________________________________________________________
+void EdbAngle2D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbAngle2D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbAngle2D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      R__b.CheckByteCount(R__s, R__c, EdbAngle2D::IsA());
+      //====end of old versions
+   } else {
+     EdbAngle2D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+
+//_____________________________________________________________________________
+void EdbTrack2D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbTrack2D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbTrack2D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      EdbPoint2D::Streamer(R__b);
+      EdbAngle2D::Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbTrack2D::IsA());
+      //====end of old versions
+   } else {
+     EdbTrack2D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//______________________________________________________________________________

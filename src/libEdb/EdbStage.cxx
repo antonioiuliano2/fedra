@@ -8,14 +8,8 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
  
-#ifndef ROOT_EdbStage
+#include <TClass.h>
 #include "EdbStage.h"
-#endif
-
-//#ifndef ROOT_EdbAffine
-//#include "EdbAffine.h"
-//#endif
-
 
 ClassImp(EdbCCD)
 ClassImp(EdbObjective)
@@ -38,12 +32,61 @@ EdbStage::~EdbStage()
 }
 
 //______________________________________________________________________________
+void EdbStage::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbStage.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbStage::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TNamed::Streamer(R__b);
+      R__b >> eCCD;
+      R__b >> eObjective;
+      R__b >> eEncoders2Stage;
+      R__b.CheckByteCount(R__s, R__c, EdbStage::IsA());
+      //====end of old versions
+   } else {
+     EdbStage::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//______________________________________________________________________________
 void EdbStage::Print( Option_t *opt ) const
 {
   printf("EdbStage:\n");
   eCCD->Print();
   eObjective->Print();
   //eEncoders2Stage->Print();
+}
+
+//______________________________________________________________________________
+void EdbCCD::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbCCD.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbCCD::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TNamed::Streamer(R__b);
+      R__b >> eNx;
+      R__b >> eNy;
+      R__b >> ePixX;
+      R__b >> ePixY;
+      R__b.CheckByteCount(R__s, R__c, EdbCCD::IsA());
+      //====end of old versions
+   } else {
+     EdbCCD::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________
@@ -69,6 +112,28 @@ void EdbCCD::Print( Option_t *opt ) const
 	 eNx, eNy, ePixX, ePixY );
 }
  
+//______________________________________________________________________________
+void EdbObjective::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbObjective.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbObjective::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TNamed::Streamer(R__b);
+      R__b >> eMagnification;
+      R__b >> eCCD2Stage;
+      R__b.CheckByteCount(R__s, R__c, EdbObjective::IsA());
+      //====end of old versions
+   } else {
+     EdbObjective::Class()->WriteBuffer(R__b,this);
+   }
+}
 
 //______________________________________________________________________________
 EdbObjective::EdbObjective( float mag )

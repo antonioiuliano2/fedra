@@ -111,9 +111,7 @@ public:
       return 0;
   }
 
-
-
-   ClassDef(EdbCluster,1)  // single cluster
+   ClassDef(EdbCluster,2)  // single cluster
 };
 
 //______________________________________________________________________________
@@ -146,7 +144,7 @@ class EdbClustersBox : public TObject, public EdbPointsBox3D {
   // other finctions
   // void       Print( Option_t *opt="") const;
 
-  ClassDef(EdbClustersBox,1)  // collection of clusters
+  ClassDef(EdbClustersBox,2)  // collection of clusters
 };
 
 

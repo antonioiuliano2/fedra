@@ -7,23 +7,43 @@
 // Affine transformations                                               //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-#include <math.h>
-#ifndef ROOT_TMath
-#include "TMath.h"
-#endif
 
-#ifndef ROOT_EdbAffine
+#include <TMath.h>
+#include <TClass.h>
 #include "EdbAffine.h"
-#endif
- 
-#ifndef ROOT_EdbVirtual
 #include "EdbVirtual.h"
-#endif
 
 ClassImp(EdbAffine2D)
 ClassImp(EdbAffine3D)
 
 inline Double_t sqr(Double_t x) {return (x*x);};
+
+//______________________________________________________________________________
+void EdbAffine2D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbAffine2D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbAffine2D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eA11;
+      R__b >> eA12;
+      R__b >> eA21;
+      R__b >> eA22;
+      R__b >> eB1;
+      R__b >> eB2;
+      R__b.CheckByteCount(R__s, R__c, EdbAffine2D::IsA());
+      //====end of old versions
+   } else {
+     EdbAffine2D::Class()->WriteBuffer(R__b,this);
+   }
+}
 
 //______________________________________________________________________________
 void EdbAffine2D::Print( Option_t *opt ) const
@@ -331,6 +351,39 @@ void EdbAffine2D::Rotate( float angle )
   Transform( &aff );
 }
  
+//______________________________________________________________________________
+void EdbAffine3D::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbAffine3D.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbAffine3D::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eA11;
+      R__b >> eA12;
+      R__b >> eA13;
+      R__b >> eA21;
+      R__b >> eA22;
+      R__b >> eA23;
+      R__b >> eA31;
+      R__b >> eA32;
+      R__b >> eA33;
+      R__b >> eB1;
+      R__b >> eB2;
+      R__b >> eB3;
+      R__b.CheckByteCount(R__s, R__c, EdbAffine3D::IsA());
+      //====end of old versions
+   } else {
+     EdbAffine3D::Class()->WriteBuffer(R__b,this);
+   }
+}
+
 //______________________________________________________________________________
 void EdbAffine3D::Print( Option_t *opt ) const
 {

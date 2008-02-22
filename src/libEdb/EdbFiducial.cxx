@@ -8,23 +8,15 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include  <stdio.h>
-#ifndef ROOT_TMath
-#include "TMath.h"
-#endif
- 
+#include <stdio.h>
 #ifndef WIN32
 #include "TText.h"
 #endif
 
-#ifndef ROOT_EdbFiducial
+#include <TClass.h>
+#include <TMath.h>
 #include "EdbFiducial.h"
-#endif
-
-#ifndef ROOT_EdbAffine
 #include "EdbAffine.h"
-#endif
-
 #include "EdbLog.h"
 
 ClassImp(EdbArea)
@@ -32,12 +24,69 @@ ClassImp(EdbMark)
 ClassImp(EdbMarksBox)
 ClassImp(EdbMarksSet)
 
+
+//______________________________________________________________________________
+void EdbMark::Print(Option_t *opt) const
+{
+  printf("EdbMark: %d %f %f %d\n", GetID(), GetX(), GetY(), Flag() );
+}
+//______________________________________________________________________________
+void EdbMark::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbMark.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbMark::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      EdbPoint2D::Streamer(R__b);
+      R__b >> eID;
+      R__b >> eX;
+      R__b >> eY;
+      R__b.CheckByteCount(R__s, R__c, EdbMark::IsA());
+      //====end of old versions
+   } else {
+     EdbMark::Class()->WriteBuffer(R__b,this);
+   }
+}
+
 //______________________________________________________________________________
 EdbArea::EdbArea( int N, float stepx, float stepy, int ft, int fb, int path ) : EdbMarksBox(N)
 {
   Set( N, stepx, stepy, ft, fb, path );
 }
 
+//______________________________________________________________________________
+void EdbArea::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbArea.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 2) {
+	EdbArea::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      EdbMarksBox::Streamer(R__b);
+      R__b >> eN;
+      R__b >> eStepX;
+      R__b >> eStepY;
+      R__b >> eFramesTop;
+      R__b >> eFramesBot;
+      R__b >> ePath;
+      R__b.CheckByteCount(R__s, R__c, EdbArea::IsA());
+      //====end of old versions
+   } else {
+     EdbArea::Class()->WriteBuffer(R__b,this);
+   }
+}
 
 //______________________________________________________________________________
 void EdbArea::Print( Option_t opt ) const
@@ -336,7 +385,7 @@ Int_t  EdbMarksSet::ReadDollar( char *file, EdbMarksBox *mbox )
 Int_t  EdbMarksSet::ReadMap( char *file )
 { 
   // Read map file and add informations to eAbsolute
-  Int_t nmarks;
+  Int_t nmarks=0;
   Int_t mark;
   Float_t x,y;
 
@@ -373,6 +422,28 @@ void EdbMarksSet::Print(Option_t *opt) const
 }
 
 //______________________________________________________________________________
+void EdbMarksSet::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbMarksSet.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbMarksSet::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      TObject::Streamer(R__b);
+      R__b >> eAbsolute;
+      R__b >> eStage;
+      R__b.CheckByteCount(R__s, R__c, EdbMarksSet::IsA());
+      //====end of old versions
+   } else {
+     EdbMarksSet::Class()->WriteBuffer(R__b,this);
+   }
+}
+
 //______________________________________________________________________________
 EdbMarksBox::EdbMarksBox()
 {
@@ -396,6 +467,29 @@ EdbMarksBox::EdbMarksBox( int n )
 EdbMarksBox::~EdbMarksBox( )
 {
   if(eMarks) delete eMarks;
+}
+
+//______________________________________________________________________________
+void EdbMarksBox::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbMarksBox.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbMarksBox::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      TObject::Streamer(R__b);
+      EdbPointsBox2D::Streamer(R__b);
+      eMarks->Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbMarksBox::IsA());
+      //====end of old versions
+   } else {
+     EdbMarksBox::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________
@@ -443,10 +537,4 @@ EdbMark      *EdbMarksBox::GetMark(int i) const
 void EdbMarksBox::AddMark(int id, float x, float y)
 {
   new((*eMarks)[GetN()])  EdbMark( id,x,y );
-}
-
-//______________________________________________________________________________
-void EdbMark::Print(Option_t *opt) const
-{
-  printf("EdbMark: %d %f %f %d\n", GetID(), GetX(), GetY(), Flag() );
 }

@@ -64,7 +64,7 @@ public:
   virtual void    Print( Option_t *opt=0) const;
   void            WriteDC( FILE *file ) const;
   
-  ClassDef(EdbPredictionDC,1)  // one prediction (track) a-la $c
+  ClassDef(EdbPredictionDC,2)  // one prediction (track) a-la $c
 };
 
 //______________________________________________________________________________
@@ -109,7 +109,7 @@ class EdbPredictionsBox : public TObject, public EdbPointsBox2D {
 
   //void      Test();
 
-  ClassDef(EdbPredictionsBox,1)  // Predictions a-la $c
+  ClassDef(EdbPredictionsBox,2)  // Predictions a-la $c
 };
 
 #endif /* EdbPrediction */

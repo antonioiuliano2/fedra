@@ -116,7 +116,7 @@ public:
   int  AddAsciiFile(const char *fname, const char *objname);
   int  ExtractAsciiFile(const char *fname, const char *objname);
 
-  ClassDef(EdbRun,1)  // main run class contained all objects
+  ClassDef(EdbRun,2)  // main run class contained all objects
 };
 
 R__EXTERN EdbRun  *gRUN;

@@ -80,7 +80,7 @@ class EdbMarksBox : public TObject, public EdbPointsBox2D {
   // other finctions
   void       Print( Option_t *opt="") const;
 
-  ClassDef(EdbMarksBox,1)  // collection of fiducial marks
+  ClassDef(EdbMarksBox,2)  // collection of fiducial marks
 };
 
 
@@ -168,7 +168,7 @@ class EdbArea : public EdbMarksBox {
   int  ReadParameters( const char *str );
   void Print(Option_t opt=0) const;
 
-  ClassDef(EdbArea,2)  // Area structure definition
+  ClassDef(EdbArea,3)  // Area structure definition
 };
 
 #endif /* ROOT_EdbFiducial */

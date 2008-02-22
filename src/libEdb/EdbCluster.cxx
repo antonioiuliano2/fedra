@@ -8,16 +8,42 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_TPolyMarker3D
-#include "TPolyMarker3D.h"
-#endif
-
-#ifndef ROOT_EdbCluster
+#include <TPolyMarker3D.h>
+#include <TClass.h>
 #include "EdbCluster.h"
-#endif
 
 ClassImp(EdbCluster)
 ClassImp(EdbClustersBox)
+
+//______________________________________________________________________________
+void EdbCluster::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbCluster.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbCluster::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      EdbPoint3D::Streamer(R__b);
+      R__b >> eX;
+      R__b >> eY;
+      R__b >> eZ;
+      R__b >> eArea;
+      R__b >> eVolume;
+      R__b >> eFrame;
+      R__b >> eSide;
+      R__b >> eSegment;
+      R__b.CheckByteCount(R__s, R__c, EdbCluster::IsA());
+      //====end of old versions
+   } else {
+     EdbCluster::Class()->WriteBuffer(R__b,this);
+   }
+}
 
 //______________________________________________________________________________
 void EdbCluster::Set0()
@@ -57,6 +83,29 @@ EdbClustersBox::EdbClustersBox( int n )
 EdbClustersBox::~EdbClustersBox( )
 {
   if(eClusters)    delete eClusters;
+}
+
+//______________________________________________________________________________
+void EdbClustersBox::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbClustersBox.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbClustersBox::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      EdbPointsBox3D::Streamer(R__b);
+      eClusters->Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbClustersBox::IsA());
+      //====end of old versions
+   } else {
+     EdbClustersBox::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

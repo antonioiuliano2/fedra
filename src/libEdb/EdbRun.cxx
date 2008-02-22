@@ -104,6 +104,34 @@ EdbRun::~EdbRun()
 }
 
 //______________________________________________________________________________
+void EdbRun::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbRun.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbRun::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eHeader;
+      R__b >> eView;
+      R__b >> eTree;
+      R__b >> eFile;
+      ePath.Streamer(R__b);
+      R__b >> ePredictions;
+      R__b >> eMarks;
+      R__b.CheckByteCount(R__s, R__c, EdbRun::IsA());
+      //====end of old versions
+   } else {
+     EdbRun::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//______________________________________________________________________________
 void EdbRun::Init( )
 {
   eView        = new EdbView();      //each run has his own view

@@ -71,7 +71,7 @@ class EdbAffine2D : public TObject{
 
   void Print(Option_t *opt="") const;
 
-  ClassDef(EdbAffine2D,1)  // 2D affine parameters  
+  ClassDef(EdbAffine2D,2)  // 2D affine parameters  
 };
 
 //______________________________________________________________________________
@@ -133,7 +133,7 @@ class EdbAffine3D : public TObject {
 
   void Print(Option_t *opt="") const;
 
-  ClassDef(EdbAffine3D,1)  // 3D affine parameters
+  ClassDef(EdbAffine3D,2)  // 3D affine parameters
 };
 
 #endif /* ROOT_EdbAffine */

@@ -13,24 +13,41 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_EdbFiducial
 #include "EdbFiducial.h"
-#endif
-
-#ifndef ROOT_EdbAffine
 #include "EdbAffine.h"
-#endif
-
-#ifndef ROOT_EdbPrediction
 #include "EdbPrediction.h"
-#endif
-
-//#ifndef ROOT_EdbBasic
-//#include "EdbBasic.h"
-//#endif
 
 ClassImp(EdbPredictionDC)
 ClassImp(EdbPredictionsBox)
+
+//_____________________________________________________________________________
+void EdbPredictionDC::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPredictionDC.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPredictionDC::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      EdbTrack2D::Streamer(R__b);
+      R__b >> eIDp;
+      R__b >> eEvent;
+      R__b >> eFlag;
+      R__b >> eTy;
+      R__b >> eTz;
+      R__b >> eYp;
+      R__b >> eZp;
+      R__b.CheckByteCount(R__s, R__c, EdbPredictionDC::IsA());
+      //====end of old versions
+   } else {
+     EdbPredictionDC::Class()->WriteBuffer(R__b,this);
+   }
+}
 
 //_____________________________________________________________________________
 void EdbPredictionDC::WriteDC( FILE *file ) const
@@ -70,6 +87,29 @@ EdbPredictionsBox::EdbPredictionsBox(int n)
 EdbPredictionsBox::~EdbPredictionsBox()
 {
   if(ePredictions) delete ePredictions;
+}
+
+//______________________________________________________________________________
+void EdbPredictionsBox::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPredictionsBox.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPredictionsBox::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      EdbPointsBox2D::Streamer(R__b);
+      ePredictions->Streamer(R__b);
+      R__b.CheckByteCount(R__s, R__c, EdbPredictionsBox::IsA());
+      //====end of old versions
+   } else {
+     EdbPredictionsBox::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

@@ -50,7 +50,7 @@ public:
   TH2F   *GetHist2(int flip=0) const { return eImage->GetHist2(flip); }
   TH1F   *GetHist1() const { return eImage->GetHist1(); }
 
-  ClassDef(EdbFrame,3)  // Scanning Frame: image+positin information
+  ClassDef(EdbFrame,4)  // Scanning Frame: image+positin information
 };
 
 #endif /* ROOT_EdbFrame */

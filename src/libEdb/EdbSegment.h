@@ -54,7 +54,7 @@ public:
 
   //  virtual void       Print( Option_t *opt=0) const;
   
-  ClassDef(EdbSeg3D,1)  // base class with geometrical data for segments
+  ClassDef(EdbSeg3D,2)  // base class with geometrical data for segments
 };
 
 //______________________________________________________________________________
@@ -118,7 +118,7 @@ public:
 
   void       Print( Option_t *opt=0) const;
   
-  ClassDef(EdbSegment,2)  // segment of the track
+  ClassDef(EdbSegment,3)  // segment of the track
 };
 
 //______________________________________________________________________________
@@ -148,7 +148,7 @@ class EdbTrack : public EdbSeg3D {
 
   void       Print( Option_t *opt=0) const;
   
-  ClassDef(EdbTrack,2)  // Track linked from segments
+  ClassDef(EdbTrack,3)  // Track linked from segments
 };
 
 #endif /* ROOT_EdbSegment */

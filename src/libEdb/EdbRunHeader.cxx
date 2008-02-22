@@ -7,11 +7,9 @@
 // Implementation of Scanning Run class                                 //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-#include "TSystem.h"
-
-#ifndef ROOT_EdbRunHeader
+#include <TSystem.h>
+#include <TClass.h>
 #include "EdbRunHeader.h"
-#endif
 
 ClassImp(EdbRunHeader)
 ClassImp(EdbCamera)
@@ -35,6 +33,41 @@ EdbRunHeader::EdbRunHeader( int n )
 }
 
 //______________________________________________________________________________
+void EdbRunHeader::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbRunHeader.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbRunHeader::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      TNamed::Streamer(R__b);
+      R__b >> eRunID;
+      R__b.ReadStaticArray((int*)eFlag);
+      eStartTime.Streamer(R__b);
+      eFinishTime.Streamer(R__b);
+      R__b >> eSystemStartTime;
+      R__b >> eCPU;
+      eComment.Streamer(R__b);
+      R__b >> eArea;
+      R__b >> ePlate;
+      R__b >> eStage;
+      R__b >> eXmin;
+      R__b >> eXmax;
+      R__b >> eYmin;
+      R__b >> eYmax;
+      R__b >> eNareas;
+      R__b.CheckByteCount(R__s, R__c, EdbRunHeader::IsA());
+      //====end of old versions
+   } else {
+     EdbRunHeader::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//______________________________________________________________________________
 void EdbRunHeader::Print()
 {
   printf("\n--------------------------------------------------------------------\n");
@@ -55,6 +88,31 @@ void EdbRunHeader::Print()
 }
 
 //______________________________________________________________________________
+void EdbCamera::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbCamera.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbCamera::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TNamed::Streamer(R__b);
+      R__b >> eWidth;
+      R__b >> eHeight;
+      R__b >> eRows;
+      R__b >> eColumns;
+      R__b.CheckByteCount(R__s, R__c, EdbCamera::IsA());
+      //====end of old versions
+   } else {
+     EdbCamera::Class()->WriteBuffer(R__b,this);
+   }
+}
+
+//______________________________________________________________________________
 void EdbCamera::SetCamera(float w, float h, int r, int c)
 {
   if(w!=0) eWidth   = w;
@@ -69,6 +127,33 @@ void EdbCamera::Print() const
   printf("\nEdbCamera: \t\t %s \n", GetTitle() );
   printf("%s \t\t\t %d %d    %d %d\n", GetName(),
 	 (int)eWidth, (int)eHeight,  eRows, eColumns);
+}
+
+//______________________________________________________________________________
+void EdbPlate::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbPlate.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbPlate::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TNamed::Streamer(R__b);
+      R__b >> eID;
+      R__b >> eUp;
+      R__b >> eBase;
+      R__b >> eDown;
+      R__b >> eShrinkageU;
+      R__b >> eShrinkageD;
+      R__b.CheckByteCount(R__s, R__c, EdbPlate::IsA());
+      //====end of old versions
+   } else {
+     EdbPlate::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

@@ -8,13 +8,9 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_EdbFrame
+#include <TH2.h>
+#include <TClass.h>
 #include "EdbFrame.h"
-#endif
-
-#ifndef ROOT_TH2
-#include "TH2.h"
-#endif
 
 ClassImp(EdbFrame)
 
@@ -47,6 +43,32 @@ EdbFrame::EdbFrame( int frame, float z, int ncl, int npix )
 EdbFrame::~EdbFrame()
 {
   if(eImage) delete eImage;
+}
+
+//______________________________________________________________________________
+void EdbFrame::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbFrame.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 3) {
+	EdbFrame::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eFrameID;
+      R__b >> eZframe;
+      R__b >> eNcl;
+      R__b >> eNpix;
+      R__b >> eImage;
+      R__b.CheckByteCount(R__s, R__c, EdbFrame::IsA());
+      //====end of old versions
+   } else {
+     EdbFrame::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

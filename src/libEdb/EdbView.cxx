@@ -8,35 +8,20 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TSystem.h"
-#include "TRandom.h"
-#include "TMath.h"
-#include "TH3.h"
-#include "TPolyLine3D.h"
+#include <TSystem.h>
+#include <TRandom.h>
+#include <TMath.h>
+#include <TH3.h>
+#include <TPolyLine3D.h>
 
-#ifndef ROOT_EdbCluster
 #include "EdbCluster.h"
-#endif
-
-#ifndef ROOT_EdbFrame
 #include "EdbFrame.h"
-#endif
-
-#ifndef ROOT_EdbView
 #include "EdbView.h"
-#endif
-
-#ifndef ROOT_EdbSegment
 #include "EdbSegment.h"
-#endif
-
-#ifndef ROOT_EdbRun
 #include "EdbRun.h"
-#endif
 
 ClassImp(EdbView)
 ClassImp(EdbViewHeader)
-
 
 //______________________________________________________________________________
 EdbView::EdbView()
@@ -60,6 +45,33 @@ EdbView::~EdbView()
   if(eTracks)    { eTracks->Delete();   delete eTracks;   }
   if(eHeader)    delete eHeader;
   if(eFrames)    { eFrames->Delete();   delete eFrames;   }
+}
+
+//______________________________________________________________________________
+void EdbView::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbView.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 2) {
+	EdbView::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution  (version 1)
+      TObject::Streamer(R__b);
+      R__b >> eHeader;
+      eClusters->Streamer(R__b);
+      eSegments->Streamer(R__b);
+      eTracks->Streamer(R__b);
+      eFrames->Streamer(R__b);
+      R__b >> eLastSystemTime;
+      R__b.CheckByteCount(R__s, R__c, EdbView::IsA());
+      //====end of old versions
+   } else {
+     EdbView::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________
@@ -621,7 +633,6 @@ void EdbView::GenerateFrames( int n )
 }
 
 //______________________________________________________________________________
-//______________________________________________________________________________
 EdbViewHeader::EdbViewHeader()
 {
   Set0();
@@ -631,6 +642,46 @@ EdbViewHeader::EdbViewHeader()
 EdbViewHeader::~EdbViewHeader()
 {
   //if(eZlevels) delete eZlevels;
+}
+
+//______________________________________________________________________________
+void EdbViewHeader::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbViewHeader.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 4) {
+	EdbViewHeader::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eViewID;
+      R__b >> eAreaID;
+      R__b >> eXview;
+      R__b >> eYview;
+      R__b >> eZ1;
+      R__b >> eZ2;
+      R__b >> eZ3;
+      R__b >> eZ4;
+      R__b >> eNframesTop;
+      R__b >> eNframesBot;
+      R__b >> eTime;
+      R__b >> eNclusters;
+      R__b >> eNsegments;
+      eAff.Streamer(R__b);
+      R__b >> eCol;
+      R__b >> eRow;
+      R__b >> eStatus;
+      R__b >> eEvent;
+      R__b >> eTrack;
+      R__b.CheckByteCount(R__s, R__c, EdbViewHeader::IsA());
+      //====end of old versions
+   } else {
+     EdbViewHeader::Class()->WriteBuffer(R__b,this);
+   }
 }
 
 //______________________________________________________________________________

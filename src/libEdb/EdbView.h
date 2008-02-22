@@ -127,7 +127,7 @@ public:
   Int_t    GetEvent()       const { return eEvent; }
   void     Print() const;
 
-  ClassDef(EdbViewHeader,4)  // view identification
+  ClassDef(EdbViewHeader,5)  // view identification
 };
 
 //______________________________________________________________________________
@@ -249,7 +249,7 @@ public:
   float Zmin() const {return TMath::Min( GetZ1(), GetZ4() );}
   float Zmax() const {return TMath::Max( GetZ1(), GetZ4() );}
 
-  ClassDef(EdbView,2)  // Base scanning data object: entry into Run tree
+  ClassDef(EdbView,3)  // Base scanning data object: entry into Run tree
 };
 
 #endif /* ROOT_EdbView */

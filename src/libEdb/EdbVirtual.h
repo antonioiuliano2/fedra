@@ -9,9 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_TObject
 #include "TObject.h"
-#endif
 
 class TH1F;
 class TH2F;
@@ -48,7 +46,7 @@ class EdbPoint {
 
   virtual void Test() const { printf("EdbPoint::Test \n"); }
 
-  ClassDef(EdbPoint,1)  // virtual point
+  ClassDef(EdbPoint,2)  // virtual point
 };
 
 //______________________________________________________________________________
@@ -72,7 +70,7 @@ class EdbAngle2D {
 
   virtual void Print( Option_t *opt="") const;
 
-  ClassDef(EdbAngle2D,1)  // virtual angle
+  ClassDef(EdbAngle2D,2)  // virtual angle
 };
 //______________________________________________________________________________
 class EdbPoint2D : public EdbPoint {
@@ -96,7 +94,7 @@ class EdbPoint2D : public EdbPoint {
   virtual void Test() const { printf("EdbPoint2D::Test \n"); }
   virtual void TestPoint2D() const { printf("EdbPoint2D::TestPoint2D \n"); }
 
-  ClassDef(EdbPoint2D,1)  // virtual 2D point
+  ClassDef(EdbPoint2D,2)  // virtual 2D point
 };
 
 //______________________________________________________________________________
@@ -117,7 +115,7 @@ class EdbPoint3D : public EdbPoint2D {
   virtual void Test() const { printf("EdbPoint3D::Test \n"); }
   virtual void TestPoint3D() const { printf("EdbPoint3D::TestPoint3D \n"); }
 
-  ClassDef(EdbPoint3D,1)  // virtual 3D point
+  ClassDef(EdbPoint3D,2)  // virtual 3D point
 };
 
 
@@ -137,7 +135,7 @@ class EdbTrack2D : public EdbPoint2D, public EdbAngle2D {
 
   virtual void Print( Option_t *opt="") const;
 
-  ClassDef(EdbTrack2D,1)  // virtual track
+  ClassDef(EdbTrack2D,2)  // virtual track
 };
 
 //______________________________________________________________________________
@@ -200,7 +198,7 @@ class EdbPointsBox2D : public EdbPoint3D {
 
   virtual void  DrawPoints(int style=23, int   col=4, float size=1.);
 
-  ClassDef(EdbPointsBox2D,1)  // collection of  2D points
+  ClassDef(EdbPointsBox2D,2)  // collection of  2D points
 };
 
 //______________________________________________________________________________
@@ -210,10 +208,7 @@ class EdbPointsBox3D : public EdbPointsBox2D {
   EdbPointsBox3D(): EdbPointsBox2D() {}
   virtual ~EdbPointsBox3D() {}
 
-  ClassDef(EdbPointsBox3D,1)  // collection of  3D points
+  ClassDef(EdbPointsBox3D,2)  // collection of  3D points
 };
 
 #endif /* ROOT_EdbVirtual */
-
-
-

@@ -43,7 +43,7 @@ public:
 
   void Print(Option_t *opt="") const;
 
-  ClassDef(EdbCCD,1)  // CCD camera specification
+  ClassDef(EdbCCD,2)  // CCD camera specification
 };
 
 //______________________________________________________________________________
@@ -77,7 +77,7 @@ class EdbObjective : public TNamed {
   int  ReadParameters( const char *str );
   void Print(Option_t *opt="") const;
 
-  ClassDef(EdbObjective,1)  // objective affine parameters
+  ClassDef(EdbObjective,2)  // objective affine parameters
 };
 
 
@@ -107,7 +107,7 @@ class EdbStage : public TNamed {
 
   void Print(Option_t *opt="") const;
 
-  ClassDef(EdbStage,1)  // stage parameters
+  ClassDef(EdbStage,2)  // stage parameters
 };
 
 #endif /* ROOT_EdbStage */

@@ -64,7 +64,7 @@ public:
 
   Int_t   DumpPGM( char *file );
 
-  ClassDef(EdbImage,1)  // CCD Image in bytemap format
+  ClassDef(EdbImage,2)  // CCD Image in bytemap format
 };
 
 #endif /* ROOT_EdbImage */

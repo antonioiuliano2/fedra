@@ -8,13 +8,12 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-#include "TH1.h"
-#include "TH2.h"
+#include <TH1.h>
+#include <TH2.h>
+#include <Riostream.h>
+#include <TClass.h>
 
-#ifndef ROOT_EdbImage
 #include "EdbImage.h"
-#endif
-#include "Riostream.h"
  
 ClassImp(EdbImage)
 
@@ -48,6 +47,32 @@ EdbImage::~EdbImage()
   Set0();
 }
 
+//______________________________________________________________________________
+void EdbImage::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbImage.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      if (R__v > 1) {
+	EdbImage::Class()->ReadBuffer(R__b, this, R__v, R__s, R__c);
+	return;
+      }
+      //====process old versions before automatic schema evolution
+      TObject::Streamer(R__b);
+      R__b >> eColumns;
+      R__b >> eRows;
+      R__b >> eColors;
+      R__b >> eBuffer;
+      R__b >> eBytes;
+      R__b.CheckByteCount(R__s, R__c, EdbImage::IsA());
+      //====end of old versions
+   } else {
+     EdbImage::Class()->WriteBuffer(R__b,this);
+   }
+}
+   
 //______________________________________________________________________________
 void EdbImage::Set0()
 {

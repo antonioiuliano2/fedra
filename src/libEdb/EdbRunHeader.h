@@ -62,7 +62,7 @@ public:
 
   int  ReadParameters( const char *str );
 
-  ClassDef(EdbPlate,1)  // emulsion plate specification
+  ClassDef(EdbPlate,2)  // emulsion plate specification
 };
 
 //______________________________________________________________________________
@@ -87,7 +87,7 @@ public:
   Int_t     GetRows()    const { return eRows;    }
   Int_t     GetColumns() const { return eColumns; }
 
-  ClassDef(EdbCamera,1)  // CCD camera specification (obsolete)
+  ClassDef(EdbCamera,2)  // CCD camera specification (obsolete)
 };
 
 //______________________________________________________________________________
@@ -214,7 +214,7 @@ public:
 
   void         Print();
 
-  ClassDef(EdbRunHeader,1)  // Run specific information
+  ClassDef(EdbRunHeader,2)  // Run specific information
 };
 
 #endif /* ROOT_EdbRunHeader */
