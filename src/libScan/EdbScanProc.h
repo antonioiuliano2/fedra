@@ -57,6 +57,7 @@ public:
   int     ReadPatCP(EdbPattern &pat, int id[4], TCut c="1");
   int     ReadPatCP(EdbPattern &pat, EdbID id, TCut c="1") {int id4[4]; id.Get(id4); return ReadPatCP(pat,id4,c);}
   int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1", bool do_erase=true);
+  int     ReadPatCPnopar(EdbPattern &pat, const char *file, TCut cut="1", EdbMask *erase_mask=0);
   EdbMask* ReadEraseMask(EdbID id);
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
@@ -109,6 +110,7 @@ public:
   int     TestAl(int id1[4], int id2[4]);
   int     TestAl(EdbID id1, EdbID id2)   {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return TestAl(id14,id24); }
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
+  int     TestAl(const char *cpfile1, const char *cpfile2, TCut &cut, float dz);
 
   int     ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename);
 

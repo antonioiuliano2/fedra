@@ -306,12 +306,19 @@ int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut, bool do_era
 {
   TString cpfile;
   MakeFileName(cpfile,id,"cp.root");
+  EdbMask* mask = 0;
+  if(do_erase) mask = ReadEraseMask(id);
+  return ReadPatCPnopar(pat,cpfile.Data(),cut, mask );
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, EdbMask *mask)
+{
   EdbDataPiece piece;
   piece.eFileNameCP  = cpfile;
   piece.AddRCut(0,cut);
   if(!piece.InitCouplesTree("READ")) return 0;
-
-  if(do_erase) piece.eEraseMask = ReadEraseMask(id);
+  piece.eEraseMask = mask;
   return piece.GetCPData_new( &pat,0,0,0 );
 }
 
@@ -740,7 +747,7 @@ bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int
   piece2.eFileNamePar = parfileOUT;
   ali.GetPattern(0)->GetKeep(aff);
   piece2.UpdateAffPar(0,aff);
-  if( strcmp(opt,"-z") >=0 ) {
+  if( strstr(opt,"-z")) {
     ali.FineCorrZnew();
     piece2.UpdateZPar(0,-ali.GetPattern(0)->Z());
   }
@@ -804,8 +811,20 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
 }
 
 //----------------------------------------------------------------
+int EdbScanProc::TestAl(const char *cpfile1, const char *cpfile2, TCut &cut, float dz)
+{
+  EdbPattern p1,p2;
+  ReadPatCPnopar(p2, cpfile2, cut, false);
+  p2.SetZ(0);  p2.SetSegmentsZ();
+  ReadPatCPnopar(p1, cpfile1, cut, false);
+  p1.SetZ(-dz);  p1.SetSegmentsZ();
+  return TestAl(p1,p2);
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
 {
+  Log(2,"EdbScanProc::TestAl","align patterns %d and %d", p1.N(), p2.N());
   EdbTestAl ta;
   ta.HDistance(p1,p2);
 
