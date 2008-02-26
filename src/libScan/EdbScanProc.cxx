@@ -694,7 +694,7 @@ bool EdbScanProc::CorrectPredWithFound(int id1[4],int id2[4], const char *opt, i
 }
 
 //----------------------------------------------------------------
-bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int patmin)
+bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int patmin, const char *parfile)
 {
   // take p1.found.root, apply AFF/p1_p2.par, align to p2 and update AFF/p1_p2.par
   EdbPattern pat;
@@ -713,7 +713,7 @@ bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int
   pat.SetZ(-dz);
   pat.SetSegmentsZ();
 
-  MakeInPar(id2,"fullalignment");
+  MakeInPar(id2,parfile);
   EdbPattern p2;
   EdbDataPiece piece2;
   InitPiece(piece2, id2);
@@ -748,6 +748,8 @@ bool EdbScanProc::CorrectAffWithPred(int id1[4],int id2[4], const char *opt, int
   ali.GetPattern(0)->GetKeep(aff);
   piece2.UpdateAffPar(0,aff);
   if( strstr(opt,"-z")) {
+    EdbDataProc proc;
+    proc.LinkTracksWithFlag( &ali, 10., 0.05, 2, 3, 0 );
     ali.FineCorrZnew();
     piece2.UpdateZPar(0,-ali.GetPattern(0)->Z());
   }
@@ -826,6 +828,8 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
 {
   Log(2,"EdbScanProc::TestAl","align patterns %d and %d", p1.N(), p2.N());
   EdbTestAl ta;
+  //TFile ftree("testal.root","RECREATE");
+  //ta.eBinTree = new TNtuple("bintree","bin tree","dz:phi:dx:dy:bin");
   ta.HDistance(p1,p2);
 
   float bin[4]={20,20, 25,0.001};                  // default values for normal alignment (expected dz=1300)
@@ -854,6 +858,10 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
   aff.ShiftY(ta.eD0[1]);
   if(gEDBDEBUGLEVEL>1) aff.Print();
   //ta.FillTree( piece2.GetLayer(0)->Z()-piece1.GetLayer(0)->Z() );
+
+  //ta.eBinTree->Write("bintree");
+  //ftree.Close();
+
   return 0;
 }
   

@@ -28,6 +28,7 @@ EdbTestAl::EdbTestAl()
   eS1=0;
   eS2=0;
 
+  eBinTree=0;
   eT   = 0;
   eFile= 0;
   HD=0;
@@ -163,6 +164,16 @@ int EdbTestAl::CheckMaxBin(float gdz, float phi, float &meanbin, float &xmax, fl
     h2.Fill(dx,dy);    
   }
 
+  if(eBinTree) {   // disabled test
+    for(int i=0; i<eN[0]; i++)
+      for(int j=0; j<eN[1]; j++) {
+	float bin=h2.GetBinContent(h2.GetBin(i,j));
+	if(bin<1) continue;
+	dx = eDmin[0] + (i+0.5)*(eDmax[0]-eDmin[0])/eN[0];
+	dy = eDmin[1] + (j+0.5)*(eDmax[1]-eDmin[1])/eN[1];
+	eBinTree->Fill(gdz,phi,dx,dy,bin);
+      }
+  }
   meanbin = h2.GetSum()/h2.GetNbinsX()/h2.GetNbinsY();
   int mx,my,mz;
   h2.GetMaximumBin(mx,my,mz);

@@ -1,8 +1,9 @@
 #ifndef ROOT_EdbTestAl
 #define ROOT_EdbTestAl
 
-#include "TVector3.h"
-#include "TH2F.h"
+#include <TNtuple.h>
+#include <TVector3.h>
+#include <TH2F.h>
 #include "EdbPattern.h"
 #include "EdbAffine.h"
 
@@ -19,6 +20,8 @@ public:
   float eBinSize; //microns
 
   TObjArray *eS1, *eS2;   // pointers to segments selected by HDistance
+
+  TNtuple *eBinTree;        // put bins value for all attempts
 
   TTree *eT;
   TFile *eFile;

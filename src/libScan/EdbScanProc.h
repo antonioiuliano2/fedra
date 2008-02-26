@@ -75,7 +75,7 @@ public:
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
   int     AlignSet( EdbScanSet &sc, int npre=1, int nfull=3, const char *opt="-z");
   bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
-  bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
+  bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6, const char *parfile="fullalignment");
   bool    ProjectFound(int id1[4],int id2[4]);
 
   int     FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found, int maxholes=3);
