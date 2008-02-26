@@ -101,12 +101,13 @@ void EGraphTool::DrawFrame()
   // create tab for options frame
 
   TGTab *OptTab = new TGTab(ButtonFrame);
-  fEmGraphRec->AddRecOptFrame(OptTab); // Create a button frame
+  // fEmGraphRec->AddRecOptFrame(OptTab); // Create a button frame
+  fEmGraphRec->AddScanBackFrame(OptTab); // Create scan back frame
   ButtonFrame->AddFrame(OptTab, fLayout2);
 
   // create process list frame
 
-  fEmGraphRec->AddProcListFrame(ButtonFrame);
+  // fEmGraphRec->AddProcListFrame(ButtonFrame);
 
   // Process Event
 

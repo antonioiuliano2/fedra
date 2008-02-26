@@ -16,6 +16,10 @@
 #include "EdbMath.h"
 #include "EdbTraceBack.h"
 #include "EdbLog.h"
+#include <TSystem.h>
+#include <iostream>
+
+using namespace std;
 
 ClassImp(EdbMask)
 ClassImp(EdbDataPiece)
@@ -276,16 +280,16 @@ int EdbDataPiece::TakePiecePar()
 ///______________________________________________________________________________
 int EdbDataPiece::ReadPiecePar(const char *file)
 {
-  char            buf[256];
-  char            key[256];
-  char            name[256];
+  char buf[256];
+  char key[256];
+  char name[256];
 
-  FILE *fp=fopen(file,"r");
-  if (fp==NULL)   {
-    Log(1,"ReadPiecePar","ERROR open file: %s", file);
-    return(-1);
-  }else
-    Log(2,"ReadPiecePar","Read piece parameters from file: %s", file );
+  FILE *fp = fopen(file,"r");
+  if (!fp) {
+    Log(1,"ReadPiecePar","ERROR open file: %s\nPlease run \"Alignment\" procedure first\n", file);
+    return -1;
+  }
+  else Log(2,"ReadPiecePar","Read piece parameters from file: %s", file );
 
   int id,mode;
   float z,zmin,zmax,shr;
@@ -293,10 +297,9 @@ int EdbDataPiece::ReadPiecePar(const char *file)
   float x1,x2,x3,x4;
   float var[10];
 
-  while( fgets(buf,256,fp)!=NULL ) {
-
-    for( int i=0; i<(int)strlen(buf); i++ ) 
-      if( buf[i]=='#' )  {
+  while (fgets(buf, sizeof(buf), fp)) {
+    for (Int_t i = 0; i < (Int_t)strlen(buf); i++) 
+      if (buf[i]=='#')  {
 	buf[i]='\0';                       // cut out comments starting from #
 	break;
       }
@@ -816,6 +819,7 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   if(cut)       tree->Draw(">>lst", *cut );
   else          tree->Draw(">>lst", "" );
   lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
+
   int nlst =lst->GetN();
   if(cut) printf("select %d of %d segments by cut %s\n",nlst, nentr, cut->GetTitle() );
 
@@ -1229,20 +1233,36 @@ int EdbDataPiece::AcceptViewHeader(const EdbViewHeader *head)
 ///______________________________________________________________________________
 int EdbDataPiece::InitCouplesTree(const char *mode)
 {
-  if( (eCouplesTree=InitCouplesTree(eFileNameCP,mode ))) return 1;
+  if ((eCouplesTree=InitCouplesTree(eFileNameCP,mode))) return 1;
   return 0;
 }
 
-///______________________________________________________________________________
+//______________________________________________________________________________
 TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
 {
   static TString tree_name("couples");
-  TTree *tree=0;
+  TTree *tree = NULL;
+
+  // checking for the existing directory
+
+  if (!gSystem->OpenDirectory(gSystem->DirName(file_name))) {
+    if (gEDBDEBUGLEVEL > 0) {
+      cout << "ERROR! Directory " << gSystem->DirName(file_name) 
+	   << " does not exist.\n";
+      cout << "Please run scanning procedure first for the plate " 
+	   << gSystem->BaseName(gSystem->DirName(file_name)) << endl;
+    }
+    return 0;
+
+  }
+
 
   TFile *f = new TFile(file_name, mode);
-  if (f)  tree = (TTree*)f->Get(tree_name);
 
-  if(!tree) {
+  if (f->IsOpen()) tree = (TTree*)f->Get(tree_name);
+  else return 0;
+
+  if (!tree) {
     f->cd();
     tree = new TTree(tree_name, tree_name);
     tree->SetMaxTreeSize(15000000000LL);   //set 15 Gb file size limit)
@@ -1619,24 +1639,25 @@ int EdbDataProc::CheckCCD()
   return np;
 }
 
-///------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 int EdbDataProc::Link()
 {
-  if(!eDataSet) return 0;
+  if (!eDataSet) return 0;
   EdbDataPiece *piece;
-  int np=eDataSet->N();
-  for(int i=0; i<np; i++) {
+  Int_t np = eDataSet->N();
+  for (Int_t i = 0; i < np; i++) {
     piece = eDataSet->GetPiece(i);
-    piece->TakePiecePar();
-    if(gEDBDEBUGLEVEL>2) piece->Print();
-    piece->WriteCuts();
-    if(piece->Flag()==1)    Link(*piece);
+    if (piece->TakePiecePar() > 0) {
+      if (gEDBDEBUGLEVEL > 2) piece->Print();
+      piece->WriteCuts();
+      if (piece->Flag() == 1) Link(*piece);
+    }
     piece->CloseRun();
   }
   return np;
 }
 
-///______________________________________________________________________________
+//______________________________________________________________________________
 int EdbDataProc::Link(EdbDataPiece &piece)
 {
   EdbPVRec  *ali;

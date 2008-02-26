@@ -7,106 +7,136 @@
 //----------------------------------------------------------------------------
 
 #include "EGraphRec.h"
+#include "EdbLog.h"
 #include <TEnv.h>
 #include <TGTab.h>
 #include <TGLabel.h>
 #include <TGTextView.h>
 #include <TGButton.h>
 #include <TGButtonGroup.h>
+#include <TGFileDialog.h>
 #include <TBranchClones.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TCanvas.h>
 #include <TGLSAViewer.h>
 #include <TView.h>
 #include <TThread.h>
+#include <TMath.h>
 #include <iostream>
 
 #include "EdbScanProc.h"
 
 using namespace std;
+using namespace TMath;
 
 ClassImp(EGraphRec)
 
 
 //----------------------------------------------------------------------------
-void *ThProcessEvent(void *ptr)
+void *ThSBProcess(void *ptr)
 {
   EGraphRec   *egraph      = (EGraphRec*) ptr;
-  EdbScanProc *sproc       = egraph->GetScanProc();
-  EdbScanSet  *predScan    = egraph->GetPredScanProc();
-  Int_t       *brickToProc = egraph->GetBrickToProc();
+  EdbScanProc *scanProc    = egraph->GetScanProc();    // Scan Proc
+  EdbScanSet  *scanSet     = egraph->GetScanSet();     // Scan Set
+  EdbPattern  *predTracks  = egraph->GetPredTracks();  // predicted tracks
+  EdbPVRec    *foundTracks = egraph->GetFoundTracks(); // found tracks
+  ProcBrick_t  brickToProc = egraph->GetBrickToProc(); // Brick to process
   ProcId_t     procId      = egraph->GetProcId();
 
-  Int_t brickCalibCurr[4], brickCalibPrev[4];
-  Int_t brickPredCurr[4],  brickPredPrev[4];
+  Int_t pID_IC[4]      = {brickToProc.brickId, 0, brickToProc.ver, 0};
+  Int_t pID_PS[4]      = {brickToProc.brickId, 0, brickToProc.ver, 0};
+  Int_t pID_IC_prev[4] = {brickToProc.brickId, 0, brickToProc.ver, 0};
+  Int_t pID_PS_prev[4] = {brickToProc.brickId, 0, brickToProc.ver, 0};
 
-  brickPredCurr[0] = brickPredPrev[0] = brickCalibCurr[0] = 
-    brickCalibPrev[0] = brickToProc[0]; // brick Id
-  brickPredCurr[2] = brickPredPrev[2] = brickCalibCurr[2] = 
-    brickCalibPrev[2] = brickToProc[2]; // version
-  
-  Int_t firstPlate = brickToProc[1];
-  Int_t lastPlate  = brickToProc[3];
+  Int_t firstPlate = brickToProc.firstPlate;
+  Int_t lastPlate  = brickToProc.lastPlate;
+  Int_t step=(lastPlate>=firstPlate) ? brickToProc.step : -1*brickToProc.step;
+  Int_t nFailurePlates = 0;
 
-  Int_t step = (lastPlate >= firstPlate) ? 1 : -1;
-
-  EdbPattern *predP = egraph->GetPredTracks();
-  EdbPVRec   *foundTracks = egraph->GetFoundTracks();
-
-  predP->Reset();
+  predTracks->Reset();
   
   for (Int_t plate = firstPlate; plate != lastPlate + step; plate += step) {
 
-    brickPredCurr[1]  = brickCalibCurr[1] = plate;
-    brickPredPrev[1]  = brickCalibPrev[1] = plate - step;
-    brickCalibPrev[3] = brickCalibCurr[3] = procId.interCalib;
-    brickPredPrev[3]  = brickPredCurr[3]  = procId.predScan;
+    pID_PS[1]      = pID_IC[1]      = plate;
+    pID_PS_prev[1] = pID_IC_prev[1] = plate - step;
+    pID_IC_prev[3] = pID_IC[3]      = procId.interCalib;
+    pID_PS_prev[3] = pID_PS[3]      = procId.predScan;
+
+    // get prediction for the current plate
+
+    // scanProc->ReadPred(*predTrack, pID_PS);
+
+    // scanning intercalibration zone
+
+    // Checking directory (if there is no scanning)
+
+    TString str;
+    scanProc->MakeFileName(str, pID_PS, "root");
+
+    if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+      cout << "ERROR! Directory " << gSystem->DirName(str) 
+	   << " does not exist.\n";
+      cout << "Please run scanning procedure for the plate number " 
+	   << pID_PS[1] << endl;
+      continue;
+    }
 
     // linking process
 
-    if (egraph->IsToProcLink()) {
-      brickCalibCurr[3] = procId.interCalib;
-      sproc->LinkRunAll(brickCalibCurr);
-    }
+    if (egraph->IsSBToLink() && !scanProc->LinkRunAll(pID_IC)) return 0;
 
-    // alignment process
+    // alignment process between previous and current plate
 
-    if (egraph->IsToProcAlgn() && plate != firstPlate) {
-      brickCalibCurr[3] = brickCalibPrev[3] = procId.interCalib;
-      sproc->SetAFFDZ(brickCalibPrev, brickCalibCurr, 1300.*step);
-      sproc->AlignAll(brickCalibPrev, brickCalibCurr, 1, 4, "-z");
+    if (egraph->IsSBToAlgn() && plate != firstPlate) {
+      if (!scanProc->SetAFFDZ(pID_IC_prev, pID_IC, 1300.*step)) return 0;
+      if (scanProc->AlignAll(pID_IC_prev, pID_IC, 1, 4, "-z") < 0) return 0;
     }
 
     // Scan back mode. Search predictions.
 
-    sproc->CopyPar(brickCalibCurr, brickPredCurr);
+    scanProc->CopyPar(pID_IC, pID_PS);
 
     if (plate != firstPlate) {
-      sproc->CopyAFFPar(brickCalibPrev, brickCalibCurr, 
-			brickPredPrev,  brickPredCurr);
-      sproc->ProjectFound(brickPredPrev, brickPredCurr);
+      scanProc->CopyAFFPar(pID_IC_prev, pID_IC, pID_PS_prev,  pID_PS);
+      scanProc->ProjectFound(pID_PS_prev, pID_PS);
     }
 
-    // adding plate to the brick
+    // adding scanned plate to the brick
+    // read affine and assemble "EdbBrickP" object
 
-    if (predScan->AddID(new EdbID(brickPredCurr), step)) {
-
-      // read affine and assemble "EdbBrickP" object
-
-      sproc->AssembleScanSet(*predScan);
-      predScan->SetAsReferencePlate(firstPlate);
+    if (scanSet->AddID(new EdbID(pID_PS), step)) {
+      if (scanProc->AssembleScanSet(*scanSet) < 1) return 0;
+      scanSet->SetAsReferencePlate(firstPlate);
     }
-
-    // Put the reset according plate number!
-
-    // sproc->ReadPred(*predP, brickPredCurr);
 
     // after scann
 
     foundTracks->ResetTracks();
-    sproc->ReadFoundTracks(*predScan, *foundTracks);
+
+    // come back to previous scanned plate + 1 if there are no tracks were
+    // found
+
+    scanProc->ReadFoundTracks(*scanSet, *foundTracks);
+
+    EdbPattern pat;
+    if (!scanProc->ReadFound(pat, pID_PS)) {
+      if (Abs(step) != 1) {
+	plate += -step + (step > 0 ? 1 : -1);
+	if (!nFailurePlates) plate += step;
+      }
+      nFailurePlates++;
+      cout << "Track does not found in the plate " << plate 
+	   << ". starting scann plate " << plate + step << endl;
+    }
+    else nFailurePlates = 0;
+
     egraph->DrawEvent();
 
+    if (nFailurePlates == 3) {
+      cout << "There are no any tracks during " << nFailurePlates 
+	   << "plates. Stop scanning" << endl;
+      return 0;
+    }
   }
 
   return 0;
@@ -114,13 +144,13 @@ void *ThProcessEvent(void *ptr)
 
 
 //----------------------------------------------------------------------------
-void *ThCheckProcessEvent(void *ptr)
+void *ThSBCheckProcess(void *ptr)
 {
   // Set enable "Execute Event" button after finishing process
 
   EGraphRec *egraph = (EGraphRec*) ptr;
-  egraph->GetThProcessEvent()->Join();            // Join ThProcessEvent
-  egraph->GetTextProcEvent()->SetEnabled(kTRUE);  // Enable button
+  egraph->GetThSBProcess()->Join();              // Join ThSBProcess
+  egraph->GetButtonSBStart()->SetEnabled(kTRUE); // Enable button
   return 0;
 }
 
@@ -138,8 +168,8 @@ EGraphRec::EGraphRec()
 EGraphRec::~EGraphRec() 
 {
   SafeDelete(fGraphHits);
-  SafeDelete(fThProcessEvent);
-  SafeDelete(fThCheckProcessEvent);
+  SafeDelete(fThSBProcess);
+  SafeDelete(fThSBCheckProcess);
   SafeDelete(fPredTracks);
   SafeDelete(fFoundTracks);
 }
@@ -150,25 +180,25 @@ void EGraphRec::ProcessEvent()
 {
   // DrawEvent(nentries);
   
-  fSproc->eProcDirClient = fDataDir;
+  // fSproc->eProcDirClient = fDataDir;
 
-  fBrickToProc[0] = fProcBrickEntry[0]->GetIntNumber(); // Brick Id
-  fBrickToProc[1] = fProcBrickEntry[1]->GetIntNumber(); // first plate
-  fBrickToProc[2] = fProcBrickEntry[3]->GetIntNumber(); // version
-  fBrickToProc[3] = fProcBrickEntry[2]->GetIntNumber(); // last plate
+//   fBrickToProc[0] = fProcBrickEntry[0]->GetIntNumber(); // Brick Id
+//   fBrickToProc[1] = fProcBrickEntry[1]->GetIntNumber(); // first plate
+//   fBrickToProc[2] = fProcBrickEntry[3]->GetIntNumber(); // version
+//   fBrickToProc[3] = fProcBrickEntry[2]->GetIntNumber(); // last plate
 
-  if (fPredScanProc && fPredScanProc->Brick().ID() != fBrickToProc[0]) {
-    SafeDelete(fPredScanProc);
-  }
+//   if (fPredScanProc && fPredScanProc->Brick().ID() != fBrickToProc[0]) {
+//     SafeDelete(fPredScanProc);
+//   }
 
-  if (!fPredScanProc) {
-    fPredScanProc = new EdbScanSet();
-    fPredScanProc->Brick().SetID(fBrickToProc[0]);
-  }
+//   if (!fPredScanProc) {
+//     fPredScanProc = new EdbScanSet();
+//     fPredScanProc->Brick().SetID(fBrickToProc[0]);
+//   }
 
-  fThProcessEvent->Run();              // Running Event Process in Thread mode
-  fThCheckProcessEvent->Run();         // Check the end of job
-  fTextProcEvent->SetEnabled(kFALSE);  // Disable Execution button
+//   fThProcessEvent->Run();              // Running Event Process in Thread mode
+//   fThCheckProcessEvent->Run();         // Check the end of job
+//   fTextProcEvent->SetEnabled(kFALSE);  // Disable Execution button
 
   // ReconstructTracks();
 }
@@ -187,6 +217,37 @@ void EGraphRec::ResetProcess()
 //     fThProcessEvent      = new TThread("ThProcessEvent", 
 //  				       ThProcessEvent, (void*) this);
 //   }
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::StartScanBack()
+{
+  // start scan back
+
+  fSproc->eProcDirClient = fDataDir;  // brick directory initialization
+
+  // Initialization of brick to be processed
+
+  fBrickToProc.brickId    = fEntryProcBrickId->GetIntNumber();
+  fBrickToProc.ver        = fEntryProcVer->GetIntNumber();
+  fBrickToProc.firstPlate = fEntrySBFirstPlate->GetIntNumber();
+  fBrickToProc.lastPlate  = fEntrySBLastPlate->GetIntNumber();
+  fBrickToProc.step       = fEntrySBStep->GetIntNumber();
+
+  // Scan set initialization
+
+  if (fScanSet && fScanSet->Brick().ID() != fBrickToProc.brickId)
+    SafeDelete(fScanSet);
+
+  if (!fScanSet) {
+    fScanSet = new EdbScanSet();
+    fScanSet->Brick().SetID(fBrickToProc.brickId);
+  }
+
+  fThSBProcess->Run();                // Run scan back Process in Thread mode
+  fThSBCheckProcess->Run();           // Check the end of job
+  fButtonSBStart->SetEnabled(kFALSE); // Disable Execution button
 }
 
 
@@ -216,57 +277,7 @@ void EGraphRec::DrawEvent()
 //----------------------------------------------------------------------------
 void EGraphRec::ReconstructTracks()
 {
-  EdbScanSet *scanBack = new EdbScanSet();
 
-  Int_t firstPlate = fProcBrickEntry[1]->GetIntNumber();
-  Int_t lastPlate  = fProcBrickEntry[2]->GetIntNumber();
-  Int_t step = (lastPlate >= firstPlate) ? 1 : -1;
-
-  Int_t brickToProc[4] = {fProcBrickEntry[0]->GetIntNumber(),
-			  0, 
-			  fProcBrickEntry[3]->GetIntNumber(),
-			  fProcId.predScan};
-
-  scanBack->eB.SetID(brickToProc[0]);
-
-  for (Int_t plate = firstPlate; plate != lastPlate + step; plate += step) {
-    brickToProc[1] = plate;
-    scanBack->eIDS.Add(new EdbID(brickToProc));
-  }
-
-  // read affine and assemble "EdbBrickP" object
-  fSproc->AssembleScanSet(*scanBack); 
-  scanBack->SetAsReferencePlate(firstPlate);
-  scanBack->Print();
-
-
-//   EdbScanSet sc10;     sc10.eB.SetID(BRICK);   
-//   EdbScanSet sc100;    sc100.eB.SetID(BRICK);  
-//   EdbScanSet sc20;     sc20.eB.SetID(BRICK);   
-//   EdbScanSet sc200;    sc200.eB.SetID(BRICK);  
-//   EdbScanSet sc400;    sc400.eB.SetID(BRICK);  
-
-//   make_id_list_20(sc20);
-//   make_id_list_400(sc400);
-
- 
-//   //make_id_list_10(sc10);
-//   //make_id_list_100(sc100);
-
-//   dproc = new EdbDataProc();
-//   gAli  = dproc->PVR();
-//   EdbScanCond *cond = new EdbScanCond();
-//   SetCondBT(*cond);
-//   gAli->SetScanCond(cond);
-
-//   EdbSegP s(s1p);
-//   float dxy=5000, dtxy=0.05;
-//   TCut cut = "eN1==1&&eN2==1&&eCHI2P<3.5&&s.eW>16";
-//   TCut QC = "s.eW>15+3*s.eChi2";
-//   char spos[128]; sprintf(spos,"sqrt((s.eX-(%f))*(s.eX-(%f))+(s.eY-(%f))*(s.eY-(%f)))<%f", s1p.X(), s1p.X(), s1p.Y(), s1p.Y(),dxy);
-//   char sang1[128]; sprintf(sang1,"sqrt((s.eTX-(%f))*(s.eTX-(%f))+(s.eTY-(%f))*(s.eTY-(%f)))<%f", s1p.TX(), s1p.TX(), s1p.TY(), s1p.TY(),dtxy);
-//   cut+=QC;
-//   sproc.ReadScanSetCP(sc20,  *gAli, cut);
 }
 
 
@@ -298,6 +309,8 @@ void EGraphRec::SetTree(TTree *tree)
 //----------------------------------------------------------------------------
 void EGraphRec::AddProcBrickFrame(TGVerticalFrame *workframe)
 {
+  // TODO: add the scanning options window
+
   TGLabel *label;
   TGHorizontalFrame *frame;
 
@@ -308,48 +321,24 @@ void EGraphRec::AddProcBrickFrame(TGVerticalFrame *workframe)
 
   frame = new TGHorizontalFrame(GroupProcBrick);
   label = new TGLabel(frame, "Brick Id");
-  fProcBrickEntry[0] = new TGNumberEntry(frame, fProcBrick.brickId, 7, 0, 
-					 TGNumberEntry::kNESInteger,
-					 TGNumberEntry::kNEANonNegative,
-					 TGNumberEntry::kNELLimitMin, 0, 1);
+  fEntryProcBrickId = new TGNumberEntry(frame, fProcBrick.brickId, 7, 0, 
+					TGNumberEntry::kNESInteger,
+					TGNumberEntry::kNEANonNegative,
+					TGNumberEntry::kNELLimitMin, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
-  frame->AddFrame(fProcBrickEntry[0], fLayoutRightExpY);
-  GroupProcBrick->AddFrame(frame, fLayout1);
-
-  // First plate to process
-
-  frame = new TGHorizontalFrame(GroupProcBrick);
-  label = new TGLabel(frame, "First plate");
-  fProcBrickEntry[1] = new TGNumberEntry(frame, fProcBrick.firstPlate, 3, 1, 
-					 TGNumberEntry::kNESInteger,
-					 TGNumberEntry::kNEANonNegative,
-					 TGNumberEntry::kNELLimitMinMax, 0, 58);
-  frame->AddFrame(label, fLayoutLeftExpY);
-  frame->AddFrame(fProcBrickEntry[1], fLayoutRightExpY);
-  GroupProcBrick->AddFrame(frame, fLayout1);
-
-  // Last plate to process
-
-  frame = new TGHorizontalFrame(GroupProcBrick);
-  label = new TGLabel(frame, "Last plate");
-  fProcBrickEntry[2] = new TGNumberEntry(frame, fProcBrick.lastPlate, 3, 2, 
-					 TGNumberEntry::kNESInteger,
-					 TGNumberEntry::kNEANonNegative,
-					 TGNumberEntry::kNELLimitMinMax,0,58);
-  frame->AddFrame(label, fLayoutLeftExpY);
-  frame->AddFrame(fProcBrickEntry[2], fLayoutRightExpY);
+  frame->AddFrame(fEntryProcBrickId, fLayoutRightExpY);
   GroupProcBrick->AddFrame(frame, fLayout1);
 
   // Version
 
   frame = new TGHorizontalFrame(GroupProcBrick);
   label = new TGLabel(frame, "Base version");
-  fProcBrickEntry[3] = new TGNumberEntry(frame, fProcBrick.ver, 3, 3, 
-					 TGNumberEntry::kNESInteger,
-					 TGNumberEntry::kNEANonNegative,
-					 TGNumberEntry::kNELLimitMin, 0, 1);
+  fEntryProcVer = new TGNumberEntry(frame, fProcBrick.ver, 3, 3, 
+				    TGNumberEntry::kNESInteger,
+				    TGNumberEntry::kNEANonNegative,
+				    TGNumberEntry::kNELLimitMin, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
-  frame->AddFrame(fProcBrickEntry[3], fLayoutRightExpY);
+  frame->AddFrame(fEntryProcVer, fLayoutRightExpY);
   GroupProcBrick->AddFrame(frame, fLayout1);
 
   workframe->AddFrame(GroupProcBrick, fLayout1);
@@ -393,11 +382,9 @@ void EGraphRec::AddProcListFrame(TGVerticalFrame *workframe)
 //----------------------------------------------------------------------------
 void EGraphRec::AddRecOptFrame(TGTab *worktab)
 {
-  TGCompositeFrame *tf;
-
   // Create a tab with reconstruction options buttons
 
-  tf = worktab->AddTab("Reconstruction options");
+  TGCompositeFrame *tf = worktab->AddTab("Reconstruction options");
 
   ReconstructionOptionsDlg(tf);
 }
@@ -511,6 +498,112 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 
 
 //----------------------------------------------------------------------------
+void EGraphRec::AddScanBackFrame(TGTab *worktab)
+{
+  TGLabel           *label;
+  TGHorizontalFrame *frame;
+
+  // Create a tab for scan back procedure
+
+  TGCompositeFrame *sb_tab = worktab->AddTab("Scan Back");
+
+  // Parameters
+
+  TGVButtonGroup *GroupSBPar = new TGVButtonGroup(sb_tab, "Parameters");
+
+  // First plate to process
+
+  frame = new TGHorizontalFrame(GroupSBPar);
+  label = new TGLabel(frame, "First plate");
+  fEntrySBFirstPlate = new TGNumberEntry(frame, 57, 3, 1, 
+					 TGNumberEntry::kNESInteger,
+					 TGNumberEntry::kNEANonNegative,
+					 TGNumberEntry::kNELLimitMinMax,0,58);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntrySBFirstPlate, fLayoutRightExpY);
+  GroupSBPar->AddFrame(frame, fLayout1);
+
+  // Last plate to process
+
+  frame = new TGHorizontalFrame(GroupSBPar);
+  label = new TGLabel(frame, "Last plate");
+  fEntrySBLastPlate = new TGNumberEntry(frame, 0, 3, 2, 
+					TGNumberEntry::kNESInteger,
+					TGNumberEntry::kNEANonNegative,
+					TGNumberEntry::kNELLimitMinMax,0,58);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntrySBLastPlate, fLayoutRightExpY);
+  GroupSBPar->AddFrame(frame, fLayout1);
+
+  // Step
+
+  frame = new TGHorizontalFrame(GroupSBPar);
+  label = new TGLabel(frame, "Step");
+  fEntrySBStep = new TGNumberEntry(frame, 1, 3, 3, 
+				   TGNumberEntry::kNESInteger,
+				   TGNumberEntry::kNEANonNegative,
+				   TGNumberEntry::kNELLimitMinMax,0,58);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntrySBStep, fLayoutRightExpY);
+  GroupSBPar->AddFrame(frame, fLayout1);
+
+  sb_tab->AddFrame(GroupSBPar, fLayout1);
+
+  // Scan back process list
+
+  TGVButtonGroup *GroupSBProcList = new TGVButtonGroup(sb_tab, "Process list");
+  fCheckSBScan = new TGCheckButton(GroupSBProcList, "Scanning");
+  fCheckSBLink = new TGCheckButton(GroupSBProcList, "Linking");
+  fCheckSBAlgn = new TGCheckButton(GroupSBProcList, "Alignment plates");
+  fCheckSBTrks = new TGCheckButton(GroupSBProcList, "Reconstruct tracks");
+  // fCheckSBVrtx = new TGCheckButton(GroupProcList, "Reconstruct vertex");
+
+//   fCheckSBLink->SetState(kButtonDown);
+//   fCheckSBAlgn->SetState(kButtonDown);
+  fCheckSBScan->SetEnabled(kFALSE);
+  fCheckSBTrks->SetEnabled(kFALSE);
+  // fCheckSBVrtx->SetEnabled(kFALSE);
+
+  sb_tab->AddFrame(GroupSBProcList, fLayout1);
+
+  // Scan intercalibration zone
+  // Linking
+  // Alignment
+  // Scan predictions
+  // Find the track
+  // Draw track
+
+  // Info
+
+  // current plate
+  // process
+
+  // read prediction for the first plate
+  // start procedure
+  // stop procedure
+
+
+  // Read prediction
+
+  TGTextButton *readPred = new TGTextButton(sb_tab, "Read prediction");
+  readPred->Connect("Clicked()", "EGraphRec", this, "ReadSBPred()");
+  sb_tab->AddFrame(readPred, fLayout1);
+
+  // start process
+
+  fButtonSBStart = new TGTextButton(sb_tab, "Start Scan Back");
+  fButtonSBStart->Connect("Clicked()","EGraphRec",this,"StartScanBack()");
+  sb_tab->AddFrame(fButtonSBStart, fLayout1);
+
+
+//   TGTextButton *endprocess = new TGTextButton(workframe, "Reset process");
+//   endprocess->Connect("Clicked()", "EGraphRec", this, "ResetProcess()");
+//   workframe->AddFrame(endprocess, fLayout1);
+
+}
+
+
+//----------------------------------------------------------------------------
 void EGraphRec::AddCanvasFrame(TGTab *worktab)
 {
   TGCompositeFrame *tf;
@@ -537,6 +630,46 @@ void EGraphRec::AddInfoFrame(TGVerticalFrame *workframe)
 
   WriteInfo();
 }
+
+
+//----------------------------------------------------------------------------
+void EGraphRec::ReadSBPred()
+{
+  // const char *filetypes[] = {"ROOT files", "*.root", 0, 0};
+
+  static TString dir(".");
+  TGFileInfo fi;
+  // fi.fFileTypes = filetypes;
+  fi.fIniDir    = StrDup(dir.Data());
+  new TGFileDialog(gClient->GetRoot(), 0, kFDOpen, &fi);
+  dir = fi.fIniDir;
+
+  fPredTracks->Reset();
+
+  // open file with predictions
+
+  if (fi.fFilename) {
+    EdbSegP s;
+    Int_t   ids=0,flag=0;
+    Float_t x=0.,y=0.,tx=0.,ty=0.;
+    char    buffer[256];
+
+    FILE *f = fopen(fi.fFilename, "r");
+
+    while (!fgets(buffer, sizeof(buffer), f)) {
+      if (sscanf(buffer,"%d %f %f %f %f %d", 
+		 &ids, &x, &y, &tx, &ty, &flag) != 6) break;
+      s.Set(ids, x, y, tx, ty, 50., flag);
+      s.SetErrors(50, 50, 0., 0.6, 0.6);
+      fPredTracks->AddSegment(s);
+    }
+    fclose(f);
+  }
+
+  // Create directory and write the predictions to the root file
+
+}
+
 
 //----------------------------------------------------------------------------
 void EGraphRec::Set3DViewer()
@@ -571,17 +704,17 @@ void EGraphRec::WriteInfo()
 {
   fTextInfo->Clear();
   fTextInfo->AddLine("");
-  fTextInfo->AddLine(" Read data from directory: " + fDataDir);
+  fTextInfo->AddLine(" Brick data directory: " + fDataDir);
 }
 
 //----------------------------------------------------------------------------
 void EGraphRec::InitVariables()
 {
-  fEvent               = NULL;
-  fThProcessEvent      = NULL;
-  fThCheckProcessEvent = NULL;
-  fPredScanProc        = NULL;
-  fDataDir             = "";
+  fEvent            = NULL;
+  fThSBProcess      = NULL;
+  fThSBCheckProcess = NULL;
+  fScanSet          = NULL;
+  fDataDir          = "";
 
   fProcBrick.brickId = fProcBrick.firstPlate = fProcBrick.lastPlate = 
     fProcBrick.ver = -1;
@@ -595,10 +728,11 @@ void EGraphRec::InitVariables()
 
   // TThread functions
 
-  fThProcessEvent      = new TThread("ThProcessEvent", 
-				     ThProcessEvent, (void*) this);
-  fThCheckProcessEvent = new TThread("ThCheckProcessEvent",
-				     ThCheckProcessEvent, (void*) this);
+  fThSBProcess      = new TThread("ThSBProcess", ThSBProcess, (void*) this);
+  fThSBCheckProcess = new TThread("ThSBCheckProcess",
+				  ThSBCheckProcess, (void*) this);
+
+  gEDBDEBUGLEVEL = 1;
 }
 
 //----------------------------------------------------------------------------

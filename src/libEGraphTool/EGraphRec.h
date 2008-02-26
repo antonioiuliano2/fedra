@@ -25,6 +25,7 @@ typedef struct {
   Int_t firstPlate;
   Int_t lastPlate;
   Int_t ver;
+  Int_t step;
 } ProcBrick_t;
 
 // processes IDs
@@ -46,6 +47,7 @@ class EGraphRec {
   void AddProcBrickFrame(TGVerticalFrame *workframe);
   void AddProcListFrame(TGVerticalFrame *workframe);
   void AddRecOptFrame(TGTab *worktab);
+  void AddScanBackFrame(TGTab *worktab);
   void AddCanvasFrame(TGTab *worktab);
   void AddInfoFrame(TGVerticalFrame *workframe);
   void ReconstructTracks();
@@ -57,16 +59,20 @@ class EGraphRec {
   void ZoomOut();
   void ClearEvent();
 
-  Bool_t        IsToProcLink()      const   {return fCheckProcLink->IsDown();}
-  Bool_t        IsToProcAlgn()      const   {return fCheckProcAlgn->IsDown();}
-  Int_t        *GetBrickToProc()            {return fBrickToProc;}
+  void ReadSBPred();
+  void StartScanBack();
+
+
+  Bool_t        IsSBToLink()        const   {return fCheckSBLink->IsDown();}
+  Bool_t        IsSBToAlgn()        const   {return fCheckSBAlgn->IsDown();}
+  ProcBrick_t   GetBrickToProc()    const   {return fBrickToProc;}
   ProcId_t      GetProcId()         const   {return fProcId;}
   EdbScanProc  *GetScanProc()       const   {return fSproc;}
+  EdbScanSet   *GetScanSet()        const   {return fScanSet;}
   EdbPattern   *GetPredTracks()     const   {return fPredTracks;}
   EdbPVRec     *GetFoundTracks()    const   {return fFoundTracks;}
-  EdbScanSet   *GetPredScanProc()   const   {return fPredScanProc;}
-  TThread      *GetThProcessEvent() const   {return fThProcessEvent;}
-  TGTextButton *GetTextProcEvent()          {return fTextProcEvent;}
+  TThread      *GetThSBProcess()    const   {return fThSBProcess;}
+  TGTextButton *GetButtonSBStart()          {return fButtonSBStart;}
 
   void SetDataDir(TString &dataDir)         {fDataDir = dataDir;}
   void SetProcId(ProcId_t &procId)          {fProcId = procId;}
@@ -74,19 +80,19 @@ class EGraphRec {
 
  private:
 
-  Int_t                fBrickToProc[4];
+  ProcBrick_t          fBrickToProc;
   TTree               *fEvtTree;
   TString              fDataDir;
   EdbView             *fEvent;
   EdbScanProc         *fSproc;
   EdbPattern          *fPredTracks;
   EdbPVRec            *fFoundTracks;
-  EdbScanSet          *fPredScanProc;
+  EdbScanSet          *fScanSet;
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;
-  TThread             *fThProcessEvent;
-  TThread             *fThCheckProcessEvent;
+  TThread             *fThSBProcess;
+  TThread             *fThSBCheckProcess;
 
   TGLayoutHints       *fLayout1;
   TGLayoutHints       *fLayout2;
@@ -94,7 +100,8 @@ class EGraphRec {
   TGLayoutHints       *fLayoutLeftExpY;
   TGLayoutHints       *fLayoutRightExpY;
   TGNumberEntry       *fRecOptEntry[6];
-  TGNumberEntry       *fProcBrickEntry[4];
+  TGNumberEntry       *fEntryProcBrickId;
+  TGNumberEntry       *fEntryProcVer;
   TGTextView          *fTextInfo;
   TGCheckButton       *fCheckProcScan;
   TGCheckButton       *fCheckProcLink;
@@ -102,6 +109,19 @@ class EGraphRec {
   TGCheckButton       *fCheckProcTrks;
   TGCheckButton       *fCheckProcVrtx;
   TGTextButton        *fTextProcEvent;
+
+  // scan back parameters
+
+  TGNumberEntry       *fEntrySBFirstPlate;
+  TGNumberEntry       *fEntrySBLastPlate;
+  TGNumberEntry       *fEntrySBStep;
+  TGTextButton        *fButtonSBStart;
+  TGCheckButton       *fCheckSBScan;
+  TGCheckButton       *fCheckSBLink;
+  TGCheckButton       *fCheckSBAlgn;
+  TGCheckButton       *fCheckSBTrks;
+  // TGCheckButton       *fCheckSBVrtx;
+
 
   TRootEmbeddedCanvas *fDisplayHits;
   TRootEmbeddedCanvas *fDisplayHitsGL;

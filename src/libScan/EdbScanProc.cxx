@@ -55,7 +55,7 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
   TString parfile;
   MakeAffName(parfile,id1,id2);
   piece.eFileNamePar = parfile;
-  if(piece.TakePiecePar() < 0) return false;
+  if (piece.TakePiecePar() < 0) return false;
   float       dz = piece.GetLayer(0)->Z();
   EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
   if(gEDBDEBUGLEVEL>2) a->Print();
@@ -88,8 +88,6 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
     return 1;
   }
 
-  // make couples in a given order
-
   sc.ePC.Delete();  // clear plate array
 
   EdbID *id1=0, *id2=0;
@@ -97,7 +95,7 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
   for (Int_t i = 1; i < sc.eIDS.GetEntries(); i++) {
     id1 = (EdbID *)(sc.eIDS.At(i-1));
     id2 = (EdbID *)(sc.eIDS.At(i));
-    AddAFFtoScanSet(sc, *id1, *id2);
+    if (!AddAFFtoScanSet(sc, *id1, *id2)) return -1;
   }
 
   return sc.AssembleBrickFromPC();
@@ -107,9 +105,9 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 int EdbScanProc::ReadFoundSegment(EdbID id,  EdbSegP &s, int flag)
 {
   EdbPattern pat;
-  ReadFound(pat, id, flag);
+  if (!ReadFound(pat, id, flag)) return 0;
   EdbSegP *ss = pat.FindSegment(s.ID());
-  if(!ss) return 0;
+  if (!ss) return 0;
   s.Copy(*ss);
   return 1;
 }
@@ -128,7 +126,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
 
   for(int i=0; i<n; i++) {
     EdbID *id    = (EdbID *)(sc.eIDS.At(i));
-    if(ReadFoundSegment(*id,*s)<=0) continue;
+    if (ReadFoundSegment(*id,*s) <= 0) continue;
     count++;
     plate = sc.GetPlate(id->ePlate);
     pat.Transform(    plate->GetAffineXY()   );
@@ -591,18 +589,19 @@ bool EdbScanProc::SetAFFDZ(int id1[4], int id2[4], float dz)
 //----------------------------------------------------------------
 int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull, int correct_ang )
 {
-  LogPrint(id[0],1,"LinkRunAll","%d.%d.%d.%d  %d prelinking + %d fullinking", id[0],id[1],id[2],id[3],npre,nfull);
-  int nc=0;
-  if(npre>0) {
-    MakeInPar(id,"prelinking");    // make input par file (x.x.x.x.in.par) for the current ID including the prelinking par file
-    for(int i=0; i<npre; i++) {
-      nc = LinkRun(id,0);          // will be done (pre)linking and updated x.x.x.x.par file
-      if(correct_ang)  CorrectAngles(id);
+  LogPrint(id[0],1,"LinkRunAll","%d.%d.%d.%d  %d prelinking + %d fullinking", 
+	   id[0],id[1],id[2],id[3],npre,nfull);
+  Int_t nc = 0;
+  if (npre > 0) {
+    MakeInPar(id, "prelinking");    // make input par file (x.x.x.x.in.par) for the current ID including the prelinking par file
+    for (Int_t i = 0; i < npre; i++) {
+      nc = LinkRun(id, 0);          // will be done (pre)linking and updated x.x.x.x.par file
+      if (correct_ang) CorrectAngles(id);
     }
   }
-  if(nfull>0) {
-    MakeInPar(id,"fulllinking");   // make input par file including the fulllinking par file
-    for(int i=0; i<nfull; i++)
+  if (nfull > 0) {
+    MakeInPar(id, "fulllinking");   // make input par file including the fulllinking par file
+    for (Int_t i = 0; i < nfull; i++)
       nc = LinkRun(id,1);         // will be done (full)linking and DO NOT updated x.x.x.x.par file
   }
   LogPrint(id[0],1,"LinkRunAll","%d couples stored", nc);
@@ -613,16 +612,17 @@ int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull, int correct_ang )
 bool EdbScanProc::ProjectFound(int id1[4],int id2[4])
 {
   //take xp.xp.xp.xp.found.root and produce yp.yp.yp.yp.pred.root using the AFF/xp_yp.par
-  LogPrint(id1[0],2,"ProjectFound","from %d.%d.%d.%d to %d.%d.%d.%d", id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3]);
+  LogPrint(id1[0],2,"ProjectFound","from %d.%d.%d.%d to %d.%d.%d.%d", 
+	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3]);
   EdbPattern pat;
   ReadFound(pat,id1);
   //pat.SetZ(0);
   //pat.SetSegmentsZ();
-  for(int i=0; i<pat.N(); i++) {
+  for (Int_t i = 0; i < pat.N(); i++) {
     pat.GetSegment(i)->SetErrors(50., 50., 0., .1, .1);  // area to be scanned for this prediction
   }
   ApplyAffZ(pat,id1,id2);
-  WritePred(pat,id2);
+  if (!WritePred(pat,id2)) return false;
   WritePatTXT(pat,id2,"man.pred.txt");
   return true;
 }
@@ -861,17 +861,23 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
 int EdbScanProc::AlignAll(int id1[4], int id2[4], int npre, int nfull, const char *opt)
 {
   int nal=0;
-  if(npre>0) {
+  if (npre > 0) {
     MakeInPar(id1,"prealignment");
     MakeInPar(id2,"prealignment");
-    for(int i=0; i<npre; i++)
-      nal=Align(id1,id2,"");	// find affine transformation from id1 to id2 and update par of id1
+    for (Int_t i = 0; i < npre; i++) {
+      // find affine transformation from id1 to id2 and update par of id1
+      nal = Align(id1, id2, "");	
+      if (nal == -1) return -1;
+    }
   }
-  if(nfull>0) {
+  if (nfull > 0) {
     MakeInPar(id1,"fullalignment");
     MakeInPar(id2,"fullalignment");
-    for(int i=0; i<nfull; i++)
-      nal=Align(id1,id2,opt);	// find affine transformation from id1 to id2 and update par of id1
+    for (Int_t i = 0; i < nfull; i++) {
+      // find affine transformation from id1 to id2 and update par of id1
+      nal = Align(id1, id2, opt);	
+      if (nal == -1) return -1;
+    }
   }
   LogPrint(id1[0],1,"AlignAll","%d.%d.%d.%d to %d.%d.%d.%d with %d pre and %d full.  The final pattern is: %d", 
 	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3],npre,nfull,nal);
@@ -891,7 +897,7 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
   if(!f) { LogPrint(id[0],1,"WritePatTXT","ERROR! can not open file %s", str.Data()); return 0; }
   for(int i=0; i<pred.N(); i++) {
     s = pred.GetSegment(i);
-    if(flag>-1) if(flag!=s->Flag())  continue;
+    if (flag > -1 && flag != s->Flag())  continue;
     if( strcmp(suffix,"man") >=0 )
       fprintf(f,"%8d %11.2f %11.2f %8.4f %8.4f %d\n",
 	      s->ID(),s->X(),s->Y(),s->TX(),s->TY(),s->Flag());
@@ -910,34 +916,43 @@ int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int
   // read ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
   //        man      - for manual check by sysal
   //                 - overvise complete format
+
   EdbSegP s;
-  int   ids=0,flag=0;
-  float x=0,y=0,tx=0,ty=0,sx=0,sy=0,stx=0,sty=0;
+  Int_t   ids = 0, flag = 0, ic = 0;
+  Float_t x=0,y=0,tx=0,ty=0,sx=0,sy=0,stx=0,sty=0;
   TString str;
-  MakeFileName(str,id,suffix);
-  FILE *f = fopen(str.Data(),"r");
-  if(!f) { LogPrint(id[0],1,"ReadPatTXT","ERROR! can not open file %s", str.Data()); return 0; }
-  char  buffer[256]="";
-  int ic=0;
-  for( int i=0; i<100000; i++ ) {
-    if (fgets (buffer, 256, f) == NULL) break;
-    if( strcmp(suffix,"man") >=0 ) {
-      if( sscanf(buffer,"%d %f %f %f %f %d", 
-		 &ids,&x,&y,&tx,&ty,&flag) !=6) break;
-      if(flag0>-1) if(flag0 != flag) continue;
+  char    buffer[256];
+
+  MakeFileName(str, id, suffix);
+  FILE *f = fopen(str.Data(), "r");
+
+  if (!f) {
+    LogPrint(id[0],1,"ReadPatTXT","ERROR! can not open file %s", str.Data()); 
+    return 0; 
+  }
+  
+  while (fgets (buffer, sizeof(buffer), f)) {
+    if (strcmp(suffix,"man") >= 0) {
+      if (sscanf(buffer,"%d %f %f %f %f %d", 
+		 &ids,&x,&y,&tx,&ty,&flag) !=6 ) break;
+      if (flag0 > -1 && flag0 != flag) continue;
       s.Set(ids,x,y,tx,ty,50.,flag);
       s.SetErrors(50,50,0.,0.6,0.6);
-    } else {
-      if( sscanf(buffer,"%d %f %f %f %f %f %f %f %f %d", 
-		 &ids,&x,&y,&tx,&ty,&sx,&sy,&stx,&sty,&flag) !=10) break;
-      if(flag0>-1) if(flag0 != flag) continue;
+    } 
+    else {
+      if (sscanf(buffer,"%d %f %f %f %f %f %f %f %f %d", 
+		 &ids,&x,&y,&tx,&ty,&sx,&sy,&stx,&sty,&flag) != 10) break;
+      if (flag0 > -1 && flag0 != flag) continue;
       s.Set(ids,x,y,tx,ty,50.,flag);
       s.SetErrors(sx,sy,0.,stx,sty);
     }
-    pred.AddSegment(s);		ic++;
+    pred.AddSegment(s);
+    ic++;
   }
+
   fclose(f);
-  LogPrint(id[0],2,"ReadPatTXT","%s with %d predictions with flag: %d", str.Data(),pred.N(),flag0);
+  LogPrint(id[0], 2, "ReadPatTXT","%s with %d predictions with flag: %d", 
+	   str.Data(), pred.N(), flag0);
   return ic;
 }
 
@@ -948,8 +963,22 @@ int EdbScanProc::WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, i
   int n = pred.N();
   TString str;
   MakeFileName(str,id,suffix);
-  TFile f(str.Data(),"RECREATE");
-  if(flag<0) pred.Write("pat");
+
+  // checking for the existing directory
+
+  if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+    if (gEDBDEBUGLEVEL > 0) {
+      cout << "ERROR! Directory " << gSystem->DirName(str) 
+	   << " does not exist.\n";
+      cout << "Please run scanning procedure for the plate number " << id[1] 
+	   << endl;
+    }
+    return 0;
+  }
+
+  TFile f(str.Data(), "RECREATE");
+
+  if (flag < 0) pred.Write("pat");
   else {
     EdbPattern pat;
     pat.SetID(pred.ID());
@@ -957,13 +986,14 @@ int EdbScanProc::WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, i
     pat.SetX(pred.X());
     pat.SetY(pred.Y());
     pat.SetZ(pred.Z());
-    for(int i=0; i<pred.N(); i++) 
-      if(pred.GetSegment(i)->Flag()==flag) pat.AddSegment(*(pred.GetSegment(i)));
+    for (Int_t i = 0; i < pred.N(); i++) 
+      if (pred.GetSegment(i)->Flag()==flag) pat.AddSegment(*(pred.GetSegment(i)));
     n = pat.N();
     pat.Write("pat");
   }
   f.Close();
-  LogPrint(id[0],2,"WritePatRoot","%s with %d predictions with flag: %d", str.Data(),n,flag);
+  LogPrint(id[0],2,"WritePatRoot","%s with %d predictions with flag: %d", 
+	   str.Data(),n,flag);
   return n;
 }
 
@@ -974,12 +1004,25 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
   int n=0;
   TString str;
   MakeFileName(str,id,suffix);
+
+  // checking for the existing directory
+
+  if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+    if (gEDBDEBUGLEVEL > 0) {
+      cout << "ERROR! Directory " << gSystem->DirName(str) 
+	   << " does not exist.\n";
+      cout << "Please run scanning procedure for the plate number " << id[1] 
+	   << endl;
+    }
+    return 0;
+  }
+
   TFile f(str.Data());
   EdbPattern *p=0;
   f.GetObject("pat",p);
-  if(!p) { f.Close(); return 0;}
+  if (!p) {f.Close(); return 0;}
   for(int i=0; i<p->N(); i++) {
-    if(flag>-1) if(flag != p->GetSegment(i)->Flag() ) continue;
+    if (flag > -1 && flag != p->GetSegment(i)->Flag()) continue;
     pred.AddSegment(*(p->GetSegment(i))); n++;
   }
   f.Close();
@@ -1081,7 +1124,7 @@ bool EdbScanProc::AddParLine(const char *file, const char *line)
 {
   // add string to par file
   FILE *f = fopen(file,"a+");
-  if(!f) return false;
+  if (!f) return false;
   fprintf(f,"%s\n",line);
   fclose(f);
   return true;
@@ -1633,7 +1676,7 @@ bool  EdbScanProc::GetAffZ(EdbAffine2D &aff, float &dz, int id1[4],int id2[4])
   MakeAffName(parfile,id1,id2);
   EdbDataPiece piece;
   piece.eFileNamePar = parfile;
-  piece.TakePiecePar();
+  if (piece.TakePiecePar() < 0) return false;
   EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
   if(!a) return false;
   aff.Set( a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2() );
@@ -1648,8 +1691,10 @@ bool  EdbScanProc::ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4])
   EdbAffine2D aff;
   float       dz;
   if( !GetAffZ( aff, dz, id1, id2) ) return false;
-  printf("ApplyAffZ: dz = %f\n",dz);
-  aff.Print();
+  if(gEDBDEBUGLEVEL>2) {
+    printf("ApplyAffZ: dz = %f\n",dz);
+    aff.Print();
+  }
   pat.ProjectTo(dz);
   pat.Transform(&aff);
   return true;
@@ -1678,7 +1723,7 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   InitPiece(piece1, id1);
   piece1.GetLayer(0)->SetZlayer(-1*piece1.GetLayer(0)->Z(), 0,0);
   pat = new EdbPattern(0.,0., piece1.GetLayer(0)->Z(),100 );
-  ReadPiece(piece1, *pat);
+  if (!ReadPiece(piece1, *pat)) {delete pat; return -1;}
   pat->SetPID(0);
   pat->SetSegmentsZ();
   ali.AddPattern(pat);
@@ -1686,7 +1731,7 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   InitPiece(piece2, id2);
   piece2.GetLayer(0)->SetZlayer(0, 0,0);
   pat = new EdbPattern(0.,0., piece2.GetLayer(0)->Z(),100 );
-  ReadPiece(piece2, *pat);
+  if (!ReadPiece(piece2, *pat)) {delete pat; return -1;}
   pat->SetPID(1);
   pat->SetSegmentsZ();
   ali.AddPattern(pat);
@@ -1701,7 +1746,7 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   ali.SetCouplesAll();
   ali.SetChi2Max(cond->Chi2PMax());
   ali.SetOffsetsMax(cond->OffX(),cond->OffY());
-  
+
   if( strstr( option,"-a")> 0 && strstr( option,"-a2")==0 )
     ali.Align(0);                                              //GS: 25-07-07
   else
@@ -1720,7 +1765,9 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   MakeFileName(cpfile,id1,"al.cp.root");
   EdbDataProc proc;
   proc.LinkTracksWithFlag( &ali, 10., 0.05, 2, 3, 0 );
+
   TTree *cptree=EdbDataPiece::InitCouplesTree(cpfile.Data(),"RECREATE");
+
   proc.FillCouplesTree(cptree, &ali,0);
   proc.CloseCouplesTree(cptree);
   
