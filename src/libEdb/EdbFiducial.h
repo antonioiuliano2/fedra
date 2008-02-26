@@ -27,7 +27,7 @@ class EdbMark : public TObject, public EdbPoint2D {
 
  public: 
   EdbMark(){}
-  EdbMark(int id, float x, float y): eID(id), eX(x), eY(y) {}
+  EdbMark(int id, float x, float y, int flag=0): eID(id), eX(x), eY(y), eFlag(flag) {}
   virtual ~EdbMark(){}
 
   //members access functions
@@ -66,7 +66,7 @@ class EdbMarksBox : public TObject, public EdbPointsBox2D {
 
 
   //members access functions
-  void          AddMark(int id, float x, float y);
+  void          AddMark(int id, float x, float y, int flag=0);
   Int_t         GetN()         const;
   EdbMark      *GetMark(int i) const;
   TClonesArray *GetMarks()     const { return eMarks; }
@@ -77,7 +77,7 @@ class EdbMarksBox : public TObject, public EdbPointsBox2D {
 
   void  Draw(int style=23, int   col=4, float size=1., float tsiz=.03 );
 
-  // other finctions
+  // other functions
   void       Print( Option_t *opt="") const;
 
   ClassDef(EdbMarksBox,2)  // collection of fiducial marks
@@ -116,7 +116,9 @@ class EdbMarksSet : public TObject {
   Int_t           ReadDB( char *file );
   Int_t           ReadDollar( char *file, EdbMarksBox *mbox );
 
-  Int_t           ReadMap( char *file );
+  Int_t           ChangeMapStringSpacer( TString &str, char spacer);
+  Int_t           ReadMap( char *file, char spacer='_');
+  Int_t           WriteMap( char *file, char spacer='_');
 
   void            DrawA( Option_t *opt="") const;
   void            DrawS( Option_t *opt="") const;

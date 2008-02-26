@@ -382,25 +382,43 @@ Int_t  EdbMarksSet::ReadDollar( char *file, EdbMarksBox *mbox )
 }
 
 //______________________________________________________________________________
-Int_t  EdbMarksSet::ReadMap( char *file )
-{ 
-  // Read map file and add informations to eAbsolute
+Int_t  EdbMarksSet::ChangeMapStringSpacer( TString &str, char spacer)
+{
+  // Changes the spacer inside the map string with a new character
+  char oldspacer = str[7];
+  for (int is=0;is<str.Length();is++) 
+    if(str[is]==oldspacer) str[is]=spacer;
+
+  return(1);
+}
+
+//______________________________________________________________________________
+Int_t  EdbMarksSet::ReadMap( char *file, char spacer)
+{
+  // Reads map file and adds informations to eAbsolute
   Int_t nmarks=0;
   Int_t mark;
   Float_t x,y;
 
   FILE *fp = fopen( file,"r");
 
+  TString str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+  TString str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%*d";
+
+  ChangeMapStringSpacer(str_header,spacer);
+  ChangeMapStringSpacer(str_mark,spacer);
+
   if(!fp)
     { Log(1,"EdbMarksSet::ReadMap","ERROR: can not open file %s\n", file); return 0; }
 
-  if ( fscanf(fp,"mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f",
-	      &eBrick,&nmarks,&eXmin,&eXmax,&eYmin,&eYmax) != 6 )
+  if ( fscanf(fp, str_header.Data(), &eBrick,&nmarks,&eXmin,&eYmin,&eXmax,&eYmax) != 6 )
     { Log(1,"EdbMarksSet::ReadMap","ERROR: file %s is empty or wrong format\n", file); return 0; }
+
+  GetAbsolute()->GetMarks()->Clear("C");
 
   for (int imarks=0;imarks<nmarks;imarks++)
     {
-      if (fscanf(fp,";_%d_%f_%f_%*f_%*f_%*d_%*d_%*d",&mark,&x,&y) != 3)
+      if (fscanf(fp, str_mark.Data(), &mark,&x,&y) != 3)
 	{ Log(1,"EdbMarksSet::ReadMap","ERROR: file %s is empty or wrong format\n", file); return 0; }
       GetAbsolute()->AddMark(mark,x,y);
     }
@@ -411,13 +429,48 @@ Int_t  EdbMarksSet::ReadMap( char *file )
   return nmarks;
 }
 
+//______________________________________________________________________________
+Int_t  EdbMarksSet::WriteMap( char *file, char spacer)
+{
+  // Create a map string starting from the informations stored in this class
+  // and in the EdbMarksBox object eAbsolute
+
+  FILE *fp = fopen( file,"w");
+
+  TString str_header = "mapext:_%ld_1_0_0;_%d_%f_%f_%f_%f";
+  TString str_mark = ";_%d_%f_%f_%f_%f_1_1_1";
+
+  ChangeMapStringSpacer(str_header,spacer);
+  ChangeMapStringSpacer(str_mark,spacer);
+
+  if(!fp)
+    { Log(1,"EdbMarksSet::ReadMap","ERROR: can not open file %s\n", file); return 0; }
+  
+  int nmarks = GetAbsolute()->GetN();
+  
+  fprintf(fp, str_header.Data(), eBrick,nmarks,eXmin,eYmin,eXmax,eYmax);
+  
+  for (int imarks=0;imarks<nmarks;imarks++)
+    {
+      EdbMark *mark = GetAbsolute()->GetMark(imarks);
+      fprintf(fp, str_mark.Data(), mark->GetID(),mark->GetX(),mark->GetY(),mark->GetX(),mark->GetY());
+    }
+  
+  fprintf(fp,"\n");
+  fclose(fp);
+
+  Log(3,"EdbMarksSet::WriteMap","%d marks are written as string map in the file %s\n", nmarks, file);
+  return nmarks;
+}
 
 //______________________________________________________________________________
 void EdbMarksSet::Print(Option_t *opt) const
 {
   printf("EdbMarksSet: eBrick = %ld\n", eBrick);
-  printf("EdbMarksSet: eXmin, eXmax, eYmin, eYmax = %f %f %f %f\n", eXmin, eXmax, eYmin, eYmax);
+  printf("EdbMarksSet: eXmin, eYmin, eXmax, eYmax = %f %f %f %f\n", eXmin, eYmin, eXmax, eYmax);
+  printf("EdbMarksSet: Absolute mark set:\n");
   if(eAbsolute)      eAbsolute->Print();
+  printf("EdbMarksSet: Stage mark set:\n");
   if(eStage)         eStage->Print();
 }
 
@@ -534,7 +587,7 @@ EdbMark      *EdbMarksBox::GetMark(int i) const
 }
 
 //______________________________________________________________________________
-void EdbMarksBox::AddMark(int id, float x, float y)
+void EdbMarksBox::AddMark(int id, float x, float y, int flag)
 {
-  new((*eMarks)[GetN()])  EdbMark( id,x,y );
+  new((*eMarks)[GetN()])  EdbMark( id,x,y,flag );
 }
