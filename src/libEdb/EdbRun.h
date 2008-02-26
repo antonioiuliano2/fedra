@@ -118,8 +118,5 @@ public:
 
   ClassDef(EdbRun,2)  // main run class contained all objects
 };
-
-R__EXTERN EdbRun  *gRUN;
-
 #endif /* ROOT_EdbRun */
 

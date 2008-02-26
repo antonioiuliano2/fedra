@@ -44,7 +44,6 @@
 #include "EdbLog.h"
 
 ClassImp(EdbRun)
-EdbRun      *gRUN=0;         // global pointer to the current Run
 
 //______________________________________________________________________________
 EdbRun::EdbRun()
@@ -95,12 +94,12 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
 //______________________________________________________________________________
 EdbRun::~EdbRun()
 {
-  if(eTree)        delete eTree;
-  if(eFile)        delete eFile;
-  if(eHeader)      delete eHeader;
-  if(ePredictions) delete ePredictions;
-  if(eMarks)       delete eMarks;
-  if(eView)        delete eView;
+  //SafeDelete(eTree);
+  SafeDelete(eFile); 
+  SafeDelete(eHeader);
+  SafeDelete(ePredictions);
+  SafeDelete(eMarks);
+  SafeDelete(eView);
 }
 
 //______________________________________________________________________________
@@ -141,7 +140,6 @@ void EdbRun::Init( )
   ePath        = "";
   ePredictions = 0;
   eMarks       = 0;
-  gRUN         = this;
 }
 
 //______________________________________________________________________________
@@ -172,13 +170,13 @@ void EdbRun::Open( const char *fname )
 
   SetView();
 
-  if(eHeader) delete eHeader;
+  SafeDelete(eHeader);
   eHeader = (EdbRunHeader*)eFile->Get("RunHeader");
 
-  if(ePredictions) delete ePredictions;
+  SafeDelete(ePredictions);
   ePredictions = (EdbPredictionsBox*)eFile->Get("Predictions");
 
-  if(eMarks) delete eMarks;
+  SafeDelete(eMarks);
   eMarks = (EdbMarksSet*)eFile->Get("Marks");
 
   if(gEDBDEBUGLEVEL>2) Print();
@@ -193,13 +191,13 @@ void EdbRun::OpenUpdate( const char *fname )
   eTree = (TTree*)eFile->Get("Views");
   SetView();
 
-  if(eHeader) delete eHeader;
+  SafeDelete(eHeader);
   eHeader = (EdbRunHeader*)eFile->Get("RunHeader");
 
-  if(ePredictions) delete ePredictions;
+  SafeDelete(ePredictions);
   ePredictions = (EdbPredictionsBox*)eFile->Get("Predictions");
 
-  if(eMarks) delete eMarks;
+  SafeDelete(eMarks);
   eMarks = (EdbMarksSet*)eFile->Get("Marks");
 
   if(gEDBDEBUGLEVEL>2) Print();
@@ -240,7 +238,7 @@ void EdbRun::SetView( EdbView *view )
   if(!view) { Log(1,"EdbRun::SetView","ERROR: EdbRun::SetView: *view=0\n");    return; }
 
   if(eView != view) {
-    if(eView) { eView->Clear(); delete eView; }
+    if(eView) { eView->Clear(); SafeDelete(eView); }
     eView = view;
   }
 
@@ -503,7 +501,7 @@ void EdbRun::TransformDC()
       ePredictions->Transform(aff);
       printf("transfrom predictions according to fiducial marks:\n");
       aff->Print();
-      delete aff;
+      SafeDelete(aff);
     }
   }
 }

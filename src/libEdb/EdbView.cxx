@@ -417,8 +417,6 @@ void EdbView::Draw(Option_t *option)
   //float xmin=GetXview()-500, xmax=xmin+1000.;
   //float ymin=GetYview()-500, ymax=ymin+1000.;
 
-  //float xmin=Xmin(), xmax=Xmax();
-  //float ymin=Ymin(), ymax=Ymax();
   float zmin = TMath::Min( GetZ1(), GetZ4() );
   float zmax = TMath::Max( GetZ1(), GetZ4() );
 
@@ -482,22 +480,6 @@ void EdbView::Draw(Option_t *option)
     }
   }
 
-}
-
-//______________________________________________________________________________
-float EdbView::Xmax() const
-{
-  // View coordinates are in pixels:
-  if(gRUN)     return  Xmin() + gRUN->GetHeader()->CameraWidth();
-  else         return  512;
-}
-
-//______________________________________________________________________________
-float EdbView::Ymax() const
-{
-  // View coordinates are in pixels:
-  if(gRUN)     return  Ymin() + gRUN->GetHeader()->CameraHeight();
-  else         return  512;
 }
 
 //______________________________________________________________________________

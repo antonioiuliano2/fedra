@@ -15,10 +15,8 @@
 #include "TPolyMarker3D.h"
 #include "TArrayF.h"
 
-
 #include "EdbAffine.h"
 #include "EdbCluster.h"
-//#include "EdbSegment.h"
 
 class EdbSegment;
 class EdbTrack;
@@ -244,8 +242,6 @@ public:
 
   float Xmin() const { return 0; }  // View coordinates are in pixels
   float Ymin() const { return 0; }  //  starting from 0
-  float Xmax() const;
-  float Ymax() const;
   float Zmin() const {return TMath::Min( GetZ1(), GetZ4() );}
   float Zmax() const {return TMath::Max( GetZ1(), GetZ4() );}
 

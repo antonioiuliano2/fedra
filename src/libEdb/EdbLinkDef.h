@@ -4,8 +4,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ global gRUN;
-
 #pragma link C++ function Log0;
 #pragma link C++ function Log;
 #pragma link C++ global gEDBDEBUGLEVEL;
