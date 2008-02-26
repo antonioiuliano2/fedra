@@ -1796,7 +1796,7 @@ int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename)
 {
   // read marks file and copy its informations into an EdbMarksSet object
   char str[256];
-  sprintf(str,"%s/b%6.6d/b%6.6d%s",
+  sprintf(str,"%s/b%6.6d/b%6.6d.%s",
 	  eProcDirClient.Data(),brick,brick,filename);
 
   ms.ReadMap(str);
