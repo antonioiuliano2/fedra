@@ -1792,14 +1792,31 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
 
 
 //______________________________________________________________________________
-int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename)
+int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer)
 {
-  // read marks file and copy its informations into an EdbMarksSet object
+  // Reads map file and copy its informations into an EdbMarksSet object
+  // With "spacer" you can choose the character which is assumed to be
+  // between the words in the map file. Default is '_'
   char str[256];
   sprintf(str,"%s/b%6.6d/b%6.6d.%s",
 	  eProcDirClient.Data(),brick,brick,filename);
 
-  ms.ReadMap(str);
+  ms.ReadMap(str,spacer);
+
+  return(1);
+}
+
+//______________________________________________________________________________
+int EdbScanProc::WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer)
+{
+  // Reads an EdbMarksSet object and uses its content to write a map file
+  // With "spacer" you can choose the character that you want to insert
+  // between the words in the map file. Default is '_'
+  char str[256];
+  sprintf(str,"%s/b%6.6d/b%6.6d.%s",
+	  eProcDirClient.Data(),brick,brick,filename);
+
+  ms.WriteMap(str,spacer);
 
   return(1);
 }
