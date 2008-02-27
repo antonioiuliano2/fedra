@@ -918,22 +918,22 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
   return pred.N();
 }
 
-int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag0)
+int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag)
 {
   TString str;
   MakeFileName(str,id,suffix);
 
-  ReadPatTXT(str.Data(),pred,flag0);
+  ReadPatTXT(str.Data(),pred,flag);
 
   LogPrint(id[0], 2, "ReadPatTXT","%s with %d predictions with flag: %d", 
-	   str.Data(), pred.N(), flag0);
+	   str.Data(), pred.N(), flag);
 
   return(pred.N());
 }
 
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
+int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag)
 {
   // read ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
   //        man      - for manual check by sysal
@@ -966,7 +966,7 @@ int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
   while (fgets (buffer, sizeof(buffer), f)) {
     if (sscanf(buffer,"%d %f %f %f %f %d", 
 	       &ids,&x,&y,&tx,&ty,&flag) !=ncolumns ) break;
-    if (flag0 > -1 && flag0 != flag) continue;
+    if (flag > -1 && flag != flag) continue;
     s.Set(ids,x,y,tx,ty,50.,flag);
     if (ncolumns==10) s.SetErrors(sx,sy,0.,stx,sty);
     else s.SetErrors(50,50,0.,0.6,0.6);
