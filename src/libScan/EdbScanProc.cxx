@@ -933,7 +933,7 @@ int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int
 
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag)
+int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
 {
   // read ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
   //        man      - for manual check by sysal
@@ -966,7 +966,7 @@ int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag)
   while (fgets (buffer, sizeof(buffer), f)) {
     if (sscanf(buffer,"%d %f %f %f %f %d", 
 	       &ids,&x,&y,&tx,&ty,&flag) !=ncolumns ) break;
-    if (flag > -1 && flag != flag) continue;
+    if (flag0 > -1 && flag0 != flag) continue;
     s.Set(ids,x,y,tx,ty,50.,flag);
     if (ncolumns==10) s.SetErrors(sx,sy,0.,stx,sty);
     else s.SetErrors(50,50,0.,0.6,0.6);
