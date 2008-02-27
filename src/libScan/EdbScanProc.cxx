@@ -918,8 +918,22 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
   return pred.N();
 }
 
-//----------------------------------------------------------------
 int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag0)
+{
+  TString str;
+  MakeFileName(str,id,suffix);
+
+  ReadPatTXT(str.Data(),pred,flag0);
+
+  LogPrint(id[0], 2, "ReadPatTXT","%s with %d predictions with flag: %d", 
+	   str.Data(), pred.N(), flag0);
+
+  return(pred.N());
+}
+
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
 {
   // read ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
   //        man      - for manual check by sysal
@@ -928,39 +942,40 @@ int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int
   EdbSegP s;
   Int_t   ids = 0, flag = 0, ic = 0;
   Float_t x=0,y=0,tx=0,ty=0,sx=0,sy=0,stx=0,sty=0;
-  TString str;
+
   char    buffer[256];
 
-  MakeFileName(str, id, suffix);
-  FILE *f = fopen(str.Data(), "r");
+  FILE *f = fopen(file, "r");
 
   if (!f) {
-    LogPrint(id[0],1,"ReadPatTXT","ERROR! can not open file %s", str.Data()); 
+    Log(1,"ReadPatTXT","ERROR! can not open file %s", file); 
     return 0; 
   }
   
+  fgets (buffer, sizeof(buffer), f);
+  int ncolumns = sscanf(buffer,"%d %f %f %f %f %f %f %f %f %d", 
+			&ids,&x,&y,&tx,&ty,&sx,&sy,&stx,&sty,&flag);
+
+  if (ncolumns!=6 && ncolumns!=10) {
+    Log(1,"ReadPatTXT","ERROR! cannot recognize the format of file %s", file); 
+    return 0; 
+  }
+
+  rewind(f);
+
   while (fgets (buffer, sizeof(buffer), f)) {
-    if (strcmp(suffix,"man") >= 0) {
-      if (sscanf(buffer,"%d %f %f %f %f %d", 
-		 &ids,&x,&y,&tx,&ty,&flag) !=6 ) break;
-      if (flag0 > -1 && flag0 != flag) continue;
-      s.Set(ids,x,y,tx,ty,50.,flag);
-      s.SetErrors(50,50,0.,0.6,0.6);
-    } 
-    else {
-      if (sscanf(buffer,"%d %f %f %f %f %f %f %f %f %d", 
-		 &ids,&x,&y,&tx,&ty,&sx,&sy,&stx,&sty,&flag) != 10) break;
-      if (flag0 > -1 && flag0 != flag) continue;
-      s.Set(ids,x,y,tx,ty,50.,flag);
-      s.SetErrors(sx,sy,0.,stx,sty);
-    }
+    if (sscanf(buffer,"%d %f %f %f %f %d", 
+	       &ids,&x,&y,&tx,&ty,&flag) !=ncolumns ) break;
+    if (flag0 > -1 && flag0 != flag) continue;
+    s.Set(ids,x,y,tx,ty,50.,flag);
+    if (ncolumns==10) s.SetErrors(sx,sy,0.,stx,sty);
+    else s.SetErrors(50,50,0.,0.6,0.6);
     pred.AddSegment(s);
     ic++;
   }
 
   fclose(f);
-  LogPrint(id[0], 2, "ReadPatTXT","%s with %d predictions with flag: %d", 
-	   str.Data(), pred.N(), flag0);
+
   return ic;
 }
 

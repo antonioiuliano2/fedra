@@ -35,6 +35,7 @@ public:
   void    CheckFiles( EdbScanSet &sc, const char *suffix );
 
   int     ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
+  int     ReadPatTXT(const char *file, EdbPattern &pred, int flag0);
   int     WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
