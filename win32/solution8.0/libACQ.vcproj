@@ -24,9 +24,30 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libACQ&#x0A;NMAKE"
-				ReBuildCommandLine="cd ..\..\src\libACQ&#x0A;NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libACQ&#x0A;NMAKE clean"
+				BuildCommandLine="cd ..\..\src\libACQ&#x0D;&#x0A;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\libACQ&#x0A;&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libACQ&#x0A;&#x0D;&#x0A;NMAKE clean"
+				Output="..\..\lib\libACQ.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libACQ&#x0D;&#x0A;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libACQ&#x0A;&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libACQ&#x0A;&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; clean"
 				Output="..\..\lib\libACQ.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""

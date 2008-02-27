@@ -38,6 +38,29 @@
 				CompileAsManaged=""
 			/>
 		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE /a CFG=&quot;Debug&quot;"
+				CleanCommandLine="cd ..\..\src\appl\recset&#x0D;&#x0A;NMAKE clean CFG=&quot;Debug&quot;"
+				Output="..\..\bin\recset.exe"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>

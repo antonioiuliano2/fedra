@@ -37,6 +37,29 @@
 				CompileAsManaged=""
 			/>
 		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; clean"
+				Output="..\..\lib\libvt++.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
