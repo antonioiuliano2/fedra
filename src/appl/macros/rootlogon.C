@@ -15,11 +15,11 @@ void rootlogon()
   loadlib( "libGui"  , "TGNumberEntry" );         // required only in batch mode
   loadlib( "libEdd"  , "EdbDisplay" );            // optional
   loadlib( "libEMC"  , "EdbPVGen" );              // optional
-  loadlibEOracle();                               // optional
   if(gSystem->Load("libDataConversion"))          // optional
     printf("libDataConversion do NOT loaded!\n"); 
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
+  loadlibEOracle();                               // optional
 
   gStyle->SetPalette(1);
 }
