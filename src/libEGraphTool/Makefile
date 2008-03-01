@@ -5,7 +5,7 @@ include ../config/RootDef.mk
 
 NAME          = EGraphTool
 
-headers       = EGraphTool.h EGraphRec.h EGraphHits.h
+headers       = EGraphTool.h EGraphRec.h EGraphRecProc.h EGraphHits.h
 
 EXTRALIBS     = -lThread -lGui
 

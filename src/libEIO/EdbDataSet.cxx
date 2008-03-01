@@ -469,7 +469,7 @@ int EdbDataPiece::UpdateShrPar(int layer)
   if (fp==NULL)   {
     printf("ERROR open file: %s \n", file);
     return -1;
-  }else
+  }else if (gEDBDEBUGLEVEL > 1)
     printf( "\nUpdate parameters file with SHRINK %d: %s\n\n", layer, file );
 
   char str[64];
@@ -486,10 +486,11 @@ int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
   const char *file=eFileNamePar.Data();
 
   FILE *fp=fopen(file,"a");
-  if (fp==NULL)   {
+  if (!fp) {
     printf("ERROR open file: %s \n", file);
     return -1;
-  }else
+  }
+  else if (gEDBDEBUGLEVEL > 1)
     printf( "\nUpdate parameters file with AFFXY: %s\n\n", file );
 
   char str[124];
@@ -507,11 +508,11 @@ int EdbDataPiece::UpdateZPar(int layer, float z)
   const char *file=eFileNamePar.Data();
 
   FILE *fp=fopen(file,"a");
-  if (fp==NULL)   {
+  if (!fp) {
     printf("ERROR open file: %s \n", file);
     return -1;
-  }else
-    printf( "\nUpdate parameters file with ZLAYER: %s\n\n", file );
+  }
+  else printf( "\nUpdate parameters file with ZLAYER: %s\n\n", file );
 
   char str[124];
   sprintf(str,"ZLAYER \t %d \t %f %f %f\n",layer,
@@ -532,10 +533,11 @@ int EdbDataPiece::UpdateAffTPar(int layer, EdbAffine2D &aff)
   const char *file=eFileNamePar.Data();
 
   FILE *fp=fopen(file,"a");
-  if (fp==NULL)   {
+  if (!fp) {
     printf("ERROR open file: %s \n", file);
     return -1;
-  }else
+  }
+  else if (gEDBDEBUGLEVEL > 1) 
     printf( "\nUpdate parameters file with AFFTXTY: %s\n\n", file );
 
   char str[124];
@@ -553,11 +555,11 @@ void EdbDataPiece::WriteCuts()
   TString file = eFileNamePar+".C";
 
   FILE *fp=fopen(file,"w");
-  if (fp==NULL)   {
+  if (!fp) {
     printf("ERROR open file: %s \n", file.Data());
     return;
-  }else
-    printf( "\nPut Cuts to file: %s\n\n", file.Data() );
+  }
+  else printf( "\nPut Cuts to file: %s\n\n", file.Data() );
 
   fprintf(fp,"{\n");
 
@@ -900,7 +902,7 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   TArrayF y2(nentr);
 
   int nseg = 0;
-  printf("nentr = %d\n",nentr);
+  if (gEDBDEBUGLEVEL > 1) printf("nentr = %d\n",nentr);
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
 
@@ -1026,7 +1028,7 @@ int EdbDataPiece::UpdateSegmentCut(EdbSegmentCut cut)
   const char *file=eFileNamePar.Data();
 
   FILE *fp=fopen(file,"a");
-  if (fp==NULL)   {
+  if (!fp) {
     printf("ERROR open file: %s \n", file);
     return -1;
   }
@@ -1166,8 +1168,9 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
     }
   }
 
-  printf("Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
-	 aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
+  if (gEDBDEBUGLEVEL > 1)
+    printf("Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
+	   aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
   pat->SetSegmentsZ();
   ali->AddPattern(pat);
   return nseg;
@@ -1307,7 +1310,8 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
   }
 
   int nentr = eRun->GetEntries();
-  printf("Make views coordinate map,  nentr = %d\n",nentr);
+  if (gEDBDEBUGLEVEL > 1) 
+    printf("Make views coordinate map,  nentr = %d\n",nentr);
 
   TIndexCell upc;
   TIndexCell downc;
@@ -1535,11 +1539,11 @@ int EdbDataSet::GetRunList(const char *file)
   int             nrun=0;
 
   FILE *fp=fopen(file,"r");
-  if (fp==NULL)   {
+  if (!fp)   {
     printf("ERROR open file: %s \n", file);
     return(-1);
-  }else
-    printf( "\nRead runs list from file: %s\n\n", file );
+  }
+  else printf( "\nRead runs list from file: %s\n\n", file );
 
   EdbDataPiece *piece=0;
   EdbDataPiece *pp=0;
@@ -1677,9 +1681,10 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
     nareas = piece.MakeLinkListCoord(irun);
     //nareas = piece.MakeLinkListArea(irun);
-    printf("%d areas mapped\n",nareas);
-    if(nareas<=0) continue;
-    for(int i=0; i<nareas; i++ ) {
+    if (gEDBDEBUGLEVEL > 1) printf("%d areas mapped\n",nareas);
+    if (nareas <= 0) continue;
+
+    for (Int_t i = 0; i < nareas; i++ ) {
 
       ali      = new EdbPVRec();
       ali->SetScanCond( cond );
@@ -1691,6 +1696,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
 
       ali->SetCouplesAll();
       ali->SetChi2Max(cond->Chi2PMax());
+
       for(int ic=0; ic<ali->Ncouples(); ic++) 
 	ali->GetCouple(ic)->SetCHI2mode(cond->Chi2Mode());
 
@@ -1716,7 +1722,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
       shrtot1 = shrtot1/nshrtot;
       shrtot2 = shrtot2/nshrtot;
       if(nshrtot<20) printf("WARNING: unreliable shrinkage correction - low statistics\n");
-      printf("Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
+      if (gEDBDEBUGLEVEL > 1) 
+	printf("Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
       piece.CorrectShrinkage( 1, (float)shrtot1 );
       piece.CorrectShrinkage( 2, (float)shrtot2 );
       if(!NoUpdate())   piece.UpdateShrPar(1);
@@ -1733,7 +1740,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 {
   tree->GetDirectory()->cd();
 
-  printf("fill couples tree...\n");
+  if (gEDBDEBUGLEVEL > 1) printf("fill couples tree...\n");
 
   EdbPatCouple *patc=0;
   float xv = al->X();

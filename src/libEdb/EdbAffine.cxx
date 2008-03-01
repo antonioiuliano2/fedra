@@ -12,6 +12,7 @@
 #include <TClass.h>
 #include "EdbAffine.h"
 #include "EdbVirtual.h"
+#include "EdbLog.h"
 
 ClassImp(EdbAffine2D)
 ClassImp(EdbAffine3D)
@@ -207,7 +208,9 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     q = sy1-c*sx0-d*sy0;
   }
 
-  printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", n, a,b,c,d,p,q);
+  if (gEDBDEBUGLEVEL > 1) 
+    printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", 
+	   n, a,b,c,d,p,q);
 
   Set(a,b,c,d,p,q);
 
@@ -426,75 +429,73 @@ Int_t EdbAffine2D::CalculateTurn(int n, float *x0, float *y0, float *x1, float *
   Int_t i;
 		
 
-	if (n==0){
-		return 0;
-	}
-	else if(n==1){
-		a = 1.0;
-		b = 0.0;
-		c = 0.0;
-		d = 1.0;
-		p = x1[0] - x0[0];
-		q = y1[0] - y0[0];
-	}
-	else {
+  if (n==0){
+    return 0;
+  }
+  else if(n==1){
+    a = 1.0;
+    b = 0.0;
+    c = 0.0;
+    d = 1.0;
+    p = x1[0] - x0[0];
+    q = y1[0] - y0[0];
+  }
+  else {
+    for (i=0;i<n;i++) {
+      X += x0[i];
+      Y += y0[i];
+      X_ += x1[i];
+      Y_ += y1[i];
+    }
+    X /= (Double_t)n;
+    Y /= (Double_t)n;
+    X_ /= (Double_t)n;
+    Y_ /= (Double_t)n;
+
+    for (i=0;i<n;i++) {
+      f += x1[i] * (x0[i] - X) + y1[i] * (y0[i] - Y);
+      d += x1[i] * (Y - y0[i]) + y1[i] * (x0[i] - X);
+      e += x1[i] * Y_ - y1[i] * X_;
+    }
 		
-		for (i=0;i<n;i++) {
-			X += x0[i];
-			Y += y0[i];
-			X_ += x1[i];
-			Y_ += y1[i];
-		}
-		X /= (Double_t)n;
-		Y /= (Double_t)n;
-		X_ /= (Double_t)n;
-		Y_ /= (Double_t)n;
+    teta1 = TMath::ASin((e*f-d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
+    teta2 = TMath::Pi() - TMath::ASin((e*f+d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
 
-		for (i=0;i<n;i++) {
-			f += x1[i] * (x0[i] - X) + y1[i] * (y0[i] - Y);
-			d += x1[i] * (Y - y0[i]) + y1[i] * (x0[i] - X);
-			e += x1[i] * Y_ - y1[i] * X_;
-		}
-		
-		teta1 = TMath::ASin((e*f-d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
-		teta2 = TMath::Pi() - TMath::ASin((e*f+d*TMath::Sqrt(sqr(f)+sqr(d)-sqr(e)))/(sqr(f)+sqr(d)));
+    a1 = X + Y_*TMath::Sin(teta1) - X_*TMath::Cos(teta1);
+    b1 = Y - Y_*TMath::Cos(teta1) - X_*TMath::Sin(teta1);
 
-		a1 = X + Y_*TMath::Sin(teta1) - X_*TMath::Cos(teta1);
-		b1 = Y - Y_*TMath::Cos(teta1) - X_*TMath::Sin(teta1);
+    a2 = X + Y_*TMath::Sin(teta2) - X_*TMath::Cos(teta2);
+    b2 = Y - Y_*TMath::Cos(teta2) - X_*TMath::Sin(teta2);
 
-		a2 = X + Y_*TMath::Sin(teta2) - X_*TMath::Cos(teta2);
-		b2 = Y - Y_*TMath::Cos(teta2) - X_*TMath::Sin(teta2);
+    for (i=0;i<n;i++) {
+      F1 += sqr(x0[i] - x1[i]*TMath::Cos(teta1) + y1[i]*TMath::Sin(teta1) - a1)	\
+	+ sqr(y0[i] - x1[i]*TMath::Sin(teta1) - y1[i]*TMath::Cos(teta1) - b1);
 
-		for (i=0;i<n;i++) {
-			F1 += sqr(x0[i] - x1[i]*TMath::Cos(teta1) + y1[i]*TMath::Sin(teta1) - a1)	\
-				+ sqr(y0[i] - x1[i]*TMath::Sin(teta1) - y1[i]*TMath::Cos(teta1) - b1);
+      F2 += sqr(x0[i] - x1[i]*TMath::Cos(teta2) + y1[i]*TMath::Sin(teta2) - a2)	\
+	+ sqr(y0[i] - x1[i]*TMath::Sin(teta2) - y1[i]*TMath::Cos(teta2) - b2);
+    }
 
-			F2 += sqr(x0[i] - x1[i]*TMath::Cos(teta2) + y1[i]*TMath::Sin(teta2) - a2)	\
-				+ sqr(y0[i] - x1[i]*TMath::Sin(teta2) - y1[i]*TMath::Cos(teta2) - b2);
-		}
-
-		if (F1<F2) {
-			a = TMath::Cos(teta1);
-			b = TMath::Sin(teta1);
-			c = -TMath::Sin(teta1);
-			d = TMath::Cos(teta1);
-			p = -a1*TMath::Cos(teta1) - b1*TMath::Sin(teta1);
-			q = a1*TMath::Sin(teta1) - b1*TMath::Cos(teta1);
-		}
-		else {
-			a = TMath::Cos(teta2);
-			b = TMath::Sin(teta2);
-			c = -TMath::Sin(teta2);
-			d = TMath::Cos(teta2);
-			p = -a2*TMath::Cos(teta2) - b2*TMath::Sin(teta2);
-			q = a2*TMath::Sin(teta2) - b2*TMath::Cos(teta2);
-		}
-
-	}
-  printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", n, a,b,c,d,p,q);
+    if (F1<F2) {
+      a = TMath::Cos(teta1);
+      b = TMath::Sin(teta1);
+      c = -TMath::Sin(teta1);
+      d = TMath::Cos(teta1);
+      p = -a1*TMath::Cos(teta1) - b1*TMath::Sin(teta1);
+      q = a1*TMath::Sin(teta1) - b1*TMath::Cos(teta1);
+    }
+    else {
+      a = TMath::Cos(teta2);
+      b = TMath::Sin(teta2);
+      c = -TMath::Sin(teta2);
+      d = TMath::Cos(teta2);
+      p = -a2*TMath::Cos(teta2) - b2*TMath::Sin(teta2);
+      q = a2*TMath::Sin(teta2) - b2*TMath::Cos(teta2);
+    }
+  }
+  if (gEDBDEBUGLEVEL > 1)
+    printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", n, a,b,c,d,p,q);
 
   Set(a,b,c,d,p,q);
-
   return  1;
 }
 

@@ -17,6 +17,7 @@
 #include "EdbPhys.h"
 #include "EdbMath.h"
 #include "EdbTrackFitter.h"
+#include "EdbLog.h"
 
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
@@ -268,7 +269,7 @@ int EdbPatCouple::FillCHI2P()
   float       chi2;
   int ncp = Ncouples();
 
-  printf("eCHI2mode = %d\n",eCHI2mode);
+  if (gEDBDEBUGLEVEL > 1) printf("eCHI2mode = %d\n",eCHI2mode);
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
 
@@ -454,7 +455,7 @@ int EdbPatCouple::CutCHI2P(float chi2max)
   TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
   int ncp = Ncouples();
-  printf("CutCHI2P (%4.1f):  %d -> ", chi2max,ncp );
+  if (gEDBDEBUGLEVEL > 1) printf("CutCHI2P (%4.1f):  %d -> ", chi2max,ncp );
  
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
@@ -463,7 +464,7 @@ int EdbPatCouple::CutCHI2P(float chi2max)
   }
   delete eSegCouples;
   eSegCouples=sCouples;
-  printf(" %d \n", Ncouples() );
+  if (gEDBDEBUGLEVEL > 1) printf(" %d \n", Ncouples() );
   return Ncouples();
 }
 
@@ -595,8 +596,9 @@ int EdbPatCouple::LinkSlow( float chi2max )
 
   ClearSegCouples();
 
-  printf("Couple: link (slow) patterns: %d (%d)  and  %d (%d) \n",
-	 pat1->ID(), pat1->N(), pat2->ID(),pat2->N());
+  if (gEDBDEBUGLEVEL > 1) 
+    printf("Couple: link (slow) patterns: %d (%d)  and  %d (%d) \n",
+	   pat1->ID(), pat1->N(), pat2->ID(),pat2->N());
 
   EdbSegCouple   *c;
   float chi2;
@@ -627,8 +629,9 @@ int EdbPatCouple::LinkFast()
   int npat =0;
   SetZlink( (Pat2()->Z()+Pat1()->Z())/2. );
 
-  printf("Couple: link patterns: %d (%d)  and  %d (%d) at Z = %f\n",
-	 Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
+  if (gEDBDEBUGLEVEL > 1)
+    printf("Couple: link patterns: %d (%d)  and  %d (%d) at Z = %f\n",
+	   Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
 

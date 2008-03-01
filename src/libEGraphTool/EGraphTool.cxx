@@ -102,7 +102,8 @@ void EGraphTool::DrawFrame()
 
   TGTab *OptTab = new TGTab(ButtonFrame);
   // fEmGraphRec->AddRecOptFrame(OptTab); // Create a button frame
-  fEmGraphRec->AddScanBackFrame(OptTab); // Create scan back frame
+  fEmGraphRec->AddScanBackFrame(OptTab);  // Create scan back frame
+  fEmGraphRec->AddVertexRecFrame(OptTab); // Craete vertex reconstruction frame
   ButtonFrame->AddFrame(OptTab, fLayout2);
 
   // create process list frame

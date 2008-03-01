@@ -7,6 +7,7 @@
 #include <TTree.h>
 #include "EdbView.h"
 #include "EGraphHits.h"
+#include "EGraphRecProc.h"
 
 class TThread;
 class TGTab;
@@ -18,24 +19,6 @@ class EdbPattern;
 class EdbScanSet;
 class EdbPVRec;
 
-// brick to process
-
-typedef struct {
-  Int_t brickId;
-  Int_t firstPlate;
-  Int_t lastPlate;
-  Int_t ver;
-  Int_t step;
-} ProcBrick_t;
-
-// processes IDs
-
-typedef struct {
-  Int_t interCalib;
-  Int_t volumeScan;
-  Int_t predScan;
-  Int_t scanForth;
-} ProcId_t;
 
 class EGraphRec {
  public:
@@ -48,6 +31,7 @@ class EGraphRec {
   void AddProcListFrame(TGVerticalFrame *workframe);
   void AddRecOptFrame(TGTab *worktab);
   void AddScanBackFrame(TGTab *worktab);
+  void AddVertexRecFrame(TGTab *worktab);
   void AddCanvasFrame(TGTab *worktab);
   void AddInfoFrame(TGVerticalFrame *workframe);
   void ReconstructTracks();
@@ -61,13 +45,14 @@ class EGraphRec {
 
   void ReadSBPred();
   void StartScanBack();
+  void StartVertexRec();
 
 
   Bool_t        IsSBToLink()        const   {return fCheckSBLink->IsDown();}
   Bool_t        IsSBToAlgn()        const   {return fCheckSBAlgn->IsDown();}
   ProcBrick_t   GetBrickToProc()    const   {return fBrickToProc;}
   ProcId_t      GetProcId()         const   {return fProcId;}
-  EdbScanProc  *GetScanProc()       const   {return fSproc;}
+  EdbScanProc  *GetScanProc()       const   {return fScanProc;}
   EdbScanSet   *GetScanSet()        const   {return fScanSet;}
   EdbPattern   *GetPredTracks()     const   {return fPredTracks;}
   EdbPVRec     *GetFoundTracks()    const   {return fFoundTracks;}
@@ -84,7 +69,7 @@ class EGraphRec {
   TTree               *fEvtTree;
   TString              fDataDir;
   EdbView             *fEvent;
-  EdbScanProc         *fSproc;
+  EdbScanProc         *fScanProc;
   EdbPattern          *fPredTracks;
   EdbPVRec            *fFoundTracks;
   EdbScanSet          *fScanSet;
@@ -120,13 +105,12 @@ class EGraphRec {
   TGCheckButton       *fCheckSBLink;
   TGCheckButton       *fCheckSBAlgn;
   TGCheckButton       *fCheckSBTrks;
-  // TGCheckButton       *fCheckSBVrtx;
-
 
   TRootEmbeddedCanvas *fDisplayHits;
   TRootEmbeddedCanvas *fDisplayHitsGL;
   TGLSAViewer         *fGLViewer;
 
+  void InitScanSet();
   void InitVariables();
   void ReadCmdConfig();
   void InitDrawVariables();

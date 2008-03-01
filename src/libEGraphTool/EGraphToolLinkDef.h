@@ -7,5 +7,6 @@
 #pragma link C++ class EGraphTool;
 #pragma link C++ class EGraphRec;
 #pragma link C++ class EGraphHits;
+#pragma link C++ class EGraphRecProc;
 
 #endif
