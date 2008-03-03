@@ -44,7 +44,7 @@ class EGraphRecProc {
   void SetBrickToProc(ProcBrick_t &brickToProc) {fBrickToProc = brickToProc;}
   void SetProcId(ProcId_t & procId)             {fProcId = procId;}
 
-  EdbPVRec *VertexRec();
+  EdbVertexRec *VertexRec();
 
  private:
 

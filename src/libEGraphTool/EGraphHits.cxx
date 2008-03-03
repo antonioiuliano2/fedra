@@ -7,26 +7,12 @@
 //----------------------------------------------------------------------------
 
 #include "EGraphHits.h"
-
-// #include <TVector3.h>
-// #include <TObjArray.h>
-// #include <TPolyMarker3D.h>
-// #include <TProfile.h>
-// #include <TProfile2D.h>
-// #include <TList.h>
-// #include <TSystem.h>
-// #include <TStyle.h>
-// #include <TCanvas.h>
-// #include <TChain.h>
-// #include <TMath.h>
-// #include <TF1.h>
-// #include <TLegend.h>
-#include <TPolyLine3D.h>
-
 #include "EdbView.h"
 #include "EdbSegment.h"
 #include "EdbPVRec.h"
+#include "EdbVertex.h"
 
+#include <TPolyLine3D.h>
 #include <iostream>
 
 using namespace std;
@@ -43,6 +29,7 @@ EGraphHits::EGraphHits()
   // fAllSegments    = new TObjArray();
   fAllPredTracks  = new TObjArray();
   fAllFoundTracks = new TObjArray();
+  fAllVerticesRec = new TObjArray();
 }
 
 //----------------------------------------------------------------------------
@@ -55,6 +42,7 @@ EGraphHits::~EGraphHits()
   // SafeDelete(fAllSegments);
   SafeDelete(fAllPredTracks);
   SafeDelete(fAllFoundTracks);
+  SafeDelete(fAllVerticesRec);
 }
 
 
@@ -190,24 +178,68 @@ void EGraphHits::BuildEvent(EdbPVRec *tracks, const TString status)
 
   for (Int_t itrack = 0; itrack < Ntracks; itrack++) {
     EdbTrackP *trk = tracks->GetTrack(itrack);
-    Int_t Nseg = trk->N();
-    Double_t DZ = 250.;
 
-    for (Int_t iseg = 0; iseg < Nseg; iseg++) {
-      EdbSegP *seg = trk->GetSegment(iseg);
+    if (status == "predicted") FillSegmentsArray(trk, fAllPredTracks);
+    if (status == "found")     FillSegmentsArray(trk, fAllFoundTracks);
+  }
+}
 
-      Double_t x1 = seg->X() - 0.5*DZ*seg->TX();
-      Double_t y1 = seg->Y() - 0.5*DZ*seg->TX();
-      Double_t z1 = seg->Z() - 0.5*DZ;
-      Double_t x2 = seg->X() + 0.5*DZ*seg->TX();
-      Double_t y2 = seg->Y() + 0.5*DZ*seg->TY();
-      Double_t z2 = seg->Z() + 0.5*DZ;
 
-      TPolyLine3D *segment = new TPolyLine3D;
-      segment->SetPoint(0, x1, y1, z1);
-      segment->SetPoint(1, x2, y2, z2);
-      if (status == "predicted") fAllPredTracks->Add(segment);
-      if (status == "found")     fAllFoundTracks->Add(segment);
+//----------------------------------------------------------------------------
+void EGraphHits::BuildVertex(EdbVertexRec *vertexRec)
+{
+  Int_t nvtx = vertexRec->Nvtx();
+
+  for (Int_t ivtx = 0; ivtx < nvtx; ivtx++) {
+    EdbVertex *vertex = vertexRec->GetVTX(ivtx);
+
+    // vertex opposite to neutrino dir.
+
+    if (vertex->Flag() < 0 || vertex->Flag() == 2) continue;
+
+    Int_t ntracks = vertex->N(); // number of attached tracks
+
+    for (Int_t itrack = 0; itrack < ntracks; itrack++) {
+       EdbTrackP *track = vertex->GetTrack(itrack);
+       FillSegmentsArray(track, fAllVerticesRec);
+    }
+  }
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphHits::FillSegmentsArray(const EdbTrackP *track,TObjArray *AllTracks)
+{
+  Int_t Nseg = track->N();
+  Double_t DZ = 250.;
+
+  for (Int_t iseg = 0; iseg < Nseg; iseg++) {
+    EdbSegP *seg = track->GetSegment(iseg);
+
+    Double_t x1 = seg->X() - 0.5*DZ*seg->TX();
+    Double_t y1 = seg->Y() - 0.5*DZ*seg->TX();
+    Double_t z1 = seg->Z() - 0.5*DZ;
+    Double_t x2 = seg->X() + 0.5*DZ*seg->TX();
+    Double_t y2 = seg->Y() + 0.5*DZ*seg->TY();
+    Double_t z2 = seg->Z() + 0.5*DZ;
+
+    TPolyLine3D *segment = new TPolyLine3D;
+    segment->SetPoint(0, x1, y1, z1);
+    segment->SetPoint(1, x2, y2, z2);
+    AllTracks->Add(segment);
+  }
+}
+
+
+//----------------------------------------------------------------------------
+void EGraphHits::DrawVertex()
+{
+  for (Int_t i = 0; i < fAllVerticesRec->GetEntriesFast(); i++) {
+    TPolyLine3D *segment = (TPolyLine3D*)fAllVerticesRec->At(i);
+    if (segment) {
+      segment->SetLineWidth(3);
+      segment->SetLineColor(8);
+      segment->Draw();
     }
   }
 }

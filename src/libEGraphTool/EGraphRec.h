@@ -18,6 +18,7 @@ class EdbScanProc;
 class EdbPattern;
 class EdbScanSet;
 class EdbPVRec;
+class EdbVertexRec;
 
 
 class EGraphRec {
@@ -72,6 +73,7 @@ class EGraphRec {
   EdbScanProc         *fScanProc;
   EdbPattern          *fPredTracks;
   EdbPVRec            *fFoundTracks;
+  EdbVertexRec        *fVertexRec;
   EdbScanSet          *fScanSet;
   EGraphHits          *fGraphHits;
   ProcId_t             fProcId;

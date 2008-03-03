@@ -122,7 +122,8 @@ void EGraphRec::StartVertexRec()
   recProc->SetProcId(fProcId);           // Process Ids
 
   SafeDelete(fFoundTracks);
-  fFoundTracks = recProc->VertexRec();
+  SafeDelete(fVertexRec);
+  fVertexRec = recProc->VertexRec();
   DrawEvent();
 
   delete recProc;
@@ -145,8 +146,15 @@ void EGraphRec::DrawEvent()
   // fGraphHits->DrawHits();
 
   // fGraphHits->BuildEvent(fPredTracks,  "predicted");
-  fGraphHits->BuildEvent(fFoundTracks, "found");
-  fGraphHits->DrawTracks("all");
+  if (kFALSE) fGraphHits->BuildEvent(fFoundTracks, "found");
+  if (kFALSE) fGraphHits->DrawTracks("all");
+
+  // drawing vertices
+
+  if (kTRUE) {
+    fGraphHits->BuildVertex(fVertexRec);
+    fGraphHits->DrawVertex();
+  }
 
   canvasHits->Update();
 }
@@ -581,6 +589,7 @@ void EGraphRec::InitScanSet()
 void EGraphRec::InitVariables()
 {
   fEvent            = NULL;
+  fVertexRec        = NULL;
   fThSBProcess      = NULL;
   fThSBCheckProcess = NULL;
   fScanSet          = NULL;

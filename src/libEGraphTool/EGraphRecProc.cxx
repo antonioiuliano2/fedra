@@ -175,7 +175,7 @@ EGraphRecProc::~EGraphRecProc()
 
 
 //----------------------------------------------------------------------------
-EdbPVRec *EGraphRecProc::VertexRec()
+EdbVertexRec *EGraphRecProc::VertexRec()
 {
   Int_t pID_VS[4] = {fBrickToProc.brickId, 0, fBrickToProc.ver,
 		     fProcId.volumeScan};
@@ -222,9 +222,9 @@ EdbPVRec *EGraphRecProc::VertexRec()
   cout << fVertexRec->eEdbTracks->GetEntries() << " tracks for vertexing" 
        << endl;
   cout << fVertexRec->FindVertex() << " 2-track vertexes was found" << endl;
-  cout << fVertexRec->ProbVertexN() << endl;
+  fVertexRec->ProbVertexN();
 
-  return fFoundTracks;
+  return fVertexRec;
 }
 
 
