@@ -39,7 +39,7 @@ EdbSegCouple::EdbSegCouple()
 ///______________________________________________________________________________
 EdbSegCouple::~EdbSegCouple() 
 { 
-  if(eS) delete eS;
+  SafeDelete(eS);
 }
 
 ///______________________________________________________________________________
@@ -108,8 +108,7 @@ EdbPatCouple::~EdbPatCouple()
 {
   if(eSegCouples) {
     eSegCouples->Delete();
-    delete eSegCouples;
-    eSegCouples=0;
+    SafeDelete(eSegCouples);
   }
 }
 
@@ -316,7 +315,7 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   eCond->FillErrorsCov( s1->TX(), s1->TY(), s1->COV() );
   eCond->FillErrorsCov( s2->TX(), s2->TY(), s2->COV() );
 
-  if(scp->eS) delete (scp->eS);
+  SafeDelete(scp->eS);
   scp->eS=new EdbSegP(*s2);
   float chi2 = EdbTrackFitter::Chi2Seg(scp->eS, s1);
   scp->eS->PropagateToCOV( 0.5*(s1->Z()+s2->Z()) );
@@ -334,7 +333,7 @@ float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
   EdbSegP *s2 = Pat2()->GetSegment(scp->ID2());
   float chi2 = Chi2A(s1,s2, iprob);
 
-  if(scp->eS) delete (scp->eS);
+  SafeDelete(scp->eS);
   EdbSegP *s = scp->eS=new EdbSegP();
   s->Set( 0,                              // id will be assigned on writing into the tree
 	  (s1->X()+s2->X())/2.,
@@ -431,7 +430,7 @@ float EdbPatCouple::Chi2Pz0(EdbSegCouple *scp)
   float chi2 =  TMath::Sqrt( (a1*a1 + a2*a2)/2. ) / 
     eCond->ProbSeg( tx, ty, (s1->W()+s2->W())/2. ) / sa;
 
-  if(scp->eS) delete (scp->eS);
+  SafeDelete(scp->eS);
   EdbSegP *s = scp->eS=new EdbSegP();
   s->Set( 0,                              // id will be assigned on writing into the tree
 	  (s1->X()+s2->X())/2.,
@@ -460,9 +459,9 @@ int EdbPatCouple::CutCHI2P(float chi2max)
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
     if(sc->CHI2P()<=chi2max)      sCouples->Add(sc);
-    else{ delete sc;  sc=0; }
+    else SafeDelete(sc);
   }
-  delete eSegCouples;
+  SafeDelete(eSegCouples);
   eSegCouples=sCouples;
   if (gEDBDEBUGLEVEL > 1) printf(" %d \n", Ncouples() );
   return Ncouples();
@@ -478,10 +477,10 @@ int EdbPatCouple::SelectIsolated()
 
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
-    if( sc->N1tot()>1 || sc->N2tot()>1 )   { delete sc;  sc=0; }
-    else sCouples->Add(sc);    
+    if( sc->N1tot()>1 || sc->N2tot()>1 ) {SafeDelete(sc);}
+    else sCouples->Add(sc);
   }
-  delete eSegCouples;
+  SafeDelete(eSegCouples);
   eSegCouples=sCouples;
   printf(" %d \n", Ncouples() );
   return Ncouples();
@@ -825,25 +824,21 @@ EdbPVRec::~EdbPVRec()
   
   if(ePatCouples) {
     ePatCouples->Delete();
-    delete ePatCouples;
-    ePatCouples=0;
+    SafeDelete(ePatCouples);
   }
   if(eTracks) {
     eTracks->Delete();
-    delete eTracks;
-    eTracks=0;
+    SafeDelete(eTracks);
   }
 //  if(eVTX)    {
 //    eVTX->Delete();
-//    delete eVTX;
-//    eVTX=0;
+//    SafeDelete(eVTX);
 //  }
-  if(eTracksCell) { delete eTracksCell; eTracksCell=0; }
+  SafeDelete(eTracksCell);
   if (gROOT->GetListOfSpecials()->FindObject(this))
     {
       gROOT->GetListOfSpecials()->Remove(this);
     }
-  
 }
 
 ///______________________________________________________________________________
@@ -927,7 +922,11 @@ void EdbPVRec::SetCouplesPeriodic(int istart, int iperiod)
 
   if( istart<0 || istart>=npat-iperiod ) return;
 
-  for(int i=0; i<npat; i++ ) GetPattern(i)->SetSegmentsPID();
+  int ifirst=0; 
+  for(int i=0; i<npat; i++ ) {if(GetPattern(i)) ifirst=i; break;}
+  for(int i=ifirst; i<npat; i++ ) 
+    if(GetPattern(i)) GetPattern(i)->SetSegmentsPID();
+  if(ifirst<istart) istart=ifirst;
   for(int i=istart; i<npat-iperiod; i+=iperiod ) {
     pc = new EdbPatCouple();
     pc->SetID(i,i+iperiod);
@@ -1016,6 +1015,7 @@ void EdbPVRec::SetSegmentsErrors()
   int nseg=0;
   for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
+    if(!pat) continue;
     nseg = pat->N();
     for(int j=0; j<nseg; j++ ) {
       seg = pat->GetSegment(j);      
@@ -1156,7 +1156,7 @@ void EdbPVRec::FillTracksCellFast()
   printf("build tracks from couples for ncp=%d ... \n", ncp);
   if(ncp<1)     return;
 
-  if(eTracks) delete eTracks;
+  SafeDelete(eTracks);
   eTracks  = new TObjArray();
 
   EdbPatCouple *pc = 0;
@@ -2091,7 +2091,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
   int ntr=0;
   if(!eTracksCell) return ntr;
   if(nsegments<2) return ntr;
-  if(eTracks) delete eTracks;
+  SafeDelete(eTracks);
   eTracks = new TObjArray();
 
   EdbTrackP  *track=0;
@@ -2237,7 +2237,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
     tr = GetTrack(i);
     if(tr->Flag() != -10) continue;
     eTracks->RemoveAt(i);
-    delete tr;
+    SafeDelete(tr);
   }
   eTracks->Compress();
 

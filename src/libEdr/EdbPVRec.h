@@ -131,16 +131,12 @@ class EdbPatCouple : public TObject {
   float   Zlink()    const {return eZlink;}
   int     Ncouples() const { if(eSegCouples) return eSegCouples->GetEntriesFast(); 
                              else return 0; }
-  void  ClearSegCouples() { eSegCouples->Clear(); }
-
+  void  ClearSegCouples() { if(eSegCouples) eSegCouples->Clear(); }
 
   EdbSegCouple   *AddSegCouple(int id1, int id2);
   EdbSegCouple   *GetSegCouple(int i) const 
     { return (EdbSegCouple *)(eSegCouples->At(i)); }
-  void   RemoveSegCouple(EdbSegCouple *sc) { 
-    //eSegCouples->Remove(sc); 
-    if(sc) delete sc; sc=0;
-  }
+  void   RemoveSegCouple(EdbSegCouple *sc) { SafeDelete(sc); }
 
   EdbPattern     *Pat1()  { return ePat1; }
   EdbPattern     *Pat2()  { return ePat2; }
