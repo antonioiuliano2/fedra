@@ -94,7 +94,7 @@ EdbVertex::EdbVertex()
 //________________________________________________________________________
 EdbVertex::~EdbVertex()
 {
-  if(eV) { eV->clear(); delete eV; eV=0; }
+  if (eV) {eV->clear(); SafeDelete(eV);}
   //for(int i=0; i<N();  i++) delete GetVTa(i);
   //for(int i=0; i<Nn(); i++) delete GetVTn(i);
   eVTa.Delete("slow");
@@ -143,7 +143,7 @@ void EdbVertex::Clear()
   //for(int i=0; i<Nn(); i++) delete GetVTn(i);
   eVTa.Delete("slow");
   eVTn.Delete("slow");
-  if(eV) { eV->clear(); delete eV; eV=0; }
+  if (eV) {eV->clear(); SafeDelete(eV);}
   eX = 0.;
   eY = 0.;
   eZ = 0.;
@@ -668,7 +668,7 @@ int EdbVertexRec::MakeV( EdbVertex &edbv )
 
   float X0 =  ePVR->GetScanCond()->RadX0();
   Vertex *v=edbv.V();
-  if(v) { v->clear(); delete v; v=0; }
+  if (v) {v->clear(); SafeDelete(v);}
   v = new Vertex();
   v->use_kalman(true);               //TODO: define as parameter
   v->use_momentum(eUseMom);
@@ -682,14 +682,12 @@ int EdbVertexRec::MakeV( EdbVertex &edbv )
     if   (edbv.Zpos(i)) seg = (EdbSegP*)tr->TrackZmin(eUseSegPar);
     else  	        seg = (EdbSegP*)tr->TrackZmax(eUseSegPar);
     Track *t=new Track();
-    if( edbv.Edb2Vt( *seg, *t, X0, tr->M() ) )
-    {
-	t->rm((double)(tr->M()));
-	v->push_back(*t);
+    if (edbv.Edb2Vt(*seg, *t, X0, tr->M())) {
+      t->rm((double)(tr->M()));
+      v->push_back(*t);
     }
-    else { 
-      delete t; t=0;
-    }
+    else SafeDelete(t);
+
     if (i<50) ta[i] = t;
   }
   int retval = 0;
@@ -733,8 +731,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 	    {
 	      if (distance(*t, *v) > eImpMax)
 	      {
-		  delete t;
-		  t=0;
+		SafeDelete(t);
 	      }
 	      else
 	      {
@@ -746,24 +743,21 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 	        if (!(v->findVertexVt()))
 		{
 		  v->remove_last();
-		  delete t;
-		  t=0;
+		  SafeDelete(t);
 		  printf("EdbVertex::AddTrack - vertex not found!");
 	          v->findVertexVt();
 		}
 	        else if (!(v->valid()))
 		{
 		  v->remove_last();
-		  delete t;
-		  t=0;
+		  SafeDelete(t);
 		  printf("EdbVertex::AddTrack - vertex not valid!");
 	          v->findVertexVt();
 		}
 	        else if (v->prob() < eProbMin )
 		{
 		  v->remove_last();
-		  delete t;
-		  t=0;
+		  SafeDelete(t);
 	          v->findVertexVt();
 		}
 	        else
@@ -794,8 +788,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 	}
       else
 	{ 
-	  delete t;
-	  t=0;
+	  SafeDelete(t);
 	  printf("EdbVertex::AddTrack - conversion to VT failed!");
 	}
     }
@@ -1058,14 +1051,12 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
 
   if (!(vta1 = AddTrack( *v2, tr1, zpos1)))
     {
-      delete v2;
-      v2 = 0;
+      SafeDelete(v2);
       return 0;
     }
   if (!(vta2 = AddTrack( *v2, tr2, zpos2)))
     {
-      delete v2;
-      v2 = 0;
+      SafeDelete(v2);
       return 0;
     }
 
@@ -1076,28 +1067,25 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
 
   if(!(MakeV(*v2)))
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
   if( !(v2->V()) )
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
   if( !(v2->V()->valid()) )
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
@@ -1114,10 +1102,9 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
       zvmax = TMath::Max(s1->Z() ,s2->Z()) + 0.5*eZbin;
       if (z < zvmin || z > zvmax)
 	{
-	  delete vta1;
-	  delete vta2;
-	  delete v2;
-	  v2 = 0;
+	  SafeDelete(vta1);
+	  SafeDelete(vta2);
+	  SafeDelete(v2);
 	  return 0;
 	}
       else
@@ -1131,10 +1118,9 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
       zvmin = TMath::Max(s1->Z() ,s2->Z()) - eDZmax;
       if (z > zvmax || z < zvmin)
 	{
-	  delete vta1;
-	  delete vta2;
-	  delete v2;
-	  v2 = 0;
+	  SafeDelete(vta1);
+	  SafeDelete(vta2);
+	  SafeDelete(v2);
 	  return 0;
 	} 
       else
@@ -1148,10 +1134,9 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
       zvmax = TMath::Min(s1->Z() ,s2->Z()) + eDZmax + eZbin;
       if (z < zvmin || z > zvmax )
 	{
-	  delete vta1;
-	  delete vta2;
-	  delete v2;
-	  v2 = 0;
+	  SafeDelete(vta1);
+	  SafeDelete(vta2);
+	  SafeDelete(v2);
 	  return 0;
 	} 
       else
@@ -1186,10 +1171,9 @@ int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
     return 1;
   }
   else {
-    delete vta1;
-    delete vta2;
-    delete v2;
-    v2 = 0;
+    SafeDelete(vta1);
+    SafeDelete(vta2);
+    SafeDelete(v2);
   }
   return 0;
 }
@@ -1215,14 +1199,12 @@ EdbVertex *EdbVertexRec::ProbVertex1( EdbTrackP *tr1, EdbTrackP *tr2,
 
   if (!(vta1 = AddTrack( *v2, tr1, zpos1)))
     {
-      delete v2;
-      v2 = 0;
+      SafeDelete(v2);
       return 0;
     }
   if (!(vta2 = AddTrack( *v2, tr2, zpos2)))
     {
-      delete v2;
-      v2 = 0;
+      SafeDelete(v2);
       return 0;
     }
 
@@ -1233,28 +1215,25 @@ EdbVertex *EdbVertexRec::ProbVertex1( EdbTrackP *tr1, EdbTrackP *tr2,
 
   if(!(MakeV(*v2)))
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
   if( !(v2->V()) )
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
   if( !(v2->V()->valid()) )
     {
-      delete vta1;
-      delete vta2;
-      delete v2;
-      v2 = 0;
+      SafeDelete(vta1);
+      SafeDelete(vta2);
+      SafeDelete(v2);
       return 0;
     }
 
@@ -1301,10 +1280,9 @@ EdbVertex *EdbVertexRec::ProbVertex1( EdbTrackP *tr1, EdbTrackP *tr2,
     return v2;
   }
   else {
-    delete vta1;
-    delete vta2;
-    delete v2;
-    v2 = 0;
+    SafeDelete(vta1);
+    SafeDelete(vta2);
+    SafeDelete(v2);
   }
   return 0;
 }
@@ -1732,22 +1710,20 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 	}
 	if (n < 2)
 	{
-	    delete eWorking;
-	    eWorking = 0;
-	    eVertex->ResetTracks();
-	    printf("Can't create working copy of the vertex!\n");
-	    fflush(stdout);
-	    return 0;
+	  SafeDelete(eWorking);
+	  eVertex->ResetTracks();
+	  printf("Can't create working copy of the vertex!\n");
+	  fflush(stdout);
+	  return 0;
 	}
 
 	if (!MakeV(*(eWorking)))
 	{
-	    delete eWorking;
-	    eWorking = 0;
-	    eVertex->ResetTracks();
-	    printf("Can't create working copy of the vertex!\n");
-	    fflush(stdout);
-	    return 0;
+	  SafeDelete(eWorking);
+	  eVertex->ResetTracks();
+	  printf("Can't create working copy of the vertex!\n");
+	  fflush(stdout);
+	  return 0;
 	}
     }
     else
@@ -1766,17 +1742,16 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 	}
 	if (n < 2)
 	{
-	    delete eWorking;
-	    if (ePrevious)
+	  SafeDelete(eWorking);
+	  if (ePrevious)
 	    {
-		eWorking = ePrevious;
-		eWorking->ResetTracks();
+	      eWorking = ePrevious;
+	      eWorking->ResetTracks();
 	    }
 	    else
-	    {
-		eWorking = 0;
+	      {
 		eVertex->ResetTracks();
-	    }
+	      }
 	    printf("Can't create working copy of the vertex!\n");
 	    fflush(stdout);
 	    return 0;
@@ -1784,7 +1759,8 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 
 	if (!MakeV(*(eWorking)))
 	{
-	    delete eWorking;
+	  SafeDelete(eWorking);
+
 	    if (ePrevious)
 	    {
 		eWorking = ePrevious;
@@ -1792,7 +1768,6 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 	    }
 	    else
 	    {
-		eWorking = 0;
 		eVertex->ResetTracks();
 	    }
 	    printf("Can't create working copy of the vertex!\n");
@@ -1828,7 +1803,8 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
 	fflush(stdout);
 	delete Tr;
-	delete eWorking;
+
+	SafeDelete(eWorking);
 	if (ePrevious)
 	{
 	    eWorking = ePrevious;
@@ -1836,7 +1812,6 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
 	}
 	else
 	{
-	    eWorking = 0;
 	    eVertex->ResetTracks();
 	}
 	eImpMax = ImpMaxSave;
@@ -2287,20 +2262,20 @@ EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, in
 	}
 	if (n < 2)
 	{
-	    delete eWorking;
-	    (eVertex)->ResetTracks();
-	    printf("Can't create working copy of the vertex!\n");
-	    fflush(stdout);
-	    return 0;
+	  SafeDelete(eWorking);
+	  (eVertex)->ResetTracks();
+	  printf("Can't create working copy of the vertex!\n");
+	  fflush(stdout);
+	  return 0;
 	}
 
 	if (!MakeV(*eWorking))
 	{
-	    delete eWorking;
-	    eVertex->ResetTracks();
-	    printf("Can't create working copy of the vertex!\n");
-	    fflush(stdout);
-	    return 0;
+	  SafeDelete(eWorking);
+	  eVertex->ResetTracks();
+	  printf("Can't create working copy of the vertex!\n");
+	  fflush(stdout);
+	  return 0;
 	}
     }
     if ((vta = AddTrack(*eWorking, eTr, zpos)))
@@ -2312,9 +2287,9 @@ EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, in
     {
 //	printf("Track not added! May be Prob < ProbMin.\n");
 //	fflush(stdout);
-	delete eWorking;
-	eVertex->ResetTracks();
-	return 0;
+      SafeDelete(eWorking);
+      eVertex->ResetTracks();
+      return 0;
     }
     return eWorking;
 }
@@ -2362,7 +2337,7 @@ EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
     {
 	printf("Can't create working copy of the vertex!\n");
 	fflush(stdout);
-	delete eWorking;
+	SafeDelete(eWorking);
 	eVertex->ResetTracks();
 	return 0;
     }
@@ -2377,7 +2352,7 @@ EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
     {
 	printf("Can't create working copy of the vertex!\n");
 	fflush(stdout);
-	delete eWorking;
+	SafeDelete(eWorking);
 	eVertex->ResetTracks();
 	return 0;
     }
@@ -2428,14 +2403,8 @@ void EdbVertexRec::AcceptModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking)
 //_____________________________________________________________________________
 void EdbVertexRec::CancelModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking)
 {
-    if (eWorking)
-    {
-	delete eWorking;
-    }
-    if (eVertex)
-    {
-	(eVertex)->ResetTracks();
-    }
+  SafeDelete(eWorking);
+  if (eVertex) eVertex->ResetTracks();
 }
 //______________________________________________________________________________
 int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
