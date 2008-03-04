@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "EdbScanProc.h"
+#include "EdbDisplay.h"
 
 using namespace std;
 using namespace TMath;
@@ -487,6 +488,15 @@ void EGraphRec::AddCanvasFrame(TGTab *worktab)
   tf = worktab->AddTab("cRec");
   fDisplayHits = new TRootEmbeddedCanvas("Reconstruction", tf, 900, 650);
   tf->AddFrame(fDisplayHits, fLayout3);
+
+  tf = worktab->AddTab("cFedra");
+  fDisplayFedra = new TRootEmbeddedCanvas("FEDRA Viewer", tf, 900, 650);
+  tf->AddFrame(fDisplayFedra, fLayout3);
+
+  TCanvas *CanvasFedra = fDisplayFedra->GetCanvas();
+
+  EdbDisplay *display = new EdbDisplay("FEDRA Viewer (orig)", 0., 10000., 
+  				       0., 10000., -10000., 0, CanvasFedra);
 
 //   tf = worktab->AddTab("GL Viewer");
 //   fDisplayHitsGL = new TRootEmbeddedCanvas("Reconstruction GL", tf, 900, 650);

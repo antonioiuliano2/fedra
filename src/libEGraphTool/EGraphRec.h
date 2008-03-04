@@ -109,7 +109,8 @@ class EGraphRec {
   TGCheckButton       *fCheckSBTrks;
 
   TRootEmbeddedCanvas *fDisplayHits;
-  TRootEmbeddedCanvas *fDisplayHitsGL;
+  // TRootEmbeddedCanvas *fDisplayHitsGL;
+  TRootEmbeddedCanvas *fDisplayFedra;
   TGLSAViewer         *fGLViewer;
 
   void InitScanSet();

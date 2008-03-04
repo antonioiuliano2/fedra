@@ -59,9 +59,9 @@ public:
 
    ~Edb3DView() {};
 
-   virtual const char *	GetTitle() const;
-   virtual const char *	GetName() const;
-   virtual char *    GetObjectInfo(int px, int py) const;
+   virtual const char *GetTitle() const;
+   virtual const char *GetName() const;
+   virtual char *GetObjectInfo(int px, int py) const;
    virtual void  ExecuteRotateView(Int_t event, Int_t px, Int_t py);
    virtual void  SetRotateMode( bool Mode = true );
 
@@ -131,7 +131,8 @@ public:
    EdbDisplayBase( const char *title, 
 		   Float_t x0, Float_t x1, 
 		   Float_t y0, Float_t y1, 
-		   Float_t z0, Float_t z1 );
+		   Float_t z0, Float_t z1, 
+		   TCanvas *Canvas = 0);
    ~EdbDisplayBase();
 
 //   virtual TCanvas   *GetCanvas() { return fCanvas; }

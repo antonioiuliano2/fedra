@@ -209,26 +209,19 @@ EdbDisplay *EdbDisplay::EdbDisplayExist(const char *title)
 //________________________________________________________________________
 EdbDisplay::~EdbDisplay()
 {
-    DeleteModifiedVTX();
+  DeleteModifiedVTX();
 
-    if (gROOT->GetListOfSpecials()->FindObject(this))
-    {
-	gROOT->GetListOfSpecials()->Remove(this);
-    }
-    if (fCanvasVTX) fCanvasVTX->Close();
-    fCanvasVTX = 0;
-    if (fCanvasTRK) fCanvasTRK->Close();
-    fCanvasTRK = 0;
-    if (eWorking) delete eWorking;
-    eWorking = 0;
-    if (ePrevious) delete ePrevious;
-    ePrevious = 0;
-    if (eArrSegPSave && eArrSegP) delete eArrSegP;
-    eArrSegP = 0;
-    if (eArrVSave && eArrV) delete eArrV;
-    eArrV = 0;
-    if (eArrTrSave && eArrTr) delete eArrTr;
-    eArrTr = 0;
+  if (gROOT->GetListOfSpecials()->FindObject(this))
+    gROOT->GetListOfSpecials()->Remove(this);
+
+  SafeDelete(fCanvasVTX);
+  SafeDelete(fCanvasTRK);
+  SafeDelete(eWorking);
+  SafeDelete(ePrevious);
+
+  if (eArrSegPSave) SafeDelete(eArrSegP);
+  if (eArrVSave)    SafeDelete(eArrV);
+  if (eArrTrSave)   SafeDelete(eArrTr);
 }
 
 //________________________________________________________________________
@@ -296,27 +289,21 @@ void EdbDisplay::GuessRange()
 //________________________________________________________________________
 void EdbDisplay::Delete()
 {
-    DeleteModifiedVTX();
+  DeleteModifiedVTX();
 
-    if (gROOT->GetListOfSpecials()->FindObject(this))
-    {
-	gROOT->GetListOfSpecials()->Remove(this);
-    }
-    if (fCanvasVTX) fCanvasVTX->Close();
-    fCanvasVTX = 0;
-    if (fCanvasTRK) fCanvasTRK->Close();
-    fCanvasTRK = 0;
-    if (eWorking) delete eWorking;
-    eWorking = 0;
-    if (ePrevious) delete ePrevious;
-    ePrevious = 0;
-    if (eArrSegPSave && eArrSegP) delete eArrSegP;
-    eArrSegP = 0;
-    if (eArrVSave && eArrV) delete eArrV;
-    eArrV = 0;
-    if (eArrTrSave && eArrTr) delete eArrTr;
-    eArrTr = 0;
+  if (gROOT->GetListOfSpecials()->FindObject(this))
+    gROOT->GetListOfSpecials()->Remove(this);
+
+  SafeDelete(fCanvasVTX);
+  SafeDelete(fCanvasTRK);
+  SafeDelete(eWorking);
+  SafeDelete(ePrevious);
+
+  if (eArrSegPSave) SafeDelete(eArrSegP);
+  if (eArrVSave)    SafeDelete(eArrV);
+  if (eArrTrSave)   SafeDelete(eArrTr);
 }
+
 
 //________________________________________________________________________
 void EdbDisplay::SetArrSegP(TObjArray *arr)
@@ -3876,9 +3863,9 @@ void EdbDisplay::AcceptModifiedParams()
     if(fNumericEntries[0]) eRadMax = fNumericEntries[0]->GetIntNumber();
     if(fNumericEntries[1]) eDpat   = fNumericEntries[1]->GetIntNumber();
     if(fNumericEntries[2]) eImpMax = fNumericEntries[2]->GetIntNumber();
-    if(fNumericEntries[0]) delete fNumericEntries[0];  
-    if(fNumericEntries[1]) delete fNumericEntries[1];  
-    if(fNumericEntries[2]) delete fNumericEntries[2];  
+
+    for (Int_t i = 0; i < 3; i++) SafeDelete(fNumericEntries[i]);
+
     fMain->SendCloseMessage();
     fMain = 0;
 }
@@ -3892,9 +3879,7 @@ void EdbDisplay::CloseDialogModifiedParams()
 void EdbDisplay::CancelDialogModifiedParams()
 {
     eWait_Answer = false;
-    if(fNumericEntries[0]) delete fNumericEntries[0];  
-    if(fNumericEntries[1]) delete fNumericEntries[1];  
-    if(fNumericEntries[2]) delete fNumericEntries[2];  
+    for (Int_t i = 0; i < 3; i++) SafeDelete(fNumericEntries[i]);
     fMain->SendCloseMessage();
     fMain = 0;
 }
@@ -3906,10 +3891,7 @@ void EdbDisplay::AcceptModifiedTrackParams()
     if(fNumericEntries[1]) eM = fNumericEntries[1]->GetNumber();
     if(fNumericEntries[2]) eTImpMax  = fNumericEntries[2]->GetNumber();
     if(fNumericEntries[3]) eTProbMin = fNumericEntries[3]->GetNumber();
-    if(fNumericEntries[0]) delete fNumericEntries[0];  
-    if(fNumericEntries[1]) delete fNumericEntries[1];  
-    if(fNumericEntries[2]) delete fNumericEntries[2];  
-    if(fNumericEntries[3]) delete fNumericEntries[3];  
+    for (Int_t i = 0; i < 4; i++) SafeDelete(fNumericEntries[i]);
     fMain->SendCloseMessage();
     fMain = 0;
 }
@@ -3923,10 +3905,7 @@ void EdbDisplay::CloseDialogModifiedTrackParams()
 void EdbDisplay::CancelDialogModifiedTrackParams()
 {
     eWait_Answer = false;
-    if(fNumericEntries[0]) delete fNumericEntries[0];  
-    if(fNumericEntries[1]) delete fNumericEntries[1];  
-    if(fNumericEntries[2]) delete fNumericEntries[2];  
-    if(fNumericEntries[3]) delete fNumericEntries[3];  
+    for (Int_t i = 0; i < 4; i++) SafeDelete(fNumericEntries[i]);
     fMain->SendCloseMessage();
     fMain = 0;
 }

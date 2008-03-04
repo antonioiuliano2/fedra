@@ -66,19 +66,20 @@ class EdbDisplay: public EdbDisplayBase {
 
  public:
 
-  EdbDisplay() : EdbDisplayBase() { Set0(); };
+  EdbDisplay() : EdbDisplayBase() {Set0();}
   ~EdbDisplay();
 
-  EdbDisplay(const char *title, 
-	     Float_t x0, Float_t x1, 
-	     Float_t y0, Float_t y1, 
-	     Float_t z0, Float_t z1) : 
-  EdbDisplayBase(title, x0, x1, y0, y1, z0, z1)  { Set0(); };
+  EdbDisplay(const char *title,
+	     Float_t x0, Float_t x1,
+	     Float_t y0, Float_t y1,
+	     Float_t z0, Float_t z1,
+	     TCanvas *Canvas = 0) : 
+    EdbDisplayBase(title, x0, x1, y0, y1, z0, z1, Canvas) {Set0();}
 
-  EdbDisplay(const char *title, EdbLayer &la) : 
-	EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
-		       la.Zmin(), la.Zmax())
-		    				 { Set0(); };
+    EdbDisplay(const char *title, EdbLayer &la, TCanvas *Canvas = 0) : 
+      EdbDisplayBase(title, la.Xmin(), la.Xmax(), la.Ymin(), la.Ymax(), 
+		     la.Zmin(), la.Zmax(), Canvas)
+      {Set0();}
 
   static EdbDisplay *EdbDisplayExist(const char *title);
   void Delete();

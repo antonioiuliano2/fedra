@@ -33,7 +33,8 @@ EdbDisplayBase::EdbDisplayBase()
 EdbDisplayBase::EdbDisplayBase(const char *title, 
 			       Float_t x0, Float_t x1,
 			       Float_t y0, Float_t y1, 
-			       Float_t z0, Float_t z1)
+			       Float_t z0, Float_t z1,
+			       TCanvas *Canvas)
 {
    char VPadName[140], TPadName[140];
    char ZoomButName[140], PickButName[140], UnZoomButName[140];
@@ -69,7 +70,16 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    while (*ptitle) { if (*ptitle == ' ') *ptitle = '_'; ptitle++; }
    strcpy(CanTitle, "FEDRA Event Display: ");
    strcat(CanTitle, title);
-   fCanvas = new TCanvas(fCanvasName, CanTitle, 14, 47, 800, 700);
+
+   // if Canvas not defined, then run as standalone viewer
+
+   if (!Canvas) fCanvas = new TCanvas(fCanvasName, CanTitle, 14, 47, 800, 700);
+   else {
+     fCanvas = Canvas;
+     fCanvas->SetName(fCanvasName);
+     fCanvas->SetTitle(CanTitle);
+   }
+
    fCanvas->ToggleEventStatus();
 
   // Create main display pad
@@ -94,18 +104,14 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    fTrigPad->Draw();
    fTrigPad->cd();
 
-   if (fStyle/2 == 1)
-	fTrigPad->SetFillColor(38); // blue shades
-   else
-	fTrigPad->SetFillColor(22); // brown shades
+   if (fStyle/2 == 1) fTrigPad->SetFillColor(38); // blue shades
+   else	fTrigPad->SetFillColor(22);               // brown shades
 
    fTrigPad->SetBorderSize(2);
 
-   Int_t butcolor = 33; // blue shades
-   if (fStyle/2 == 1)
-	butcolor = 33; // blue shades
-   else
-	butcolor = 38; // blue shades
+   Int_t butcolor = 33;              // blue shades
+   if (fStyle/2 == 1) butcolor = 33; // blue shades
+   else	butcolor = 38;               // blue shades
 
    char undov[256];
    sprintf(undov,
@@ -206,15 +212,14 @@ EdbDisplayBase::~EdbDisplayBase()
   //
   // Default destructor
   //
-    if (fMain) delete fMain;
-    fMain = 0;
-    if (fView) delete fView;
-    fView = 0;
-    if (fCanvas) delete fCanvas;
-    fCanvas = 0;
-    if (fDetector) delete fDetector;
-    fDetector = 0;
+
+  SafeDelete(fMain);
+  SafeDelete(fView);
+  SafeDelete(fCanvas);
+  SafeDelete(fDetector);
 }
+
+
 //=============================================================================
 void EdbDisplayBase::Set0()
 {
