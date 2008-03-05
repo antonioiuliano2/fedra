@@ -1141,7 +1141,6 @@ EdbRun *EdbScanProc::InitRun(int id[4])
   LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
   return new EdbRun(str.Data(),"RECREATE");
 }
-
 //-------------------------------------------------------------------
 bool EdbScanProc::AddParLine(const char *file, const char *line)
 {
