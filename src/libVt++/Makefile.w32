@@ -1,8 +1,17 @@
+!IF "$(CFG)" == "" 
+CFG = Release
+!ENDIF 
+
 all:
-   cd vt++
-   nmake /nologo /F Makefile.w32
+   @cd vt++
+   @nmake /nologo CFG=$(CFG) /F Makefile.w32
 
 clean:
-   cd vt++
-   nmake /nologo /F Makefile.w32 clean
+   @cd vt++
+   @nmake /nologo CFG=$(CFG)  /F Makefile.w32 clean
+
+check:
+   @cd vt++
+   @nmake /nologo CFG=$(CFG)  /F Makefile.w32 check
+
 

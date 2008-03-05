@@ -115,15 +115,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\install.cmd = ..\..\install.cmd
 		..\..\src\makeall.cmd = ..\..\src\makeall.cmd
 		..\..\src\appl\macros\makepar.C = ..\..\src\appl\macros\makepar.C
-		..\..\src\config\RootDef.mk = ..\..\src\config\RootDef.mk
 		..\..\src\config\RootDef.windows.mk = ..\..\src\config\RootDef.windows.mk
 		..\..\src\appl\macros\rootlogon.C = ..\..\src\appl\macros\rootlogon.C
-		..\..\src\config\TargetsDef.mk = ..\..\src\config\TargetsDef.mk
 		..\..\src\config\TargetsDef.windows.mk = ..\..\src\config\TargetsDef.windows.mk
 		..\..\src\appl\macros\test_oracle.C = ..\..\src\appl\macros\test_oracle.C
 		..\..\src\appl\macros\traceback.C = ..\..\src\appl\macros\traceback.C
 		..\..\uninstall.cmd = ..\..\uninstall.cmd
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "display", "display.vcproj", "{5BC2FD27-9867-4BB5-A974-AD617F6DE4BA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEGraphTool", "libEGraphTool.vcproj", "{3F367432-3C18-45E4-90ED-21249540C406}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -211,6 +213,14 @@ Global
 		{61100955-376C-431B-88D0-0EF3744451F1}.Debug|Win32.Build.0 = Debug|Win32
 		{61100955-376C-431B-88D0-0EF3744451F1}.Release|Win32.ActiveCfg = Release|Win32
 		{61100955-376C-431B-88D0-0EF3744451F1}.Release|Win32.Build.0 = Release|Win32
+		{5BC2FD27-9867-4BB5-A974-AD617F6DE4BA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5BC2FD27-9867-4BB5-A974-AD617F6DE4BA}.Debug|Win32.Build.0 = Debug|Win32
+		{5BC2FD27-9867-4BB5-A974-AD617F6DE4BA}.Release|Win32.ActiveCfg = Release|Win32
+		{5BC2FD27-9867-4BB5-A974-AD617F6DE4BA}.Release|Win32.Build.0 = Release|Win32
+		{3F367432-3C18-45E4-90ED-21249540C406}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3F367432-3C18-45E4-90ED-21249540C406}.Debug|Win32.Build.0 = Debug|Win32
+		{3F367432-3C18-45E4-90ED-21249540C406}.Release|Win32.ActiveCfg = Release|Win32
+		{3F367432-3C18-45E4-90ED-21249540C406}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

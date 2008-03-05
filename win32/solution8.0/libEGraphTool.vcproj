@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="libEOracle"
-	ProjectGUID="{1A51EAF8-C292-4F49-8180-C20CA552B98D}"
-	RootNamespace="libEOracle"
+	Name="libEGraphTool"
+	ProjectGUID="{3F367432-3C18-45E4-90ED-21249540C406}"
+	RootNamespace="libEGraphTool"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +26,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE /F Makefile.w32"
-				ReBuildCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE /F Makefile.w32 /a"
-				CleanCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE  /F Makefile.w32 clean"
-				Output="..\..\lib\libEOracle.dll"
+				BuildCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE  clean"
+				Output="..\..\lib\libEGraphTool.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -49,10 +49,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE /F Makefile.w32  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE /F Makefile.w32  CFG=&quot;Debug&quot; /a"
-				CleanCommandLine="cd ..\..\src\libEOracle&#x0D;&#x0A;NMAKE  /F Makefile.w32  CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libEOracle.dll"
+				BuildCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libEGraphTool&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
+				Output="..\..\lib\libEGraphTool.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -70,27 +70,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleResult.cxx"
+				RelativePath="..\..\src\libEGraphTool\EGraphHits.cxx"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleRow.cxx"
+				RelativePath="..\..\src\libEGraphTool\EGraphRec.cxx"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleServer.cxx"
+				RelativePath="..\..\src\libEGraphTool\EGraphRecProc.cxx"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE2.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE2W.cxx"
+				RelativePath="..\..\src\libEGraphTool\EGraphTool.cxx"
 				>
 			</File>
 		</Filter>
@@ -99,31 +91,23 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="..\..\src\libEOracle\EOracleLinkDef.h"
+				RelativePath="..\..\src\libEGraphTool\EGraphHits.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleResult.h"
+				RelativePath="..\..\src\libEGraphTool\EGraphRec.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleRow.h"
+				RelativePath="..\..\src\libEGraphTool\EGraphRecProc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleServer.h"
+				RelativePath="..\..\src\libEGraphTool\EGraphTool.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE2.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEOracle\TOracleServerE2W.h"
+				RelativePath="..\..\src\libEGraphTool\EGraphToolLinkDef.h"
 				>
 			</File>
 		</Filter>
@@ -133,11 +117,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEOracle\Makefile"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\libeoracle\makefile.w32"
+			RelativePath="..\..\src\libEGraphTool\Makefile"
 			>
 		</File>
 	</Files>

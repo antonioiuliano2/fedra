@@ -3,39 +3,39 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-NAME      = Vt++
-NAME2     = vt
+NAME          = vt
 CINT_NAME     = vtCint
 LINKDEF_NAME  = cintdict\LinkDef.hh
 
-TARGETSO       = $(LIB_DIR)/lib$(NAME).$(DllSuf)
+TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
 
 #------------------------------------------------------------------------------
-headers =  CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
+headers  = CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
            VtMatrix.hh VtNegMatrix.hh VtRelation.hh VtRelationList.hh \
            VtSqMatrix.hh VtSymMatrix.hh VtTrack.hh VtVector.hh VtVertex.hh
 
-SrcSuf    = C
+SrcSuf   = C
   
-classes   = $(headers:.hh=.c)
+classes  = $(headers:.hh=.c)
 
-CINT    =  include\CMatrix.hh        include\VtDistance.hh \
+CINT     = include\CMatrix.hh        include\VtDistance.hh \
            include\VtIni.hh          include\VtKalman.hh   \
            include\VtMassC.hh        include\VtMatrix.hh   \
            include\VtNegMatrix.hh    include\VtRelation.hh \
            include\VtRelationList.hh include\VtSqMatrix.hh \
            include\VtSymMatrix.hh    include\VtTrack.hh    \
-           include\VtVector.hh       include\VtVertex.hh cintdict\LinkDef.hh
-SRC       = $(classes) $(CINT_NAME).cxx
-OBJS      = $(SRC:.cxx=.obj)
-OBJS      = $(OBJS:.c=.obj)
+           include\VtVector.hh       include\VtVertex.hh $(LINKDEF_NAME)
+
+SRC      = $(classes) $(CINT_NAME).cxx
+OBJS     = $(SRC:.cxx=.obj)
+OBJS     = $(OBJS:.c=.obj)
 
 CXXFLAGS = $(CXXFLAGS) -I$(INC_DIR)
-CXXFLAGS      =  $(CXXFLAGS)  -D_USESYSAL -DUSE_ROOT
+CXXFLAGS = $(CXXFLAGS) -D_USESYSAL -DUSE_ROOT
 
 #------------------------------------------------------------------------------
 
-all: $(TARGETSO) $(LIB_DIR)/libvt.lib $(LIB_DIR)/libvt.dll  
+all: $(TARGETSO)
 
 #includes: $(headers)
 #	cp $(headers) $(INC_DIR)
@@ -43,7 +43,6 @@ all: $(TARGETSO) $(LIB_DIR)/libvt.lib $(LIB_DIR)/libvt.dll
 $(TARGETSO): $(OBJS)
     BINDEXPLIB  $* $(OBJS) > $*.def
     lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
-#    $(LD) $(DLLFLAGS) $(LDDEBUG) $(PROJECT_LIBS) $(OBJS) $*.exp $(LIBS) $(OutPutOpt)$(TARGETSO) 
     $(LD) $(SOFLAGS)  $(LDFLAGS) $(OBJS) $*.exp  $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
     $(MT_DLL)
     @echo "$@ done"
@@ -56,7 +55,11 @@ $(CINT_NAME).obj: $(CINT_NAME).cxx
     $(CXX) $(CXXFLAGS) -DCINTOBJECT -c $(CINT_NAME).cxx
 
 clean:
-    del /q $(OBJS) *Cint.* *.pdb *.def "$(LIB_DIR)"\lib$(NAME).* "$(LIB_DIR)"\lib$(NAME2).*
+    del /q $(OBJS) *Cint.* *.pdb *.def "$(LIB_DIR)"\lib$(NAME).* 
+
+check:
+	@for %F in ($(TARGETSO:.dll=.lib)) DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
+	@for %F in ($(TARGETSO))           DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
 
 depend:
         @makedepend -I$(INCLUDE) *.cxx >& /dev/null
@@ -81,11 +84,3 @@ $(NAME)Dict.$(SrcSuf): $(headers) $(NAME)LinkDef.h
 # /TP compile all files as C++ even if they have *.C extension
 .C.$(ObjSuf):
    $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -TP -c $<
-
-
-#------------------------------------------------------------------------------
-# create hardlinks
-$(LIB_DIR)/lib$(NAME2).lib $(LIB_DIR)/lib$(NAME2).dll  :$(TARGETSO) 
-    if exist "$(LIB_DIR)"\lib$(NAME2).lib del "$(LIB_DIR)"\lib$(NAME2).*
-    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\lib$(NAME2).lib  "$(TARGETSO:.dll=.lib)"
-    $(PROJECT_ROOT)\win32\tools\fsutil hardlink create "$(LIB_DIR)"\lib$(NAME2).dll  "$(TARGETSO)"

@@ -23,11 +23,11 @@ OBJS          = $(headers:.h=.obj) $(NAME)Dict.$(ObjSuf) $(EXTRAOBJS)
 TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
 
 $(TARGETSO):  $(OBJS)
-    BINDEXPLIB  $* $(OBJS) > $*.def
-    lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
-    $(LD) $(SOFLAGS) $(LDFLAGS) $(OBJS) $*.exp $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
-    $(MT_DLL)
-    @echo "$@ done"
+	BINDEXPLIB  $* $(OBJS) > $*.def
+	lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
+	$(LD) $(SOFLAGS) $(LDFLAGS) $(OBJS) $*.exp $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+	$(MT_DLL)
+	@echo "$@ done"
 
 !ELSE
 
@@ -53,13 +53,17 @@ TARGET    =
 all: $(TARGETSO) $(TARGET)
 
 clean:
-    @for %F IN ($(OBJS) *Dict.* *.pdb ) DO IF EXIST "%F" del /q "%F"
-    @for %F in ($(TARGETSO)) DO @FOR %F IN ( %~dpnF.def %~dpnF.exp %~dpnF.lib %~dpnF.dll.*  ) DO IF EXIST "%F" del /q "%F"
-    @for %F in ($(TARGET))   DO @FOR %F IN ( %~nF.obj %~dpnF.exe.* ) DO IF EXIST "%F" del /q "%F"
+	@for %F IN ($(OBJS) *Dict.* *.pdb ) DO IF EXIST "%F" del /q "%F"
+	@for %F in ($(TARGETSO)) DO @FOR %F IN ( %~dpnF.def %~dpnF.exp %~dpnF.lib %~dpnF.dll.*  ) DO IF EXIST "%F" del /q "%F"
+	@for %F in ($(TARGET))   DO @FOR %F IN ( %~nF.obj %~dpnF.exe.* ) DO IF EXIST "%F" del /q "%F"
 
 distclean:      clean
-       @del *.exe *.root *.ps *.lib *.dll
+	@del *.exe *.root *.ps *.lib *.dll
 
+check:
+	@for %F in ($(TARGETSO:.dll=.lib)) DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
+	@for %F in ($(TARGETSO))           DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
+	@for %F in ($(TARGET))             DO @IF EXIST %F ( @ECHO bin\%~nxF...ok ) ELSE ( @ECHO bin\%~nxF...ERROR! )
 
 ###
 

@@ -12,7 +12,7 @@ headers       = TOracleServerE2W.h TOracleServerE2.h TOracleServerE.h TOracleSer
 
 PROJECT_LIBS  = $(PROJECT_LIBS)     -LIBPATH:$(OCCIHOME)/sdk/lib/msvc        \
                 /DEFAULTLIB:ociw32  /DEFAULTLIB:oci  /DEFAULTLIB:oraocci10   \
-                -lEdb -lEmath -lEphys -lvt -lEdr
+                -lEdb -lEmath -lEphys -lvt -lEdr -lScan
 
 INC_DIR       = $(INC_DIR)   -I$(ORAINC)
 CXXFLAGS      = $(CXXFLAGS)  -DNOTROOTCINT

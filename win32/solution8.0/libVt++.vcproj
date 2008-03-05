@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="libVt++"
 	ProjectGUID="{0527083D-B335-443C-9502-CB876BAC95A1}"
+	RootNamespace="libVt++"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,7 +27,7 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;"
-				ReBuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; /a"
+				ReBuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; clean&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;&#x0D;&#x0A;"
 				CleanCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot; clean"
 				Output="..\..\lib\libvt++.dll"
 				PreprocessorDefinitions=""
@@ -49,9 +50,9 @@
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; /a"
+				ReBuildCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; clean&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; "
 				CleanCommandLine="cd ..\..\src\libVt++&#x0D;&#x0A;NMAKE /f &quot;Makefile.w32&quot;  CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libvt++.dll"
+				Output="..\..\lib\libvt.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -68,7 +69,7 @@
 			Name="smatrix"
 			>
 			<Filter
-				Name="Header Files No. 1"
+				Name="Header Files"
 				Filter="h;hpp;hxx;hm;inl;hh"
 				>
 				<File
