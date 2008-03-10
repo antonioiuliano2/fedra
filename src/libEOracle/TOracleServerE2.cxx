@@ -503,15 +503,18 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
 }
 
 //------------------------------------------------------------------------------------
-Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id)
+Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id)
 {
+  // Get the last process operation ID related to a given brick and program setting
+
   char *query= new char[2048];
 
   try{
     if (!fStmt)
       fStmt = fConn->createStatement();
 
-    sprintf(query,"select ID from tb_proc_operations%s where id_eventbrick=%s",eRTS.Data(), id_eventbrick);
+    sprintf(query,"select ID from tb_proc_operations%s where id_eventbrick=%s and id_programsettings=%s"
+	    ,eRTS.Data(), id_eventbrick, id_programsettings);
 
     fStmt->setSQL(query);
     Log(2,"GetProcessOperationID","execute sql query: %s ...",query);
@@ -523,14 +526,16 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id)
     delete rs;
  
   } catch (SQLException &oraex) {
-    Error("TOracleServerE", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
   return 0;
 }
 
 //------------------------------------------------------------------------------------
-Int_t TOracleServerE2::GetProcessOperationID(char *id_programsettings, char *id_eventbrick, char *id_plate, char *id)
+Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id_plate, char *id)
 {
+  // Get the last process operation ID related to a given brick, plate and program setting
+
   char *query= new char[2048];
 
   try{
@@ -552,10 +557,131 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_programsettings, char *id_
     delete rs;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
   return 0;
 }
+
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick,char *id_programsettings)
+{
+  // Dump on the screen the list of process operation IDs related to a given brick and program setting
+
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID,to_char(starttime) from tb_proc_operations%s where id_eventbrick=%s and id_programsettings=%s", 
+	    eRTS.Data(), id_eventbrick, id_programsettings);
+
+    fStmt->setSQL(query);
+    Log(2,"DumpProcessOperations","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      printf("Operation: %s, Start time: %s\n",rs->getString(1).c_str(),rs->getString(2).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::GetId_EventBrick(char *id_brick,char *id_set, char *id)
+{
+  // Get the brick ID related to a given brick name and brick-set
+
+  char *query= new char[2048];
+   try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID from tb_eventbricks%s where id_brick=%s and id_set=%s ",
+	    eRTS.Data(), id_brick, id_set);
+
+    fStmt->setSQL(query);
+    Log(2,"GetId_EventBrick","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      strcpy(id,rs->getString(1).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "GetId_Eventbrick; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::GetId_Zone(char *id_eventbrick,char *id_plate, char *id_process_operation, char *series, char* id)
+{
+  // Get the zone ID related to a given brick, plate, process operation and series
+
+  char *query= new char[2048];
+   try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID from tb_zones%s where id_eventbrick=%s and id_plate=%s and id_processoperation=%s and series=%s", 
+	    eRTS.Data(), id_eventbrick, id_plate, id_process_operation, series);
+
+    fStmt->setSQL(query);
+    Log(2,"GetId_Zone","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      strcpy(id,rs->getString(1).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "GetId_Zone; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::GetId_ScanBack_Path(char *id_eventbrick, char *id_process_operation, int path, char *id)
+{
+  // Get the scanback path ID related to a given brick, process operation and path
+
+  char *query= new char[2048];
+   try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID from TB_SCANBACK_PATHS%s where id_eventbrick=%s and ID_PROCESSOPERATION=%s and PATH=%d", 
+	    eRTS.Data(), id_eventbrick, id_process_operation, path);
+
+    fStmt->setSQL(query);
+    Log(2,"GetId_ScanBack_Path","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      strcpy(id,rs->getString(1).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "GetId_ScanBack_Path; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
 
 //------------------------------------------------------------------------------------
 Int_t TOracleServerE2::GetProcessType(char *IDPROCESS)
