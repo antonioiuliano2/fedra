@@ -1,4 +1,5 @@
 #include "TOracleServerE2W.h"
+#include "EdbLog.h"
 #include "TTree.h"
 #include "EdbPattern.h"
 #include "EdbAffine.h"
@@ -36,11 +37,10 @@ Int_t  TOracleServerE2W::AddProcessOperation(char *id_machine,
 	    id_machine, id_programsettings, id_requester, id_parent_operation, id_eventbrick, id_plate, driverlevel, id_calibration, starttime, finishtime, success);
     
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddProcessOperation","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("Process operation added\n");
+    Log(2,"AddProcessOperation","Process operation added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddProcessOperation; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -69,12 +69,11 @@ Int_t  TOracleServerE2W::AddEventBricks(char *databrick)
      VALUES (%s)", databrick);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddEventBricks","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
 
-    printf("Brick added\n");
+    Log(2,"AddEventBricks","Brick added");
     return 0;
 
   } catch (SQLException &oraex) {
@@ -110,12 +109,11 @@ Int_t  TOracleServerE2W::AddBrick_Set(
  	    id, idrange_min, idrange_max, id_partition);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddBrick_Set","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
 
-    printf("Brick_Set added, Partition created\n");
+    Log(2,"AddBrick_Set","Brick_Set added, partition created");
     return 0;
 
   } catch (SQLException &oraex) {
@@ -128,8 +126,8 @@ Int_t  TOracleServerE2W::AddBrick_Set(
 
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2W::AddBrick_Space(
-				      char *id_brick, 
-				      char *id_set)
+					char *id_brick, 
+					char *id_set)
 {
   // Adds a brick-space into the DB
   // Procedure involved: PC_ADD_BRICK_SPACE
@@ -142,20 +140,19 @@ Int_t  TOracleServerE2W::AddBrick_Space(
     if (!fStmt)
       fStmt = fConn->createStatement();
 
-   sprintf(query,"CALL PC_ADD_BRICK_SPACE(%s, %s)",
+    sprintf(query,"CALL PC_ADD_BRICK_SPACE(%s, %s)",
  	    id_brick, id_set);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddBrick_Space","execute sql query: %s ...",query);
     fStmt->executeUpdate();
-    //    Query(query);
     Query(commit);
 
-    printf("Brick_Space mapped\n");
+    Log(2,"AddBrick_Space","Brick_Space mapped");
     return 0;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE2W", "AddBrick_Set; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2W", "AddBrick_Space; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
 
   return 1;
@@ -184,11 +181,10 @@ Int_t  TOracleServerE2W::AddPlate(char *id_eventbrick,
  VALUES (%s, %s)", id_eventbrick, dataplate);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddPlate","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("Plate added\n");
+    Log(2,"AddPlate","Plate added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddPlate; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -221,11 +217,10 @@ Int_t  TOracleServerE2W::AddPlateCalibration(char *id_eventbrick,
  VALUES (%s, %s, %s)", id_eventbrick, id_process_operation, datacalibration);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddPlateCalibration","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("PlateCalibration added\n");
+    Log(2,"AddPlateCalibration","PlateCalibration added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddPlateCalibration; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -254,11 +249,10 @@ Int_t  TOracleServerE2W::AddZone(char *data)
     TXX, TXY, TYX, TYY, TDX, TDY)VALUES (%s)",data);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddZone","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("Zone added\n");
+    Log(2,"AddZone","Zone added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddZone; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -293,10 +287,10 @@ Int_t  TOracleServerE2W::AddBasetracks(EdbPattern &pat, char *id_eventbrick, cha
       }
 
     Query(commit);
-    printf("%d Basetrack added\n",pat.N());
+    Log(2,"AddBaseTracks","%d basetracks added\n",pat.N());
     
   } catch (SQLException &oraex) {
-    Error("TOracleServerE2W", "AddBaseTrack; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2W", "AddBaseTracks; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
 
   return 0;
@@ -323,11 +317,10 @@ Int_t  TOracleServerE2W::AddView(char *dataView)
  VALUES (%s)", dataView);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddView","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("View added\n");
+    Log(2,"AddView","View added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddView; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -358,11 +351,10 @@ Int_t  TOracleServerE2W::AddMicroTrack(char *datamicro)
  VALUES (%s)", datamicro);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(3,"AddMicroTrack","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
 //    Query(commit);
-    printf("MicroTrack Added\n");
+    Log(3,"AddMicroTrack","MicroTrack added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddMicroTrack; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -391,11 +383,10 @@ Int_t  TOracleServerE2W::AddBaseTrack(char *database)
  VALUES (%s)", database);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(3,"AddBaseTrack","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("BaseTrack Added\n");
+    Log(3,"AddBaseTrack","BaseTrack added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddBaseTrack; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -423,11 +414,10 @@ Int_t  TOracleServerE2W::AddScanbackPath(char *datapath)
     INSERT INTO OPERA.TB_SCANBACK_PATHS (ID_EVENTBRICK, ID_PROCESSOPERATION, PATH, ID_START_PLATE, ID_FORK_PATH, ID_CANCEL_PLATE)VALUES (%s)",datapath);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddScanbackPath","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("ScanbackPath added\n");
+    Log(2,"AddScanbackPath","ScanbackPath added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddScanbackPath; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -456,11 +446,10 @@ Int_t  TOracleServerE2W::AddScanbackPrediction(char *dataprediction)
     POSTOL1,POSTOL2,SLOPETOL1,SLOPETOL2,FRAME,ID_ZONE,ID_CANDIDATE,DAMAGED,ISMANUAL)VALUES (%s)", dataprediction);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n", query);
+    Log(2,"AddScanbackPrediction","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("ScanbackPrediction added\n");
+    Log(2,"AddScanbackPrediction","ScanbackPrediction added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddScanbackPrediction; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -490,11 +479,10 @@ Int_t  TOracleServerE2W::AddTemplateMarkSets(char *datamarks)
     VALUES (%s)", datamarks);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n", query);
+    Log(2,"AddTemplateMarkSets","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("TemplateMarkSets added\n");
+    Log(2,"AddTemplateMarkSets","TemplateMarkSets added");
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddTemplateMarkSets; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -528,11 +516,10 @@ Int_t  TOracleServerE2W::AddPlateCalibration(char *id_eventbrick, char *id_proce
 	    plate->ID(), plate->Z(), a->A11(), a->A12(), a->A21(), a->A22(), a->B1(), a->B2());
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"AddPlateCalibration","execute sql query: %s ...",query);
     fStmt->execute();
-    //    Query(query);
     Query(commit);
-    printf("PlateCalibration added\n");
+    Log(2,"AddPlateCalibration","PlateCalibration added");  
     
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "AddPlateCalibration; failed: (error: %s)", (oraex.getMessage()).c_str());
@@ -550,7 +537,7 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   // Details: no queries directly executed
 
   if(!view) {
-    fprintf(stderr,"Error! view=0\n");
+    Log(1,"AddView","Error! view=0");
     return 1;
   }
     
@@ -567,10 +554,10 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   int ViewID = view->GetViewID();
   int nsegV  = view->Nsegments();
   
-  printf("Area %d, View %d is in the side %d and contains %d segments\n",AreaID,ViewID,side,nsegV);
-  printf("POSX %f, POSY %f\n",xview,yview);
-  printf("%f %f %f %f\n",view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),
-	 view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4());
+  Log(2,"AddView","Area %d, View %d is in the side %d and contains %d segments",AreaID,ViewID,side,nsegV);
+  Log(2,"AddView","POSX %f, POSY %f",xview,yview);
+  Log(2,"AddView","%f %f %f %f",view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),
+      view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4());
   
   char datacalibview[2048];
   if (side==1)
@@ -597,8 +584,8 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
     AddMicroTrack(datamicro);
     
   }
-  
-  printf("View Added: %d microtracks added\n",nsegV);
+
+  Log(2,"AddView","View added: %d microtracks added",nsegV);
 
   return 0;
 }
@@ -607,7 +594,8 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
 
 int TOracleServerE2W::AddBasetracks(TTree *tree, char *id_eventbrick, char *id_zone)
 {
-  // Adds a set of basetracks from a TTree (cp.root file) into the DB
+  // Adds a set of basetracks from a TTree (cp.root file) into the DB,
+  // assuming that the corresponding microtracks are already added into the DB
   // Table involved: TB_MIPBASETRACKS through AddBaseTrack(...)
   // Details: no queries directly executed
 
@@ -644,12 +632,10 @@ int TOracleServerE2W::AddBasetracks(TTree *tree, char *id_eventbrick, char *id_z
 	    id_eventbrick, id_zone, i, s->X(), s->Y(), s->TX(), s->TY(), s->W(), s->Volume(), s->Chi2(),
 	    1, id1, 2, id2);
 
-    //    printf("%s\n",data);
-
     AddBaseTrack(data);
   }
 
-  printf("Basetracks Added: %d basetracks added assuming microtracks previously added\n",nentr);
+  Log(2,"AddBasetracks","Basetracks added: %d basetracks added assuming microtracks previously added",nentr);
 
   return nentr;
 }
@@ -683,12 +669,12 @@ Int_t  TOracleServerE2W::DeleteBrick(char *id_eventbrick)
 
     for (int i=0;i<11;i++) {
 	fStmt->setSQL(query[i]);
-	printf("\nexecute sql query: %s ...\n",query[i]);
+	Log(2,"DeleteBrick","execute sql query: %s ...",query);
 	fStmt->execute();
     }
     Query(commit);
 
-    printf("Brick deleted\n");
+    Log(2,"DeleteBrick","Brick deleted");
     return 0;
 
   } catch (SQLException &oraex) {
@@ -715,12 +701,12 @@ Int_t  TOracleServerE2W::DeleteBrickSpace(char *id_brick)
     sprintf(query,"call pc_remove_brick_space(%s,'OPERA NA BK01')",id_brick);
 
     fStmt->setSQL(query);
-    printf("\nexecute sql query: %s ...\n",query);
+    Log(2,"DeleteBrickSpace","execute sql query: %s ...",query);
     fStmt->execute();
 
     Query(commit);
 
-    printf("BrickSpace deleted\n");
+    Log(2,"DeleteBrickSpace","BrickSpace deleted");
     return 0;
 
   } catch (SQLException &oraex) {
@@ -756,12 +742,12 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
 
     for (int i=0;i<9;i++) {
 	fStmt->setSQL(query[i]);
-	printf("\nexecute sql query: %s ...\n",query[i]);
+	Log(2,"DeleteOperation","execute sql query: %s ...",query);
 	fStmt->execute();
     }
     Query(commit);
 
-    printf("Operation deleted\n");
+    Log(2,"DeleteOperation","Operation deleted");
     return 0;
 
   } catch (SQLException &oraex) {
