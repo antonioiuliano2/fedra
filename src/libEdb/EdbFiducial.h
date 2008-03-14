@@ -116,7 +116,7 @@ class EdbMarksSet : public TObject {
   Int_t           ReadDB( char *file );
   Int_t           ReadDollar( char *file, EdbMarksBox *mbox );
 
-  Int_t           ChangeMapStringSpacer( TString &str, char spacer);
+  Int_t           ChangeMapStringSpacer( TString &str, char oldspacer, char newspacer);
   Int_t           ReadMap( char *file, char spacer='_');
   Int_t           WriteMap( char *file, char spacer='_');
 

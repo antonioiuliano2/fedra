@@ -382,12 +382,11 @@ Int_t  EdbMarksSet::ReadDollar( char *file, EdbMarksBox *mbox )
 }
 
 //______________________________________________________________________________
-Int_t  EdbMarksSet::ChangeMapStringSpacer( TString &str, char spacer)
+Int_t  EdbMarksSet::ChangeMapStringSpacer( TString &str, char oldspacer, char newspacer)
 {
   // Changes the spacer inside the map string with a new character
-  char oldspacer = str[7];
   for (int is=0;is<str.Length();is++) 
-    if(str[is]==oldspacer) str[is]=spacer;
+    if(str[is]==oldspacer) str[is]=newspacer;
 
   return(1);
 }
@@ -396,17 +395,17 @@ Int_t  EdbMarksSet::ChangeMapStringSpacer( TString &str, char spacer)
 Int_t  EdbMarksSet::ReadMap( char *file, char spacer)
 {
   // Reads map file and adds informations to eAbsolute
-  Int_t nmarks=0;
-  Int_t mark;
-  Float_t x,y;
+  Int_t nmarks = 0;
+  Int_t mark, flag;
+  Float_t x, y;
 
   FILE *fp = fopen( file,"r");
 
   TString str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
-  TString str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%*d";
+  TString str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
 
-  ChangeMapStringSpacer(str_header,spacer);
-  ChangeMapStringSpacer(str_mark,spacer);
+  ChangeMapStringSpacer(str_header,'_',spacer);
+  ChangeMapStringSpacer(str_mark,'_',spacer);
 
   if(!fp)
     { Log(1,"EdbMarksSet::ReadMap","ERROR: can not open file %s\n", file); return 0; }
@@ -418,9 +417,9 @@ Int_t  EdbMarksSet::ReadMap( char *file, char spacer)
 
   for (int imarks=0;imarks<nmarks;imarks++)
     {
-      if (fscanf(fp, str_mark.Data(), &mark,&x,&y) != 3)
+      if (fscanf(fp, str_mark.Data(), &mark, &x, &y, &flag) != 4)
 	{ Log(1,"EdbMarksSet::ReadMap","ERROR: file %s is empty or wrong format\n", file); return 0; }
-      GetAbsolute()->AddMark(mark,x,y);
+      GetAbsolute()->AddMark(mark,x,y,flag);
     }
 
   fclose(fp);
@@ -437,11 +436,11 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer)
 
   FILE *fp = fopen( file,"w");
 
-  TString str_header = "mapext:_%ld_1_0_0;_%d_%f_%f_%f_%f";
-  TString str_mark = ";_%d_%f_%f_%f_%f_1_1_1";
+  TString str_header = "mapext:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
+  TString str_mark = ";_%d_%0.4f_%0.4f_%0.4f_%0.4f_1_1_%d";
 
-  ChangeMapStringSpacer(str_header,spacer);
-  ChangeMapStringSpacer(str_mark,spacer);
+  ChangeMapStringSpacer(str_header,'_',spacer);
+  ChangeMapStringSpacer(str_mark,'_',spacer);
 
   if(!fp)
     { Log(1,"EdbMarksSet::ReadMap","ERROR: can not open file %s\n", file); return 0; }
@@ -453,10 +452,9 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer)
   for (int imarks=0;imarks<nmarks;imarks++)
     {
       EdbMark *mark = GetAbsolute()->GetMark(imarks);
-      fprintf(fp, str_mark.Data(), mark->GetID(),mark->GetX(),mark->GetY(),mark->GetX(),mark->GetY());
+      fprintf(fp, str_mark.Data(), mark->GetID(),mark->GetX(),mark->GetY(),mark->GetX(),mark->GetY(),mark->Flag());
     }
   
-  fprintf(fp,"\n");
   fclose(fp);
 
   Log(3,"EdbMarksSet::WriteMap","%d marks are written as string map in the file %s\n", nmarks, file);
