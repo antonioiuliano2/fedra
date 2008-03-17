@@ -90,8 +90,8 @@ cd $installdir
 
 # install config files
 
-test -d $FEDRA_ROOT/config || mkdir $FEDRA_ROOT/config
-cp  $PROJECT_SRC/appl/config/*cfg $FEDRA_ROOT/config
-cd $installdir
+#test -d $FEDRA_ROOT/config || mkdir $FEDRA_ROOT/config
+#cp  $PROJECT_SRC/appl/config/*cfg $FEDRA_ROOT/config
+#cd $installdir
 
 

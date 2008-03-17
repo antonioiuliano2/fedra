@@ -159,7 +159,7 @@ EGraphRecProc::EGraphRecProc()
   fUseMom      = true;  // use or not track momentum for vertex calculations
   fUseSegPar   = false; // use only the nearest measured segments for 
                         // vertex fit (as Neuchatel)
-  fDZmax       = 3000.; // maximum z-gap in the track-vertex group
+  fDZmax       = 10000.; // maximum z-gap in the track-vertex group
   fProbMinV    = 0.001; // minimum acceptable probability for chi2-distance 
                         // between tracks
   fImpMax      = 20.;   // maximal acceptable impact parameter [microns] 
@@ -178,7 +178,7 @@ EGraphRecProc::~EGraphRecProc()
 EdbVertexRec *EGraphRecProc::VertexRec()
 {
   Int_t pID_VS[4] = {fBrickToProc.brickId, 0, fBrickToProc.ver,
-		     fProcId.volumeScan};
+		     fProcId.interCalib};
 
   Int_t firstPlate = fBrickToProc.firstPlate;
   Int_t lastPlate  = fBrickToProc.lastPlate;

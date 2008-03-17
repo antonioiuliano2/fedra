@@ -8,6 +8,7 @@ class EdbScanProc;
 class EdbScanSet;
 class EdbScanCond;
 class EdbVertexRec;
+class EdbPVRec;
 
 // brick to process
 

@@ -558,10 +558,8 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
   xv = vv->X();
   yv = vv->Y();
   zv = vv->Z();
-  v->SetPoint(0, 
-	       xv, 
-	       yv, 
-	       zv );
+
+  v->SetPoint(0, xv, yv, zv);
   v->SetMarkerStyle(kFullCircle);
   if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
   else               v->SetMarkerColor(kWhite);

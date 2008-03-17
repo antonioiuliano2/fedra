@@ -762,7 +762,7 @@ void EdbDisplayBase::DrawViewGL()
    pad->cd();
    TView *view = pad->GetView();
    if (!view) return;
-   pad->GetViewer3D("OPENGL");
+   pad->GetViewer3D("ogl");
    //pad->x3d("OPENGL");
 }
 

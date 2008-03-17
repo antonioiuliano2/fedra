@@ -23,9 +23,9 @@ fi
 if [[ -a $installdir/macros ]] ; then
   rm -rf $installdir/macros
 fi
-if [[ -a $installdir/config ]] ; then
-  rm -rf $installdir/config
-fi
+#if [[ -a $installdir/config ]] ; then
+#  rm -rf $installdir/config
+#fi
 if [[ -a $installdir/setup_new.sh ]] ; then
   rm $installdir/setup_new.sh
 fi

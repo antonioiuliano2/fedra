@@ -6,7 +6,6 @@
 #include <TGNumberEntry.h>
 #include <TTree.h>
 #include "EdbView.h"
-#include "EGraphHits.h"
 #include "EGraphRecProc.h"
 
 class TThread;
@@ -19,6 +18,7 @@ class EdbPattern;
 class EdbScanSet;
 class EdbPVRec;
 class EdbVertexRec;
+class EdbDisplay;
 
 
 class EGraphRec {
@@ -75,7 +75,7 @@ class EGraphRec {
   EdbPVRec            *fFoundTracks;
   EdbVertexRec        *fVertexRec;
   EdbScanSet          *fScanSet;
-  EGraphHits          *fGraphHits;
+  EdbDisplay          *fDisplay;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;
   TThread             *fThSBProcess;

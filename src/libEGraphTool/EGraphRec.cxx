@@ -45,7 +45,6 @@ EGraphRec::EGraphRec()
 //----------------------------------------------------------------------------
 EGraphRec::~EGraphRec() 
 {
-  SafeDelete(fGraphHits);
   SafeDelete(fThSBProcess);
   SafeDelete(fThSBCheckProcess);
   SafeDelete(fPredTracks);
@@ -92,6 +91,9 @@ void EGraphRec::StartScanBack()
 
   InitScanSet();
 
+  SafeDelete(fFoundTracks);
+  fFoundTracks  = new EdbPVRec();
+
   fThSBProcess->Run();                // Run scan back Process in Thread mode
   fThSBCheckProcess->Run();           // Check the end of job
   fButtonSBStart->SetEnabled(kFALSE); // Disable Execution button
@@ -107,10 +109,8 @@ void EGraphRec::StartVertexRec()
 
   fBrickToProc.brickId    = fEntryProcBrickId->GetIntNumber();
   fBrickToProc.ver        = fEntryProcVer->GetIntNumber();
-//   fBrickToProc.firstPlate = fEntrySBFirstPlate->GetIntNumber();
-//   fBrickToProc.lastPlate  = fEntrySBLastPlate->GetIntNumber();
-  fBrickToProc.firstPlate = 34;
-  fBrickToProc.lastPlate  = 40;
+  fBrickToProc.firstPlate = fEntrySBFirstPlate->GetIntNumber();
+  fBrickToProc.lastPlate  = fEntrySBLastPlate->GetIntNumber();
   fBrickToProc.step       = fEntrySBStep->GetIntNumber();
 
   InitScanSet();
@@ -122,42 +122,34 @@ void EGraphRec::StartVertexRec()
   recProc->SetBrickToProc(fBrickToProc); // Brick to process
   recProc->SetProcId(fProcId);           // Process Ids
 
-  SafeDelete(fFoundTracks);
   SafeDelete(fVertexRec);
   fVertexRec = recProc->VertexRec();
+
   DrawEvent();
 
-  delete recProc;
+  // delete recProc;
 }
 
 
 //----------------------------------------------------------------------------
 void EGraphRec::DrawEvent()
 {
-  TCanvas *canvasHits = fDisplayHits->GetCanvas();
-  canvasHits->cd(); canvasHits->Clear();
+  fDisplay->fCanvas->Clear("D");
+  fDisplay->fCanvas->cd();
 
-//   fGraphHits->ClearEvent();
-
-//   for (Int_t evt = 0; evt < 2; evt++) {
-//     fEvtTree->GetEntry(evt);
-//     fGraphHits->BuildEvent(fEvent);
-//   }
-
-  // fGraphHits->DrawHits();
-
-  // fGraphHits->BuildEvent(fPredTracks,  "predicted");
-  if (kFALSE) fGraphHits->BuildEvent(fFoundTracks, "found");
-  if (kFALSE) fGraphHits->DrawTracks("all");
-
-  // drawing vertices
-
-  if (kTRUE) {
-    fGraphHits->BuildVertex(fVertexRec);
-    fGraphHits->DrawVertex();
+  if (fFoundTracks) {
+    fDisplay->SetArrTr(fFoundTracks->eTracks);
+    fDisplay->SetDrawTracks(4);
   }
 
-  canvasHits->Update();
+//   if (fVertexRec) {
+//     fDisplay->SetArrV(fVertexRec->eVTX);
+//     fDisplay->SetDrawVertex(1);
+//   }
+
+  fDisplay->Draw();
+  fDisplay->fCanvas->Update();
+
 }
 
 
@@ -402,7 +394,7 @@ void EGraphRec::AddScanBackFrame(TGTab *worktab)
 
   frame = new TGHorizontalFrame(GroupSBPar);
   label = new TGLabel(frame, "First plate");
-  fEntrySBFirstPlate = new TGNumberEntry(frame, 57, 3, 1, 
+  fEntrySBFirstPlate = new TGNumberEntry(frame, fProcBrick.firstPlate, 3, 1, 
 					 TGNumberEntry::kNESInteger,
 					 TGNumberEntry::kNEANonNegative,
 					 TGNumberEntry::kNELLimitMinMax,0,58);
@@ -414,7 +406,7 @@ void EGraphRec::AddScanBackFrame(TGTab *worktab)
 
   frame = new TGHorizontalFrame(GroupSBPar);
   label = new TGLabel(frame, "Last plate");
-  fEntrySBLastPlate = new TGNumberEntry(frame, 0, 3, 2, 
+  fEntrySBLastPlate = new TGNumberEntry(frame, fProcBrick.lastPlate, 3, 2, 
 					TGNumberEntry::kNESInteger,
 					TGNumberEntry::kNEANonNegative,
 					TGNumberEntry::kNELLimitMinMax,0,58);
@@ -475,7 +467,7 @@ void EGraphRec::AddVertexRecFrame(TGTab *worktab)
   // start process
 
   TGTextButton *buttonVRStart = new TGTextButton(vr_tab, "Start Vertex Rec");
-  buttonVRStart->Connect("Clicked()","EGraphRec",this,"StartVertexRec()");
+  // buttonVRStart->Connect("Clicked()","EGraphRec",this,"StartVertexRec()");
   vr_tab->AddFrame(buttonVRStart, fLayout1);
 }
 
@@ -485,18 +477,14 @@ void EGraphRec::AddCanvasFrame(TGTab *worktab)
 {
   TGCompositeFrame *tf;
 
-  tf = worktab->AddTab("cRec");
-  fDisplayHits = new TRootEmbeddedCanvas("Reconstruction", tf, 900, 650);
-  tf->AddFrame(fDisplayHits, fLayout3);
-
   tf = worktab->AddTab("cFedra");
   fDisplayFedra = new TRootEmbeddedCanvas("FEDRA Viewer", tf, 900, 650);
   tf->AddFrame(fDisplayFedra, fLayout3);
 
   TCanvas *CanvasFedra = fDisplayFedra->GetCanvas();
 
-  EdbDisplay *display = new EdbDisplay("FEDRA Viewer (orig)", 0., 10000., 
-  				       0., 10000., -10000., 0, CanvasFedra);
+  fDisplay = new EdbDisplay("FEDRA Viewer (orig)", -50000., 50000., 
+			    -50000., 50000., -150., 37850., CanvasFedra);
 
 //   tf = worktab->AddTab("GL Viewer");
 //   fDisplayHitsGL = new TRootEmbeddedCanvas("Reconstruction GL", tf, 900, 650);
@@ -544,28 +532,27 @@ void EGraphRec::ReadSBPred()
 //----------------------------------------------------------------------------
 void EGraphRec::Set3DViewer()
 {
-  fGLViewer = (TGLSAViewer*)fDisplayHits->GetCanvas()->GetViewer3D("ogl");
-  fGLViewer->SetClearColor(38);
+//   fGLViewer = (TGLSAViewer*)fDisplayHits->GetCanvas()->GetViewer3D("ogl");
+//   fGLViewer->SetClearColor(38);
 }
 
 
-//----------------------------------------------------------------------------
 void EGraphRec::ZoomIn()
 {
-  fDisplayHits->GetCanvas()->cd();
-  fDisplayHits->GetCanvas()->GetView()->Zoom();
-  fDisplayHits->GetCanvas()->Modified();
-  fDisplayHits->GetCanvas()->Update();
+//   fDisplayHits->GetCanvas()->cd();
+//   fDisplayHits->GetCanvas()->GetView()->Zoom();
+//   fDisplayHits->GetCanvas()->Modified();
+//   fDisplayHits->GetCanvas()->Update();
 }
 
 
 //----------------------------------------------------------------------------
 void EGraphRec::ZoomOut()
 {
-  fDisplayHits->GetCanvas()->cd();
-  fDisplayHits->GetCanvas()->GetView()->UnZoom();
-  fDisplayHits->GetCanvas()->Modified();
-  fDisplayHits->GetCanvas()->Update();
+//   fDisplayHits->GetCanvas()->cd();
+//   fDisplayHits->GetCanvas()->GetView()->UnZoom();
+//   fDisplayHits->GetCanvas()->Modified();
+//   fDisplayHits->GetCanvas()->Update();
 }
 
 
@@ -600,6 +587,7 @@ void EGraphRec::InitVariables()
 {
   fEvent            = NULL;
   fVertexRec        = NULL;
+  fFoundTracks      = NULL;
   fThSBProcess      = NULL;
   fThSBCheckProcess = NULL;
   fScanSet          = NULL;
@@ -610,10 +598,8 @@ void EGraphRec::InitVariables()
   fProcId.interCalib = fProcId.volumeScan = fProcId.predScan = 
     fProcId.scanForth = -1;
 
-  fGraphHits    = new EGraphHits();
   fScanProc     = new EdbScanProc();
   fPredTracks   = new EdbPattern();
-  fFoundTracks  = new EdbPVRec();
 
   // TThread functions
 
