@@ -35,11 +35,13 @@ class EdbRunTracking : public EdbRunAccess {
   EdbPattern eSpre;              // preliminary selected basetracks
 
   Float_t ePulsMinBT;            // (18)
+  Float_t ePulsMinDegradMT;      // (0)
   Float_t eChi2MaxBT;            // (1.5) maximum chi2 accepted between prediction and basetrack candidates
 
   EdbPattern eScnd;              // basetracks candidates passed all cuts
 
   Float_t ePulsMinMT;            // (10) mimimal number of grains accepted to select microtracks
+  Float_t ePulsMinDegradBT;      // (0)
   Float_t eChi2MaxMT;            // (1.6) maximum chi2 accepted between prediction and microtrack candidates
 
   EdbPattern eS1cnd;             // microtrack candidates passed all cuts
@@ -81,7 +83,7 @@ class EdbRunTracking : public EdbRunAccess {
   int FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPattern &fnds1, EdbPattern &fnds2 );
   int FindCandidateMT( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd );
   //  int FindCandidateBT(EdbPattern &fndbt, EdbSegP &fnd );
-  int FindBestCandidate(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float chi2max);
+  int FindBestCandidate(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float wmindegrad, float chi2max);
   int FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred );
 
   //void TransformToPlateRS( EdbPlateP &plate);

@@ -35,9 +35,11 @@ void EdbRunTracking::Set0()
 
   eDeltaR      = 20;
   ePulsMinBT   = 18;
+  ePulsMinDegradBT = 0;
   eChi2MaxBT   = 2.5;
 
   eChi2MaxMT   = 1.6;
+  ePulsMinDegradMT = 0;
   ePulsMinMT   = 10.;
 
   eDegradPos   = 0;
@@ -72,8 +74,10 @@ void EdbRunTracking::Print()
   printf("                         eChi2MaxBT            = %5.3f\n", eChi2MaxBT);
   printf("Final       bt selection:\n");
   printf("                         ePulsMinBT            = %3.1f\n", ePulsMinBT);
+  printf("                         ePulsMinDegradBT      = %3.1f\n", ePulsMinDegradBT);
   printf("Final       mt selection:\n");
   printf("                         ePulsMinMT            = %3.1f\n", ePulsMinMT);
+  printf("                         ePulsMinDegradMT      = %3.1f\n", ePulsMinDegradMT);
   printf("                         eChi2MaxMT            = %5.3f\n", eChi2MaxMT);
   printf("\n");
 }
@@ -286,8 +290,8 @@ int EdbRunTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatter
 int EdbRunTracking::FindCandidateMT( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd )
 {
   EdbSegP s1,s2;
-  int n1=FindBestCandidate( fnds1, s1, eS1cnd, ePulsMinMT, eChi2MaxMT);
-  int n2=FindBestCandidate( fnds2, s2, eS2cnd, ePulsMinMT, eChi2MaxMT);
+  int n1=FindBestCandidate( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT);
+  int n2=FindBestCandidate( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT);
   Log(2,"FindCandidateMT","Found %d+%d microtrack candidates after cuts",n1,n2);
 
   if( n1==0&&n2==0 )  return 0;
@@ -304,15 +308,15 @@ int EdbRunTracking::FindCandidateMT( EdbPattern &fnds1, EdbPattern &fnds2, EdbSe
 }
 
 //----------------------------------------------------------------------------------------
-int EdbRunTracking::FindBestCandidate(EdbPattern &cand, EdbSegP &fnd, EdbPattern &passed, float wmin, float chi2max )
+int EdbRunTracking::FindBestCandidate(EdbPattern &cand, EdbSegP &fnd, EdbPattern &passed, float wmin, float wmindegrad, float chi2max )
 {
   int n=0;
   fnd.Set0();
   fnd.SetChi2(10000.+chi2max);
   for (int i=0; i<cand.N(); i++) {
     EdbSegP *s = cand.GetSegment(i);
-    if ( s->W()<wmin )           continue;
-    if ( s->Chi2()>chi2max )     continue;
+    if ( s->W()<wmin+s->Chi2()*wmindegrad )  continue;
+    if ( s->Chi2()>chi2max )                 continue;
     n++;
     passed.AddSegment(*s);
     if (s->Chi2()<fnd.Chi2())      fnd.Copy(*s);
@@ -374,7 +378,7 @@ int EdbRunTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnd
   FindCandidates( spred, eSpre, eS1pre, eS2pre );
 
   EdbSegP fnd;
-  int nbt = FindBestCandidate(eSpre,fnd, eScnd, ePulsMinBT, eChi2MaxBT);
+  int nbt = FindBestCandidate(eSpre,fnd, eScnd, ePulsMinBT, ePulsMinDegradBT, eChi2MaxBT);
   if ( nbt > 0 ) {
     eS.Copy(fnd);
     eS1.Copy(*(eS1pre.GetSegment(fnd.Flag()%10000)));
