@@ -226,7 +226,7 @@ class EdbVertexRec: public TObject {
   void       SetPVRec(EdbPVRec *pvr) {ePVR = pvr;}
   void       AddVTA(EdbVTA *vta)     {eVTA.Add((TObject*)vta);}
   Int_t      Nvtx()           const  {return eVTX ? eVTX->GetEntries() : 0;}
-  EdbVertex *GetVTX(Int_t &i)        {return eVTX ? (EdbVertex*)eVTX->At(i):0;}
+  EdbVertex *GetVertex(Int_t &i)     {return eVTX ? (EdbVertex*)eVTX->At(i):0;}
 
   void AddVertex(EdbVertex *vtx) {
     if (!eVTX) eVTX = new TObjArray();

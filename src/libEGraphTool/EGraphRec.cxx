@@ -49,6 +49,7 @@ EGraphRec::~EGraphRec()
   SafeDelete(fThSBCheckProcess);
   SafeDelete(fPredTracks);
   SafeDelete(fFoundTracks);
+  SafeDelete(fRecProc);
 }
 
 
@@ -92,7 +93,8 @@ void EGraphRec::StartScanBack()
   InitScanSet();
 
   SafeDelete(fFoundTracks);
-  fFoundTracks  = new EdbPVRec();
+  fFoundTracks = new EdbPVRec();
+  fThSBProcess = new TThread("ThSBProcess", ThSBProcess, (void*) this);
 
   fThSBProcess->Run();                // Run scan back Process in Thread mode
   fThSBCheckProcess->Run();           // Check the end of job
@@ -113,17 +115,13 @@ void EGraphRec::StartVertexRec()
   fBrickToProc.lastPlate  = fEntrySBLastPlate->GetIntNumber();
   fBrickToProc.step       = fEntrySBStep->GetIntNumber();
 
-  InitScanSet();
+  fScanProc->eProcDirClient = fDataDir;  // brick directory initialization
 
-  EGraphRecProc *recProc = new EGraphRecProc();
+  fRecProc->SetScanProc(fScanProc);       // Scan Proc
+  fRecProc->SetBrickToProc(fBrickToProc); // Brick to process
+  fRecProc->SetProcId(fProcId);           // Process Ids
 
-  recProc->SetScanProc(fScanProc);       // Scan Proc
-  recProc->SetScanSet(fScanSet);         // Scan Set
-  recProc->SetBrickToProc(fBrickToProc); // Brick to process
-  recProc->SetProcId(fProcId);           // Process Ids
-
-  SafeDelete(fVertexRec);
-  fVertexRec = recProc->VertexRec();
+  fPVRec = fRecProc->VertexRec();
 
   DrawEvent();
 
@@ -137,15 +135,14 @@ void EGraphRec::DrawEvent()
   fDisplay->fCanvas->Clear("D");
   fDisplay->fCanvas->cd();
 
-  if (fFoundTracks) {
-    fDisplay->SetArrTr(fFoundTracks->eTracks);
-    fDisplay->SetDrawTracks(4);
-  }
-
-//   if (fVertexRec) {
-//     fDisplay->SetArrV(fVertexRec->eVTX);
-//     fDisplay->SetDrawVertex(1);
+//   if (fFoundTracks) {
+//     fDisplay->SetArrTr(fFoundTracks->eTracks);
+//     fDisplay->SetDrawTracks(4);
 //   }
+
+  fDisplay->SelectVertexTracks(fPVRec->eVTX);
+  fDisplay->SetDrawTracks(4);
+  // fDisplay->SetDrawVertex(1);
 
   fDisplay->Draw();
   fDisplay->fCanvas->Update();
@@ -467,7 +464,7 @@ void EGraphRec::AddVertexRecFrame(TGTab *worktab)
   // start process
 
   TGTextButton *buttonVRStart = new TGTextButton(vr_tab, "Start Vertex Rec");
-  // buttonVRStart->Connect("Clicked()","EGraphRec",this,"StartVertexRec()");
+  buttonVRStart->Connect("Clicked()","EGraphRec",this,"StartVertexRec()");
   vr_tab->AddFrame(buttonVRStart, fLayout1);
 }
 
@@ -532,8 +529,8 @@ void EGraphRec::ReadSBPred()
 //----------------------------------------------------------------------------
 void EGraphRec::Set3DViewer()
 {
-//   fGLViewer = (TGLSAViewer*)fDisplayHits->GetCanvas()->GetViewer3D("ogl");
-//   fGLViewer->SetClearColor(38);
+  fGLViewer = (TGLSAViewer*)fDisplay->fPad->GetViewer3D("ogl");
+  fGLViewer->SetClearColor(38);
 }
 
 
@@ -572,13 +569,17 @@ void EGraphRec::InitScanSet()
 
   // Scan set initialization
 
-  if (fScanSet && fScanSet->Brick().ID() != fBrickToProc.brickId)
-    SafeDelete(fScanSet);
+//   if (fScanSet && fScanSet->Brick().ID() != fBrickToProc.brickId)
+//     SafeDelete(fScanSet);
 
-  if (!fScanSet) {
-    fScanSet = new EdbScanSet();
-    fScanSet->Brick().SetID(fBrickToProc.brickId);
-  }
+//   if (!fScanSet) {
+//     fScanSet = new EdbScanSet();
+//     fScanSet->Brick().SetID(fBrickToProc.brickId);
+//   }
+
+  SafeDelete(fScanSet);
+  fScanSet = new EdbScanSet();
+  fScanSet->Brick().SetID(fBrickToProc.brickId);
 }
 
 
@@ -586,11 +587,12 @@ void EGraphRec::InitScanSet()
 void EGraphRec::InitVariables()
 {
   fEvent            = NULL;
-  fVertexRec        = NULL;
   fFoundTracks      = NULL;
+  fPVRec            = NULL;
   fThSBProcess      = NULL;
   fThSBCheckProcess = NULL;
   fScanSet          = NULL;
+  fThSBProcess      = NULL;
   fDataDir          = "";
 
   fProcBrick.brickId = fProcBrick.firstPlate = fProcBrick.lastPlate = 
@@ -600,10 +602,11 @@ void EGraphRec::InitVariables()
 
   fScanProc     = new EdbScanProc();
   fPredTracks   = new EdbPattern();
+  fRecProc      = new EGraphRecProc();
 
   // TThread functions
 
-  fThSBProcess      = new TThread("ThSBProcess", ThSBProcess, (void*) this);
+  // fThSBProcess      = new TThread("ThSBProcess", ThSBProcess, (void*) this);
   fThSBCheckProcess = new TThread("ThSBCheckProcess",
 				  ThSBCheckProcess, (void*) this);
 

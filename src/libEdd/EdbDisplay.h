@@ -98,6 +98,7 @@ class EdbDisplay: public EdbDisplayBase {
   EdbSegG *SegLine(const EdbSegP *seg);
 
   void DrawRef(float start[3], float end[3]);
+  void SelectVertexTracks(TObjArray *vtx);
   void SetArrV(TObjArray *arrv);
   void VertexDraw(EdbVertex *v);
   void SetDrawVertex(int opt) {eDrawVertex=opt;}

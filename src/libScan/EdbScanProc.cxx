@@ -989,7 +989,9 @@ int EdbScanProc::WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, i
 
   // checking for the existing directory
 
-  if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+  FileStat_t buf;
+
+  if (gSystem->GetPathInfo(gSystem->DirName(str), buf)) {
     if (gEDBDEBUGLEVEL > 0) {
       cout << "ERROR! Directory " << gSystem->DirName(str) 
 	   << " does not exist.\n";
@@ -1030,7 +1032,9 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
 
   // checking for the existing directory
 
-  if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+  FileStat_t buf;
+
+  if (gSystem->GetPathInfo(gSystem->DirName(str), buf)) {
     if (gEDBDEBUGLEVEL > 0) {
       cout << "ERROR! Directory " << gSystem->DirName(str) 
 	   << " does not exist.\n";
@@ -1736,7 +1740,7 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   TString parfileOUT;
   MakeAffName(parfileOUT,id1,id2);
   parfileOUT.Prepend("INCLUDE ");
-  AddParLine(name.Data(),	parfileOUT.Data());
+  AddParLine(name.Data(), parfileOUT.Data());
   
   EdbPVRec ali;
   EdbPattern *pat=0;

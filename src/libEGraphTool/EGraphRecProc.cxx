@@ -63,7 +63,9 @@ void *ThSBProcess(void *ptr)
     TString str;
     scanProc->MakeFileName(str, pID_PS, "root");
 
-    if (!gSystem->OpenDirectory(gSystem->DirName(str))) {
+    FileStat_t buf;
+
+    if (gSystem->GetPathInfo(gSystem->DirName(str), buf)) {
       cout << "ERROR! Directory " << gSystem->DirName(str) 
 	   << " does not exist.\n";
       cout << "Please run scanning procedure for the plate number " 
@@ -138,8 +140,10 @@ void *ThSBCheckProcess(void *ptr)
   // Set enable "Execute Event" button after finishing process
 
   EGraphRec *egraph = (EGraphRec*) ptr;
+  TThread *thread = egraph->GetThSBProcess();
   egraph->GetThSBProcess()->Join();              // Join ThSBProcess
   egraph->GetButtonSBStart()->SetEnabled(kTRUE); // Enable button
+  SafeDelete(thread);
   return 0;
 }
 
@@ -164,59 +168,73 @@ EGraphRecProc::EGraphRecProc()
                         // between tracks
   fImpMax      = 20.;   // maximal acceptable impact parameter [microns] 
                         // (for preliminary check)
+
+  fScanSetVTX  = NULL;
+  fVertexRec   = NULL;
+  fPVRec       = NULL;
+  fScanCond    = new EdbScanCond();
 }
 
 
 //----------------------------------------------------------------------------
 EGraphRecProc::~EGraphRecProc() 
 {
-
+  SafeDelete(fScanCond);
+  SafeDelete(fScanSetVTX);
 }
 
 
 //----------------------------------------------------------------------------
-EdbVertexRec *EGraphRecProc::VertexRec()
+EdbPVRec *EGraphRecProc::VertexRec()
 {
+  // Vertex reconstruction
+
+  SafeDelete(fScanSetVTX);
+  SafeDelete(fPVRec);
+
+  fScanSetVTX = new EdbScanSet();
+  fPVRec      = new EdbPVRec();
+
+  SetCondBT(); // init track reconstruction conditions
+  fPVRec->SetScanCond(fScanCond);
+
+  // brick initialization
+
   Int_t pID_VS[4] = {fBrickToProc.brickId, 0, fBrickToProc.ver,
 		     fProcId.interCalib};
 
   Int_t firstPlate = fBrickToProc.firstPlate;
   Int_t lastPlate  = fBrickToProc.lastPlate;
   Int_t step=(lastPlate>=firstPlate)?fBrickToProc.step : -1*fBrickToProc.step;
+  
+  fScanSetVTX->Brick().SetID(fBrickToProc.brickId);
 
   // make a brick assuming that all plates are linked and aligned
 
   for (Int_t plate = firstPlate; plate != lastPlate + step; plate += step) {
     pID_VS[1] = plate;
-    fScanSet->AddID(new EdbID(pID_VS), step);
+    fScanSetVTX->AddID(new EdbID(pID_VS), step);
   }
 
-  fScanProc->AssembleScanSet(*fScanSet);
-  fScanSet->SetAsReferencePlate(firstPlate);
+  fScanProc->AssembleScanSet(*fScanSetVTX);
+  fScanSetVTX->SetAsReferencePlate(firstPlate);
 
   // get the tracks passing through our cuts
-
-  EdbDataProc *dproc = new EdbDataProc();
-  EdbScanCond *cond  = new EdbScanCond();
-  SetCondBT(cond);
-
-  fFoundTracks = dproc->PVR();
-  fFoundTracks->SetScanCond(cond);
 
   TCut cut = "eN1==1&&eN2==1&&eCHI2P<3.5&&s.eW>16";
   TCut QC = "s.eW>15+3*s.eChi2";
   cut += QC;
 
-  fScanProc->ReadScanSetCP(*fScanSet, *fFoundTracks, cut);
+  fScanProc->ReadScanSetCP(*fScanSetVTX, *fPVRec, cut);
 
   // tracking
 
-  fFoundTracks->SetCouplesPeriodic(0,1);
-  dproc->LinkTracksWithFlag(fFoundTracks, fMomentum, fProbMinP, fNsegmin,
-			    fNgapmax, 0);
+  fPVRec->SetCouplesPeriodic(0,1);
+  EdbDataProc::LinkTracksWithFlag(fPVRec, fMomentum, fProbMinP, fNsegmin,
+				  fNgapmax, 0);
 
   PropagateTracks();
-  fFoundTracks->FillCell(30,30,0.009,0.009);
+  fPVRec->FillCell(30,30,0.009,0.009);
   SetEVR();
 
   cout << fVertexRec->eEdbTracks->GetEntries() << " tracks for vertexing" 
@@ -224,7 +242,9 @@ EdbVertexRec *EGraphRecProc::VertexRec()
   cout << fVertexRec->FindVertex() << " 2-track vertexes was found" << endl;
   fVertexRec->ProbVertexN();
 
-  return fVertexRec;
+  fPVRec->eVTX = fVertexRec->eVTX;
+
+  return fPVRec;
 }
 
 
@@ -234,18 +254,18 @@ void EGraphRecProc::PropagateTracks()
   // example of additional propagation and 
   // other tracking operations if necessary
 
-  Int_t ntracks = fFoundTracks->eTracks->GetEntries();
+  Int_t ntracks = fPVRec->eTracks->GetEntries();
 
   // set tracks IDs
 
   for (Int_t i = 0; i < ntracks; i++) {
-    EdbTrackP *track = (EdbTrackP*)(fFoundTracks->eTracks->At(i));
+    EdbTrackP *track = (EdbTrackP*)(fPVRec->eTracks->At(i));
     track->SetID(i);
     track->SetSegmentsTrack();
     track->SetErrorP(0.2*0.2*fMomentum*fMomentum);
 
     if (track->Flag() < 0) continue;
-    fFoundTracks->PropagateTrack(*track, true, 0.001, 3, 0);
+    fPVRec->PropagateTrack(*track, true, 0.001, 3, 0);
   }
 }
 
@@ -253,11 +273,12 @@ void EGraphRecProc::PropagateTracks()
 //----------------------------------------------------------------------------
 void EGraphRecProc::SetEVR()
 {
+  SafeDelete(fVertexRec);
   fVertexRec = new EdbVertexRec();
 
-  fVertexRec->eEdbTracks   = fFoundTracks->eTracks;
-  fVertexRec->eVTX         = fFoundTracks->eVTX;
-  fVertexRec->SetPVRec(fFoundTracks);
+  fVertexRec->eEdbTracks   = fPVRec->eTracks;
+  fVertexRec->eVTX         = fPVRec->eVTX;
+  fVertexRec->SetPVRec(fPVRec);
   fVertexRec->eDZmax       = fDZmax;
   fVertexRec->eProbMin     = fProbMinV;
   fVertexRec->eImpMax      = fImpMax;
@@ -267,17 +288,21 @@ void EGraphRecProc::SetEVR()
 }
 
 //----------------------------------------------------------------------------
-void EGraphRecProc::SetCondBT(EdbScanCond *cond)
+void EGraphRecProc::SetCondBT()
 {
-  cond->SetSigma0(5., 5., 0.002, 0.002); // sigma0 "x, y, tx, ty" at zero angle
-  cond->SetDegrad(5.);                   // sigma(tx) = sigma0*(1+degrad*tx)
-  cond->SetBins(3, 3, 3, 3);             // bins in [sigma] for checks
-  cond->SetPulsRamp0(5., 5.);            // in range (Pmin:Pmax) Signal/All 
-                                         // is nearly linear
-  cond->SetPulsRamp04(5., 5.);
-  cond->SetChi2Max(6.5);
-  cond->SetChi2PMax(6.5);
-  cond->SetChi2Mode(3);
-  cond->SetRadX0(5810.);
-  cond->SetName("OPERA_basetrack");
+  fScanCond->SetDefault();
+
+  // sigma0 "x, y, tx, ty" at zero angle
+
+  fScanCond->SetSigma0(5., 5., 0.002, 0.002); 
+  fScanCond->SetDegrad(5.);             // sigma(tx) = sigma0*(1+degrad*tx)
+  fScanCond->SetBins(3, 3, 3, 3);       // bins in [sigma] for checks
+  fScanCond->SetPulsRamp0(5., 5.);      // in range (Pmin:Pmax) Signal/All 
+                                        // is nearly linear
+  fScanCond->SetPulsRamp04(5., 5.);
+  fScanCond->SetChi2Max(6.5);
+  fScanCond->SetChi2PMax(6.5);
+  fScanCond->SetChi2Mode(3);
+  fScanCond->SetRadX0(5810.);
+  fScanCond->SetName("OPERA_basetrack");
 }

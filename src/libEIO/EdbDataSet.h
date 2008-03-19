@@ -229,7 +229,7 @@ class EdbDataProc : public TObject {
   int  Link(EdbDataPiece &piece);
   void Align(int alignFlag);
 
-  int  LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag, float mass=0.1396 );
+  static int LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag, float mass=0.1396 );
   void LinkTracks(int alg=0, float p=-1.);
   void LinkTracksC(int alg=0, float p=-1.);
   void LinkRawTracks(int alg=0);

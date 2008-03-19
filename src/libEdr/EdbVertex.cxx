@@ -839,12 +839,12 @@ int EdbVertexRec::FindVertex()
 
   if(nvtx!=nvtxt) printf("ERROR: EdbVertexRec::FindVertex():  nxtx =%d nvtxt =%d\n",nvtx,nvtxt);
 
-  for (Int_t i = 0; i < nvtxt; i++) GetVTX(i)->SetID(i);
+  for (Int_t i = 0; i < nvtxt; i++) GetVertex(i)->SetID(i);
 
   if (nvtxt) eVTX->Sort(nvtxt-1);
 
   for (Int_t i = nvtx-1; i >= 0; i--) {
-    edbv = GetVTX(i);
+    edbv = GetVertex(i);
     if (!edbv) continue;
     edbv->SetID(i);
     edbv->ResetTracks();
@@ -1306,7 +1306,7 @@ int EdbVertexRec::ProbVertexN()
   if (eVTX) {
     nvtx = eVTX->GetEntries();
     for (Int_t i = 0; i < nvtx; i++) {
-      edbv1 = GetVTX(i);
+      edbv1 = GetVertex(i);
       if (edbv1) {
 	if (edbv1->N() > 2) {
 	  for (Int_t j = 0; j<edbv1->N(); j++)  eVTA.Remove(edbv1->GetVTa(j));
@@ -1359,7 +1359,7 @@ int EdbVertexRec::ProbVertexN()
 
   for (Int_t i1 = 0; i1 < nvtx; i1++) {
     wasadded = false;
-    edbv1 = GetVTX(i1);
+    edbv1 = GetVertex(i1);
     if (!(i1%nprint)) {
       printf("\b\b\b\b%3d%%",(int)((double)i1/double(nvtx)*100.));
       fflush(stdout);
@@ -1396,7 +1396,7 @@ int EdbVertexRec::ProbVertexN()
       }
     }
     for (Int_t i2 = i1+1; i2<nvtx; i2++) {
-      edbv2 = GetVTX(i2);
+      edbv2 = GetVertex(i2);
       if (!edbv2) continue;
       if (edbv2->Flag() == -10) continue;
       if (edbv2->N() == 2) {
@@ -1477,7 +1477,7 @@ int EdbVertexRec::ProbVertexN()
   printf("--------------------------------------------------------\n");
 
   for (int i1=0; (i1<nvtx); i1++) {
-    edbv1 = GetVTX(i1);
+    edbv1 = GetVertex(i1);
     if (!edbv1) continue;
     if (edbv1->Flag() == -10) continue;
     edbv1->ResetTracks();
@@ -1497,7 +1497,7 @@ void EdbVertexRec::StatVertexN()
   EdbVertex *v=0;
   Int_t ntv = 0;
   for (Int_t i = 0; i < nvt; i++) {
-    v = GetVTX(i);
+    v = GetVertex(i);
     if (!v || v->Flag() < 0) continue;
     ntv = v->N();
     if (ntv > 11) ntv = 11;
@@ -1524,7 +1524,7 @@ int EdbVertexRec::LinkedVertexes()
 
   int nvl = 0;
   for (int iv=0; iv<nvt; iv++) {
-    v = GetVTX(iv);
+    v = GetVertex(iv);
     if (v)
     {
 	if (v->Flag() != -10)
@@ -1934,7 +1934,7 @@ int EdbVertexRec::VertexTuning(int seltype)
   double v2chiorig = 0., v2distorig = 0., crit = 0., critorig = 0.;
 
   for (iv=0; iv<nvt; iv++) {  // loop on all vertexes
-    v1 = GetVTX(iv);
+    v1 = GetVertex(iv);
     if (v1)
     {
 	    if (v1->Flag() < 0) continue;
@@ -2145,7 +2145,7 @@ int EdbVertexRec::VertexTuning(int seltype)
   nvt = eVTX->GetEntries();
 
   for (iv=0; iv<nvt; iv++) {
-    v1 = GetVTX(iv);
+    v1 = GetVertex(iv);
     if (v1)
     {
 	    if (v1->Flag()<-10)
@@ -2425,7 +2425,7 @@ int EdbVertexRec::VertexNeighbor(float RadMax, int Dpat, float ImpMax)
   EdbVertex *v   = 0;
 
   for (iv=0; iv<nvt; iv++) {
-    v = GetVTX(iv);
+    v = GetVertex(iv);
     if (v)
     {
 	    nn += VertexNeighbor(v, RadMax, Dpat, ImpMax);

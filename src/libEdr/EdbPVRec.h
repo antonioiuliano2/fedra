@@ -297,6 +297,8 @@ class EdbPVRec : public EdbPatternsVolume {
     if(!eVTX) eVTX = new TObjArray();
     eVTX->Add((TObject*)vtx);
   }
+  Int_t      Nvtx()       const  {return eVTX ? eVTX->GetEntriesFast() : 0;}
+  EdbVertex *GetVertex(Int_t &i) {return eVTX ? (EdbVertex*)eVTX->At(i) : 0;}
 
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );

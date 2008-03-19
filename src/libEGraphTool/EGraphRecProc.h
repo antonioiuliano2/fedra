@@ -41,11 +41,10 @@ class EGraphRecProc {
   virtual ~EGraphRecProc();
 
   void SetScanProc(EdbScanProc *scanProc)       {fScanProc = scanProc;}
-  void SetScanSet(EdbScanSet *scanSet)          {fScanSet = scanSet;}
   void SetBrickToProc(ProcBrick_t &brickToProc) {fBrickToProc = brickToProc;}
-  void SetProcId(ProcId_t & procId)             {fProcId = procId;}
+  void SetProcId(ProcId_t &procId)              {fProcId = procId;}
 
-  EdbVertexRec *VertexRec();
+  EdbPVRec *VertexRec();
 
  private:
 
@@ -66,14 +65,15 @@ class EGraphRecProc {
   Float_t fProbMinV;
   Float_t fImpMax;
 
-  EdbPVRec     *fFoundTracks;
+  EdbPVRec     *fPVRec;
   EdbVertexRec *fVertexRec;
   EdbScanProc  *fScanProc;
-  EdbScanSet   *fScanSet;
+  EdbScanSet   *fScanSetVTX;
+  EdbScanCond  *fScanCond;
   ProcId_t      fProcId;
   ProcBrick_t   fBrickToProc;
 
-  void SetCondBT(EdbScanCond *cond);
+  void SetCondBT();
   void PropagateTracks();
   void SetEVR();
 

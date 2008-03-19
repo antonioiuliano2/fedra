@@ -1248,7 +1248,9 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
 
   // checking for the existing directory
 
-  if (!gSystem->OpenDirectory(gSystem->DirName(file_name))) {
+  FileStat_t buf;
+
+  if (gSystem->GetPathInfo(gSystem->DirName(file_name), buf)) {
     if (gEDBDEBUGLEVEL > 0) {
       cout << "ERROR! Directory " << gSystem->DirName(file_name) 
 	   << " does not exist.\n";
@@ -2250,7 +2252,7 @@ void EdbDataProc::AjustZ(int doZ)
 }
 
 ///______________________________________________________________________________
-int  EdbDataProc::LinkTracksWithFlag( EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag, float mass )
+int EdbDataProc::LinkTracksWithFlag(EdbPVRec *ali, float p, float probmin, int nsegmin, int maxgap, int flag, float mass)
 {
   // p       - momentum expected for tracks
   // probmin - minimum probability to accept tracks

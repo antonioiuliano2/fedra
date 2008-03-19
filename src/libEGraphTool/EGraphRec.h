@@ -66,6 +66,7 @@ class EGraphRec {
 
  private:
 
+  EGraphRecProc       *fRecProc;
   ProcBrick_t          fBrickToProc;
   TTree               *fEvtTree;
   TString              fDataDir;
@@ -73,7 +74,7 @@ class EGraphRec {
   EdbScanProc         *fScanProc;
   EdbPattern          *fPredTracks;
   EdbPVRec            *fFoundTracks;
-  EdbVertexRec        *fVertexRec;
+  EdbPVRec            *fPVRec;
   EdbScanSet          *fScanSet;
   EdbDisplay          *fDisplay;
   ProcId_t             fProcId;

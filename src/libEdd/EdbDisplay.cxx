@@ -4060,6 +4060,24 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
   gPad->Modified(kTRUE);
   gPad->Update();
 }
+
+//=============================================================================
+void EdbDisplay::SelectVertexTracks(TObjArray *vtx)
+{
+  if (!vtx) return;
+
+  if (!eArrTr) eArrTr = new TObjArray();
+  else eArrTr->Clear();
+
+  Int_t nv = vtx->GetEntries();
+
+  for (Int_t i = 0; i < nv; i++) {
+    EdbVertex *vertex = (EdbVertex*)(vtx->At(i));
+    if (!vertex || vertex->Flag() < 0) continue;
+    for (Int_t j = 0; j < vertex->N(); j++) eArrTr->Add(vertex->GetTrack(j));
+  }
+}
+
 //=============================================================================
 void EdbDisplay::ClearSegmentEnv()
 {
