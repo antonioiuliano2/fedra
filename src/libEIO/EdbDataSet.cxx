@@ -467,10 +467,9 @@ int EdbDataPiece::UpdateShrPar(int layer)
 
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateShrPar","ERROR open file: %s \n", file);
     return -1;
-  }else if (gEDBDEBUGLEVEL > 1)
-    printf( "\nUpdate parameters file with SHRINK %d: %s\n\n", layer, file );
+  }else Log(2,"EdbDataPiece::UpdateShrPar","Update parameters file with SHRINK %d: %s", layer, file );
 
   char str[64];
   sprintf(str,"SHRINK \t %d \t %f \n",layer, GetLayer(layer)->Shr() );
@@ -487,11 +486,9 @@ int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateAffPar","ERROR open file: %s \n", file);
     return -1;
-  }
-  else if (gEDBDEBUGLEVEL > 1)
-    printf( "\nUpdate parameters file with AFFXY: %s\n\n", file );
+  } else Log(2,"EdbDataPiece::UpdateAffPar","Update parameters file with AFFXY: %s", file );
 
   char str[124];
   sprintf(str,"AFFXY \t %d \t %f %f %f %f %f %f\n",layer,
@@ -509,10 +506,10 @@ int EdbDataPiece::UpdateZPar(int layer, float z)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateZPar", "ERROR open file: %s \n", file);
     return -1;
   }
-  else printf( "\nUpdate parameters file with ZLAYER: %s\n\n", file );
+  else Log(2,"EdbDataPiece::UpdateZPar", "Update parameters file with ZLAYER: %s", file );
 
   char str[124];
   sprintf(str,"ZLAYER \t %d \t %f %f %f\n",layer,
@@ -534,11 +531,10 @@ int EdbDataPiece::UpdateAffTPar(int layer, EdbAffine2D &aff)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateAffTPar","ERROR open file: %s \n", file);
     return -1;
   }
-  else if (gEDBDEBUGLEVEL > 1) 
-    printf( "\nUpdate parameters file with AFFTXTY: %s\n\n", file );
+  else Log(2,"EdbDataPiece::UpdateAffTPar","\nUpdate parameters file with AFFTXTY: %s\n\n", file );
 
   char str[124];
   sprintf(str,"AFFTXTY \t %d \t %f %f %f %f %f %f\n",layer,
@@ -556,10 +552,10 @@ void EdbDataPiece::WriteCuts()
 
   FILE *fp=fopen(file,"w");
   if (!fp) {
-    printf("ERROR open file: %s \n", file.Data());
+    Log(1," EdbDataPiece::WriteCuts","ERROR open file: %s \n", file.Data());
     return;
   }
-  else printf( "\nPut Cuts to file: %s\n\n", file.Data() );
+  else Log(2,"EdbDataPiece::WriteCuts","Put Cuts to file: %s", file.Data() );
 
   fprintf(fp,"{\n");
 
@@ -622,7 +618,6 @@ int EdbDataPiece::TakeRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
   EdbLayer  *layer=GetLayer(side);
   seg->Transform(layer->GetAffineXY());                          //internal view transformation
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
-  //  seg->Print();
 
   float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
@@ -730,7 +725,7 @@ int EdbDataPiece::TakeCPSegment( EdbSegCouple &cp, EdbSegP &seg)
 ///______________________________________________________________________________
 int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 {
-  printf("z = %f \n", GetLayer(0)->Z());
+  Log(2,"EdbDataPiece::GetCPData","z = %f", GetLayer(0)->Z());
   pat->SetID(0);
   EdbSegP    segP;
 
@@ -783,7 +778,7 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
     }
   }
 
-  printf("%d (of %d) segments are readed\n", nseg,nentr );
+  Log(2,"EdbDataPiece::GetCPData","%d (of %d) segments are readed", nseg,nentr );
 
   return nseg;
 }
@@ -791,7 +786,7 @@ int EdbDataPiece::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2)
 ///______________________________________________________________________________
 int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
 {
-  printf("GetCPData_new: z = %f \n", GetLayer(0)->Z());
+  Log(3,"EdbDataPiece::GetCPData_new","z = %f ", GetLayer(0)->Z());
   if(!eCouplesTree)  return  0;
   pat->SetID(0);
   EdbSegP    segP;
@@ -823,7 +818,6 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
 
   int nlst =lst->GetN();
-  if(cut) printf("select %d of %d segments by cut %s\n",nlst, nentr, cut->GetTitle() );
 
   int entr=0;
   for(int i=0; i<nlst; i++ ) {
@@ -831,7 +825,6 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
 
     if(trseg) {           //exclude segments participating in tracks
       if( (trseg->Find(ePlate*1000+ePiece,entr) >= 0) )  continue;
-	//{printf("exclude seg %d of pat %d\n",entr,ePlate); continue;}
     }
 
     if(eEraseMask) if(eEraseMask->At(entr)) continue;
@@ -863,7 +856,8 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
     }
   }
 
-  printf("%d (of %d) segments are readed\n", nseg,nentr );
+  if(cut) Log(2,"EdbDataPiece::GetCPData_new","select %d of %d segments by cut %s",nlst, nentr, cut->GetTitle() );
+  else    Log(2,"EdbDataPiece::GetCPData_new","%d (of %d) segments accepted", nseg,nentr );
 
   return nseg;
 }
@@ -902,7 +896,7 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   TArrayF y2(nentr);
 
   int nseg = 0;
-  if (gEDBDEBUGLEVEL > 1) printf("nentr = %d\n",nentr);
+  Log(2,"EdbDataPiece::CorrectAngles","nentr = %d\n",nentr);
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
 
@@ -940,7 +934,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 {
   if (eRun ) delete eRun;
   eRun =  new EdbRun( GetRunFile(0),"READ" );
-  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
+  if(!eRun) { Log(1,"EdbDataPiece::CheckCCD","ERROR open file: %s",GetRunFile(0)); return -1; }
   EdbView    *view = eRun->GetView();
   EdbSegment *seg;
 
@@ -956,7 +950,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 
   int ncheck=0;
   int nentr = TMath::Min(maxentr,eRun->GetEntries());
-  printf("nentr=%d\n",nentr);
+  Log(2,"EdbDataPiece::CheckCCD","nentr=%d\n",nentr);
   for (i=0; i<nentr; i++) {
     view = eRun->GetEntry(i);
     int nseg=view->Nsegments();
@@ -973,7 +967,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
     }
   }
 
-  printf("ncheck=%d\n",ncheck);
+  Log(2,"EdbDataPiece::CheckCCD","ncheck=%d",ncheck);
   for(i=0; i<200; i++ ) {           //eliminate upto 200 CCD defects
     if(!RemoveCCDPeak(matr)) break;
     npeak++;
@@ -1002,7 +996,7 @@ int EdbDataPiece::RemoveCCDPeak(TMatrix &matr)
       }
     }
   mean/=filled;
-  printf("mean = %f \t max[%d,%d]=%d\n",mean,ix,iy,(int)max);
+  Log(2,"EdbDataPiece::RemoveCCDPeak","mean = %f \t max[%d,%d]=%d\n",mean,ix,iy,(int)max);
 
   float vmin[5],vmax[5];
   EdbSegmentCut cut;
@@ -1029,13 +1023,13 @@ int EdbDataPiece::UpdateSegmentCut(EdbSegmentCut cut)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateSegmentCut","ERROR open file: %s", file);
     return -1;
   }
 
   char str[124];
   if(cut.XI()==0) {
-    printf( "\nUpdate parameters file with XCUT: %s\n\n", file );
+    Log(2,"EdbDataPiece::UpdateSegmentCut","Update parameters file with XCUT: %s", file );
     sprintf(str,"XCUT \t %d \t %f %f %f %f %f %f %f %f %f %f\n",1,
 	    cut.Min(0),cut.Max(0), 
 	    cut.Min(1),cut.Max(1), 
@@ -1053,7 +1047,7 @@ int EdbDataPiece::UpdateSegmentCut(EdbSegmentCut cut)
 	    );
     fprintf(fp,"\n%s",str);
   } else  if(cut.XI()==1) {
-    printf( "\nUpdate parameters file with ICUT: %s\n\n", file );
+    Log(2,"EdbDataPiece::UpdateSegmentCut","Update parameters file with ICUT: %s", file );
     sprintf(str,"ICUT \t %d \t %f %f %f %f %f %f %f %f %f %f\n",1,
 	    cut.Min(0),cut.Max(0), 
 	    cut.Min(1),cut.Max(1), 
@@ -1083,7 +1077,7 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
 
   CloseRun();
   eRun =  new EdbRun( GetRunFile(0),"READ" );
-  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
+  if(!eRun) { Log(1,"EdbDataPiece::GetRawData","ERROR open file: %s",GetRunFile(0)); return -1; }
 
   EdbPattern *pat1 = new EdbPattern( 0.,0., GetLayer(1)->Z() + GetLayer(0)->Z() );
   EdbPattern *pat2 = new EdbPattern( 0.,0., GetLayer(2)->Z() + GetLayer(0)->Z() );
@@ -1168,8 +1162,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
     }
   }
 
-  if (gEDBDEBUGLEVEL > 1)
-    printf("Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
+  Log(2,"EdbDataPiece::GetAreaData","Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
 	   aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
   pat->SetSegmentsZ();
   ali->AddPattern(pat);
@@ -1181,7 +1174,7 @@ int EdbDataPiece::MakeLinkListArea(int irun)
 {
   if (eRun ) delete eRun;
   eRun =  new EdbRun( GetRunFile(irun),"READ" );
-  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(irun)); return -1; }
+  if(!eRun) { Log(1," EdbDataPiece::MakeLinkListArea","ERROR open file: %s",GetRunFile(irun)); return -1; }
 
   for(int i=0; i<3; i++) {
     if(eAreas[i])    delete eAreas[i];
@@ -1189,7 +1182,7 @@ int EdbDataPiece::MakeLinkListArea(int irun)
   }
 
   int nentr = eRun->GetEntries();
-  printf("Make views entry map,  nentr = %d\n",nentr);
+  Log(2,"EdbDataPiece::MakeLinkListArea","Make views entry map,  nentr = %d\n",nentr);
 
   Long_t v[2];   // areaID,entry
   EdbViewHeader *head=0;
@@ -1292,7 +1285,7 @@ TTree *EdbDataPiece::InitCouplesTree(const char *file_name, const char *mode)
     // tree->SetAutoSave(2000000);
   }
 
-  if(!tree) printf("ERROR!!! InitCouplesTree: can't initialize tree at %s as %s\n",file_name,mode);
+  if(!tree) Log(1,"EdbDataPiece::InitCouplesTree","ERROR!!! InitCouplesTree: can't initialize tree at %s as %s",file_name,mode);
 
   return tree;
 }
@@ -1303,7 +1296,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
 {
   if(eRun) delete eRun;
   eRun =  new EdbRun( GetRunFile(irun),"READ" );
-  if(!eRun) { printf("ERROR open file: %s\n",GetRunFile(0)); return -1; }
+  if(!eRun) { Log(1,"EdbDataPiece::MakeLinkListCoord","ERROR open file: %s",GetRunFile(0)); return -1; }
 
   
   for(int i=0; i<3; i++) {
@@ -1312,8 +1305,7 @@ int EdbDataPiece::MakeLinkListCoord(int irun)
   }
 
   int nentr = eRun->GetEntries();
-  if (gEDBDEBUGLEVEL > 1) 
-    printf("Make views coordinate map,  nentr = %d\n",nentr);
+  Log(2,"EdbDataPiece::MakeLinkListCoord","Make views coordinate map,  nentr = %d",nentr);
 
   TIndexCell upc;
   TIndexCell downc;
@@ -1447,11 +1439,10 @@ int EdbDataSet::ReadDataSetDef(const char *file)
 
   FILE *fp=fopen(file,"r");
   if (fp==NULL)   {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataSet::ReadDataSetDef","ERROR open file: %s", file);
     return(-1);
   }else
-    printf( "\nRead Data Set Definitions from: %s\n\n", file );
-
+    Log(2,"EdbDataSet::ReadDataSetDef", "Read Data Set Definitions from: %s", file );
 
   while( fgets(buf,256,fp)!=NULL ) {
     for( int i=0; i<(int)strlen(buf); i++ ) 
@@ -1542,10 +1533,10 @@ int EdbDataSet::GetRunList(const char *file)
 
   FILE *fp=fopen(file,"r");
   if (!fp)   {
-    printf("ERROR open file: %s \n", file);
+    Log(1,"EdbDataSet::GetRunList","ERROR open file: %s", file);
     return(-1);
   }
-  else printf( "\nRead runs list from file: %s\n\n", file );
+  else Log(2,"EdbDataSet::GetRunList", "Read runs list from file: %s", file );
 
   EdbDataPiece *piece=0;
   EdbDataPiece *pp=0;
@@ -1568,7 +1559,7 @@ int EdbDataSet::GetRunList(const char *file)
       if(piece->TakePiecePar()>=0)
 	ePieces.Add(piece);
       else {
-	printf("Missing par file for piece!!!\n");
+	Log(1,"EdbDataSet::GetRunList","Missing par file for piece!!!\n");
 	if(fp) fclose(fp);
 	return -1;
       }
@@ -1637,8 +1628,8 @@ int EdbDataProc::CheckCCD()
   for(int i=0; i<np; i++) {
     piece = eDataSet->GetPiece(i);
     ndef = piece->CheckCCD();
-    if(ndef<0) { printf("skip piece\n"); continue; }
-    printf("piece %s: eliminated defects: %d\n",piece->GetName(),ndef); 
+    if(ndef<0) { Log(2,"EdbDataProc::CheckCCD","skip piece"); continue; }
+    Log(1,"EdbDataProc::CheckCCD","piece %s: eliminated defects: %d",piece->GetName(),ndef); 
     piece->WriteCuts();
     piece->CloseRun();
   }
@@ -1683,7 +1674,7 @@ int EdbDataProc::Link(EdbDataPiece &piece)
   for( int irun=0; irun<piece.Nruns(); irun++ ) {
     nareas = piece.MakeLinkListCoord(irun);
     //nareas = piece.MakeLinkListArea(irun);
-    if (gEDBDEBUGLEVEL > 1) printf("%d areas mapped\n",nareas);
+    Log(2,"EdbDataProc::Link","%d areas mapped",nareas);
     if (nareas <= 0) continue;
 
     for (Int_t i = 0; i < nareas; i++ ) {
@@ -1723,9 +1714,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     if(nshrtot>3) {
       shrtot1 = shrtot1/nshrtot;
       shrtot2 = shrtot2/nshrtot;
-      if(nshrtot<20) printf("WARNING: unreliable shrinkage correction - low statistics\n");
-      if (gEDBDEBUGLEVEL > 1) 
-	printf("Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
+      if(nshrtot<20) Log(1,"EdbDataProc::Link","WARNING: unreliable shrinkage correction - low statistics\n");
+      Log(2,"EdbDataProc::Link","Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
       piece.CorrectShrinkage( 1, (float)shrtot1 );
       piece.CorrectShrinkage( 2, (float)shrtot2 );
       if(!NoUpdate())   piece.UpdateShrPar(1);
@@ -1742,7 +1732,7 @@ void EdbDataProc::FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw )
 {
   tree->GetDirectory()->cd();
 
-  if (gEDBDEBUGLEVEL > 1) printf("fill couples tree...\n");
+  Log(2,"EdbDataProc::FillCouplesTree","fill couples tree...");
 
   EdbPatCouple *patc=0;
   float xv = al->X();
@@ -1820,9 +1810,10 @@ void EdbDataProc::CloseCouplesTree(TTree *tree)
 int EdbDataProc::CheckShrinkage(EdbPVRec *ali, int couple, float &shr1, float &shr2)
 {
   EdbPatCouple  *patc = ali->GetCouple(couple);
+  if(!patc) return 0;
+
   EdbSegCouple *sc=0;
   EdbSegP *s1=0, *s2=0;
-
   double dz,tx,ty,t,t1,t2,sumt1=0,sumt2=0;
   int    nsum=0;
 
@@ -1863,7 +1854,7 @@ void EdbDataProc::CorrectAngles()
 {
   EdbDataPiece *piece;
   int npieces = eDataSet->N();
-  printf("npieces = %d\n",npieces);
+  Log(2,"EdbDataProc::CorrectAngles","npieces = %d\n",npieces);
   if(!npieces) return;
 
   for(int i=0; i<npieces; i++ ) {
@@ -1880,7 +1871,7 @@ int EdbDataProc::InitVolumeRaw(EdbPVRec    *ali)
   
   EdbDataPiece *piece;
   int npieces = eDataSet->N();
-  printf("npieces = %d\n",npieces);
+  Log(2,"EdbDataProc::InitVolumeRaw","npieces = %d",npieces);
   if(!npieces) return 0;
 
   for(int i=0; i<npieces; i++ ) {
@@ -1925,7 +1916,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbSegP &seg, int plmin, int plmax,
 
   EdbPVRec *ali = new EdbPVRec();
 
-  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+  Log(2,"EdbDataProc::ExtractDataVolume","Select Data %d in EdbPVRec with %d patterns:\n",
 	 datatype, npat);
 
   float dz, min[5],  max[5];
@@ -1960,7 +1951,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolumeF( EdbTrackP &tr, float binx, float bint
   if(!ePVR)               return 0;
   int npat = ePVR->Npatterns();
   EdbPVRec *ali = new EdbPVRec();
-  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+  Log(2,"EdbDataProc::ExtractDataVolumeF","Select Data %d in EdbPVRec with %d patterns:\n",
 	 datatype, npat);
 
   EdbSegP ss; // the "selector" segment 
@@ -1997,7 +1988,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolumeF( EdbTrackP &tr, float binx, float bint
 
   ali->AddPattern( spat );
 
-  printf("%d segments are selected\n",nseg);
+  Log(2,"EdbDataProc::ExtractDataVolumeF","%d segments are selected",nseg);
   return ali;
 }
 
@@ -2015,7 +2006,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
 
   EdbPVRec *ali = new EdbPVRec();
 
-  printf("Select Data %d in EdbPVRec with %d patterns:\n",
+  Log(2,"EdbDataProc::ExtractDataVolume","Select Data %d in EdbPVRec with %d patterns",
 	 datatype, npat);
 
   float min[5],  max[5];
@@ -2029,7 +2020,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
   float tx  = (tr.GetSegment(tr.N()-1)->X() - tr.GetSegment(0)->X())/dz;
   float ty  = (tr.GetSegment(tr.N()-1)->Y() - tr.GetSegment(0)->Y())/dz;
 
-  printf("select segments with acceptance: %f %f [microns]   %f %f [mrad]\n",
+  Log(2,"EdbDataProc::ExtractDataVolume","select segments with acceptance: %f %f [microns]   %f %f [mrad]\n",
 	 dx,dy,dtx*1000,dty*1000);
 
   EdbPattern *pat  = 0;
@@ -2058,7 +2049,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
     nseg += spat->N();
     ali->AddPattern( spat );
   }
-  printf("%d segments are selected\n",nseg);
+  Log(2,"EdbDataProc::ExtractDataVolume","%d segments are selected\n",nseg);
   return ali;
 }
 
@@ -2097,7 +2088,7 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
   
     EdbDataPiece *piece;
     int npieces = eDataSet->N();
-    printf("npieces = %d\n",npieces);
+    Log(2,"EdbDataProc::InitVolumeTracks","npieces = %d",npieces);
     if(!npieces) return 0;
 
     if( ali->Npatterns() == 0) {                    // case of segments already readed
@@ -2121,7 +2112,7 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
 
   ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
 
-  ali->SetSegmentsTracks();
+  ali->SetSegmentsTracks();  // reset the id of tracks????? to check that it is really necessary!!
   ali->SetSegmentsErrors();
   ali->SetCouplesAll();
   ali->SetChi2Max(cond->Chi2PMax());
@@ -2142,7 +2133,7 @@ void EdbDataProc::FineAlignmentTracks()
   for( int i=0; i<ali->Npatterns(); i++ ) {
     fctr = ali->FineCorrF(i,aff,afft);
     if(fctr<fctr0) fctr0=fctr;
-    printf("fctr = %d\n",fctr);
+    Log(2,"EdbDataProc::FineAlignmentTracks","fctr = %d\n",fctr);
   }
 
   if(fctr0>fcMin) {
@@ -2163,7 +2154,7 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
   
   EdbDataPiece *piece;
   int npieces = eDataSet->N();
-  printf("npieces = %d\n",npieces);
+  Log(2,"EdbDataProc::InitVolume","npieces = %d",npieces);
   if(!npieces) return 0;
 
   //TTree *cptree=0;
@@ -2174,9 +2165,8 @@ int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
   EdbPattern *p2=0;
 
   for(i=0; i<npieces; i++ ) {
-    printf("\n");
     piece = eDataSet->GetPiece(i);
-    if(!piece->InitCouplesTree("READ"))  printf("no tree %d\n",i);
+    if(!piece->InitCouplesTree("READ"))  Log(1," EdbDataProc::InitVolume","no tree %d",i);
 
     pat = new EdbPattern( 0.,0., piece->GetLayer(0)->Z(),100 );
     pat->SetPID(i);
@@ -2310,7 +2300,7 @@ void EdbDataProc::LinkTracks( int alg, float p )
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
 
-  printf("tracking:  alg = %d \t p= %f\n", alg, p);
+  Log(2,"EdbDataProc::LinkTracks","tracking:  alg = %d \t p= %f", alg, p);
 
   ali->SetCouplesPeriodic(0,1);
   int ntr=0;
@@ -2339,7 +2329,7 @@ void EdbDataProc::LinkTracksC( int alg, float p )
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolume(ali);
 
-  printf("carbonium tracking:  alg = %d \t p= %f\n", alg, p);
+  Log(2,"EdbDataProc::LinkTracksC","carbonium tracking:  alg = %d \t p= %f", alg, p);
 
   ali->SetCouplesPeriodic(0,1);
   LinkTracksWithFlag( ali, p, 0.01, 2, 3, 0 );
@@ -2365,7 +2355,7 @@ void EdbDataProc::LinkRawTracks( int alg )
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolumeRaw(ali);
   ali->Link();
-  printf("link ok\n");
+  Log(2,"EdbDataProc::LinkRawTracks","link ok\n");
 
 //    if(alg==1) {
 //      ali->MakeHoles();
@@ -2388,7 +2378,7 @@ void EdbDataProc::FineAlignment(int doFine)
   EdbPVRec    ali;
   InitVolume(&ali);
   ali.Link();
-  printf("link ok\n");
+  Log(2,"EdbDataProc::FineAlignment","link ok\n");
   ali.FillTracksCell();
 
   EdbAffine2D aff;
@@ -2424,7 +2414,7 @@ void EdbDataProc::FineAlignment(int doFine)
     fctr = ali.FineCorrZ(i,dz);
     if(fctr<=fcMin) break;
     z -= dz;
-    printf("dz = %f  z = %f\n",dz,z);
+    Log(2,"EdbDataProc::FineAlignment","dz = %f  z = %f\n",dz,z);
     if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,z);
   }
 
@@ -2445,7 +2435,7 @@ void EdbDataProc::FineAlignment(int doFine)
     fctr = ali.FineCorrZ(i,dz);
     if(fctr<=fcMin) break;
     z -= dz;
-    printf("dz = %f  z = %f\n",dz,z);
+    Log(2,"EdbDataProc::FineAlignment","dz = %f  z = %f",dz,z);
     if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,z);
   }
 
@@ -2476,7 +2466,7 @@ void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
   }
 
   ali->Link();
-  printf("link ok\n");
+  Log(2,"EdbDataProc::AlignLinkTracks","link ok\n");
 
 //    if(alg==1) {
 //      ali->MakeHoles();
@@ -2507,7 +2497,7 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali, const char *file)
 //______________________________________________________________________________
 int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char *file)
 {
-  printf("write tracks into %s ... \n",file);
+  Log(2,"EdbDataProc::MakeTracksTree","write tracks into %s ... ",file);
   TFile fil(file,"RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
@@ -2560,7 +2550,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 
   tracks->Write();
   fil.Close();
-  printf("%d tracks are written \n",ntr);
+  Log(2,"EdbDataProc::MakeTracksTree","%d tracks are written \n",ntr);
   return ntr; 
 }
 
@@ -2585,7 +2575,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
   tracks->Draw(">>lst", cut );
   TEventList *lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
   int nlst =lst->GetN();
-  if(cut) printf("select %d of %d tracks by cut %s\n",nlst, nentr, cut.GetTitle() );
+  if(cut) Log(2,"EdbDataProc::ReadTracksTree","select %d of %d tracks by cut %s",nlst, nentr, cut.GetTitle() );
 
   TClonesArray *seg  = new TClonesArray("EdbSegP", 60);
   TClonesArray *segf = new TClonesArray("EdbSegP", 60);
@@ -2611,18 +2601,12 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     EdbTrackP *tr1 = new EdbTrackP();
     ((EdbSegP*)tr1)->Copy(*trk);
     tr1->SetM(0.139);                 //TODO
- 
-//     tr1->SetID(trk->ID());
-//     tr1->SetP(trk->P());
-//     tr1->SetErrorP(trk->SP());
-//     tr1->SetFlag(trk->Flag());
-//     tr1->SetProb(trk->Prob());
 
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
       pat = ali.GetPattern( s1->PID() );
       if(!pat) { 
-	printf("WARNING: no pattern with pid %d: creating new one!\n",s1->PID()); 
+	Log(1,"EdbDataProc::ReadTracksTree","WARNING: no pattern with pid %d: creating new one!",s1->PID()); 
 	pat = new EdbPattern( 0., 0., s1->Z() );
 	pat->SetID(s1->PID());
 	ali.AddPatternAt(pat,s1->PID());
@@ -2637,7 +2621,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     ali.AddTrack(tr1);
   }
 
-  printf("%d tracks are read \n",nlst);
+  Log(2,"EdbDataProc::ReadTracksTree","%d tracks are read",nlst);
   return nlst;
 }
 

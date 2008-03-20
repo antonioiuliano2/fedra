@@ -212,13 +212,13 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
   int      ny = (int)( eYoffsetMax/stepy );
 
   if(nx==0&&ny==0) return 2;
-  printf("FindOffset( %d x %d ) with steps %8.3f %8.3f \t%f %f\n",
+  Log(2,"EdbPatCouple::FindOffset","( %d x %d ) with steps %8.3f %8.3f \t%f %f\n",
 	 2*nx+1,2*ny+1,stepx,stepy,Cond()->StepTX(0),Cond()->StepTY(0) );
 
   FillCell_XYaXaY(pat1,Cond(),dz/2.,stepx,stepy);
-  printf( " drop couples: %d \n",pat1->Cell()->DropCouples(4) );
+  Log(2,"EdbPatCouple::FindOffset"," drop couples: %d \n",pat1->Cell()->DropCouples(4) );
   FillCell_XYaXaY(pat2,Cond(),-dz/2.,stepx,stepy);
-  printf( " drop couples: %d \n",pat2->Cell()->DropCouples(4) );
+  Log(2,"EdbPatCouple::FindOffset"," drop couples: %d \n",pat2->Cell()->DropCouples(4) );
 
   Long_t vshift[4] = {0,0,0,0};
   TIndexCell *c1=pat1->Cell();
@@ -234,7 +234,6 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
       c1->Shift(2,vshift);
  
       npat = c1->ComparePatterns(4,vdiff,c2);
-      printf(" %5d", npat);
 
       if(npat>npat0) {
 	npat0 = npat;
@@ -246,10 +245,9 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
       vshift[1] = -iy;
       c1->Shift(2,vshift);
     }
-    printf("\n");
   }
 
-  printf("\nOffset: %f %f   npat = %d \n\n", voff[0], voff[1], npat0 );
+   Log(2,"EdbPatCouple::FindOffset","Offset: %f %f   npat = %d", voff[0], voff[1], npat0 );
 
   EdbAffine2D aff;
   aff.ShiftX(voff[0]);
@@ -268,16 +266,14 @@ int EdbPatCouple::FillCHI2P()
   float       chi2;
   int ncp = Ncouples();
 
-  if (gEDBDEBUGLEVEL > 1) printf("eCHI2mode = %d\n",eCHI2mode);
+  Log(2,"EdbPatCouple::FillCHI2P","eCHI2mode = %d\n",eCHI2mode);
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
 
-    //if     (eCHI2mode==1) chi2 = Chi2Pn(scp);  //deprecated
     if(eCHI2mode==2) chi2 = Chi2Pz0(scp);
     else if(eCHI2mode==3) chi2 = Chi2KF(scp);
     else                  chi2 = Chi2A(scp);
 
-    //    printf("chi2 = %f   mode=%d\n",chi2,eCHI2mode);
     scp->SetCHI2P(chi2);
   }
   return Ncouples();
@@ -385,7 +381,6 @@ float EdbPatCouple::Chi2A( EdbSegP *s1, EdbSegP *s2, int iprob  )
   float stx   = eCond->SigmaTX(tx);
   float sty   = eCond->SigmaTY(ty);
 
-  //printf("dz,tx,ty,stx,sty:  %f\t %f %f\t %f %f\n",dz,tx,ty,stx,sty); 
   float prob1=1., prob2=1.;
   if(iprob) {
     prob1 = eCond->ProbSeg(tx,ty,s1->W());
@@ -454,7 +449,8 @@ int EdbPatCouple::CutCHI2P(float chi2max)
   TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
   int ncp = Ncouples();
-  if (gEDBDEBUGLEVEL > 1) printf("CutCHI2P (%4.1f):  %d -> ", chi2max,ncp );
+
+  if(gEDBDEBUGLEVEL>1) printf("CutCHI2P (%4.1f):  %d -> ", chi2max,ncp );
  
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
@@ -463,7 +459,7 @@ int EdbPatCouple::CutCHI2P(float chi2max)
   }
   SafeDelete(eSegCouples);
   eSegCouples=sCouples;
-  if (gEDBDEBUGLEVEL > 1) printf(" %d \n", Ncouples() );
+  if(gEDBDEBUGLEVEL>1) printf("%d\n", Ncouples() );
   return Ncouples();
 }
 
@@ -473,7 +469,7 @@ int EdbPatCouple::SelectIsolated()
   TObjArray *sCouples = new TObjArray();
   EdbSegCouple *sc = 0;
   int ncp = Ncouples();
-  printf("SelectIsolated:  %d -> ", ncp );
+  if(gEDBDEBUGLEVEL>1) printf("SelectIsolated:  %d -> ", ncp );
 
   for( int i=ncp-1; i>=0; i-- ) {
     sc = GetSegCouple(i);
@@ -482,7 +478,7 @@ int EdbPatCouple::SelectIsolated()
   }
   SafeDelete(eSegCouples);
   eSegCouples=sCouples;
-  printf(" %d \n", Ncouples() );
+  if(gEDBDEBUGLEVEL>1) printf(" %d \n", Ncouples() );
   return Ncouples();
 }
 
@@ -537,8 +533,7 @@ int EdbPatCouple::Align(int alignFlag)
 
   SetZlink( (Pat1()->Z()+Pat2()->Z())/2. );  // link at central z
 
-  printf("\n************************************************************\n");
-  printf("align patterns: %d (%d)  and  %d (%d) at Zlink = %f\n",
+  Log(2,"EdbPatCouple::Align","patterns: %d (%d)  and  %d (%d) at Zlink = %f",
 	 Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   npat = FindOffset01(eXoffsetMax,eYoffsetMax);   if(npat<2) return npat;
@@ -595,8 +590,7 @@ int EdbPatCouple::LinkSlow( float chi2max )
 
   ClearSegCouples();
 
-  if (gEDBDEBUGLEVEL > 1) 
-    printf("Couple: link (slow) patterns: %d (%d)  and  %d (%d) \n",
+  Log(2,"EdbPatCouple::LinkSlow","patterns: %d (%d)  and  %d (%d) \n",
 	   pat1->ID(), pat1->N(), pat2->ID(),pat2->N());
 
   EdbSegCouple   *c;
@@ -628,8 +622,7 @@ int EdbPatCouple::LinkFast()
   int npat =0;
   SetZlink( (Pat2()->Z()+Pat1()->Z())/2. );
 
-  if (gEDBDEBUGLEVEL > 1)
-    printf("Couple: link patterns: %d (%d)  and  %d (%d) at Z = %f\n",
+  Log(2,"EdbPatCouple::LinkFast","patterns: %d (%d)  and  %d (%d) at Z = %f\n",
 	   Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
@@ -639,8 +632,6 @@ int EdbPatCouple::LinkFast()
   npat = DiffPat( Pat1(), Pat2(), vdiff );
 
   FillCHI2P();
-  //  FillCHI2();
-
   return npat;
 }
 
@@ -803,9 +794,6 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
 }
 
 ///=============================================================================
-///=============================================================================
-
-
 EdbPVRec::EdbPVRec()
 {
   ePatCouples = new TObjArray();
@@ -1009,6 +997,10 @@ void EdbPVRec::SetSegmentProbability( EdbSegP &seg )
 //______________________________________________________________________________
 void EdbPVRec::SetSegmentsErrors()
 {
+  if(!GetScanCond()) {
+    Log(1,"EdbPVRec::SetSegmentsErrors","ERROR: ScanCond didn't set!!!");
+    return;
+  }
   EdbPattern *pat;
   EdbSegP    *seg;
   int npat =Npatterns();
@@ -1040,7 +1032,7 @@ int EdbPVRec::LinkSlow()
     pc->LinkSlow( Chi2Max() );
     npat = pc->SortByCHI2P();
   }
-  printf(" EdbPVRec::LinkSlow: npat= %d \n",npat);
+  Log(2,"EdbPVRec::LinkSlow"," npat= %d",npat);
   return npat;
 }
 
@@ -1061,7 +1053,7 @@ int EdbPVRec::Link()
     pc->SortByCHI2P();
     npat += pc->Ncouples();
   }
-  //printf(" EdbPVRec (LinkFast): npat= %d \n",npat);
+  Log(2,"EdbPVRec::Link"," npat= %d",npat);
   return npat;
 }
 
@@ -1112,7 +1104,7 @@ void EdbPVRec::FillTracksCell()
   // fill tracks cell "vid1:vid2"
   // second segment is considered as leading one
 
-  printf("fill tracks cell... \n");
+  Log(2,"EdbPVRec::FillTracksCel","...");
 
   Long_t vid1,vid2;
 
@@ -1143,7 +1135,7 @@ void EdbPVRec::FillTracksCell()
     }
   }
   tracksCell->Sort();
-  tracksCell->PrintPopulation(1);
+  if(gEDBDEBUGLEVEL>1) tracksCell->PrintPopulation(1);
 }
 
 //______________________________________________________________________________
@@ -1153,7 +1145,7 @@ void EdbPVRec::FillTracksCellFast()
   // second segment is considered as leading one
 
   int ncp = Ncouples();
-  printf("build tracks from couples for ncp=%d ... \n", ncp);
+  Log(2,"EdbPVRec::FillTracksCellFast","build tracks from couples for ncp=%d ...", ncp);
   if(ncp<1)     return;
 
   SafeDelete(eTracks);
@@ -1183,9 +1175,9 @@ void EdbPVRec::FillTracksCellFast()
   }
 
   for(int i=0; i<nfound+1; i++) 
-    printf("%d \t tracks with  %d segments\n",segtab[i],i);
+    Log(2,"EdbPVRec::FillTracksCellFast","%d \t tracks with  %d segments",segtab[i],i);
 
-  printf("%d tracks are found \n", ntr);
+  Log(2,"EdbPVRec::FillTracksCellFast","%d tracks are found", ntr);
 }
 
 //_________________________________________________________________________
@@ -1222,8 +1214,6 @@ void EdbPVRec::AddCouplesToTracks(EdbPatCouple *pc, TIndex2 &itracks )
   itracks.Set(0);
   itracks.BuildIndex(ncpp,w);
   delete[] w;
-
-  //printf("%d <->%d :\t %d ******* ok ********\n", pc->ID1(), pc->ID2(), ncpp);
 }
 
 //_________________________________________________________________________
@@ -1301,8 +1291,6 @@ void EdbPVRec::AddCouplesToTracksM(EdbPatCouple *pc, TIndex2 &itracks )
     }
     maj0=maj;
   }
-
-  //printf("%d <->%d :\t %d ******* ok ********\n", pc->ID1(), pc->ID2(), ncpp);
 }
 
 //______________________________________________________________________________
@@ -1332,7 +1320,7 @@ void EdbPVRec::FillTracksCell1()
   for(int iv=0; iv<ncp; iv++ ) {
     pc = GetCouple(iv);
     ncpp = pc->Ncouples();
-    printf("cross: %d %d\n",iv,ncpp);
+    Log(2,"EdbPVRec::FillTracksCell1","cross: %d %d\n",iv,ncpp);
     for(int ip=0; ip<ncpp; ip++) {
       sc = pc->GetSegCouple(ip);
 
@@ -1346,11 +1334,10 @@ void EdbPVRec::FillTracksCell1()
       cc->FindAdd(vid1);
     }
   }
-  //cross->PrintPopulation(1);
 
   TIndexCell *ct=0;
   int ncross = cross->GetSize();
-  printf("ncross = %d\n",ncross);
+  Log(2,"EdbPVRec::FillTracksCell1","ncross = %d",ncross);
   int ncc=0;
 
   for(int i=0; i<ncross; i++) {
@@ -1391,7 +1378,7 @@ void EdbPVRec::FillTracksCell2()
   for(int iv=0; iv<ncp; iv++ ) {
     pc = GetCouple(iv);
     ncpp = pc->Ncouples();
-    printf("cross: %d %d\n",iv,ncpp);
+    Log(2,"EdbPVRec::FillTracksCell2","cross: %d %d\n",iv,ncpp);
     for(int ip=0; ip<ncpp; ip++) {
       sc = pc->GetSegCouple(ip);
 
@@ -1409,11 +1396,11 @@ void EdbPVRec::FillTracksCell2()
     }
   }
   cross->Sort();
-  cross->PrintPopulation(1);
+  if(gEDBDEBUGLEVEL>1) cross->PrintPopulation(1);
 
   TIndexCell *ct=0;
   int ncross = cross->N(1);
-  printf("ncross = %d\n",ncross);
+  Log(2,"EdbPVRec::FillTracksCell2","ncross = %d",ncross);
   int ncc=0;
 
   for(int i=0; i<ncross; i++) {
@@ -1428,7 +1415,7 @@ void EdbPVRec::FillTracksCell2()
   }
 
   tracks->Sort();
-  tracks->PrintPopulation(1);
+  if(gEDBDEBUGLEVEL>1) tracks->PrintPopulation(1);
 }
 
 //______________________________________________________________________________
@@ -1542,12 +1529,12 @@ int EdbPVRec::MergeTracks(int maxgap)
 
   for(int i=0; i<10; i++) {
     m1 = MergeTracks1(maxgap);
-    printf("\n%d tracks are merged!\n",  m1);
+    Log(2,"EdbPVRec::MergeTracks","%d tracks are merged!",  m1);
     if(m1==0)  break;
     merged += m1;
   }
 
-  printf("\nTotal: %d tracks are merged!\n",  merged);
+  Log(2,"EdbPVRec::MergeTracks","Total: %d tracks are merged!",  merged);
 
   return merged;
 }
@@ -1791,7 +1778,7 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
   if( eTracks ) ntr0 = eTracks->GetEntries();
   else   eTracks  = new TObjArray();
 
-  printf("make tracks (ntr0=%d)...\n",ntr0);
+  Log(2,"EdbPVRec::MakeTracks","ntr0=%d...",ntr0);
 
   int         nseg, ntr=0;
   Long_t      vid=0;
@@ -1825,7 +1812,7 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
     track->SetCounters();
   }
 
-  printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
+  Log(2,"EdbPVRec::MakeTracks","%d tracks with >= %d segments are selected\n",ntr, nsegments);
   return ntr;
 }
 
@@ -1849,7 +1836,7 @@ int EdbPVRec::FineCorrF(int ipat, EdbAffine2D &aff,  EdbAffine2D &afft )
 
     track = (EdbTrackP*)eTracks->At(i);
 
-    printf("track->CHI2() = %f %f   prob = %f\n",
+    Log(2,"EdbPVRec::FineCorrF","track->CHI2() = %f %f   prob = %f",
 	   track->CHI2(),track->CHI2F(),track->Prob() );
     if(track->Prob()<probMax) continue;
 
@@ -1989,7 +1976,7 @@ int EdbPVRec::FineCorrZnew()
   if(!eTracks) return 0;
   int   ntr  = eTracks->GetEntriesFast();
 
-  if(ntr < nMin) { printf("FineCorrZnew: ntr<%d : nothing to do\n", nMin ); return 0; }
+  if(ntr < nMin) { Log(1,"EdbPVRec::FineCorrZnew"," ntr<%d : nothing to do!", nMin ); return 0; }
 
   int   npat = Npatterns();
   float  tx1,ty1;
@@ -2029,7 +2016,7 @@ int EdbPVRec::FineCorrZnew()
     else  dzz[i] = dzz[i]/itr[i];      // dzz is the ratio of "position angle"/"track angle"
     float dz = (GetPattern(i)->Z()-GetPattern(i+1)->Z())*dzz[i];
     znew[i] = znew[i+1] + dz;
-    printf("Ajust Z of pat: %d  by %d tracks: dz = %f  Zold, Znew: %f %f   diff = %f\n", 
+    Log(2,"EdbPVRec::FineCorrZnew","Ajust Z of pat: %d  by %d tracks: dz = %f  Zold, Znew: %f %f   diff = %f\n", 
 	   i, itr[i], dz, GetPattern(i)->Z(), znew[i], znew[i]-GetPattern(i)->Z() );
   }
 
@@ -2079,7 +2066,6 @@ int EdbPVRec::MakeSummaryTracks()
   for(int i=0; i<ntr; i++) {
     track = (EdbTrackP*)eTracks->At(i);
     track->FitTrack();
-    //    printf("track chi2 = %f\n",track->CHI2());
   }
   return ntr;
 }
@@ -2132,7 +2118,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
     eTracks->Add(track);
   }
 
-  printf("%d tracks with >= %d segments are selected\n",ntr, nsegments);
+  Log(2,"EdbPVRec::SelectLongTracks","%d tracks with >= %d segments are selected\n",ntr, nsegments);
   return ntr; 
 }
 
@@ -2143,7 +2129,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   // discard tracks with probability < probMin
 
   int ntr = eTracks->GetEntries();
-  printf("Comb %d tracks, longer then %d; ngaps <= %d ...\n"
+  Log(2,"EdbPVRec::CombTracks","Comb %d tracks, longer then %d; ngaps <= %d ..."
 	 ,ntr,nplmin, ngapMax );
 
   int nseg=0, nsegtot=0;
@@ -2166,7 +2152,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   }
   cn.Sort();
 
-  printf("%d tracks with %d segments for processing...\n",ntr,nsegtot);
+  Log(2,"EdbPVRec::CombTracks","%d tracks with %d segments for processing...",ntr,nsegtot);
 
   // *** set track ID for segments attached to
 
@@ -2250,7 +2236,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
     nsegtot += tr->SetSegmentsTrack();
   }
 
-  printf("%d tracks with %d segments remaining\n",ntr,nsegtot);
+  Log(2,"EdbPVRec::CombTracks","%d tracks with %d segments remaining",ntr,nsegtot);
   return ntr;
 }
 
@@ -2286,7 +2272,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 
   int ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects TODO remove this call from here? 
 
-  printf("propagate %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ...\n"
+  Log(2,"EdbPVRec::PropagateTracks"," %d tracks, selecting in range [%d : %d] plates, ngaps <= %d ..."
 	 ,ntr,nplmin,nplmax, ngapMax );
 
   if(ntr<1) return 0;
@@ -2324,7 +2310,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 
 	if(!tr) { 
-	  printf("ERROR: EdbPVRec::PropagateTracks: bad track(%d) pointer!!\n",i);
+	  Log(1,"EdbPVRec::PropagateTracks","ERROR: bad track(%d) pointer!!",i);
 	  continue;
 	}
 
@@ -2336,7 +2322,6 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 	if(tr->Npl()>nplmax)   continue;
 	if(tr->Flag()==-10)    continue;
 
-	//printf("EdbPVRec::PropagateTracks:track(%d, %d, %d) \n",i,ip,it);
   	nseg = PropagateTrack(*tr, false, probMin, ngapMax, design);
   	nsegTot += nseg;
 
@@ -2346,7 +2331,7 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
 
   ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects
 
-  printf("%d segments are attached after propagation\n\n",nsegTot);
+  Log(2,"EdbPVRec::PropagateTracks","%d segments are attached after propagation\n\n",nsegTot);
   return nsegTot;
 }
 
@@ -2376,8 +2361,6 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
   float probmax=0, prob=0;
   EdbTrackP *ttt = 0;
 
-  //  printf("pat cycle: pstart=%d, pend=%d, step=%d\n",pstart,pend,step);
- 
   for(int i=pstart+step; i!=pend+step; i+=step ) {
     pat = GetPattern(i);
     if(!pat)                     goto GAP;
@@ -2399,15 +2382,13 @@ int EdbPVRec::PropagateTrack( EdbTrackP &tr, bool followZ, float probMin,
 
     trind= segmax->Track();
     if(trind==tr.ID()) {
-      printf("TRACK LOOP: %d %d \n",trind, tr.ID());
-      //printf("ipat=%d followz=%d  patZ: %f trackZ: %f %f  \n",
-      //     i, followZ,pat->Z(), tr.Zmin(), tr.Zmax());
+      Log(1,"EdbPVRec::PropagateTrack","TRACK LOOP: %d %d",trind, tr.ID());
       goto GAP;
     }
     ttt=0;
     if( trind >= 0 && trind<ntr )    {
       ttt = ((EdbTrackP*)eTracks->At(trind));
-      if(!ttt)  { printf("BAD TRACK POINTER: %d\n", trind); goto GAP;};
+      if(!ttt)  { Log(1,"EdbPVRec::PropagateTrack","BAD TRACK POINTER: %d\n", trind); goto GAP;};
       
       if(ttt->VertexS() || ttt->VertexE()) goto GAP;
 
@@ -2662,7 +2643,7 @@ int EdbPVRec::ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr,
 
     nseg += pat->FindCompliments(ss,arr,binx,bint);
   }
-  printf("%d segments are selected\n",nseg);
+  Log(2,"EdbPVRec::ExtractDataVolumeSeg","%d segments are selected\n",nseg);
   return nseg;
 }
 
@@ -2683,7 +2664,7 @@ int EdbPVRec::ExtractDataVolumeSegAll( TObjArray &arr )
       nseg++;
     }
   }
-  printf("%d segments are selected\n",nseg);
+  Log(2,"EdbPVRec::ExtractDataVolumeSegAll","%d segments are selected\n",nseg);
   return nseg;
 }
 

@@ -40,7 +40,7 @@ void EdbScanSet::MakeNominalSet(Int_t from_plate, Int_t to_plate, Float_t z0, Fl
     z += dz;
   } while( p!=(to_plate+step) );
   MakePIDList();
-  Print();
+  if(gEDBDEBUGLEVEL>1) Print();
 }
 
 //----------------------------------------------------------------
