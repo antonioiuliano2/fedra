@@ -31,7 +31,7 @@ TEventList* GetCPListFromTracks(const char* fname, Int_t pid, const char* cutstr
 {
   // OPEN TRACKS FILE
   cout << "   ... open the volume tracks file " << fname << endl;
-  //  TFile* trfile = new TFile(fname);
+  TFile* trfile = new TFile(fname);
   TTree* tracks = (TTree*) gDirectory->Get("tracks");
   Int_t   nseg=0;
   EdbSegP *trk=0;
