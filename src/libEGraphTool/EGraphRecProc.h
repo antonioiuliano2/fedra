@@ -29,6 +29,23 @@ typedef struct {
   Int_t scanForth;
 } ProcId_t;
 
+// vertex reconstruction options
+
+typedef struct {
+  Int_t   QualityMode;  // vertex quality estimation method 
+                        // (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average 
+                        // track-vertex distance)
+  Bool_t  UseMom;       // use or not track momentum for vertex calculations
+  Bool_t  UseSegPar;    // use only the nearest measured segments for 
+                        // vertex fit (as Neuchatel)
+  Float_t DZmax;        // maximum z-gap in the track-vertex group
+  Float_t ProbMinV;     // minimum acceptable probability for chi2-distance 
+                        // between tracks
+  Float_t ImpMax;       // maximal acceptable impact parameter [microns] 
+                        // (for preliminary check)
+} VertexRecOpt_t;
+
+
 // TThread functions
 
 void *ThSBProcess(void *ptr);
@@ -43,6 +60,7 @@ class EGraphRecProc {
   void SetScanProc(EdbScanProc *scanProc)       {fScanProc = scanProc;}
   void SetBrickToProc(ProcBrick_t &brickToProc) {fBrickToProc = brickToProc;}
   void SetProcId(ProcId_t &procId)              {fProcId = procId;}
+  void SetVertexRecOpt(VertexRecOpt_t &recOpt)  {fVertexRecOpt = recOpt;}
 
   EdbPVRec *VertexRec();
 
@@ -56,22 +74,14 @@ class EGraphRecProc {
   Float_t fMass;      // particle mass
   Float_t fProbMinP;  // minimal probability to accept segment on propagation
 
-  // vertex reconstruction options
-
-  Int_t   fQualityMode;
-  Bool_t  fUseMom;
-  Bool_t  fUseSegPar;
-  Float_t fDZmax;
-  Float_t fProbMinV;
-  Float_t fImpMax;
-
-  EdbPVRec     *fPVRec;
-  EdbVertexRec *fVertexRec;
-  EdbScanProc  *fScanProc;
-  EdbScanSet   *fScanSetVTX;
-  EdbScanCond  *fScanCond;
-  ProcId_t      fProcId;
-  ProcBrick_t   fBrickToProc;
+  EdbPVRec      *fPVRec;
+  EdbVertexRec  *fVertexRec;
+  EdbScanProc   *fScanProc;
+  EdbScanSet    *fScanSetVTX;
+  EdbScanCond   *fScanCond;
+  ProcId_t       fProcId;
+  ProcBrick_t    fBrickToProc;
+  VertexRecOpt_t fVertexRecOpt;
 
   void SetCondBT();
   void PropagateTracks();

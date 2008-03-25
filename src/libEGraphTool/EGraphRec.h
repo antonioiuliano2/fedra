@@ -79,6 +79,7 @@ class EGraphRec {
   EdbDisplay          *fDisplay;
   ProcId_t             fProcId;
   ProcBrick_t          fProcBrick;
+  VertexRecOpt_t       fVertexRecOpt;
   TThread             *fThSBProcess;
   TThread             *fThSBCheckProcess;
 
@@ -109,6 +110,15 @@ class EGraphRec {
   TGCheckButton       *fCheckSBAlgn;
   TGCheckButton       *fCheckSBTrks;
 
+  // vertex reconstruction parameters
+
+  TGCheckButton       *fCheckUseMom;
+  TGCheckButton       *fCheckUseSegPar;
+  TGNumberEntry       *fEntryQualityMode;
+  TGNumberEntry       *fEntryDZmax;
+  TGNumberEntry       *fEntryProbMinV;
+  TGNumberEntry       *fEntryImpMax;
+
   TRootEmbeddedCanvas *fDisplayHits;
   // TRootEmbeddedCanvas *fDisplayHitsGL;
   TRootEmbeddedCanvas *fDisplayFedra;
@@ -118,7 +128,6 @@ class EGraphRec {
   void InitVariables();
   void ReadCmdConfig();
   void InitDrawVariables();
-  void ReconstructionOptionsDlg(TGCompositeFrame *DlgRec);
   void WriteInfo();
 
   ClassDef(EGraphRec,0)

@@ -115,11 +115,19 @@ void EGraphRec::StartVertexRec()
   fBrickToProc.lastPlate  = fEntrySBLastPlate->GetIntNumber();
   fBrickToProc.step       = fEntrySBStep->GetIntNumber();
 
-  fScanProc->eProcDirClient = fDataDir;  // brick directory initialization
+  fVertexRecOpt.QualityMode = fEntryQualityMode->GetIntNumber();
+  fVertexRecOpt.UseMom      = fCheckUseMom->IsDown();
+  fVertexRecOpt.UseSegPar   = fCheckUseSegPar->IsDown();
+  fVertexRecOpt.DZmax       = fEntryDZmax->GetNumber();
+  fVertexRecOpt.ProbMinV    = fEntryProbMinV->GetNumber();
+  fVertexRecOpt.ImpMax      = fEntryImpMax->GetNumber();
 
-  fRecProc->SetScanProc(fScanProc);       // Scan Proc
-  fRecProc->SetBrickToProc(fBrickToProc); // Brick to process
-  fRecProc->SetProcId(fProcId);           // Process Ids
+  fScanProc->eProcDirClient = fDataDir;     // brick directory initialization
+
+  fRecProc->SetScanProc(fScanProc);         // Scan Proc
+  fRecProc->SetBrickToProc(fBrickToProc);   // Brick to process
+  fRecProc->SetProcId(fProcId);             // Process Ids
+  fRecProc->SetVertexRecOpt(fVertexRecOpt); // vertex reconstruction options
 
   fPVRec = fRecProc->VertexRec();
 
@@ -135,14 +143,11 @@ void EGraphRec::DrawEvent()
   fDisplay->fCanvas->Clear("D");
   fDisplay->fCanvas->cd();
 
-//   if (fFoundTracks) {
-//     fDisplay->SetArrTr(fFoundTracks->eTracks);
-//     fDisplay->SetDrawTracks(4);
-//   }
-
-  fDisplay->SelectVertexTracks(fPVRec->eVTX);
   fDisplay->SetDrawTracks(4);
   // fDisplay->SetDrawVertex(1);
+
+  if (fFoundTracks) fDisplay->SetArrTr(fFoundTracks->eTracks);
+  if (fPVRec) fDisplay->SelectVertexTracks(fPVRec->eVTX);
 
   fDisplay->Draw();
   fDisplay->fCanvas->Update();
@@ -261,14 +266,6 @@ void EGraphRec::AddRecOptFrame(TGTab *worktab)
   // Create a tab with reconstruction options buttons
 
   TGCompositeFrame *tf = worktab->AddTab("Reconstruction options");
-
-  ReconstructionOptionsDlg(tf);
-}
-
-
-//--------------------------------------------------------------------------
-void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
-{
   TGLabel *label;
   TGHorizontalFrame *frame;
 
@@ -276,7 +273,7 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 
   // Momentum
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label = new TGLabel(frame, "momentum");
   fRecOptEntry[0] = new TGNumberEntry(frame, 1, //fRecParams->p, 
 				      7, 0, 
@@ -285,11 +282,11 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMin, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[0], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1);
+  tf->AddFrame(frame, fLayout1);
 
   // Prob min
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label  = new TGLabel(frame, "probmin");
   fRecOptEntry[1] = new TGNumberEntry(frame, 1, // fRecParams->probmin, 
 				      7, 1,
@@ -298,11 +295,11 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMinMax, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[1], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1);
+  tf->AddFrame(frame, fLayout1);
 
   // Nseg min
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label  = new TGLabel(frame, "nsegmin");
   fRecOptEntry[2] = new TGNumberEntry(frame, 1, // fRecParams->nsegmin, 
 				      7, 2,
@@ -311,11 +308,11 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMin, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[2], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1); 
+  tf->AddFrame(frame, fLayout1); 
 
   // Max gap
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label  = new TGLabel(frame, "maxgap");
   fRecOptEntry[3] = new TGNumberEntry(frame, 1, // fRecParams->maxgap, 
 				      7, 3,
@@ -324,16 +321,16 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMin, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[3], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1);
+  tf->AddFrame(frame, fLayout1);
 
   // Scanning conditions
 
-  label = new TGLabel(DlgRec,"Scanning conditions:");
-  DlgRec->AddFrame(label, fLayout1);
+  label = new TGLabel(tf,"Scanning conditions:");
+  tf->AddFrame(label, fLayout1);
 
   // Coords sigma
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label  = new TGLabel(frame, "Coords Sigma");
   fRecOptEntry[4] = new TGNumberEntry(frame, 1, //fGR->GetScanCond()->SigmaX(0), 
 				      7, 4,
@@ -342,11 +339,11 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMinMax, 0, 10);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[4], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1);
+  tf->AddFrame(frame, fLayout1);
 
   // Tangents sigma
 
-  frame = new TGHorizontalFrame(DlgRec);
+  frame = new TGHorizontalFrame(tf);
   label  = new TGLabel(frame, "Tangents Sigma");
   fRecOptEntry[5] = new TGNumberEntry(frame,1, // fGR->GetScanCond()->SigmaTX(0), 
 				      7, 5,
@@ -355,11 +352,11 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
 				      TGNumberEntry::kNELLimitMinMax, 0, 1);
   frame->AddFrame(label, fLayoutLeftExpY);
   frame->AddFrame(fRecOptEntry[5], fLayoutRightExpY);
-  DlgRec->AddFrame(frame, fLayout1);
+  tf->AddFrame(frame, fLayout1);
 
   // buttons
     
-  TGHorizontalFrame *Frame1 = new TGHorizontalFrame(DlgRec);
+  TGHorizontalFrame *Frame1 = new TGHorizontalFrame(tf);
 
   TGTextButton *Apply = new TGTextButton(Frame1, "Apply", 2);
   // Apply->Connect("Clicked()", "EGraphRec", this, "DoApplyRec()");
@@ -369,7 +366,7 @@ void EGraphRec::ReconstructionOptionsDlg(TGCompositeFrame *DlgRec)
   // Reset->Connect("Clicked()", "EGraphRec", this, "DoResetRec()");
   Frame1->AddFrame(Reset, fLayout1);
 
-  DlgRec->AddFrame(Frame1, fLayout1);
+  tf->AddFrame(Frame1, fLayout1);
 }
 
 
@@ -459,7 +456,76 @@ void EGraphRec::AddVertexRecFrame(TGTab *worktab)
 {
   // create a tab for vertex reconstruction
 
+  TGLabel *label;
+  TGHorizontalFrame *frame;
   TGCompositeFrame *vr_tab = worktab->AddTab("Vertex Rec");
+
+  // use or not track momentum for vertex calculations
+
+  fCheckUseMom = new TGCheckButton(vr_tab, "Use track momentum");
+  if (fVertexRecOpt.UseMom) fCheckUseMom->SetState(kButtonDown, kTRUE);
+  else fCheckUseMom->SetState(kButtonUp, kTRUE);
+  vr_tab->AddFrame(fCheckUseMom, fLayout1);
+
+  // use only the nearest measured segments for vertex fit
+
+  fCheckUseSegPar = new TGCheckButton(vr_tab, "Use nearest measured segments");
+  if (fVertexRecOpt.UseSegPar) fCheckUseSegPar->SetState(kButtonDown, kTRUE);
+  else fCheckUseSegPar->SetState(kButtonUp, kTRUE);
+  vr_tab->AddFrame(fCheckUseSegPar, fLayout1);
+
+  // vertex quality estimation method
+
+  frame = new TGHorizontalFrame(vr_tab);
+  label = new TGLabel(frame, "Quality Mode");
+  fEntryQualityMode = new TGNumberEntry(frame, fVertexRecOpt.QualityMode,
+					5, 0, 
+					TGNumberEntry::kNESInteger,
+					TGNumberEntry::kNEANonNegative,
+					TGNumberEntry::kNELLimitMin);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntryQualityMode, fLayoutRightExpY);
+  vr_tab->AddFrame(frame, fLayout1);
+
+  // maximum z-gap in the track-vertex group
+
+  frame = new TGHorizontalFrame(vr_tab);
+  label = new TGLabel(frame, "Maximum Z gap");
+  fEntryDZmax = new TGNumberEntry(frame, fVertexRecOpt.DZmax,
+				  7, 0, 
+				  TGNumberEntry::kNESRealOne,
+				  TGNumberEntry::kNEANonNegative,
+				  TGNumberEntry::kNELLimitMin);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntryDZmax, fLayoutRightExpY);
+  vr_tab->AddFrame(frame, fLayout1);
+
+  // minimum acceptable probability for chi2-distance between tracks
+
+  frame = new TGHorizontalFrame(vr_tab);
+  label = new TGLabel(frame, "Minimal vertex prob");
+  fEntryProbMinV = new TGNumberEntry(frame, fVertexRecOpt.ProbMinV,
+				     7, 0, 
+				     TGNumberEntry::kNESReal,
+				     TGNumberEntry::kNEANonNegative,
+				     TGNumberEntry::kNELLimitMin);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntryProbMinV, fLayoutRightExpY);
+  vr_tab->AddFrame(frame, fLayout1);
+
+
+  // maximal acceptable impact parameter
+
+  frame = new TGHorizontalFrame(vr_tab);
+  label = new TGLabel(frame, "Maximal impact param");
+  fEntryImpMax = new TGNumberEntry(frame, fVertexRecOpt.ImpMax,
+				   7, 0, 
+				   TGNumberEntry::kNESRealTwo,
+				   TGNumberEntry::kNEANonNegative,
+				   TGNumberEntry::kNELLimitMin);
+  frame->AddFrame(label, fLayoutLeftExpY);
+  frame->AddFrame(fEntryImpMax, fLayoutRightExpY);
+  vr_tab->AddFrame(frame, fLayout1);
 
   // start process
 
@@ -600,6 +666,15 @@ void EGraphRec::InitVariables()
   fProcId.interCalib = fProcId.volumeScan = fProcId.predScan = 
     fProcId.scanForth = -1;
 
+  // init default vertex reconstruction options
+
+  fVertexRecOpt.QualityMode = 0;
+  fVertexRecOpt.UseMom      = kTRUE;
+  fVertexRecOpt.UseSegPar   = kFALSE;
+  fVertexRecOpt.DZmax       = 3000.;
+  fVertexRecOpt.ProbMinV    = 0.001;
+  fVertexRecOpt.ImpMax      = 20.;
+
   fScanProc     = new EdbScanProc();
   fPredTracks   = new EdbPattern();
   fRecProc      = new EGraphRecProc();
@@ -610,7 +685,7 @@ void EGraphRec::InitVariables()
   fThSBCheckProcess = new TThread("ThSBCheckProcess",
 				  ThSBCheckProcess, (void*) this);
 
-  gEDBDEBUGLEVEL = 1;
+  gEDBDEBUGLEVEL = 2;
 }
 
 //----------------------------------------------------------------------------
@@ -657,6 +732,21 @@ void EGraphRec::ReadCmdConfig()
     fProcId.predScan = gEnv->GetValue("EGraphRec.ProcId.predScan", 0);
   if (fProcId.scanForth < 0)
     fProcId.scanForth = gEnv->GetValue("EGraphRec.ProcId.scanForth", 0);
+
+  // vertex reconstruction options
+
+  fVertexRecOpt.QualityMode = gEnv->GetValue("VertexRecOpt.QualityMode", 
+					     fVertexRecOpt.QualityMode);
+  fVertexRecOpt.UseMom      = gEnv->GetValue("VertexRecOpt.UseMom", 
+					     fVertexRecOpt.UseMom);
+  fVertexRecOpt.UseSegPar   = gEnv->GetValue("VertexRecOpt.UseSegPar", 
+					     fVertexRecOpt.UseSegPar);
+  fVertexRecOpt.DZmax       = gEnv->GetValue("VertexRecOpt.DZmax", 
+					     fVertexRecOpt.DZmax);
+  fVertexRecOpt.ProbMinV    = gEnv->GetValue("VertexRecOpt.ProbMinV", 
+					     fVertexRecOpt.ProbMinV);
+  fVertexRecOpt.ImpMax      = gEnv->GetValue("VertexRecOpt.ImpMax", 
+					     fVertexRecOpt.ImpMax);
 }
 
 

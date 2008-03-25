@@ -157,18 +157,6 @@ EGraphRecProc::EGraphRecProc()
   fMass     = 0.139; // particle mass
   fProbMinP = 0.001; // minimal probability to accept segment on propagation
 
-  fQualityMode = 0;     // vertex quality estimation method 
-                        // (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average 
-                        // track-vertex distance)
-  fUseMom      = true;  // use or not track momentum for vertex calculations
-  fUseSegPar   = false; // use only the nearest measured segments for 
-                        // vertex fit (as Neuchatel)
-  fDZmax       = 10000.; // maximum z-gap in the track-vertex group
-  fProbMinV    = 0.001; // minimum acceptable probability for chi2-distance 
-                        // between tracks
-  fImpMax      = 20.;   // maximal acceptable impact parameter [microns] 
-                        // (for preliminary check)
-
   fScanSetVTX  = NULL;
   fVertexRec   = NULL;
   fPVRec       = NULL;
@@ -181,6 +169,7 @@ EGraphRecProc::~EGraphRecProc()
 {
   SafeDelete(fScanCond);
   SafeDelete(fScanSetVTX);
+  SafeDelete(fPVRec);
 }
 
 
@@ -201,7 +190,7 @@ EdbPVRec *EGraphRecProc::VertexRec()
   // brick initialization
 
   Int_t pID_VS[4] = {fBrickToProc.brickId, 0, fBrickToProc.ver,
-		     fProcId.interCalib};
+		     fProcId.volumeScan};
 
   Int_t firstPlate = fBrickToProc.firstPlate;
   Int_t lastPlate  = fBrickToProc.lastPlate;
@@ -279,12 +268,12 @@ void EGraphRecProc::SetEVR()
   fVertexRec->eEdbTracks   = fPVRec->eTracks;
   fVertexRec->eVTX         = fPVRec->eVTX;
   fVertexRec->SetPVRec(fPVRec);
-  fVertexRec->eDZmax       = fDZmax;
-  fVertexRec->eProbMin     = fProbMinV;
-  fVertexRec->eImpMax      = fImpMax;
-  fVertexRec->eUseMom      = fUseMom;
-  fVertexRec->eUseSegPar   = fUseSegPar;
-  fVertexRec->eQualityMode = fQualityMode;
+  fVertexRec->eDZmax       = fVertexRecOpt.DZmax;
+  fVertexRec->eProbMin     = fVertexRecOpt.ProbMinV;
+  fVertexRec->eImpMax      = fVertexRecOpt.ImpMax;
+  fVertexRec->eUseMom      = fVertexRecOpt.UseMom;
+  fVertexRec->eUseSegPar   = fVertexRecOpt.UseSegPar;
+  fVertexRec->eQualityMode = fVertexRecOpt.QualityMode;
 }
 
 //----------------------------------------------------------------------------
