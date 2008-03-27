@@ -669,7 +669,7 @@ Int_t  TOracleServerE2W::DeleteBrick(char *id_eventbrick)
 
     for (int i=0;i<11;i++) {
 	fStmt->setSQL(query[i]);
-	Log(2,"DeleteBrick","execute sql query: %s ...",query);
+	Log(2,"DeleteBrick","execute sql query: %s ...",query[i]);
 	fStmt->execute();
     }
     Query(commit);
@@ -742,7 +742,7 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
 
     for (int i=0;i<9;i++) {
 	fStmt->setSQL(query[i]);
-	Log(2,"DeleteOperation","execute sql query: %s ...",query);
+	Log(2,"DeleteOperation","execute sql query: %s ...",query[i]);
 	fStmt->execute();
     }
     Query(commit);
@@ -752,6 +752,46 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
 
   } catch (SQLException &oraex) {
     Error("TOracleServerE2W", "DeleteOperation; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  return 1;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::DeletePlateOperation(char *id_brick, char *id_process_operation, char *id_plate)
+{
+  // Delete all informations related to a plate of a process operation of a brick from the DB
+  // Tables involved: ... a lot, look at the code...
+  // Details: DELETE queries and then a COMMIT query
+
+  char query[7][2048];
+  char commit[11]="commit";
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query[0], "delete from Tb_Scanback_Predictions where (id_path) in (select id from tb_scanback_paths where id_processoperation=%s) and id_eventbrick=%s and id_plate=%s",id_process_operation,id_brick,id_plate);
+    sprintf(query[1], "delete from Tb_MipBasetracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s and id_plate=%s)) and id_eventbrick=%s",id_process_operation,id_plate,id_brick);
+    sprintf(query[2], "delete from Tb_MipMicrotracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s and id_plate=%s)) and id_eventbrick=%s",id_process_operation,id_plate,id_brick);
+    sprintf(query[3], "delete from tb_views where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s and id_plate=%s))",id_process_operation,id_plate);
+    sprintf(query[4], "delete from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s and id_plate=%s)",id_process_operation,id_plate);
+    sprintf(query[5], "delete from tb_plate_calibrations where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s and id_plate=%s)",id_process_operation,id_plate);
+    sprintf(query[6], "delete from tb_proc_operations where id_parent_operation=%s and id_plate=%s",id_process_operation,id_plate);
+
+    for (int i=0;i<7;i++) {
+	fStmt->setSQL(query[i]);
+	Log(2,"DeletePlateOperation","execute sql query: %s ...",query[i]);
+	fStmt->execute();
+    }
+    Query(commit);
+
+    Log(2,"DeletePlateOperation","Plate operation deleted");
+    return 0;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "DeletePlateOperation; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
 
   return 1;

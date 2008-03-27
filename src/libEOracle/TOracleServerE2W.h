@@ -40,6 +40,7 @@ public:
     Int_t       DeleteBrick(char *id_eventbrick);
     Int_t       DeleteBrickSpace(char *id_brick);
     Int_t       DeleteOperation(char *id_brick, char *id_process_operation);
+    Int_t       DeletePlateOperation(char *id_brick, char *id_process_operation, char *id_plate);
 
     ClassDef(TOracleServerE2W,1)  // Write enabled access to the OPERA db 
 };
