@@ -661,6 +661,323 @@ for(int plate=0;plate<npl;plate++)
 
   return 0.;
 }
+
+//________________________________________________________________________________________
+float EdbTrackFitter::PMS_graph(EdbTrackP &tr,TGraphErrors *h_p)
+{
+  // Momentum resolution by Multiple scattering (Annecy implementation Oct-2007)
+  //
+  // Input: tr       - track
+ 
+  // detheta angular dependance : 
+  // To avoid angular dependance, the transverse coordinate is used for track angles more than 0.1 rad. 
+  // This gives a worse resolution as the 3D angle (used with angular dependance parametrisation),
+  // but gives right momentum measurement, biased in the 3D case.
+
+  // The constant term im the scattering formula is not 13.6 but 14.64, which
+  // is the right reevaluated number, due to a calculation with the moliere
+  // distribution. 13.6 is an approximation. See Geant3 or 4 references for more explanations.
+
+  float x0 = eX0/1000.;
+  float k = 14.64*14.64/x0;                 //rad length in [mm]
+  float x,y,z,tx,ty,w;
+  FitTrackLine(tr,x,y,z,tx,ty,w);  
+  float theta0 = Sqrt(tx*tx+ty*ty);
+  // cout<<"track "<<tr.ID()<<" -> txy3D fedra"<<tx<<" "<<ty<<" "<<theta0<<endl;
+
+
+  EdbSegP *s, *st;
+  int nseg = tr.N();
+  int npl = tr.Npl();
+  if(nseg<2)   { Log(1,"PMS_Mag","Warning! nseg<2 (%d)- impossible estimate momentum!",nseg);            return 0;}
+  if(npl<nseg) { Log(1,"PMS_Mag","Warning! npl<nseg (%d, %d) - use track.SetCounters() first",npl,nseg); return 0;}
+  int plmax = Max( tr.GetSegmentFirst()->PID(), tr.GetSegmentLast()->PID() ) + 1;
+  if(plmax<1||plmax>1000)   { Log(1,"PMS_Mag","Warning! plmax = %d - correct the segments PID's!",plmax); return 0;}
+
+  TArrayF theta2(plmax),dtheta(plmax),theta(plmax);
+  TArrayF theta2x(plmax),dthetax(plmax),thetax(plmax);
+  TArrayF theta2y(plmax),dthetay(plmax),thetay(plmax);
+  TArrayF thick(plmax), thickx(plmax), thicky(plmax);
+  TArrayF dx(plmax);
+
+  TArrayI sPID(plmax);
+  TArrayF setx(plmax), sety(plmax);
+  double   P=0, dP=0, Px=0, dPx=0, Py=0, dPy=0;
+  double   slopecorx=0, slopecory=0;
+  double   sigx=0, sigy=0;
+  int      lastci=0, firstci=0;
+  int control=-1;
+
+  st=tr.GetSegment(0);
+  for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	  sPID[ci]=s->PID();
+	  if (control==-1) {control=1; firstci=s->PID();}
+	  slopecorx=slopecorx+s->TX();
+	  slopecory=slopecory+s->TY();
+	  lastci=sPID[ci];
+	}
+    }    
+  if (firstci<lastci) lastci=firstci; 
+    
+  slopecorx=slopecorx/nseg;
+  slopecory=slopecory/nseg;
+  double cor=slopecorx*slopecorx+slopecory*slopecory;
+  double Zeff=Sqrt(1+cor);
+  float PHI=atan2( slopecorx, slopecory);
+ 
+  for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	  setx[s->PID()]=s->TY()*cos(-PHI)-s->TX()*sin(-PHI);   // longitudinal coordinate
+	  sety[s->PID()]=s->TX()*cos(-PHI)+ s->TY()*sin(-PHI);  // transversal coordinate	
+	}
+    }
+    
+  float tl=st->TY()*cos(-PHI)-st->TX()*sin(-PHI); 
+  float tt=st->TX()*cos(-PHI)+ st->TY()*sin(-PHI); 
+  float theta0b=Sqrt(tl*tl+tt*tt);  
+  float detheta=0, dty=0, dtx=0;
+  detheta = eDT0  + eDT1*Abs(theta0b)+eDT2*theta0b*theta0b;   detheta*=detheta;
+  dtx     = eDTx0 + eDTx1*Abs(tl) + eDTx2*tl*tl ;             dtx*=dtx;
+  dty     = eDTy0 + eDTy1*Abs(tt) + eDTy2*tt*tt ;             dty*=dty;
+  TF1 *f1=new TF1("f1",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,detheta),0,14);  // 0-14 the fitting range (cells)
+  f1->SetParameter(0,1000.);                             // strating value for momentum in MeV
+  TF1 *f1x=new TF1("f1x",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dtx),0,14);  // 0-14 the fitting range (cells)
+  f1x->SetParameter(0,1000.);                             // strating value for momentum in MeV
+  TF1 *f1y=new TF1("f1y",Form("sqrt(%f*x*(1+0.038*log(x/(%f)))/([0])**2+%f)",k,x0,dty),0,14);  // 0-14 the fitting range (cells)
+  f1y->SetParameter(0,1000.);                             // strating value for momentum in MeV
+
+
+
+  //-_-_-_-_-_-_-_-_-_  disable to large angles compared to rms
+
+  for(int ci=0;ci<npl;ci++)
+    {
+      if (setx[ci]!=0)
+	{
+	  sigx=sigx+(setx[ci]-slopecorx)*(setx[ci]-slopecorx);
+	  sigy=sigy+(sety[ci]-slopecory)*(sety[ci]-slopecory);
+	}
+    }
+  sigx=sqrt(sigx/nseg);
+  sigy=sqrt(sigy/nseg); 
+  for(int ci=0;ci<nseg;ci++)
+    {
+      s=tr.GetSegment(ci);
+      if(s!=NULL)
+	{
+	  sPID[ci]=s->PID();
+	  if(fabs(s->TX()-slopecorx)>3*sigx) setx[sPID[ci]]=0;
+	  if(fabs(s->TY()-slopecory)>3*sigy) sety[sPID[ci]]=0;
+	}
+    }    
+  //-_-_-_-_-_-_-_-_-_  
+
+
+  for(int plate=0;plate<npl;plate++)
+    {
+      setx[plate]=setx[plate+lastci];
+      sety[plate]=sety[plate+lastci];
+    }
+  int Ncell=0, NcellA=0, Ncellx=0, Ncelly=0;
+  
+  
+  for (int m=0;m<tr.Npl()-1;m++)
+    {
+      Ncell++;
+
+      theta2[Ncell-1]=0;dtheta[Ncell-1]=0;theta[Ncell-1]=0;
+      theta2x[Ncell-1]=0;dthetax[Ncell-1]=0;thetax[Ncell-1]=0;
+      theta2y[Ncell-1]=0;dthetay[Ncell-1]=0;thetay[Ncell-1]=0;
+
+      int dim=0, dimx=0, dimy=0;
+      int nshift=Ncell-1;
+      if(nshift>npl-Ncell-1){ nshift=npl-Ncell-1; }
+
+      int nhole=0;
+      for(int j=0;j<nshift+1;j++)
+	{
+	  double x = (npl-(j+1))/Ncell;
+	  int nmes = (int)x;
+	  nhole=0;
+	  for (int i=0;i<nmes;i++)
+	    {
+	      if ( (setx[Ncell*i+j+Ncell]!=0&&setx[Ncell*i+j]!=0)&&(sety[Ncell*i+j+Ncell]!=0&&sety[Ncell*i+j]!=0))
+		{
+		  theta2[Ncell-1] =
+		    theta2[Ncell-1] +
+		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 ) +
+		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
+		  dim++;
+		}
+	      if ( (setx[Ncell*i+j+Ncell]!=0&&setx[Ncell*i+j]!=0) )
+		{
+		  theta2x[Ncell-1] =
+		    theta2x[Ncell-1] +
+		    Power( (ATan(setx[Ncell*i+j+Ncell])-ATan(setx[Ncell*i+j])), 2 );
+		  dimx++;
+		}
+	      if ( (sety[Ncell*i+j+Ncell]!=0&&sety[Ncell*i+j]!=0) )
+		{
+		  theta2y[Ncell-1] =
+		    theta2y[Ncell-1] +
+		    Power( (ATan(sety[Ncell*i+j+Ncell])-ATan(sety[Ncell*i+j])), 2 );
+		  dimy++;
+		}
+		
+	      else nhole++;
+	    }
+	}//end loop on shifts
+
+      if (dim!=0)
+	{
+	  NcellA++;
+	  theta[NcellA-1]=Sqrt(theta2[Ncell-1]/(Zeff*2*dim));
+	  double errstat=theta[NcellA-1]/Sqrt(4*dim);
+	  dtheta[NcellA-1]=errstat;
+	  thick[NcellA-1]=Ncell;
+	}
+      if (dimx!=0&&dimx!=1)
+	{
+	  Ncellx++;
+	  thetax[Ncellx-1]=Sqrt(theta2x[Ncell-1]/(Zeff*dimx));
+	  dthetax[Ncellx-1]=thetax[Ncellx-1]/Sqrt(2*dimx);
+	  thickx[Ncellx-1]=Ncell;
+	  if (dimx<3) dthetax[Ncellx-1]=detheta*1000/2;	  
+	}
+      if (dimy!=0&&dimy!=1)
+	{
+	  Ncelly++;
+	  thetay[Ncelly-1]=Sqrt(theta2y[Ncell-1]/(Zeff*dimy));
+	  dthetay[Ncelly-1]=thetay[Ncelly-1]/Sqrt(2*dimy);
+	  thicky[Ncelly-1]=Ncell;
+	  if (dimy<3) dthetay[Ncelly-1]=detheta*1000/2;
+	}
+	
+   
+      //  else{ P=0.5; break;}
+
+      // thick[Ncell-1]=Ncell;
+      dx[Ncell-1]=0.25;                // not important
+
+    } //end loop on Ncell
+
+  TGraphErrors *ef1=new TGraphErrors(npl-1,thick.GetArray(),theta.GetArray(),dx.GetArray(),dtheta.GetArray());
+  ef1->Fit("f1","MRQ");
+  P=f1->GetParameter(0);
+  dP=f1->GetParError(0);
+
+  P=fabs(P/1000.);
+
+  if (P>50.||P==1) P=-99.;
+
+  delete ef1;
+  delete f1;
+
+  TGraphErrors *ef1x=new TGraphErrors(npl-1,thickx.GetArray(),thetax.GetArray(),dx.GetArray(),dthetax.GetArray());
+  ef1x->Fit("f1x","MRQ");
+  Px=f1x->GetParameter(0);
+  dPx=f1x->GetParError(0);
+
+  Px=fabs(Px/1000.);
+
+  if (Px>50.||Px==1) Px=-99.;
+
+  delete ef1x;
+  delete f1x;
+
+  TGraphErrors *ef1y=new TGraphErrors(npl-1,thicky.GetArray(),thetay.GetArray(),dx.GetArray(),dthetay.GetArray());
+  ef1y->Fit("f1y","MRQ");
+  Py=f1y->GetParameter(0);
+  dPy=f1y->GetParError(0);
+
+  Py=fabs(Py/1000.);
+
+  if (Py>50.||Py==1) Py=-99.;
+
+  delete ef1y;
+  delete f1y; 
+  
+  //  cout<<" p=" <<P<<" px="<< Px<<" py=" <<Py<<endl;
+
+
+
+  //----------------------------
+  float *DP;
+  if (theta0<0.1) 
+    {
+      eP=P;
+      DP=GetDP(P,nseg,theta0); 
+      eflagt=0;   
+    }
+  else
+    {
+      eP=Py;
+      DP=GetDP(Py,nseg,Abs(ty));
+      eflagt=2;
+     
+    }
+  if (eP>0) 
+    {   
+      ePmin=DP[0];
+      ePmax=DP[1];
+    }
+  else {ePmin=-99; ePmax=-99;}
+
+
+  char fit_type[100];
+   
+  if (eflagt==0){ 
+    if(h_p){
+      if(h_p->GetN()==npl-1){
+	for(int u=0;u<npl-1;u++) {
+	  h_p->SetPoint(u,thick.At(u),theta.At(u)); 
+	  h_p->SetPointError(u,dx.At(u),dtheta.At(u));
+	}
+	sprintf(fit_type,"3D_evaluation %f",detheta);
+	h_p->SetTitle(fit_type);
+      };
+    };
+    return (float)P;
+  }
+  if (eflagt==1) { 
+    if(h_p){
+      if(h_p->GetN()==npl-1){
+	for(int u=0;u<npl-1;u++) {
+	  h_p->SetPoint(u,thickx.At(u),thetax.At(u)); 
+	  h_p->SetPointError(u,dx.At(u),dthetax.At(u));
+	}
+	sprintf(fit_type,"2D_evaluation %f (long.)",dtx);
+	h_p->SetTitle(fit_type);
+
+      };
+    };
+    return (float)Px;
+  }
+  if (eflagt==2) { 
+    if(h_p){
+      if(h_p->GetN()==npl-1){
+	for(int u=0;u<npl-1;u++) {
+	  h_p->SetPoint(u,thicky.At(u),thetay.At(u)); 
+	  h_p->SetPointError(u,dx.At(u),dthetay.At(u));
+	}
+	sprintf(fit_type,"2D_evaluation %f (transv.)",dty);
+	h_p->SetTitle(fit_type);
+
+      };
+    };
+    return (float)Py;
+  }
+
+  return 0.;
+}
+
 //______________________________________________________________________________________
 float *EdbTrackFitter::GetDP(float P, int npl, float ang)
 {

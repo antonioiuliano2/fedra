@@ -45,6 +45,7 @@ class EdbTrackFitter : public TNamed {
   int     FitTrackLine(const EdbTrackP &tr, float &x,float &y,float &z,float &tx,float &ty,float &w);
   void    SetParPMS_Mag();
   float   PMS_Mag(EdbTrackP &tr);
+  float   PMS_graph(EdbTrackP &tr,TGraphErrors *h_p);
   float*  GetDP(float P, int npl, float ang);
   double   Mat(float P, int npl, float ang);
 
