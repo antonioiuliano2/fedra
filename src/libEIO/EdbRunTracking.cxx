@@ -208,7 +208,8 @@ int EdbRunTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatter
   for(int side=1; side<=2; side++) {
     EdbPattern pat;
     AddSegmentCut(side,1,xmin,xmax);
-    GetPatternXY( spred, side,  pat, eDeltaRview);
+    GetPatternDataForPrediction( spred.ID(), side, pat );
+    //GetPatternXY( spred, side,  pat, eDeltaRview);
     Log(2,"FindCandidates","%d microtracks in side %d",pat.N(),side);
 
     for(int i=0; i<pat.N(); i++) {

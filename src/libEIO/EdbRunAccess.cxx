@@ -193,6 +193,7 @@ int EdbRunAccess::GetViewsXY( int ud, TArrayI &entr,
   return nv;
 }
 
+
 ///_________________________________________________________________________
 int EdbRunAccess::GetEntryXY(int ud, float x, float y)
 {
@@ -258,6 +259,7 @@ int EdbRunAccess::GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin
   int nrej=0;
   return GetPatternData(pat,side,nv,entr,nrej);
 }
+
 
 ///_________________________________________________________________________
 int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
@@ -394,6 +396,50 @@ int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
   }
   return nseg;
 }
+
+
+
+///_________________________________________________________________________
+int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat )
+{
+  // get raw segments belonging to views having a given id (view->GetHeader()->GetTrack()) and a given side
+  // the result is stored into an EdbPattern object
+  
+  // this routine is called by EdbRunTracking::FindCandidates and to select microtracks from a raw.root file 
+  // acquired for a specific prediction
+
+  EdbSegP    segP;
+  EdbView    *view = eRun->GetView();
+  int nviews = eRun->GetEntries();
+  int   nseg=0;
+  int   nsegV;
+  
+  for(int entry=0; entry<nviews; entry++) {
+    if(eCLUST)       {
+      view = eRun->GetEntry(entry,1,1,1);
+      view->AttachClustersToSegments();
+    }
+    else view = eRun->GetEntry(entry);
+
+    if (view->GetHeader()->GetTrack()!=id) continue;
+
+    nsegV = view->Nsegments();
+    if( ViewSide(view) != side )   continue;
+
+    for(int j=0;j<nsegV;j++) {
+      if(!AcceptRawSegment(view,j,segP,side)) {
+	continue;
+      }
+      nseg++;
+      segP.SetVid(entry,j);
+      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      pat.AddSegment( segP);
+    }
+  }
+  return nseg;
+}
+
+
 
 ///_________________________________________________________________________
 int EdbRunAccess::GetViewsArea(int ud, TArrayI &entr, int area,
