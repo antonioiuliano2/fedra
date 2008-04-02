@@ -1777,7 +1777,7 @@ void EdbPatternsVolume::PrintAff() const
   int npat = Npatterns();
   for(int i=0; i<npat; i++ ) {
     GetPattern(i)->GetKeep(a);
-    printf(" %d  (%d) ",i,GetPattern(i)->NAff() ); a.Print();
+    printf(" %3d  (%5d) Z=%13.3f ",i,GetPattern(i)->NAff(), GetPattern(i)->Z() ); a.Print();
   }
 }
 
@@ -1819,7 +1819,7 @@ void EdbPatternsVolume::Print() const
   EdbPattern *pat=0;
   for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
-    printf(" id=%d pid=%d   x:y:z =  %f %f %f \t n= %d \n", 
+    printf(" id=%3d pid=%3d   x:y:z =  %12.3f %12.3f %12.3f  n= %8d \n", 
 	   pat->ID(), pat->PID(), pat->X(),pat->Y(),pat->Z(),pat->N());
   }
 } 

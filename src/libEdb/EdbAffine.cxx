@@ -49,8 +49,7 @@ void EdbAffine2D::Streamer(TBuffer &R__b)
 //______________________________________________________________________________
 void EdbAffine2D::Print( Option_t *opt ) const
 {
-  printf("EdbAffine2D: \t\t %f %f %f %f \t %f %f\n", 
-	 eA11, eA12, eA21, eA22, eB1, eB2 );
+  printf("EdbAffine2D:  %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f\n",  eA11, eA12, eA21, eA22, eB1, eB2 );
 }
  
 //______________________________________________________________________________

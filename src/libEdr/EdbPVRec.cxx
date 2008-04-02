@@ -212,13 +212,13 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
   int      ny = (int)( eYoffsetMax/stepy );
 
   if(nx==0&&ny==0) return 2;
-  Log(2,"EdbPatCouple::FindOffset","( %d x %d ) with steps %8.3f %8.3f \t%f %f\n",
+  Log(2,"EdbPatCouple::FindOffset","( %d x %d ) with steps %8.3f %8.3f \t%f %f",
 	 2*nx+1,2*ny+1,stepx,stepy,Cond()->StepTX(0),Cond()->StepTY(0) );
 
   FillCell_XYaXaY(pat1,Cond(),dz/2.,stepx,stepy);
-  Log(2,"EdbPatCouple::FindOffset"," drop couples: %d \n",pat1->Cell()->DropCouples(4) );
+  Log(3,"EdbPatCouple::FindOffset"," drop couples: %d",pat1->Cell()->DropCouples(4) );
   FillCell_XYaXaY(pat2,Cond(),-dz/2.,stepx,stepy);
-  Log(2,"EdbPatCouple::FindOffset"," drop couples: %d \n",pat2->Cell()->DropCouples(4) );
+  Log(3,"EdbPatCouple::FindOffset"," drop couples: %d",pat2->Cell()->DropCouples(4) );
 
   Long_t vshift[4] = {0,0,0,0};
   TIndexCell *c1=pat1->Cell();
@@ -234,6 +234,7 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
       c1->Shift(2,vshift);
  
       npat = c1->ComparePatterns(4,vdiff,c2);
+      if(gEDBDEBUGLEVEL>1) printf("%5d",npat);
 
       if(npat>npat0) {
 	npat0 = npat;
@@ -245,9 +246,10 @@ int EdbPatCouple::FindOffset( EdbPattern *pat1, EdbPattern *pat2, Long_t vdiff[4
       vshift[1] = -iy;
       c1->Shift(2,vshift);
     }
+    if(gEDBDEBUGLEVEL>1) printf("\n");
   }
 
-   Log(2,"EdbPatCouple::FindOffset","Offset: %f %f   npat = %d", voff[0], voff[1], npat0 );
+  Log(2,"EdbPatCouple::FindOffset","Offset: %f %f   npat = %d", voff[0], voff[1], npat0 );
 
   EdbAffine2D aff;
   aff.ShiftX(voff[0]);
@@ -266,7 +268,7 @@ int EdbPatCouple::FillCHI2P()
   float       chi2;
   int ncp = Ncouples();
 
-  Log(2,"EdbPatCouple::FillCHI2P","eCHI2mode = %d\n",eCHI2mode);
+  Log(3,"EdbPatCouple::FillCHI2P","eCHI2mode = %d\n",eCHI2mode);
   for( int i=0; i<ncp; i++ ) {
     scp=GetSegCouple(i);
 
@@ -533,7 +535,7 @@ int EdbPatCouple::Align(int alignFlag)
 
   SetZlink( (Pat1()->Z()+Pat2()->Z())/2. );  // link at central z
 
-  Log(2,"EdbPatCouple::Align","patterns: %d (%d)  and  %d (%d) at Zlink = %f",
+  Log(2,"/nEdbPatCouple::Align","patterns: %d (%d)  and  %d (%d) at Zlink = %f",
 	 Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   npat = FindOffset01(eXoffsetMax,eYoffsetMax);   if(npat<2) return npat;
@@ -622,7 +624,7 @@ int EdbPatCouple::LinkFast()
   int npat =0;
   SetZlink( (Pat2()->Z()+Pat1()->Z())/2. );
 
-  Log(2,"EdbPatCouple::LinkFast","patterns: %d (%d)  and  %d (%d) at Z = %f\n",
+  Log(2,"EdbPatCouple::LinkFast"," %3d (%7d)  and  %3d (%7d) at Z = %13.3f",
 	   Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
@@ -1053,7 +1055,7 @@ int EdbPVRec::Link()
     pc->SortByCHI2P();
     npat += pc->Ncouples();
   }
-  Log(2,"EdbPVRec::Link"," npat= %d",npat);
+  Log(3,"EdbPVRec::Link","total number of linked segments = %d",npat);
   return npat;
 }
 
@@ -1104,7 +1106,7 @@ void EdbPVRec::FillTracksCell()
   // fill tracks cell "vid1:vid2"
   // second segment is considered as leading one
 
-  Log(2,"EdbPVRec::FillTracksCel","...");
+  Log(2,"\nEdbPVRec::FillTracksCell","...");
 
   Long_t vid1,vid2;
 
@@ -1778,7 +1780,7 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
   if( eTracks ) ntr0 = eTracks->GetEntries();
   else   eTracks  = new TObjArray();
 
-  Log(2,"EdbPVRec::MakeTracks","ntr0=%d...",ntr0);
+  Log(2,"\nEdbPVRec::MakeTracks","ntr0=%d...",ntr0);
 
   int         nseg, ntr=0;
   Long_t      vid=0;
@@ -1812,7 +1814,7 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
     track->SetCounters();
   }
 
-  Log(2,"EdbPVRec::MakeTracks","%d tracks with >= %d segments are selected\n",ntr, nsegments);
+  Log(2,"EdbPVRec::MakeTracks","%d tracks with >= %d segments are selected",ntr, nsegments);
   return ntr;
 }
 
@@ -2016,7 +2018,7 @@ int EdbPVRec::FineCorrZnew()
     else  dzz[i] = dzz[i]/itr[i];      // dzz is the ratio of "position angle"/"track angle"
     float dz = (GetPattern(i)->Z()-GetPattern(i+1)->Z())*dzz[i];
     znew[i] = znew[i+1] + dz;
-    Log(2,"EdbPVRec::FineCorrZnew","Ajust Z of pat: %d  by %d tracks: dz = %f  Zold, Znew: %f %f   diff = %f\n", 
+    Log(2,"EdbPVRec::FineCorrZnew","Ajust Z of pat: %3d  by %4d tracks: dz =%7.3f  Zold, Znew: %12.3f %12.3f   diff = %7.3f", 
 	   i, itr[i], dz, GetPattern(i)->Z(), znew[i], znew[i]-GetPattern(i)->Z() );
   }
 
@@ -2129,7 +2131,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   // discard tracks with probability < probMin
 
   int ntr = eTracks->GetEntries();
-  Log(2,"EdbPVRec::CombTracks","Comb %d tracks, longer then %d; ngaps <= %d ..."
+  Log(3,"EdbPVRec::CombTracks","Comb %d tracks, longer then %d; ngaps <= %d ..."
 	 ,ntr,nplmin, ngapMax );
 
   int nseg=0, nsegtot=0;
@@ -2152,7 +2154,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   }
   cn.Sort();
 
-  Log(2,"EdbPVRec::CombTracks","%d tracks with %d segments for processing...",ntr,nsegtot);
+  Log(3,"EdbPVRec::CombTracks","%d tracks with %d segments for processing...",ntr,nsegtot);
 
   // *** set track ID for segments attached to
 
@@ -2236,7 +2238,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
     nsegtot += tr->SetSegmentsTrack();
   }
 
-  Log(2,"EdbPVRec::CombTracks","%d tracks with %d segments remaining",ntr,nsegtot);
+  Log(3,"EdbPVRec::CombTracks","%d tracks with %d segments remaining",ntr,nsegtot);
   return ntr;
 }
 
@@ -2329,9 +2331,9 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
     }
   }
 
-  ntr = CombTracks(nplmin, ngapMax);  // clean-up from all tracking defects
+  ntr = CombTracks(nplmin, ngapMax);  // clean-up all tracking defects
 
-  Log(2,"EdbPVRec::PropagateTracks","%d segments are attached after propagation\n\n",nsegTot);
+  Log(2,"EdbPVRec::PropagateTracks","%d segments are attached after propagation",nsegTot);
   return nsegTot;
 }
 

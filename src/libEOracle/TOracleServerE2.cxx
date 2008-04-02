@@ -106,6 +106,7 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
     Log(2,"ReadVolume","\nexecute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
+    if(!rs) return 0;
     int plate=0;
     int brick=0;
     while (rs->next()){
@@ -122,9 +123,10 @@ Int_t  TOracleServerE2::ReadVolume(char *id_volume, EdbPatternsVolume &vol)
   int npat = patterns.GetEntries();
   for(int i=0; i<npat; i++) {
     pat = (EdbPattern*)patterns.At(i);
-    if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
+    //if( !ReadZplate(pat->ID(), pat->PID(), *pat ) )
+    if( !ReadZplate_nominal(pat->ID(), pat->PID(), *pat ) )
       { Log(1,"ReadVolume","skip plate %d %d !", pat->ID(),pat->PID()); continue; }
-    sprintf(query,"id_zone in (select id_zone from TB_VOLUME_SLICES%s where id_volume=%s and id_plate=%d)",eRTS.Data(), id_volume,pat->PID());
+    sprintf(query,"id_eventbrick=%d and id_zone in (select id_zone from TB_VOLUME_SLICES%s where id_volume=%s and id_plate=%d)",pat->ID(), eRTS.Data(), id_volume,pat->PID());
     nsegtot  += ReadBasetracksPattern(query, *pat);
     vol.AddPattern(pat);
   }
@@ -192,8 +194,8 @@ bool  TOracleServerE2::ReadZplate_nominal(int id_eventbrick, int id_plate, EdbPa
       fStmt = fConn->createStatement();
 
     sprintf(query,
-            "select z from tb_plates%s \
-             where id_eventbrick=%d and id=%d",eRTS.Data(),
+            "select pl.z-br.minz from tb_plates%s pl, tb_eventbricks%s br\
+             where pl.id_eventbrick=%d and pl.id=%d and br.id=pl.id_eventbrick",eRTS.Data(),eRTS.Data(),
             id_eventbrick, id_plate);
 
     fStmt->setSQL(query);
