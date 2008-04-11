@@ -642,6 +642,106 @@ int TOracleServerE2W::AddBasetracks(TTree *tree, char *id_eventbrick, char *id_z
 
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::AddVolume(char *id_eventbrick, 
+				   char *id_process_operation, 
+				   int ivolume)
+{
+  // Adds a volume into the DB
+  // Table involved: TB_VOLUMES
+  // Details: INSERT query and then a COMMIT query
+
+  char query[2048];
+  char commit[10]="commit";
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    
+    sprintf(query,"\
+ INSERT INTO OPERA.TB_VOLUMES (ID_EVENTBRICK, ID_PROCESSOPERATION, VOLUME) \
+ VALUES (%s, %s, %d)", id_eventbrick, id_process_operation, ivolume);
+
+    fStmt->setSQL(query);
+    Log(2,"AddVolume","execute sql query: %s ...",query);
+    fStmt->execute();
+    Query(commit);
+    Log(2,"AddVolume","Volume added");
+    
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddVolume; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::AddVolumeSlice(char *datavolumeslice)
+{
+  // Adds a volume slice into the DB
+  // Table involved: TB_VOLUME_SLICES
+  // Details: INSERT query and then a COMMIT query
+
+  char query[2048];
+  char commit[10]="commit";
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    
+    sprintf(query,"\
+ INSERT INTO OPERA.TB_VOLUME_SLICES \
+ (ID_EVENTBRICK, ID_VOLUME, ID_PLATE, MINX, MINY, MAXX, MAXY, ID_ZONE, DAMAGED) \
+ VALUES (%s)", datavolumeslice);
+
+    fStmt->setSQL(query);
+    Log(2,"AddVolumeSlice","execute sql query: %s ...",query);
+    fStmt->execute();
+    Query(commit);
+    Log(2,"AddVolumeSlice","Volume slice added");
+    
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddVolumeSlice; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::AddBSBpathsVolumes(char *databsbpathsvolumes)
+{
+  // Adds a connection between brick, sbpath and volume into the DB
+  // Table involved: TB_B_SBPATHS_VOLUMES
+  // Details: INSERT query and then a COMMIT query
+
+  char query[2048];
+  char commit[10]="commit";
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    
+    sprintf(query,"\
+ INSERT INTO OPERA.TB_B_SBPATHS_VOLUMES \
+ (ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH, ID_VOLUMESCAN_PROCOPID, VOLUME, ID_PLATE) \
+ VALUES (%s)", databsbpathsvolumes);
+
+    fStmt->setSQL(query);
+    Log(2,"AddBSBpathsVolumes","execute sql query: %s ...",query);
+    fStmt->execute();
+    Query(commit);
+    Log(2,"AddBSBpathsVolumes","BSBpathsVolumes added");
+    
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddBSBpathsVolumes; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2W::DeleteBrick(char *id_eventbrick)
 {
   // Delete all informations related to a brick from the DB

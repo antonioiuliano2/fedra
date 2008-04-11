@@ -36,6 +36,10 @@ public:
     Int_t       AddPlateCalibration(char *id_eventbrick, char *id_process_operation, EdbPlateP *plate);
     Int_t       AddView(EdbView *view, int id_view, char *id_eventbrick, char *id_calibzone);
     Int_t       AddBasetracks(TTree *tree, char *id_eventbrick, char *id_zone);
+
+    Int_t       AddVolume(char *id_eventbrick, char *id_process_operation, int ivolume);
+    Int_t       AddVolumeSlice(char *datavolumeslice);
+    Int_t       AddBSBpathsVolumes(char *databsbpathsvolumes);
     
     Int_t       DeleteBrick(char *id_eventbrick);
     Int_t       DeleteBrickSpace(char *id_brick);
