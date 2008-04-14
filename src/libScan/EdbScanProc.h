@@ -18,8 +18,8 @@ public:
 
   bool    CheckProcDir(int id[4], bool create=true);
   bool    CheckProcDir( EdbID id, bool create=true) {int id4[4]; id.Get(id4); return CheckProcDir(id4,create); }
-  void    MakeFileName(TString &s, int id[4], const char *suffix);
-  void    MakeFileName(TString &s, EdbID id, const char *suffix) {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix);}
+  void    MakeFileName(TString &s, int id[4], const char *suffix, bool inplate=true);
+  void    MakeFileName(TString &s, EdbID id, const char *suffix, bool inplate=true) {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix,inplate);}
   void    MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix="aff.par");
   void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") 
     { int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return MakeAffName(s,id14,id24,suffix); }

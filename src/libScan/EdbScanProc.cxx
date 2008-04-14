@@ -1085,12 +1085,18 @@ bool EdbScanProc::CheckProcDir(int id[4], bool create)
 }
 
 //----------------------------------------------------------------
-void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix)
+void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool inplate)
 {
-  //make full file pathname for id and add suffix
+  //make file pathname as .../bXXXXXX/pYYY/a.a.a.a.suffix is inplate==true
+  //otherwise as .../bXXXXXX/a.a.a.a.suffix
   char str[256];
-  sprintf(str,"%s/b%6.6d/p%3.3d/%d.%d.%d.%d.%s",
-	  eProcDirClient.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
+  if (inplate)
+    sprintf(str,"%s/b%6.6d/p%3.3d/%d.%d.%d.%d.%s",
+	    eProcDirClient.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
+  else
+    sprintf(str,"%s/b%6.6d/%d.%d.%d.%d.%s",
+	    eProcDirClient.Data(),ID[0], ID[0], ID[1], ID[2], ID[3],suffix);
+    
   s=str;
 }
 
