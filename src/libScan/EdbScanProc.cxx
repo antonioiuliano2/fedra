@@ -1094,7 +1094,7 @@ void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool i
     sprintf(str,"%s/b%6.6d/p%3.3d/%d.%d.%d.%d.%s",
 	    eProcDirClient.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
   else
-    sprintf(str,"%s/b%6.6d/%d.%d.%d.%d.%s",
+    sprintf(str,"%s/b%6.6d/b%6.6d.%d.%d.%d.%s",
 	    eProcDirClient.Data(),ID[0], ID[0], ID[1], ID[2], ID[3],suffix);
     
   s=str;
