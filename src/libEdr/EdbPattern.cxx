@@ -1380,18 +1380,18 @@ EdbVertex  *EdbTrackP::VertexE()
 }
 
 //______________________________________________________________________________
-float EdbTrackP::Zmin() const
+Float_t EdbTrackP::Zmin() const
 {
-  float zmin = Z(); 
-  if(N()) if(GetSegmentFirst()->Z()<zmin) zmin=GetSegmentFirst()->Z();
+  Float_t zmin = Z(); 
+  if (N() && GetSegmentFirst()->Z() < zmin) zmin = GetSegmentFirst()->Z();
   return zmin;
 }
 
 //______________________________________________________________________________
-float EdbTrackP::Zmax() const
+Float_t EdbTrackP::Zmax() const
 {
-  float zmax = Z(); 
-  if(N()) if(GetSegmentLast()->Z()>zmax) zmax=GetSegmentLast()->Z();
+  Float_t zmax = Z(); 
+  if (N() && GetSegmentLast()->Z() > zmax) zmax = GetSegmentLast()->Z();
   return zmax;
 }
 

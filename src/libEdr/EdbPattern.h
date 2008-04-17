@@ -154,14 +154,14 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t   Aid(int i) const {return (i < 0 || i > 1) ? -1 : eAid[i];} 
 
   // mandatory virtual functions:
-  Float_t X()        const {return eX;}
-  Float_t Y()        const {return eY;}
-  Float_t TX()       const {return eTX;}
-  Float_t TY()       const {return eTY;}
-  void    SetX(  float x )  { eX=x; }
-  void    SetY(  float y )  { eY=y; }
-  void    SetTX( float tx ) { eTX=tx; }
-  void    SetTY( float ty ) { eTY=ty; }
+  Float_t X()           const {return eX;}
+  Float_t Y()           const {return eY;}
+  Float_t TX()          const {return eTX;}
+  Float_t TY()          const {return eTY;}
+  void    SetX(  Float_t x )  { eX=x; }
+  void    SetY(  Float_t y )  { eY=y; }
+  void    SetTX( Float_t tx ) { eTX=tx; }
+  void    SetTY( Float_t ty ) { eTY=ty; }
  
   //other functions
   Float_t Phi()      const {return TMath::ATan2(eTY,eTX);}
@@ -185,7 +185,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
 
   TClonesArray *eSegments;  // collection of segments (EdbSegP)
 
-  Float_t eDZkeep;           // eDZkeep = eZ - Zoriginal (before any projections)
+  Float_t eDZkeep;          // eDZkeep = eZ - Zoriginal (before any projections)
 
   //  void (*PF_COUPLE)(EdbSegP *seg1,EdbSegP *seg2); //pointer to the function
 
@@ -209,46 +209,46 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   EdbSegmentsBox(float x0, float y0, float z0, int nseg=0);
   virtual ~EdbSegmentsBox();
  
-  EdbSegP   *AddSegment(int i, EdbSegP &s);
-  EdbSegP   *AddSegment(EdbSegP &s);
-  EdbSegP   *AddSegment(EdbSegP &s1, EdbSegP &s2); 
-  EdbSegP   *AddSegment(int id, float x, float y, float tx, float ty, 
-		    float w=0, int flag=0);
-  Int_t      GetN() const {return eSegments ? eSegments->GetEntriesFast() : 0;}
-  EdbSegP      *GetSegment(int i) const { return (EdbSegP*)eSegments->At(i); }
-  EdbSegP      *GetSegmentLast()  const { if(GetN()) return (EdbSegP*)eSegments->Last(); else return 0; }
-  TClonesArray *GetSegments()     const { return eSegments; }
-  void          *GetSegmentsAddr()  { return &eSegments; }
+  EdbSegP  *AddSegment(int i, EdbSegP &s);
+  EdbSegP  *AddSegment(EdbSegP &s);
+  EdbSegP  *AddSegment(EdbSegP &s1, EdbSegP &s2); 
+  EdbSegP  *AddSegment(int id, float x, float y, float tx, float ty, 
+		      float w=0, int flag=0);
+  Int_t     GetN() const {return eSegments ? eSegments->GetEntriesFast() : 0;}
+  EdbSegP  *GetSegment(int i) const {return (EdbSegP*)eSegments->At(i); }
+  EdbSegP  *GetSegmentLast()  const {return GetN() ? (EdbSegP*)eSegments->Last() : 0;}
 
-  void SetSegmentsZ();
-  void SetSegmentsDZ(float dz);
+  TClonesArray *GetSegments()     const { return eSegments; }
+  void         *GetSegmentsAddr()       { return &eSegments; }
+
+  void      SetSegmentsZ();
+  void      SetSegmentsDZ(float dz);
+
   // mandatory virtual functions:
-  void       SetX(float x) { eX=x; }
-  void       SetY(float y) { eY=y; }
+
+  void      SetX(float x) { eX=x; }
+  void      SetY(float y) { eY=y; }
 
   Float_t   X()       const {return eX;}
   Float_t   Y()       const {return eY;}
   Float_t   Z()       const {return eZ;}
-  float     DZ()      const {return eDZkeep;}
+  Float_t   DZ()      const {return eDZkeep;}
   Int_t     N()       const {return GetN();}
   EdbPoint *At(int i) const {return (EdbPoint*)GetSegment(i);}
  
   // other finctions
-  void   Print( Option_t *opt="") const;
- 
-  void Set0();
-  void Reset();
-  void ProjectTo(const float z);
 
-  int CalculateXY(  EdbSegmentsBox *p , EdbAffine2D *aff  );
-  int CalculateAXAY(EdbSegmentsBox *p , EdbAffine2D *affA );
-
-  void TransformA(    const EdbAffine2D *affA );
-  void TransformARot( const EdbAffine2D *affA );
-  void TransformShr(  const float shr );
-
-  float DiffAff( EdbAffine2D *aff );
-  float Diff( EdbSegmentsBox &p );
+  void    Print( Option_t *opt="") const;
+  void    Set0();
+  void    Reset();
+  void    ProjectTo(const float z);
+  void    TransformA(    const EdbAffine2D *affA );
+  void    TransformARot( const EdbAffine2D *affA );
+  void    TransformShr(  const float shr );
+  Int_t   CalculateXY(  EdbSegmentsBox *p , EdbAffine2D *aff  );
+  Int_t   CalculateAXAY(EdbSegmentsBox *p , EdbAffine2D *affA );
+  Float_t DiffAff( EdbAffine2D *aff );
+  Float_t Diff( EdbSegmentsBox &p );
 
   ClassDef(EdbSegmentsBox,1)  // collection of segments
 };
@@ -275,15 +275,13 @@ class EdbTrackP : public EdbSegP {
   EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) ) {Copy(track);}
   virtual ~EdbTrackP();
 
-  void     Set0();
-
-  void  AddVTA(EdbVTA *vta);
-  void  ClearVTA(EdbVTA *vta);
-
-  EdbVTA *VTAS() const { return eVTAS;}
-  EdbVTA *VTAE() const { return eVTAE;}
-  EdbVertex  *VertexS();
-  EdbVertex  *VertexE();
+  void       Set0();
+  void       AddVTA(EdbVTA *vta);
+  void       ClearVTA(EdbVTA *vta);
+  EdbVTA    *VTAS() const {return eVTAS;}
+  EdbVTA    *VTAE() const {return eVTAE;}
+  EdbVertex *VertexS();
+  EdbVertex *VertexE();
 
   void    SetPDG( int pdg )  { ePDG=pdg; }
   Int_t   PDG()      const {return ePDG;}
@@ -310,8 +308,8 @@ class EdbTrackP : public EdbSegP {
 
   //int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
 
-  int      N()  const  { return (eS) ?  eS->GetSize()  : 0; }
-  int      NF() const  { return (eSF)?  eSF->GetSize() : 0; }
+  Int_t    N()  const  { return (eS) ?  eS->GetSize()  : 0; }
+  Int_t    NF() const  { return (eSF)?  eSF->GetSize() : 0; }
 
   float    Wgrains() const;
   int	   GetSegmentsFlag( int &nseg ) const;
@@ -330,14 +328,15 @@ class EdbTrackP : public EdbSegP {
   EdbSegP *TrackZmin(bool usesegpar=false) const { if(usesegpar || (!eSF)) return GetSegmentFirst(); else return GetSegmentFFirst(); }
   EdbSegP *TrackZmax(bool usesegpar=false) const { if(usesegpar || (!eSF)) return GetSegmentLast();  else return GetSegmentFLast(); }
 
-  float Zmax()   const;
-  float Zmin()   const;
-  int   Dir()    const { if(DZ()<0) return -1; else return 1; }
-  const EdbSegP  *TrackStart() const;
-  const EdbSegP  *TrackEnd()   const;
-  float Zstart() const { return TrackStart()->Z(); }
-  float Zend()   const { return TrackEnd()->Z(); }
-  void  AddTrack(const EdbTrackP &tr);
+  const EdbSegP *TrackStart() const;
+  const EdbSegP *TrackEnd()   const;
+
+  Int_t   Dir()    const {return (DZ()<0) ? -1 : 1;}
+  Float_t Zmax()   const;
+  Float_t Zmin()   const;
+  Float_t Zstart() const {return TrackStart()->Z();}
+  Float_t Zend()   const {return TrackEnd()->Z();}
+  void    AddTrack(const EdbTrackP &tr);
 
   void  AddSegment(EdbSegP *s)
   { 
@@ -474,7 +473,7 @@ class EdbPatternsVolume : public TObject {
 
   EdbPattern  *NextPattern(float z, int dir) const;
 
-  void DropCell();
+  void   DropCell();
 
   void   PrintStat( Option_t *opt="") const;
   void   PrintStat( EdbPattern &pat ) const;

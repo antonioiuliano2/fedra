@@ -216,26 +216,25 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbPVRec();
   ~EdbPVRec();
 
-  void    FillCell( float stepx,  float stepy, float steptx,float stepty);
-  void    SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
+  void  FillCell( float stepx,  float stepy, float steptx,float stepty);
+  void  SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
   EdbScanCond const *GetScanCond() { return eScanCond; }
 
-  void SetBinsCheck(int nx, int ny, int ntx, int nty) 
+  void  SetBinsCheck(int nx, int ny, int ntx, int nty) 
     { eVdiff[0]=nx; eVdiff[1]=ny; eVdiff[2]=ntx; eVdiff[3]=nty; }
   EdbPatCouple *AddCouple(int id1, int id2);
-  void AddCouple(EdbPatCouple *c) { ePatCouples->Add(c); }
-  void SetCouples();
-  void ResetCouples();
-  void DeleteCouples() { if(ePatCouples) ePatCouples->Delete(); }
-  void SetCouplesAll();
-  void SetCouplesPeriodic(int istart, int iperiod);
-  void SetCouplesExclude(TArrayI &exclude);
+  void  AddCouple(EdbPatCouple *c) { ePatCouples->Add(c); }
+  void  SetCouples();
+  void  ResetCouples();
+  void  DeleteCouples() { if(ePatCouples) ePatCouples->Delete(); }
+  void  SetCouplesAll();
+  void  SetCouplesPeriodic(int istart, int iperiod);
+  void  SetCouplesExclude(TArrayI &exclude);
 
   float Chi2Max( ) const { return eChi2Max; }
-  void SetChi2Max(float chi)
-    { eChi2Max=chi; }
+  void  SetChi2Max(float chi) { eChi2Max=chi; }
 
-  Int_t  Ncouples() const {return ePatCouples?ePatCouples->GetEntriesFast():0;}
+  Int_t Ncouples() const {return ePatCouples?ePatCouples->GetEntriesFast():0;}
 
   EdbPatCouple  *GetCouple(int i) const { if(ePatCouples) 
                                return (EdbPatCouple  *)(ePatCouples->At(i));
@@ -285,11 +284,11 @@ class EdbPVRec : public EdbPatternsVolume {
   void SetSegmentErrors( EdbSegP &seg );
   void SetSegmentProbability( EdbSegP &seg );
 
-  EdbTrackP* GetTrack(int i) const { if(eTracks) return (EdbTrackP*)(eTracks->At(i)); else return 0; }
+  EdbTrackP* GetTrack(int i) const {return eTracks ? (EdbTrackP*)(eTracks->At(i)) : 0;}
   EdbTrackP* FindTrack(int id) const;
 
   void AddTrack(EdbTrackP *track) {
-    if(!eTracks) eTracks = new TObjArray();
+    if (!eTracks) eTracks = new TObjArray();
     eTracks->Add(track);
   }
 
