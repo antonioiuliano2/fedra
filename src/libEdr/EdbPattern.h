@@ -410,7 +410,7 @@ class EdbPattern : public EdbSegmentsBox {
   void  FillCell( float stepx, float stepy, float steptx, float stepty );
   int   FindCompliments(EdbSegP &s, TObjArray &arr, float nsig, float nsigt);
   void  SetSegmentsPID();
-  EdbPattern *ExtractSubPattern(float min[5], float max[5]);
+  EdbPattern *ExtractSubPattern(float min[5], float max[5], int MCevt=-1);
 
   void  SetID(int id)   {eID=id;}
   void  SetPID(int pid) {ePID=pid;}

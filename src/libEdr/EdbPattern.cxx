@@ -1620,7 +1620,7 @@ void EdbPattern::SetSegmentsPID()
 }
 
 //______________________________________________________________________________
-EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5])
+EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5], int MCEvt)
 {
   //
   // return the copy of selected segments
@@ -1631,6 +1631,8 @@ EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5])
 
   for(int i=0; i<nseg; i++) {
     s = GetSegment(i);
+		
+		if (s->MCEvt()!=MCEvt && s->MCEvt()>0 ) continue;
 
     if(s->X()  < min[0])   continue;
     if(s->Y()  < min[1])   continue;
