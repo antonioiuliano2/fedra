@@ -263,7 +263,7 @@ Int_t  TOracleServerE2W::AddZone(char *data)
 
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2W::AddBasetracks(EdbPattern &pat, char *id_eventbrick, char *id_zone)
+Int_t  TOracleServerE2W::AddBaseTracks(EdbPattern &pat, char *id_eventbrick, char *id_zone)
 {
   // Adds a basetrack into the DB
   // Table involved: TB_MIPBASETRACKS
@@ -542,8 +542,8 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   }
     
   int side;
-  if(view->GetNframesTop()==0) side=2;  // 2 - bottom
-  else side=1;                          // 1 - top
+  if(view->GetNframesTop()==0) side=1;  // 1 - bottom
+  else side=2;                          // 2 - top
   
   EdbSegP sview(0,0,0,0,0);
   sview.Transform(view->GetHeader()->GetAffine());
@@ -554,7 +554,7 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   int ViewID = view->GetViewID();
   int nsegV  = view->Nsegments();
   
-  Log(2,"AddView","Area %d, View %d is in the side %d and contains %d segments",AreaID,ViewID,side,nsegV);
+  Log(2,"AddView","Area %d, View %d is in the (DB) side %d and contains %d segments",AreaID,ViewID,side,nsegV);
   Log(2,"AddView","POSX %f, POSY %f",xview,yview);
   Log(2,"AddView","%f %f %f %f",view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),
       view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4());
@@ -591,8 +591,124 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
 }
 
 
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::AddViewWithBuffer(EdbView *view, int id_view, char *id_eventbrick, char *id_zone)
+{
+  // Adds a view and all its microtracks from an EdbView object into the DB
+  // Tables involved: TB_VIEWS through AddView(...) and TB_MIPMICROTRACKS
+  // Details: Microtracks are added by filling a buffer and entirely sending it to DB
 
-int TOracleServerE2W::AddBasetracks(TTree *tree, char *id_eventbrick, char *id_zone)
+  if(!view) {
+    Log(1,"AddViewWithBuffer","Error! view=0");
+    return 1;
+  }
+    
+  int side;
+  if(view->GetNframesTop()==0) side=1;  // 1 - bottom
+  else side=2;                          // 2 - top
+  
+  EdbSegP sview(0,0,0,0,0);
+  sview.Transform(view->GetHeader()->GetAffine());
+  float xview = sview.X();
+  float yview = sview.Y();
+  
+  int AreaID = view->GetAreaID();
+  int ViewID = view->GetViewID();
+  int nsegV  = view->Nsegments();
+  
+  Log(2,"AddView","Area %d, View %d is in the side %d and contains %d segments",AreaID,ViewID,side,nsegV);
+  Log(2,"AddView","POSX %f, POSY %f",xview,yview);
+  Log(2,"AddView","%f %f %f %f",view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),
+      view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4());
+  
+  char datacalibview[2048];
+  if (side==1)
+    sprintf(datacalibview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
+	    view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),xview,yview );
+  else
+    sprintf(datacalibview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
+	    view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4(),xview,yview );
+  
+  AddView(datacalibview);
+  
+  // Copy of microtracks
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    char query[2048];
+    sprintf(query,"\
+ INSERT INTO OPERA.TB_MIPMICROTRACKS \
+ (ID_EVENTBRICK, ID_ZONE, SIDE, ID, ID_VIEW, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, SIGMA) \
+ VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12)");
+    fStmt->setSQL(query);
+
+    char ID_EVENTBRICK[10000][50],ID_ZONE[10000][50];
+    int SIDE[10000],ID[10000],ID_VIEW[10000];
+    float POSX[10000],POSY[10000],SLOPEX[10000],SLOPEY[10000];
+    int GRAINS[10000],AREASUM[10000];
+    float SIGMA[10000];
+    ub2 SINT[10000],SFLOAT[10000],SID_EVENTBRICK[10000],SID_ZONE[10000];
+
+    if (nsegV>10000) {
+      Log(1,"AddViewWithBuffer","Error! Number of segments (%d) in the view is greater than 10000",nsegV);
+      exit(1);
+    }
+
+    EdbSegment *seg;
+    for(int isegment=0;isegment<nsegV;isegment++) {
+      seg = view->GetSegment(isegment);
+      seg->Transform(view->GetHeader()->GetAffine());
+      sprintf(ID_EVENTBRICK[isegment],"%s%c",id_eventbrick,0);  //  1
+      sprintf(ID_ZONE[isegment],"%s%c",id_zone,0);              //  2
+      SIDE[isegment]=side;                   //  3
+      ID[isegment]=id_view*10000 + isegment; //  4
+      ID_VIEW[isegment]=id_view;             //  5
+      POSX[isegment]=seg->GetX0();           //  6
+      POSY[isegment]=seg->GetY0();           //  7
+      SLOPEX[isegment]=seg->GetTx();         //  8
+      SLOPEY[isegment]=seg->GetTy();         //  9
+      GRAINS[isegment]=seg->GetPuls();       // 10
+      AREASUM[isegment]=seg->GetVolume();    // 11
+      SIGMA[isegment]=seg->GetSigmaX();      // 13
+
+      SID_EVENTBRICK[isegment]=strlen(ID_EVENTBRICK[isegment])+1;
+      SID_ZONE[isegment]=strlen(ID_ZONE[isegment])+1;
+      SINT[isegment]=sizeof(int);
+      SFLOAT[isegment]=sizeof(float);
+    }
+
+    fStmt->setDataBuffer( 1, ID_EVENTBRICK, OCCI_SQLT_STR, sizeof(ID_EVENTBRICK[0]), (unsigned short *) &SID_EVENTBRICK);
+    fStmt->setDataBuffer( 2, ID_ZONE, OCCI_SQLT_STR, sizeof(ID_ZONE[0]), (unsigned short *) &SID_ZONE);
+    fStmt->setDataBuffer( 3, SIDE,    OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer( 4, ID,      OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer( 5, ID_VIEW, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer( 6, POSX,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 7, POSY,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 8, SLOPEX,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 9, SLOPEY,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer(10, GRAINS,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(11, AREASUM, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(12, SIGMA,   OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->executeArrayUpdate(nsegV);
+
+    char commit[10]="commit";
+    Query(commit);
+    
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddViewWithBuffer; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+
+  Log(2,"AddViewWithBuffer","View added: %d microtracks added",nsegV);
+
+  return 0;
+}
+
+
+
+int TOracleServerE2W::AddBaseTracks(TTree *tree, char *id_eventbrick, char *id_zone)
 {
   // Adds a set of basetracks from a TTree (cp.root file) into the DB,
   // assuming that the corresponding microtracks are already added into the DB
@@ -635,7 +751,119 @@ int TOracleServerE2W::AddBasetracks(TTree *tree, char *id_eventbrick, char *id_z
     AddBaseTrack(data);
   }
 
-  Log(2,"AddBasetracks","Basetracks added: %d basetracks added assuming microtracks previously added",nentr);
+  Log(2,"AddBaseTracks","Basetracks added: %d basetracks added assuming microtracks previously added",nentr);
+
+  return nentr;
+}
+
+
+int TOracleServerE2W::AddBaseTracksWithBuffer(TTree *tree, char *id_eventbrick, char *id_zone)
+{
+  // Adds a set of basetracks from a TTree (cp.root file) into the DB,
+  // assuming that the corresponding microtracks are already added into the DB
+  // Table involved: TB_MIPBASETRACKS
+  // Details: Basetracks are added by filling a buffer and entirely sending it to DB
+
+
+  if(!tree)  return(0);
+
+  EdbSegP    segP;
+
+  EdbSegP         *s1 = 0;
+  EdbSegP         *s2 = 0;
+  EdbSegP         *s  = 0;
+
+  TBranch *b_s=0, *b_s1=0, *b_s2=0;
+  b_s  = tree->GetBranch("s.");
+  b_s1 = tree->GetBranch("s1.");
+  b_s2 = tree->GetBranch("s2.");
+  b_s->SetAddress(  &s   );
+  b_s1->SetAddress( &s1  );
+  b_s2->SetAddress( &s2  );
+
+  int nentr = (int)(tree->GetEntries());
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    char query[2048];
+    sprintf(query,"\
+ INSERT INTO OPERA.TB_MIPBASETRACKS \
+ (ID_EVENTBRICK, ID_ZONE, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, SIGMA, ID_DOWNSIDE, ID_DOWNTRACK, ID_UPSIDE, ID_UPTRACK) \
+ VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14)");
+    fStmt->setSQL(query);
+
+    char ID_EVENTBRICK[50000][50],ID_ZONE[50000][50];
+    int ID[50000];
+    float POSX[50000],POSY[50000],SLOPEX[50000],SLOPEY[50000];
+    int GRAINS[50000],AREASUM[50000];
+    float SIGMA[50000];
+    int ID_DOWNSIDE[50000],ID_DOWNTRACK[50000],ID_UPSIDE[50000],ID_UPTRACK[50000];
+    ub2 SINT[50000],SFLOAT[50000],SID_EVENTBRICK[50000],SID_ZONE[50000];
+
+    if (nentr>50000) {
+      Log(1,"AddBaseTracksWithBuffer","Error! Number of segments (%d) is greater than 50000",nentr);
+      exit(1);
+    }
+
+
+    for(int ibasetrack=0; ibasetrack<nentr; ibasetrack++ ) {
+
+      b_s->GetEntry(ibasetrack);
+      b_s1->GetEntry(ibasetrack);
+      b_s2->GetEntry(ibasetrack);
+      
+      int id_up   = s1->Vid(0)*10000 + s1->ID();
+      int id_down = s2->Vid(0)*10000 + s2->ID();
+
+      sprintf(ID_EVENTBRICK[ibasetrack],"%s%c",id_eventbrick,0);  //  1
+      sprintf(ID_ZONE[ibasetrack],"%s%c",id_zone,0);              //  2
+      ID[ibasetrack]=ibasetrack;               //  3
+      POSX[ibasetrack]=s->X();                 //  4
+      POSY[ibasetrack]=s->Y();                 //  5
+      SLOPEX[ibasetrack]=s->TX();              //  6
+      SLOPEY[ibasetrack]=s->TY();              //  7
+      GRAINS[ibasetrack]=(int)s->W();          //  8
+      AREASUM[ibasetrack]=(int)s->Volume();    //  9
+      SIGMA[ibasetrack]=s->Chi2();             // 10
+      ID_DOWNSIDE[ibasetrack]=1;               // 11
+      ID_DOWNTRACK[ibasetrack]=id_down;        // 12
+      ID_UPSIDE[ibasetrack]=2;                 // 13
+      ID_UPTRACK[ibasetrack]=id_up;            // 14
+
+      SID_EVENTBRICK[ibasetrack]=strlen(ID_EVENTBRICK[ibasetrack])+1;
+      SID_ZONE[ibasetrack]=strlen(ID_ZONE[ibasetrack])+1;
+      SINT[ibasetrack]=sizeof(int);
+      SFLOAT[ibasetrack]=sizeof(float);
+      
+      fprintf(stderr,"filling basetrack buffer... %2.0f%\r",100.*ibasetrack/nentr);
+    }
+
+    fStmt->setDataBuffer( 1, ID_EVENTBRICK, OCCI_SQLT_STR, sizeof(ID_EVENTBRICK[0]), (unsigned short *) &SID_EVENTBRICK);
+    fStmt->setDataBuffer( 2, ID_ZONE, OCCI_SQLT_STR, sizeof(ID_ZONE[0]), (unsigned short *) &SID_ZONE);
+    fStmt->setDataBuffer( 3, ID,      OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer( 4, POSX,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 5, POSY,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 6, SLOPEX,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 7, SLOPEY,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer( 8, GRAINS,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer( 9, AREASUM, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(10, SIGMA,   OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+    fStmt->setDataBuffer(11, ID_DOWNSIDE,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(12, ID_DOWNTRACK, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(13, ID_UPSIDE,    OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->setDataBuffer(14, ID_UPTRACK,   OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+    fStmt->executeArrayUpdate(nentr);
+
+    char commit[10]="commit";
+    Query(commit);
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddBaseTracksWithBuffer; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  Log(2,"AddBaseTracksWithBuffer","Basetracks added: %d basetracks added assuming microtracks previously added",nentr);
 
   return nentr;
 }
