@@ -324,8 +324,14 @@ int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, E
 void EdbScanProc::PrepareVolumesPred( int idIN[4], EdbPattern &points,
 				      int before, int after, int pmin, int pmax, EdbScanSet *sc )
 {
-  // create prediction patterns for the stopping points in the segments of the pattern "points"
-  // should be correctly defined  (eID ePID eX eY eSX eSY)
+  // Create prediction patterns for the stopping points in the segments of the pattern "points".
+  // For each point should be correctly defined  (eID ePID eX eY eSX eSY).
+  // Input: idIN   - identifier for predictions to be created
+  //        points - stopping points in form of the segments (last found segment)
+  //        before,after - number of plates before and after stopping point
+  //        pmin,pmax    - brick limits (normally 1-57)
+  //        sc           - EdbScanSet with affine transformations
+  // Output: x.x.x.x.pred.root for all necessary plates
 
   TIndexCell cell;
   Long_t  v[2];  // pl,id

@@ -280,6 +280,10 @@ int EdbDataPiece::TakePiecePar()
 ///______________________________________________________________________________
 int EdbDataPiece::ReadPiecePar(const char *file)
 {
+  // read parameters from par-file
+  // return: 0 if ok
+  //        -1 if file access failed
+
   char buf[256];
   char key[256];
   char name[256];
@@ -1644,7 +1648,7 @@ int EdbDataProc::Link()
   Int_t np = eDataSet->N();
   for (Int_t i = 0; i < np; i++) {
     piece = eDataSet->GetPiece(i);
-    if (piece->TakePiecePar() > 0) {
+    if (piece->TakePiecePar() >= 0) {
       if (gEDBDEBUGLEVEL > 2) piece->Print();
       piece->WriteCuts();
       if (piece->Flag() == 1) Link(*piece);
