@@ -27,8 +27,7 @@ public:
 				    char *starttime, char *finishtime, char *success);
     Int_t       AddView(char *dataView);
     Int_t       AddBaseTracks(EdbPattern &pat, char *id_eventbrick, char *id_zone);
-    Int_t       AddBaseTracks(TTree *tree, char *id_eventbrick, char *id_zone);
-    Int_t       AddBaseTracksWithBuffer(TTree *tree, char *id_eventbrick, char *id_zone);
+    Int_t       AddBaseTracks(TTree *tree, char *id_eventbrick, char *id_zone, bool usebuffer=true);
     Int_t       AddMicroTrack(char *datamicro);
     Int_t       AddBaseTrack(char *database);
     Int_t       AddScanbackPath(char *datapath);
@@ -36,8 +35,8 @@ public:
     Int_t       AddTemplateMarkSets(char *datamarks);
     
     Int_t       AddPlateCalibration(char *id_eventbrick, char *id_process_operation, EdbPlateP *plate);
-    Int_t       AddView(EdbView *view, int id_view, char *id_eventbrick, char *id_calibzone);
-    Int_t       AddViewWithBuffer(EdbView *view, int id_view, char *id_eventbrick, char *id_calibzone);
+    Int_t       AddView(EdbView *view, int id_view, char *id_eventbrick, char *id_zone, bool usebuffer=true);
+    Int_t       AddViews(EdbRun *run, char *id_eventbrick, char *id_zone, bool usebuffer=true);
 
     Int_t       AddVolume(char *id_eventbrick, char *id_process_operation, int ivolume);
     Int_t       AddVolumeSlice(char *datavolumeslice);
