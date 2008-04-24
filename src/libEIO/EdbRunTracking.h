@@ -58,6 +58,7 @@ class EdbRunTracking : public EdbRunAccess {
   Int_t   eIdp[4];               // to read from sbt 
   Int_t   eIdf[4];
 
+  bool    ePredictionScan;       // if true use GetPatternDataForPrediction( spred.ID(), side, pat ); in FindCandidates (default is false)
 
  public:
 
