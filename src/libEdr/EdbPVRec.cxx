@@ -614,6 +614,52 @@ int EdbPatCouple::LinkSlow( float chi2max )
 }
 
 ///______________________________________________________________________________
+int EdbPatCouple::CheckSegmentsDuplication(EdbPattern *pat)
+{
+  TIndexCell   *cell=pat->Cell();
+  int n1 = cell->GetEntries();
+  TIndexCell   *c1,*c2,*c3,*c4;
+  EdbSegP *s1=0,*s2=0;
+  for( int i1=0; i1<n1; i1++) {
+    c1 = cell->At(i1);
+    int n2 = c1->GetEntries();
+    for( int i2=0; i2<n2; i2++) {
+      c2 = c1->At(i2);
+      int n3 = c2->GetEntries();
+      for( int i3=0; i3<n3; i3++) {
+	c3 = c2->At(i3);
+	int n4 = c3->GetEntries();
+	for( int i4=0; i4<n4; i4++) {
+	  c4 = c3->At(i4);
+	  int N=c4->N();
+	  if(N>1) {
+	    for(int j1=0; j1<N-1; j1++) {
+	      s1=pat->GetSegment(c4->At(j1)->Value());
+	      for(int j2=j1+1; j2<N; j2++) {
+		s2=pat->GetSegment(c4->At(j2)->Value());
+		
+		if(gDIFF) gDIFF->Fill( s1->X(),s1->Y(),s1->TX(),s1->TY(),s1->W(),
+				       s2->X(),s2->Y(),s2->TX(),s2->TY(),s2->W(),
+				       s1->Z(),
+				       s1->Aid(0), s1->Aid(1), s2->Aid(0), s2->Aid(1)
+				       );
+		if( s1->Flag()<0 ) continue;
+		if( s2->Flag()<0 ) continue;
+		if( s1->Aid(0) == s2->Aid(0)&& s1->Aid(1) == s2->Aid(1)) continue;
+		if( TMath::Abs(s2->X()-s1->X()) > 3.) continue;
+		if( TMath::Abs(s2->Y()-s1->Y()) > 3.) continue;
+		s2->W()>s1->W() ? s1->SetFlag(-1):s2->SetFlag(-1);
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return 0;
+}
+
+///______________________________________________________________________________
 int EdbPatCouple::LinkFast()
 {
   // to link segments of already aligned patterns
@@ -628,6 +674,9 @@ int EdbPatCouple::LinkFast()
 	   Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
+
+  //CheckSegmentsDuplication(Pat1());
+  //CheckSegmentsDuplication(Pat2());
 
   Long_t vdiff[4]={1,1,1,1};
 

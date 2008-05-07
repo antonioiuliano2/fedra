@@ -19,6 +19,7 @@
 #include "TGResourcePool.h"
 #include "TGClient.h"
 #include "TRootEmbeddedCanvas.h"
+#include "EdbLog.h"
 #include "EdbDisplay.h"
 
 ClassImp(EdbDisplay);
@@ -2531,166 +2532,171 @@ void EdbTrackG::RemoveTrackFromVertex()
 //_____________________________________________________________________________
 void EdbDisplay::RemoveTrackFromTable(int ivt)
 {
-    char text[512];
-    EdbTrackP *etr = 0;
-    if (eWait_Answer) return;
-    if (!(eVertex)) return;
-    EdbVTA *vta = 0;
-    EdbVertex *ePreviousSaved = ePrevious;
-    int n = 0;
-    int ntr = 0;
-    if (eWorking == 0)
+  char text[512];
+  EdbTrackP *etr = 0;
+  if (eWait_Answer) return;
+  if (!(eVertex)) return;
+  Log(3,"EdbDisplay::RemoveTrackFromTable","%d tracks in vertex before",eVertex->N());
+  
+  EdbVTA *vta = 0;
+  EdbVertex *ePreviousSaved = ePrevious;
+  int n = 0;
+  int ntr = 0;
+  if (eWorking == 0)
     {
-	ntr = eVertex->N();
-	if (ntr < 3)
+      ntr = eVertex->N();
+      if (ntr < 3)
 	{
-    
-	    printf("Working vertex has 2 prongs only!\n");
-	    fflush(stdout);
-	    return;
+	  
+	  printf("Working vertex has 2 prongs only!\n");
+	  fflush(stdout);
+	  return;
 	}
-	if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
-	if (!eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
-	eWorking = new EdbVertex();
-	int i = 0;
-	etr = eVertex->GetTrack(ivt);
-	for(i=0; i<ntr; i++)
+      if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+      if (!eVerRec) {
+	printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); 
+	fflush(stdout); return;
+      }
+      eWorking = new EdbVertex();
+      int i = 0;
+      etr = eVertex->GetTrack(ivt);
+      for(i=0; i<ntr; i++)
 	{
-	    if (i == ivt)
+	  if (i == ivt)
 	    {
-		etr->ClearVTA(eVertex->GetVTa(i));
-		continue;
+	      etr->ClearVTA(eVertex->GetVTa(i));
+	      continue;
 	    }
-	    if ((vta = (eVerRec)->EdbVertexRec::AddTrack( *(eWorking), (eVertex)->GetTrack(i), (eVertex)->Zpos(i))))
+	  if ((vta = (eVerRec)->EdbVertexRec::AddTrack( *(eWorking), (eVertex)->GetTrack(i), (eVertex)->Zpos(i))))
 	    {
-		((eVertex)->GetTrack(i))->AddVTA(vta);
-		n++;
+	      ((eVertex)->GetTrack(i))->AddVTA(vta);
+	      n++;
 	    }
 	}
     }
-    else
+  else
     {
-	ntr = eWorking->N();
-	if (ntr < 3)
+      ntr = eWorking->N();
+      if (ntr < 3)
 	{
-    
-	    printf("Working vertex has 2 prongs only!\n");
-	    fflush(stdout);
-	    return;
+	  
+	  printf("Working vertex has 2 prongs only!\n");
+	  fflush(stdout);
+	  return;
 	}
-	if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
-	if (!eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
-	etr = eWorking->GetTrack(ivt);
-	ePrevious = eWorking;
-	eWorking = new EdbVertex();
-	int i = 0;
-	for(i=0; i<ntr; i++)
+      if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
+      if (!eVerRec) {printf("Error: EdbDisplay:RemoveTrackFromTable: EdbVertexRec not defined, use SetVerRec(...)\n"); fflush(stdout); return;}
+      etr = eWorking->GetTrack(ivt);
+      ePrevious = eWorking;
+      eWorking = new EdbVertex();
+      int i = 0;
+      for(i=0; i<ntr; i++)
 	{
-	    if (i == ivt)
+	  if (i == ivt)
 	    {
-		etr->ClearVTA(ePrevious->GetVTa(i));
-		continue;
+	      etr->ClearVTA(ePrevious->GetVTa(i));
+	      continue;
 	    }
-	    if ((vta = (eVerRec)->EdbVertexRec::AddTrack(*(eWorking),(ePrevious)->GetTrack(i), (ePrevious)->Zpos(i))))
+	  if ((vta = (eVerRec)->EdbVertexRec::AddTrack(*(eWorking),(ePrevious)->GetTrack(i), (ePrevious)->Zpos(i))))
 	    {
-		((ePrevious)->GetTrack(i))->AddVTA(vta);
-		n++;
+	      ((ePrevious)->GetTrack(i))->AddVTA(vta);
+	      n++;
 	    }
 	}
     }
-    if ((n < 2)||(n == ntr))
+  if ((n < 2)||(n == ntr))
     {
-	delete eWorking;
-	if (ePrevious)
+      delete eWorking;
+      if (ePrevious)
 	{
-	    eWorking = ePrevious;
-	    (eWorking)->ResetTracks();
-	    ePrevious = ePreviousSaved;
+	  eWorking = ePrevious;
+	  (eWorking)->ResetTracks();
+	  ePrevious = ePreviousSaved;
 	}
-	else
+      else
 	{
-	    eWorking = 0;
-	    (eVertex)->ResetTracks();
+	  eWorking = 0;
+	  (eVertex)->ResetTracks();
 	}
-	printf("Can't create working copy of the vertex!\n");
-	fflush(stdout);
-	return;
+      printf("Can't create working copy of the vertex!\n");
+      fflush(stdout);
+      return;
     }
 
-    if ((eVerRec)->MakeV(*(eWorking)))
+  if ((eVerRec)->MakeV(*(eWorking)))
     {
-	EdbVertex *eW = eWorking;
-	eW->ResetTracks();
-	eW->SetID(eVertex->ID());
-	eW->V()->rmsDistAngle();
-	sprintf(text,"New     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
-	eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
-	eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
-	DrawOldBut("Original");
-	if (ePrevious)
+      EdbVertex *eW = eWorking;
+      eW->ResetTracks();
+      eW->SetID(eVertex->ID());
+      eW->V()->rmsDistAngle();
+      sprintf(text,"New     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+	      eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+	      eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+      DrawOldBut("Original");
+      if (ePrevious)
 	{
-	    DrawNewVTX(text);
-	    DrawNewBut("Modified");
-	    eW = ePrevious;
-	    sprintf(text,"Pre     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
-	    eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
-	    eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
-	    DrawPreVTX(text);
-	    DrawPreBut("Previous");
+	  DrawNewVTX(text);
+	  DrawNewBut("Modified");
+	  eW = ePrevious;
+	  sprintf(text,"Pre     %-4d  %-4d  %-8.1f   %-8.1f   %-8.1f   %-6.1f %-7.1f  %-7.5f",
+		  eW->ID(), eW->N(), eW->VX(), eW->VY(), eW->VZ(), eW->V()->dist(),
+		  eW->V()->chi2()/eW->V()->ndf(), eW->V()->prob());
+	  DrawPreVTX(text);
+	  DrawPreBut("Previous");
 	}
-	else
+      else
 	{
-	    DrawPreVTX(text);
-	    DrawPreBut("Modified");
-	    if (eVertex->ID() >= 0)
+	  DrawPreVTX(text);
+	  DrawPreBut("Modified");
+	  if (eVertex->ID() >= 0)
 	    {
-		DrawAcc();
-		DrawCan();
-		DrawUnd();
+	      DrawAcc();
+	      DrawCan();
+	      DrawUnd();
 	    }
 	}
-//	DrawOldBut("Original");
-	TButton *rm = fRemBut[ivt];
-	fRemBut[ivt] = 0;
-	DrawVTXTracks("Modified", eWorking);
-	if (eArrV && (eIndVert >= 0)) 
+      //	DrawOldBut("Original");
+      TButton *rm = fRemBut[ivt];
+      fRemBut[ivt] = 0;
+      DrawVTXTracks("Modified", eWorking);
+      if (eArrV && (eIndVert >= 0)) 
 	{
-//	    eArrV->RemoveAt(eIndVert);
-	    eArrV->AddAt(eWorking, eIndVert);
+	  //	    eArrV->RemoveAt(eIndVert);
+	  eArrV->AddAt(eWorking, eIndVert);
 	}	
-//	if (eCreatedTracks.FindObject(etr))
-//	{
-//	    eCreatedTracks.Remove(etr);
-//	    if ( eArrTr)
-//		if (eArrTr->FindObject(etr)) eArrTr->Remove(etr);
-//	    if ( eArrTrSave)
-//		if (eArrTrSave->FindObject(etr)) eArrTrSave->Remove(etr);
-//	    delete etr;
-//	} 
-	fCanvas->cd();
-	Draw();
-	fPad->Update(); 
-	if (ePreviousSaved) delete ePreviousSaved;
-	ePreviousSaved = 0;
-	fCanvasVTX->cd();
-	if (rm) delete rm;
+      //	if (eCreatedTracks.FindObject(etr))
+      //	{
+      //	    eCreatedTracks.Remove(etr);
+      //	    if ( eArrTr)
+      //		if (eArrTr->FindObject(etr)) eArrTr->Remove(etr);
+      //	    if ( eArrTrSave)
+      //		if (eArrTrSave->FindObject(etr)) eArrTrSave->Remove(etr);
+      //	    delete etr;
+      //	} 
+      fCanvas->cd();
+      Draw();
+      fPad->Update(); 
+      if (ePreviousSaved) delete ePreviousSaved;
+      ePreviousSaved = 0;
+      fCanvasVTX->cd();
+      if (rm) delete rm;
     }
-    else
+  else
     {
-	delete eWorking;
-	if (ePrevious)
+      delete eWorking;
+      if (ePrevious)
 	{
-	    eWorking = ePrevious;
-	    (eWorking)->ResetTracks();
-	    ePrevious = ePreviousSaved;
+	  eWorking = ePrevious;
+	  (eWorking)->ResetTracks();
+	  ePrevious = ePreviousSaved;
 	}
-	else
+      else
 	{
-	    eWorking = 0;
-	    (eVertex)->ResetTracks();
+	  eWorking = 0;
+	  (eVertex)->ResetTracks();
 	}
-	printf("Can't create new vertex after track removing!\n");
-	fflush(stdout);
+      printf("Can't create new vertex after track removing!\n");
+      fflush(stdout);
     }
 }
 
@@ -2745,7 +2751,7 @@ void EdbTrackG::AddTrackToVertex()
 	(eD->eVerRec)->eProbMin = eD->eTProbMin;
 	eTr2 = (eD->eVertex)->GetTrack(0);
 	zpos2 = (eD->eVertex)->Zpos(0);
-	if((eVs = eD->eVerRec->ProbVertex1(eTr2, eTr, zpos2, zpos)))
+	if((eVs = eD->eVerRec->ProbVertex2(eTr2, eTr, zpos2, zpos)))
 	{
 	    if (eD->eArrV) 
 	    {

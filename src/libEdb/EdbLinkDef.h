@@ -8,6 +8,7 @@
 #pragma link C++ function Log;
 #pragma link C++ global gEDBDEBUGLEVEL;
 #pragma link C++ global gEDBLOGFILE;
+#pragma link C++ global gDIFF;
 
 #pragma link C++ class EdbRun-;
 #pragma link C++ class EdbRunHeader-;

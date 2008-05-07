@@ -21,8 +21,9 @@
 #  endif
 #endif
 
-Int_t gEDBDEBUGLEVEL = 2;
-FILE *gEDBLOGFILE=0;
+Int_t    gEDBDEBUGLEVEL = 2;
+FILE    *gEDBLOGFILE=0;
+TNtuple *gDIFF=0;
 
 /*
 //______________________________________________________________________________

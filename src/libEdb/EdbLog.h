@@ -2,9 +2,12 @@
 #define ROOT_EdbLog
 
 #include "TError.h"
+#include "TNtuple.h"
 
 R__EXTERN Int_t   gEDBDEBUGLEVEL;
 R__EXTERN FILE   *gEDBLOGFILE;
+
+R__EXTERN TNtuple   *gDIFF;
 
 /* enum EDebugLevel { */
 /*    kDebNone         = 0, */

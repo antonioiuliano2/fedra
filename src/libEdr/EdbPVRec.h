@@ -145,6 +145,7 @@ class EdbPatCouple : public TObject {
 
   int          LinkSlow( float chi2max );
   int          LinkFast();
+  int          CheckSegmentsDuplication(EdbPattern *pat);
   int          DiffPat( EdbPattern *pat1, EdbPattern *pat2, 
 			Long_t vdiff[4]);
 

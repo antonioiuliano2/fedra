@@ -282,6 +282,7 @@ class EdbTrackP : public EdbSegP {
   EdbVTA    *VTAE() const {return eVTAE;}
   EdbVertex *VertexS();
   EdbVertex *VertexE();
+  EdbVertex *Vertex(int zpos) {return zpos? VertexS(): VertexE();}
 
   void    SetPDG( int pdg )  { ePDG=pdg; }
   Int_t   PDG()      const {return ePDG;}
