@@ -256,6 +256,16 @@ namespace VERTEX {
   float Vertex::vtx_cov_z()   const { return v_CS(2,2); }
 
   //==============================================================================
+  // add_track, get_track - added by VT: 7/05/08
+  //==============================================================================
+  void Vertex::add_track(Track &t) {
+    tracks.push_back(&t);   // add track to the tracks list in a way that vertex become the owner
+    push_back(t);           // set the relation
+  }
+
+  const Track *Vertex::get_track(int i) const {return tracks.at(i);}
+
+  //==============================================================================
   // push_back
   //==============================================================================
   void Vertex::push_back(Track& track) {

@@ -267,6 +267,9 @@ namespace VERTEX {
     ///
     const double  operator- (const Vertex& rhs) const;
 
+   void         add_track(Track &t);
+   const Track *get_track(int i) const;
+
   private:
     const unsigned int bigdim() const;
     // flag vertex as invalid 
