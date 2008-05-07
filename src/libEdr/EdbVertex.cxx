@@ -11,6 +11,7 @@
 #include "TROOT.h"
 #include "TFile.h"
 #include "TRandom.h"
+#include "TMap.h"
 
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
@@ -23,6 +24,7 @@
 #include "EdbPhys.h"
 #include "EdbMath.h"
 #include "TIndexCell.h"
+#include "EdbLog.h"
 
 ClassImp(EdbVTA);
 ClassImp(EdbVertex);
@@ -73,6 +75,14 @@ EdbVTA::~EdbVTA()
   if(eVertex && (eFlag == 2)) { (eVertex->VTa())->Remove(this); }
   if(eVertex && (eFlag < 2)) { (eVertex->VTn())->Remove(this); }
 }
+
+//______________________________________________________________________________
+void EdbVTA::Print()
+{
+  printf("VTA with: track=%5d  vertex= %5d  zpos =%2d  flag =%2d  imp =%8.4f  dist = %f\n", 
+	 eTrack->ID(), eVertex->ID(), eZpos, eFlag, eImp, eDist );
+}
+
 //______________________________________________________________________________
 void EdbVTA::AddVandT()
 {
@@ -94,22 +104,79 @@ EdbVertex::EdbVertex()
 //________________________________________________________________________
 EdbVertex::~EdbVertex()
 {
-  if (eV) {eV->clear(); SafeDelete(eV);}
-  //for(int i=0; i<N();  i++) delete GetVTa(i);
-  //for(int i=0; i<Nn(); i++) delete GetVTn(i);
+  Clear();
+}
+
+//________________________________________________________________________
+void EdbVertex::ClearV()
+{
+  //clear VtVertex object
+  if (eV) {
+    eV->clear();     // should delete also tracks ownered by vertex
+    SafeDelete(eV);
+  }
+}
+
+//________________________________________________________________________
+void EdbVertex::Clear()
+{
   eVTa.Delete("slow");
   eVTn.Delete("slow");
+  ClearV();
+  eX = 0.;
+  eY = 0.;
+  eZ = 0.;
+  eID = 0;
+  eFlag = 0;
+  eQuality = 0.;
 }
+
+//______________________________________________________________________________
+Int_t EdbVertex::CheckDiscardedTracks()
+{
+  int ndsc = 0;
+  EdbVTA *vta = 0;
+  for (int i=0; i<N(); i++)
+  {
+    vta = GetVTa(i);
+    if (vta) {
+      if( GetTrack(i)->Vertex(vta->Zpos()) != this ) ndsc++;
+    }
+    else ndsc++;
+  }
+  return ndsc;
+}
+
+// //______________________________________________________________________________
+// void EdbVertex::UpdateVTA()
+// {
+//   // set imp and dist to VTA's
+//   for(int i=0; i<N(); i++)
+//     {
+//       GetVTa(i)->SetDist( VZ() -  GetTrackV(i)->Z() );  //TODO: uesesegpar??
+//       GetVTa(i)->SetImp( distance(V()->get_track(i),*v) );
+//     }
+// }
 
 //______________________________________________________________________________
 void EdbVertex::ResetTracks()
 {
+  // Assign the eVTAS or eVTAE of the tracks to the current vertex
   EdbVTA *vta = 0;
   for (int i=0; i<N(); i++)
   {
     vta = GetVTa(i);
     if (vta) GetTrack(i)->AddVTA(vta);
   }
+}
+
+//______________________________________________________________________________
+Bool_t EdbVertex::TrackInVertex( EdbTrackP *t )
+{
+  int   ntr = N();
+  if(!ntr) return 0;
+  for (int i=0; i<ntr; i++)  if(t == GetTrack(i)) return 1;
+  return 0;
 }
 
 //______________________________________________________________________________
@@ -134,22 +201,6 @@ float EdbVertex::MaxAperture()
     }
   }
   return aper;
-}
-
-//________________________________________________________________________
-void EdbVertex::Clear()
-{
-  //for(int i=0; i<N();  i++) delete GetVTa(i);
-  //for(int i=0; i<Nn(); i++) delete GetVTn(i);
-  eVTa.Delete("slow");
-  eVTn.Delete("slow");
-  if (eV) {eV->clear(); SafeDelete(eV);}
-  eX = 0.;
-  eY = 0.;
-  eZ = 0.;
-  eID = 0;
-  eFlag = 0;
-  eQuality = 0.;
 }
 //________________________________________________________________________
 void EdbVertex::ClearNeighborhood()
@@ -213,20 +264,26 @@ void EdbVertex::AddVTA(EdbVTA *vta)
   else               eVTa.Add(vta);
 }
 //________________________________________________________________________
+void EdbVertex::RemoveVTA(EdbVTA *vta)
+{
+  if(vta->Flag()!=2) eVTn.Remove(vta);
+  else               eVTa.Remove(vta);
+}
+//________________________________________________________________________
 int EdbVertex::Nv()
 {
-    EdbTrackP *tr = 0;
-    EdbVertex *vc = 0;
-    int nv = 0;
-    for (int i=0; i<N(); i++)
+  // return the number of linked vertex: tracks attached by the other edge to the different vertex
+  EdbTrackP *tr = 0;
+  EdbVertex *vc = 0;
+  int nv = 0;
+  for (int i=0; i<N(); i++)
     {
-	if ((tr = GetTrack(i)))
-	{
-	    if      ((Zpos(i) == 1) && (vc = tr->VertexE())) nv++;
-	    else if ((Zpos(i) == 0) && (vc = tr->VertexS())) nv++;
-	}
+      if ((tr = GetTrack(i))) {
+	if      ((Zpos(i) == 1) && (vc = tr->VertexE())) nv++;
+	else if ((Zpos(i) == 0) && (vc = tr->VertexS())) nv++;
+      }
     }
-    return nv;
+  return nv;
 }
 
 //________________________________________________________________________
@@ -274,15 +331,14 @@ EdbVertex *EdbVertex::GetConnectedVertex(int nv)
     }
     return 0;
 }
+
 //________________________________________________________________________
 float EdbVertex::Impact( int i)
 {
-    EdbVTA *vta = 0;
-    float imp = 1000000.;
-    if (i < 0 || i >= N())   return imp;
-    if (!(vta = GetVTa(i)))  return imp;
-    return vta->Imp();
+  // return eImp from vta
+  return GetVTa(i)?  GetVTa(i)->Imp(): 1000000.;
 }
+
 //________________________________________________________________________
 EdbVTA *EdbVertex::CheckImp( const EdbTrackP *tr , float ImpMax, int zpos, float dist)
 {
@@ -291,20 +347,19 @@ EdbVTA *EdbVertex::CheckImp( const EdbTrackP *tr , float ImpMax, int zpos, float
     if (!tr) return vta;
     Track *t = new Track();
     Vertex *v = this->V();
-    if (Edb2Vt(*tr, *t))
-    {
-	float imp = distance(*t,*v);
-	if (imp > ImpMax) { delete t; return vta;}
-	vta = new EdbVTA(tr1, this);
-	vta->SetZpos(zpos);
-	vta->SetFlag(0);
-	vta->SetImp(imp);
-	vta->SetDist(dist);
-	AddVTA(vta);
-    }
+    Edb2Vt(*tr, *t);
+    float imp = distance(*t,*v);
+    if (imp > ImpMax) { delete t; return vta;}
+    vta = new EdbVTA(tr1, this);
+    vta->SetZpos(zpos);
+    vta->SetFlag(0);
+    vta->SetImp(imp);
+    vta->SetDist(dist);
+    AddVTA(vta);
     delete t;
     return vta;
 }
+
 //________________________________________________________________________
 bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
 {
@@ -321,8 +376,8 @@ bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
   double yw_sum  = 0.;
   double yty_sum = 0.;
   double ty2_sum = 0.;
-  const EdbTrackP   *tr = 0;
-  const EdbSegP   *seg = 0;
+  const EdbTrackP  *tr = 0;
+  const EdbSegP    *seg = 0;
 
   double x,y,tx,ty,xweight,yweight,xweight2,yweight2;
 
@@ -405,86 +460,74 @@ bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
 }
 
 //________________________________________________________________________
-bool EdbVertex::Edb2Vt(const EdbTrackP& tr, Track& t, float X0, float m)
+void EdbVertex::Edb2Vt(const EdbTrackP& tr, Track& t, float X0, float m)
 {
-  return Edb2Vt( *((EdbSegP*)&tr), t, X0, m);
+  Edb2Vt( *((EdbSegP*)&tr), t, X0, m);
 }
 
 //________________________________________________________________________
-//bool EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t)
-//{
-//	double x1 = (double)tr.X() - eX;
-//	double y1 = (double)tr.Y() - eY;
-//	double z1 = (double)tr.Z() - eZ;
-//	double tx1 = (double)tr.TX();
-//	double ty1 = (double)tr.TY();
-//	double p1 = (double)tr.P();
-//
-//	CMatrix cov1;             // covariance matrix for seg0
-//	for(int k=0; k<5; k++) 
-//    	    for(int l=0; l<5; l++) cov1(k,l) = (tr.COV())(k,l);
-//
-//	t.set(x1,  y1,  z1,  tx1,  ty1, p1, cov1);
-//	t.propagate(0.);
-//	return true;
-//}
-//________________________________________________________________________
-bool EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t, float X0, float m)
+void EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t, float X0, float m)
 {
-    double dz = eZ - tr.Z();
-    double tx = (double)tr.TX();
-    double ty = (double)tr.TY();
-    double x  = (double)tr.X() + tx*dz - eX;
-    double y  = (double)tr.Y() + ty*dz - eY;
-    double z  = 0.;
-    float  p  = tr.P();
+  // Input: EdbSegP tr - track parameters near to vertex
+  //        X0         - rad length for ms estimation
+  //        m          - mass of the particle
+  // Output: VERTEX:Track t - object propagated to the vertex position with the estimated erorrs matrix
+  // Used: eX,eY,eZ - the reference point of this vertex
 
-    VtSymMatrix dms(4);   // multiple scattering matrix
-    dms.clear();
-    if ( X0 > 0. && m > 0.)
+  double dz = eZ - tr.Z();
+  double tx = (double)tr.TX();
+  double ty = (double)tr.TY();
+  double x  = (double)tr.X() + tx*dz - eX;
+  double y  = (double)tr.Y() + ty*dz - eY;
+  double z  = 0.;
+  float  p  = tr.P();
+
+  VtSymMatrix dms(4);   // multiple scattering matrix
+  dms.clear();
+  if ( X0 > 0. && m > 0.)
     {
-	double dPb = dz*TMath::Sqrt(1.+tx*tx+ty*ty); // thickness of the Pb+emulsion cell in microns
-	double teta0sq = EdbPhysics::ThetaMS2( p, m, dPb, X0 );
-	dms(0,0) = teta0sq*dz*dz/3.;
-	dms(1,1) = dms(0,0);
-	dms(2,2) = teta0sq;
-	dms(3,3) = dms(2,2);
-	dms(2,0) = teta0sq*dz/2.;
-	dms(3,1) = dms(2,0);
-	dms(0,2) = dms(2,0);
-	dms(1,3) = dms(2,0);
+      double dPb = dz*TMath::Sqrt(1.+tx*tx+ty*ty); // thickness of the Pb+emulsion cell in microns
+      double teta0sq = EdbPhysics::ThetaMS2( p, m, dPb, X0 );
+      dms(0,0) = teta0sq*dz*dz/3.;
+      dms(1,1) = dms(0,0);
+      dms(2,2) = teta0sq;
+      dms(3,3) = dms(2,2);
+      dms(2,0) = teta0sq*dz/2.;
+      dms(3,1) = dms(2,0);
+      dms(0,2) = dms(2,0);
+      dms(1,3) = dms(2,0);
     }
 
-    VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
-    pred.clear();
-    pred(0,0) = 1.;
-    pred(1,1) = 1.;
-    pred(2,2) = 1.;
-    pred(3,3) = 1.;
-    pred(0,2) = dz;
-    pred(1,3) = dz;
+  VtSqMatrix pred(4);        //propagation matrix for track parameters (x,y,tx,ty)
+  pred.clear();
+  pred(0,0) = 1.;
+  pred(1,1) = 1.;
+  pred(2,2) = 1.;
+  pred(3,3) = 1.;
+  pred(0,2) = dz;
+  pred(1,3) = dz;
 
-    VtSymMatrix cov(4);             // covariance matrix for seg0
-    for(int k=0; k<4; k++) 
-	for(int l=0; l<4; l++) cov(k,l) = (tr.COV())(k,l);
+  VtSymMatrix cov(4);             // covariance matrix for seg0
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) cov(k,l) = (tr.COV())(k,l);
 
+  VtSymMatrix covpred(4);         // covariance matrix for prediction
+  covpred = pred*(cov*(pred.T()))+dms;
 
-    VtSymMatrix covpred(4);         // covariation matrix for prediction
-    covpred = pred*(cov*(pred.T()))+dms;
+  CMatrix covp;             // covariance matrix for the track
+  covp.clear();
+  for(int k=0; k<4; k++) 
+    for(int l=0; l<4; l++) covp(k,l) = covpred(k,l);
+  covp(4,4) = (tr.COV())(4,4);
 
-    CMatrix covp;             // covariance matrix for seg0
-    covp.clear();
-    for(int k=0; k<4; k++) 
-      for(int l=0; l<4; l++) covp(k,l) = covpred(k,l);
-                             covp(4,4) = (tr.COV())(4,4);
-
-    t.set(x,  y,  z,  tx,  ty,  (double)p, covp);
-    return true;
+  t.set(x,  y,  z,  tx,  ty,  (double)p, covp);
+  t.rm((double)m);
 }
+
 //________________________________________________________________________
 float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
 {
-  // distance from track to already existed vertex
+  // Chi2-distance from track to already existing vertex
 
   if (!track) return 0.;
   double distchi2 = -2.;
@@ -504,129 +547,42 @@ float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
       if (track->M() <= 0.) track->SetM(.1395);
       if (track->SP() <= 0.) track->SetErrorP(1.);
       Track *t=new Track();
-      if( Edb2Vt( *seg, *t, X0, track->M() ) )
+      Edb2Vt( *seg, *t, X0, track->M() );
+      distchi2 = -3.;
+      if (eV->valid())
 	{
-	  distchi2 = -3.;
-	  if (eV->valid())
-	    {
-	      t->rm(track->M());
-	      distchi2 = eV->distance(*t);
-	    } 
-	}
-      else
-	{ 
-	  printf("EdbVertex::Chi2Track - conversion to VT failed!");
-	  distchi2 = -4.;
-	}
-      delete t;
-      t=0;
+	  t->rm(track->M());
+	  distchi2 = eV->distance(*t);
+	} 
+      SafeDelete(t);
     }
   return (float)distchi2;
 }
+
 //________________________________________________________________________
 float EdbVertex::DistTrack(EdbTrackP *track, int zpos, float X0)
 {
-  // distance from track to already existed vertex
-
+  // distance from track to already fitted vertex
   if (!track) return 0.;
-  double dist = 0.;
-  EdbSegP *seg = 0;
-  if   (zpos)
-    {
-      seg = (EdbSegP *)(track->TrackZmin());
-    }
-  else
-    {
-      seg = (EdbSegP *)(track->TrackZmax());
-    }
-  if (eV)
-    {
-      if (track->NF() <= 0) return 0.;
-      Track *t=new Track();
-      if( Edb2Vt( *seg, *t, X0, track->M() ) )
-	{
-	  if (eV->valid())
-	    {
-	      dist = distance(*t, *eV);
-	    } 
-	}
-      else
-	{ 
-	  printf("EdbVertex::DistTrack - conversion to VT failed!");
-	}
-      delete t;
-      t=0;
-    }
-  return (float)dist;
+  EdbSegP *seg = zpos ? track->TrackZmin():track->TrackZmax();
+  if (!seg)  return 0.;
+  return DistSeg(seg,X0);
 }
 
 //________________________________________________________________________
 float EdbVertex::DistSeg(EdbSegP *seg, float X0)
 {
-  // distance from track to already existed vertex
-
-  if (!seg) return 0.;
-  double dist = 0.;
-  if (eV)
-    {
-      Track *t=new Track();
-      if( Edb2Vt( *seg, *t, X0, 0. ) )
-	{
-	  if (eV->valid())
-	    {
-	      dist = distance(*t, *eV);
-	    } 
-	}
-      else
-	{ 
-	  printf("EdbVertex::DistSeg - conversion to VT failed!");
-	}
-      delete t;
-      t=0;
-    }
-  return (float)dist;
+  // distance from segment to already fitted vertex
+  if(seg)   
+    if(eV)  
+      if(eV->valid()) {
+	Track t;
+	Edb2Vt( *seg, t, X0, 0. );
+	return (float)distance(t, *eV);
+      }
+  return 100000.;
 }
 
-//________________________________________________________________________
-float EdbVertex::ImpTrack(int i)
-{
-  // distance from track to already existed vertex
-
-  EdbVTA *vta = GetVTa(i);
-  if (!vta) return 0.;
-  EdbTrackP *track = vta->GetTrack();
-  if (!track) return 0.;
-  double dist = 0.;
-  int zpos = vta->Zpos();
-  EdbSegP *seg = 0;
-  if   (zpos)
-    {
-      seg = (EdbSegP *)(track->TrackZmin());
-    }
-  else
-    {
-      seg = (EdbSegP *)(track->TrackZmax());
-    }
-  if (eV)
-    {
-      if (track->NF() <= 0) return 0.;
-      Track *t=new Track();
-      if( Edb2Vt( *seg, *t ) )
-	{
-	  if (eV->valid())
-	    {
-	      dist = distance(*t, *eV);
-	    } 
-	}
-      else
-	{ 
-	  printf("EdbVertex::DistTrack - conversion to VT failed!");
-	}
-      delete t;
-      t=0;
-    }
-  return (float)dist;
-}
 //========================================================================
 EdbVertexRec::EdbVertexRec()
 {
@@ -643,6 +599,7 @@ EdbVertexRec::EdbVertexRec()
   eImpMax     = 25.;       // microns
   eUseMom     = false;     // do not use it
   eUseSegPar  = false;     // use fitted track parameters
+  eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
 
   (gROOT->GetListOfSpecials())->Add(this);
 }
@@ -659,153 +616,132 @@ EdbVertexRec::~EdbVertexRec()
 }
 
 //________________________________________________________________________
-int EdbVertexRec::MakeV( EdbVertex &edbv )
+Bool_t EdbVertexRec::EstimateVertexQuality( EdbVertex &vtx )
 {
-  // create new VtVertex and add (two) tracks to this one
-  //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
+  // TODO! razobratsia s etimi qualitiami!!
+
+  float quality=0.;
+  vtx.SetQuality(quality);
+  Vertex *v = vtx.V();
+  if(!v)           return 0;
+  if(!v->valid())  return 0;
+
+  if (eQualityMode == 0)  quality = v->prob()/(v->vtx_cov_x()+v->vtx_cov_y());
+  else if (eQualityMode == 1)    
+    {
+      double rms=v->rmsDistAngle();
+      if (rms != 0.)  quality= (float)(1./rms);
+      else quality =  10.e+35;
+    }
+  else quality= 1.;
+  
+  vtx.SetQuality(quality);
+  return 1;
+}
+
+//________________________________________________________________________
+Bool_t EdbVertexRec::EstimateVertexPosition( EdbVertex &v )
+{
+  // make approximate (without matrix) estimation of the vertex and set the reference point of 
+  // the vertex XYZ in the estimated position
+
+  int nt = v.N(); 
+  if(nt<2) return false;
+
+  EdbSegP *s1=0,*s2=0;
+  bool zpos1,zpos2;
+  float vxyz[3], vsum[3];
+  for(int i=0; i<3; i++) vsum[i]=0;
+  int count=0;
+  for(int i1=0; i1<nt-1; i1++) {
+    s1    = v.GetTrackV(i1,eUseSegPar);
+    zpos1 = v.Zpos(i1);
+    for(int i2=1; i2<nt; i2++) {
+      s2    = v.GetTrackV(i2,eUseSegPar);
+      zpos2 = v.Zpos(i2);
+      if( CheckImpact(s1,s2,zpos1,zpos2, vxyz) > 2.*eImpMax) continue;
+      for(int i=0; i<3; i++) vsum[i]+=vxyz[i];
+      count++;
+    }
+  }
+  for(int i=0; i<3; i++) vsum[i]/=count;
+  v.SetXYZ(vsum[0],vsum[1],vsum[2]);
+  return true;
+}
+
+//________________________________________________________________________
+int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
+{
+  // create new VtVertex and add tracks to this one
+  // if isRefit - use input vertex position to improve the fit (default is false)
+
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
   if(!ePVR) {printf("Error: EdbVertexRec::MakeV: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
+  int n = edbv.N();
+  if (n<2)         return 0;
+
+  if(isRefit) edbv.SetXYZ(edbv.VX(),edbv.VY(),edbv.VZ());
+  else        EstimateVertexPosition(edbv);
+  edbv.ClearV();
+  Vertex *v = new Vertex();
+  v->use_kalman(eUseKalman);
+  v->use_momentum(eUseMom);
 
   float X0 =  ePVR->GetScanCond()->RadX0();
-  Vertex *v=edbv.V();
-  if (v) {v->clear(); SafeDelete(v);}
-  v = new Vertex();
-  v->use_kalman(true);               //TODO: define as parameter
-  v->use_momentum(eUseMom);
-  EdbTrackP *tr=0;
   EdbSegP *seg=0;
-  Track *ta[50];                       //TODO!
-  for (int i=0; i<50; i++) ta[i] = 0;
-  for (int i=0; i<edbv.N(); i++) {
-    tr = edbv.GetTrack(i);
-    if (tr->NF() <= 0) return 0;        //???
-    if   (edbv.Zpos(i)) seg = (EdbSegP*)tr->TrackZmin(eUseSegPar);
-    else  	        seg = (EdbSegP*)tr->TrackZmax(eUseSegPar);
-    Track *t=new Track();
-    if (edbv.Edb2Vt(*seg, *t, X0, tr->M())) {
-      t->rm((double)(tr->M()));
-      v->push_back(*t);
+  for (int i=0; i<n; i++)
+    {
+      seg = edbv.GetTrackV(i,eUseSegPar);
+      Track *t = new Track();
+      edbv.Edb2Vt(*seg, *t, X0, edbv.GetTrack(i)->M());
+      v->add_track(*t);
     }
-    else SafeDelete(t);
-
-    if (i<50) ta[i] = t;
-  }
-  int retval = 0;
-  if (v->ntracks() < 2) return retval;
-  retval = v->findVertexVt();
-  int n = edbv.N();
-  if (!retval) return retval;
-  if (!(v->valid())) return 0;
-  for (int i=0; i<n; i++) {
-    if (n<50) if (ta[i]) edbv.GetVTa(i)->SetImp(distance(*ta[i],*v));
-  }
+  if (!v->findVertexVt())       return 0;
+  if (!(v->valid()))            return 0;
   edbv.SetV(v);
-  return retval;
+  for(int i=0; i<n; i++)
+    {
+      edbv.GetVTa(i)->SetDist( edbv.VZ() -  edbv.GetTrackV(i,eUseSegPar)->Z() );
+      edbv.GetVTa(i)->SetImp( distance(v->get_track(i),*v) );
+    }
+  EstimateVertexQuality(edbv);
+  return 1;
 }
 
 //________________________________________________________________________
 EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 {
-  // add track to already existed vertex if prob > eProbMin
+  // add track to already existing vertex if prob > eProbMin
   // if vertex do not exist yet - calculate medium x,y,z
 
-  if (!track) return 0;
+  if (!track)        return 0;
+  EdbSegP *seg = zpos? track->TrackZmin(eUseSegPar): track->TrackZmax(eUseSegPar);
+  if (!seg)          return 0;
   int ntr = edbv.N();
+  if(edbv.TrackInVertex(track)) return 0;
+  //for (int i=0; i<ntr; i++) if(track == edbv.GetTrack(i)) return 0;
 
-  for (int i=0; i<ntr; i++) if (track == edbv.GetTrack(i)) return 0;
+  EdbVTA *vta = new EdbVTA(track, &edbv);
+  vta->SetZpos(zpos);
+  vta->SetFlag(2);
+  edbv.AddVTA(vta);
 
-  EdbVTA  *vta = 0;
-  EdbSegP *seg = 0;
-  if (zpos)   seg = (EdbSegP*)track->TrackZmin(eUseSegPar);
-  else        seg = (EdbSegP*)track->TrackZmax(eUseSegPar);
-
-  Vertex *v=edbv.V();
-  if (v)
+  if(ntr<1)               // this is the first track in the vertex
     {
-      if (track->NF() <= 0) return 0;
-      float X0 =  ePVR->GetScanCond()->RadX0();
-      Track *t=new Track();
-      if( edbv.Edb2Vt( *seg, *t, X0, track->M() ) )
-	{
-	  if (v->valid())
-	    {
-	      if (distance(*t, *v) > eImpMax)
-	      {
-		SafeDelete(t);
-	      }
-	      else
-	      {
-		  t->rm((double)(track->M()));
-	          v->push_back(*t);
-	      };
-	      if (t)
-	      {
-	        if (!(v->findVertexVt()))
-		{
-		  v->remove_last();
-		  SafeDelete(t);
-		  printf("EdbVertex::AddTrack - vertex not found!");
-	          v->findVertexVt();
-		}
-	        else if (!(v->valid()))
-		{
-		  v->remove_last();
-		  SafeDelete(t);
-		  printf("EdbVertex::AddTrack - vertex not valid!");
-	          v->findVertexVt();
-		}
-	        else if (v->prob() < eProbMin )
-		{
-		  v->remove_last();
-		  SafeDelete(t);
-	          v->findVertexVt();
-		}
-	        else
-		{
-		  vta = new EdbVTA(track, &edbv);
-		  vta->SetZpos(zpos);
-	          vta->SetFlag(2);
-		  vta->SetImp(distance(*t, *v));
-		  for (int i=0; i<ntr; i++) edbv.GetVTa(i)->SetImp(edbv.ImpTrack(i));
-	          edbv.AddVTA(vta);
-		  if (eQualityMode == 0)
-		    edbv.SetQuality( v->prob()/(v->vtx_cov_x()+v->vtx_cov_y()) );
-		  else if (eQualityMode == 1)
-		  {
-		    double rms=(edbv.V())->rmsDistAngle();
-		    if (rms != 0.) 
-			edbv.SetQuality( (float)(1./rms) );
-		    else
-			edbv.SetQuality( 10.e+35 );
-		  }
-		  else
-		  {
-		    edbv.SetQuality( 1. );
-		  }
-		}
-	      }
-	    }
-	}
-      else
-	{ 
-	  SafeDelete(t);
-	  printf("EdbVertex::AddTrack - conversion to VT failed!");
-	}
+      edbv.SetXYZ( seg->X(), seg->Y(), seg->Z());
+      return vta;
     }
   else
     {
-      vta = new EdbVTA(track, &edbv);
-      vta->SetZpos(zpos);
-      vta->SetFlag(2);
-      edbv.AddVTA(vta);
-      if (track->NF() <= 0) return vta;
-      ntr++;
-      edbv.SetXYZ( ((ntr-1)*edbv.X() + seg->X())/ntr, ((ntr-1)*edbv.Y() + seg->Y())/ntr, ((ntr-1)*edbv.Z() + seg->Z())/ntr );
-      //printf("EdbVertex::AddTrack: x,y,z: %f %f %f\n", edbv.X(),edbv.Y(),edbv.Z());
+      if( MakeV(edbv) ) 
+	if( (edbv.V()->prob() > eProbMin) ) 	  return vta;
     }
-  return vta;
+  edbv.RemoveVTA(vta);
+  if(ntr>1) 
+    if( !MakeV(edbv) ) 	Log(1,"EdbVertexRec::AddTrack","vertex lost! ntr = %d",ntr);
+  SafeDelete(vta);
+  return 0;
 }
-
 
 //______________________________________________________________________________
 int EdbVertexRec::FindVertex()
@@ -893,31 +829,28 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 
   int nvtx     = 0; 
   int ncombin  = 0;
-  int ncombinv = 0;
   int ncount   = 0;
 
   TIndexCell *c1=0,  *c2=0;
   EdbTrackP  *tr1=0, *tr2=0;
-  EdbSegP    *s1=0,  *s2=0;
   int         itr1,  itr2;
 
   int   nz1 = list1.GetEntries();
   int   nz2 = list2.GetEntries();
-  float z1, z2, vestim[3];
-  float dz, dtx,dty,deltaZ, imp=-1;
-  float isign=1.;
+  float z1, z2;
 
   int ntot = nz1*nz2;
   printf("  2-track vertexes search in progress... %3d%%", 0);
 
   for(int iz1=0; iz1<nz1; iz1++)   {           // first z-group
     c1 = list1.At(iz1);
+    z1 = c1->Value()*eZbin;
+    int nc1=c1->GetEntries();
 
     for(int iz2=0; iz2<nz2; iz2++)   {         // second z-group
       c2 = list2.At(iz2);
-
-      z1 = c1->Value()*eZbin;
       z2 = c2->Value()*eZbin;
+
       if( z2 < z1 )           continue;
       if( z2-z1 > eDZmax )    break;
 
@@ -925,17 +858,12 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
       printf("\b\b\b\b%3d%%",(int)((double)ncount/double(ntot)*100.));
       fflush(stdout);
       
-      int nc1=c1->GetEntries();
       int nc2=c2->GetEntries();
-
       for(int ic1=0; ic1<nc1; ic1++) {      // first z-group entries
 
 	itr1 = c1->At(ic1)->Value();
 	tr1  = (EdbTrackP*)((*eEdbTracks)[itr1]);
 	if(!tr1)             continue;
-
-	if(zpos1) s1 = (EdbSegP *)tr1->TrackZmin(eUseSegPar);             // start-
-	else      s1 = (EdbSegP *)tr1->TrackZmax(eUseSegPar);             // end  -
 
 	int ic2start=0;
 	if(c1==c2) ic2start=ic1+1;
@@ -948,38 +876,12 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 	  tr2  = (EdbTrackP*)((*eEdbTracks)[itr2]);
 	  if(!tr2)             continue;
 
-	  if(zpos2) s2 = (EdbSegP *)tr2->TrackZmin(eUseSegPar);             // - start
-	  else      s2 = (EdbSegP *)tr2->TrackZmax(eUseSegPar);             // - end
-
-	  dz     = TMath::Abs(s2->Z()-s1->Z());
-	  if( dz > eDZmax )                                       continue;
-
-	  if(zpos1!=zpos2) {              // start-end,   end-start
-	    deltaZ = (dz+eZbin);
-	    isign = -1.;
-	  } else {                        // start-start, end-end
-            deltaZ = (eDZmax-dz/2.);
-	    isign = +1.;
+	  EdbVertex *vtx = ProbVertex2( tr1, tr2, zpos1, zpos2 );
+	  if(vtx) {
+	    AddVertex(vtx);
+	    nvtx++;
 	  }
 
-	  dtx = TMath::Abs(s2->TX() - isign*s1->TX())+eAbin;
-	  if( TMath::Abs(s2->X()-s1->X()) > dtx*deltaZ )          continue;
-
-	  dty = TMath::Abs(s2->TY() - isign*s1->TY())+eAbin;
-	  if( TMath::Abs(s2->Y()-s1->Y()) > dty*deltaZ )          continue;
-
-	  imp = CheckImpact( s1, s2, zpos1, zpos2, vestim );
-	  if(imp>eImpMax)                                         continue;
-
-      	  ncombinv++;
-
-	  //printf("imp = %f \n", imp);
-
-	  if( !ProbVertex( tr1, tr2, zpos1, zpos2, vestim) )      continue;
-
-
-	  nvtx++;
-	  
 	}
       }
     }
@@ -987,8 +889,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 
   printf("\b\b\b\b%3d%%\n",100);
 
-  printf("  %6d pairs, %d vertexes, %d with Prob > %f\n",
-	    ncombin, ncombinv, nvtx, eProbMin);
+  printf("  %6d pairs -> %d vertices accepted\n", ncombin, nvtx);
 
   return nvtx;
 }
@@ -1029,266 +930,244 @@ float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
 }
 
 //______________________________________________________________________________
-int EdbVertexRec::ProbVertex( EdbTrackP *tr1, EdbTrackP *tr2,
-			      int zpos1,      int zpos2,      float vestim[3] )
+EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
+				      int zpos1,      int zpos2 )
 {
-  if(!tr1) return 0;
-  if(!tr2) return 0;
-
-  EdbSegP *s1=0, *s2=0;
-  if(zpos1) s1 = (EdbSegP *)tr1->TrackZmin(eUseSegPar);             // start-
-  else      s1 = (EdbSegP *)tr1->TrackZmax(eUseSegPar);             // end  -
-  if(zpos2) s2 = (EdbSegP *)tr2->TrackZmin(eUseSegPar);             // - start
-  else      s2 = (EdbSegP *)tr2->TrackZmax(eUseSegPar);             // - end 
-
-  EdbVTA    *vta1=0;
-  EdbVTA    *vta2=0;
-  EdbVertex *v2=0;  // temporary vertex for couples check
-  float x, y, z, d, prob;
-  float zvmin=0,zvmax=0; 
-
-  v2 = new EdbVertex();
-
-  if (!(vta1 = AddTrack( *v2, tr1, zpos1)))
-    {
-      SafeDelete(v2);
-      return 0;
-    }
-  if (!(vta2 = AddTrack( *v2, tr2, zpos2)))
-    {
-      SafeDelete(v2);
-      return 0;
-    }
-
-  //v2->EstimateVertexMath(x,y,z,d);                         //TODO?????
-  //printf("xyz: %f %f %f \t d: %f\n",x,y,z,d);
-
-  if (vestim) v2->SetXYZ(vestim[0], vestim[1], vestim[2]);
-
-  if(!(MakeV(*v2)))
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
-  if( !(v2->V()) )
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
-  if( !(v2->V()->valid()) )
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
+  // Check if 2 tracks can form the vertex. If yes - return the pointer to the new EdbVertex object
   
-  d = v2->V()->rmsDistAngle();
-  x = v2->VX();
-  y = v2->VY();
-  z = v2->VZ();
-  prob = v2->V()->prob();
+  if(!tr1)     return 0;
+  if(!tr2)     return 0;
+  if(tr1==tr2) return 0;
+  EdbSegP *s1 = zpos1? tr1->TrackZmin(eUseSegPar):tr1->TrackZmax(eUseSegPar);
+  EdbSegP *s2 = zpos2? tr2->TrackZmin(eUseSegPar):tr2->TrackZmax(eUseSegPar);
+  if(!s1)      return 0;
+  if(!s2)      return 0;
 
-  if (zpos1 == 0 && zpos2 == 1)            // ends & starts
-    {
-      zvmin = TMath::Min(s1->Z() ,s2->Z()) - 0.5*eZbin;
-      zvmax = TMath::Max(s1->Z() ,s2->Z()) + 0.5*eZbin;
-      if (z < zvmin || z > zvmax)
-	{
-	  SafeDelete(vta1);
-	  SafeDelete(vta2);
-	  SafeDelete(v2);
-	  return 0;
-	}
-      else
-	{
-	  v2->SetFlag(1);
-	} 
-    }
-  else if (zpos1 == 1 && zpos2 == 1)        // starts & starts
-    {
-      zvmax = TMath::Min(s1->Z() ,s2->Z()) + eZbin;
-      zvmin = TMath::Max(s1->Z() ,s2->Z()) - eDZmax;
-      if (z > zvmax || z < zvmin)
-	{
-	  SafeDelete(vta1);
-	  SafeDelete(vta2);
-	  SafeDelete(v2);
-	  return 0;
-	} 
-      else
-	{
-	  v2->SetFlag(0);
-	} 
-    }
-  else if (zpos1 == 0 && zpos2 == 0)        // ends & ends
-    {
-      zvmin = TMath::Max(s1->Z() ,s2->Z());
-      zvmax = TMath::Min(s1->Z() ,s2->Z()) + eDZmax + eZbin;
-      if (z < zvmin || z > zvmax )
-	{
-	  SafeDelete(vta1);
-	  SafeDelete(vta2);
-	  SafeDelete(v2);
-	  return 0;
-	} 
-      else
-	{
-	  v2->SetFlag(2);
-	} 
-    }
+  // check the dZ position agreement
+  float dz     = TMath::Abs(s2->Z()-s1->Z());
+  if( dz > eDZmax )                                       return 0;
+
+  // check the dX dY position agreement
+  int   isign;
+  float dtx,dty,deltaZ=0;
+  if(zpos1!=zpos2) {              // start-end,   end-start
+    deltaZ = (dz+eZbin);
+    isign = -1;
+  } else {                        // start-start, end-end
+    deltaZ = (eDZmax-dz/2.);
+    isign = +1;
+  }
+  dtx = TMath::Abs(s2->TX() - isign*s1->TX())+eAbin;
+  if( TMath::Abs(s2->X()-s1->X()) > dtx*deltaZ )          return 0;
+  dty = TMath::Abs(s2->TY() - isign*s1->TY())+eAbin;
+  if( TMath::Abs(s2->Y()-s1->Y()) > dty*deltaZ )          return 0;
+
+  // check the impact
+  float vestim[3];
+  float imp = CheckImpact( s1, s2, zpos1, zpos2, vestim );
+  if(imp>eImpMax)                                         return 0;
+
+  // create the new EdbVertex
+  EdbVertex *vtx =  new EdbVertex();
+
+  EdbVTA    *vta1 =  new EdbVTA(tr1,vtx);
+  vta1->SetZpos(zpos1);
+  vta1->SetFlag(2);
+  vtx->AddVTA(vta1);
+
+  EdbVTA    *vta2 =  new EdbVTA(tr2,vtx);
+  vta2->SetZpos(zpos2);
+  vta2->SetFlag(2);
+  vtx->AddVTA(vta2);
   
-  //  printf("prob = %f , eProbmin= %f\n", prob, eProbMin);
+  if(MakeV(*vtx))
+    if( vtx->V() )
+      if( vtx->V()->valid() )
+	if( vtx->V()->prob() >= eProbMin )
+	  if( CheckDZ2( s1->Z(), s2->Z(), zpos1,zpos2, vtx->VZ() ) )
+	    {                    // if everything is fine:
+	      vtx->SetFlag( EstimateVertexFlag(zpos1,zpos2) );
+	      return vtx;
+	    }
 
-  if(prob >= eProbMin) {
+  // TODO: very importent cut is the fiducial volume where we looking for the vertices
 
-    if (eQualityMode == 0)
-	v2->SetQuality(v2->V()->prob()/
-			    (v2->V()->vtx_cov_x()+v2->V()->vtx_cov_y()));
-    else if (eQualityMode == 1)
-    {
-	if (d != 0.) 
-	    v2->SetQuality( 1./d );
-	else
-	    v2->SetQuality( 10.e+35 );
-    }
-    else
-    {
-	v2->SetQuality( 1. );
-    }
-    tr1->AddVTA(vta1);
-    tr2->AddVTA(vta2);
-    AddVTA(vta1);
-    AddVTA(vta2);
-    AddVertex(v2);
-    return 1;
-  }
-  else {
-    SafeDelete(vta1);
-    SafeDelete(vta2);
-    SafeDelete(v2);
-  }
+  SafeDelete(vta1);
+  SafeDelete(vta2);
+  SafeDelete(vtx); 
   return 0;
 }
+
 //______________________________________________________________________________
-EdbVertex *EdbVertexRec::ProbVertex1( EdbTrackP *tr1, EdbTrackP *tr2,
-			              int zpos1,      int zpos2,      float vestim[3] )
+int EdbVertexRec::EstimateVertexFlag(int zpos1, int zpos2)
 {
-  if(!tr1) return 0;
-  if(!tr2) return 0;
+    if      (zpos1 == 0 && zpos2 == 1)   return 1;         // end   & start
+    else if (zpos1 == 1 && zpos2 == 1)   return 0;         // start & start
+    else if (zpos1 == 0 && zpos2 == 0)   return 2;         // end   & end
+    return -1;
+}
 
-  EdbSegP *s1=0, *s2=0;
-  if(zpos1) s1 = (EdbSegP *)tr1->TrackZmin(eUseSegPar);             // start-
-  else      s1 = (EdbSegP *)tr1->TrackZmax(eUseSegPar);             // end  -
-  if(zpos2) s2 = (EdbSegP *)tr2->TrackZmin(eUseSegPar);             // - start
-  else      s2 = (EdbSegP *)tr2->TrackZmax(eUseSegPar);             // - end 
+//______________________________________________________________________________
+bool EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z )
+{
+  // return 1 if the vertex position (z) is in agreement with limits defined by  eZbin and DZmax
 
-  EdbVTA    *vta1=0;
-  EdbVTA    *vta2=0;
-  EdbVertex *v2=0;  // temporary vertex for couples check
-  float x, y, z, d, prob;
-
-  v2 = new EdbVertex();
-
-  if (!(vta1 = AddTrack( *v2, tr1, zpos1)))
-    {
-      SafeDelete(v2);
-      return 0;
-    }
-  if (!(vta2 = AddTrack( *v2, tr2, zpos2)))
-    {
-      SafeDelete(v2);
-      return 0;
-    }
-
-  //v2->EstimateVertexMath(x,y,z,d);                         //TODO?????
-  //printf("xyz: %f %f %f \t d: %f\n",x,y,z,d);
-
-  if (vestim) v2->SetXYZ(vestim[0], vestim[1], vestim[2]);
-
-  if(!(MakeV(*v2)))
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
-  if( !(v2->V()) )
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
-  if( !(v2->V()->valid()) )
-    {
-      SafeDelete(vta1);
-      SafeDelete(vta2);
-      SafeDelete(v2);
-      return 0;
-    }
-
-  
-  d = v2->V()->rmsDistAngle();
-  x = v2->VX();
-  y = v2->VY();
-  z = v2->VZ();
-  prob = v2->V()->prob();
-
+  float zvmin,zvmax;
   if (zpos1 == 0 && zpos2 == 1)            // ends & starts
     {
-	  v2->SetFlag(1);
+      zvmin = TMath::Min(z1,z2) - 0.5*eZbin;
+      zvmax = TMath::Max(z1,z2) + 0.5*eZbin;
+      if (z < zvmin || z > zvmax)  return 0;
     }
   else if (zpos1 == 1 && zpos2 == 1)        // starts & starts
     {
-	  v2->SetFlag(0);
+      zvmax = TMath::Min(z1,z2) + eZbin;
+      zvmin = TMath::Max(z1,z2) - eDZmax;
+      if (z > zvmax || z < zvmin)	  return 0;
     }
   else if (zpos1 == 0 && zpos2 == 0)        // ends & ends
     {
-	  v2->SetFlag(2);
+      zvmin = TMath::Max(z1 ,z2);
+      zvmax = TMath::Min(z1 ,z2) + eDZmax + eZbin;
+      if (z < zvmin || z > zvmax )	  return 0;
     }
-  
-  //  printf("prob = %f , eProbmin= %f\n", prob, eProbMin);
-
-  if(prob >= eProbMin) {
-
-    if (eQualityMode == 0)
-	v2->SetQuality(v2->V()->prob()/
-			    (v2->V()->vtx_cov_x()+v2->V()->vtx_cov_y()));
-    else if (eQualityMode == 1)
-    {
-	if (d != 0.) 
-	    v2->SetQuality( 1./d );
-	else
-	    v2->SetQuality( 10.e+35 );
-    }
-    else
-    {
-	v2->SetQuality( 1. );
-    }
-    tr1->AddVTA(vta1);
-    tr2->AddVTA(vta2);
-    return v2;
-  }
-  else {
-    SafeDelete(vta1);
-    SafeDelete(vta2);
-    SafeDelete(v2);
-  }
-  return 0;
+  return 1;
 }
+
 //______________________________________________________________________________
 int EdbVertexRec::ProbVertexN()
 {
+  ProbVertexNpos(0);  // find n-track vtx attached to left edges
+  ProbVertexNpos(1);  // to right edges
+  CheckVTX();         // rank the vertices and reassign tracks according to the major rank
+  StatVertexN();      // print vertex statistics
+  return 0;
+}
+
+//______________________________________________________________________________
+int EdbVertexRec::ProbVertexNpos(int zpos)
+{
+  // cycle by all vertices, check if it is possible to join some of them by common track, do it
+
+  if (!eVTX) return 0;
+  int nv2 = eVTX->GetEntries();    // number of vertices
+  if(nv2<2)  return 0;
+
+  Log(2,"EdbVertexRec::ProbVertexN_new","%d vertices as input",nv2);
+
+  // first group vertices with a common track
+
+  TMap maptr;  //key is track, value is TObjArray of vertices
+  TObjArray *arr=0; 
+  EdbVertex *vtx=0;
+  EdbTrackP *t=0;
+  for( int i=0; i<nv2; i++) {
+    vtx = GetVertex(i);
+    if(!vtx) Log(1,"EdbVertexRec::ProbVertexN_new","vertex not found!");
+    for( int j=0; j<vtx->N(); j++) {
+      t = vtx->GetTrack(j);
+      if(!t) Log(1,"EdbVertexRec::ProbVertexN_new","track not found!");
+      if(!(vtx->Zpos(j)==zpos)) continue;
+      arr = (TObjArray*)maptr.GetValue(t);
+      if(!arr) {
+	arr = new TObjArray();
+	maptr.Add(t,arr);
+      }
+      arr->Add(vtx);
+    }
+  }
+
+  TIter next(maptr.GetTable());
+  TPair *a;
+  while ((a = (TPair*) next())) {   // cycle by all keys (tracks)
+    t  = (EdbTrackP*)a->Key();
+    arr = (TObjArray*)a->Value();
+    int nv = arr->GetEntries();
+    if(nv<2)    continue;
+    TObjArray arrvta;        // group of vta of tracks attached to t
+    for(int iv=0; iv<nv; iv++) {
+      vtx = (EdbVertex*)arr->At(iv);
+      for(int it=0; it<vtx->N(); it++) {
+	arrvta.Add(vtx->GetVTa(it));
+      }
+    }
+    EdbVertex *newvtx=TestVTAGroup(arrvta);
+    if(newvtx) eVTX->Add(newvtx);
+  }
+
+  Log(2,"EdbVertexRec::ProbVertexN_new","%d entries in the map for zpos = %d",maptr.GetEntries(), zpos);
+
+  return 0;
+}
+
+//______________________________________________________________________________
+void  EdbVertexRec::CheckVTX()
+{
+  // rank the vertices and reassign tracks according to the major weight
+
+  int nvtx = eVTX->GetEntries();
+
+  TArrayF   weight(nvtx);  // the vertex "weight" = 10*ntr+prob
+  TArrayI   ind(nvtx);
+  EdbVertex *vtx=0;
+  for(int i=0; i<nvtx; i++)  {
+    vtx = GetVertex(i);
+    weight[i] = 10*vtx->N() + vtx->V()->prob();
+  }
+  TMath::Sort(nvtx,weight.GetArray(),ind.GetArray(),0); // sort in ascending order
+  for(int i=0; i<nvtx; i++)  {
+    vtx = GetVertex(ind[i]);
+    vtx->ResetTracks();
+  }
+
+  // discard vertices if lost tracks
+  for(int i=0; i<nvtx; i++)  {
+    vtx = GetVertex(ind[i]);
+    if(vtx->CheckDiscardedTracks()>0) vtx->SetFlag(-10);
+  }
+
+  //eVTA.Clear();  //TODO?
+}
+
+//______________________________________________________________________________
+EdbVertex *EdbVertexRec::TestVTAGroup(TObjArray &arrvta)
+{
+  // Try to create  N-prong vertex from vta's group
+  // Input: array of preselected vta's
+  // return the new vertex if successful
+
+  int nvta=arrvta.GetEntries();
+  EdbVTA *vta=0, *newvta=0;
+  EdbVertex *newvtx = new EdbVertex();
+  for(int i=0; i<nvta; i++) {
+    vta = (EdbVTA*)arrvta.At(i);
+    if( newvtx->TrackInVertex(vta->GetTrack()) )  continue;
+    newvta =  new EdbVTA(vta->GetTrack(),newvtx);
+    newvta->SetZpos(vta->Zpos());
+    newvta->SetFlag(2);
+    newvtx->AddVTA(newvta);
+  }
+
+  if(MakeV(*newvtx))
+    if( newvtx->V() )
+      if( newvtx->V()->valid() )
+	if( newvtx->V()->prob() >= eProbMin )   // accept new N-tracks vertex
+	  {
+	    for(int i=0; i<nvta; i++)
+	      ((EdbVTA*)arrvta.At(i))->GetVertex()->SetFlag(-10);
+	    return newvtx;
+	  }
+
+  SafeDelete(newvtx);   // discard new vertex
+  return 0;
+}
+
+//______________________________________________________________________________
+int EdbVertexRec::ProbVertexN_old()
+{
+  // deprecated function (VT: 7/05/2008. Keeped for back-compatibility tests. 
+  // After the complete testing of the new ProbVertexN this function can be removed
+
   EdbVTA *vta = NULL, *vta1 = NULL, *vta2 = NULL;
   EdbVertex *edbv1 = NULL;
   EdbVertex *edbv2 = NULL;
@@ -1513,32 +1392,25 @@ void EdbVertexRec::StatVertexN()
   }
 }
 
-
 //---------------------------------------------------------
 int EdbVertexRec::LinkedVertexes()
 {
+  // calculate the number of linked vertices (with Nv()>0) and set flag+3 for them
   int nvt = Nvtx();
   if (!nvt) return 0;
-
   EdbVertex *v = 0;
-
   int nvl = 0;
   for (int iv=0; iv<nvt; iv++) {
     v = GetVertex(iv);
     if (v)
-    {
-	if (v->Flag() != -10)
-	{
-	    if (v->Nv() != 0)
-	    {
-			if (v->Flag() < 3) v->SetFlag(v->Flag()+3);
-			nvl++;
-	    }
+      if (v->Flag() != -10)
+	if (v->Nv() != 0) {
+	  if (v->Flag() < 3) v->SetFlag(v->Flag()+3);
+	  nvl++;
 	}
-    }
   }
   return nvl;
-} 
+}
 
 //---------------------------------------------------------
 int EdbVertexRec::SelVertNeighbor( EdbVertex *v, int seltype, float RadMax, int Dpat, TObjArray *ao)
@@ -2213,6 +2085,25 @@ double EdbVertexRec::MoveTrackToOtherVertex(EdbVertex *v2, int it2max, EdbVertex
     }
     return 0.;
 }
+
+//______________________________________________________________________________
+int EdbVertexRec::RefitAll()
+{
+  // use already found vertex position to improve the fit
+  int nv = eVTX->GetEntries();
+  EdbVertex *vtx = 0;
+  int cnt=0;
+  for (int i=0; i<nv; i++)   {
+    vtx = GetVertex(i);
+    if(vtx)
+      if(vtx->Flag()>-1) {
+	MakeV(*vtx,true);
+	cnt++;
+      }
+  }
+  return cnt;
+}
+
 //______________________________________________________________________________
 EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, int zpos)
 {
@@ -2293,6 +2184,7 @@ EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, in
     }
     return eWorking;
 }
+
 //_____________________________________________________________________________
 EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
 {
@@ -2855,29 +2747,6 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, float ImpM
 } 
 
 //________________________________________________________________________
-TTree *EdbVertexRec::init_tracks_tree(const char *file_name, EdbTrackP *track)
-{
-  TTree *tracks=0;
-  /*
-  char *tree_name="tracks";
-  TFile *f = new TFile(file_name);
-
-  if (f)  tracks = (TTree*)f->Get(tree_name);
-  if(!tracks) return 0;
-  f->cd();
-
-  EdbSegP *tr = (EdbSegP*)track;
-  TClonesArray *segments  = track->S()->GetSegments();
-  TClonesArray *segmentsf = track->SF()->GetSegments();
-
-  tracks->SetBranchAddress("t.",&tr);
-  tracks->SetBranchAddress("s" ,&segments);
-  tracks->SetBranchAddress("sf",&segmentsf);
-  */
-  return tracks;
-}
-
-//________________________________________________________________________
 double EdbVertexRec::Tdistance(const Track& t1, const Track& t2) {
   //
   // geometrical distance between 2 track lines in the space XYZ
@@ -2903,69 +2772,37 @@ double EdbVertexRec::Tdistance(const Track& t1, const Track& t2) {
 double EdbVertexRec::Tdistance(const EdbSegP &s1, const EdbSegP &s2) 
 {
   EdbVertex edbv;
-  Track t1;
-  Track t2;
-  if(!edbv.Edb2Vt(s1,t1))  return 1.E20;
-  if(!edbv.Edb2Vt(s2,t2))  return 1.E20;
+  Track t1,t2;
+  edbv.Edb2Vt(s1,t1);
+  edbv.Edb2Vt(s2,t2);
   return Tdistance(t1,t2);
-
 }
 
 //________________________________________________________________________
 double EdbVertexRec::TdistanceChi2(const EdbTrackP &tr1, const EdbTrackP &tr2) 
 {
   EdbVertex edbv;
-  Track t1;
-  Track t2;
+  Track t1,t2;
   float X0 =  ePVR->GetScanCond()->RadX0();
-  if(!edbv.Edb2Vt(tr1,t1,X0,tr1.M()))  return 1.E20;
-  if(!edbv.Edb2Vt(tr2,t2,X0,tr2.M()))  return 1.E20;
+  edbv.Edb2Vt(tr1,t1,X0,tr1.M());
+  edbv.Edb2Vt(tr2,t2,X0,tr2.M());
   return distanceChi2(t1,t2);
 }
 
 //________________________________________________________________________
-double EdbVertexRec::TdistanceChi2(const EdbSegP &s1, const EdbSegP &s2, float m) 
+double EdbVertexRec::TdistanceChi2(const EdbSegP &s1, const EdbSegP &s2, float m)
 {
   EdbVertex edbv;
-  Track t1;
-  Track t2;
+  Track t1,t2;
   float X0 =  ePVR->GetScanCond()->RadX0();
-  if(!edbv.Edb2Vt(s1,t1,X0,m))  return 1.E20;
-  if(!edbv.Edb2Vt(s2,t2,X0,m))  return 1.E20;
+  edbv.Edb2Vt(s1,t1,X0,m);
+  edbv.Edb2Vt(s2,t2,X0,m);
   return distanceChi2(t1,t2);
-}
-//________________________________________________________________________
-int EdbVertexRec::BuildTracksArr(const char *file_name, int nsegMin )
-{
-  // read tracks from the "linked_tracks" tree and fill TObjArray
-
-  EdbTrackP *track  = new EdbTrackP(8);
-  TTree     *tracks = init_tracks_tree(file_name, track);
-
-  EdbTrackP *track1=0;
-  int ngood = 0;
-
-  int nentr = (int)(tracks->GetEntries());
-
-  for(int i=0; i<nentr; i++) {
-
-    tracks->GetEntry(i);
-    track1 = new EdbTrackP(*track);
-    if (track1->N() < nsegMin ) continue;
-    eEdbTracks->Add( (TObject *)track1 );
-
-    ngood++;
-  }
-
-  eEdbTracks->Expand(ngood);
-  return ngood;
 }
 
 //________________________________________________________________________
 EdbTrackP *EdbVertexRec::GetEdbTrack(const int index)
 {
-  if (!eEdbTracks) return 0;
-  if (index < 0)   return 0;
-  if (index > eEdbTracks->GetLast()) return 0;
-  return     (EdbTrackP *)eEdbTracks->At(index);
+  if (!eEdbTracks) return (EdbTrackP *)eEdbTracks->At(index);
+  return 0;
 }

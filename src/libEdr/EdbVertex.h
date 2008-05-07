@@ -56,6 +56,7 @@ class EdbVTA: public TObject {
   void SetDist(float dist)     {eDist = dist;}
   void SetTrack(EdbTrackP *tr) {eTrack = tr;}
   void SetVertex(EdbVertex *v) {eVertex = v;}
+  void Print();
 
   void AddVandT();
 
@@ -94,24 +95,21 @@ class EdbVertex: public TObject {
   //  int MakeV( bool usemom = true, bool usesegpar=false );
  
   void       Clear();
+  void       ClearV();
   void       ClearNeighborhood();
   void       AddVTA(EdbVTA *vta);
+  void       RemoveVTA(EdbVTA *vta);
   void       ResetTracks();
   void       Print();
   Int_t      Compare(const TObject *o) const;
   Bool_t     EstimateVertexMath( float& xv, float& yv, float& zv, float& d );
-  Bool_t     Edb2Vt(const EdbTrackP& tr, VERTEX::Track& t, float X0 = 0., float m = 0.139 );
-  Bool_t     Edb2Vt(const EdbSegP& s, VERTEX::Track& t,float X0 = 0., float m = 0.139 );
-  Float_t    Impact(int i);
+  void       Edb2Vt(const EdbTrackP& tr, VERTEX::Track& t, float X0 = 0., float m = 0.139 );
+  void       Edb2Vt(const EdbSegP& s, VERTEX::Track& t,float X0 = 0., float m = 0.139 );
   Float_t    Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
-  Float_t    DistTrack(EdbTrackP *tr, int zpos, float X0 = 0.);
-  Float_t    DistSeg(EdbSegP *seg, float X0 = 0.);
-  Float_t    ImpTrack(int i);
+
   Float_t    MaxAperture();
   EdbVertex *GetConnectedVertex(int nv);
   EdbVertex *GetConnectedVertexForTrack(int it);
-  EdbVTA    *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
-  // EdbVTA    *AddTrack(EdbTrackP *track, int zpos, float ProbMin = 0.);
   Bool_t     IsEqual(const TObject *o) const;
 
   Int_t      N()          const  {return eVTa.GetSize();}
@@ -134,6 +132,15 @@ class EdbVertex: public TObject {
   EdbVTA    *GetVTa(int i)       {return (EdbVTA*)(eVTa.At(i));}
   EdbVTA    *GetVTn(int i)       {return (EdbVTA*)(eVTn.At(i));}
   EdbTrackP *GetTrack(int i)     {return GetVTa(i)->GetTrack();}
+  EdbSegP   *GetTrackV(int i, bool usesegpar=false)    
+    {return Zpos(i) ? GetTrack(i)->TrackZmin(usesegpar):GetTrack(i)->TrackZmax(usesegpar);}
+
+  EdbVTA    *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
+  Float_t    Impact(int i);
+  Float_t    DistSeg(EdbSegP *seg, float X0 = 0.);
+  Float_t    DistTrack(EdbTrackP *tr, int zpos, float X0 = 0.);
+  Float_t    ImpTrack(int i) { return DistSeg( GetTrackV(i) ); }
+
   VERTEX::Vertex *V()     const  {return eV;}
 
   void       SetID(int ID = 0)                 {eID = ID;}
@@ -141,6 +148,9 @@ class EdbVertex: public TObject {
   void       SetFlag(int flag = 0 )            {eFlag = flag;}
   void       SetV(VERTEX::Vertex *v)           {eV=v;}
   void       SetQuality( float q = 0 )         {eQuality = q;}
+
+  Bool_t     TrackInVertex( EdbTrackP *t );
+  Int_t      CheckDiscardedTracks();
 
   ClassDef(EdbVertex,2)  // vertex class for OPERA emulsion data
 };
@@ -166,22 +176,33 @@ class EdbVertexRec: public TObject {
   Float_t    eProbMin;      // minimum acceptable probability for chi2-distance between tracks
   Float_t    eImpMax;       // maximal acceptable impact parameter (preliminary check)
   Bool_t     eUseMom;       // use or not track momentum for vertex calculations
-  Bool_t     eUseSegPar;     // use only the nearest measured segments for vertex fit (as Neuchatel)
+  Bool_t     eUseSegPar;    // use only the nearest measured segments for vertex fit (as Neuchatel)
   Int_t      eQualityMode;  // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
+  Bool_t     eUseKalman;    // use or not Kalman for the vertex fit. Default is true
 
  public:
   EdbVertexRec();
   virtual ~EdbVertexRec();
 
+  int        RefitAll();
   void       AcceptPolish();
   void       RejectPolish();
   void       StatVertexN();
   void	     AcceptModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
   void       CancelModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
   void       FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends);
-  Int_t      MakeV(EdbVertex &edbv);
+  Int_t      MakeV(EdbVertex &edbv, bool isRefit=false);
   Int_t      FindVertex();
+
+  EdbVertex *ProbVertex2(EdbTrackP *tr1, EdbTrackP *tr2, int zpos1, int zpos2 );
   Int_t      ProbVertexN();
+  Int_t      ProbVertexN_old();
+  Int_t      ProbVertexNpos(int zpos);
+  void       CheckVTX();
+  EdbVertex *TestVTAGroup(TObjArray &arrvta);
+  int        EstimateVertexFlag(int zpos1, int zpos2);
+  bool       CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
+
   Int_t	     LinkedVertexes();
   Int_t      LoopVertex(TIndexCell &list1, TIndexCell &list2, int zpos1, 
 			int zpos2);
@@ -202,12 +223,9 @@ class EdbVertexRec: public TObject {
   Int_t	     SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1, 
 			     float ImpMax = 1000000., TObjArray *aseg = 0, 
 			     TObjArray *atr = 0, TObjArray *arv = 0);
-  Int_t      BuildTracksArr(const char *file_name="linked_tracks.root", 
-			    int nsegMin=2 );
-  Int_t      ProbVertex(EdbTrackP *tr1, EdbTrackP *tr2, int zpos1, int zpos2,
-			float pv[3] = 0);
-  Float_t    CheckImpact(EdbSegP *s1, EdbSegP *s2, int zpos1, int zpos2,
-			 float pv[3] = 0 );
+  Float_t    CheckImpact( EdbSegP *s1,   EdbSegP *s2, int zpos1, int zpos2, float pv[3] );
+  Bool_t     EstimateVertexQuality(EdbVertex &v);
+  Bool_t     EstimateVertexPosition(EdbVertex &v);
   Double_t   Tdistance(const VERTEX::Track& t1, const VERTEX::Track& t2);
   Double_t   Tdistance(const EdbSegP& s1, const EdbSegP& s2);
   Double_t   TdistanceChi2(const EdbTrackP& tr1, const EdbTrackP& tr2);
@@ -217,11 +235,9 @@ class EdbVertexRec: public TObject {
 				    EdbVertex **v1n);
   EdbVertex *AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, int zpos);
   EdbVertex *RemoveTrackFromVertex(EdbVertex *eVertex, int itr);
-  EdbVertex *ProbVertex1(EdbTrackP *tr1, EdbTrackP *tr2, int zpos1, int zpos2,
-			 float pv[3] = 0 );
+
   EdbTrackP *GetEdbTrack(const int index);
   EdbVTA    *AddTrack(EdbVertex &edbv, EdbTrackP *track, int zpos);
-  TTree     *init_tracks_tree(const char *file_name, EdbTrackP *track);
 
   void       SetPVRec(EdbPVRec *pvr) {ePVR = pvr;}
   void       AddVTA(EdbVTA *vta)     {eVTA.Add((TObject*)vta);}
