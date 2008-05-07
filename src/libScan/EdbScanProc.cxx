@@ -222,6 +222,9 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
 //----------------------------------------------------------------
 bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
 {
+  // create AFF dir if do not exist 
+  // put all affine transformations inside for each plates couple
+
   if(sc.eIDS.GetEntries()<2) return 0;
   EdbID *id1,*id2;
   for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
@@ -232,7 +235,6 @@ bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
     float dz = sc.GetDZP2P(id1->ePlate,id2->ePlate);
     TString str;
     MakeAffName(str,*id1,*id2);
-  
     char card[128];
     sprintf(card,"ZLAYER 0 %f 0 0",dz);
     LogPrint(id1->eBrick,2,"MakeAFFSet","%s as %s", str.Data(),card);
@@ -242,6 +244,32 @@ bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
     AddParLine(str.Data(),card);
   }
   return 1;
+}
+
+//----------------------------------------------------------------
+bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
+{
+  // input: sc with brick and all id's defined
+  // function -check or create the directory structure for this brick,
+  //          -create par-files for all plates
+  //          -create aff.par files for all couples in the defined order
+
+  if(sc.eIDS.GetEntries()<1)   return false;
+  EdbID *id=0;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++) {
+    id = (EdbID *)(sc.eIDS.At(i));
+    CheckProcDir(*id);
+    TString name;
+    MakeFileName(name,*id,"par");
+    char card[128];
+    sprintf(card,"SHRINK 1 %f",sc.GetPlate(id->ePlate)->GetLayer(1)->Shr());
+    AddParLine(name,card);
+    sprintf(card,"SHRINK 2 %f",sc.GetPlate(id->ePlate)->GetLayer(2)->Shr());
+    AddParLine(name,card);
+  }
+  if(!CheckAFFDir(sc.eB.ID())) return false;
+  MakeAFFSet(sc);
+  return true;
 }
 
 //----------------------------------------------------------------
@@ -607,8 +635,17 @@ int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull, int correct_ang )
   }
   if (nfull > 0) {
     MakeInPar(id, "fulllinking");   // make input par file including the fulllinking par file
-    for (Int_t i = 0; i < nfull; i++)
+    for (Int_t i = 0; i < nfull; i++) {
+      //SafeDelete(gDIFF);
+      TFile f("diff.root","RECREATE");
+      gDIFF = new TNtuple("diff","diff","x1:y1:tx1:ty1:w1:x2:y2:tx2:ty2:w2:z:aid10:aid11:aid20:aid21");
+      
       nc = LinkRun(id,1);         // will be done (full)linking and DO NOT updated x.x.x.x.par file
+
+      gDIFF->AutoSave();
+      f.Close();
+      //SafeDelete(gDIFF);
+    }
   }
   LogPrint(id[0],1,"LinkRunAll","%d couples stored", nc);
   return nc;
@@ -1065,28 +1102,49 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::CheckDir(const char *dir, bool create)
+{
+  // check the existance of the directory dir
+  // if do not exist and create==true (default) - create it 
+  // return true if the directory exists or succesfully created
+
+  void *dirp=0; // pointer to the directory
+  dirp = gSystem->OpenDirectory(dir);
+  if(!dirp) {
+    if(create) {
+      if(gSystem->MakeDirectory(dir)==0) Log(2,"EdbScanProc::CheckDir","create directory %s", dir);
+      else                               Log(1,"EdbScanProc::CheckDir","ERROR! can not create directory %s", dir);
+    }
+    else return false;
+  } else  { gSystem->FreeDirectory(dirp); dirp=0;}
+  dirp = gSystem->OpenDirectory(dir);
+  if(!dirp) {
+     Log(1,"EdbScanProc::CheckDir","ERROR! directory %s is not created!", dir);
+    return false;
+  }
+  gSystem->FreeDirectory(dirp);
+  return true;
+}
+
+//----------------------------------------------------------------
+bool EdbScanProc::CheckAFFDir(int brick, bool create)
+{
+  //return true if dir ../bXXXXXX/AFF is exists, if create==true (default) create it if necessary 
+  char str[256];
+  sprintf(str,"%s/b%6.6d/AFF", eProcDirClient.Data(),brick);
+  return CheckDir(str,create);
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc::CheckProcDir(int id[4], bool create)
 {
   //return true if dir ../bXXXXXX/pXXX exist, if create==true (default) create it if necessary 
-  char str[256];
-  void *dirp=0; // pointer to the directory
-  sprintf(str,"%s/b%6.6d", eProcDirClient.Data(),id[0]);
-  dirp = gSystem->OpenDirectory(str);
-  if(!dirp) {
-    if(create) gSystem->MakeDirectory(str);
-    else return false;
-  } else  { gSystem->FreeDirectory(dirp); dirp=0;}
 
+  char str[256];
+  sprintf(str,"%s/b%6.6d", eProcDirClient.Data(),id[0]);
+  if(!CheckDir(str,create)) return false;
   sprintf(str,"%s/b%6.6d/p%3.3d", eProcDirClient.Data(),id[0],id[1]);
-  dirp = gSystem->OpenDirectory(str);
-  if(!dirp) {
-    if(create) gSystem->MakeDirectory(str);
-    else return false;
-  } else  { gSystem->FreeDirectory(dirp); dirp=0;}
-  dirp = gSystem->OpenDirectory(str);
-  if(!dirp) return false;
-  gSystem->FreeDirectory(dirp);
-  dirp=0;
+  if(!CheckDir(str,create)) return false;
   return true;
 }
 
