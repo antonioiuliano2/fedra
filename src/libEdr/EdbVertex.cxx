@@ -12,6 +12,7 @@
 #include "TFile.h"
 #include "TRandom.h"
 #include "TMap.h"
+#include <TArrayF.h>
 
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
