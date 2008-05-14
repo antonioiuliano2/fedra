@@ -69,6 +69,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
     SafeDelete(eEMULDigitArray);
   }
 
+  //void Transform(EdbAffine2D &aff) { ((EdbTrack2D*)this)->Transform(&aff); }
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
   void    PropagateTo( float z );
   void    PropagateToCOV( float z );
@@ -272,7 +273,8 @@ class EdbTrackP : public EdbSegP {
 
   EdbTrackP(int nseg=0);
   EdbTrackP(EdbSegP *seg, float m=0.12);
-  EdbTrackP(EdbTrackP &track) : EdbSegP( *((EdbSegP *)&track) ) {Copy(track);}
+  EdbTrackP(EdbTrackP &track) { Set0(); Copy(track); }
+
   virtual ~EdbTrackP();
 
   void       Set0();
@@ -372,6 +374,8 @@ class EdbTrackP : public EdbSegP {
   float CHI2F();
   void  FitTrack();
   void  Copy(const EdbTrackP &tr);
+  void  Transform(const EdbAffine2D &tr);
+
   void  Clear()  { if(eS)  eS->Clear(); if(eSF) eSF->Clear(); }
   void  ClearF() { if(eSF) eSF->Clear(); }
   void  Print();

@@ -709,8 +709,10 @@ void EdbTrackP::Set0()
 //______________________________________________________________________________
 void EdbTrackP::AddVTA(EdbVTA *vta)
 {
-  if(vta->Zpos()==0)      eVTAE=vta;
-  else if(vta->Zpos()==1) eVTAS=vta;
+  if(vta) {
+    if(vta->Zpos()==0)      eVTAE=vta;
+    else if(vta->Zpos()==1) eVTAS=vta;
+  }
 }
 //______________________________________________________________________________
 void EdbTrackP::ClearVTA(EdbVTA *vta)
@@ -741,6 +743,15 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
     AddSegmentF(new EdbSegP(*tr.GetSegmentF(i)));
   if (eS) eS->SetOwner();
   if (eSF) eSF->SetOwner();
+}
+
+//______________________________________________________________________________
+void EdbTrackP::Transform(const EdbAffine2D &aff)
+{
+  // apply transformation to all track elements
+  ((EdbSegP*)(this))->Transform(&aff);
+  for(int i=0; i<N(); i++)  GetSegment(i)->Transform(&aff);
+  for(int i=0; i<NF(); i++) GetSegmentF(i)->Transform(&aff);
 }
 
 //______________________________________________________________________________
