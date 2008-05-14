@@ -776,7 +776,7 @@ int EdbVertexRec::FindVertex()
 
   if(nvtx!=nvtxt) printf("ERROR: EdbVertexRec::FindVertex():  nxtx =%d nvtxt =%d\n",nvtx,nvtxt);
 
-  for (Int_t i = 0; i < nvtxt; i++) GetVertex(i)->SetID(i);
+  //for (Int_t i = 0; i < nvtxt; i++) GetVertex(i)->SetID(i);
 
   if (nvtxt) eVTX->Sort(nvtxt-1);
 
@@ -1104,7 +1104,7 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
 //______________________________________________________________________________
 void  EdbVertexRec::CheckVTX()
 {
-  // rank the vertices and reassign tracks according to the major weight
+  // rank the vertices and reassign tracks according to the major vertex weight
 
   int nvtx = eVTX->GetEntries();
 
@@ -1121,11 +1121,14 @@ void  EdbVertexRec::CheckVTX()
     vtx->ResetTracks();
   }
 
-  // discard vertices if lost tracks
+  // discard vertices with the lost tracks
   for(int i=0; i<nvtx; i++)  {
     vtx = GetVertex(ind[i]);
     if(vtx->CheckDiscardedTracks()>0) vtx->SetFlag(-10);
   }
+
+  // reassign the vertex id's
+  for (Int_t i = 0; i < nvtx; i++) GetVertex(i)->SetID(i);
 
   //eVTA.Clear();  //TODO?
 }
