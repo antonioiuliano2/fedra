@@ -249,13 +249,13 @@ class EdbDataProc : public TObject {
   void   FillCouplesTree( TTree *tree, EdbPVRec *al, int fillraw=0 );
   void   CloseCouplesTree( TTree *tree );
 
-  int   MakeTracksTree( EdbPVRec *ali=0, const char *file="linked_tracks.root");
-  static int  MakeTracksTree( TObjArray &tracks, float xv=0, float yv=0, const char *file="linked_tracks.root");
-  int   ReadTracksTree( EdbPVRec &ali,
-			char *fname="linked_tracks.root",
-			int   nsegMin=3,
-			float probMin=0.01, 
-			const char *rcut="t.eFlag>-1&&nseg>2&&t.eProb>.01" );
+  static int MakeTracksTree(EdbPVRec *ali=0, const char *file="linked_tracks.root");
+  static int MakeTracksTree(TObjArray &tracks, float xv=0, float yv=0, const char *file="linked_tracks.root");
+  static int ReadTracksTree(EdbPVRec &ali,
+			    char *fname="linked_tracks.root",
+			    int   nsegMin=3,
+			    float probMin=0.01, 
+			    const char *rcut="t.eFlag>-1&&nseg>2&&t.eProb>.01" );
 
   TIndex2 *MakeTracksSegmentsList( EdbPVRec &ali );
 

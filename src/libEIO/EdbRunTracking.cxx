@@ -422,7 +422,7 @@ int EdbRunTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnd
 
  RESUME:
   
-  Log(1,"FindPrediction","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
+  Log(2,"FindPrediction","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
       eStatus, 
       eScnd.N(),eS1cnd.N(),eS2cnd.N(),
       eSpre.N(),eS1pre.N(),eS2pre.N()
@@ -582,7 +582,7 @@ float EdbRunTracking::TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps)
   if     (z<=t.Zmin()) ps.Copy(*t.GetSegmentFFirst());
   else if(z>=t.Zmax()) ps.Copy(*t.GetSegmentFLast());
   else         // z is inside the track
-    { printf("EdbRunTracking::TrackExtrapolationToZ: TODO!/n"); }
+    { Log(2, "EdbRunTracking::TrackExtrapolationToZ", " TODO!\n"); }
   float dz = Abs(ps.Z() - z);
   ps.PropagateTo( z );
   return dz;

@@ -10,6 +10,7 @@
 #include "TF1.h"
 #include "TArrayF.h"
 #include "TVectorF.h"
+#include "TVector.h"
 #include "TGraphErrors.h"
 #include "EdbLog.h"
 #include "EdbPhys.h"
