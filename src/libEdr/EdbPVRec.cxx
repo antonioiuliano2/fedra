@@ -16,7 +16,7 @@
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
 #include "EdbMath.h"
-#include "EdbTrackFitter.h"
+#include "EdbMomentumEstimator.h"
 #include "EdbLog.h"
 
 #include "vt++/CMatrix.hh"
@@ -1762,7 +1762,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
 	 ntr,X0);
 
 
-  EdbTrackFitter tf;
+  EdbMomentumEstimator tf;
   tf.eX0 = X0;
   tf.eM  = mass;
   EdbTrackP *tr = 0, *trg = 0;
