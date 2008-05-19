@@ -33,7 +33,8 @@ public:
    Int_t       DumpProcessOperations(char *id_eventbrick,char *id_programsettings);
    Int_t       GetId_EventBrick (char *id_brick, char*id_set, char *id);
    Int_t       GetId_Zone(char *id_eventbrick,char *id_plate, char *id_process_operation, char *series, char* id);
-   Int_t       GetId_ScanBack_Path(char *id_eventbrick, char *id_process_operation, int path, char *id);
+   Int_t       GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id);
+   Int_t       GetId_Volume(char *id_eventbrick, char *id_process_operation, int ivolume, char *id);
 
    Int_t       ReadDataSet(ULong64_t id_parent_op, int id_brick, ULong64_t path, EdbPatternsVolume &vol);
    Int_t       GetProcessType(char *IDPROCESS);

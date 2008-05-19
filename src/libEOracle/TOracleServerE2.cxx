@@ -656,7 +656,7 @@ Int_t TOracleServerE2::GetId_Zone(char *id_eventbrick,char *id_plate, char *id_p
 
 
 //------------------------------------------------------------------------------------
-Int_t TOracleServerE2::GetId_ScanBack_Path(char *id_eventbrick, char *id_process_operation, int path, char *id)
+Int_t TOracleServerE2::GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id)
 {
   // Get the scanback path ID related to a given brick, process operation and path
 
@@ -669,7 +669,7 @@ Int_t TOracleServerE2::GetId_ScanBack_Path(char *id_eventbrick, char *id_process
 	    eRTS.Data(), id_eventbrick, id_process_operation, path);
 
     fStmt->setSQL(query);
-    Log(2,"GetId_ScanBack_Path","execute sql query: %s ...",query);
+    Log(2,"GetId_ScanbackPath","execute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
@@ -678,7 +678,36 @@ Int_t TOracleServerE2::GetId_ScanBack_Path(char *id_eventbrick, char *id_process
     delete rs;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE2", "GetId_ScanBack_Path; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2", "GetId_ScanbackPath; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::GetId_Volume(char *id_eventbrick, char *id_process_operation, int ivolume, char *id)
+{
+  // Get the volume ID related to a given brick, process operation and progressive number of the volume
+
+  char *query= new char[2048];
+   try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID from TB_VOLUMES%s where id_eventbrick=%s and ID_PROCESSOPERATION=%s and VOLUME=%d", 
+	    eRTS.Data(), id_eventbrick, id_process_operation, ivolume);
+
+    fStmt->setSQL(query);
+    Log(2,"GetId_Volume","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      strcpy(id,rs->getString(1).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "GetId_Volume; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
   return 0;
 }
