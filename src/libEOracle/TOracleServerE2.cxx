@@ -451,8 +451,12 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir)
+Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major, int minor)
 {
+  // Input: id_volume (from tb_volumes)
+  //        outdir - where to write the dataset
+  //        major,minor - versions for the files names like: brick.plate,major.minor.raw.root
+
   int  nviewtot=0;
   char query[2048];
   std::map<int,ULong64_t> pl_zones;
@@ -490,7 +494,7 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
     plate= iter->first;
     zone = iter->second;
     Log(2,"ConvertMicrotracksVolumeToEdb","for plate: %d read zone: %lld", plate,zone);
-    id[0] = brick; id[1]=plate; id[2]=0; id[3]=0;
+    id[0] = brick; id[1]=plate; id[2]=major; id[3]=minor;
     TString str; sproc.MakeFileName(str,id,"raw.root");
     sproc.CheckProcDir(id);
     if(plate!=plate0) {

@@ -179,6 +179,8 @@ class EdbVertexRec: public TObject {
   Bool_t     eUseSegPar;    // use only the nearest measured segments for vertex fit (as Neuchatel)
   Int_t      eQualityMode;  // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
   Bool_t     eUseKalman;    // use or not Kalman for the vertex fit. Default is true
+  Bool_t     eUseLimits;    // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
+  TVector3   eVmin,eVmax;   // limits for the vertex search
 
  public:
   EdbVertexRec();
@@ -201,7 +203,8 @@ class EdbVertexRec: public TObject {
   void       CheckVTX();
   EdbVertex *TestVTAGroup(TObjArray &arrvta);
   int        EstimateVertexFlag(int zpos1, int zpos2);
-  bool       CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
+  Bool_t     CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
+  Bool_t     InsideLimits(EdbSegP &s);
 
   Int_t	     LinkedVertexes();
   Int_t      LoopVertex(TIndexCell &list1, TIndexCell &list2, int zpos1, 

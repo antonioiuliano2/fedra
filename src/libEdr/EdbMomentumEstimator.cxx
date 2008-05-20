@@ -130,17 +130,17 @@ float EdbMomentumEstimator::PMSang(EdbTrackP tr)
   float maxX =0;                                  // maximum value for the function fit
   TVector vind(size), errvind(size);
   TVector errdax(size), errday(size);
-  int ist=0;                          // use the counter for case of missing cells 
+  int ist=0;                                      // use the counter for case of missing cells 
   for(int i=0; i<size; i++) 
     {
       if( nentr[i] >= minentr ) {
-	vind[ist]    = i+1;                            // x-coord is defined as the number of cells
-	errvind[ist] = .25;
-	dax[ist]    = Sqrt( dax[ist]/nentr[ist] );
-	day[ist]    = Sqrt( day[ist]/nentr[ist] );
-	errdax[ist] = dax[ist]/CellWeight(npl,i+1);    //   Sqrt(npl/vind[i]);
-	errday[ist] = day[ist]/CellWeight(npl,i+1);
-	maxX=vind[ist];
+	vind[ist]    = i+1;                           // x-coord is defined as the number of cells
+	dax[ist]     = Sqrt( dax[ist]/nentr[i] );
+	day[ist]     = Sqrt( day[ist]/nentr[i] );
+	errvind[ist] = 0.25;
+	errdax[ist]  = dax[ist]/CellWeight(npl,i+1);  //   Sqrt(npl/vind[i]);
+	errday[ist]  = day[ist]/CellWeight(npl,i+1);
+	maxX         = vind[ist];
 	ist++;
       }
     }

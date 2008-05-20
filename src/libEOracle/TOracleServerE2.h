@@ -42,7 +42,7 @@ public:
    Int_t       ReadMicrotracksZone(Int_t id_eventbrick, ULong64_t id_zone, int side, TObjArray &edbviews);
    Int_t       ConvertMicrotracksZoneToEdb(Int_t id_eventbrick, ULong64_t id_zone, EdbRun &run);
 
-   Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir);
+   Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0);
 
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };

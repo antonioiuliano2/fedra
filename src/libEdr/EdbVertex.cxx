@@ -802,13 +802,18 @@ void EdbVertexRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends )
   int ntr  = eEdbTracks->GetEntries();
   Long_t  v[2];
 
+  EdbSegP *s=0;
   for(int itr=0; itr<ntr; itr++)   {
     tr = (EdbTrackP*)(eEdbTracks->At(itr));
-    if (tr->Flag() < 0) continue;
-    v[0] = (Long_t)(tr->TrackZmin(eUseSegPar)->Z()/eZbin);
+    if (tr->Flag() < 0)                     continue;
+    s = tr->TrackZmin(eUseSegPar);
+    if(eUseLimits)  if( !InsideLimits(*s) ) continue;
+    v[0] = (Long_t)(s->Z()/eZbin);
     v[1] = itr;
-    starts.Add(2,v); 
-    v[0] = (Long_t)(tr->TrackZmax(eUseSegPar)->Z()/eZbin);
+    starts.Add(2,v);
+    s = tr->TrackZmax(eUseSegPar);
+    if(eUseLimits)  if( !InsideLimits(*s) ) continue;
+    v[0] = (Long_t)(s->Z()/eZbin);
     v[1] = itr;
     ends.Add(2,v);
   }
@@ -821,7 +826,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 			      int zpos1, int zpos2 )
 {
 
-  // zpos1  - the directoin flag for the first  track 1-start, 0-end
+  // zpos1  - the direction flag for the first  track 1-start, 0-end
   // zpos2  - the direction flag for the second track
   // in cycles is assumed that members of list1 has z <= members of list2
 
@@ -1009,7 +1014,20 @@ int EdbVertexRec::EstimateVertexFlag(int zpos1, int zpos2)
 }
 
 //______________________________________________________________________________
-bool EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z )
+Bool_t EdbVertexRec::InsideLimits(EdbSegP &s)
+{
+  // return 1 if the segment position (x,y,z) is inside the limits defined by eVmin,eVmax
+  if(s.X()<eVmin.X()) return 0;
+  if(s.Y()<eVmin.Y()) return 0;
+  if(s.Z()<eVmin.Z()) return 0;
+  if(s.X()>eVmax.X()) return 0;
+  if(s.Y()>eVmax.Y()) return 0;
+  if(s.Z()>eVmax.Z()) return 0;
+  return 1;
+}
+
+//______________________________________________________________________________
+Bool_t EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z )
 {
   // return 1 if the vertex position (z) is in agreement with limits defined by  eZbin and DZmax
 
