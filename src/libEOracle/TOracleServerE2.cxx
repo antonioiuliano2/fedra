@@ -581,7 +581,7 @@ Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick,char *id_progra
     if (!fStmt)
       fStmt = fConn->createStatement();
 
-    sprintf(query,"select ID,to_char(starttime) from tb_proc_operations%s where id_eventbrick=%s and id_programsettings=%s", 
+    sprintf(query,"select ID,to_char(starttime),to_char(notes) from tb_proc_operations%s where id_eventbrick=%s and id_programsettings=%s",
 	    eRTS.Data(), id_eventbrick, id_programsettings);
 
     fStmt->setSQL(query);
@@ -589,7 +589,8 @@ Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick,char *id_progra
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
-      printf("Operation: %s, Start time: %s\n",rs->getString(1).c_str(),rs->getString(2).c_str());
+      printf("Operation: %s, start time: %s, notes: %s\n",
+	     rs->getString(1).c_str(),rs->getString(2).c_str(),rs->getString(3).c_str());
     }
     delete rs;
 
