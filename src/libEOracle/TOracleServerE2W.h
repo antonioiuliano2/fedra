@@ -11,9 +11,13 @@ class EdbPatternsVolume;
 
 class TOracleServerE2W : public TOracleServerE2 {
 
-public:
+ private:
+
+  Int_t eNviewsPerArea;
+
+ public:
   TOracleServerE2W(const char *db, const char *uid, const char *pw):
-    TOracleServerE2(db, uid, pw){}
+    TOracleServerE2(db, uid, pw){eNviewsPerArea=0;}
     ~TOracleServerE2W(){}
 
     Int_t       AddEventBricks(char *databrick);
@@ -24,7 +28,7 @@ public:
     Int_t       AddZone(char *data);
     Int_t       AddProcessOperation(char *id_machine, char *id_programsettings, char *id_requester, char *id_parent_operation, 
 				    char *id_eventbrick, char *id_plate, char *driverlevel, char *templatemarks, 
-				    char *starttime, char *finishtime, char *success);
+				    char *starttime, char *finishtime, char *success, char *notes);
     Int_t       AddView(char *dataView);
     Int_t       AddBaseTracks(EdbPattern &pat, char *id_eventbrick, char *id_zone);
     Int_t       AddBaseTracks(TTree *tree, char *id_eventbrick, char *id_zone, bool usebuffer=true);
@@ -46,6 +50,8 @@ public:
     Int_t       DeleteBrickSpace(char *id_brick);
     Int_t       DeleteOperation(char *id_brick, char *id_process_operation);
     Int_t       DeletePlateOperation(char *id_brick, char *id_process_operation, char *id_plate);
+
+    Int_t       NviewsPerArea() {return eNviewsPerArea;};
 
     ClassDef(TOracleServerE2W,1)  // Write enabled access to the OPERA db 
 };

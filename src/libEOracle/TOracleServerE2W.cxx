@@ -9,17 +9,18 @@
 ClassImp(TOracleServerE2W)
 
 //-------------------------------------------------------------------------------------
-Int_t  TOracleServerE2W::AddProcessOperation(char *id_machine, 
-					   char *id_programsettings, 
-					   char *id_requester, 
-					   char *id_parent_operation, 
-					   char *id_eventbrick, 
-					   char *id_plate, 
-					   char *driverlevel, 
-					   char *id_calibration, 
-					   char *starttime, 
-					   char *finishtime,
-					   char *success)
+  Int_t  TOracleServerE2W::AddProcessOperation(char *id_machine, 
+					       char *id_programsettings, 
+					       char *id_requester, 
+					       char *id_parent_operation, 
+					       char *id_eventbrick, 
+					       char *id_plate, 
+					       char *driverlevel, 
+					       char *id_calibration, 
+					       char *starttime, 
+					       char *finishtime,
+					       char *success,
+					       char *notes)
 {
   // Adds a process operation into the DB
   // Table involved: TB_PROC_OPERATIONS
@@ -33,9 +34,9 @@ Int_t  TOracleServerE2W::AddProcessOperation(char *id_machine,
       fStmt = fConn->createStatement();
     
     sprintf(query,"\
- INSERT INTO OPERA.TB_PROC_OPERATIONS (ID_MACHINE, ID_PROGRAMSETTINGS, ID_REQUESTER, ID_PARENT_OPERATION, ID_EVENTBRICK, ID_PLATE, DRIVERLEVEL, ID_CALIBRATION_OPERATION, STARTTIME, FINISHTIME, SUCCESS) \
- VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
-	    id_machine, id_programsettings, id_requester, id_parent_operation, id_eventbrick, id_plate, driverlevel, id_calibration, starttime, finishtime, success);
+ INSERT INTO OPERA.TB_PROC_OPERATIONS (ID_MACHINE, ID_PROGRAMSETTINGS, ID_REQUESTER, ID_PARENT_OPERATION, ID_EVENTBRICK, ID_PLATE, DRIVERLEVEL, ID_CALIBRATION_OPERATION, STARTTIME, FINISHTIME, SUCCESS, NOTES) \
+ VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '%s')",
+	    id_machine, id_programsettings, id_requester, id_parent_operation, id_eventbrick, id_plate, driverlevel, id_calibration, starttime, finishtime, success, notes);
     
     fStmt->setSQL(query);
     Log(2,"AddProcessOperation","execute sql query: %s ...",query);
@@ -543,9 +544,14 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   }
     
   int side;
-  if(view->GetNframesTop()==0) side=1;  // 1 - bottom
-  else side=2;                          // 2 - top
-  
+//   if(view->GetNframesTop()==0) side=1;  // 1 - bottom
+//   else side=2;                          // 2 - top
+
+  // Warning! inverted definition to make it compatible with the DB
+  if(view->GetNframesTop()==0) side=2;
+  else side=1;
+
+
   EdbSegP sview(0,0,0,0,0);
   sview.Transform(view->GetHeader()->GetAffine());
   float xview = sview.X();
@@ -563,13 +569,21 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
   char dataview[2048];
   if (side==1)
     sprintf(dataview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
-	    view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),xview,yview );
+ 	    view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),xview,yview );
   else
     sprintf(dataview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
-	    view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4(),xview,yview );
+ 	    view->GetHeader()->GetZ4(),view->GetHeader()->GetZ3(),xview,yview );
+
+//   if (side==1)
+//     sprintf(dataview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
+// 	    view->GetHeader()->GetZ3(),view->GetHeader()->GetZ4(),xview,yview );
+//   else
+//     sprintf(dataview,"%s, %s, %d, %d, %f, %f, %f, %f", id_eventbrick, id_zone, side, id_view,
+// 	    view->GetHeader()->GetZ1(),view->GetHeader()->GetZ2(),xview,yview );
   
   AddView(dataview);
-  
+
+  if (nsegV<=0) return(-1);
 
   if (!usebuffer) {
   
@@ -579,7 +593,8 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
     for(int isegment=0;isegment<nsegV;isegment++) {
       seg = view->GetSegment(isegment);
       seg->Transform(view->GetHeader()->GetAffine());
-      id_microtrack = id_view*10000 + isegment;
+      //      id_microtrack = id_view*10000 + isegment;
+      id_microtrack = id_view*100000 + side*10000 + isegment;
       sprintf(datamicro,"%s, %s ,%d, %d, %d, %f, %f, %f, %f, %d, %d, NULL, %f", id_eventbrick, id_zone, side, id_microtrack, id_view, seg->GetX0(), seg->GetY0(), seg->GetTx(), seg->GetTy(), seg->GetPuls(), seg->GetVolume(), seg->GetSigmaX());
       AddMicroTrack(datamicro);
     }
@@ -618,7 +633,8 @@ Int_t  TOracleServerE2W::AddView(EdbView *view, int id_view, char *id_eventbrick
 	sprintf(ID_EVENTBRICK[isegment],"%s%c",id_eventbrick,0);  //  1
 	sprintf(ID_ZONE[isegment],"%s%c",id_zone,0);              //  2
 	SIDE[isegment]=side;                   //  3
-	ID[isegment]=id_view*10000 + isegment; //  4
+	//	ID[isegment]=id_view*10000 + isegment; //  4
+	ID[isegment]=id_view*100000 + side*10000 + isegment; // 4
 	ID_VIEW[isegment]=id_view;             //  5
 	POSX[isegment]=seg->GetX0();           //  6
 	POSY[isegment]=seg->GetY0();           //  7
@@ -672,12 +688,31 @@ Int_t TOracleServerE2W::AddViews(EdbRun *run, char *id_eventbrick, char *id_zone
   EdbView *view = run->GetView();
   int nviews = run->GetEntries();
 
+  if (!nviews) return 0;
+
+  eNviewsPerArea = 0;
+  view = run->GetEntry(0);
+  int idfirstarea = view->GetAreaID();
+
+  // count number of views per area
   for(int iview=0; iview<nviews; iview++) {
     view = run->GetEntry(iview);
-    if (gEDBDEBUGLEVEL>=2) printf("view %d/%d\r",iview+1,nviews);
-    AddView(view, iview, id_eventbrick, id_zone, usebuffer);
+    if (view->GetAreaID()==idfirstarea) eNviewsPerArea++;
   }
-  if (gEDBDEBUGLEVEL>=2) printf("\n");
+  // divide by 2 because we have 2 views per side
+  eNviewsPerArea/=2;
+
+  //  printf("eNviewsPerArea %d\n",eNviewsPerArea);
+
+  for(int iview=0; iview<nviews; iview++) {
+    view = run->GetEntry(iview);
+    if (gEDBDEBUGLEVEL>=1) { printf("Adding view %d/%d\r",iview+1,nviews); fflush(stdout); }
+    //    AddView(view, iview, id_eventbrick, id_zone, usebuffer);
+    int id_view = (view->GetAreaID()-1)*eNviewsPerArea+view->GetViewID();
+    //    printf("id_view %d %d %d %d\n",view->GetAreaID(),eNviewsPerArea,view->GetViewID(),id_view);
+    AddView(view, id_view, id_eventbrick, id_zone, usebuffer);
+  }
+  if (gEDBDEBUGLEVEL>=1) printf("\n");
   
   return 0;
 }
@@ -697,8 +732,12 @@ Int_t TOracleServerE2W::AddBaseTracks(TTree *tree, char *id_eventbrick, char *id
   b_s1 = tree->GetBranch("s1.");
   b_s2 = tree->GetBranch("s2.");
   b_s->SetAddress(  &s   );
-  b_s1->SetAddress( &s1  );
-  b_s2->SetAddress( &s2  );
+//   b_s1->SetAddress( &s1  );
+//   b_s2->SetAddress( &s2  );
+
+  // Warning! inverted definition to make it compatible with the DB
+  b_s1->SetAddress( &s2  );
+  b_s2->SetAddress( &s1  );
 
   int nentr = (int)(tree->GetEntries());
 
@@ -709,11 +748,16 @@ Int_t TOracleServerE2W::AddBaseTracks(TTree *tree, char *id_eventbrick, char *id
       b_s->GetEntry(i);
       b_s1->GetEntry(i);
       b_s2->GetEntry(i);
-      int id1 = s1->Vid(0)*10000 + s1->ID();
-      int id2 = s2->Vid(0)*10000 + s2->ID();
+      //       int id_up   = s1->Vid(0)*10000 + s1->ID();
+      //       int id_down = s2->Vid(0)*10000 + s2->ID();
+      int id_view_up   = (s1->Aid(0)-1)*eNviewsPerArea+s1->Aid(1);
+      int id_view_down = (s2->Aid(0)-1)*eNviewsPerArea+s2->Aid(1);
+      int id_up   = id_view_up  *100000 + 10000*2 + s1->ID();
+      int id_down = id_view_down*100000 + 10000*1 + s2->ID();
+
       sprintf(data,"%s, %s, %d, %2f, %2f, %2f, %2f, %2f, %2f, NULL, %2f, %d, %d, %d, %d", 
 	      id_eventbrick, id_zone, i, s->X(), s->Y(), s->TX(), s->TY(), s->W(), s->Volume(), s->Chi2(),
-	      1, id1, 2, id2);
+	      1, id_down, 2, id_up);
       AddBaseTrack(data);
     }
 
@@ -725,79 +769,95 @@ Int_t TOracleServerE2W::AddBaseTracks(TTree *tree, char *id_eventbrick, char *id
       if (!fStmt)
 	fStmt = fConn->createStatement();
       
-      char query[2048];
-      sprintf(query,"\
+      char ID_EVENTBRICK[10000][50],ID_ZONE[10000][50];
+      int ID[10000];
+      float POSX[10000],POSY[10000],SLOPEX[10000],SLOPEY[10000];
+      int GRAINS[10000],AREASUM[10000];
+      float SIGMA[10000];
+      int ID_DOWNSIDE[10000],ID_DOWNTRACK[10000],ID_UPSIDE[10000],ID_UPTRACK[10000];
+      ub2 SINT[10000],SFLOAT[10000],SID_EVENTBRICK[10000],SID_ZONE[10000];
+      
+//       if (nentr>10000) {
+// 	Log(1,"AddBaseTracksWithBuffer","Error! Number of segments (%d) is greater than 10000",nentr);
+// 	exit(1);
+//       }
+
+      int nstep = nentr/10000+1;
+
+      for(int istep=0; istep<nstep; istep++ ) {
+	
+	char query[2048];
+	sprintf(query,"\
  INSERT INTO OPERA.TB_MIPBASETRACKS					\
  (ID_EVENTBRICK, ID_ZONE, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, SIGMA, ID_DOWNSIDE, ID_DOWNTRACK, ID_UPSIDE, ID_UPTRACK) \
  VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14)");
-      fStmt->setSQL(query);
+	fStmt->setSQL(query);
 
-      char ID_EVENTBRICK[50000][50],ID_ZONE[50000][50];
-      int ID[50000];
-      float POSX[50000],POSY[50000],SLOPEX[50000],SLOPEY[50000];
-      int GRAINS[50000],AREASUM[50000];
-      float SIGMA[50000];
-      int ID_DOWNSIDE[50000],ID_DOWNTRACK[50000],ID_UPSIDE[50000],ID_UPTRACK[50000];
-      ub2 SINT[50000],SFLOAT[50000],SID_EVENTBRICK[50000],SID_ZONE[50000];
-      
-      if (nentr>50000) {
-	Log(1,"AddBaseTracksWithBuffer","Error! Number of segments (%d) is greater than 50000",nentr);
-	exit(1);
-      }
-      
-      
-      for(int ibasetrack=0; ibasetrack<nentr; ibasetrack++ ) {
+	int ibt=0;
+
+	for(int ibasetrack=10000*istep; (ibasetrack<nentr && ibasetrack<10000*(istep+1)); ibasetrack++ ) {
+	  
+	  b_s->GetEntry(ibasetrack);
+	  b_s1->GetEntry(ibasetrack);
+	  b_s2->GetEntry(ibasetrack);
+	  
+// 	  int id_up   = s1->Vid(0)*10000 + s1->ID();
+// 	  int id_down = s2->Vid(0)*10000 + s2->ID();
+
+	  int id_view_up   = (s1->Aid(0)-1)*eNviewsPerArea+s1->Aid(1);
+	  int id_view_down = (s2->Aid(0)-1)*eNviewsPerArea+s2->Aid(1);
+	  int id_up   = id_view_up  *100000 + 10000*2 + s1->ID();
+	  int id_down = id_view_down*100000 + 10000*1 + s2->ID();
+	  
+	  sprintf(ID_EVENTBRICK[ibt],"%s%c",id_eventbrick,0);  //  1
+	  sprintf(ID_ZONE[ibt],"%s%c",id_zone,0);              //  2
+	  ID[ibt]=ibasetrack;               //  3
+	  POSX[ibt]=s->X();                 //  4
+	  POSY[ibt]=s->Y();                 //  5
+	  SLOPEX[ibt]=s->TX();              //  6
+	  SLOPEY[ibt]=s->TY();              //  7
+	  GRAINS[ibt]=(int)s->W();          //  8
+	  AREASUM[ibt]=(int)s->Volume();    //  9
+	  SIGMA[ibt]=s->Chi2();             // 10
+	  ID_DOWNSIDE[ibt]=1;               // 11
+	  ID_DOWNTRACK[ibt]=id_down;        // 12
+	  ID_UPSIDE[ibt]=2;                 // 13
+	  ID_UPTRACK[ibt]=id_up;            // 14
+	  
+	  SID_EVENTBRICK[ibt]=strlen(ID_EVENTBRICK[ibt])+1;
+	  SID_ZONE[ibt]=strlen(ID_ZONE[ibt])+1;
+	  SINT[ibt]=sizeof(int);
+	  SFLOAT[ibt]=sizeof(float);
+	  
+	  if (gEDBDEBUGLEVEL>=1) {
+	    printf("buffer %d/%d: filling basetrack buffers... %2.0f%%\r",istep+1,nstep,100.*ibasetrack/nentr);
+	    fflush(stdout);
+	  }
+	  ibt++;
+	}
+	if (gEDBDEBUGLEVEL>=1) printf("\n");
 	
-	b_s->GetEntry(ibasetrack);
-	b_s1->GetEntry(ibasetrack);
-	b_s2->GetEntry(ibasetrack);
+	fStmt->setDataBuffer( 1, ID_EVENTBRICK, OCCI_SQLT_STR, sizeof(ID_EVENTBRICK[0]), (unsigned short *) &SID_EVENTBRICK);
+	fStmt->setDataBuffer( 2, ID_ZONE, OCCI_SQLT_STR, sizeof(ID_ZONE[0]), (unsigned short *) &SID_ZONE);
+	fStmt->setDataBuffer( 3, ID,      OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer( 4, POSX,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+	fStmt->setDataBuffer( 5, POSY,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+	fStmt->setDataBuffer( 6, SLOPEX,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+	fStmt->setDataBuffer( 7, SLOPEY,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+	fStmt->setDataBuffer( 8, GRAINS,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer( 9, AREASUM, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer(10, SIGMA,   OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
+	fStmt->setDataBuffer(11, ID_DOWNSIDE,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer(12, ID_DOWNTRACK, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer(13, ID_UPSIDE,    OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->setDataBuffer(14, ID_UPTRACK,   OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
+	fStmt->executeArrayUpdate(ibt);
 	
-	int id_up   = s1->Vid(0)*10000 + s1->ID();
-	int id_down = s2->Vid(0)*10000 + s2->ID();
-	
-	sprintf(ID_EVENTBRICK[ibasetrack],"%s%c",id_eventbrick,0);  //  1
-	sprintf(ID_ZONE[ibasetrack],"%s%c",id_zone,0);              //  2
-	ID[ibasetrack]=ibasetrack;               //  3
-	POSX[ibasetrack]=s->X();                 //  4
-	POSY[ibasetrack]=s->Y();                 //  5
-	SLOPEX[ibasetrack]=s->TX();              //  6
-	SLOPEY[ibasetrack]=s->TY();              //  7
-	GRAINS[ibasetrack]=(int)s->W();          //  8
-	AREASUM[ibasetrack]=(int)s->Volume();    //  9
-	SIGMA[ibasetrack]=s->Chi2();             // 10
-	ID_DOWNSIDE[ibasetrack]=1;               // 11
-	ID_DOWNTRACK[ibasetrack]=id_down;        // 12
-	ID_UPSIDE[ibasetrack]=2;                 // 13
-	ID_UPTRACK[ibasetrack]=id_up;            // 14
-	
-	SID_EVENTBRICK[ibasetrack]=strlen(ID_EVENTBRICK[ibasetrack])+1;
-	SID_ZONE[ibasetrack]=strlen(ID_ZONE[ibasetrack])+1;
-	SINT[ibasetrack]=sizeof(int);
-	SFLOAT[ibasetrack]=sizeof(float);
-	
-	fprintf(stderr,"filling basetrack buffer... %2.0f%\r",100.*ibasetrack/nentr);
-      }
-      fprintf(stderr,"\n");
+	char commit[10]="commit";
+	Query(commit);
       
-      fStmt->setDataBuffer( 1, ID_EVENTBRICK, OCCI_SQLT_STR, sizeof(ID_EVENTBRICK[0]), (unsigned short *) &SID_EVENTBRICK);
-      fStmt->setDataBuffer( 2, ID_ZONE, OCCI_SQLT_STR, sizeof(ID_ZONE[0]), (unsigned short *) &SID_ZONE);
-      fStmt->setDataBuffer( 3, ID,      OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer( 4, POSX,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
-      fStmt->setDataBuffer( 5, POSY,    OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
-      fStmt->setDataBuffer( 6, SLOPEX,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
-      fStmt->setDataBuffer( 7, SLOPEY,  OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
-      fStmt->setDataBuffer( 8, GRAINS,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer( 9, AREASUM, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer(10, SIGMA,   OCCIFLOAT, sizeof(float), (unsigned short *) &SFLOAT);
-      fStmt->setDataBuffer(11, ID_DOWNSIDE,  OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer(12, ID_DOWNTRACK, OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer(13, ID_UPSIDE,    OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->setDataBuffer(14, ID_UPTRACK,   OCCIINT,   sizeof(int),   (unsigned short *) &SINT);
-      fStmt->executeArrayUpdate(nentr);
-      
-      char commit[10]="commit";
-      Query(commit);
-      
+      } // istep
+
     } catch (SQLException &oraex) {
       Error("TOracleServerE2W", "AddBaseTracksWithBuffer; failed: (error: %s)", (oraex.getMessage()).c_str());
     }
@@ -992,7 +1052,7 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
   // Tables involved: ... a lot, look at the code...
   // Details: DELETE queries and then a COMMIT query
 
-  char query[9][2048];
+  char query[12][2048];
   char commit[11]="commit";
 
   try{
@@ -1001,15 +1061,18 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
 
     sprintf(query[0], "delete from Tb_Scanback_Predictions where (id_path) in (select id from tb_scanback_paths where id_processoperation=%s) and id_eventbrick=%s",id_process_operation,id_brick);    
     sprintf(query[1], "delete from Tb_Scanback_Paths where id_processoperation=%s and id_eventbrick=%s",id_process_operation,id_brick);
-    sprintf(query[2], "delete from Tb_MipBasetracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)) and id_eventbrick=%s",id_process_operation,id_brick);
-    sprintf(query[3], "delete from Tb_MipMicrotracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)) and id_eventbrick=%s",id_process_operation,id_brick);
-    sprintf(query[4], "delete from tb_views where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s))",id_process_operation);
-    sprintf(query[5], "delete from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)",id_process_operation);
-    sprintf(query[6], "delete from tb_plate_calibrations where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)",id_process_operation);
-    sprintf(query[7], "delete from tb_proc_operations where id_parent_operation=%s",id_process_operation);
-    sprintf(query[8], "delete from tb_proc_operations where id=%s",id_process_operation);
+    sprintf(query[2], "delete from Tb_MipBasetracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[3], "delete from Tb_MipMicrotracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[4], "delete from tb_views where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[5], "delete from tb_b_sbpaths_volumes where id_eventbrick=%s and id_volumescan_procopid=%s",id_brick,id_process_operation);
+    sprintf(query[6], "delete from tb_volume_slices where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s))",id_process_operation);
+    sprintf(query[7], "delete from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s",id_process_operation,id_brick);
+    sprintf(query[8], "delete from tb_volumes where id_processoperation=%s",id_process_operation);
+    sprintf(query[9], "delete from tb_plate_calibrations where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)",id_process_operation);
+    sprintf(query[10],"delete from tb_proc_operations where id_parent_operation=%s",id_process_operation);
+    sprintf(query[11],"delete from tb_proc_operations where id=%s",id_process_operation);
 
-    for (int i=0;i<9;i++) {
+    for (int i=0;i<12;i++) {
 	fStmt->setSQL(query[i]);
 	Log(2,"DeleteOperation","execute sql query: %s ...",query[i]);
 	fStmt->execute();
