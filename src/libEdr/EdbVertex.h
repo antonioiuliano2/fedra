@@ -186,6 +186,8 @@ class EdbVertexRec: public TObject {
   EdbVertexRec();
   virtual ~EdbVertexRec();
 
+  const TVector3  *Vmin() const {return &eVmin;}
+  const TVector3  *Vmax() const {return &eVmax;}
   int        RefitAll();
   void       AcceptPolish();
   void       RejectPolish();
@@ -204,7 +206,8 @@ class EdbVertexRec: public TObject {
   EdbVertex *TestVTAGroup(TObjArray &arrvta);
   int        EstimateVertexFlag(int zpos1, int zpos2);
   Bool_t     CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
-  Bool_t     InsideLimits(EdbSegP &s);
+  Bool_t     IsInsideLimits(EdbSegP &s);
+  Int_t      FindSimilarTracks(EdbTrackP &t, TObjArray &found, int nsegmin=2, float dMax=100., float dTheta=0.01, float dZmax=50000.);
 
   Int_t	     LinkedVertexes();
   Int_t      LoopVertex(TIndexCell &list1, TIndexCell &list2, int zpos1, 

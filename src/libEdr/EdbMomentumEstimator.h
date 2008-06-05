@@ -55,6 +55,8 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   float*  GetDP(float P, int npl, float ang);
 
   float   P_MS(EdbTrackP &tr);
+  void    DrawPlots();
+
   void    Print();
 
   ClassDef(EdbMomentumEstimator,1)  // track momentum estimator

@@ -601,6 +601,7 @@ EdbVertexRec::EdbVertexRec()
   eUseMom     = false;     // do not use it
   eUseSegPar  = false;     // use fitted track parameters
   eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
+  eUseLimits  = false;     // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
 
   (gROOT->GetListOfSpecials())->Add(this);
 }
@@ -745,6 +746,55 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
 }
 
 //______________________________________________________________________________
+Int_t EdbVertexRec::FindSimilarTracks(EdbTrackP &track, TObjArray &found, int nsegmin, float dMax, float dTheta, float dZmax)
+{
+  // find all tracks close to the "track" and return them in "found"
+  // nsegmin - min number of segments for the interesting tracks
+  // gMax    - max 3-d distance between track lines
+  // dTheta  - max spatial angle between track lines
+  // dZmax   - max distance in z between track lines
+
+  using namespace TMath;
+  int ntr  = eEdbTracks->GetEntries();
+  if(ntr<1) return 0;
+
+  EdbTrackP *t=0;
+  EdbSegP   *s=track.TrackZmin(eUseSegPar);
+  EdbSegP   *e=track.TrackZmax(eUseSegPar);
+  EdbSegP   *ts=0, *te=0;  // start and end for the other tracks
+
+  track.FitTrack();
+  EdbSegP *t1=(EdbSegP*)(&track);
+  EdbSegP *t2;
+  int   nfound=0;
+  float pv[3], imp, dtheta;
+  for(int itr=0; itr<ntr; itr++)   {
+    t = (EdbTrackP*)(eEdbTracks->At(itr));
+    if (t == &track)                                          continue;
+    if (t->Flag() < 0)                                        continue;
+    ts = t->TrackZmin(eUseSegPar);
+    te = t->TrackZmax(eUseSegPar);
+    if( Min(ts->X(),te->X()) - Max(s->X(),e->X())   > dMax )  continue;
+    if( Min(s->X(),e->X())   - Max(ts->X(),te->X()) > dMax )  continue;
+    if( Min(ts->Y(),te->Y()) - Max(s->Y(),e->Y())   > dMax )  continue;
+    if( Min(s->Y(),e->Y())   - Max(ts->Y(),te->Y()) > dMax )  continue;
+    if( Min(ts->Z(),te->Z()) - Max(s->Z(),e->Z())   > dZmax ) continue;
+    if( Min(s->Z(),e->Z())   - Max(ts->Z(),te->Z()) > dZmax ) continue;
+    
+    t->FitTrack();
+    t2 = (EdbSegP*)t;
+    dtheta = Sqrt( (t2->TX()-t1->TX())*(t2->TX()-t1->TX()) + (t2->TY()-t1->TY())*(t2->TY()-t1->TY()) );
+    if(dtheta>dTheta)                                         continue;
+    imp = CheckImpact( t1,t2,1,1, pv);
+    if(imp>dMax)                                              continue;
+
+    found.Add(t);
+    nfound++;
+  }
+  return nfound;
+}
+
+//______________________________________________________________________________
 int EdbVertexRec::FindVertex()
 {
   // Note: in this function is assumed that all tracks selections are already done
@@ -807,12 +857,12 @@ void EdbVertexRec::FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends )
     tr = (EdbTrackP*)(eEdbTracks->At(itr));
     if (tr->Flag() < 0)                     continue;
     s = tr->TrackZmin(eUseSegPar);
-    if(eUseLimits)  if( !InsideLimits(*s) ) continue;
+    if(eUseLimits)  if( !IsInsideLimits(*s) ) continue;
     v[0] = (Long_t)(s->Z()/eZbin);
     v[1] = itr;
     starts.Add(2,v);
     s = tr->TrackZmax(eUseSegPar);
-    if(eUseLimits)  if( !InsideLimits(*s) ) continue;
+    if(eUseLimits)  if( !IsInsideLimits(*s) ) continue;
     v[0] = (Long_t)(s->Z()/eZbin);
     v[1] = itr;
     ends.Add(2,v);
@@ -1014,7 +1064,7 @@ int EdbVertexRec::EstimateVertexFlag(int zpos1, int zpos2)
 }
 
 //______________________________________________________________________________
-Bool_t EdbVertexRec::InsideLimits(EdbSegP &s)
+Bool_t EdbVertexRec::IsInsideLimits(EdbSegP &s)
 {
   // return 1 if the segment position (x,y,z) is inside the limits defined by eVmin,eVmax
   if(s.X()<eVmin.X()) return 0;

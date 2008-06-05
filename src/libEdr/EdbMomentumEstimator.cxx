@@ -6,6 +6,8 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TCanvas.h"
+#include "TStyle.h"
 #include "TMath.h"
 #include "TF1.h"
 #include "TArrayF.h"
@@ -138,7 +140,7 @@ float EdbMomentumEstimator::PMSang(EdbTrackP tr)
 	dax[ist]     = Sqrt( dax[ist]/nentr[i] );
 	day[ist]     = Sqrt( day[ist]/nentr[i] );
 	errvind[ist] = 0.25;
-	errdax[ist]  = dax[ist]/CellWeight(npl,i+1);  //   Sqrt(npl/vind[i]);
+	errdax[ist]  = dax[ist]/CellWeight(npl,i+1);
 	errday[ist]  = day[ist]/CellWeight(npl,i+1);
 	maxX         = vind[ist];
 	ist++;
@@ -176,12 +178,12 @@ float EdbMomentumEstimator::PMSang(EdbTrackP tr)
   EstimateMomentumError( ePx, npl, txmean, ePXmin, ePXmax );
   EstimateMomentumError( ePy, npl, tymean, ePYmin, ePYmax );
 
-  printf("px=%7.2f +-%5.2f (%6.2f : %6.2f)    py=%7.2f +-%5.2f  (%6.2f : %6.2f)\n",
-	 ePx,eDPx,ePXmin, ePXmax,ePy,eDPy,ePYmin, ePYmax);
-
   float wx = 1./eDPx/eDPx;
   float wy = 1./eDPy/eDPy;
   float p  = (ePx*wx + ePy*wy)/(wx+wy);   // TODO: check on MC the biases of different estimations
+
+  printf("id=%6d (%2d/%2d) px=%7.2f +-%5.2f (%6.2f : %6.2f)    py=%7.2f +-%5.2f  (%6.2f : %6.2f)  pmean =%7.2f\n",
+	 tr.ID(),npl,nseg,ePx,eDPx,ePXmin, ePXmax,ePy,eDPy,ePYmin, ePYmax, p);
 
   return p;
 }
@@ -190,7 +192,9 @@ float EdbMomentumEstimator::PMSang(EdbTrackP tr)
 float EdbMomentumEstimator::CellWeight(int npl, int m)
 {
   // npl - number of plates, m - the cell thickness in plates
-  // return the statistical weight of the cell
+  // return the statistical weight of the cell to estimate the measurement 
+  // error as dax[i]/CellWeight(npl,i+1)
+  // TODO: elaborate correctly the missing segments
 
   //return  Sqrt(npl/m);  // the simpliest estimation no shift, no correlations
 
@@ -218,6 +222,42 @@ TF1 *EdbMomentumEstimator::MCSErrorFunction(const char *name, float x0, float dt
 
   return new TF1(name,Form("sqrt(0.0002143296*x/%f*(1+0.038*log(x/(%f)))/([0])**2+%f)",x0,x0,dtx));
   //return new TF1(name,Form("sqrt(0.0001849599*x/%f*(1+0.038*log(x/(%f)))/([0])**2+%f)",x0,x0,dtx));
+}
+
+//________________________________________________________________________________________
+void EdbMomentumEstimator::DrawPlots()
+{
+  // example of the plots available after PMSang
+  gStyle->SetOptFit(11111);
+  TCanvas *c1 = new TCanvas();
+  c1->Divide(1,2);
+
+  c1->cd(1);
+  TGraphErrors *gx = new TGraphErrors(*eGX);
+  gx->SetTitle("Theta vs cell (longitudinal component)");
+  gx->Draw("ALPR");
+  TF1 *fxmin = new TF1(*(eF1X));
+  fxmin->SetLineColor(kBlue);
+  fxmin->SetParameter(0,ePXmin);
+  fxmin->Draw("same");
+  TF1 *fxmax = new TF1(*(eF1X));
+  fxmax->SetLineColor(kBlue);
+  fxmax->SetParameter(0,ePXmax);
+  fxmax->Draw("same");
+
+  c1->cd(2);
+  TGraphErrors *gy = new TGraphErrors(*eGY);
+  gy->SetTitle("Theta vs cell (transverse component)");
+  gy->Draw("ALPR");
+  gy->Print();
+  TF1 *fymin = new TF1(*(eF1Y));
+  fymin->SetLineColor(kBlue);
+  fymin->SetParameter(0,ePYmin);
+  fymin->Draw("same");
+  TF1 *fymax = new TF1(*(eF1Y));
+  fymax->SetLineColor(kBlue);
+  fymax->SetParameter(0,ePYmax);
+  fymax->Draw("same");
 }
 
 //________________________________________________________________________________________
