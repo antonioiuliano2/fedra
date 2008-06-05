@@ -279,7 +279,7 @@ void EdbRun::AddView( EdbView *view )
 {
 
   if( view != eView ) { 
-    Log(2," EdbRun::AddView","WARNING: view!=eView - inefficient cycle!\n");
+    Log(3," EdbRun::AddView","WARNING: view!=eView - inefficient cycle!\n");
     SetView(view);
   }
 

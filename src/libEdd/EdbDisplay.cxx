@@ -20,6 +20,7 @@
 #include "TGClient.h"
 #include "TRootEmbeddedCanvas.h"
 #include "EdbLog.h"
+#include "EdbMomentumEstimator.h"
 #include "EdbDisplay.h"
 
 ClassImp(EdbDisplay);
@@ -78,6 +79,15 @@ void EdbTrackG::DumpTrack()
 void EdbTrackG::InspectTrack()
 {
   if (eTr) eTr->Inspect();
+}
+
+//_____________________________________________________________________________
+void EdbTrackG::EstimateMomentum()
+{
+  if (!eTr) return;
+  EdbMomentumEstimator me;
+  me.PMSang(*eTr);
+  me.DrawPlots();
 }
 
 //_____________________________________________________________________________
@@ -1560,6 +1570,19 @@ void EdbSegG::InfoSegSeg()
   (eD->fVTXTRKInfo)->Draw();
   (eD->fCanvasTRK)->Modified();
   (eD->fCanvasTRK)->Update();
+}
+//_____________________________________________________________________________
+void EdbVertexG::TestVertex()
+{
+  printf("\n");
+  eV->Print();
+  EdbTrackP *t=0;
+  EdbMomentumEstimator me;
+  for(int i=0; i<eV->N(); i++) {
+    t = eV->GetTrack(i);
+    //t->PrintNice();
+    printf("nseg = %d p = %f\n",t->N(), me.PMSang(*t));
+  }
 }
 //_____________________________________________________________________________
 void EdbVertexG::SetAsWorking()

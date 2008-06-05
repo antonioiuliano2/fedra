@@ -65,7 +65,7 @@ bool EdbMath::LineLineIntersect( float p1[3], float p2[3], float p3[3], float p4
 //     two lines P1P2 and P3P4. Calculate also the values of mua and mub where
 //        Pa = P1 + mua (P2 - P1)
 //        Pb = P3 + mub (P4 - P3)
-//     Return FALSE if no solution exists.
+//     Return FALSE if no solution exists (the lines are parallel)
 
    float p13[3],p43[3],p21[3];
    double d1343,d4321,d1321,d4343,d2121;

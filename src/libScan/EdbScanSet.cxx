@@ -196,7 +196,9 @@ void EdbScanSet::Print()
   printf("Brick %d with %d plates:\n", eB.ID(), eB.Npl());
   for(Int_t i=0; i<eB.Npl(); i++) { 
     p = eB.GetPlate(i);
+    if(!p) continue;
     EdbAffine2D *a=p->GetAffineXY();
+    if(!a) continue;
     printf("%3d  %12.2f       %9.6f %9.6f %9.6f %9.6f %15.6f %15.6f\n",
 	   p->ID(), p->Z(), a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
   }
