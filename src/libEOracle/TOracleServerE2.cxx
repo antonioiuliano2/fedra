@@ -14,6 +14,70 @@ ClassImp(TOracleServerE2)
 
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadScanbackPath(Int_t id_eventbrick, Int_t path, EdbTrackP &t)
+{
+  // read scanback track from vw_scanback_history and fill track t
+  // the found segments stored as "s", the predicted ones as "sf"
+
+  int  nseg=0;
+  char query[2048];
+  try{
+    if (!fStmt)  fStmt = fConn->createStatement();
+
+    sprintf(query, "select \
+id_track,id_plate,z,grains,fpx,fpy,fsx,fsy,ppx,ppy,psx,psy \
+from vw_scanback_history%s \
+where id_eventbrick=%d and path=%d and grains is not null order by id_plate"
+	    ,eRTS.Data(), id_eventbrick, path);
+
+    fStmt->setSQL(query);
+    fStmt->setPrefetchRowCount(2000);
+    Log(2,"ReadScanbackPath","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    EdbSegP seg;
+    EdbSegP segp;
+    while (rs->next()){
+      seg.Set(
+	      rs->getInt(1),    //id_track
+	      rs->getFloat(5),  //fpx
+	      rs->getFloat(6),  //fpy
+	      rs->getFloat(7),  //fsx
+	      rs->getFloat(8),  //fsy
+	      rs->getInt(4),    //grains
+	      0                 //flag
+	      );
+      seg.SetPID(rs->getInt(2));          // id_plate
+      seg.SetZ(rs->getFloat(3));          // z
+      seg.SetDZ(300.);                    //!!! a kind of hack
+      segp.Set(
+	      rs->getInt(1),     //id_track
+	      rs->getFloat(9),   //ppx
+	      rs->getFloat(10),  //ppy
+	      rs->getFloat(11),  //psx
+	      rs->getFloat(12),  //psy
+	      rs->getInt(4),     //grains
+	      0                  //flag
+	      );
+      segp.SetPID(rs->getInt(2));          // id_plate
+      segp.SetZ(rs->getFloat(3));          // z
+      segp.SetDZ(300.);                    //!!! a kind of hack
+      t.AddSegment(new EdbSegP(seg));
+      t.AddSegmentF(new EdbSegP(segp));
+      nseg++;
+    }
+    delete rs;
+  } catch (SQLException &oraex)  {
+    Error("TOracleServerE", "ReadBasetracksPattern failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  Log(2,"ReadScanbackPath","%d segments are read\n", nseg);
+  t.SetID(path);
+  t.SetSegmentsTrack(path);
+  t.SetCounters();
+  return nseg;
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadDataSet(ULong64_t id_parent_op, int id_brick, ULong64_t path, EdbPatternsVolume &vol)
 {
   // read all basetracks patterns corresponsing to the given parent process for the given brick and given path ("series" in tb_zones table)
@@ -77,9 +141,9 @@ Int_t  TOracleServerE2::ReadDataSet(ULong64_t id_parent_op, int id_brick, ULong6
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol)
 {
-        char id[24];
-        sprintf(id,"%lld",id_volume);
-        return ReadVolume(id,vol);
+  char id[24];
+  sprintf(id,"%lld",id_volume);
+  return ReadVolume(id,vol);
 }
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol, Int_t min_pl, Int_t max_pl)
@@ -323,11 +387,13 @@ Int_t  TOracleServerE2::ReadViewsZone(ULong64_t id_zone, int side, TObjArray &ed
       view = new EdbView();
       view->GetHeader()->SetAreaID(id_zone%10000000);
       view->GetHeader()->SetViewID(rs->getInt(3));
-      if     (side==1)	{
+
+      //inverted 1 and 2 (vt 26/05)
+      if     (side==2)	{
 	view->SetNframes(0,15);  //bottom side
 	view->GetHeader()->SetCoordZ( 0,0, rs->getFloat(5), rs->getFloat(4) );  //to check it!
       }
-      else if(side==2) {
+      else if(side==1) {
 	view->SetNframes(15,0);  //top side
 	view->GetHeader()->SetCoordZ( rs->getFloat(5), rs->getFloat(4), 0,0 );  //to check it!
       }
@@ -378,14 +444,27 @@ Int_t  TOracleServerE2::ReadMicrotracksZone(Int_t id_eventbrick, ULong64_t id_zo
   sprintf(selection, " id_zone=%lld and side=%d", id_zone, side );
   EdbPattern pat;
   int nseg = ReadMicrotracksPattern( id_eventbrick, selection, pat);
-  
+
+  std::map<int,EdbView*> id_views;
   EdbView     *v=0;
+  for(int i=0; i<edbviews.GetEntriesFast(); i++) {
+    v = (EdbView*)edbviews.At(i);
+    id_views[v->GetViewID()]=v;
+  }
+
   EdbSegment   sv;
   EdbSegP    *sp=0;
   float z=0;
   for(int i=0; i<nseg; i++ ) {
     sp = pat.GetSegment(i);
-    v = (EdbView*)edbviews.At(sp->Aid(1)-1);   // assume that views are in the order!
+    //v = (EdbView*)edbviews.At(sp->Aid(1)-1);   // assume that views are in the order!
+
+    v = id_views.find(sp->Aid(1))->second;       // do not assume that views are in the order
+    if(!v) {
+      Log(1,"ReadMicrotracksZone","ERROR! do not found view for segment with Aid: %d %d - skipped!",sp->Aid(0),sp->Aid(1));
+      continue;
+    }
+
     if(v->GetNframesTop()>0) z = v->GetZ2(); 
     else                     z = v->GetZ3();
     sv.Set( sp->X()-v->GetXview(),
