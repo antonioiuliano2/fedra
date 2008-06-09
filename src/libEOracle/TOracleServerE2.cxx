@@ -536,6 +536,13 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
   //        outdir - where to write the dataset
   //        major,minor - versions for the files names like: brick.plate,major.minor.raw.root
 
+  //check if outdir is accessible: 
+  if( gSystem->AccessPathName(outdir, kWritePermission) )   //can not access file!
+    {
+      Log(1,"ConvertMicrotracksVolumeToEdb","ERROR: can not open output directory: %s !!!",outdir);
+      return 0;
+    }
+
   int  nviewtot=0;
   char query[2048];
   std::map<int,ULong64_t> pl_zones;
