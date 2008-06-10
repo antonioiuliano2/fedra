@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="libEIO"
-	ProjectGUID="{C4BFA40A-6311-4899-B48E-F17C1769ED0A}"
-	RootNamespace="libEIO"
+	Name="libEmr"
+	ProjectGUID="{E04D07EA-649A-4F98-A49E-3263D461A0C4}"
+	RootNamespace="libEmr"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +26,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  clean"
-				Output="..\..\lib\libEIO.dll"
+				BuildCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE  /a"
+				CleanCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE clean"
+				Output="..\..\lib\libEmr.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -49,10 +49,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
-				CleanCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libEIO.dll"
+				BuildCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libEmr&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; clean"
+				Output="..\..\lib\libEmr.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -70,19 +70,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunTracking.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbTraceBack.cxx"
+				RelativePath="..\..\src\libEmr\EdbEmrIO.cxx"
 				>
 			</File>
 		</Filter>
@@ -91,23 +79,11 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.h"
+				RelativePath="..\..\src\libEmr\EdbEmrIO.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunTracking.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbTraceBack.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EIOLinkDef.h"
+				RelativePath="..\..\src\libEmr\EmrLinkDef.h"
 				>
 			</File>
 		</Filter>
@@ -117,7 +93,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEIO\Makefile"
+			RelativePath="..\..\src\libEmr\Makefile"
 			>
 		</File>
 	</Files>

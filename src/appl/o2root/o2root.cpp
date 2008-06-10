@@ -50,8 +50,13 @@ int main(int argc, char* argv[])
 
     if     (!strncmp(key,"-v",2)) 
       {
-	if(strlen(key)>2)       id_volume=atoll(key+2);
-	do_volume=true;
+	if(strlen(key)>2)       
+#if defined(R__WIN32)
+         id_volume=_atoi64(key+2);
+#else
+         id_volume=atoll(key+2);
+#endif
+   do_volume=true;
       }
     else if(!strncmp(key,"-o",2)) 
       {

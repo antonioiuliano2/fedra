@@ -70,10 +70,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEGraphTool\EGraphHits.cxx"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\libEGraphTool\EGraphRec.cxx"
 				>
 			</File>
@@ -90,10 +86,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="..\..\src\libEGraphTool\EGraphHits.h"
-				>
-			</File>
 			<File
 				RelativePath="..\..\src\libEGraphTool\EGraphRec.h"
 				>

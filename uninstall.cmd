@@ -15,10 +15,11 @@ IF NOT EXIST %installdir%\src\config\ProjectDef.mk (
  echo INC_DIR = $^(PROJECT_ROOT^)/include
  echo.
 ) > %installdir%\src\config\ProjectDef.mk
- set ln=win32\tools\fsutil.exe hardlink create 
+
  set configdir=%installdir%\src\config
- if not exist %configdir%\RootDef.mk         %ln% %configdir%\RootDef.mk        %configdir%\RootDef.windows.mk
- if not exist %configdir%\TargetsDef.mk      %ln% %configdir%\TargetsDef.mk     %configdir%\TargetsDef.windows.mk
+ set ln=call win32\tools\ln.exe
+ if not exist %configdir%\RootDef.mk         %ln% %configdir%\RootDef.windows.mk        %configdir%\RootDef.mk
+ if not exist %configdir%\TargetsDef.mk      %ln% %configdir%\TargetsDef.windows.mk     %configdir%\TargetsDef.mk
 ::-------------------------------------
 
  set PROJECT_INC=%installdir%\include
@@ -26,6 +27,7 @@ IF NOT EXIST %installdir%\src\config\ProjectDef.mk (
  
  pushd %installdir%\src
  call makeall.cmd clean 
+ del  makeall-report.txt
  popd
 
  if exist %installdir%\bin     rmdir /s/q %installdir%\bin
@@ -51,16 +53,16 @@ IF NOT EXIST %installdir%\src\config\ProjectDef.mk (
  if DEFINED FEDRA win32\tools\setenv.exe  -u FEDRA -delete
 
 :: remove MSVS temporary files
- if exist %installdir%\win32\solution\Fedra.suo del /A:H %installdir%\win32\solution\Fedra.suo
- if exist %installdir%\win32\solution\Fedra.ncb del      %installdir%\win32\solution\Fedra.ncb
- if exist %installdir%\win32\solution\Debug     rd /S/Q  %installdir%\win32\solution\Debug
- if exist %installdir%\win32\solution\Release   rd /S/Q  %installdir%\win32\solution\Release
+ if exist %installdir%\win32\solution7.1\Fedra.suo del /A:H %installdir%\win32\solution7.1\Fedra.suo
+ if exist %installdir%\win32\solution7.1\Fedra.ncb del      %installdir%\win32\solution7.1\Fedra.ncb
+ if exist %installdir%\win32\solution7.1\Debug     rd /S/Q  %installdir%\win32\solution7.1\Debug
+ if exist %installdir%\win32\solution7.1\Release   rd /S/Q  %installdir%\win32\solution7.1\Release
 
 :: remove MSVS 2005 temporary files
- if exist %installdir%\win32\solution8\Fedra.suo del /A:H %installdir%\win32\solution8\Fedra.suo
- if exist %installdir%\win32\solution8\Fedra.ncb del      %installdir%\win32\solution8\Fedra.ncb
- if exist %installdir%\win32\solution8\Debug     rd /S/Q  %installdir%\win32\solution8\Debug
- if exist %installdir%\win32\solution8\Release   rd /S/Q  %installdir%\win32\solution8\Release
- if exist %installdir%\win32\solution8\*.user    del      %installdir%\win32\solution8\*.user
+ if exist %installdir%\win32\solution8.0\Fedra.suo del /A:H %installdir%\win32\solution8.0\Fedra.suo
+ if exist %installdir%\win32\solution8.0\Fedra.ncb del      %installdir%\win32\solution8.0\Fedra.ncb
+ if exist %installdir%\win32\solution8.0\Debug     rd /S/Q  %installdir%\win32\solution8.0\Debug
+ if exist %installdir%\win32\solution8.0\Release   rd /S/Q  %installdir%\win32\solution8.0\Release
+ if exist %installdir%\win32\solution8.0\*.user    del      %installdir%\win32\solution8.0\*.user
 
 

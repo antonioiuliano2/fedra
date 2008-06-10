@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="libEIO"
-	ProjectGUID="{C4BFA40A-6311-4899-B48E-F17C1769ED0A}"
-	RootNamespace="libEIO"
+	Name="o2root"
+	ProjectGUID="{28E239F6-0A11-4987-823A-09AC90162AF8}"
+	RootNamespace="o2root"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +26,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  clean"
-				Output="..\..\lib\libEIO.dll"
+				BuildCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE /f Makefile.w32"
+				ReBuildCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE /a  /f Makefile.w32"
+				CleanCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE clean  /f Makefile.w32"
+				Output="..\..\bin\o2root.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -49,10 +49,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
-				CleanCommandLine="cd ..\..\src\libEIO&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libEIO.dll"
+				BuildCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE CFG=&quot;Debug&quot;  /f Makefile.w32"
+				ReBuildCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE /a CFG=&quot;Debug&quot;  /f Makefile.w32"
+				CleanCommandLine="cd ..\..\src\appl\o2root&#x0D;&#x0A;NMAKE clean CFG=&quot;Debug&quot;  /f Makefile.w32"
+				Output="..\..\bin\o2root.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -70,19 +70,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunTracking.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbTraceBack.cxx"
+				RelativePath="..\..\src\appl\o2root\o2root.cpp"
 				>
 			</File>
 		</Filter>
@@ -90,26 +78,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="..\..\src\libEIO\EdbDataSet.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunAccess.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbRunTracking.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EdbTraceBack.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEIO\EIOLinkDef.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -117,7 +85,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEIO\Makefile"
+			RelativePath="..\..\src\appl\o2root\Makefile.w32"
 			>
 		</File>
 	</Files>

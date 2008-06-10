@@ -127,6 +127,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "display", "display.vcproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEGraphTool", "libEGraphTool.vcproj", "{3F367432-3C18-45E4-90ED-21249540C406}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEmr", "libEmr.vcproj", "{E04D07EA-649A-4F98-A49E-3263D461A0C4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "o2root", "o2root.vcproj", "{28E239F6-0A11-4987-823A-09AC90162AF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -221,6 +225,14 @@ Global
 		{3F367432-3C18-45E4-90ED-21249540C406}.Debug|Win32.Build.0 = Debug|Win32
 		{3F367432-3C18-45E4-90ED-21249540C406}.Release|Win32.ActiveCfg = Release|Win32
 		{3F367432-3C18-45E4-90ED-21249540C406}.Release|Win32.Build.0 = Release|Win32
+		{E04D07EA-649A-4F98-A49E-3263D461A0C4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E04D07EA-649A-4F98-A49E-3263D461A0C4}.Debug|Win32.Build.0 = Debug|Win32
+		{E04D07EA-649A-4F98-A49E-3263D461A0C4}.Release|Win32.ActiveCfg = Release|Win32
+		{E04D07EA-649A-4F98-A49E-3263D461A0C4}.Release|Win32.Build.0 = Release|Win32
+		{28E239F6-0A11-4987-823A-09AC90162AF8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{28E239F6-0A11-4987-823A-09AC90162AF8}.Debug|Win32.Build.0 = Debug|Win32
+		{28E239F6-0A11-4987-823A-09AC90162AF8}.Release|Win32.ActiveCfg = Release|Win32
+		{28E239F6-0A11-4987-823A-09AC90162AF8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

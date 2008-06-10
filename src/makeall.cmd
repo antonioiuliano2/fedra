@@ -12,8 +12,8 @@
 ::-------------------------------------------
 :MAIN
    @ECHO OFF
-   SET eLIBS= libEmath libEdb libDataConversion libVt++ libEphys libEGA libEdr libEIO libEdd libEMC libScan libEOracle libACQ libShower appl\bmatrix libEGraphTool
-   SET eBINS=appl\recset appl\rwc2edb appl\tracks2edb appl\checkrun appl\edbtools appl\display
+   SET eLIBS= libEmath libEdb libDataConversion libVt++ libEphys libEGA libEdr libEIO libEdd libEMC libScan libEOracle libACQ libShower appl\bmatrix libEGraphTool libEmr 
+   SET eBINS=appl\recset appl\rwc2edb appl\tracks2edb appl\checkrun appl\edbtools appl\display appl\o2root
 
    IF /I '%1'=='checkall' (
       GOTO CHECKALL
@@ -44,6 +44,14 @@ GOTO END
    echo.
    IF '%1'=='' CALL %0 CHECKALL
 
+   (
+	echo compiled by %USERDOMAIN%\%USERNAME% on %COMPUTERNAME% ^(%DATE% %TIME%^)
+        echo    NMAKE options/macrodefs/targets: %1
+        nmake /NOLOGO /P | find "_NMAKE_VER"
+        for /F "tokens=3" %%i IN ('findstr /c:"#define ROOT_RELEASE " %%ROOTSYS%%\include\RVersion.h') DO echo    ROOT VERSION %%i
+   ) >  "%~dp0"\makeall-report.txt
+
+
 GOTO END
 
 ::-------------------------------------------
@@ -62,6 +70,14 @@ GOTO END
    )
    echo.
    CALL %0 CHECKALL
+
+   (
+	echo compiled by %USERDOMAIN%\%USERNAME% on %COMPUTERNAME% ^(%DATE% %TIME%^)
+        echo    NMAKE options/macrodefs/targets: CFG="Debug"
+        nmake /NOLOGO /P | find "_NMAKE_VER"
+        for /F "tokens=3" %%i IN ('findstr /c:"#define ROOT_RELEASE " %%ROOTSYS%%\include\RVersion.h') DO echo    ROOT VERSION %%i
+   ) >  "%~dp0"\makeall-report.txt
+
 
 GOTO END
 

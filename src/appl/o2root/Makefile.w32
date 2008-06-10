@@ -1,0 +1,23 @@
+#------------------------------------------------------------------------------
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+TARGET  =       $(BIN_DIR)/o2root$(ExeSuf)
+
+ORAINC        = $(OCCIHOME)/sdk/include
+#ORALIB       = $(OCCIHOME)
+
+PROJECT_LIBS  = $(PROJECT_LIBS)     -LIBPATH:$(OCCIHOME)/sdk/lib/msvc          \
+                /DEFAULTLIB:ociw32  /DEFAULTLIB:oci  /DEFAULTLIB:oraocci10     \
+                -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEOracle \
+                -lEIO -lEMC -lDataConversion
+
+
+INC_DIR       = $(INC_DIR)   -I$(ORAINC)
+CXXFLAGS      = $(CXXFLAGS)  -DNOTROOTCINT
+
+
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#------------------------------------------------------------------------------

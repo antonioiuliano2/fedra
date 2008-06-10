@@ -22,13 +22,12 @@
 
 :: Define links from include-dir to src-files; former "setlinks.sh"
 :: ----------------------------------------------------------------
- set ln=win32\tools\fsutil.exe hardlink create 
+ set ln=call win32\tools\ln.exe
+ for /D %%D in (src\lib*) do for %%F in (%%D\*.h)        do %ln% %%F %PROJECT_INC%\%%~nxF
 
- for /D %%D in (src\lib*) do for %%F in (%%D\*.h) do %ln% %PROJECT_INC%\%%~nxF %%F
- 
- for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %ln% %PROJECT_INC%\dataio\%%~nxF  %%F
- for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %ln% %PROJECT_INC%\vt++\%%~nxF    %%F
- for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %ln% %PROJECT_INC%\smatrix\%%~nxF %%F
+ for %%F in (%PROJECT_SRC%\libDataConversion\dataio\*.*) do %ln% %%F %PROJECT_INC%\dataio\%%~nxF
+ for %%F in (%PROJECT_SRC%\libVt++\vt++\include\*.*)     do %ln% %%F %PROJECT_INC%\vt++\%%~nxF
+ for %%F in (%PROJECT_SRC%\libVt++\smatrix\include\*.*)  do %ln% %%F %PROJECT_INC%\smatrix\%%~nxF
 
 :: create ProjectDef.mk in ./config-directory
 :: ----------------------------------------------
@@ -46,8 +45,8 @@
  set configdir=%installdir%\src\config
  if exist %configdir%\RootDef.mk         del /q %configdir%\RootDef.mk
  if exist %configdir%\TargetsDef.mk      del /q %configdir%\TargetsDef.mk
- %ln% %configdir%\RootDef.mk                    %configdir%\RootDef.windows.mk
- %ln% %configdir%\TargetsDef.mk                 %configdir%\TargetsDef.windows.mk
+ %ln% %configdir%\RootDef.windows.mk            %configdir%\RootDef.mk
+ %ln% %configdir%\TargetsDef.windows.mk         %configdir%\TargetsDef.mk
 
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
