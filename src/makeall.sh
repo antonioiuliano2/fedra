@@ -20,7 +20,7 @@ for lib in ${LIBS} ; do
     cd ..
 done
 
-APPLS="appl/recset appl/rwc2edb appl/tracks2edb appl/bmatrix appl/checkrun"
+APPLS="appl/recset appl/rwc2edb appl/tracks2edb appl/checkrun appl/o2root"
 for appl in ${APPLS} ; do
     if [ "$1" != "check" ]; then 
        echo

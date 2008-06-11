@@ -936,6 +936,18 @@ int EdbScanProc::AlignAll(int id1[4], int id2[4], int npre, int nfull, const cha
 }
 
 //----------------------------------------------------------------
+int EdbScanProc::WriteSBTrack(EdbTrackP &sb, int path, EdbID id)
+{
+  if(!CheckBrickDir(id)) return 0;
+  TString name;
+  MakeFileName(name,id,"sb.root",false);
+  TFile f(name.Data(),"UPDATE");
+  if(!f.IsOpen()) return 0;
+  sb.Write(Form("sb_%d",path));
+  return 1;
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag)
 {
   // write ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
@@ -1102,6 +1114,17 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::CheckDirWritable(const char *dir)
+{
+  if( gSystem->AccessPathName(dir, kWritePermission) )   //can not access file!
+    {
+      Log(1,"CheckDirWritable","ERROR: can not open output directory: %s !!!",dir);
+      return 0;
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc::CheckDir(const char *dir, bool create)
 {
   // check the existance of the directory dir
@@ -1136,22 +1159,39 @@ bool EdbScanProc::CheckAFFDir(int brick, bool create)
 }
 
 //----------------------------------------------------------------
-bool EdbScanProc::CheckProcDir(int id[4], bool create)
+bool EdbScanProc::CheckBrickDir( EdbID id, bool create )
+{
+  //return true if dir ../bXXXXXX exist, if create==true (default) create it if necessary 
+  char str[256];
+  sprintf(str,"%s/b%6.6d", eProcDirClient.Data(),id.eBrick);
+  if(!CheckDir(str,create)) return false;
+  return true;
+}
+
+//----------------------------------------------------------------
+bool EdbScanProc::CheckPlateDir( EdbID id, bool create )
 {
   //return true if dir ../bXXXXXX/pXXX exist, if create==true (default) create it if necessary 
-
   char str[256];
-  sprintf(str,"%s/b%6.6d", eProcDirClient.Data(),id[0]);
+  sprintf(str,"%s/b%6.6d/p%3.3d", eProcDirClient.Data(),id.eBrick,id.ePlate);
   if(!CheckDir(str,create)) return false;
-  sprintf(str,"%s/b%6.6d/p%3.3d", eProcDirClient.Data(),id[0],id[1]);
-  if(!CheckDir(str,create)) return false;
+  return true;
+}
+
+//----------------------------------------------------------------
+bool EdbScanProc::CheckProcDir( int id[4], bool create)
+{
+  //return true if dir ../bXXXXXX/pXXX exist, if create==true (default) create it if necessary 
+  EdbID idd( id[0], id[1], id[2], id[3] );
+  if(!CheckBrickDir(idd,create)) return false;
+  if(!CheckPlateDir(idd,create)) return false;
   return true;
 }
 
 //----------------------------------------------------------------
 void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool inplate)
 {
-  //make file pathname as .../bXXXXXX/pYYY/a.a.a.a.suffix is inplate==true
+  //make file pathname as .../bXXXXXX/pYYY/a.a.a.a.suffix if inplate==true
   //otherwise as .../bXXXXXX/a.a.a.a.suffix
   char str[256];
   if (inplate)

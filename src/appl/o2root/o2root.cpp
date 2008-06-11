@@ -4,13 +4,17 @@
 #include <iostream>
 #include <TEnv.h>
 #include "TOracleServerE2.h"
+#include "EdbLog.h"
 
 using namespace std;
 
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  o2root -vVOLUME [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n\n";
+  cout<< "\nUsage: \n\t  o2root -vVOLUME [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
+  cout<< "\t  o2root -sbPATH -brickBRICK [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n\n";
   cout<< "\t\t  VOLUME  - volume id as stored in database \n";
+  cout<< "\t\t  PATH    - the scanback path id \n";
+  cout<< "\t\t  BRICK   - the brick ID (if scanback path should be extracted)\n";
   cout<< "\t\t  MAJOR   - major version (default is 0)\n";
   cout<< "\t\t  MINOR   - minor version (default is 0)\n";
   cout<< "\t\t  OUTDIR  - output directory - should exist and be writable (default is ./)\n";
@@ -39,24 +43,29 @@ int main(int argc, char* argv[])
   const char *password  = gEnv->GetValue("o2root.password" , "password");
   const char *rdb       = gEnv->GetValue("o2root.rdb"      , "");
   const char *outdir    = gEnv->GetValue("o2root.outdir"   , "./");
+  gEDBDEBUGLEVEL        = gEnv->GetValue("o2root.EdbDebugLevel" , 1);
 
-  bool      do_volume=false;
+  bool      do_volume   = false;
+  bool      do_scanback = false;
   ULong64_t id_volume = 0LL;
   int       major=0;
   int       minor=0;
+
+  Long_t    id_brick=0;
+  Int_t     path    =0;
 
   for(int i=1; i<argc; i++ ) {
     char *key  = argv[i];
 
     if     (!strncmp(key,"-v",2)) 
       {
-	if(strlen(key)>2)       
-#if defined(R__WIN32)
-         id_volume=_atoi64(key+2);
-#else
-         id_volume=atoll(key+2);
-#endif
-   do_volume=true;
+	if(strlen(key)>2)       sscanf(key+2,"%lld",&id_volume);
+// #if defined(R__WIN32)
+//          id_volume=_atoi64(key+2);
+// #else
+//          id_volume=atoll(key+2);
+// #endif
+	do_volume=true;
       }
     else if(!strncmp(key,"-o",2)) 
       {
@@ -74,20 +83,36 @@ int main(int argc, char* argv[])
       {
 	if(strlen(key)>4)	rdb=key+4;
       }
+    else if(!strncmp(key,"-brick",6))
+      {
+	if(strlen(key)>6)	id_brick=atol(key+6);
+      }
+    else if(!strncmp(key,"-sb",3))
+      {
+	if(strlen(key)>3)	path=atol(key+3);
+	do_scanback=true;
+      }
   }
 
-  printf("\n----------------------------------------------------------------------------\n");
-  printf("Read volume: \t\t\t%lld \nfrom the database: \t\t%s %s \nand save into directory: \t%s \nwith versions: \t\t\t%d.%d\n",
-	 id_volume, dbname, rdb, outdir, major,minor);
-  printf("----------------------------------------------------------------------------\n\n");
-
-  if(!do_volume) { print_help_message();  return 0; }
+  if(!(do_volume||do_scanback))   { print_help_message(); return 0; }
 
   TOracleServerE2 *db = new TOracleServerE2(dbname,user,password);
-  printf("Server info: %s\n", db->ServerInfo());
-  if(!db) return 0;
+  if(!db) { Log(1,"o2root","ERROR: the database connection is failed!"); return 0; }
   db->eRTS=rdb;
-  db->ConvertMicrotracksVolumeToEdb(id_volume, outdir, major, minor);
+  if(do_volume) {
+    printf("\n----------------------------------------------------------------------------\n");
+    printf("Read volume: \t\t\t%lld \nfrom the database: \t\t%s %s \nand save into directory: \t%s \nwith versions: \t\t\t%d.%d\n",
+	   id_volume, dbname, rdb, outdir, major,minor);
+    printf("----------------------------------------------------------------------------\n\n");
+    db->ConvertMicrotracksVolumeToEdb(id_volume, outdir, major, minor);
+  }
+  if(do_scanback) {
+    printf("\n----------------------------------------------------------------------------\n");
+    printf("Read scanback path: \t\t%d of brick %ld \nfrom the database: \t\t%s %s \nand save into directory: \t%s \nwith versions: \t\t\t%d.%d\n",
+	   path, id_brick, dbname, rdb, outdir, major,minor);
+    printf("----------------------------------------------------------------------------\n\n");
+    db->ConvertScanbackPathToEdb(id_brick, path, outdir, major, minor);
+  }
   delete db;
-  return 0;
+  return 1;
 }

@@ -14,6 +14,20 @@ ClassImp(TOracleServerE2)
 
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor)
+{
+  EdbScanProc sproc;
+  if(!sproc.CheckDirWritable(outdir))     return 0;
+  sproc.eProcDirClient=outdir;
+  EdbTrackP t;
+  if(ReadScanbackPath(id_eventbrick,path,t)) {
+    EdbID id(id_eventbrick,0,major,minor);
+    if(sproc.WriteSBTrack(t, path, id))  return 1;
+  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadScanbackPath(Int_t id_eventbrick, Int_t path, EdbTrackP &t)
 {
   // read scanback track from vw_scanback_history and fill track t
@@ -537,11 +551,8 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
   //        major,minor - versions for the files names like: brick.plate,major.minor.raw.root
 
   //check if outdir is accessible: 
-  if( gSystem->AccessPathName(outdir, kWritePermission) )   //can not access file!
-    {
-      Log(1,"ConvertMicrotracksVolumeToEdb","ERROR: can not open output directory: %s !!!",outdir);
-      return 0;
-    }
+  EdbScanProc sproc;
+  if(!sproc.CheckDirWritable(outdir))     return 0;
 
   int  nviewtot=0;
   char query[2048];
@@ -570,7 +581,6 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
     Error("TOracleServerE", "ReadPatternsVolume; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
 
-  EdbScanProc sproc;
   sproc.eProcDirClient=outdir;
   int id[4];
   int plate0 =-999;

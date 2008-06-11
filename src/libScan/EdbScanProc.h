@@ -17,7 +17,10 @@ public:
   virtual ~EdbScanProc(){}
 
   bool    CheckDir(const char *dir, bool create=true);
+  bool    CheckDirWritable(const char *dir);
   bool    CheckAFFDir(int brick, bool create=true);
+  bool    CheckBrickDir(EdbID id, bool create=true);
+  bool    CheckPlateDir(EdbID id, bool create=true);
   bool    CheckProcDir(int id[4], bool create=true);
   bool    CheckProcDir( EdbID id, bool create=true) {int id4[4]; id.Get(id4); return CheckProcDir(id4,create); }
   void    MakeFileName(TString &s, int id[4], const char *suffix, bool inplate=true);
@@ -47,6 +50,8 @@ public:
   int     WriteFound(EdbPattern &pred, int id[4], int flag=-1) {return WritePatRoot(pred,id,"found.root",flag);}
   int     ReadFound(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadFound(pred,id4,flag);}
   int     ReadPred(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadPred(pred,id4,flag);}
+
+  int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);
 
   EdbRun *InitRun(int id[4]);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);

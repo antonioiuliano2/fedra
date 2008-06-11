@@ -13,6 +13,7 @@
 #include "TOracleResult.h"
 #include "TUrl.h"
 #include "TTree.h"
+#include "EdbLog.h"
 
 ClassImp(TOracleServer)
 
@@ -48,9 +49,8 @@ TOracleServer::TOracleServer(const char *db, const char *uid, const char *pw)
 
    try {
       fEnv = Environment::createEnvironment();
-      printf("connect to database %s..\n",conn_str);
+      Log(2,"TOracleServer","connect to database %s..\n",conn_str);
       fConn = fEnv->createConnection(uid, pw, conn_str);
-      printf("OK!\n");
 
       fType = "Oracle";
       fHost = url.GetHost();

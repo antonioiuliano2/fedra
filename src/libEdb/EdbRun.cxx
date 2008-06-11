@@ -37,6 +37,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "TBranchClones.h"
+#include "TError.h"
 #include "TSystem.h"
 #include "TObjString.h"
 #include "EdbRun.h"
@@ -87,7 +88,7 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
     eMarks  = new EdbMarksSet(*(run.GetMarks()));
   if(run.GetPredictions())  
     ePredictions  = new EdbPredictionsBox(*(run.GetPredictions()));
-  Log(3,"EdbRun::EdbRun","Run headers are copied\n");
+  Log(3,"EdbRun::EdbRun","Run headers are copied");
   SelectOpenMode( fname, "RECREATE" );
 }
 
@@ -153,18 +154,18 @@ void EdbRun::SelectOpenMode( const char *fname, const char *status )
     else                                               Create(fname);
   }
 
-  Log(3,"EdbRun::SelectOpenMode","root file version: %d \n",eFile->GetVersion());
+  Log(3,"EdbRun::SelectOpenMode","root file version: %d",eFile->GetVersion());
 }
 
 //______________________________________________________________________________
 void EdbRun::Open( const char *fname )
 {
-  Log(3,"EdbRun::Open","\nOpen an existing file %s \n", fname);
+  Log(3,"EdbRun::Open","Open an existing file %s", fname);
   eFile = new TFile(fname);
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
   if(!eTree) {
-    Log(1,"EdbRun::Open","ERROR: %s has no Views tree\n",fname);
+    Log(1,"EdbRun::Open","ERROR: %s has no Views tree",fname);
     return;
   }
 
@@ -185,7 +186,7 @@ void EdbRun::Open( const char *fname )
 //______________________________________________________________________________
 void EdbRun::OpenUpdate( const char *fname )
 {
-  Log(3,"EdbRun::OpenUpdate","\nOpen an existing file for update %s \n", fname);
+  Log(3,"EdbRun::OpenUpdate","Open an existing file for update %s", fname);
   eFile = new TFile(fname,"UPDATE");
 
   eTree = (TTree*)eFile->Get("Views");
@@ -210,9 +211,9 @@ void EdbRun::Create( const char *fname )
   if(!eMarks)       eMarks         = new EdbMarksSet();
 
   if( !gSystem->AccessPathName(fname, kFileExists) )
-    Log(2,"EdbRun::Create","WARNING : file %s already exists!\n", fname);
+    Log(2,"EdbRun::Create","WARNING : file %s already exists!", fname);
 
-  Log(2,"EdbRun::Create","\nOpen new file %s \n\n", fname);
+  Log(2,"EdbRun::Create","Open new file %s", fname);
   eFile = new TFile(fname,"RECREATE");
 
   eFile->SetCompressionLevel(2);
@@ -226,18 +227,21 @@ void EdbRun::Create( const char *fname )
   TClonesArray     *eSegments = eView->GetSegments();
   TClonesArray     *eTracks   = eView->GetTracks();
   TClonesArray     *eFrames   = eView->GetFrames();
+  int savelevel = gErrorIgnoreLevel;
+  gErrorIgnoreLevel = kError;
   eTree->Branch( "clusters", &eClusters);
   eTree->Branch( "segments", &eSegments);
   eTree->Branch( "tracks",   &eTracks);
   eTree->Branch( "frames",   &eFrames);
   eTree->Branch("headers", "EdbViewHeader", eView->GetHeaderAddr());
+  gErrorIgnoreLevel = savelevel;
   SetView();
 }
 
 //______________________________________________________________________________
 void EdbRun::SetView( EdbView *view )
 {
-  if(!view) { Log(1,"EdbRun::SetView","ERROR: EdbRun::SetView: *view=0\n");    return; }
+  if(!view) { Log(1,"EdbRun::SetView","ERROR: EdbRun::SetView: *view=0");    return; }
 
   if(eView != view) {
     if(eView) { eView->Clear(); SafeDelete(eView); }
@@ -251,16 +255,15 @@ void EdbRun::SetView( EdbView *view )
 void EdbRun::SetView()
 {
   if(!eView) { 
-    Log(2,"EdbRun::SetView","WARNING: *eView=0\n");    
+    Log(2,"EdbRun::SetView","WARNING: *eView=0");    
     eView = new EdbView();
   } 
   else if( !eView->GetClusters() ) {
-    Log(1,"EdbRun::SetView","ERROR: eView was deleted!\n");
+    Log(1,"EdbRun::SetView","ERROR: eView was deleted!");
     eView = new EdbView();
   }
 
-  Log(3,"EdbRun::SetView","Note: EdbRun::SetView \n");
-
+  Log(3,"EdbRun::SetView","Note: EdbRun::SetView");
   if(eView->GetHeader())   eTree->SetBranchAddress("headers",  eView->GetHeaderAddr()   );
   if(eView->GetClusters()) eTree->SetBranchAddress("clusters", eView->GetClustersAddr() );
   if(eView->GetSegments()) eTree->SetBranchAddress("segments", eView->GetSegmentsAddr() );
@@ -279,7 +282,7 @@ void EdbRun::AddView( EdbView *view )
 {
 
   if( view != eView ) { 
-    Log(3," EdbRun::AddView","WARNING: view!=eView - inefficient cycle!\n");
+    Log(3," EdbRun::AddView","WARNING: view!=eView - inefficient cycle!");
     SetView(view);
   }
 
