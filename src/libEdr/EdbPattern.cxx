@@ -381,7 +381,14 @@ void EdbSegP::Print(Option_t *opt) const
 	 W(),P(),Prob(),Chi2(), Track() );
 	
   if(eCOV) eCOV->Print();
-} 
+}
+
+///______________________________________________________________________________
+void EdbSegP::PrintNice() const
+{
+  printf( "EdbSegP: ID= %8d  PID = %8d, x= %14.3f, y= %14.3f, z= %14.3f, tx= %7.4f, ty= %7.4f, w= %7.4f, chi2= %7.4f \n", ID(),PID(),X(),Y(),Z(),TX(),TY(),W(),Chi2() );
+  return;
+}
 
 ///______________________________________________________________________________
 Bool_t EdbSegP::IsEqual(const TObject *obj) const

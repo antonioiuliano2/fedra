@@ -169,6 +169,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t Theta()    const {return TMath::Sqrt(eTY*eTY+eTX*eTX);}
  
   void    Print( Option_t *opt="") const;
+  void    PrintNice() const;
 
   Bool_t  IsEqual(const TObject *obj) const;
   Bool_t  IsSortable() const { return kTRUE; }
