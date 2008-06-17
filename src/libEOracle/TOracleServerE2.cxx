@@ -634,7 +634,7 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_progr
 }
 
 //------------------------------------------------------------------------------------
-Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id_plate, char *id)
+Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_parent_operation, char *id_programsettings, char *id_plate, char *id)
 {
   // Get the last process operation ID related to a given brick, plate and program setting
 
@@ -646,8 +646,8 @@ Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_progr
 
     sprintf(query,"\
  select ID from tb_proc_operations%s \
- where id_programsettings=%s and id_eventbrick=%s and id_plate=%s",eRTS.Data(),
-	    id_programsettings,id_eventbrick,id_plate);
+ where id_parent_operation=%s and id_programsettings=%s and id_eventbrick=%s and id_plate=%s",eRTS.Data(),
+	    id_parent_operation, id_programsettings, id_eventbrick, id_plate);
 
     fStmt->setSQL(query);
     Log(2,"GetProcessOperationID","execute sql query: %s ...",query);

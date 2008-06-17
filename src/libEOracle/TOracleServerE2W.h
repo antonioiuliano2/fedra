@@ -26,9 +26,10 @@ class TOracleServerE2W : public TOracleServerE2 {
     Int_t       AddPlate(char *id_eventbrick, char *dataplate);
     Int_t       AddPlateCalibration(char *id_eventbrick, char *id_process_operation, char *datacalibration);
     Int_t       AddZone(char *data);
-    Int_t       AddProcessOperation(char *id_machine, char *id_programsettings, char *id_requester, char *id_parent_operation, 
-				    char *id_eventbrick, char *id_plate, char *driverlevel, char *templatemarks, 
-				    char *starttime, char *finishtime, char *success, char *notes);
+    Int_t       AddProcessOperation(char *id_machine, char *id_programsettings, char *id_requester, 
+				    char *id_parent_operation, char *id_eventbrick, char *id_plate, char *driverlevel,
+				    char *id_calibration, char *starttime, char *finishtime, char *success, 
+				    char *notes);
     Int_t       AddView(char *dataView);
     Int_t       AddBaseTracks(EdbPattern &pat, char *id_eventbrick, char *id_zone);
     Int_t       AddBaseTracks(TTree *tree, char *id_eventbrick, char *id_zone, bool usebuffer=true);
