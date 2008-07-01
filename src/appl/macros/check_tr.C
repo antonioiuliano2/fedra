@@ -1,16 +1,21 @@
+
+#ifndef __CINT__
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TSystem.h"
+#include "TCut.h"
+#include "TStyle.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TF1.h"
+#include "Riostream.h"
+#include "EdbPVRec.h"
+#endif
+
 TCut trcut = "t.eFlag>=0.&&t.eProb>0.001";
 
-void check_tr()
-{
-  check_volume();
-  check_eff();
-  check_resolution();
-  check_surf();
-  check_errXY();
-  check_errTXTY();
-}
+TTree* tracks ;
 
-//-----------------------------------------------------------------
 void check_resolution()
 {
   TCanvas *c = new TCanvas("res","tracks_resolution");
@@ -100,3 +105,25 @@ void check_errTXTY()
   c->cd(2);
   tracks->Draw("s.eTY-sf.eTY:(s.eY+s.ePID*60000)>>hdtyy(500,100)", trcut );
 }
+
+//-----------------------------------------------------------------
+void check_tr()
+{
+  tracks = (TTree*) gFile->Get("tracks") ;
+
+  check_volume();
+  check_eff();
+  check_resolution();
+  check_surf();
+  check_errXY();
+  check_errTXTY();
+}
+
+//-----------------------------------------------------------------
+#ifndef __CINT__
+void main( int argc, char *argv[] )
+{          
+   gStyle->SetPalette(1);
+   check_tr() ;
+}
+#endif

@@ -7,65 +7,38 @@
 //         root[0] .x check_raw.C(1)         the pictures will be saved as gif files
 //   b) batch mode:
 //         $ root -b -q check_raw.C\(2,\"pl56.root\"\)    run file will be opened for update to save canvases inside
+//         $ root -b -q check_raw.C\(3,\"pl56.root\"\)    run file will be opened for update 
+//                                                        to save canvases inside AND
+//                                                        the pictures will be saved ALSO as gif files
 //
 //------------------------------------------------------
+#define XSIZE 1200
+#define YSIZE  800
 
-TTree *cr_tree=0;
-//-------------------------------------------------------
-void check_raw( int output=0, char *fname=0 )
-{
-  printf("Red  line: Top    side\n");
-  printf("Blue line: Bottom side\n");
-  int do_z=1,do_view=1,do_surf=1;
+#ifndef __CINT__
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TSystem.h"
+#include "TCut.h"
+#include "TStyle.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TF1.h"
+#include "Riostream.h"
+#include "EdbRun.h"
+#include "EdbView.h"
+#include "EdbCluster.h"
+#include "EdbSegment.h"
+#endif
 
-  TCanvas *cz=0, *cview=0, *csurf=0;
-  if      (fname&&output==2)   TFile *f = new TFile(fname,"UPDATE");
-  else if (fname&&output<2)    TFile *f = new TFile(fname);
-
-  init();
-
-  if(output!=2) {
-    cz    = dynamic_cast<TCanvas*>(gDirectory->Get("raw_z"));
-    cview = dynamic_cast<TCanvas*>(gDirectory->Get("raw_view"));
-    csurf = dynamic_cast<TCanvas*>(gDirectory->Get("raw_surf"));
-    if(cz)    { cz->Draw();    do_z=0;    }
-    if(cview) { cview->Draw(); do_view=0; }
-    if(csurf) { csurf->Draw(); do_surf=0; }
-  }
-
-  if(do_z) {
-    cz    = new TCanvas("cz"    , "check Z",800,1000);
-    cz->Divide(2,4);
-    check_z(cz);
-  }
-  if(do_view)  {
-    cview = new TCanvas("view"  , "check View",800,1000);
-    cview->Divide(2,4);
-    check_view(cview);
-  }
-  if(do_surf)  {
-    csurf = new TCanvas("csurf" , "check surf, etc",800,1000);
-    csurf->Divide(2,4);
-    check_surf(csurf);
-  }
-
-  if(fname&&output==2) {           // save as canvases into root file
-    if(cz)    cz->Write("raw_z");
-    if(cview) cview->Write("raw_view");
-    if(csurf) csurf->Write("raw_surf");
-  } else if(output==1) {           // save as gif pictures
-    gSystem->Sleep(500);
-    if(cz)    cz->SaveAs("raw_z.gif");
-    if(cview) cview->SaveAs("raw_view.gif");
-    if(csurf) csurf->SaveAs("raw_surf.gif");
-  }
-}
+EdbRun* run ;
+TTree* cr_tree;
 
 //-------------------------------------------------------
 void init()
 {
-  cr_tree = (TTree*)gDirectory->Get("Views");
-  cr_tree->SetAlias("puls","segments.GetPuls()");
+ //cr_tree = (TTree*)gDirectory->Get("Views");
+  cr_tree->SetAlias("puls",  "segments.GetPuls()");
   cr_tree->SetAlias("volume","segments.GetVolume()");
 }
 
@@ -172,3 +145,75 @@ void check_surf(TCanvas *c)
   }
   cr_tree->SetLineColor(1);
 }
+
+//-------------------------------------------------------
+void check_raw( int output=0, char *fname=0 )
+{
+
+   cout << "fname  : " << fname  << endl;
+
+   printf("Red  line: Top    side\n");
+   printf("Blue line: Bottom side\n");
+
+  if      (fname&&output>=2)   run = new EdbRun( fname , "UPDATE");
+  else if (fname&&output<2)    run = new EdbRun( fname );
+  
+  cr_tree = run->GetTree() ;
+
+  init();
+
+  int do_z=1 , do_view=1 , do_surf=1 ;
+  
+  TCanvas *cz=0, *cview=0, *csurf=0;
+  if( output!=2 ) {
+    cz    = dynamic_cast<TCanvas*>(gDirectory->Get("raw_z"));
+    cview = dynamic_cast<TCanvas*>(gDirectory->Get("raw_view"));
+    csurf = dynamic_cast<TCanvas*>(gDirectory->Get("raw_surf"));
+    if(cz)    { cz->Draw();    do_z=0;    }
+    if(cview) { cview->Draw(); do_view=0; }
+    if(csurf) { csurf->Draw(); do_surf=0; }
+  }
+
+  if(do_z) {
+    cz    = new TCanvas("cz"    , "check Z", XSIZE,YSIZE);
+    cz->Divide(2,4);
+    check_z(cz);
+  }
+  if(do_view)  {
+    cview = new TCanvas("view"  , "check View", XSIZE,YSIZE);
+    cview->Divide(2,4);
+    check_view(cview);
+  }
+  if(do_surf)  {
+    csurf = new TCanvas("csurf" , "check surf, etc",XSIZE,YSIZE);
+    csurf->Divide(2,4);
+    check_surf(csurf);
+  }
+
+   if( (fname&&output==2) || (fname&&output==3) ) {
+      printf("save as canvases into root file\n");
+      if(cz)    cz->Write("raw_z");
+      if(cview) cview->Write("raw_view");
+      if(csurf) csurf->Write("raw_surf");
+   } 
+   if(output==1  || (fname&&output==3) ) {
+      printf("save as gif pictures\n");
+      gSystem->Sleep(500);
+      if(cz)    cz->SaveAs("raw_z.gif");
+      if(cview) cview->SaveAs("raw_view.gif");
+      if(csurf) csurf->SaveAs("raw_surf.gif");
+    }
+   run->Close();
+}
+
+//-----------------------------------------------------------------
+#ifndef __CINT__
+void main( int argc, char *argv[] )
+{
+   int  output=3 ;
+   char* fname=argv[1] ;
+   
+   gStyle->SetPalette(1);
+   check_raw( output,  fname ) ;
+}
+#endif

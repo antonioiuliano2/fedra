@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="rwc2edb"
 	ProjectGUID="{5AB5F301-21B3-4774-A560-43EDCB23094D}"
+	RootNamespace="rwc2edb"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>

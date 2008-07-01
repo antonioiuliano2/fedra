@@ -79,6 +79,6 @@ int main(int argc, char *argv[])
 
     FreeMemory((void**)pCat);
 
-   delete pCat ;
+    //delete pCat ;    // WINDOWS VISTA CRASH
 
 };

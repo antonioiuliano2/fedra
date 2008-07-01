@@ -51,15 +51,19 @@
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
 (
- echo set FEDRA_ROOT=%installdir%
+ echo set FEDRA_ROOT=%%~dp0%%
  echo path %%FEDRA_ROOT%%\bin;%%FEDRA_ROOT%%\lib;%%PATH%%
- echo win32\tools\setenv.exe  -u FEDRA_ROOT %installdir%
+ echo win32\tools\setenv.exe  -u FEDRA_ROOT %%~dp0%%
  echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\bin
  echo win32\tools\pathman.exe /au %%%%FEDRA_ROOT%%%%\lib
  echo.
  echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\bin
  echo if DEFINED FEDRA win32\tools\pathman /ru %%%%FEDRA%%%%\lib
  echo if DEFINED FEDRA win32\tools\setenv.exe  -u FEDRA -delete
+ echo.
+ echo if NOT DEFINED HOME copy src\appl\macros\fedra.rootrc %%%%HOMEDRIVE%%%%%%%%HOMEPATH%%%%\.rootrc
+ echo if NOT DEFINED HOME win32\tools\setenv.exe  -u HOME %%%%HOMEDRIVE%%%%%%%%HOMEPATH%%%%
+ echo.
 ) > %installdir%\setup_new.cmd
 
 :: copy vsvars.bat into src directory
@@ -73,25 +77,15 @@
    ) ELSE echo "MS Visual Studio .NET 2003 not found" 
 )
 
-:: check SySalDataIO.dll registration
-:: ----------------------------------
- set regutil=reg.exe
- ECHO Check SySalDataIO.dll registration ......
- @%regutil% query HKEY_LOCAL_MACHINE\SOFTWARE\SySal2\Classes\SySalDataIO
- IF '%ERRORLEVEL%'=='0' ( 
-	ECHO ok!  
- ) ELSE (
-	ECHO WARNING: SySalDataIO is not registered on this machine!!!! 
- )
-	
- echo.
-
 :: copy macros
 :: ------------
- copy /Y "%PROJECT_SRC%"\appl\macros\* "%installdir%"\macros
+ ECHO copy macros ....
+ copy /Y "%PROJECT_SRC%"\appl\macros\*  "%installdir%"\macros
+ del /Q  "%installdir%"\macros\*.obj    "%installdir%"\Makefile
 
 :: load environment variables
 :: --------------------------
+ ECHO load environment variables ....
  cd %installdir%
  call setup_new.cmd
 
@@ -105,4 +99,23 @@
 	)
 
 cd %installdir%
+
+:: check SySalDataIO.dll registration
+:: ----------------------------------
+ set regutil=reg.exe
+ ECHO Check SySalDataIO.dll registration ......
+ @%regutil% query HKEY_LOCAL_MACHINE\SOFTWARE\SySal2\Classes\SySalDataIO
+ IF '%ERRORLEVEL%'=='0' ( 
+	FOR /f "usebackq tokens=3 delims= " %%a IN (`REG QUERY HKCR\CLSID\{4B47E8CE-894C-11D3-A47C-9F3735226036}\InProcServer32 /ve`) DO dir %%a
+        IF ERRORLEVEL 1  (
+           ECHO WARNING: SySalDataIO class is registered but the .dll cannot be found. 
+           ECHO          You need to register SySalDataIO again, please!
+        ) ELSE (
+           ECHO SySalDataIO registration ok!
+        )
+ ) ELSE (
+	ECHO WARNING: SySalDataIO is not registered on this machine!!!! 
+ )
+ echo.
+
 pause

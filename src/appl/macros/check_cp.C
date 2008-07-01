@@ -1,31 +1,44 @@
+//------------------------------------------------------
+// To check the quality of couples data
+// usage:
+//  a) interactive: 
+//      $ root -l pl56.root
+//      root[0] .x check_cp.C             draw plots on the screen; use saved 
+//                                        into rootfile canvases if any
+//      root[0] .x check_cp.C(1)          the pictures will be saved as gif files
+//      root[0] .x check_cp.C("s.eTX>0")  the pictures will be saved as gif files 
+//                                        with SELECTION "s.eTX>0"
+//  b) batch mode:
+//    $ root -b -q check_cp.C\(2,\"pl56.root\"\)   run file will be opened for  
+//                                                 update to save canvases inside
+//    $ root -b -q check_cp.C\(3,\"pl56.root\"\)   run file will be opened for 
+//                                                 update to save canvases inside 
+//                                                 AND the pictures will be saved 
+//                                                 ALSO as gif files
+
+#ifndef __CINT__
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TSystem.h"
+#include "TCut.h"
+#include "TStyle.h"
+#include "TTree.h"
+#include "TH1.h"
+#include "TF1.h"
+#include "Riostream.h"
+#include "EdbPVRec.h"
+#endif
+
 TCut signal("1");
 TCut cut1("pid2>-1&&eCHI2P<1.5");
 TCut sameview("(s1.eAid[1]==s2.eAid[1])");
 TCut diffview("(s1.eAid[1]!=s2.eAid[1])");
 TCut diffarea("(s1.eAid[0]!=s2.eAid[0])");
 
-//-----------------------------------------------------------------
-void check_cp(char *signal_cut="1")
-{
-  signal = signal_cut;
-  printf("Check couples with the general selection as: %s\n",signal_cut);
-  printf("s1: Red  line\n");
-  printf("s2: Blue line\n");
-  printf("functions: check_surf, check_sigma, check_shrinkage, check_distorsion, check_view, correct_shrinkage\n");
-  init();
-  check_all();
-}
+TTree* couples;
 
-//-----------------------------------------------------------------
-void check_all()
-{
-  check_surf();
-  //check_sigma();
-  //check_view();
-  //check_shrinkage();
-  //check_distorsion();
-  //correct_shrinkage();
-}
+#define XSIZE 1200
+#define YSIZE  800
 
 //-----------------------------------------------------------------
 void init()
@@ -65,11 +78,10 @@ void init()
 }
 
 //-----------------------------------------------------------------
-void check_surf()
+void check_surf( TCanvas *surf )
 {
   printf("check_surf with the cut: %s \n", signal.GetTitle() );
-  TCanvas *surf = new TCanvas("surf","couples_surf",600,800);
-  surf->Divide(2,3);
+  
   surf->cd(1);  couples->Draw("s.eY:s.eX",signal);
   surf->cd(2);  couples->Draw("s.eTY:s.eTX",signal);
   surf->cd(5); {
@@ -90,12 +102,13 @@ void check_surf()
   } 
   couples->SetLineColor(1);
   
-  surf->cd(4); couples->Draw("s.eW>>hw(25,10,35)", signal );
+  surf->cd(4);  couples->Draw("s.eW>>hw(25,10,35)", signal );
   surf->cd(6);  couples->Draw("eCHI2P:s.eW>>hchiw(25,10,35,30,0,3.)", signal,"colZ");
+
 }
 
 //-----------------------------------------------------------------
-void check_sigma()
+void check_sigma( TCanvas *cs )
 {
   printf("check_sigma with the cut: %s \n", signal.GetTitle() );
 
@@ -103,11 +116,12 @@ void check_sigma()
   couples->Project("htx2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTX-tx):tx",signal,"prof");
   couples->Project("hty1(20,-1.,1.,40,0.,0.1)", "abs(s1.eTY-ty):ty",signal,"prof");
   couples->Project("hty2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTY-ty):ty",signal,"prof");
+    TH1* htx1  = (TH1*) gDirectory->Get("htx1");
+    TH1* htx2  = (TH1*) gDirectory->Get("htx2");
+    TH1* hty1  = (TH1*) gDirectory->Get("hty1");
+    TH1* hty2  = (TH1*) gDirectory->Get("hty2");
 
-  TCanvas *cs = new TCanvas("csig","couples_sigma");
-  cs->Divide(2,3);
-
-  cs->cd(1);{
+    cs->cd(1);{
     cs->GetPad(1)->SetGrid(1,1);
     htx1->SetLineColor(kRed);
     htx1->Draw();
@@ -125,6 +139,10 @@ void check_sigma()
   couples->Project("htt2(10,0.,1.,40,0.,0.1)", "abs(dst2):ts",signal,"prof");
   couples->Project("htl1(10,0.,1.,40,0.,0.1)", "dsl1:ts",signal,"prof");
   couples->Project("htl2(10,0.,1.,40,0.,0.1)", "dsl2:ts",signal,"prof");
+    TH1* htt1  = (TH1*) gDirectory->Get("htt1");
+    TH1* htt2  = (TH1*) gDirectory->Get("htt2");
+    TH1* htl1  = (TH1*) gDirectory->Get("htl1");
+    TH1* htl2  = (TH1*) gDirectory->Get("htl2");
 
   cs->cd(3); {
     cs->GetPad(3)->SetGrid(1,1);
@@ -143,10 +161,13 @@ void check_sigma()
   }
 
   cs->cd(5); {
-    surf->GetPad(4)->SetGrid(1,1);
+    cs->GetPad(4)->SetGrid(1,1);
     couples->Project("hs" ,"s.eW:ts" , signal, "prof");
     couples->Project("hs1","s1.eW:ts", signal, "prof");
     couples->Project("hs2","s2.eW:ts", signal, "prof");
+    TH1* hs  = (TH1*) gDirectory->Get("hs");
+    TH1* hs1 = (TH1*) gDirectory->Get("hs1");
+    TH1* hs2 = (TH1*) gDirectory->Get("hs2");
     hs->Draw();
     hs1->SetLineColor(kRed);
     hs1->Draw("same");
@@ -162,41 +183,38 @@ void check_sigma()
   } 
   couples->SetLineColor(1);
 
-
 }
 
 //-----------------------------------------------------------------
-void check_view()
+void check_view( TCanvas *cs )
 {
   // check the accuracy deterioration in case when the segments are in 
   // the different views
 
   printf("check_view with the cut: %s \n", signal.GetTitle() );
 
-  TCanvas *cs = new TCanvas("cview","couples_view");
-  cs->Divide(2,2);
   cs->cd(1);
   couples->Draw("eCHI2P", signal&&sameview);
   couples->Draw("eCHI2P", signal&&diffview,"same");
   couples->Draw("eCHI2P", signal&&diffarea,"same");
   cs->cd(2);
   couples->SetMarkerStyle(20);
-  couples->Draw("s.eTY:sameview",signal,"prof");
+  couples->SetAlias("same_view","(s1.eAid[1]==s2.eAid[1])");
+  couples->Draw("s.eTY:same_view",signal,"prof");
   cs->cd(3);
-  couples->Draw("s.eTX:sameview",signal,"prof");
+  couples->Draw("s.eTX:same_view",signal,"prof");
   cs->cd(4);
   couples->Draw("s.eTX>>htxv(100)",signal&&sameview);
   couples->Draw("s.eTX",signal&&diffview,"same");
   couples->SetMarkerStyle(1);
   gStyle->SetOptStat("nemr");
+
 }
 
 //-----------------------------------------------------------------
-void check_shrinkage()
+void check_shrinkage( TCanvas *diff )
 {
   printf("check_shrinkage with the cut: %s \n", signal.GetTitle() );
-  TCanvas *diff = new TCanvas("diff","couples_shrinkage");
-  diff->Divide(2,2);
 
   diff->cd(1);
   couples->Draw("s1.eTX-tx:tx", signal );
@@ -207,62 +225,78 @@ void check_shrinkage()
   diff->cd(4);
   couples->Draw("s2.eTY-ty:ty", signal );
   gStyle->SetOptStat("nemr");
+
 }
 
 //-----------------------------------------------------------------
-void correct_shrinkage()
+void correct_shrinkage( TCanvas *cshr )
 {
-  // this function check shrinkage and/or distance between linked planes 
-  // Note: do not use s.* (linked segment parameters), because them could 
-  // be different from the "base angle" calculated here directly
+   // this function check shrinkage and/or distance between linked planes 
+   // Note: do not use s.* (linked segment parameters), because them could 
+   // be different from the "base angle" calculated here directly
 
-  printf("correct_shrinkage with the cut: %s \n", signal.GetTitle() );
-  TCanvas *cshr = new TCanvas("cshr","couples_shrinkage_corr");
-  cshr->Divide(2,2);
+   printf("correct_shrinkage with the cut: %s \n", signal.GetTitle() );
 
-  //  TCut cut1("pid2>-1&&eCHI2P<1.5");
+   //  TCut cut1("pid2>-1&&eCHI2P<1.5");
 
-  cshr->cd(1);   {
-    couples->Draw("s1.eTX-tx:tx", signal,"prof");
-    htemp->Fit("pol1","wQ","",-.4,.4);
-  }
-  float p0 = htemp->GetFunction("pol1")->GetParameter(0);
-  float p1 = htemp->GetFunction("pol1")->GetParameter(1);
-  printf("side1     : p0 = %f \t p1 = %f \n",p0,p1);
-  char str[160]="";
-  sprintf(str,"s1.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)",p1,p0);
-  cshr->cd(3);   {
-    couples->Draw(str,signal,"prof");
-    htemp->Fit("pol1","wQ","",-.4,.4);
-  } 
-  p0 = htemp->GetFunction("pol1")->GetParameter(0);
-  p1 = htemp->GetFunction("pol1")->GetParameter(1);
-  printf("side1 corr: p0 = %f \t p1 = %f \n",p0,p1);
+   cshr->cd(1);   
+   TH1* hsh1  ;
 
-  cshr->cd(2);{
-    couples->Draw("s2.eTX-tx:tx", signal,"prof");
-    htemp->Fit("pol1","wQ","",-.4,.4);
-  }
-  p0 = htemp->GetFunction("pol1")->GetParameter(0);
-  p1 = htemp->GetFunction("pol1")->GetParameter(1);
-  printf("side2     : p0 = %f \t p1 = %f \n",p0,p1);
-  sprintf(str,"s2.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)",p1,p0);
-  cshr->cd(4); {
-    couples->Draw(str, signal ,"prof");
-    htemp->Fit("pol1","wQ","",-.4,.4);
-  }
-  p0 = htemp->GetFunction("pol1")->GetParameter(0);
-  p1 = htemp->GetFunction("pol1")->GetParameter(1);
-  printf("side2 corr: p0 = %f \t p1 = %f \n",p0,p1);
-  gStyle->SetOptStat("nemr");
+   couples->Draw("s1.eTX-tx:tx>>hsh1", signal,"prof");
+   hsh1 = (TH1*) gDirectory->Get("hsh1");
+   hsh1->Fit("pol1","wQ","",-.4,.4);
+
+   float p0 = hsh1->GetFunction("pol1")->GetParameter(0);
+   float p1 = hsh1->GetFunction("pol1")->GetParameter(1);
+   printf("side1     : p0 = %f \t p1 = %f \n",p0,p1);
+   
+
+   cshr->cd(3);   
+   TH1* hsh3  ;
+
+   char str[160]="";
+   sprintf(str,"s1.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)>>hsh3",p1,p0);
+   couples->Draw(str,signal,"prof");
+   hsh3 = (TH1*) gDirectory->Get("hsh3");
+   hsh3->Fit("pol1","wQ","",-.4,.4);
+
+   p0 = hsh3->GetFunction("pol1")->GetParameter(0);
+   p1 = hsh3->GetFunction("pol1")->GetParameter(1);
+   printf("side1 corr: p0 = %f \t p1 = %f \n",p0,p1);
+
+   
+   cshr->cd(2);
+   TH1* hsh2;
+
+   couples->Draw("s2.eTX-tx:tx>>hsh2", signal,"prof");
+   hsh2 = (TH1*) gDirectory->Get("hsh2");
+   hsh2->Fit("pol1","wQ","",-.4,.4);
+  
+   p0 = hsh2->GetFunction("pol1")->GetParameter(0);
+   p1 = hsh2->GetFunction("pol1")->GetParameter(1);
+   printf("side2     : p0 = %f \t p1 = %f \n",p0,p1);
+
+   cshr->cd(4); 
+   TH1* hsh4 ;
+
+   sprintf(str,"s2.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)>>hsh4",p1,p0);
+   couples->Draw(str, signal ,"prof");
+   hsh4 = (TH1*) gDirectory->Get("hsh4");   
+   hsh4->Fit("pol1","wQ","",-.4,.4);
+  
+   p0 = hsh4->GetFunction("pol1")->GetParameter(0);
+   p1 = hsh4->GetFunction("pol1")->GetParameter(1);
+   printf("side2 corr: p0 = %f \t p1 = %f \n",p0,p1);
+  
+  
+   gStyle->SetOptStat("nemr");
 }
 
 //-----------------------------------------------------------------
-void check_distorsion()
+void check_distorsion( TCanvas *cs )
 {
   printf("check_distortion with the cut: %s \n", signal.GetTitle() );
-  TCanvas *cs = new TCanvas("cdist","couples_distortion");
-  cs->Divide(2,2);
+
   cs->cd(1);
   couples->Draw("s1.eTX-s.eTX:s.eX", signal );
   cs->cd(2);
@@ -273,3 +307,125 @@ void check_distorsion()
   couples->Draw("s2.eTY-s.eTY:s.eY", signal );
   gStyle->SetOptStat("nemr");
 }
+//-----------------------------------------------------------------
+/*void check_all()
+{
+  check_surf();
+  check_sigma();
+  check_view();
+  check_shrinkage();
+  check_distorsion();
+  correct_shrinkage();
+}
+*/
+//-----------------------------------------------------------------
+void check_cp(int output=0, char *fname=0, char *signal_cut="1")
+{
+  signal = signal_cut;
+
+  cout << "fname  : " << fname  << endl;
+
+  printf("Check couples with the general selection as: %s\n",signal_cut);
+  printf("s1: Red  line\n");
+  printf("s2: Blue line\n");
+  printf("functions: check_surf, check_sigma, check_shrinkage, check_distorsion, check_view, correct_shrinkage\n");
+  
+  if      (fname&&output>=2)   TFile *f = new TFile(fname,"UPDATE");
+  else if (fname&&output<2)    TFile *f = new TFile(fname);
+  
+  couples = (TTree*) gFile->Get("couples") ;
+
+  init();
+  //check_all();
+
+  int do_surf=1, do_sig=1, do_view=1, do_diff=1;
+  int do_shr=1;
+  int do_dist=1 ;
+  
+  TCanvas *csurf=0, *csig=0, *cview=0, *cdiff=0, *cshr=0, *cdist=0;
+  if( output!=2 ) {
+    csurf   = dynamic_cast<TCanvas*>(gDirectory->Get("csurf"));
+    csig    = dynamic_cast<TCanvas*>(gDirectory->Get("csig"));
+    cview   = dynamic_cast<TCanvas*>(gDirectory->Get("cview"));
+    cdiff   = dynamic_cast<TCanvas*>(gDirectory->Get("cdiff"));
+    cshr    = dynamic_cast<TCanvas*>(gDirectory->Get("cshr"));
+    cdist   = dynamic_cast<TCanvas*>(gDirectory->Get("cdist"));
+
+    if(csurf ) { csurf ->Draw();  do_surf =0; }
+    if(csig  ) { csig  ->Draw();  do_sig  =0; }
+    if(cview ) { cview ->Draw();  do_view =0; }
+    if(cdiff ) { cdiff ->Draw();  do_diff =0; }
+    if(cshr  ) { cshr  ->Draw();  do_shr  =0; }
+    if(cdist ) { cdist ->Draw();  do_dist =0; }
+  }
+
+if(do_surf ) {
+   csurf  = new TCanvas("csurf" ,"couples_surf"        ,XSIZE,YSIZE);
+   csurf->Divide(2,3);
+   check_surf(csurf);
+}
+if(do_sig  ) {
+   csig   = new TCanvas("csig"  ,"couples_sigma"       ,XSIZE,YSIZE);
+   csig ->Divide(2,3);
+   check_sigma(csig);
+}
+if(do_view ) {
+   cview  = new TCanvas("cview" ,"couples_view"        ,XSIZE,YSIZE);
+   cview->Divide(2,2);
+   check_view(cview);
+}
+if(do_diff ) {
+   cdiff  = new TCanvas("cdiff" ,"couples_shrinkage"   ,XSIZE,YSIZE);
+   cdiff->Divide(2,2);
+   check_shrinkage(cdiff);
+}
+if(do_shr  ) {
+   cshr   = new TCanvas("cshr"  ,"couples_shrinkage_corr",XSIZE,YSIZE);
+   cshr ->Divide(2,2);
+   correct_shrinkage(cshr);
+}
+if(do_dist ) {
+   cdist  = new TCanvas("cdist" ,"couples_distortion"  ,XSIZE,YSIZE);
+   cdist->Divide(2,2);
+   check_distorsion(cdist) ;
+}
+
+   if( (fname&&output==2) || (fname&&output==3) ) {
+      printf("save as canvases into root file\n");
+      if(csurf ) csurf ->Write("cp_surf");
+      if(csig  ) csig  ->Write("cp_sigma" ); 
+      if(cview ) cview ->Write("cp_view");
+      if(cdiff ) cdiff ->Write("cp_diff");
+      if(cshr  ) cshr  ->Write("cp_shr" ); 
+      if(cdist ) cdist ->Write("cp_dist");
+   } 
+   if(output==1  || (fname&&output==3) ) {
+      printf("save as gif pictures\n");
+      gSystem->Sleep(500);
+      if(csurf ) csurf ->SaveAs("cp_surf.gif" );
+      if(csig  ) csig  ->SaveAs("cp_sigma.gif"); 
+      if(cview ) cview ->SaveAs("cp_view.gif");
+      if(cdiff ) cdiff ->SaveAs("cp_diff.gif");
+      if(cshr  ) cshr  ->SaveAs("cp_shr.gif" ); 
+      if(cdist ) cdist ->SaveAs("cp_dist.gif");
+    }
+}
+
+//-----------------------------------------------------------------
+void check_cp(char *signal_cut="1")
+{
+   check_cp( 0,  0, signal_cut ) ;
+}
+
+//-----------------------------------------------------------------
+#ifndef __CINT__
+void main( int argc, char *argv[] )
+{          
+   int output=3;
+   char* fname=argv[1];
+   char* signal_cut="1";
+
+   gStyle->SetPalette(1);
+   check_cp( output,  fname, signal_cut ) ;
+}
+#endif

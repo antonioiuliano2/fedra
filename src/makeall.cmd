@@ -13,9 +13,9 @@
 :MAIN
    @ECHO OFF
    SET eLIBS= libEmath libEdb libDataConversion libVt++ libEphys libEGA libEdr libEIO libEdd libEMC libScan libEOracle libACQ libShower appl\bmatrix libEGraphTool libEmr 
-   SET eBINS=appl\recset appl\rwc2edb appl\tracks2edb appl\checkrun appl\edbtools appl\display appl\o2root
+   SET eBINS=appl\recset appl\rwc2edb appl\macros appl\display appl\o2root
 
-   IF /I '%1'=='checkall' (
+   IF /I '%1'=='check' (
       GOTO CHECKALL
    ) ELSE IF /I '%1'=='debug' (
       GOTO MAKEALLDEBUG
@@ -42,7 +42,7 @@ GOTO END
       popd
    )
    echo.
-   IF '%1'=='' CALL %0 CHECKALL
+   IF '%1'=='' CALL %0 CHECK
 
    (
 	echo compiled by %USERDOMAIN%\%USERNAME% on %COMPUTERNAME% ^(%DATE% %TIME%^)
@@ -69,7 +69,7 @@ GOTO END
       popd
    )
    echo.
-   CALL %0 CHECKALL
+   CALL %0 CHECK
 
    (
 	echo compiled by %USERDOMAIN%\%USERNAME% on %COMPUTERNAME% ^(%DATE% %TIME%^)
@@ -85,26 +85,16 @@ GOTO END
 :CHECKALL
    ECHO Check Targets:
    ECHO --------------
-   set eLIBS= libvt %eLIBS% libbmatrix
-   FOR %%f IN (%eLIBS%) DO IF NOT '%%f'=='libVt++'  (
-      IF NOT EXIST ..\lib\%%~nf.lib  IF NOT EXIST ..\lib\%%~nf.dll (
-         ECHO lib\%%~nf.lib...ERROR!		lib\%%~nf.dll...ERROR! ) | find /V "lib\bmatrix"
-      IF EXIST ..\lib\%%~nf.lib  IF NOT EXIST ..\lib\%%~nf.dll (
-         ECHO lib\%%~nf.lib...ok		lib\%%~nf.dll...ERROR! ) | find /V "lib\bmatrix"
-      IF NOT EXIST ..\lib\%%~nf.lib  IF EXIST ..\lib\%%~nf.dll (
-         ECHO lib\%%~nf.lib...ERROR!		lib\%%~nf.dll...ok )     | find /V "lib\bmatrix"
-      IF EXIST ..\lib\%%~nf.lib  IF EXIST ..\lib\%%~nf.dll (
-         ECHO lib\%%~nf.lib...ok		lib\%%~nf.dll...ok )     | find /V "lib\bmatrix"
-   )
-   ECHO.
-   set eBINS= %eBINS% rwcread rwdread rwdcomp edb2rwc getacqstatus
-   FOR %%f IN (%eBINS%) DO (
-      IF EXIST ..\bin\%%~nf.exe  (
-         ECHO bin\%%~nf.exe ...ok
+   FOR %%f IN (%eLIBS% %eBINS%) DO ( 
+      pushd %%f
+      IF EXIST Makefile.w32 (
+         nmake check /NOLOGO /F Makefile.w32
       ) ELSE (
-         ECHO bin\%%~nf.exe ...ERROR!
+         nmake check /NOLOGO
       )
+      popd
    )
+   echo.
 
 GOTO END
 

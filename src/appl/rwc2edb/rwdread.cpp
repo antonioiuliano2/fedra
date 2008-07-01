@@ -135,17 +135,22 @@ int main(int argc, char *argv[])
                  << vw->Layers[1].pLayerInfo[i].Z << endl;
          else cout << endl;
    }
-   cout<<"\n\t ##### area  X     Y     Z" <<endl;
-   for(int i=0;i<(int) tr->Grains;i++)			
-         cout<<"\t\t " 
-               <<  tr->pGrains[i].Area  <<" "<<
-					    tr->pGrains[i].X     <<" "<<
-					    tr->pGrains[i].Y     <<" "<<
-					    tr->pGrains[i].Z     << endl ;
 
+   cout<<"\n\t ##### area  X     Y     Z" <<endl;
+   if (tr->pGrains) 
+   {
+      for(int i=0;i<(int) tr->Grains;i++)			
+         cout<<"\t\t "  
+             << tr->pGrains[i].Area  <<" "<<
+                tr->pGrains[i].X     <<" "<<
+                tr->pGrains[i].Y     <<" "<<
+                tr->pGrains[i].Z     << endl ;
+   } else {
+      cout<<"\t CORRUPTED DATA: null pointer to Grain *pGrains !" << endl;
+   }
 
    FreeMemory((void**)pFrag);
-   delete pFrag ;
+   //delete pFrag;    // WINDOWS VISTA CRASH
 
    return 0;
  }

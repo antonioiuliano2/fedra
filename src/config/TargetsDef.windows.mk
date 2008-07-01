@@ -61,9 +61,14 @@ distclean:      clean
 	@del *.exe *.root *.ps *.lib *.dll
 
 check:
-	@for %F in ($(TARGETSO:.dll=.lib)) DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
-	@for %F in ($(TARGETSO))           DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
-	@for %F in ($(TARGET))             DO @IF EXIST %F ( @ECHO bin\%~nxF...ok ) ELSE ( @ECHO bin\%~nxF...ERROR! )
+	@for %F in ($(TARGET))   DO @IF EXIST %F ( @ECHO bin\%~nxF...ok ) ELSE ( @ECHO bin\%~nxF...ERROR! )
+	@for %F in ($(TARGETSO)) DO @IF NOT EXIST %~dpnF.lib @IF NOT EXIST %F @ECHO lib\%%~nF.lib...ERROR!"		lib\%%~nF.dll...ERROR!
+	@for %F in ($(TARGETSO)) DO @IF NOT EXIST %~dpnF.lib @IF     EXIST %F @ECHO lib\%%~nF.lib...ERROR!"		lib\%%~nF.dll...ok
+	@for %F in ($(TARGETSO)) DO @IF     EXIST %~dpnF.lib @IF NOT EXIST %F @ECHO lib\%%~nF.lib...ok"    		lib\%%~nF.dll...ERROR!
+	@for %F in ($(TARGETSO)) DO @IF     EXIST %~dpnF.lib @IF     EXIST %F @ECHO lib\%%~nF.lib...ok"    		lib\%%~nF.dll...ok
+
+#	@for %F in ($(TARGETSO:.dll=.lib)) DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
+#	@for %F in ($(TARGETSO))           DO @IF EXIST %F ( @ECHO lib\%~nxF...ok ) ELSE ( @ECHO lib\%~nxF...ERROR! )
 
 ###
 
