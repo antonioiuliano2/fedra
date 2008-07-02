@@ -121,9 +121,11 @@ void check_tr()
 
 //-----------------------------------------------------------------
 #ifndef __CINT__
-void main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {          
    gStyle->SetPalette(1);
    check_tr() ;
+
+   return 1 ;
 }
 #endif

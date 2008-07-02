@@ -208,12 +208,16 @@ void check_raw( int output=0, char *fname=0 )
 
 //-----------------------------------------------------------------
 #ifndef __CINT__
-void main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {
    int  output=3 ;
    char* fname=argv[1] ;
    
    gStyle->SetPalette(1);
    check_raw( output,  fname ) ;
+
+   return 1 ;
 }
 #endif
+
+

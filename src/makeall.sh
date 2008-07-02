@@ -4,7 +4,8 @@
 #       ./makeall.sh  depend - create all dependencies
 #
 
-LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO libEMC libEdd libVt++ libScan libShower"
+LIBS="libEdb libDataConversion libEGA libEmath libEphys libEdr libEIO 
+libEMC libEdd libVt++ libScan libShower libEmr"
 
 if [ "${ORACLE_HOME}" != "" ]; then
 LIBS="${LIBS} libEOracle"
@@ -20,7 +21,8 @@ for lib in ${LIBS} ; do
     cd ..
 done
 
-APPLS="appl/recset appl/rwc2edb appl/tracks2edb appl/checkrun appl/o2root"
+APPLS="appl/recset appl/rwc2edb appl/macros appl/o2root"
+
 for appl in ${APPLS} ; do
     if [ "$1" != "check" ]; then 
        echo

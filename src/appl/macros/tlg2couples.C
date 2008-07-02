@@ -767,18 +767,22 @@ void tlg2couples( const char* input_file ,
 }
 //___________________________________________________________________________//
 #ifndef __CINT__
-void main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {
-   if(argc==2)       tlg2couples( argv[1],       0, -105. );
-   else if(argc==3)  tlg2couples( argv[1], argv[2], -105. );
+   if(argc==2)       
+      tlg2couples( argv[1],       0, -105. );
+   else if(argc==3)  
+      tlg2couples( argv[1], argv[2], -105. );
    else if(argc==4) {
       float project_dz ;
       sscanf( argv[3], "%f", &project_dz );
       tlg2couples( argv[1], argv[2], project_dz );
-   }
-   else{
+   } else {
       cout << "tlg2couples.exe <input_file> [output_file] [project_dz (default= -105.)]\n";
-      return ;
+      return 0 ;
    }
+
+   return 1 ;
 }
 #endif
+

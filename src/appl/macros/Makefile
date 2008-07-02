@@ -13,7 +13,7 @@ TARGET  =   $(BIN_DIR)/addRWC$(ExeSuf)       \
 			$(BIN_DIR)/tlg2couples$(ExeSuf)  \
 			$(BIN_DIR)/checkrun$(ExeSuf)     
     
-PROJECT_LIBS  = -lEdb -lDataConversion -lEIO -lEdr -lEmath
+PROJECT_LIBS  = -lEdb -lDataConversion -lEIO -lEdr -lEmath -lvt -lEphys
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

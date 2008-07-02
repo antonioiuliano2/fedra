@@ -9,7 +9,7 @@ ORA           = $(OCCIHOME)
 ORAINC        = $(ORA)/sdk/include
 ORALIB        = $(ORA)
 
-PROJECT_LIBS += -L$(ORACLE_HOME)/instantclient_10_2 -lclntsh -locci
+PROJECT_LIBS += -L$(OCCIHOME) -lclntsh -locci
 PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEOracle -lEIO -lEMC -lDataConversion
 
 INC_DIR      += -I$(ORAINC)

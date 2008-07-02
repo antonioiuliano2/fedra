@@ -419,7 +419,7 @@ void check_cp(char *signal_cut="1")
 
 //-----------------------------------------------------------------
 #ifndef __CINT__
-void main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {          
    int output=3;
    char* fname=argv[1];
@@ -427,5 +427,9 @@ void main( int argc, char *argv[] )
 
    gStyle->SetPalette(1);
    check_cp( output,  fname, signal_cut ) ;
+
+   return 1 ;
 }
 #endif
+
+
