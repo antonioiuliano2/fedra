@@ -680,7 +680,9 @@ int EdbRunAccess::FillVP()
     if(side<1||side>2) continue;
     eVP[side]->AddSegment(segP);
   }
-  Log(2,"EdbRunAccess::FillVP"," %d entries\n", nentr);
+  Log(2,"EdbRunAccess::FillVP"," %d entries in limits X=(%f : %f) Y=(%f %f)\n", nentr,
+      eVP[1]->Xmin(), eVP[1]->Xmax(), 
+      eVP[1]->Ymin(), eVP[1]->Ymax() );
   return nentr;
 }
 

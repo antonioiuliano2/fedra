@@ -47,7 +47,7 @@ class EdbScanSet : public TNamed
 
   void     MakePIDList();
   void     MakeNominalSet(Int_t from_plate, Int_t to_plate, 
-			  Float_t z0, Float_t dz, Int_t vmi, Int_t vma);
+			  Float_t z0, Float_t dz, Int_t vmi, Int_t vma, float shr=1);
   void     Print();
   Int_t    AssembleBrickFromPC();
   Int_t    TransformBrick(EdbAffine2D aff);

@@ -12,7 +12,6 @@
 
 ClassImp(TOracleServerE2)
 
-
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor)
 {
@@ -552,6 +551,7 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
 
   //check if outdir is accessible: 
   EdbScanProc sproc;
+  EdbScanSet  ss;
   if(!sproc.CheckDirWritable(outdir))     return 0;
 
   int  nviewtot=0;
@@ -559,12 +559,15 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
   std::map<int,ULong64_t> pl_zones;
   int brick =-999, plate=0;
   ULong64_t zone=0;
+  Float_t   z=0;
+
   try{
     if (!fStmt)
       fStmt = fConn->createStatement();
     sprintf(query,"\
-    select id_eventbrick,id_plate,id_zone from TB_VOLUME_SLICES%s where \
-    (id_volume=%lld) order by id_plate",
+    select sl.id_eventbrick,sl.id_plate,sl.id_zone, pl.z from TB_VOLUME_SLICES%s sl, TB_PLATES%s pl where \
+    sl.id_volume=%lld and sl.id_eventbrick=pl.id_eventbrick and sl.id_plate=pl.id order by pl.id",
+	    eRTS.Data(),
 	    eRTS.Data(),
 	    id_volume);
     fStmt->setSQL(query);
@@ -572,17 +575,27 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
-      sscanf( (rs->getString(1)).c_str(),"%d", &brick );
-      sscanf( (rs->getString(2)).c_str(),"%d", &plate );
+      sscanf( (rs->getString(1)).c_str(),"%d"  , &brick );
+      sscanf( (rs->getString(2)).c_str(),"%d"  , &plate );
       sscanf( (rs->getString(3)).c_str(),"%lld", &zone );
+      sscanf( (rs->getString(4)).c_str(),"%f"  , &z );
       pl_zones[plate]=zone;
+
+      EdbPlateP *plt = new EdbPlateP();
+      plt->SetID(plate);
+      plt->SetZlayer(z,z-150,z+150);
+      ss.eB.AddPlate(plt);
+      ss.eIDS.Add(new EdbID(brick,plate,major,minor));
     }
   } catch (SQLException &oraex) {
     Error("TOracleServerE", "ReadPatternsVolume; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
 
   sproc.eProcDirClient=outdir;
-  int id[4];
+  int id[4]={brick,0,major,minor};
+  ss.Print();
+  sproc.WriteScanSet(id,ss);
+
   int plate0 =-999;
   EdbRun *run=0;
   map<int,ULong64_t>::const_iterator iter;

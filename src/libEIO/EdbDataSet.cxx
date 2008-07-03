@@ -290,7 +290,7 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 
   FILE *fp = fopen(file,"r");
   if (!fp) {
-    Log(1,"ReadPiecePar","ERROR open file: %s\nPlease run \"Alignment\" procedure first\n", file);
+    Log(1,"ReadPiecePar","ERROR open file: %s", file);
     return -1;
   }
   else Log(2,"ReadPiecePar","Read piece parameters from file: %s", file );
@@ -819,7 +819,9 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   TEventList *lst =0;
   if(cut)       tree->Draw(">>lst", *cut );
   else          tree->Draw(">>lst", "" );
-  lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
+  lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
+
+  if(!lst) Log(1,"EdbDataPiece::GetCPData_new","ERROR!: lst do not found! empty couples tree??");
 
   int nlst =lst->GetN();
 
@@ -859,6 +861,8 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
       nseg++; 
     }
   }
+
+  SafeDelete(lst);
 
   if(cut) Log(2,"EdbDataPiece::GetCPData_new","select %d of %d segments by cut %s",nlst, nentr, cut->GetTitle() );
   else    Log(2,"EdbDataPiece::GetCPData_new","%d (of %d) segments accepted", nseg,nentr );

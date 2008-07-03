@@ -136,11 +136,14 @@ void EdbScanCond::SetDefault()
   eSigmaZ0  = 3.;   // [microns]
   eSigmaTX0 = .008; // [mrad]
   eSigmaTY0 = .008; // [mrad]
+  
 
   ePuls0[0]     =  8;    // microtrack puls height (grains)
   ePuls0[1]     = 10;    // at 0 angle
   ePuls04[0]    =  5;    // microtrack puls height (grains)
   ePuls04[1]    =  9;    // at 0.4 rad angle
+  eBinX=eBinY   = 3;
+  eBinTX=eBinTY = 3;
 
   eChi2Max  = 3.5;
   eChi2PMax = 3.5;

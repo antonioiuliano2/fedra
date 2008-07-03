@@ -955,6 +955,12 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
 				 int zpos1,     int zpos2,    float pv[3] )
 {
+  // Return: the distance between 2 lines defined by s1 and s2
+  // Input: s1,s2,zpos1,zpos2, where
+  //        zpos1, zpos2: 0 - end   of the track (to be propagated forward in z) 
+  //        zpos1, zpos2: 1 - start of the track (to be propagated backward in z) 
+  // Output: pv - "vertex position" - the nearest point to the both lines
+
   float p1[3], p2[3];  // first line
   float p3[3], p4[3];  // second line
   float pa[3], pb[3];  // shortest line

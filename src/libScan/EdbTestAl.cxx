@@ -19,7 +19,7 @@ typedef struct {
 //---------------------------------------------------------------------
 EdbTestAl::EdbTestAl()
 {
-  eITMAX=50;  // angular step (def=50)
+  eITMAX=50;  // angular normalization (def=50) (the step is ~1./eITMAX)
   eOCMAX=100; // occupancy (def=100)
 
   eOffset=5000;
@@ -47,6 +47,70 @@ EdbTestAl::~EdbTestAl()
   if(eFile) eFile->Close();
 }
 
+//---------------------------------------------------------------------
+void  EdbTestAl::PositionPlot(EdbPattern &p1, EdbPattern &p2, TH2F &hd, float xbin, float ybin)
+{
+  // speed-optimized position plot when xbin,ybin << (xmax-xmin),(ymax-ymin)
+
+  EdbSegP *s = p1.GetSegment(0);
+  float xmin = p1.Xmin(), xmax = p1.Xmax();
+  float ymin = p1.Ymin(), ymax = p1.Ymax();
+  int nx = (int)((xmax-xmin)/xbin+2);
+  int ny = (int)((ymax-ymin)/ybin+2);
+  //printf("xbin = %f, ybin=%f    nx = %d  ny = %d\n", xbin, ybin, nx,ny);
+
+  TObjArray as1(nx*ny), as2(nx*ny);
+  for(int i=0; i<nx*ny; i++) {
+    as1.Add(new TObjArray());
+    as2.Add(new TObjArray());
+  }
+
+  int kx,ky, k;
+  for(int i=0; i<p1.N(); i++) {
+    s = p1.GetSegment(i);
+    ky = (int)((s->Y()-ymin)/ybin);
+    kx = (int)((s->X()-xmin)/xbin);
+    k = nx*ky + kx;
+    ((TObjArray*)(as1.At(k)))->Add(s);
+  }
+  for(int i=0; i<p2.N(); i++) {
+    s = p2.GetSegment(i);
+    if( s->X() <= xmin-xbin/2) continue;
+    if( s->X() >= xmax+xbin/2) continue;
+    if( s->Y() <= ymin-ybin/2) continue;
+    if( s->Y() >= ymax+ybin/2) continue;
+
+//     kx = (int)((s->X()-xmin)/xbin);
+//     ky = (int)((s->Y()-ymin)/ybin);
+//     ((TObjArray*)(as2.At(nx*ky+kx)))->Add(s);
+
+    kx = (int)((s->X()-xmin - xbin/2)/xbin);
+    ky = (int)((s->Y()-ymin - ybin/2)/ybin);
+    if(kx>nx-1||kx<0||ky>ny-1||ky<0) continue;
+    ((TObjArray*)(as2.At(nx*ky+kx)))->Add(s);
+    ((TObjArray*)(as2.At(nx*ky+kx+1)))->Add(s);
+    ((TObjArray*)(as2.At(nx*(ky+1)+kx)))->Add(s);
+    ((TObjArray*)(as2.At(nx*(ky+1)+kx+1)))->Add(s);
+  }
+
+  TObjArray *a1,*a2;
+  EdbSegP *s1,*s2;
+  for(int i=0; i<nx*ny; i++) {
+    a1 = (TObjArray*)as1.At(i);
+    a2 = (TObjArray*)as2.At(i);
+    for(int i1=0; i1<a1->GetEntriesFast(); i1++) 
+      {
+	s1 = (EdbSegP*)a1->At(i1);
+	for(int i2=0; i2<a2->GetEntriesFast(); i2++) 
+	  {
+	    s2 = (EdbSegP*)a2->At(i2);
+	    hd.Fill(s2->X()-s1->X(), s2->Y()-s1->Y());
+	  }
+      }
+  }
+  
+}
+ 
 //---------------------------------------------------------------------
 void EdbTestAl::HDistance(EdbPattern &p1, EdbPattern &p2)
 {

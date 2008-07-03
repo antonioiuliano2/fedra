@@ -225,6 +225,7 @@ bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
   // create AFF dir if do not exist 
   // put all affine transformations inside for each plates couple
 
+  if(!CheckAFFDir(sc.eB.ID())) return false;
   if(sc.eIDS.GetEntries()<2) return 0;
   EdbID *id1,*id2;
   for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
@@ -267,7 +268,6 @@ bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
     sprintf(card,"SHRINK 2 %f",sc.GetPlate(id->ePlate)->GetLayer(2)->Shr());
     AddParLine(name,card);
   }
-  if(!CheckAFFDir(sc.eB.ID())) return false;
   MakeAFFSet(sc);
   return true;
 }
@@ -285,6 +285,41 @@ int EdbScanProc::AlignSet(EdbScanSet &sc, int npre, int nfull, const char *opt )
     int id24[4]; id2->Get(id24);
     n += AlignAll(id14, id24, npre, nfull, opt);
   }
+  return n;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
+{
+  if(sc.eIDS.GetEntries()<2) return 0;
+  int n=0;
+  EdbID *id=0;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++) {
+    id = (EdbID *)(sc.eIDS.At(i));
+    MakeInPar(*id,"tracking");
+  }
+
+  EdbDataProc dproc;
+  EdbPVRec *ali = dproc.PVR();
+  ali->SetScanCond( &cond );
+  ReadScanSetCP(sc,  *ali, c, false);
+  ali->Print();
+
+  int   nsegmin  = 2;
+  int   ngapmax  = 4;
+  float probmin  = 0.01;
+  float momentum = 2;
+  float mass     = 0.14;
+
+  n = dproc.LinkTracksWithFlag( ali, momentum, probmin, nsegmin, ngapmax, 0 );
+  ali->FitTracks( momentum, mass );
+
+  EdbID ido( *((EdbID *)(sc.eIDS.At(0))) );
+  ido.ePlate=0;
+  TString name; 
+  MakeFileName(name,ido,"trk.root",false);
+  dproc.MakeTracksTree(ali,name);
+
   return n;
 }
 
@@ -637,13 +672,13 @@ int EdbScanProc::LinkRunAll(int id[4], int npre, int nfull, int correct_ang )
     MakeInPar(id, "fulllinking");   // make input par file including the fulllinking par file
     for (Int_t i = 0; i < nfull; i++) {
       //SafeDelete(gDIFF);
-      TFile f("diff.root","RECREATE");
-      gDIFF = new TNtuple("diff","diff","x1:y1:tx1:ty1:w1:x2:y2:tx2:ty2:w2:z:aid10:aid11:aid20:aid21");
+      //TFile f("diff.root","RECREATE");
+      //gDIFF = new TNtuple("diff","diff","x1:y1:tx1:ty1:w1:x2:y2:tx2:ty2:w2:z:aid10:aid11:aid20:aid21");
       
       nc = LinkRun(id,1);         // will be done (full)linking and DO NOT updated x.x.x.x.par file
 
-      gDIFF->AutoSave();
-      f.Close();
+      //gDIFF->AutoSave();
+      //f.Close();
       //SafeDelete(gDIFF);
     }
   }
@@ -873,6 +908,7 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
   EdbTestAl ta;
   //TFile ftree("testal.root","RECREATE");
   //ta.eBinTree = new TNtuple("bintree","bin tree","dz:phi:dx:dy:bin");
+  ta.eITMAX=50;  // default value
   ta.HDistance(p1,p2);
 
   float bin[4]={20,20, 25,0.001};                  // default values for normal alignment (expected dz=1300)
@@ -899,8 +935,10 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
   aff.Rotate(-ta.eD0[3]);
   aff.ShiftX(ta.eD0[0]);
   aff.ShiftY(ta.eD0[1]);
-  if(gEDBDEBUGLEVEL>1) aff.Print();
-  //ta.FillTree( piece2.GetLayer(0)->Z()-piece1.GetLayer(0)->Z() );
+  if(gEDBDEBUGLEVEL>1) {
+    aff.Print();
+    ta.FillTree(-ta.eD0[2]);
+  }
 
   //ta.eBinTree->Write("bintree");
   //ftree.Close();
@@ -945,6 +983,30 @@ int EdbScanProc::WriteSBTrack(EdbTrackP &sb, int path, EdbID id)
   if(!f.IsOpen()) return 0;
   sb.Write(Form("sb_%d",path));
   return 1;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::WriteScanSet(EdbID id, EdbScanSet &ss)
+{
+  if(!CheckBrickDir(id)) return 0;
+  TString name;
+  MakeFileName(name,id,"set.root",false);
+  TFile f(name.Data(),"UPDATE");
+  if(!f.IsOpen()) return 0;
+  ss.Write("set");
+  return 1;
+}
+
+//----------------------------------------------------------------
+EdbScanSet *EdbScanProc::ReadScanSet(EdbID id)
+{
+  TString name;
+  MakeFileName(name,id,"set.root",false);
+  TFile f(name.Data());
+  if(!f.IsOpen()) return 0;
+  TObject *ss = f.Get("set");
+  if(ss) return (EdbScanSet *)ss;
+  else   return 0;
 }
 
 //----------------------------------------------------------------

@@ -39,6 +39,7 @@ public:
   EdbTestAl();
   virtual ~EdbTestAl();
 
+  void  PositionPlot(EdbPattern &p1, EdbPattern &p2, TH2F &hd, float xbin=100, float ybin=100);
   void  HDistance(EdbPattern &p1, EdbPattern &p2);
   int   FillTree(float gdz=0);
   int   MakeTrans(EdbAffine2D &aff, float dz=0, const char *ccut="abs(dy)<400&&abs(dx)<400");

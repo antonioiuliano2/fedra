@@ -31,6 +31,7 @@ public:
   bool    GetMap(int brick, TString &map);
   bool    AddParLine(const char *file, const char *line);
   bool    MakeInPar(int id[4], const char *option);
+  bool    MakeInPar(EdbID id, const char *option)  {int id4[4]; id.Get(id4); return MakeInPar(id4,option);}
   int     CopyFile(int id1[4], int id2[4], const char *suffix, bool overwrite);
   int     CopyPar(int id1[4], int id2[4], bool overwrite=true) {return CopyFile(id1,id2,"par",overwrite);}
   int     CopyPred(int id1[4],int id2[4], bool overwrite=true) {return CopyFile(id1,id2,"pred.root",overwrite);}
@@ -50,8 +51,6 @@ public:
   int     WriteFound(EdbPattern &pred, int id[4], int flag=-1) {return WritePatRoot(pred,id,"found.root",flag);}
   int     ReadFound(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadFound(pred,id4,flag);}
   int     ReadPred(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadPred(pred,id4,flag);}
-
-  int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);
 
   EdbRun *InitRun(int id[4]);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
@@ -82,7 +81,11 @@ public:
   int     LinkSet(EdbScanSet &sc, int npre=3, int nfull=1, int correct_ang=1);
   int     Align(int id1[4], int id2[4], const char *option="");
   int     AlignAll(int id1[4], int id2[4], int npre=1, int nfull=3, const char *opt="-z");
+  int     AlignAll(EdbID id1, EdbID id2, int npre=1, int nfull=3, const char *opt="-z")
+    {int id41[4]; id1.Get(id41); int id42[4]; id2.Get(id42); return AlignAll(id41, id42, npre, nfull, opt);}
   int     AlignSet( EdbScanSet &sc, int npre=1, int nfull=3, const char *opt="-z");
+  int     TrackSetBT( EdbScanSet &sc, EdbScanCond &cond, TCut c="1");
+
   bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6, const char *parfile="fullalignment");
   bool    ProjectFound(int id1[4],int id2[4]);
@@ -112,6 +115,11 @@ public:
   int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
   int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
   int     ReadFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
+
+  int     WriteScanSet(EdbID id, EdbScanSet &ss);
+  EdbScanSet  *ReadScanSet(EdbID id);
+
+  int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);
 
   void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);

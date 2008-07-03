@@ -23,7 +23,7 @@ EdbScanSet::EdbScanSet()
 }
 
 //----------------------------------------------------------------
-void EdbScanSet::MakeNominalSet(Int_t from_plate, Int_t to_plate, Float_t z0, Float_t dz, Int_t vmi, Int_t vma)
+void EdbScanSet::MakeNominalSet(Int_t from_plate, Int_t to_plate, Float_t z0, Float_t dz, Int_t vmi, Int_t vma, float shr)
 {
   // assumed that brick eB.ID is already set
 
@@ -34,6 +34,8 @@ void EdbScanSet::MakeNominalSet(Int_t from_plate, Int_t to_plate, Float_t z0, Fl
     EdbPlateP *plate = new EdbPlateP();
     plate->SetID(p);
     plate->SetZlayer(z,z-150,z+150);
+    plate->GetLayer(1)->SetShrinkage(shr);
+    plate->GetLayer(2)->SetShrinkage(shr);
     eB.AddPlate(plate);
     eIDS.Add(new EdbID(eB.ID(),p,vmi,vma));
     p += step;
