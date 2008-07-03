@@ -29,7 +29,7 @@
 #include "EdbPVRec.h"
 #endif
 
-TCut signal("1");
+TCut csignal("1");
 TCut cut1("pid2>-1&&eCHI2P<1.5");
 TCut sameview("(s1.eAid[1]==s2.eAid[1])");
 TCut diffview("(s1.eAid[1]!=s2.eAid[1])");
@@ -80,42 +80,42 @@ void init()
 //-----------------------------------------------------------------
 void check_surf( TCanvas *surf )
 {
-  printf("check_surf with the cut: %s \n", signal.GetTitle() );
+  printf("check_surf with the cut: %s \n", csignal.GetTitle() );
   
-  surf->cd(1);  couples->Draw("s.eY:s.eX",signal);
-  surf->cd(2);  couples->Draw("s.eTY:s.eTX",signal);
+  surf->cd(1);  couples->Draw("s.eY:s.eX",csignal);
+  surf->cd(2);  couples->Draw("s.eTY:s.eTX",csignal);
   surf->cd(5); {
-    couples->Draw("eCHI2P", signal );
+    couples->Draw("eCHI2P", csignal );
     couples->SetLineColor(kGreen);
-    couples->Draw("eCHI2P", signal && sameview ,"same");
+    couples->Draw("eCHI2P", csignal && sameview ,"same");
     couples->SetLineColor(kRed);
-    couples->Draw("eCHI2P", signal && diffview,"same");
+    couples->Draw("eCHI2P", csignal && diffview,"same");
     couples->SetLineColor(6);
-    couples->Draw("eCHI2P", signal && diffarea,"same");
+    couples->Draw("eCHI2P", csignal && diffarea,"same");
   }
   couples->SetLineColor(1);
   surf->cd(3); {
     couples->SetLineColor(kBlue);
-    couples->Draw("s1.eW>>hw1(15,5,20)", signal );
+    couples->Draw("s1.eW>>hw1(15,5,20)", csignal );
     couples->SetLineColor(kRed);
-    couples->Draw("s2.eW", signal,"same");
+    couples->Draw("s2.eW", csignal,"same");
   } 
   couples->SetLineColor(1);
   
-  surf->cd(4);  couples->Draw("s.eW>>hw(25,10,35)", signal );
-  surf->cd(6);  couples->Draw("eCHI2P:s.eW>>hchiw(25,10,35,30,0,3.)", signal,"colZ");
+  surf->cd(4);  couples->Draw("s.eW>>hw(25,10,35)", csignal );
+  surf->cd(6);  couples->Draw("eCHI2P:s.eW>>hchiw(25,10,35,30,0,3.)", csignal,"colZ");
 
 }
 
 //-----------------------------------------------------------------
 void check_sigma( TCanvas *cs )
 {
-  printf("check_sigma with the cut: %s \n", signal.GetTitle() );
+  printf("check_sigma with the cut: %s \n", csignal.GetTitle() );
 
-  couples->Project("htx1(20,-1.,1.,40,0.,0.1)", "abs(s1.eTX-tx):tx",signal,"prof");
-  couples->Project("htx2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTX-tx):tx",signal,"prof");
-  couples->Project("hty1(20,-1.,1.,40,0.,0.1)", "abs(s1.eTY-ty):ty",signal,"prof");
-  couples->Project("hty2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTY-ty):ty",signal,"prof");
+  couples->Project("htx1(20,-1.,1.,40,0.,0.1)", "abs(s1.eTX-tx):tx",csignal,"prof");
+  couples->Project("htx2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTX-tx):tx",csignal,"prof");
+  couples->Project("hty1(20,-1.,1.,40,0.,0.1)", "abs(s1.eTY-ty):ty",csignal,"prof");
+  couples->Project("hty2(20,-1.,1.,40,0.,0.1)", "abs(s2.eTY-ty):ty",csignal,"prof");
     TH1* htx1  = (TH1*) gDirectory->Get("htx1");
     TH1* htx2  = (TH1*) gDirectory->Get("htx2");
     TH1* hty1  = (TH1*) gDirectory->Get("hty1");
@@ -135,10 +135,10 @@ void check_sigma( TCanvas *cs )
     hty2->SetLineColor(kBlue);
     hty2->Draw("same");
   }
-  couples->Project("htt1(10,0.,1.,40,0.,0.1)", "abs(dst1):ts",signal,"prof");
-  couples->Project("htt2(10,0.,1.,40,0.,0.1)", "abs(dst2):ts",signal,"prof");
-  couples->Project("htl1(10,0.,1.,40,0.,0.1)", "dsl1:ts",signal,"prof");
-  couples->Project("htl2(10,0.,1.,40,0.,0.1)", "dsl2:ts",signal,"prof");
+  couples->Project("htt1(10,0.,1.,40,0.,0.1)", "abs(dst1):ts",csignal,"prof");
+  couples->Project("htt2(10,0.,1.,40,0.,0.1)", "abs(dst2):ts",csignal,"prof");
+  couples->Project("htl1(10,0.,1.,40,0.,0.1)", "dsl1:ts",csignal,"prof");
+  couples->Project("htl2(10,0.,1.,40,0.,0.1)", "dsl2:ts",csignal,"prof");
     TH1* htt1  = (TH1*) gDirectory->Get("htt1");
     TH1* htt2  = (TH1*) gDirectory->Get("htt2");
     TH1* htl1  = (TH1*) gDirectory->Get("htl1");
@@ -162,9 +162,9 @@ void check_sigma( TCanvas *cs )
 
   cs->cd(5); {
     cs->GetPad(4)->SetGrid(1,1);
-    couples->Project("hs" ,"s.eW:ts" , signal, "prof");
-    couples->Project("hs1","s1.eW:ts", signal, "prof");
-    couples->Project("hs2","s2.eW:ts", signal, "prof");
+    couples->Project("hs" ,"s.eW:ts" , csignal, "prof");
+    couples->Project("hs1","s1.eW:ts", csignal, "prof");
+    couples->Project("hs2","s2.eW:ts", csignal, "prof");
     TH1* hs  = (TH1*) gDirectory->Get("hs");
     TH1* hs1 = (TH1*) gDirectory->Get("hs1");
     TH1* hs2 = (TH1*) gDirectory->Get("hs2");
@@ -177,9 +177,9 @@ void check_sigma( TCanvas *cs )
   }
   cs->cd(6); {
     couples->SetLineColor(kBlue);
-    couples->Draw("eN1tot:ts", signal, "prof");
+    couples->Draw("eN1tot:ts", csignal, "prof");
     couples->SetLineColor(kRed);
-    couples->Draw("eN2tot:ts", signal, "prof same");
+    couples->Draw("eN2tot:ts", csignal, "prof same");
   } 
   couples->SetLineColor(1);
 
@@ -191,21 +191,21 @@ void check_view( TCanvas *cs )
   // check the accuracy deterioration in case when the segments are in 
   // the different views
 
-  printf("check_view with the cut: %s \n", signal.GetTitle() );
+  printf("check_view with the cut: %s \n", csignal.GetTitle() );
 
   cs->cd(1);
-  couples->Draw("eCHI2P", signal&&sameview);
-  couples->Draw("eCHI2P", signal&&diffview,"same");
-  couples->Draw("eCHI2P", signal&&diffarea,"same");
+  couples->Draw("eCHI2P", csignal&&sameview);
+  couples->Draw("eCHI2P", csignal&&diffview,"same");
+  couples->Draw("eCHI2P", csignal&&diffarea,"same");
   cs->cd(2);
   couples->SetMarkerStyle(20);
   couples->SetAlias("same_view","(s1.eAid[1]==s2.eAid[1])");
-  couples->Draw("s.eTY:same_view",signal,"prof");
+  couples->Draw("s.eTY:same_view",csignal,"prof");
   cs->cd(3);
-  couples->Draw("s.eTX:same_view",signal,"prof");
+  couples->Draw("s.eTX:same_view",csignal,"prof");
   cs->cd(4);
-  couples->Draw("s.eTX>>htxv(100)",signal&&sameview);
-  couples->Draw("s.eTX",signal&&diffview,"same");
+  couples->Draw("s.eTX>>htxv(100)",csignal&&sameview);
+  couples->Draw("s.eTX",csignal&&diffview,"same");
   couples->SetMarkerStyle(1);
   gStyle->SetOptStat("nemr");
 
@@ -214,16 +214,16 @@ void check_view( TCanvas *cs )
 //-----------------------------------------------------------------
 void check_shrinkage( TCanvas *diff )
 {
-  printf("check_shrinkage with the cut: %s \n", signal.GetTitle() );
+  printf("check_shrinkage with the cut: %s \n", csignal.GetTitle() );
 
   diff->cd(1);
-  couples->Draw("s1.eTX-tx:tx", signal );
+  couples->Draw("s1.eTX-tx:tx", csignal );
   diff->cd(2);
-  couples->Draw("s2.eTX-tx:tx", signal );
+  couples->Draw("s2.eTX-tx:tx", csignal );
   diff->cd(3);
-  couples->Draw("s1.eTY-ty:ty", signal );
+  couples->Draw("s1.eTY-ty:ty", csignal );
   diff->cd(4);
-  couples->Draw("s2.eTY-ty:ty", signal );
+  couples->Draw("s2.eTY-ty:ty", csignal );
   gStyle->SetOptStat("nemr");
 
 }
@@ -235,14 +235,14 @@ void correct_shrinkage( TCanvas *cshr )
    // Note: do not use s.* (linked segment parameters), because them could 
    // be different from the "base angle" calculated here directly
 
-   printf("correct_shrinkage with the cut: %s \n", signal.GetTitle() );
+   printf("correct_shrinkage with the cut: %s \n", csignal.GetTitle() );
 
    //  TCut cut1("pid2>-1&&eCHI2P<1.5");
 
    cshr->cd(1);   
    TH1* hsh1  ;
 
-   couples->Draw("s1.eTX-tx:tx>>hsh1", signal,"prof");
+   couples->Draw("s1.eTX-tx:tx>>hsh1", csignal,"prof");
    hsh1 = (TH1*) gDirectory->Get("hsh1");
    hsh1->Fit("pol1","wQ","",-.4,.4);
 
@@ -256,7 +256,7 @@ void correct_shrinkage( TCanvas *cshr )
 
    char str[160]="";
    sprintf(str,"s1.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)>>hsh3",p1,p0);
-   couples->Draw(str,signal,"prof");
+   couples->Draw(str,csignal,"prof");
    hsh3 = (TH1*) gDirectory->Get("hsh3");
    hsh3->Fit("pol1","wQ","",-.4,.4);
 
@@ -268,7 +268,7 @@ void correct_shrinkage( TCanvas *cshr )
    cshr->cd(2);
    TH1* hsh2;
 
-   couples->Draw("s2.eTX-tx:tx>>hsh2", signal,"prof");
+   couples->Draw("s2.eTX-tx:tx>>hsh2", csignal,"prof");
    hsh2 = (TH1*) gDirectory->Get("hsh2");
    hsh2->Fit("pol1","wQ","",-.4,.4);
   
@@ -280,7 +280,7 @@ void correct_shrinkage( TCanvas *cshr )
    TH1* hsh4 ;
 
    sprintf(str,"s2.eTX*(1-(%f))-(%f)-(s2.eX-s1.eX)/(s2.eZ-s1.eZ):(s2.eX-s1.eX)/(s2.eZ-s1.eZ)>>hsh4",p1,p0);
-   couples->Draw(str, signal ,"prof");
+   couples->Draw(str, csignal ,"prof");
    hsh4 = (TH1*) gDirectory->Get("hsh4");   
    hsh4->Fit("pol1","wQ","",-.4,.4);
   
@@ -295,16 +295,16 @@ void correct_shrinkage( TCanvas *cshr )
 //-----------------------------------------------------------------
 void check_distorsion( TCanvas *cs )
 {
-  printf("check_distortion with the cut: %s \n", signal.GetTitle() );
+  printf("check_distortion with the cut: %s \n", csignal.GetTitle() );
 
   cs->cd(1);
-  couples->Draw("s1.eTX-s.eTX:s.eX", signal );
+  couples->Draw("s1.eTX-s.eTX:s.eX", csignal );
   cs->cd(2);
-  couples->Draw("s1.eTY-s.eTY:s.eY", signal );
+  couples->Draw("s1.eTY-s.eTY:s.eY", csignal );
   cs->cd(3);
-  couples->Draw("s2.eTX-s.eTX:s.eX", signal );
+  couples->Draw("s2.eTX-s.eTX:s.eX", csignal );
   cs->cd(4);
-  couples->Draw("s2.eTY-s.eTY:s.eY", signal );
+  couples->Draw("s2.eTY-s.eTY:s.eY", csignal );
   gStyle->SetOptStat("nemr");
 }
 //-----------------------------------------------------------------
@@ -319,19 +319,20 @@ void check_distorsion( TCanvas *cs )
 }
 */
 //-----------------------------------------------------------------
-void check_cp(int output=0, char *fname=0, char *signal_cut="1")
+void check_cp(int output=0, char *fname=0, char *csignal_cut="1")
 {
-  signal = signal_cut;
+  csignal = csignal_cut;
 
   cout << "fname  : " << fname  << endl;
 
-  printf("Check couples with the general selection as: %s\n",signal_cut);
+  printf("Check couples with the general selection as: %s\n",csignal_cut);
   printf("s1: Red  line\n");
   printf("s2: Blue line\n");
   printf("functions: check_surf, check_sigma, check_shrinkage, check_distorsion, check_view, correct_shrinkage\n");
   
-  if      (fname&&output>=2)   TFile *f = new TFile(fname,"UPDATE");
-  else if (fname&&output<2)    TFile *f = new TFile(fname);
+  TFile *f=0;
+  if      (fname&&output>=2)   f = new TFile(fname,"UPDATE");
+  else if (fname&&output<2)    f = new TFile(fname);
   
   couples = (TTree*) gFile->Get("couples") ;
 
@@ -359,62 +360,63 @@ void check_cp(int output=0, char *fname=0, char *signal_cut="1")
     if(cdist ) { cdist ->Draw();  do_dist =0; }
   }
 
-if(do_surf ) {
-   csurf  = new TCanvas("csurf" ,"couples_surf"        ,XSIZE,YSIZE);
-   csurf->Divide(2,3);
-   check_surf(csurf);
-}
-if(do_sig  ) {
-   csig   = new TCanvas("csig"  ,"couples_sigma"       ,XSIZE,YSIZE);
-   csig ->Divide(2,3);
-   check_sigma(csig);
-}
-if(do_view ) {
-   cview  = new TCanvas("cview" ,"couples_view"        ,XSIZE,YSIZE);
-   cview->Divide(2,2);
-   check_view(cview);
-}
-if(do_diff ) {
-   cdiff  = new TCanvas("cdiff" ,"couples_shrinkage"   ,XSIZE,YSIZE);
-   cdiff->Divide(2,2);
-   check_shrinkage(cdiff);
-}
-if(do_shr  ) {
-   cshr   = new TCanvas("cshr"  ,"couples_shrinkage_corr",XSIZE,YSIZE);
-   cshr ->Divide(2,2);
-   correct_shrinkage(cshr);
-}
-if(do_dist ) {
-   cdist  = new TCanvas("cdist" ,"couples_distortion"  ,XSIZE,YSIZE);
-   cdist->Divide(2,2);
-   check_distorsion(cdist) ;
-}
+  if(do_surf ) {
+    csurf  = new TCanvas("csurf" ,"couples_surf"        ,XSIZE,YSIZE);
+    csurf->Divide(2,3);
+    check_surf(csurf);
+  }
+  if(do_sig  ) {
+    csig   = new TCanvas("csig"  ,"couples_sigma"       ,XSIZE,YSIZE);
+    csig ->Divide(2,3);
+    check_sigma(csig);
+  }
+  if(do_view ) {
+    cview  = new TCanvas("cview" ,"couples_view"        ,XSIZE,YSIZE);
+    cview->Divide(2,2);
+    check_view(cview);
+  }
+  if(do_diff ) {
+    cdiff  = new TCanvas("cdiff" ,"couples_shrinkage"   ,XSIZE,YSIZE);
+    cdiff->Divide(2,2);
+    check_shrinkage(cdiff);
+  }
+  if(do_shr  ) {
+    cshr   = new TCanvas("cshr"  ,"couples_shrinkage_corr",XSIZE,YSIZE);
+    cshr ->Divide(2,2);
+    correct_shrinkage(cshr);
+  }
+  if(do_dist ) {
+    cdist  = new TCanvas("cdist" ,"couples_distortion"  ,XSIZE,YSIZE);
+    cdist->Divide(2,2);
+    check_distorsion(cdist) ;
+  }
 
-   if( (fname&&output==2) || (fname&&output==3) ) {
-      printf("save as canvases into root file\n");
-      if(csurf ) csurf ->Write("cp_surf");
-      if(csig  ) csig  ->Write("cp_sigma" ); 
-      if(cview ) cview ->Write("cp_view");
-      if(cdiff ) cdiff ->Write("cp_diff");
-      if(cshr  ) cshr  ->Write("cp_shr" ); 
-      if(cdist ) cdist ->Write("cp_dist");
-   } 
-   if(output==1  || (fname&&output==3) ) {
-      printf("save as gif pictures\n");
-      gSystem->Sleep(500);
-      if(csurf ) csurf ->SaveAs("cp_surf.gif" );
-      if(csig  ) csig  ->SaveAs("cp_sigma.gif"); 
-      if(cview ) cview ->SaveAs("cp_view.gif");
-      if(cdiff ) cdiff ->SaveAs("cp_diff.gif");
-      if(cshr  ) cshr  ->SaveAs("cp_shr.gif" ); 
-      if(cdist ) cdist ->SaveAs("cp_dist.gif");
-    }
+  if( (fname&&output==2) || (fname&&output==3) ) {
+    printf("save as canvases into root file\n");
+    if(csurf ) csurf ->Write("cp_surf");
+    if(csig  ) csig  ->Write("cp_sigma" ); 
+    if(cview ) cview ->Write("cp_view");
+    if(cdiff ) cdiff ->Write("cp_diff");
+    if(cshr  ) cshr  ->Write("cp_shr" ); 
+    if(cdist ) cdist ->Write("cp_dist");
+  } 
+  if(output==1  || (fname&&output==3) ) {
+    printf("save as gif pictures\n");
+    gSystem->Sleep(500);
+    if(csurf ) csurf ->SaveAs("cp_surf.gif" );
+    if(csig  ) csig  ->SaveAs("cp_sigma.gif"); 
+    if(cview ) cview ->SaveAs("cp_view.gif");
+    if(cdiff ) cdiff ->SaveAs("cp_diff.gif");
+    if(cshr  ) cshr  ->SaveAs("cp_shr.gif" ); 
+    if(cdist ) cdist ->SaveAs("cp_dist.gif");
+  }
+  if(f) f->Close();
 }
 
 //-----------------------------------------------------------------
-void check_cp(char *signal_cut="1")
+void check_cp(char *csignal_cut="1")
 {
-   check_cp( 0,  0, signal_cut ) ;
+   check_cp( 0,  0, csignal_cut ) ;
 }
 
 //-----------------------------------------------------------------
@@ -423,10 +425,10 @@ int main( int argc, char *argv[] )
 {          
    int output=3;
    char* fname=argv[1];
-   char* signal_cut="1";
+   char* csignal_cut="1";
 
    gStyle->SetPalette(1);
-   check_cp( output,  fname, signal_cut ) ;
+   check_cp( output,  fname, csignal_cut ) ;
 
    return 1 ;
 }

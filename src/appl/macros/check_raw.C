@@ -37,7 +37,6 @@ TTree* cr_tree;
 //-------------------------------------------------------
 void init()
 {
- //cr_tree = (TTree*)gDirectory->Get("Views");
   cr_tree->SetAlias("puls",  "segments.GetPuls()");
   cr_tree->SetAlias("volume","segments.GetVolume()");
 }
@@ -158,7 +157,8 @@ void check_raw( int output=0, char *fname=0 )
   if      (fname&&output>=2)   run = new EdbRun( fname , "UPDATE");
   else if (fname&&output<2)    run = new EdbRun( fname );
   
-  cr_tree = run->GetTree() ;
+  if(run) cr_tree = run->GetTree() ;
+  else    cr_tree = (TTree*)gDirectory->Get("Views");
 
   init();
 
@@ -203,7 +203,7 @@ void check_raw( int output=0, char *fname=0 )
       if(cview) cview->SaveAs("raw_view.gif");
       if(csurf) csurf->SaveAs("raw_surf.gif");
     }
-   run->Close();
+   if(run) run->Close();
 }
 
 //-----------------------------------------------------------------
