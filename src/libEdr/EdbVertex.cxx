@@ -472,7 +472,8 @@ void EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t, float X0, float m)
   // Input: EdbSegP tr - track parameters near to vertex
   //        X0         - rad length for ms estimation
   //        m          - mass of the particle
-  // Output: VERTEX:Track t - object propagated to the vertex position with the estimated erorrs matrix
+  //          if X0 or m are negative - ignore multiple scattering
+  // Output: VERTEX:Track t - object propagated to the vertex position with the estimated errors matrix
   // Used: eX,eY,eZ - the reference point of this vertex
 
   double dz = eZ - tr.Z();
@@ -690,6 +691,8 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
   v->use_momentum(eUseMom);
 
   float X0 =  ePVR->GetScanCond()->RadX0();
+  if(!eUseMom) X0 = -1.;  // ignore multiple scattering contribution if eUseMom is false
+
   EdbSegP *seg=0;
   for (int i=0; i<n; i++)
     {
