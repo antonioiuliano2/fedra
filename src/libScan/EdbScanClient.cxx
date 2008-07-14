@@ -84,10 +84,11 @@ int EdbScanClient::LoadPlate(int BRICK, int PLATE, const char *mapext, int nAtte
 {
   Int_t attempt=1;
   eMess1[0]=0;
+
   while( (attempt<nAttempts+1) &&  (eMess1[0]!='O') )
     {
       printf("Plate %d brick %d : load attempt %d (of %d)\n",PLATE,BRICK,attempt,nAttempts);
-      sprintf(eCMD,"201 %d %d 0 0 gg %s\n",BRICK,PLATE,mapext);
+      sprintf(eCMD,"201 %d %d 0 0 gg %s\n",ShortBrick(BRICK),PLATE,mapext);
       printf("%s",eCMD);
       eSock->SendRaw(eCMD,strlen(eCMD));
       RcvLine(eSock,eMess,sizeof(eMess));
@@ -151,7 +152,7 @@ void EdbScanClient::AsyncScanAreaS(  int id1, int id2, int id3, int id4,
 {
   // send the instruction for area scan and do not wait for the result
   memset(eCMD,0,256);
-  sprintf(eCMD,"101 %d %d %d %d %f %f %f %f %s\n", id1,id2,id3,id4,x1,y1,x2,y2,fname);
+  sprintf(eCMD,"101 %d %d %d %d %f %f %f %f %s\n", ShortBrick(id1),id2,id3,id4,x1,y1,x2,y2,fname);
   printf("%s",eCMD);
   eSock->SendRaw(eCMD,strlen(eCMD));
   return;
@@ -180,7 +181,7 @@ void EdbScanClient::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id4,
 {
   memset(eCMD,0,256);
   sprintf(eCMD,"102 %d %d %d %d %f %f %f %f %s %f %f %f %f\n", 
-	  id1,id2,id3,id4,x1,y1,x2,y2,fname,x1n,y1n,x2n,y2n);
+	  ShortBrick(id1),id2,id3,id4,x1,y1,x2,y2,fname,x1n,y1n,x2n,y2n);
   printf("%s",eCMD);
   eSock->SendRaw(eCMD,strlen(eCMD));
   return;
@@ -237,14 +238,14 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
     else  sn = areas.GetSegment(i);
 
 #ifdef WIN32
-    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
 #else
-    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
 #endif
 
     gSystem->Exec(str);
     printf("ScanAreas: scan progress: %d out of %d (%4.1f%%)\n",i,n,100.*i/n);
-    sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
+    sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
     if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),
 			   s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
 			   str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {
@@ -257,7 +258,7 @@ int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const ch
       }
       continue;  // still try to scan other predictions
     }
-    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
     run.GetHeader()->SetFlag(9, s->ID());
     run.GetHeader()->SetFlag(8, s->MCEvt());
     AddRWC(&run,str,true,options);
@@ -284,7 +285,7 @@ int EdbScanClient::ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, con
   for(int i=0; i<=n; i++) {
     if(s) {
       if(AsyncWaitForScanResult()==1) {
-	sprintf(str,"%s\\raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+	sprintf(str,"%s\\raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
 	run.GetHeader()->SetFlag(9, s->ID());
 	run.GetHeader()->SetFlag(8, s->MCEvt());
 	AddRWC(&run,str,true,options);
@@ -298,13 +299,13 @@ int EdbScanClient::ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, con
     }
 
 #ifdef WIN32
-    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
 #else
-    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),id[0], id[1], id[2], s->ID()); // s->ID() must be unique!
+    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
 #endif
 
     gSystem->Exec(str);
-    sprintf(str,"%s\\raw.%d.%d.%d.%d",eRawDirServer.Data(),id[0], id[1], id[2], s->ID());
+    sprintf(str,"%s\\raw.%d.%d.%d.%d",eRawDirServer.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
     if(s1) {
       AsyncScanPreloadAreaS( id[0], id[1], id[2], s->ID(),  
 			     s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), str,
@@ -330,7 +331,7 @@ int EdbScanClient::ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const
   int ic=0;
   for(int i=0; i<n; i++) {
     s = areas.GetSegment(i);
-    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),id[0], id[1], id[2], s->ID());
+    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
     run.GetHeader()->SetFlag(9, s->ID());
     run.GetHeader()->SetFlag(8, s->MCEvt());
     AddRWC(&run,str,true,options);

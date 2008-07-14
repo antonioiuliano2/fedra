@@ -53,6 +53,9 @@ public:
   int   ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
   int   ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
 
+// "short" version of brickID to be passed into sysal command line via BernScanDriver
+  Short_t  ShortBrick(Int_t brick){ return brick%10000; }
+
   static int     AddRWC_(EdbRun* run, char* rwcname, int bAddRWD=true, const char* options="");
 
   void   Print();
