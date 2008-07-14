@@ -13,6 +13,82 @@
 ClassImp(TOracleServerE2)
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_eventbrick)
+{
+  int nmarks=0;
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    // select * from vw_cs_candidates@opita01 vwcs 
+    // inner join tb_cs_candidate_validation@opita01 vld on (vld.id_candidate= vwcs.id_candidate)
+    // where vld.id_eventbrick = 3021343 and vld.valid = 'Y';
+
+    sprintf(query,
+            "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick=%d",
+	    eRTS.Data(),id_eventbrick);
+
+    fStmt->setSQL(query);
+    Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    int id,side;
+    float posx,posy;
+    while (rs->next()){
+      id = rs->getInt(1);
+      posx = rs->getFloat(2);
+      posy = rs->getFloat(3);
+      side = rs->getInt(4);
+      printf("%d %f %f %d \n", id, posx, posy, side);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadTemplateMarks", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return nmarks;
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_eventbrick)
+{
+  int nmarks=0;
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,
+            "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick=%d",
+	    eRTS.Data(),id_eventbrick);
+
+    fStmt->setSQL(query);
+    Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    int   id,side;
+    float posx,posy;
+    while (rs->next()){
+      id = rs->getInt(1);
+      posx = rs->getFloat(2);
+      posy = rs->getFloat(3);
+      side = rs->getInt(4);
+      printf("%d %f %f %d \n", id, posx, posy, side);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadTemplateMarks", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return nmarks;
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor)
 {
   EdbScanProc sproc;
