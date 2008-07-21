@@ -392,17 +392,29 @@ Int_t  EdbMarksSet::ChangeMapStringSpacer( TString &str, char oldspacer, char ne
 }
 
 //______________________________________________________________________________
-Int_t  EdbMarksSet::ReadMap( char *file, char spacer)
+Int_t  EdbMarksSet::ReadMap( char *file, char spacer, char shape)
 {
   // Reads map file and adds informations to eAbsolute
+  // If shape is 'S', then the "Front X-Ray Mark Map or Optical Mark Map" format is assumed
+  // If shape is 'L', then the "Lateral X-Ray Mark Map" format is assumed
   Int_t nmarks = 0;
   Int_t mark, flag;
   Float_t x, y;
 
   FILE *fp = fopen( file,"r");
 
-  TString str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
-  TString str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
+  TString str_header;
+  TString str_mark;
+
+  if (shape=='S') {
+    str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
+  } else if (shape=='L') {
+    str_header = "mapx:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
+  } else {
+    Log(1,"EdbMarksSet::ReadMap","ERROR: shape '%c' is not implemented\n", shape); return 0;
+  }
 
   ChangeMapStringSpacer(str_header,'_',spacer);
   ChangeMapStringSpacer(str_mark,'_',spacer);
@@ -429,15 +441,27 @@ Int_t  EdbMarksSet::ReadMap( char *file, char spacer)
 }
 
 //______________________________________________________________________________
-Int_t  EdbMarksSet::WriteMap( char *file, char spacer)
+Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape)
 {
   // Create a map string starting from the informations stored in this class
   // and in the EdbMarksBox object eAbsolute
+  // If shape is 'S', then the "Front X-Ray Mark Map or Optical Mark Map" format is assumed
+  // If shape is 'L', then the "Lateral X-Ray Mark Map" format is assumed
 
   FILE *fp = fopen( file,"w");
 
-  TString str_header = "mapext:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
-  TString str_mark = ";_%d_%0.4f_%0.4f_%0.4f_%0.4f_1_1_%d";
+  TString str_header;
+  TString str_mark;
+
+  if (shape=='S') {
+    str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
+  } else if (shape=='L') {
+    str_header = "mapx:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%*f_%*f_%*d_%*d_%d";
+  } else {
+    Log(1,"EdbMarksSet::ReadMap","ERROR: shape '%c' is not implemented\n", shape); return 0;
+  }
 
   ChangeMapStringSpacer(str_header,'_',spacer);
   ChangeMapStringSpacer(str_mark,'_',spacer);

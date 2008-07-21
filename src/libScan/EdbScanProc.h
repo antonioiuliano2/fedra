@@ -129,8 +129,8 @@ public:
   int     TestAl(EdbPattern &p1, EdbPattern &p2);
   int     TestAl(const char *cpfile1, const char *cpfile2, TCut &cut, float dz);
 
-  int     ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer='_');
-  int     WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer='_');
+  int     ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer='_', char shape='S');
+  int     WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer='_', char shape='S');
 
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();
