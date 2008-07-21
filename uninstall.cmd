@@ -41,16 +41,16 @@ IF NOT EXIST %installdir%\src\config\ProjectDef.mk (
  if exist %configdir%\ProjectDef.mk     del /q %configdir%\ProjectDef.mk
  
  if exist %installdir%\setup_new.cmd del /q %installdir%\setup_new.cmd
- if DEFINED FEDRA_ROOT win32\tools\setenv.exe  -u FEDRA_ROOT -delete
- if DEFINED FEDRA_ROOT win32\tools\pathman /ru %%FEDRA_ROOT%%\bin
- if DEFINED FEDRA_ROOT win32\tools\pathman /ru %%FEDRA_ROOT%%\lib
+ if DEFINED FEDRA_ROOT %installdir%\win32\tools\setenv.exe  -u   FEDRA_ROOT -delete
+ if DEFINED FEDRA_ROOT %installdir%\win32\tools\pathman    /ru %%FEDRA_ROOT%%\bin
+ if DEFINED FEDRA_ROOT %installdir%\win32\tools\pathman    /ru %%FEDRA_ROOT%%\lib
 
  if exist %installdir%\src\vsvars32.bat del /q %installdir%\src\vsvars32.bat 
 
 :: remove old FEDRA installation if defined
- if DEFINED FEDRA win32\tools\pathman /ru %%FEDRA%%\bin
- if DEFINED FEDRA win32\tools\pathman /ru %%FEDRA%%\lib
- if DEFINED FEDRA win32\tools\setenv.exe  -u FEDRA -delete
+ if DEFINED FEDRA %installdir%\win32\tools\pathman    /ru %%FEDRA%%\bin
+ if DEFINED FEDRA %installdir%\win32\tools\pathman    /ru %%FEDRA%%\lib
+ if DEFINED FEDRA %installdir%\win32\tools\setenv.exe  -u   FEDRA -delete
 
 :: remove MSVS temporary files
  if exist %installdir%\win32\solution7.1\Fedra.suo del /A:H %installdir%\win32\solution7.1\Fedra.suo

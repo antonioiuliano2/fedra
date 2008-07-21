@@ -168,10 +168,10 @@ class EdbShowerRec : public TObject
   Double_t bin51,bin52,bin53,bin54,bin55, bin56, bin57, bin58, bin59, bin60;
   Int_t type;
   
-  TMultiLayerPerceptron *mlp1();
-  TMultiLayerPerceptron *mlp2();
-  TMultiLayerPerceptron *mlp3();
-  TMultiLayerPerceptron *mlp4();
+  TMultiLayerPerceptron *mlp1;
+  TMultiLayerPerceptron *mlp2;
+  TMultiLayerPerceptron *mlp3;
+  TMultiLayerPerceptron *mlp4;
   char cmd[500];
   
   Int_t      GetID() const { return eID; }
@@ -248,7 +248,7 @@ class EdbShowerRec : public TObject
   
   void InitPiece(EdbDataPiece &piece, const char *cpfile, const char *parfile);
   int  ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
-  int  FindPredictions(EdbPattern &pred, const char *cpfile, const char *parfile, EdbPattern &found);
+ // int  FindPredictions(EdbPattern &pred, const char *cpfile, const char *parfile, EdbPattern &found);
   /*
     void rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *TRid, int piece2, int piece2par, int DOWN, float Rcut,  float Tcut);
     void recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *TRid, int piece2, int piece2par, float Rcut,  float Tcut);
