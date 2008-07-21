@@ -167,11 +167,15 @@ class EdbShowerRec : public TObject
   Double_t bin41,bin42,bin43,bin44,bin45, bin46, bin47, bin48, bin49, bin50;
   Double_t bin51,bin52,bin53,bin54,bin55, bin56, bin57, bin58, bin59, bin60;
   Int_t type;
-  
-  TMultiLayerPerceptron *mlp1;
-  TMultiLayerPerceptron *mlp2;
-  TMultiLayerPerceptron *mlp3;
-  TMultiLayerPerceptron *mlp4;
+
+#ifdef WIN32
+#else
+  TMultiLayerPerceptron *mlp1();
+  TMultiLayerPerceptron *mlp2();
+  TMultiLayerPerceptron *mlp3();
+  TMultiLayerPerceptron *mlp4();
+#endif
+
   char cmd[500];
   
   Int_t      GetID() const { return eID; }

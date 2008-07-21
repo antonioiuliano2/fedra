@@ -78,7 +78,7 @@ LDFLAGS       = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
 SOFLAGS       = $(dlllflags:-pdb:none=)
 
 # - pre-processing to define ROOTLIBS (dependent on root version)
-ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib
+ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib \
 !IF EXISTS("$(ROOTSYS)/lib/libNet.lib ")
                 libNet.lib \
 !ENDIF
