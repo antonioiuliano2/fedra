@@ -46,6 +46,10 @@
 #include "CMatrix.hh"
 #include "VtVector.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 #if defined USE_ROOT && !defined __CINT__
 #include "smatrix/SMatrix.hh"
 #include "smatrix/SVector.hh"
@@ -238,6 +242,10 @@ namespace VERTEX {
     double              k_erg;  // (in Vt: erg)
     double              k_chi2; // (in Vt: chi^2_k) chi2 contrib. to vertex
     double              k_chi2s;// (in Vt: chi^2_k,S) smoothed chi2 contrib. to vertex
+
+#ifdef WIN32
+  ClassDef(Kalman,0)
+#endif
   };
 
   //==============================================================================

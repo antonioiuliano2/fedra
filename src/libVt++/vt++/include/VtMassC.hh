@@ -32,6 +32,10 @@
 #include <vector>
 #include "VtVector.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 namespace VERTEX {
   class Relation;
 
@@ -81,6 +85,10 @@ namespace VERTEX {
     MATRIX::VtVector m_Sl;    // S_l   in Vt (eq. 42)
     Rel_v            m_rel;   // list of tracks participating im mass constr.
     double           m_galp;  // constraint (in Vt: eq. 43)
+
+#ifdef WIN32
+   ClassDef(MassC,0)
+#endif
   };
 
   //==============================================================================

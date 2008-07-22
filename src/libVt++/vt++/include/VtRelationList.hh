@@ -35,6 +35,10 @@
 #include <iosfwd>
 #include <list>
 
+#ifdef WIN32
+#   include "RTypes.h"
+#endif
+
 namespace VERTEX {
   class Relation;
   class RelationIterator;
@@ -90,6 +94,10 @@ namespace VERTEX {
     inline int operator!=(const RelationIterator& rhs) const {
       return iter != rhs.iter;
     }
+
+#ifdef WIN32
+    ClassDef(RelationIterator,0)
+#endif
   }; // class RelationIterator
   
 
@@ -127,6 +135,10 @@ namespace VERTEX {
     inline int operator!=(const ConstRelationIterator& rhs) const {
       return iter != rhs.iter;
     }
+
+#ifdef WIN32
+    ClassDef(ConstRelationIterator,0)
+#endif
   }; // class ConstRelationIterator
 
 
@@ -162,6 +174,9 @@ namespace VERTEX {
     inline int operator!=(const ReverseRelationIterator& rhs) const {
       return iter != rhs.iter;
     }
+#ifdef WIN32
+    ClassDef(ReverseRelationIterator,0)
+#endif
   }; // class ReverseRelationIterator
   
 
@@ -198,6 +213,10 @@ namespace VERTEX {
     inline int operator!=(const ConstReverseRelationIterator& rhs) const {
       return iter != rhs.iter;
     }
+
+#ifdef WIN32
+    ClassDef(ConstReverseRelationIterator,0)
+#endif
   }; // class ConstReverseRelationIterator
 
 
@@ -267,6 +286,10 @@ namespace VERTEX {
 
   private:
     Relation_v   rellist;
+
+#ifdef WIN32
+  ClassDef(RelationList,0)
+#endif
   }; // class RelationList
 
   //==============================================================================

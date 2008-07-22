@@ -30,6 +30,10 @@
 #include <math.h>
 #include "VtMatrix.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 void Dfactir1(int *n, double *a, int *idim, int *ir, int *ifail, double *det, int *jfail);
 void Dfact1(int *n, double *a, int *idim, double *ir, int *ifail, double *det, int *jfail);
 void Dfinv1(int *n, double *a, int *idim, int *ir, int *ifail);
@@ -71,6 +75,10 @@ namespace MATRIX {
     virtual const VtMatrix  operator*(const VtMatrix& rhs);
     ///
     const VtVector  operator*(const VtVector& rhs) const;
+
+#ifdef WIN32
+  ClassDef(VtSqMatrix,0)
+#endif
   }; // class VtSqMatrix
 
   //============================================================================

@@ -31,6 +31,10 @@
 
 #include "VtSqMatrix.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 void Dsinv1(int *idim, double *a, int *n, int *ifail);
 void Dsfact1(int *idim, double *a, int *n, int *ifail, double *det, int *jfail);
 
@@ -126,6 +130,10 @@ namespace MATRIX {
 
   private:
     void VtAssert(void);
+
+#ifdef WIN32
+  ClassDef(VtSymMatrix,0)
+#endif
   };
   
   //============================================================================

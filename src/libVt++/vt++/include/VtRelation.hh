@@ -31,6 +31,10 @@
 #include <iosfwd>
 #include "vt++/VtMassC_list.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 namespace VERTEX {
 
   class Track;
@@ -70,6 +74,10 @@ namespace VERTEX {
     Kalman&  kalman; // reference to Kalman-object
     //#endif
     MassC_v  massc;  // vector of mass-constraint objects
+
+#ifdef WIN32
+  ClassDef(Relation,0)
+#endif
   };
 
   //==============================================================================

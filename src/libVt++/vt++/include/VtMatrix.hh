@@ -33,6 +33,10 @@
 #include <iosfwd>
 #include <assert.h>
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 namespace MATRIX {
   class VtVector;
   class VtNegMatrix;
@@ -173,6 +177,10 @@ namespace MATRIX {
     friend class VtMatrix_row;
     friend class VtMatrix_row_const;
     int          m_size; // size of matrix array
+
+#ifdef WIN32
+  ClassDef(VtMatrix,0)
+#endif
   }; // class VtMatrix
 
   //==============================================================================

@@ -37,6 +37,10 @@
 
 #include "VtSymMatrix.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 #if defined USE_ROOT
 #ifndef __CINT__
 #include "smatrix/SMatrix.hh"
@@ -161,6 +165,9 @@ namespace MATRIX {
     /// propagate all matrix elements
     void propagate(const double dz);
 
+#ifdef WIN32
+  ClassDef(CMatrix,0)
+#endif
   }; // class CMatrix
 
 

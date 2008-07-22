@@ -30,6 +30,9 @@
 // *****************************************************************************
 
 #include <iosfwd>
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
 
 namespace MATRIX {
   class VtVector; // to fake DOC++
@@ -117,6 +120,10 @@ namespace MATRIX {
   private:
     unsigned int v_size;  // no of rows
     double*      v;       // data array
+
+#ifdef WIN32
+  ClassDef(VtVector,0)
+#endif
   };
 
   //==============================================================================

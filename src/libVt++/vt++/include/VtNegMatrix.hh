@@ -27,6 +27,10 @@
 #include <assert.h>
 #include "VtMatrix.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 namespace MATRIX {
   class VtVector;
 
@@ -95,6 +99,10 @@ namespace MATRIX {
     ///
     const VtVector     operator* (const VtVector& rhs) const;
     // not needed: const VtMatrix operator*(const VtNegMatrix& rhs) const;
+
+#ifdef WIN32
+  ClassDef(VtNegMatrix,0)
+#endif
   }; // class VtNegMatrix
 
 

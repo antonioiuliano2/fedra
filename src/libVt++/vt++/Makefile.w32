@@ -10,21 +10,22 @@ LINKDEF_NAME  = cintdict\LinkDef.hh
 TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
 
 #------------------------------------------------------------------------------
-headers  = CMatrix.hh VtDistance.hh VtIni.hh VtKalman.hh VtMassC.hh \
-           VtMatrix.hh VtNegMatrix.hh VtRelation.hh VtRelationList.hh \
-           VtSqMatrix.hh VtSymMatrix.hh VtTrack.hh VtVector.hh VtVertex.hh
+headers  = VtVector.hh VtMatrix.hh VtNegMatrix.hh VtSqMatrix.hh VtSymMatrix.hh \
+           CMatrix.hh VtIni.hh VtTrack.hh VtRelation.hh VtKalman.hh VtMassC.hh \
+           VtRelationList.hh VtVertex.hh VtDistance.hh
 
 SrcSuf   = C
   
 classes  = $(headers:.hh=.c)
 
-CINT     = include\CMatrix.hh        include\VtDistance.hh \
-           include\VtIni.hh          include\VtKalman.hh   \
-           include\VtMassC.hh        include\VtMatrix.hh   \
-           include\VtNegMatrix.hh    include\VtRelation.hh \
-           include\VtRelationList.hh include\VtSqMatrix.hh \
-           include\VtSymMatrix.hh    include\VtTrack.hh    \
-           include\VtVector.hh       include\VtVertex.hh $(LINKDEF_NAME)
+CINT     = include\VtVector.hh      include\CMatrix.hh        \
+           include\VtMatrix.hh      include\VtNegMatrix.hh    \
+           include\VtSqMatrix.hh    include\VtSymMatrix.hh    \
+           include\VtIni.hh 	    include\VtTrack.hh        \
+           include\VtRelation.hh    include\VtKalman.hh       \
+           include\VtMassC.hh       include\VtRelationList.hh \
+           include\VtVertex.hh      include\VtDistance.hh     \
+           $(LINKDEF_NAME)
 
 SRC      = $(classes) $(CINT_NAME).cxx
 OBJS     = $(SRC:.cxx=.obj)

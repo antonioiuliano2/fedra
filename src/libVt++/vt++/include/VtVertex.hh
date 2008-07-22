@@ -61,6 +61,10 @@
 #include "VtTrack.hh"
 #include "VtMassC_list.hh"
 
+#ifdef WIN32
+#   include "Rtypes.h"
+#endif
+
 void Dinv1(int *n, double *a, int *idim, double *ir, int *ifail);
 
 namespace VERTEX {
@@ -295,8 +299,11 @@ namespace VERTEX {
     Track_v    tracks;                    // tracks owned by vertex
     MassC_v    xmass;                     // vector of mass constraint pointer
 
+#ifdef WIN32
+    ClassDef(Vertex, 0);   //GS comment if <VersionNumber> >= 1 crash with Windows Vista
+#else
     ClassDef(Vertex, 1);
-
+#endif
   }; // class Vertex
 
 
