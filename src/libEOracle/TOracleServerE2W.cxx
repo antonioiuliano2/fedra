@@ -428,6 +428,62 @@ Int_t  TOracleServerE2W::AddScanbackPath(char *datapath)
   return 0;
 }
 
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2W::AddScanbackPath(char *id_eventbrick, char *id_header_operation, int id_path, int id_start_plate)
+{
+  // Adds a scanback path into the DB and connects it with the CS prediction
+  // Table involved: TB_SCANBACK_PATHS, TB_B_CSCANDS_SBPATHS
+  // Details: a SELECT and two INSERT queries and then a COMMIT query
+  
+  char query[2048];
+  char commit[10]="commit";
+  
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+    
+    sprintf(query,"\
+    INSERT INTO OPERA.TB_SCANBACK_PATHS (ID_EVENTBRICK, ID_PROCESSOPERATION, PATH, ID_START_PLATE, ID_FORK_PATH, ID_CANCEL_PLATE) VALUES (%s, %s, %d, %d, NULL, NULL)",
+	    id_eventbrick, id_header_operation, id_path, id_start_plate);
+    
+    fStmt->setSQL(query);
+    Log(2,"AddScanbackPath","execute sql query: %s ...",query);
+    fStmt->execute();
+    Query(commit);
+    Log(2,"AddScanbackPath","TB_SCANBACK_PATHS added");
+    
+    sprintf(query,"select id_cs_eventbrick,idcand from vw_local_cs_candidates where id_cs_eventbrick in (select id from tb_eventbricks where id_brick in (select id_brick from tb_eventbricks where id=%s)) and id_plate=2 and cand=%d",
+	    id_eventbrick, id_path);
+
+    fStmt->setSQL(query);
+    Log(2,"AddScanbackPath","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    char id_cs_eventbrick[20],id_candidate[20];
+    while (rs->next()){
+      strcpy(id_cs_eventbrick,rs->getString(1).c_str());
+      strcpy(id_candidate,rs->getString(2).c_str());
+    }
+    delete rs;
+
+
+    sprintf(query,"\
+    INSERT INTO OPERA.TB_B_CSCANDS_SBPATHS (ID_CS_EVENTBRICK, ID_CANDIDATE, ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH) VALUES (%s, %s, %s, %s, %d)",
+	    id_cs_eventbrick, id_candidate, id_eventbrick, id_header_operation, id_path);
+
+    fStmt->setSQL(query);
+    Log(2,"AddScanbackPath","execute sql query: %s ...",query);
+    fStmt->execute();
+    Query(commit);
+    Log(2,"AddScanbackPath","TB_B_CSCANDS_SBPATHS added");
+    
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2W", "AddScanbackPath; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+
+  return 0;
+}
+
 
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2W::AddScanbackPrediction(char *dataprediction)

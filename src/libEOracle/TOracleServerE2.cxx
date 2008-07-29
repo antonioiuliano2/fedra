@@ -9,13 +9,14 @@
 #include "EdbView.h"
 #include "EdbSegment.h"
 #include "EdbScanProc.h"
+#include "EdbFiducial.h"
 
 ClassImp(TOracleServerE2)
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_eventbrick)
+Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_brick, EdbPattern &pred)
 {
-  int nmarks=0;
+  pred.Reset();
   char *query= new char[2048];
 
   try{
@@ -27,35 +28,32 @@ Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_eventbrick)
     // where vld.id_eventbrick = 3021343 and vld.valid = 'Y';
 
     sprintf(query,
-            "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick=%d",
-	    eRTS.Data(),id_eventbrick);
-
+	    "select cand,posx,posy,slopex,slopey,grains from vw_local_cs_candidates%s where id_cs_eventbrick in (select id from tb_eventbricks where id_brick=%d) and id_plate=2",
+	    eRTS.Data(),id_brick);
+    
     fStmt->setSQL(query);
-    Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
+    Log(2,"ReadCSPredictions","execute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
-    int id,side;
-    float posx,posy;
     while (rs->next()){
-      id = rs->getInt(1);
-      posx = rs->getFloat(2);
-      posy = rs->getFloat(3);
-      side = rs->getInt(4);
-      printf("%d %f %f %d \n", id, posx, posy, side);
+      pred.AddSegment(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),
+		      rs->getInt(6),0);
     }
     delete rs;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE::ReadTemplateMarks", "Error!!! %s", (oraex.getMessage()).c_str());
+    Error("TOracleServerE::ReadCSPredictions", "Error!!! %s", (oraex.getMessage()).c_str());
     return false;
   }
-  return nmarks;
+  return (pred.N());
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_eventbrick)
+Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms)
 {
-  int nmarks=0;
+  ms.GetAbsolute()->GetMarks()->Clear("C");
+  ms.eBrick = id_brick;
+
   char *query= new char[2048];
 
   try{
@@ -63,21 +61,31 @@ Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_eventbrick)
       fStmt = fConn->createStatement();
 
     sprintf(query,
-            "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick=%d",
-	    eRTS.Data(),id_eventbrick);
-
+	    "select minx,maxx,miny,maxy from tb_eventbricks%s where id_brick=%d",
+	    eRTS.Data(),id_brick);
     fStmt->setSQL(query);
     Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
-    int   id,side;
-    float posx,posy;
     while (rs->next()){
-      id = rs->getInt(1);
-      posx = rs->getFloat(2);
-      posy = rs->getFloat(3);
-      side = rs->getInt(4);
-      printf("%d %f %f %d \n", id, posx, posy, side);
+      ms.eXmin = rs->getFloat(1);
+      ms.eXmax = rs->getFloat(2);
+      ms.eYmin = rs->getFloat(3);
+      ms.eYmax = rs->getFloat(4);
+    }
+    delete rs;
+
+    sprintf(query,
+	    "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick in \
+             (select id from tb_eventbricks where id_brick=%d) and shape='X'",
+	    eRTS.Data(),id_brick);
+
+    fStmt->setSQL(query);
+    Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
+    fStmt->execute();
+    rs = fStmt->getResultSet();
+    while (rs->next()){
+      ms.GetAbsolute()->AddMark(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getInt(4));
     }
     delete rs;
 
@@ -85,7 +93,7 @@ Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_eventbrick)
     Error("TOracleServerE::ReadTemplateMarks", "Error!!! %s", (oraex.getMessage()).c_str());
     return false;
   }
-  return nmarks;
+  return (ms.GetAbsolute()->N());
 }
 
 //------------------------------------------------------------------------------------

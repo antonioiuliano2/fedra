@@ -8,6 +8,7 @@ class EdbPattern;
 class EdbPatternsVolume;
 class EdbRun;
 class EdbTrackP;
+class EdbMarksSet;
 
 class TOracleServerE2 : public TOracleServer {
 
@@ -46,8 +47,8 @@ public:
    Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0);
    Int_t       ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor);
 
-   Int_t       ReadTemplateMarks(int brick);
-   Int_t       ReadCSPredictions(int brick);
+   Int_t       ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms);
+   Int_t       ReadCSPredictions(Int_t id_brick, EdbPattern &pred);
 
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };
