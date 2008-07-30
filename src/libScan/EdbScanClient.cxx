@@ -127,6 +127,21 @@ void  EdbScanClient::SetClusterThresholds(int TOP, int BOT)
 }
 
 //----------------------------------------------------------------
+void  EdbScanClient::SetOdysseyThresholds(int TOP, int BOT)
+{
+  sprintf(eCMD,"203 Frame_Grabber VPProgram1 0008000804F003F0%4.4X0505\n",TOP);
+  printf("%s",eCMD);
+  eSock->SendRaw(eCMD,strlen(eCMD));
+  RcvLine(eSock,eMess,sizeof(eMess));
+  printf("%s",eMess);
+  sprintf(eCMD,"203 Frame_Grabber VPProgram2 0008000804F003F0%4.4X0505\n",BOT);
+  printf("%s",eCMD);
+  eSock->SendRaw(eCMD,strlen(eCMD));
+  RcvLine(eSock,eMess,sizeof(eMess));
+  printf("%s",eMess);
+}
+
+//----------------------------------------------------------------
 int EdbScanClient::SetFragmentSize(int X, int Y)
 {
   eNXview = X;

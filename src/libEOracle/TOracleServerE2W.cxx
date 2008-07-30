@@ -1033,7 +1033,7 @@ Int_t  TOracleServerE2W::DeleteBrick(char *id_eventbrick)
   // Tables involved: ... a lot, look at the code...
   // Details: DELETE queries and then a COMMIT query
 
-  char query[11][2048];
+  char query[12][2048];
   char commit[11]="commit";
 
   try{
@@ -1041,18 +1041,19 @@ Int_t  TOracleServerE2W::DeleteBrick(char *id_eventbrick)
       fStmt = fConn->createStatement();
 
     sprintf(query[0], "delete from Tb_Scanback_Predictions where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[1], "delete from Tb_Scanback_Paths       where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[2], "delete from Tb_MipBasetracks        where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[3], "delete from Tb_MipMicrotracks       where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[4], "delete from Tb_Views                where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[5], "delete from Tb_Plate_calibrations   where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[6], "delete from Tb_Zones                where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[7], "delete from Tb_Proc_operations      where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[8], "delete from Tb_Plates               where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[9], "delete from Tb_TemplateMarkSets     where id_eventbrick=%s",id_eventbrick);
-    sprintf(query[10],"delete from Tb_Eventbricks          where id=%s",id_eventbrick);
+    sprintf(query[1], "delete from Tb_B_CSCANDS_SBPATHS    where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[2], "delete from Tb_Scanback_Paths       where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[3], "delete from Tb_MipBasetracks        where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[4], "delete from Tb_MipMicrotracks       where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[5], "delete from Tb_Views                where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[6], "delete from Tb_Plate_calibrations   where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[7], "delete from Tb_Zones                where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[8], "delete from Tb_Proc_operations      where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[9], "delete from Tb_Plates               where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[10],"delete from Tb_TemplateMarkSets     where id_eventbrick=%s",id_eventbrick);
+    sprintf(query[11],"delete from Tb_Eventbricks          where id=%s",id_eventbrick);
 
-    for (int i=0;i<11;i++) {
+    for (int i=0;i<12;i++) {
 	fStmt->setSQL(query[i]);
 	Log(2,"DeleteBrick","execute sql query: %s ...",query[i]);
 	fStmt->execute();
@@ -1108,7 +1109,7 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
   // Tables involved: ... a lot, look at the code...
   // Details: DELETE queries and then a COMMIT query
 
-  char query[12][2048];
+  char query[13][2048];
   char commit[11]="commit";
 
   try{
@@ -1116,19 +1117,20 @@ Int_t  TOracleServerE2W::DeleteOperation(char *id_brick, char *id_process_operat
       fStmt = fConn->createStatement();
 
     sprintf(query[0], "delete from Tb_Scanback_Predictions where (id_path) in (select id from tb_scanback_paths where id_processoperation=%s) and id_eventbrick=%s",id_process_operation,id_brick);    
-    sprintf(query[1], "delete from Tb_Scanback_Paths where id_processoperation=%s and id_eventbrick=%s",id_process_operation,id_brick);
-    sprintf(query[2], "delete from Tb_MipBasetracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
-    sprintf(query[3], "delete from Tb_MipMicrotracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
-    sprintf(query[4], "delete from tb_views where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
-    sprintf(query[5], "delete from tb_b_sbpaths_volumes where id_eventbrick=%s and id_volumescan_procopid=%s",id_brick,id_process_operation);
-    sprintf(query[6], "delete from tb_volume_slices where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s))",id_process_operation);
-    sprintf(query[7], "delete from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s",id_process_operation,id_brick);
-    sprintf(query[8], "delete from tb_volumes where id_processoperation=%s",id_process_operation);
-    sprintf(query[9], "delete from tb_plate_calibrations where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)",id_process_operation);
-    sprintf(query[10],"delete from tb_proc_operations where id_parent_operation=%s",id_process_operation);
-    sprintf(query[11],"delete from tb_proc_operations where id=%s",id_process_operation);
+    sprintf(query[1], "delete from Tb_B_CSCANDS_SBPATHS where id_processoperation=%s and id_eventbrick=%s",id_process_operation,id_brick);
+    sprintf(query[2], "delete from Tb_Scanback_Paths where id_processoperation=%s and id_eventbrick=%s",id_process_operation,id_brick);
+    sprintf(query[3], "delete from Tb_MipBasetracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[4], "delete from Tb_MipMicrotracks where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[5], "delete from tb_views where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s) and id_eventbrick=%s",id_process_operation,id_brick,id_brick);
+    sprintf(query[6], "delete from tb_b_sbpaths_volumes where id_eventbrick=%s and id_volumescan_procopid=%s",id_brick,id_process_operation);
+    sprintf(query[7], "delete from tb_volume_slices where (id_zone) in (select id from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s))",id_process_operation);
+    sprintf(query[8], "delete from tb_zones where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s) and id_eventbrick=%s",id_process_operation,id_brick);
+    sprintf(query[9], "delete from tb_volumes where id_processoperation=%s",id_process_operation);
+    sprintf(query[10], "delete from tb_plate_calibrations where (id_processoperation) in (select id from tb_proc_operations where id_parent_operation=%s)",id_process_operation);
+    sprintf(query[11],"delete from tb_proc_operations where id_parent_operation=%s",id_process_operation);
+    sprintf(query[12],"delete from tb_proc_operations where id=%s",id_process_operation);
 
-    for (int i=0;i<12;i++) {
+    for (int i=0;i<13;i++) {
 	fStmt->setSQL(query[i]);
 	Log(2,"DeleteOperation","execute sql query: %s ...",query[i]);
 	fStmt->execute();
