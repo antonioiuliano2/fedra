@@ -455,10 +455,10 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape)
 
   if (shape=='S'||shape=='X') {
     str_header = "mapext:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
-    str_mark = ";_%d_%0.4f_%0.4f_%0.4f_%0.4f_1_1_%d";
+    str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
   } else if (shape=='L') {
     str_header = "mapx:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
-    str_mark = ";_%d_%0.4f_%0.4f_%0.4f_%0.4f_1_1_%d";
+    str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
   } else {
     Log(1,"EdbMarksSet::ReadMap","ERROR: shape '%c' is not implemented\n", shape); return 0;
   }
