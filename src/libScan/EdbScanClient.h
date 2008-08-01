@@ -36,7 +36,7 @@ public:
   int    LoadPlate(int BRICK, int PLATE, const char *mapext, int nAttempts=1);
   void   SetParameter(char* Object, char* Parameter, char* Value);
   void   SetClusterThresholds(int TOP, int BOT);
-  void   SetOdysseyThresholds(int TOP, int BOT);
+  void   SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT);
   int    SetFragmentSize(int X, int Y);
   void   AsyncScanAreaS( int id1, int id2, int id3, int id4,	
 						 float x1, float y1, float x2, float y2,	const char *fname);

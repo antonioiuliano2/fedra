@@ -127,14 +127,14 @@ void  EdbScanClient::SetClusterThresholds(int TOP, int BOT)
 }
 
 //----------------------------------------------------------------
-void  EdbScanClient::SetOdysseyThresholds(int TOP, int BOT)
+void  EdbScanClient::SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT)
 {
-  sprintf(eCMD,"203 Frame_Grabber VPProgram1 0008000804F003F0%4.4X0505\n",TOP);
+  sprintf(eCMD,"203 Frame_Grabber VPProgram%d 0008000804F003F0%4.4X%02d%02d\n",itop,TOP,size,size);
   printf("%s",eCMD);
   eSock->SendRaw(eCMD,strlen(eCMD));
   RcvLine(eSock,eMess,sizeof(eMess));
   printf("%s",eMess);
-  sprintf(eCMD,"203 Frame_Grabber VPProgram2 0008000804F003F0%4.4X0505\n",BOT);
+  sprintf(eCMD,"203 Frame_Grabber VPProgram%d 0008000804F003F0%4.4X%02d%02d\n",ibottom,BOT,size,size);
   printf("%s",eCMD);
   eSock->SendRaw(eCMD,strlen(eCMD));
   RcvLine(eSock,eMess,sizeof(eMess));
