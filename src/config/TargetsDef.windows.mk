@@ -10,7 +10,6 @@ PROJECT_LIBS  = $(PROJECT_LIBS) ole32.lib  # ole32 needed by libDataConversion
 
 CXXFLAGS      = $(CXXFLAGS)  -D_USESYSAL -DUSE_ROOT
 
-
 #------------------------------------------------------------------------------
 !IF !DEFINED(EXTRAOBJS)
 EXTRAOBJS   =
@@ -21,13 +20,6 @@ EXTRAOBJS   =
 
 OBJS          = $(headers:.h=.obj) $(NAME)Dict.$(ObjSuf) $(EXTRAOBJS)
 TARGETSO      = $(LIB_DIR)/lib$(NAME).$(DllSuf)
-
-$(TARGETSO):  $(OBJS)
-	BINDEXPLIB  $* $(OBJS) > $*.def
-	lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
-	$(LD) $(SOFLAGS) $(LDFLAGS) $(OBJS) $*.exp $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
-	$(MT_DLL)
-	@echo "$@ done"
 
 !ELSE
 
@@ -40,7 +32,7 @@ TARGETSO     =
 
 !IF DEFINED(TARGET)
 
-$(TARGET) : $(*B).obj $(EXTRAOBJS)
+$(TARGET) : $(*B).obj $(EXTRAOBJS) $(TARGETSO)
 
 !ELSE
 
@@ -72,14 +64,14 @@ check:
 
 ###
 
-.$(ObjSuf): .$(SrcSuf)
-
-
-{.}.obj{$(BIN_DIR)}.exe:
-   $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
-   $(MT_EXE)
-   @echo "$@ done"
-
+!IF DEFINED(NAME)
+$(TARGETSO):  $(OBJS)
+	BINDEXPLIB  $* $(OBJS) > $*.def
+	lib -nologo -MACHINE:IX86 $(OBJS) -def:$*.def $(OutPutOpt)$(@:.dll=.lib)
+	$(LD) $(SOFLAGS) $(LDFLAGS) $(OBJS) $*.exp $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+	$(MT_DLL)
+	@echo "$@ done"
+!ENDIF
 
 # -p option to request the use of the compiler's preprocessor
 # instead of CINT's preprocessor.  This is useful to handle header
@@ -88,6 +80,21 @@ check:
 $(NAME)Dict.$(SrcSuf): $(headers) $(NAME)LinkDef.h
    @echo "Generating dictionary $@..."
    rootcint -f $@ -c -p -I$(INC_DIR) $(headers) $(NAME)LinkDef.h 
+
+# - - - - - - - -
+
+{.}.obj{$(BIN_DIR)}.exe:
+!IF DEFINED(NAME)
+   $(LD) $(*B).obj $(EXTRAOBJS) $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) /DEFAULTLIB:lib$(NAME) $(OutPutOpt)$@
+!ELSE
+   $(LD) $** $(LDFLAGS) $(LIBS) $(PROJECT_LIBS:-l=/DEFAULTLIB:lib) $(OutPutOpt)$@
+!ENDIF
+   $(MT_EXE)
+   @echo "$@ done"
+
+###
+
+.$(ObjSuf): .$(SrcSuf)
 
 .cxx.$(ObjSuf):
         $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -c $<
@@ -98,4 +105,3 @@ $(NAME)Dict.$(SrcSuf): $(headers) $(NAME)LinkDef.h
 # /TP compile all files as C++ even if they have *.C extension
 .C.$(ObjSuf):
         $(CXX) $(CXXFLAGS) $(EXTRAFLAGS) $(CXXOPT) -I$(INC_DIR) -TP -c $<
-

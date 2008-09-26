@@ -39,8 +39,13 @@ OutPutOpt     = -out:
 !include <win32.mak>
 CC            = $(cc)
 CXX           = $(cc)
-CXXFLAGS      = $(cvarsdll) -EHsc -nologo -GR -DWIN32 \
-                -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include
+CXXFLAGS      = \
+!IF EXISTS("$(ROOTSYS)/include/w32pragma.h")
+                -FIw32pragma.h \
+!ENDIF
+		    $(cvarsdll) -EHsc -nologo -GR -DWIN32 \
+                -DVISUAL_CPLUSPLUS -D_WINDOWS -I$(ROOTSYS)/include 
+
 LD            = $(link)
 
 !IF  "$(CFG)" == "Release"
@@ -52,7 +57,7 @@ CXXOPT        = -Z7 -MDd
 LDOPT         = -debug
 !ENDIF 
 
-!if ("$(_NMAKE_VER)" == "8.00.50727.42") || ("$(_NMAKE_VER)" == "8.00.50727.762")
+!if ("$(_NMAKE_VER)" == "8.00.50727.42") || ("$(_NMAKE_VER)" == "8.00.50727.762") || ("$(_NMAKE_VER)" == "9.00.21022.08")
 MT_EXE        = mt -nologo -manifest $@.manifest -outputresource:$@;1
 MT_DLL        = mt -nologo -manifest $@.manifest -outputresource:$@;2
 EXTRAFLAGS    = -D_CRT_SECURE_NO_DEPRECATE
@@ -79,6 +84,9 @@ SOFLAGS       = $(dlllflags:-pdb:none=)
 
 # - pre-processing to define ROOTLIBS (dependent on root version)
 ROOTLIBS      = -LIBPATH:$(ROOTSYS)/lib \
+!IF EXISTS("$(ROOTSYS)/lib/libMathCore.lib ")
+                libMathCore.lib \
+!ENDIF
 !IF EXISTS("$(ROOTSYS)/lib/libNet.lib ")
                 libNet.lib \
 !ENDIF
