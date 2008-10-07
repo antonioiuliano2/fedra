@@ -1650,8 +1650,10 @@ EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5], int MCEvt)
   for(int i=0; i<nseg; i++) {
     s = GetSegment(i);
 		
-		if (s->MCEvt()!=MCEvt && s->MCEvt()>0 ) continue;
-
+    if (s->MCEvt()!=MCEvt && s->MCEvt()>0 && MCEvt>=0) continue;
+    // Do not continue not in case MCEvt was not specified at all.
+    // This allows backward compability.
+    
     if(s->X()  < min[0])   continue;
     if(s->Y()  < min[1])   continue;
     if(s->TX() < min[2])   continue;
