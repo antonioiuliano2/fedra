@@ -284,7 +284,9 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
   cout << flush;
    
   FreeMemory((void**)pFrag);
-  //delete pFrag;    // WINDOWS VISTA CRASH
+#ifndef WIN32
+  delete pFrag;    // WINDOWS VISTA CRASH but on linux - memory leak!!
+#endif
   return true;
 }
 
