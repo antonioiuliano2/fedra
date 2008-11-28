@@ -30,6 +30,8 @@
 #include <iostream>
 #include <string.h>
 
+#include "TSystem.h"
+#include "EdbLog.h"
 #include "libDataConversion.h"
 
 #include "dataIO/dataIO.cpp"
@@ -62,6 +64,11 @@ double FindConfig(IO_VS_Catalog* pCat, char* ConfigName, char* ConfigItem)
 int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 {
   IO_VS_Catalog* pCat = 0;
+
+  if( gSystem->AccessPathName(rwcname, kReadPermission) ) {
+    Log(1,"AddRWC","ERROR! Can not access file %s",rwcname);
+    return 0;
+  }
 
   if( ReadCatalog((void**)&pCat, (char*)rwcname) != 1) return false; 
 
@@ -176,6 +183,10 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
    if (strstr(options,"CLFRAME") ) addclframe=true; // fill clusters.eFrame branch
    if (strstr(options,"SUM") )     addareasum=true; // encode the sum of cluster areas in the segment puls
    // ePuls = (sum of clust areas)*1000 + (number of clusters) 
+   const char *key=0;
+   int cutcl=0;
+   if( key = strstr(options,"CUTCL") )  sscanf(key+5,"%d",&cutcl);
+
    EdbView*    edbView = run->GetView();
    EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
 
@@ -230,7 +241,8 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 
          for (t = 0; t < rwdView->TCount[s]; t++) {
             rwdTrack = &(rwdView->pTracks[s][t]);
-            tr_clusters  = rwdTrack->Grains  ;
+            tr_clusters  = rwdTrack->Grains;
+	    if( cutcl>0 && tr_clusters<cutcl) continue;
             if (addareasum)   puls = rwdTrack->Grains + (2000000>rwdTrack->AreaSum?rwdTrack->AreaSum:2000000)*1000;
             else              puls = rwdTrack->Grains ;
 
