@@ -252,7 +252,7 @@ class EdbDataProc : public TObject {
   static int MakeTracksTree(EdbPVRec *ali=0, const char *file="linked_tracks.root");
   static int MakeTracksTree(TObjArray &tracks, float xv=0, float yv=0, const char *file="linked_tracks.root");
   static int ReadTracksTree(EdbPVRec &ali,
-			    char *fname="linked_tracks.root",
+			    const char *fname="linked_tracks.root",
 			    int   nsegMin=3,
 			    float probMin=0.01, 
 			    const char *rcut="t.eFlag>-1&&nseg>2&&t.eProb>.01" );

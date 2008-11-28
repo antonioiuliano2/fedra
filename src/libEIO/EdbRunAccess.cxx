@@ -249,7 +249,7 @@ int EdbRunAccess::GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin
   // todo: Z of layers must be setted!
 
   if(side<1||side>2) return 0;
-  TArrayI entr(1000);
+  TArrayI entr(100000);
   float x,y; 
   x = s.X()+ (eLayers[side]->Z()-s.Z())*s.TX();
   y = s.Y()+ (eLayers[side]->Z()-s.Z())*s.TY();
@@ -266,7 +266,7 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 {
   // get raw segments as a volume for the given "area"
 
-  int maxA=2000;            //TODO
+  int maxA=10000;            //TODO
   TArrayI entr1(maxA);
   float xmin,xmax,ymin,ymax;
   int n1 = GetViewsArea( 1, entr1, area, xmin,xmax,ymin,ymax);
@@ -695,14 +695,18 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
 
   float pix, chi2;
   if(eCLUST) {
-    pix = GetRawSegmentPix(seg);
-    segP.SetVolume( pix );
-    chi2 = CalculateSegmentChi2( seg,
-				 GetCond(1)->SigmaXgr(),  //TODO: side logic
-				 GetCond(1)->SigmaYgr(), 
-				 GetCond(1)->SigmaZgr());
-    if(chi2>GetCutGR())  return false;
-    segP.SetChi2( chi2 );
+    if(eUseExternalSurface) {
+      SetSegmentAtExternalSurface(seg,side);
+    } else {
+      pix = GetRawSegmentPix(seg);
+      segP.SetVolume( pix );
+      chi2 = CalculateSegmentChi2( seg,
+				   GetCond(1)->SigmaXgr(),  //TODO: side logic
+				   GetCond(1)->SigmaYgr(), 
+				   GetCond(1)->SigmaZgr());
+      if(chi2>GetCutGR())  return false;
+      segP.SetChi2( chi2 );
+    }
   }
 
   EdbLayer  *layer=GetLayer(side);
@@ -796,6 +800,26 @@ float  EdbRunAccess::GetRawSegmentPix( EdbSegment *seg )
     pix += cl->GetArea();
   }
   return pix;
+}
+
+///______________________________________________________________________________
+bool  EdbRunAccess::SetSegmentAtExternalSurface( EdbSegment *seg, int side )
+{
+  // set the segment coordinates correspondent to the cluster coord with maximal Z
+  // assumed that clusters are attached to segments
+  TObjArray *clusters = seg->GetElements();
+  if(!clusters) return false;
+  int ncl = clusters->GetLast()+1;
+  EdbCluster *cl=0, *clZ=(EdbCluster*)clusters->At(0);
+  for(int i=0; i<ncl; i++ ) {
+    cl = (EdbCluster*)clusters->At(i);
+    if     (side==1)  { if( clZ->Z() < cl->Z() )  clZ=cl; }   //side=1: top     use point of max Z
+    else if(side==2)  { if( clZ->Z() > cl->Z() )  clZ=cl; }   //side=2: bottom  use point of min Z    
+  }
+  seg->SetX0(clZ->X());
+  seg->SetY0(clZ->Y());
+  seg->SetZ0(clZ->Z());
+  return true;
 }
 
 ///______________________________________________________________________________

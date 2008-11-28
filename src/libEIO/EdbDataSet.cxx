@@ -2564,7 +2564,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 
 //---------------------------------------------------------------------------
 int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
-				 char     *fname,
+				 const char     *fname,
 				 int      nsegMin,
 				 float    probMin,
 				 const char *rcut )

@@ -18,6 +18,7 @@ class EdbRunAccess : public TObject {
  public:
   Int_t     eAFID;        // if =1 - use affine transformations of the fiducial marks
   Int_t     eCLUST;       // 1-use clusters, 0 - do not
+  Bool_t    eUseExternalSurface;  // if true - set segment position corrisponding to the very external cluster
 
  private:
   TString  eRunFileName;
@@ -101,6 +102,7 @@ class EdbRunAccess : public TObject {
     return eCuts[ud]->GetEntriesFast();
   }
 
+  bool  SetSegmentAtExternalSurface( EdbSegment *seg, int side );
   float GetRawSegmentPix( EdbSegment *seg );
   float CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz );
 
