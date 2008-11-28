@@ -149,7 +149,7 @@ void check_surf(TCanvas *c)
 void check_raw( int output=0, char *fname=0 )
 {
 
-   cout << "fname  : " << fname  << endl;
+   if(fname) cout << "fname  : " << fname  << endl;
 
    printf("Red  line: Top    side\n");
    printf("Blue line: Bottom side\n");
