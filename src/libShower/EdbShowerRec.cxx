@@ -81,7 +81,9 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
   treesaveb->Branch("tyb",tyb,"tyb[sizeb]/F");
   treesaveb->Branch("nfilmb",nfilmb,"nfilmb[sizeb]/I");
   treesaveb->Branch("ntrace1simub",ntrace1simub,"ntrace1simu[sizeb]/I");
-  treesaveb->Branch("ntrace2simub",ntrace2simub,"ntrace2simu[sizeb]/I");
+  treesaveb->Branch("ntrace2simub",ntrace2simub,"ntrace2simu[sizeb]/I"); // s->W()
+  treesaveb->Branch("ntrace3simub",ntrace3simub,"ntrace3simu[sizeb]/F"); // s->P()
+  treesaveb->Branch("ntrace4simub",ntrace4simub,"ntrace4simu[sizeb]/I"); // s->Flag()
   treesaveb->Branch("chi2btkb",chi2btkb,"chi2btkb[sizeb]/F");
   treesaveb->Branch("deltarb",deltarb,"deltarb[sizeb]/F");
   treesaveb->Branch("deltathetab",deltathetab,"deltathetab[sizeb]/F");
@@ -115,6 +117,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
   TArrayI  sigbb(eNTM*eNSM);
   TArrayI  wbb(eNTM*eNSM); 
   TArrayI  add(eNTM*eNSM);  
+  TArrayF  Pbb(eNTM*eNSM);  
+  TArrayI  Flagbb(eNTM*eNSM);
 
   for(int i=0; i<eNSM; i++)
   {
@@ -129,7 +133,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
       chi2bb[ind];
       wbb[ind];
       sigbb[ind];
-
+      Pbb[ind];
+      Flagbb[ind];
     }
   }
    
@@ -361,6 +366,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
                       if (ss->MCEvt()<0) sigbb[ind] = 0;
                       chi2bb[ind] = ss->Chi2();
                       wbb[ind] = int(ss->W());
+                      Pbb[ind] = ss->P();
+                      Flagbb[ind] = ss->Flag();
                       ok =1;
 					    
                       add[ii]++;
@@ -432,6 +439,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
       if (j>0)  ntrace1simub[j] = sigbb[j+i*eNTM];	    
       if (j==0) ntrace2simub[j]= 32; 
       if (j>0)  ntrace2simub[j] = wbb[j+i*eNTM];
+      ntrace3simub[j]= Pbb[j+i*eNTM]; 
+      ntrace4simub[j]= Flagbb[j+i*eNTM];
     }
     if (isizeb > 0)//cross at least 4 plates
     {
@@ -480,6 +489,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
   treesaveb->Branch("nfilmb",nfilmb,"nfilmb[sizeb]/I");
   treesaveb->Branch("ntrace1simub",ntrace1simub,"ntrace1simu[sizeb]/I");
   treesaveb->Branch("ntrace2simub",ntrace2simub,"ntrace2simu[sizeb]/I");
+  treesaveb->Branch("ntrace3simub",ntrace3simub,"ntrace3simu[sizeb]/F");
+  treesaveb->Branch("ntrace4simub",ntrace4simub,"ntrace4simu[sizeb]/I");
   treesaveb->Branch("chi2btkb",chi2btkb,"chi2btkb[sizeb]/F");
   treesaveb->Branch("deltarb",deltarb,"deltarb[sizeb]/F");
   treesaveb->Branch("deltathetab",deltathetab,"deltathetab[sizeb]/F");
@@ -512,7 +523,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
   TArrayI  sigbb(eNTM*eNSM);
   TArrayF  chi2bb(eNTM*eNSM);
   TArrayI  wbb(eNTM*eNSM); 
-  TArrayI add(eNTM*eNSM);    
+  TArrayI add(eNTM*eNSM);  
+  TArrayF  Pbb(eNTM*eNSM); 
+  TArrayI  Flagbb(eNTM*eNSM);  
 
   for(int i=0; i<eNSM; i++)
   {
@@ -527,6 +540,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
       sigbb[ind];
       wbb[ind];
       chi2bb[ind];
+      Pbb[ind];
+      Flagbb[ind];
     }
   }
  
@@ -761,6 +776,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                       if (ss->MCEvt()<0) sigbb[ind] = 0;
                       chi2bb[ind] = ss->Chi2();
                       wbb[ind] = int(ss->W());
+                      Pbb[ind] = ss->P();
+                      Flagbb[ind] = ss->Flag();
                       ok =1;
                       add[ii]++;
                     } 					    
@@ -831,6 +848,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
       if (j>0)  ntrace1simub[j] = sigbb[j+i*eNTM];    
       if (j==0) ntrace2simub[j]= 32; 
       if (j>0)  ntrace2simub[j] = wbb[j+i*eNTM];
+      ntrace3simub[j] = Pbb[j+i*eNTM];
+      ntrace4simub[j] = Flagbb[j+i*eNTM];
     }
     if (isizeb >0) //cross at least 4 plates
     {
@@ -1339,6 +1358,8 @@ void EdbShowerRec::NeuralNet() {
   treesaveb3->Branch("nfilmb",nfilmb,"nfilmb[sizeb]/I");
   treesaveb3->Branch("ntrace1simub",ntrace1simub,"ntrace1simu[sizeb]/I");
   treesaveb3->Branch("ntrace2simub",ntrace2simub,"ntrace2simu[sizeb]/I");
+  treesaveb3->Branch("ntrace4simub",ntrace4simub,"ntrace4simu[sizeb]/I");
+  treesaveb3->Branch("ntrace3simub",ntrace3simub,"ntrace3simu[sizeb]/F");
   treesaveb3->Branch("chi2btkb",chi2btkb,"chi2btkb[sizeb]/F");
   treesaveb3->Branch("deltarb",deltarb,"deltarb[sizeb]/F");
   treesaveb3->Branch("deltathetab",deltathetab,"deltathetab[sizeb]/F");
@@ -1488,6 +1509,8 @@ void EdbShowerRec::NeuralNet() {
   treebranch_e->SetBranchAddress("number_eventb", &number_eventb);   
   treebranch_e->SetBranchAddress("ntrace1simub", &ntrace1simub);
   treebranch_e->SetBranchAddress("ntrace2simub", &ntrace2simub);
+  treebranch_e->SetBranchAddress("ntrace3simub", &ntrace3simub);
+  treebranch_e->SetBranchAddress("ntrace4simub", &ntrace4simub);
   treebranch_e->SetBranchAddress("E_MC", &E_MC);
 	
 	
@@ -1787,8 +1810,8 @@ void EdbShowerRec::Shower2Tracks()
 
   char fname_e[128];
 
-  float x,y,tx,ty,z;
-  int w2;
+  float x,y,tx,ty,z,P;
+  int w2,flag;
   //  int plate[10000];
 
   sprintf(fname_e,"Shower.root");  //input shower tree file 
@@ -1806,6 +1829,8 @@ void EdbShowerRec::Shower2Tracks()
   treebranch_e->SetBranchAddress("zb", zb);
   treebranch_e->SetBranchAddress("number_eventb", &number_eventb);   
   treebranch_e->SetBranchAddress("ntrace2simub", &ntrace2simub); // grain
+  treebranch_e->SetBranchAddress("ntrace3simub", &ntrace3simub); // s->P()
+  treebranch_e->SetBranchAddress("ntrace4simub", &ntrace4simub); // s->Flag()
   treebranch_e->SetBranchAddress("eProb1", &eProb1); 
   treebranch_e->SetBranchAddress("eProb90", &eProb90); 
   int nentries =  treebranch_e->GetEntries();
@@ -1829,10 +1854,14 @@ void EdbShowerRec::Shower2Tracks()
       z=zb[j];
 	  // plate[j] = abs(57+(int)(z/1300.));
       w2=ntrace2simub[j];
+      P=ntrace3simub[j];
+      flag=ntrace4simub[j];
 
       seg = new EdbSegP();
       seg->Set(j, x, y, tx, ty, w2, 0);
       seg->SetZ(z);
+      seg->SetP(P);
+      seg->SetFlag(flag);
 
 	  //	  seg->SetFlag(0);
       seg->SetDZ(300.);
@@ -2063,6 +2092,8 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
   treesaveb3->Branch("nfilmb",nfilmb,"nfilmb[sizeb]/I");
   treesaveb3->Branch("ntrace1simub",ntrace1simub,"ntrace1simu[sizeb]/I");
   treesaveb3->Branch("ntrace2simub",ntrace2simub,"ntrace2simu[sizeb]/I");
+  treesaveb3->Branch("ntrace3simub",ntrace3simub,"ntrace3simu[sizeb]/F");
+  treesaveb3->Branch("ntrace4simub",ntrace4simub,"ntrace4simu[sizeb]/I");
   treesaveb3->Branch("chi2btkb",chi2btkb,"chi2btkb[sizeb]/F");
   treesaveb3->Branch("deltarb",deltarb,"deltarb[sizeb]/F");
   treesaveb3->Branch("deltathetab",deltathetab,"deltathetab[sizeb]/F");
@@ -2112,6 +2143,8 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     treesaveb->SetBranchAddress("number_eventb", &number_eventb);   
     treesaveb->SetBranchAddress("ntrace1simub", &ntrace1simub);
     treesaveb->SetBranchAddress("ntrace2simub", &ntrace2simub);
+    treesaveb->SetBranchAddress("ntrace3simub", &ntrace3simub);
+    treesaveb->SetBranchAddress("ntrace4simub", &ntrace4simub);
     treesaveb->SetBranchAddress("E_MC", &E_MC);
     treesaveb->SetBranchAddress("Energy", &EnergyCorrectedb);
     treesaveb->SetBranchAddress("EnergyUnCorrected", &EnergyUnCorrectedb);

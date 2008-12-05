@@ -125,6 +125,8 @@ class EdbShowerRec : public TObject
   Int_t ngrainb[1000];
   Int_t ntrace1simub[1000];
   Int_t ntrace2simub[1000];
+  Float_t ntrace3simub[1000];
+  Int_t ntrace4simub[1000];
   Float_t chi2btkb[1000];
   Float_t deltarb[1000];
   Float_t deltathetab[1000];
