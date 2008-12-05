@@ -90,6 +90,7 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
   treesaveb->Branch("deltaxb",deltaxb,"deltaxb[sizeb]/F");
   treesaveb->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
   treesaveb->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
+  treesaveb->Branch("purityb",&purityb,"purityb/F");
     
   fileout = new TFile("shower1.root","RECREATE");
     
@@ -391,6 +392,7 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
 	
   int  i = 0;
   int evtid = 0;
+  int nMC=0;
   TIter next(eS);
   while ((a=(EdbShowerRec*)next()))
   {	
@@ -401,6 +403,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
     sizeb20 = 0;
     sizeb30 = 0;     
     isizeb = 0;
+    purityb = 0;
+    nMC=0;
     E_MC = Esim[i];
 
     for (int j=0;j<add[i]; j++) 
@@ -441,7 +445,10 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
       if (j>0)  ntrace2simub[j] = wbb[j+i*eNTM];
       ntrace3simub[j]= Pbb[j+i*eNTM]; 
       ntrace4simub[j]= Flagbb[j+i*eNTM];
+      
+      if (ntrace1simub[j]>=1) ++nMC;
     }
+    if (sizeb>0) purityb=float(nMC)/float(sizeb);
     if (isizeb > 0)//cross at least 4 plates
     {
       showerID = evtid;   
@@ -497,6 +504,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
   treesaveb->Branch("deltaxb",deltaxb,"deltaxb[sizeb]/F");
   treesaveb->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
   treesaveb->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
+  treesaveb->Branch("purityb",&purityb,"purityb/F");
     
   fileout = new TFile("shower1.root","RECREATE");
     
@@ -799,6 +807,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 	
   int  i = 0;
   int evtid = 0;
+  int nMC=0;
   TIter next(eS);
   while ((a=(EdbShowerRec*)next()))
   {	
@@ -809,6 +818,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     sizeb20 = 0;
     sizeb30 = 0;     
     isizeb = 0;
+    purityb = 0;
+    nMC=0;
+    E_MC = Esim[i];
 
     for (int j=0;j<add[i]; j++) 
     { 
@@ -850,7 +862,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
       if (j>0)  ntrace2simub[j] = wbb[j+i*eNTM];
       ntrace3simub[j] = Pbb[j+i*eNTM];
       ntrace4simub[j] = Flagbb[j+i*eNTM];
+      if (ntrace1simub[j]>=1) ++nMC;
     }
+    if (sizeb>0) purityb=float(nMC)/float(sizeb);
     if (isizeb >0) //cross at least 4 plates
     {
 	  // number_eventb = evtid;   
@@ -1366,6 +1380,7 @@ void EdbShowerRec::NeuralNet() {
   treesaveb3->Branch("deltaxb",deltaxb,"deltaxb[sizeb]/F");
   treesaveb3->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
   treesaveb3->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
+  treesaveb3->Branch("purityb",&purityb,"purityb/F");
  
   treesaveb3->Branch("Energy",&EnergyCorrectedb,"EnergyCorrectedb/F");
   treesaveb3->Branch("EnergyUnCorrected",&EnergyUnCorrectedb,"EnergyUnCorrectedb/F");
@@ -1511,6 +1526,7 @@ void EdbShowerRec::NeuralNet() {
   treebranch_e->SetBranchAddress("ntrace2simub", &ntrace2simub);
   treebranch_e->SetBranchAddress("ntrace3simub", &ntrace3simub);
   treebranch_e->SetBranchAddress("ntrace4simub", &ntrace4simub);
+  treebranch_e->SetBranchAddress("purityb", &purityb); 
   treebranch_e->SetBranchAddress("E_MC", &E_MC);
 	
 	
@@ -2099,6 +2115,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
   treesaveb3->Branch("deltathetab",deltathetab,"deltathetab[sizeb]/F");
   treesaveb3->Branch("deltaxb",deltaxb,"deltaxb[sizeb]/F");
   treesaveb3->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
+  treesaveb3->Branch("purityb",&purityb,"purityb/F");
   treesaveb3->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
  
   treesaveb3->Branch("Energy",&EnergyCorrectedb,"EnergyCorrectedb/F");
@@ -2145,6 +2162,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     treesaveb->SetBranchAddress("ntrace2simub", &ntrace2simub);
     treesaveb->SetBranchAddress("ntrace3simub", &ntrace3simub);
     treesaveb->SetBranchAddress("ntrace4simub", &ntrace4simub);
+    treesaveb->SetBranchAddress("purityb", &purityb); 
     treesaveb->SetBranchAddress("E_MC", &E_MC);
     treesaveb->SetBranchAddress("Energy", &EnergyCorrectedb);
     treesaveb->SetBranchAddress("EnergyUnCorrected", &EnergyUnCorrectedb);

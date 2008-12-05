@@ -139,6 +139,8 @@ class EdbShowerRec : public TObject
   Float_t EnergySigmaCorrectedb;
   Float_t EnergySigmaUnCorrectedb;
   
+  Float_t purityb;
+  
   Int_t eProb90;    
   Int_t eProb1;  
 
