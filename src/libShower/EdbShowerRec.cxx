@@ -15,7 +15,8 @@ ClassImp(EdbShowerRec)
 {
   eShowerTreeIsDone=kFALSE;
   eDoEnergyCalculation=kFALSE;
-  eEnergyIsDone=kFALSE;   
+  eEnergyIsDone=kFALSE;
+  eShowersN=0;    
 }
 EdbShowerRec::~EdbShowerRec()
 {
@@ -457,6 +458,8 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
     }
     i++;
   }
+  
+  eShowersN=i;
 	
   SaveResults();
   NeuralNet();
@@ -874,6 +877,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     }
     i++;
   }
+  
+  eShowersN=i;
 
   SaveResults();
   NeuralNet();
@@ -1804,6 +1809,9 @@ void EdbShowerRec::NeuralNet() {
 			//cout << "Do treesaveb3->Fill();"<<endl;
     }	
   }  
+  
+  eShowersN=treesaveb3->GetEntries();
+  
   file_e2->Close(); 
     
   fileout3->cd();
@@ -1813,6 +1821,12 @@ void EdbShowerRec::NeuralNet() {
 
 void EdbShowerRec::Shower2Tracks() 
 {
+  
+  if (eShowersN==0) 
+  {
+   Log(2,"void EdbShowerRec::Shower2Tracks()","eShowersN==0, No Showers have been reconstructed. Return.");
+   return;    
+  }
 
   EdbSegP *seg;
   // EdbSegP *s1=0;

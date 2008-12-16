@@ -91,6 +91,7 @@ class EdbShowerRec : public TObject
     Double_t inANN[70];   
     TF1*      eEnergyResolutionFitFunction_All;
 
+    Int_t     eShowersN; // Number how many showers have been reconstructed.
 
  public:  
    
@@ -181,6 +182,8 @@ class EdbShowerRec : public TObject
 #endif
 
   char cmd[500];
+  
+  inline Int_t GetN() const { return eShowersN; }
   
   Int_t      GetID() const { return eID; }
   Float_t    GetX0() const { return eX0; }
