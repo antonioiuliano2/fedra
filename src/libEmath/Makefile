@@ -5,7 +5,7 @@ include ../config/RootDef.mk
 
 NAME          = Emath
 
-headers       = TIndexCell.h EdbMath.h
+headers       = TIndexCell.h EdbMath.h EdbCell2.h
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk
