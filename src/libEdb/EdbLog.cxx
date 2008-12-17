@@ -120,7 +120,7 @@ void Log0(int level, const char *location, const char *fmt, va_list ap)
   
   fprintf(stdout, "%-16s: ", location);
   fprintf(stdout, "%s\n", buf);
-  if(gEDBDEBUGLEVEL>2) return;     // do not print to file
+  if(level>2)       return;     // do not print to file not important mesages
   TDatime t;
   if(gEDBLOGFILE) {
     fprintf(gEDBLOGFILE, "%s> ", t.AsSQLString());
