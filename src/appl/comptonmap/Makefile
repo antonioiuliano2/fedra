@@ -3,17 +3,11 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-TARGET  =       $(BIN_DIR)/o2root$(ExeSuf)
+TARGET	=	$(BIN_DIR)/comptonmap$(ExeSuf)
 
-ORA           = $(OCCIHOME)
-ORAINC        = $(ORA)/sdk/include
-ORALIB        = $(ORA)
+PROJECT_LIBS = -lEdb -lEdr -lEmath -lEphys -lvt -lEIO -lDataConversion -lAlignment -lScan -lEMC
 
-PROJECT_LIBS += -L$(OCCIHOME) -lclntsh -locci
-PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lAlignment -lScan -lEdr -lEOracle -lEIO -lEMC -lDataConversion
-
-INC_DIR      += -I$(ORAINC)
-CXXFLAGS     += -I$(INC_DIR) -DNOTROOTCINT
+##PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lDataConversion
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

@@ -19,6 +19,7 @@ void rootlogon()
     printf("libDataConversion do NOT loaded!\n"); 
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
+  loadlib( "libAlignment", "EdbPositionAlignment" );         // optional, beta-version
   loadlibEOracle();                               // optional
 
   gStyle->SetPalette(1);
