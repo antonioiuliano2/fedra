@@ -85,6 +85,7 @@ public:
     {int id41[4]; id1.Get(id41); int id42[4]; id2.Get(id42); return AlignAll(id41, id42, npre, nfull, opt);}
   int     AlignSet( EdbScanSet &sc, int npre=1, int nfull=3, const char *opt="-z");
   int     TrackSetBT( EdbScanSet &sc, EdbScanCond &cond, TCut c="1");
+  int     ReadTracksTree(EdbID id, EdbPVRec &ali, TCut cut="1");
 
   bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6, const char *parfile="fullalignment");
@@ -112,6 +113,7 @@ public:
 
   int     AssembleScanSet(  EdbScanSet &ss);
   int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1", bool do_erase=true);
+  int     ReadScanSetCP(    EdbID id, EdbPVRec &ali, TCut c="1", bool do_erase=true, bool do_assemble=true);
   int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
   int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
   int     ReadFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
@@ -119,7 +121,9 @@ public:
   int     WriteScanSet(EdbID id, EdbScanSet &ss);
   EdbScanSet  *ReadScanSet(EdbID id);
 
-  int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);
+  int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);  //to remove?
+  int     WriteSBTracks(TObjArray &tracks, EdbID id);
+  TObjArray *ReadSBTracks(EdbID id);
 
   void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);

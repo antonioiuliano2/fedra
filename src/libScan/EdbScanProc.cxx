@@ -181,11 +181,25 @@ int EdbScanProc::ReadFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
 }
 
 //----------------------------------------------------------------
+int EdbScanProc::ReadScanSetCP(EdbID id,  EdbPVRec &ali, TCut c, bool do_erase, bool do_assemble)
+{
+  // read data for scanset defined with id  apply cut c and fill ali
+  // if(do_erase)    - exclude segmets from the erase mask if it is exist (default is true) 
+  // if(do_assemble) - read affine parfiles (default is true) 
+  
+    EdbScanSet *ss = ReadScanSet(id);
+    ss->Brick().SetID(id.eBrick);
+    if(do_assemble) AssembleScanSet(*ss);
+    return ReadScanSetCP(*ss, ali, c, do_erase);
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_erase)
 {
   // read data from scanset sc with cut c and fill ali
   // sc.eIDS is used as an id list
   // sc.eB   is used to get the brick geometry and affine transformations - must be filled before
+  // if(do_erase) - exclude segmets from the erase mask if it is exist (default is true) 
 
   int cnt=0;
   int n = sc.eIDS.GetEntries();    // number of pieces to get
@@ -211,10 +225,12 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
   ali.SetPatternsID();
   for(int i=0; i<n; i++)  ali.GetPattern(i)->SetSegmentsPID();  // PID of the segment must be ID of the pattern!
 
+  /* to be moved into the processing part!!!
   ali.SetSegmentsErrors();
   ali.SetCouplesAll();
   ali.SetChi2Max(ali.GetScanCond()->Chi2PMax());
   ali.SetOffsetsMax(ali.GetScanCond()->OffX(),ali.GetScanCond()->OffY());
+  */
 
   return cnt;
 }
@@ -323,6 +339,18 @@ int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
   return n;
 }
 
+//----------------------------------------------------------------
+int EdbScanProc::ReadTracksTree(EdbID id, EdbPVRec &ali, TCut cut)
+{
+  int n=0;
+  EdbDataProc dproc;
+  TString name; 
+  MakeFileName(name,id,"trk.root",false);
+  n = dproc.ReadTracksTree(ali, name.Data(), 2, 0.01, cut);
+  ali.Print();
+  return n;
+}
+
 
 //----------------------------------------------------------------
 int EdbScanProc::LinkSet(EdbScanSet &sc, int npre, int nfull, int correct_ang)
@@ -353,6 +381,7 @@ EdbMask *EdbScanProc::ReadEraseMask(EdbID id)
 {
   TString str;
   MakeFileName(str,id,"er.root");
+  if( gSystem->AccessPathName(str, kReadPermission) ) return 0;  //can not access file!
   TFile f(str.Data());
   if(!f.IsOpen()) return 0;
 
@@ -982,7 +1011,36 @@ int EdbScanProc::WriteSBTrack(EdbTrackP &sb, int path, EdbID id)
   TFile f(name.Data(),"UPDATE");
   if(!f.IsOpen()) return 0;
   sb.Write(Form("sb_%d",path));
+  f.Close();
   return 1;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::WriteSBTracks(TObjArray &tracks, EdbID id)
+{
+  if(!CheckBrickDir(id)) return 0;
+  TString name;
+  MakeFileName(name,id,"sb.root",false);
+  TFile f(name.Data(),"UPDATE");
+  if(!f.IsOpen()) return 0;
+  tracks.Write("sbtracks",1);
+  f.Close();
+  LogPrint(id.eBrick,2,"WriteSBTracks","%d tracks are written into %s", tracks.GetEntries(), name.Data());
+  return 1;
+}
+
+//----------------------------------------------------------------
+TObjArray *EdbScanProc::ReadSBTracks(EdbID id)
+{
+  if(!CheckBrickDir(id)) return 0;
+  TString name;
+  MakeFileName(name,id,"sb.root",false);
+  TFile f(name.Data(),"READ");
+  if(!f.IsOpen()) return 0;
+  TObjArray *tracks = (TObjArray*)f.Get("sbtracks");
+  f.Close();
+  LogPrint(id.eBrick,2,"ReadSBTracks","%d tracks read from %s", tracks->GetEntries(), name.Data());
+  return tracks;
 }
 
 //----------------------------------------------------------------
