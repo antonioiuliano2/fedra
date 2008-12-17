@@ -165,7 +165,7 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 	  sprintf(temp+strlen(temp)-1, "d");
 	  sprintf(rwdname, "%s.%08X", temp, f);
 	  cout <<"(tot. fragm.:"<<nFragments<<")  "; 
-	  if (! AddRWD(run, rwdname, f, options) )   break;
+	  if (! AddRWD(run, rwdname, f, options) )   continue;
 	}
       cout <<endl;
     }
@@ -175,6 +175,11 @@ int AddRWC(EdbRun* run, char* rwcname, int bAddRWD, const char* options)
 //______________________________________________________________________________
 int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
 { 
+  if( gSystem->AccessPathName(rwdname, kReadPermission) ) {
+    Log(1,"AddRWD","ERROR! Can not access file %s",rwdname);
+    return 0;
+  }
+
    Bool_t addcl(true);
    Bool_t addclframe(false);
    Bool_t addareasum(false);
