@@ -16,6 +16,9 @@ ClassImp(TOracleServerE2)
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_brick, EdbPattern &pred)
 {
+  // Fills an EdbPattern object with CS predictions
+  // bugged version. Please use ReadCSPredictions2() instead
+
   pred.Reset();
   char *query= new char[2048];
 
@@ -38,6 +41,53 @@ Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_brick, EdbPattern &pred)
     while (rs->next()){
       pred.AddSegment(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),
 		      rs->getInt(6),0);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadCSPredictions", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return (pred.N());
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
+{
+  // Fills an EdbPattern object with CS predictions
+  // The query is better than the one in ReadCSPredictions because takes
+  // into account also the 3 over 4 selection
+
+  pred.Reset();
+  EdbSegP seg;
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    // select * from vw_cs_candidates@opita01 vwcs 
+    // inner join tb_cs_candidate_validation@opita01 vld on (vld.id_candidate= vwcs.id_candidate)
+    // where vld.id_eventbrick = 3021343 and vld.valid = 'Y';
+
+    sprintf(query,
+	    "select cand, posx, posy, slopex, slopey, grains, id_plate from \
+             (select idcand, cand, posx, posy, slopex, slopey, id_plate, grains, row_number() \
+             over (partition by idcand order by grains desc, id_plate desc) as rnum from \
+             vw_local_cs_candidates where id_cs_eventbrick in \
+             (select id from tb_eventbricks where id_brick=%d)) \
+             where rnum = 1 order by cand",
+	    id_brick);
+    
+    fStmt->setSQL(query);
+    Log(2,"ReadCSPredictions","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      seg.Set(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),
+	      rs->getInt(6),0);
+      seg.SetPID(rs->getInt(7));
+      pred.AddSegment(seg);
     }
     delete rs;
 

@@ -49,6 +49,7 @@ public:
 
    Int_t       ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms);
    Int_t       ReadCSPredictions(Int_t id_brick, EdbPattern &pred);
+   Int_t       ReadCSPredictions2(Int_t id_brick, EdbPattern &pred);
 
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };
