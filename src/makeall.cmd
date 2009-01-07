@@ -12,7 +12,7 @@
 ::-------------------------------------------
 :MAIN
    @ECHO OFF
-   SET eLIBS= libEmath libEdb libDataConversion libVt++ libAlignment libEphys libEGA libEdr libEIO libEdd libEMC libScan libEOracle libACQ libShower appl\bmatrix libEGraphTool libEmr 
+   SET eLIBS= libEmath libEdb libDataConversion libVt++ libEphys libEGA libEdr libEIO libEdd libEMC libAlignment libScan libEOracle libACQ libShower appl\bmatrix libEGraphTool libEmr 
    SET eBINS=appl\recset appl\rwc2edb appl\macros appl\display appl\o2root appl\comptonmap 
 
    IF /I '%1'=='check' (
