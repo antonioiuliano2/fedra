@@ -2,9 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="libEmath"
-	ProjectGUID="{8A51EAF8-C292-4F49-8180-C20CA552B98D}"
-	RootNamespace="libEmath"
+	Name="comptonmap"
+	ProjectGUID="{72FC5573-E850-40FE-823B-4039BB1F78D0}"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +25,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  clean"
-				Output="..\..\lib\libEmath.dll"
+				BuildCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE clean"
+				Output="..\..\bin\comptonmap.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -49,10 +48,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
-				CleanCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libEmath.dll"
+				BuildCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE /a CFG=&quot;Debug&quot;"
+				CleanCommandLine="cd ..\..\src\appl\comptonmap&#x0D;&#x0A;NMAKE clean CFG=&quot;Debug&quot;"
+				Output="..\..\bin\comptonmap.exe"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -70,15 +69,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEmath\EdbCell2.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\EdbMath.cxx"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\TIndexCell.cpp"
+				RelativePath="..\..\src\appl\comptonmap\comptonmap.cpp"
 				>
 			</File>
 		</Filter>
@@ -86,26 +77,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="..\..\src\libEmath\EdbCell2.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\EdbMath.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\EmathLinkDef.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\EmathVer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libEmath\TIndexCell.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -113,10 +84,12 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEmath\Makefile"
+			RelativePath="..\..\src\appl\comptonmap\Makefile"
 			>
 		</File>
 	</Files>
 	<Globals>
 	</Globals>
 </VisualStudioProject>
+
+

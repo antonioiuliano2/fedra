@@ -15,7 +15,7 @@
 #include "EdbPositionAlignment.h"
 #include "EdbAlignmentMap.h"
 
-#include "TCell2.h"
+#include "EdbCell2.h"
 
 ClassImp(EdbAlignmentMap)
 

@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="libEmath"
-	ProjectGUID="{8A51EAF8-C292-4F49-8180-C20CA552B98D}"
-	RootNamespace="libEmath"
+	Name="libAlignment"
+	ProjectGUID="{4C11DDA7-0A4D-4DF2-A645-83D9A981F411}"
+	RootNamespace="libAlignment"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,10 +26,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE "
-				ReBuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE /a"
-				CleanCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  clean"
-				Output="..\..\lib\libEmath.dll"
+				BuildCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE "
+				ReBuildCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE /a"
+				CleanCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE  clean"
+				Output="..\..\lib\libAlignment.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -49,10 +49,10 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
-				ReBuildCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
-				CleanCommandLine="cd ..\..\src\libEmath&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
-				Output="..\..\lib\libEmath.dll"
+				BuildCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libAlignment&#x0D;&#x0A;NMAKE   CFG=&quot;Debug&quot; clean"
+				Output="..\..\lib\libAlignment.dll"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -70,15 +70,23 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libEmath\EdbCell2.cpp"
+				RelativePath="..\..\src\libAlignment\EdbAlignmentMap.cxx"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\EdbMath.cxx"
+				RelativePath="..\..\src\libAlignment\EdbPatCell2.cxx"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\TIndexCell.cpp"
+				RelativePath="..\..\src\libAlignment\EdbPeakProb.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libAlignment\EdbPositionAlignment.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libAlignment\EdbTestAl.cxx"
 				>
 			</File>
 		</Filter>
@@ -87,23 +95,27 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="..\..\src\libEmath\EdbCell2.h"
+				RelativePath="..\..\src\libAlignment\AlignmentLinkDef.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\EdbMath.h"
+				RelativePath="..\..\src\libAlignment\EdbAlignmentMap.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\EmathLinkDef.h"
+				RelativePath="..\..\src\libAlignment\EdbPatCell2.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\EmathVer.h"
+				RelativePath="..\..\src\libAlignment\EdbPeakProb.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libEmath\TIndexCell.h"
+				RelativePath="..\..\src\libAlignment\EdbPositionAlignment.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libAlignment\EdbTestAl.h"
 				>
 			</File>
 		</Filter>
@@ -113,7 +125,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\src\libEmath\Makefile"
+			RelativePath="..\..\src\libAlignment\Makefile"
 			>
 		</File>
 	</Files>
