@@ -57,7 +57,9 @@ CXXOPT        = -Z7 -MDd
 LDOPT         = -debug
 !ENDIF 
 
-!if ("$(_NMAKE_VER)" == "8.00.50727.42") || ("$(_NMAKE_VER)" == "8.00.50727.762") || ("$(_NMAKE_VER)" == "9.00.21022.08")
+# Check if nmake version is 8.xx or 9.xx
+!if ([nmake /? 2>&1 | findstr /c:"Version 8\." > nul ] == 0) || \
+    ([nmake /? 2>&1 | findstr /c:"Version 9\." > nul ] == 0)
 MT_EXE        = mt -nologo -manifest $@.manifest -outputresource:$@;1
 MT_DLL        = mt -nologo -manifest $@.manifest -outputresource:$@;2
 EXTRAFLAGS    = -D_CRT_SECURE_NO_DEPRECATE
@@ -69,11 +71,17 @@ EXTRAFLAGS    = -G5
 
 # pre-processing to define LDFLAGS  (dependent on root version)
 
-!IF [ %FEDRA_ROOT%\win32\tools\rootversioncode.cmd ] <= 331264   #ROOTSTS <= 5.14.00
+!IF [ %FEDRA_ROOT%\win32\tools\rootversioncode.cmd ] <= 331264        #ROOTSYS <= 5.14.00
 LDFLAGS       = $(LDOPT) $(conlflags) -nologo
-!ELSE                                                            #ROOTSYS >= 5.16.00
+!ELSE IF [ %FEDRA_ROOT%\win32\tools\rootversioncode.cmd ] < 333062    #ROOTSYS <  5.21.06
 LDFLAGS       = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
                 -include:_G__cpp_setupG__Graf1 -include:_G__cpp_setupG__G3D \
+                -include:_G__cpp_setupG__GPad -include:_G__cpp_setupG__Tree \
+                -include:_G__cpp_setupG__Rint -include:_G__cpp_setupG__PostScript \
+                -include:_G__cpp_setupG__Matrix -include:_G__cpp_setupG__Physics
+!ELSE                                                                  #ROOTSYS > 5.21.06
+LDFLAGS       = $(LDOPT) $(conlflags) -nologo -include:_G__cpp_setupG__Hist \
+                -include:_G__cpp_setupG__Graf -include:_G__cpp_setupG__G3D \
                 -include:_G__cpp_setupG__GPad -include:_G__cpp_setupG__Tree \
                 -include:_G__cpp_setupG__Rint -include:_G__cpp_setupG__PostScript \
                 -include:_G__cpp_setupG__Matrix -include:_G__cpp_setupG__Physics
