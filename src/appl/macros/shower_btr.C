@@ -40,6 +40,10 @@ void  shower_btr()
   double z0[10000];
   double tx0[10000];
   double ty0[10000];
+  double chi20[10000];
+  double P0[10000];
+  int   W0[10000];
+  int   Flag0[10000];
   int   MCid[10000];
   int   TRid[10000];
   double Esim[10000];
@@ -105,6 +109,10 @@ void  shower_btr()
 	  z0[Ncand]  =  Zoff;
 	  tx0[Ncand] =  s->TX();
 	  ty0[Ncand] =  s->TY();
+    chi20[Ncand] = s->Chi2();
+    W0[Ncand] = s->W();
+    P0[Ncand] = s->P();
+    Flag0[Ncand] = s->Flag();
 	  TRid[Ncand] = s->MCEvt();//this has to be a positive number
 	  Esim[Ncand] = s->P();
 	  id[Ncand] = s->ID();
@@ -116,9 +124,15 @@ void  shower_btr()
     printf("Ncand: %f\n",Ncand);
     file1->Close();
     
+    /* --- Depreciated  
     // Here call of the shower algorithm using x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim as seed 
     // The results will be put in Shower.root file
-   
     shower.rec(PLATE,MAXPLATE,0,Ncand,x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim,piece2,piece2par,DOWN);   
+    */ 
+    
+    // Here call of the shower algorithm using x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim as seed 
+    // chi20,W0,P0,Flag0 are not necessary but if not given first segment in shower will not have these values!
+    shower.rec(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim,piece2,piece2par,UPDOWN);   
+    
    
 }

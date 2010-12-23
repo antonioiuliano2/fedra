@@ -4,10 +4,11 @@ include ../config/RootDef.mk
 #------------------------------------------------------------------------------
 
 NAME          = Shower
+headers       = EdbShowerRec.h EdbShowerUtils.h EdbShowerAlg.h EdbPVRQuality.h 
 
-headers       = EdbShowerRec.h
+ROOTLIBS      += -lMLP
 
-PROJECT_LIBS  = $(PROJECT_LIBS) -lEmath -lEdb -lvt -lEdr -lEIO
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEmath -lEdb -lEbase -lvt -lEdr -lEIO -lAlignment
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

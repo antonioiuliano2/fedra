@@ -10,9 +10,9 @@ ORAINC        = $(ORA)/sdk/include
 ORALIB        = $(ORA)
 
 PROJECT_LIBS += -L$(OCCIHOME) -lclntsh -locci
-PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lAlignment -lScan -lEdr -lEOracle -lEIO -lEMC -lDataConversion
+PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lEbase -lvt -lEdr -lAlignment -lScan -lEdr -lEOracle -lEIO -lEMC -lDataConversion
 
-INC_DIR      += -I$(ORAINC)
+INC_DIR      +=  -I$(ORAINC)
 CXXFLAGS     += -I$(INC_DIR) -DNOTROOTCINT
 
 #------------------------------------------------------------------------------

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8,00"
+	Name="libEbase"
+	ProjectGUID="{9B93FACD-1916-4F9C-BB8B-4833504746C0}"
+	RootNamespace="libEbase"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE"
+				ReBuildCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE  /a"
+				CleanCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE  clean"
+				Output="..\..\lib\libEbase.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot;"
+				ReBuildCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; /a"
+				CleanCommandLine="cd ..\..\src\libEbase&#x0D;&#x0A;NMAKE  CFG=&quot;Debug&quot; clean"
+				Output="..\..\lib\libEbase.dll"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="..\..\src\libEbase\EdbBrick.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbLayer.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbScanCond.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbScanSet.cxx"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbSegP.cxx"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="..\..\src\libEbase\EbaseLinkDef.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbBrick.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbLayer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbScanCond.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbScanSet.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libEbase\EdbSegP.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
+		</Filter>
+		<File
+			RelativePath="..\..\src\libEbase\Makefile"
+			>
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

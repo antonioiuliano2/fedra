@@ -70,7 +70,7 @@ bool EdbMath::LineLineIntersect( float p1[3], float p2[3], float p3[3], float p4
    float p13[3],p43[3],p21[3];
    double d1343,d4321,d1321,d4343,d2121;
    double numer,denom;
-   const float EPS=1.E-10;
+   const float EPS=1.E-6;
 
    p13[0] = p1[0] - p3[0];
    p13[1] = p1[1] - p3[1];
@@ -88,15 +88,16 @@ bool EdbMath::LineLineIntersect( float p1[3], float p2[3], float p3[3], float p4
        TMath::Abs(p21[1])  < EPS && 
        TMath::Abs(p21[2])  < EPS)      return false;
 
-   d1343 = p13[0] * p43[0] + p13[1] * p43[1] + p13[2] * p43[2];
-   d4321 = p43[0] * p21[0] + p43[1] * p21[1] + p43[2] * p21[2];
-   d1321 = p13[0] * p21[0] + p13[1] * p21[1] + p13[2] * p21[2];
-   d4343 = p43[0] * p43[0] + p43[1] * p43[1] + p43[2] * p43[2];
-   d2121 = p21[0] * p21[0] + p21[1] * p21[1] + p21[2] * p21[2];
+   d1343 = p13[0] * p43[0] + p13[1] * p43[1] + p13[2] * p43[2];//  e
+   d4321 = p43[0] * p21[0] + p43[1] * p21[1] + p43[2] * p21[2];//  b
+   d1321 = p13[0] * p21[0] + p13[1] * p21[1] + p13[2] * p21[2];//  d
+   d4343 = p43[0] * p43[0] + p43[1] * p43[1] + p43[2] * p43[2];//  c
+   d2121 = p21[0] * p21[0] + p21[1] * p21[1] + p21[2] * p21[2];//  a
 
+   //        a      c       b       b
    denom = d2121 * d4343 - d4321 * d4321;
-   if (TMath::Abs(denom) < EPS)
-      return false;
+   if (TMath::Abs(denom) < EPS) return false;
+
    numer = d1343 * d4321 - d1321 * d4343;
 
    mua = numer / denom;

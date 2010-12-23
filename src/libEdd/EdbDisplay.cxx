@@ -131,6 +131,24 @@ char *EdbTrackG::GetObjectInfo(int px, int py) const
 }
 
 //_____________________________________________________________________________
+EdbSegG::EdbSegG( EdbSegP &s ) : TPolyLine3D(2)
+{
+  eSeg=0;
+  eD = 0;
+  float dz = TMath::Abs(s.DZ())/2.; if(dz<0.001) dz=10;
+  SetPoint(0,
+	   s.X() - s.TX()*dz,
+	   s.Y() - s.TY()*dz,
+	   s.Z() -           dz);
+  SetPoint(1,
+	   s.X() + s.TX()*dz,
+	   s.Y() + s.TY()*dz,
+	   s.Z() +           dz);
+
+  SetLineColor(kRed);
+  SetLineWidth(1);
+}
+//_____________________________________________________________________________
 void EdbSegG::DumpSegment()
 {
   if (eSeg) eSeg->Print();
@@ -162,7 +180,8 @@ const char *EdbSegG::GetName() const
 char *EdbSegG::GetObjectInfo(int px, int py) const
 {
     static char coordinates[80];
-    if (eSeg) sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f", eSeg->X(), eSeg->Y(), eSeg->Z(), eSeg->TX(), eSeg->TY());
+    if (eSeg) sprintf(coordinates, "X = %.1f, Y = %.1f, Z = %.1f, TX = %.3f, TY = %.3f PH = %d", 
+		      eSeg->X(), eSeg->Y(), eSeg->Z(), eSeg->TX(), eSeg->TY(), (int)eSeg->W() );
     else strcpy(coordinates, "Segment address not defined");
     return coordinates;
 }
@@ -173,6 +192,7 @@ void EdbDisplay::Set0()
   //eVerRec = ((EdbVertexRec *)(gROOT->GetListOfSpecials()->FindObject("EdbVertexRec")));
   //if (eVerRec) if (eVerRec->IsA() != EdbVertexRec::Class()) eVerRec = 0;
   //if (!eVerRec) {printf("Warning: EdbDisplay:Set0: EdbVertexRec not defined, use SetVerRec(...)\n");}
+  eArrSegG = 0;
   eArrSegP = 0;
   eArrTr   = 0;
   eArrV    = 0;
@@ -233,35 +253,36 @@ EdbDisplay::~EdbDisplay()
   if (eArrSegPSave) SafeDelete(eArrSegP);
   if (eArrVSave)    SafeDelete(eArrV);
   if (eArrTrSave)   SafeDelete(eArrTr);
+
+  //SafeDelete(eArrSegG);
 }
 
 //________________________________________________________________________
-void EdbDisplay::GuessRange()
+void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
 {
   // guess minimum display range to fit all objects
 
-  float xmin=0,xmax=0,ymin=0,ymax=0,zmin=0,zmax=0;
-  float marg=300;
+  float xmin=0,xmax=1,ymin=0,ymax=1,zmin=0,zmax=1;
 
   if (eArrSegP) {
     EdbSegP *s=0;
     for(int i=0; i<eArrSegP->GetEntries(); i++) {
       s = (EdbSegP *)(eArrSegP->At(i));
-      if(xmax-xmin<marg) {
-	xmax=s->X()+marg;
-	xmin=s->X()-marg;
-	ymax=s->Y()+marg;
-	ymin=s->Y()-marg;
-	zmax=s->Z()+marg;
-	zmin=s->Z()-marg;
+      if(xmax-xmin<margR) {
+	xmax=s->X()+margR;
+	xmin=s->X()-margR;
+	ymax=s->Y()+margR;
+	ymin=s->Y()-margR;
+	zmax=s->Z()+margZmax;
+	zmin=s->Z()-margZmin;
       }
 
-      if(xmax<s->X()+marg) xmax=s->X()+marg;
-      if(xmin>s->X()-marg) xmin=s->X()-marg;
-      if(ymax<s->Y()+marg) ymax=s->Y()+marg;
-      if(ymin>s->Y()-marg) ymin=s->Y()-marg;
-      if(zmax<s->Z()+marg) zmax=s->Z()+marg;
-      if(zmin>s->Z()-marg) zmin=s->Z()-marg;
+      if(xmax<s->X()+margR) xmax=s->X()+margR;
+      if(xmin>s->X()-margR) xmin=s->X()-margR;
+      if(ymax<s->Y()+margR) ymax=s->Y()+margR;
+      if(ymin>s->Y()-margR) ymin=s->Y()-margR;
+      if(zmax<s->Z()+margZmax) zmax=s->Z()+margZmax;
+      if(zmin>s->Z()-margZmin) zmin=s->Z()-margZmin;
     }
   }
 
@@ -273,28 +294,31 @@ void EdbDisplay::GuessRange()
       t = (EdbTrackP *)eArrTr->At(i);
       for(int j=0; j<t->N(); j++) {
 	s = t->GetSegment(j);
-	if(xmax-xmin<marg) {
-	  xmax=s->X()+marg;
-	  xmin=s->X()-marg;
-	  ymax=s->Y()+marg;
-	  ymin=s->Y()-marg;
-	  zmax=s->Z()+marg;
-	  zmin=s->Z()-marg;
+	if(xmax-xmin<margR) {
+	  xmax=s->X()+margR;
+	  xmin=s->X()-margR;
+	  ymax=s->Y()+margR;
+	  ymin=s->Y()-margR;
+	  zmax=s->Z()+margZmax;
+	  zmin=s->Z()-margZmin;
 	}
-	if(xmax<s->X()+marg) xmax=s->X()+marg;
-	if(xmin>s->X()-marg) xmin=s->X()-marg;
-	if(ymax<s->Y()+marg) ymax=s->Y()+marg;
-	if(ymin>s->Y()-marg) ymin=s->Y()-marg;
-	if(zmax<s->Z()+marg) zmax=s->Z()+marg;
-	if(zmin>s->Z()-marg) zmin=s->Z()-marg;
+	if(xmax<s->X()+margR) xmax=s->X()+margR;
+	if(xmin>s->X()-margR) xmin=s->X()-margR;
+	if(ymax<s->Y()+margR) ymax=s->Y()+margR;
+	if(ymin>s->Y()-margR) ymin=s->Y()-margR;
+	if(zmax<s->Z()+margZmax) zmax=s->Z()+margZmax;
+	if(zmin>s->Z()-margZmin) zmin=s->Z()-margZmin;
       }
     }
   }
-  printf("Guess Range:\n");
-  printf("X: %10.1f %10.1f\n",xmin,xmax);
-  printf("Y: %10.1f %10.1f\n",ymin,ymax);
-  printf("Z: %10.1f %10.1f\n",zmin,zmax);
+  if(gEDBDEBUGLEVEL>1) {
+    printf("Guess Range:\n");
+    printf("X: %10.1f %10.1f\n",xmin,xmax);
+    printf("Y: %10.1f %10.1f\n",ymin,ymax);
+    printf("Z: %10.1f %10.1f\n",zmin,zmax);
+  }
   SetRange(xmin,xmax,ymin,ymax,zmin,zmax);
+  fZooms=0;
 }
 
 //________________________________________________________________________
@@ -494,6 +518,7 @@ void EdbDisplay::Refresh()
     }
   }
 
+
   EdbTrackP *tr=0;
   if( eArrTr ) {
     int ntr = eArrTr->GetEntries();
@@ -517,6 +542,15 @@ void EdbDisplay::Refresh()
       {
         VertexDraw(v);
       }
+    }
+  }
+
+  if( eArrSegG ) {
+    int nseg = eArrSegG->GetEntries();
+    printf("%d Graph segments to draw...\n",nseg);
+    for(int j=0;j<nseg;j++) {
+      EdbSegG *sg = (EdbSegG*)(eArrSegG->At(j));
+      if (sg)        sg->Draw();
     }
   }
 
@@ -562,7 +596,10 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 {
   float xv,yv,zv;
   if (!vv) return;
-  if (vv->Flag() == -10) return;
+  //if (vv->Flag() == -10) {
+  Log(2,"EdbDisplay::VertexDraw","id=%d  %d-prong  flag = %d",  vv->ID(), vv->N(), vv->Flag() );
+    //return;
+    //}
   EdbVertexG *v = new EdbVertexG(this);
   v->SetVertex( vv );
 
@@ -604,7 +641,9 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
 	if (fStyle/2 == 1) v->SetMarkerColor(kBlack);
 	else               v->SetMarkerColor(kWhite);
   }
-  v->SetMarkerStyle(kFullStar);
+
+  if(vv->Flag()==-10)  v->SetMarkerStyle(kOpenStar);
+  else                 v->SetMarkerStyle(kFullStar);
   v->SetMarkerSize(1.2);
   v->Draw();
 
@@ -615,29 +654,32 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
     EdbTrackP *tr=0;
     bool measured_segment = false;
     if (eVerRec) measured_segment = eVerRec->eUseSegPar;
-    float dz = 0;
     for(int i=0; i<vv->N(); i++ ) {
       tr = vv->GetTrack(i);
       if (!(tr->NF())) measured_segment = true;
-      dz = 0.;
-      if( vv->Zpos(i)==0 )
-      {
-             seg = tr->TrackZmax(measured_segment);
-	     dz = TMath::Abs(seg->DZ());
-      }
-      else
-      {
-             seg = tr->TrackZmin(measured_segment);
-      }
-      if(!seg) continue;
+
+      seg = vv->GetTrackV(i,measured_segment);         if(!seg) continue;
       line = new TPolyLine3D(2);
       line->SetPoint(0, xv,yv,zv );
-      line->SetPoint(1, seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
+      line->SetPoint(1, seg->X(), seg->Y(), seg->Z());
       if (fStyle/2 == 1) line->SetLineColor(kBlack);
-      else               line->SetLineColor(kWhite);
-      line->SetLineWidth(fLineWidth);
+      else               line->SetLineColor(kYellow);
+      line->SetLineWidth(1);
       line->SetBit(kCannotPick);
+      printf("**** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
       line->Draw();
+
+      TPolyLine3D *trline = new TPolyLine3D(2);
+      EdbSegP ss(*seg);  ss.PropagateTo(zv);
+      trline->SetPoint(0, ss.X(),ss.Y(),ss.Z() );
+      trline->SetPoint(1, seg->X(), seg->Y(), seg->Z());
+      if (fStyle/2 == 1) trline->SetLineColor(kBlack);
+      else               trline->SetLineColor(kWhite);
+      trline->SetLineWidth(1);
+      trline->SetBit(kCannotPick);
+      printf("*** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
+      trline->Draw();
+
     }
   }
 
@@ -763,10 +805,11 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     if (tr->NF())      seg = tr->TrackZmax();
     else               seg = tr->GetSegmentLast();
     if(seg) {
-      dz = TMath::Abs(seg->DZ());
-      pme->SetPoint(0, seg->X()+seg->TX()*dz,
-    		       seg->Y()+seg->TY()*dz,
-		       seg->Z()+          dz);
+      pme->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
+//      dz = TMath::Abs(seg->DZ());
+//      pme->SetPoint(0, seg->X()+seg->TX()*dz,
+//    		       seg->Y()+seg->TY()*dz,
+//		       seg->Z()+          dz);
       pme->SetMarkerColor(kRed);
       pme->SetMarkerSize(1.2);
       pme->Draw();
@@ -997,7 +1040,7 @@ void EdbSegG::AddAsTrackToVertex()
     }
     else
     {
-	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	printf("Track not added! May be Prob < ProbMin=%f. Change ProbMin with 'TrackParams' button!\n", eD->eTProbMin);
 	fflush(stdout);
 	delete Tr;
 	delete eD->eWorking;
@@ -1356,16 +1399,15 @@ void EdbSegG::InfoSegVert()
   EdbSegP *s = (EdbSegP *)eSeg;  
   TText *t = 0;
 
-  strcpy(line, "  Segment   ID          X          Y          Z          TX         TY");
+  strcpy(line, "  Segment   ID          X          Y          Z          TX         TY        PH");
   t = (eD->fVTXTRKInfo)->AddText(line);
   t->SetTextColor(kBlue);
   t->SetTextSize(0.03);
   t->SetTextAlign(12);
   t->SetTextFont(102);
 
-  sprintf(line,"            %-4d        %-8.1f   %-8.1f   %-8.1f   %-7.4f    %-7.4f",
-		      s->ID(), s->X(), s->Y(), s->Z(),
-		      s->TX(), s->TY());
+  sprintf(line,"            %-4d        %-8.1f   %-8.1f   %-8.1f   %-7.4f    %-7.4f    %-4d",
+	  s->ID(), s->X(), s->Y(), s->Z(), s->TX(), s->TY(), (int)s->W() );
   t = (eD->fVTXTRKInfo)->AddText(line);
   t->SetTextColor(kBlack);
   t->SetTextSize(0.03);
@@ -1581,7 +1623,7 @@ void EdbVertexG::TestVertex()
   for(int i=0; i<eV->N(); i++) {
     t = eV->GetTrack(i);
     //t->PrintNice();
-    printf("nseg = %d p = %f\n",t->N(), me.PMSang(*t));
+    printf("nseg = %d p = %f\n",t->N(), (float)(me.PMSang(*t)) );
   }
 }
 //_____________________________________________________________________________
@@ -2799,7 +2841,7 @@ void EdbTrackG::AddTrackToVertex()
 	}
 	else
 	{
-	    printf("New vertex not created! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	    printf("EdbTrackG::AddTrackToVertex: New vertex not created! May be Prob < ProbMin=%f. Change ProbMin with 'TrackParams' button!\n",eD->eTProbMin);
 	}
 	(eD->eVerRec)->eImpMax = ImpMaxSave;
 	(eD->eVerRec)->eProbMin = ProbMinSave;
@@ -3069,15 +3111,7 @@ void EdbTrackG::InfoTrackVert()
 //  t->SetTextAlign(12);
 //  t->SetTextFont(102);
 
-  EdbSegP *seg = 0;
-  if   (zpos)
-    {
-      seg = (EdbSegP *)(tr->TrackZmin());
-    }
-  else
-    {
-      seg = (EdbSegP *)(tr->TrackZmax());
-    }
+  EdbSegP *seg = tr->TrackExtremity( zpos );//, eUseSegPar);
   float dx   = v->VX() - seg->X();
   float dy   = v->VY() - seg->Y();
   float dz   = v->VZ() - seg->Z();
@@ -4086,8 +4120,8 @@ void EdbDisplay::DrawVTXTracks(char *type, EdbVertex *v)
     }
   }
 
-  gPad->Modified(kTRUE);
-  gPad->Update();
+  fPad->Modified(kTRUE);
+  fPad->Update();
 }
 
 //=============================================================================

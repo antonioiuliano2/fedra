@@ -100,6 +100,7 @@ EdbVertex::EdbVertex()
   eZ = 0.;
   eFlag = 0;
   eQuality=0.;
+  eMCEvt=-999;
 }
 
 //________________________________________________________________________
@@ -130,6 +131,16 @@ void EdbVertex::Clear()
   eID = 0;
   eFlag = 0;
   eQuality = 0.;
+  eMCEvt=-999;
+}
+
+//________________________________________________________________________
+EdbSegP   *EdbVertex::GetTrackV(int i, bool usesegpar)
+{
+	EdbTrackP *t = GetTrack(i); if(!t) return 0;
+	EdbSegP *s = t->TrackExtremity(Zpos(i), usesegpar);
+	if(s->P() != t->P()) Log(1,"GetTrackV","Warning! segment momentum=%f is not equal to the track momentum=%f",s->P(), t->P() );
+	return s;
 }
 
 //______________________________________________________________________________
@@ -148,16 +159,30 @@ Int_t EdbVertex::CheckDiscardedTracks()
   return ndsc;
 }
 
-// //______________________________________________________________________________
-// void EdbVertex::UpdateVTA()
-// {
-//   // set imp and dist to VTA's
-//   for(int i=0; i<N(); i++)
-//     {
-//       GetVTa(i)->SetDist( VZ() -  GetTrackV(i)->Z() );  //TODO: uesesegpar??
-//       GetVTa(i)->SetImp( distance(V()->get_track(i),*v) );
-//     }
-// }
+//------------------------------------------------------------------------------
+Int_t EdbVertex::EstimateVertexFlag()
+{
+  int flag=-1;
+  int n0 = 0, n1=0, nn=0;
+  EdbVTA *vta = 0;
+  for (int i=0; i<N(); i++)
+  {
+    vta = GetVTa(i);
+    if     ( vta->Zpos()==0 ) n0++;
+    else if( vta->Zpos()==1 ) n1++;
+    else                      nn++;
+  }
+
+  if      ( n0>0 && n1 >0)    flag=1;         // end   & start
+  else if ( n0==0 && n1>0)    flag=0;         // start & start
+  else if ( n0>0 && n1==0)    flag=2;         // end   & end
+  else   flag= -1;
+  if(nn) flag= -1;              // flag -1 should newer happened: if so - should be debugged
+
+  SetFlag(flag);
+  Log(3,"EdbVertex::EstimateVertexFlag","%d   with n0=%d n1=%d, nn=%d", flag, n0,n1,nn );
+  return flag;
+}
 
 //______________________________________________________________________________
 void EdbVertex::ResetTracks()
@@ -229,34 +254,22 @@ bool EdbVertex::IsEqual(const TObject *o) const
 //________________________________________________________________________
 void EdbVertex::Print()
 {
-      printf("****** Vertex Id %d, Flag %d, quality %g, %d connected tracks ********\n",
-    	     ID(), Flag(), Quality(), N());
-      EdbTrackP *tr=0;
-      printf("IDs ");
-      for(int i=0; i<N(); i++) {
-	tr = GetTrack(i);
-	if(tr)  printf(" %6d", tr->ID());
-      }
-      printf("\n");
-      printf("Z   ");
-      for(int i=0; i<N(); i++) {
-	tr = GetTrack(i);
-	if(tr)
-	{
-	    if (Zpos(i)) printf(" %6.0f", (tr->TrackZmin())->Z());
-	    else         printf(" %6.0f", (tr->TrackZmax())->Z());
+	int ntr = N();
+//	printf("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
+	printf( "********************** Vertex %d  with flag %d   and %d tracks **************************\n", ID(), Flag(), ntr );
+	printf( "Fit quality     : probability = %f    Chi2 = %f\n", V()->prob(), V()->chi2() );
+	printf( "Vertex Position : %12.3f %12.3f %12.3f \n", VX(), VY(), VZ() );
+	printf( "Position Errors : %12.3f %12.3f %12.3f\n", V()->vxerr(), V()->vyerr(), V()->vzerr() );
+	//printf("---------------------------------------------------------\n");
+	printf( "Track   ID   Nseg   Mass       P       Chi2/ndf    Prob     Chi2Contrib   Impact       Ztr\n");
+	for(int i=0; i<ntr; i++) {
+		EdbTrackP *tr = GetTrack(i);
+		float ztr =  tr->TrackExtremity( Zpos(i) )->Z();
+		printf("%4d  %4d  %4d   %7.4f  %7.2f    %5.2f     %7.4f       %6.3f    %7.2f   %10.2f\n",
+		       i, tr->ID(), tr->N(), tr->M(), tr->P(),
+		       tr->Chi2()/tr->N(), tr->Prob(), V()->track_chi2(i), Impact(i), ztr );
 	}
-      }
-      printf("\n");
-      printf("Zpos");
-      for(int i=0; i<N(); i++) {
-	tr = GetTrack(i);
-	if(tr)
-	{
-	    printf(" %6d", Zpos(i));
-	}
-      }
-      printf("\n**********************************************************\n");
+	printf("****************************************************************************************\n");
 }
 //________________________________________________________________________
 void EdbVertex::AddVTA(EdbVTA *vta)
@@ -387,8 +400,7 @@ bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
     
     tr = GetTrack(i);
 
-    if (Zpos(i)) seg = tr->TrackZmin();
-    else         seg = tr->TrackZmax();
+    seg = tr->TrackExtremity( Zpos(i)); // usesegpar??
 
     x        = seg->X();
     y        = seg->Y();
@@ -444,8 +456,7 @@ bool EdbVertex::EstimateVertexMath( float& xv, float& yv, float& zv, float& d )
 
     tr = GetTrack(i);
 
-    if (Zpos(i)) seg = tr->TrackZmin();
-    else	 seg = tr->TrackZmax();
+     seg = tr->TrackExtremity( Zpos(i)); // usesegpar??
     
     drx = seg->X() - xv;
     dry = seg->Y() - yv;
@@ -533,15 +544,7 @@ float EdbVertex::Chi2Track(EdbTrackP *track, int zpos, float X0)
 
   if (!track) return 0.;
   double distchi2 = -2.;
-  EdbSegP *seg = 0;
-  if   (zpos)
-    {
-      seg = (EdbSegP *)(track->TrackZmin());
-    }
-  else
-    {
-      seg = (EdbSegP *)(track->TrackZmax());
-    }
+  EdbSegP *seg = track->TrackExtremity( zpos); // usesegpar??
   if (eV)
     {
       if (track->NF() <= 0) return -1.;
@@ -566,7 +569,7 @@ float EdbVertex::DistTrack(EdbTrackP *track, int zpos, float X0)
 {
   // distance from track to already fitted vertex
   if (!track) return 0.;
-  EdbSegP *seg = zpos ? track->TrackZmin():track->TrackZmax();
+  EdbSegP *seg = track->TrackExtremity( zpos); // usesegpar??
   if (!seg)  return 0.;
   return DistSeg(seg,X0);
 }
@@ -598,7 +601,8 @@ EdbVertexRec::EdbVertexRec()
   eAbin       = 0.01;      // rad
   eDZmax      = 3000.;     // microns
   eProbMin    = 0.01;      // i.e 1%
-  eImpMax     = 25.;       // microns
+  eImpMax     = 50.;       // microns
+  eImpMaxV    = 10.;       // microns
   eUseMom     = false;     // do not use it
   eUseSegPar  = false;     // use fitted track parameters
   eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
@@ -720,7 +724,7 @@ EdbVTA *EdbVertexRec::AddTrack( EdbVertex &edbv, EdbTrackP *track, int zpos )
   // if vertex do not exist yet - calculate medium x,y,z
 
   if (!track)        return 0;
-  EdbSegP *seg = zpos? track->TrackZmin(eUseSegPar): track->TrackZmax(eUseSegPar);
+  EdbSegP *seg = track->TrackExtremity( zpos, eUseSegPar);
   if (!seg)          return 0;
   int ntr = edbv.N();
   if(edbv.TrackInVertex(track)) return 0;
@@ -794,6 +798,108 @@ Int_t EdbVertexRec::FindSimilarTracks(EdbTrackP &track, TObjArray &found, int ns
     found.Add(t);
     nfound++;
   }
+
+  Log(2,"EdbVertexRec::FindSimilarTracks","%d tracks found",nfound);
+  if(gEDBDEBUGLEVEL>1) {
+    for(int i=0; i<found.GetEntries(); i++) {
+      t = (EdbTrackP*)found.At(i);
+      t2 = (EdbSegP*)t;
+      dtheta = Sqrt( (t2->TX()-t1->TX())*(t2->TX()-t1->TX()) + (t2->TY()-t1->TY())*(t2->TY()-t1->TY()) );
+      imp = CheckImpact( t1,t2,1,1, pv);
+      printf("id =%6d  imp = %7.3f  dtheta = %7.3f  nseg =%3d\n", t->ID(), imp, dtheta,t->N());
+   }
+  }
+
+  return nfound;
+}
+
+
+//______________________________________________________________________________
+bool EdbVertexRec::CompatibleSegments( EdbSegP &pred, EdbSegP &stest, 
+				       float impact, float dthetaMax, float dxy, 
+				       float zminT, float zmaxT, float zminV, float zmaxV)
+{
+  float impMin   = 5;      // limits for the tracks separability
+  float thetaMin = 0.005; //
+
+  if( TMath::Abs(stest.X()-pred.X())   > dxy )     return 0;
+  if( TMath::Abs(stest.Y()-pred.Y())   > dxy )     return 0;
+  if( stest.Z()                        < zminT )   return 0;
+  if( stest.Z()                        > zmaxT )   return 0;
+
+  float dtheta = TMath::Sqrt( (stest.TX()-pred.TX())*(stest.TX()-pred.TX()) + (stest.TY()-pred.TY())*(stest.TY()-pred.TY()) );
+  if(dtheta>dthetaMax)                             return 0;
+  float pv[3];
+  bool parallel;
+  float imp = CheckImpactN( &pred,&stest,pv, parallel, eDZmax);
+  if(imp>impact)                                   return 0;
+  
+  //printf("v: %f %f %f\n", pv[0],pv[1],pv[2]);
+  //pred.PrintNice();
+  
+  if( dtheta<thetaMin && imp > 3*impMin)     return 0;   // parallel not close  tracks ( can be interesting for decay search??)
+  
+  if( dtheta>thetaMin)  {  // check z of the vertex
+    float marg = impMin/dtheta;
+    if( pv[2]    <  zminV-marg )            return 0;
+    if( pv[2]    >  zmaxV+marg )            return 0;
+  }
+
+  Log(2,"EdbVertexRec::CompatibleSegments","ids = %6d and %6d    PH: %3d  imp = %7.3f  dtheta = %7.3f dzT = %7.3f dzV = %7.3f", 
+      pred.ID(), stest.ID(), int(stest.W()), imp, dtheta, stest.Z()-pred.Z(), pv[2]-pred.Z());
+  return 1;
+}
+
+//______________________________________________________________________________
+Int_t EdbVertexRec::FindSimilarSegments( EdbSegP &spred, TObjArray &found, EdbPattern &pat,
+					float impact, float dthetaMax, float dxy, 
+					float zminT, float zmaxT, float zminV, float zmaxV)
+{
+  // Find all segments from path compatible with the pred segment and add them to found array
+
+  int  nseg  = pat.N();  if(nseg<1) return 0;
+  int  nfound=0;
+  for(int i=0; i<nseg; i++)   {
+    EdbSegP *s = pat.GetSegment(i);
+    if (s->Flag() < 0)                                        continue;  // sure?
+    if( CompatibleSegments( spred,*s, impact, dthetaMax, dxy, zminT, zmaxT, zminV, zmaxV) )  found.Add(s);
+    else continue;
+    nfound++;
+  }
+  Log(2,"EdbVertexRec::FindSimilarSegments","%d segments are found",nfound);
+  return nfound;
+}
+
+//______________________________________________________________________________
+Int_t EdbVertexRec::FindSimilarTracksE( EdbSegP &spred, TObjArray &found, bool startend,
+					float impact, float dthetaMax, float dxy, 
+					float zminT, float zmaxT, float zminV, float zmaxV)
+{
+  // Find all tracks with the requested extremity close to the pred segment and add them to found array
+  //
+  //   startend     - selecting tracks extremity to be used: 0-tracks starts (zmin)  1-tracks ends (zmax)
+  //   impact       - max 3D distance between segment lines
+  //   dthetaMax    - max spatial angle between track lines
+  //   dxy          - preliminary distance cut between segments
+  //   zminT,zmaxT  - limits in Z for the tracks extremity
+  //   zminV,zmaxV  - limits in Z for the estimated vertex position
+
+  int ntr  = eEdbTracks->GetEntries();
+  if(ntr<1) return 0;
+  int   nfound=0;
+
+  EdbSegP *t1=&spred;
+  for(int itr=0; itr<ntr; itr++)   {
+    EdbTrackP *t = (EdbTrackP*)(eEdbTracks->At(itr));
+    if (t->Flag() < 0)                                        continue;
+    EdbSegP *te = t->TrackExtremity(startend,eUseSegPar);  // select track extremity
+
+    if( CompatibleSegments( *t1,*te, impact, dthetaMax, dxy, zminT, zmaxT, zminV, zmaxV) )  found.Add(t);
+    else continue;
+
+    nfound++;
+  }
+  Log(2,"EdbVertexRec::FindSimilarTracksE","%d tracks found",nfound);
   return nfound;
 }
 
@@ -898,8 +1004,8 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
   int   nz2 = list2.GetEntries();
   float z1, z2;
 
-  int ntot = nz1*nz2;
-  printf("  2-track vertexes search in progress... %3d%%", 0);
+  //int ntot = nz1*nz2;
+  //printf("  2-track vertexes search in progress... %3d%%", 0);
 
   for(int iz1=0; iz1<nz1; iz1++)   {           // first z-group
     c1 = list1.At(iz1);
@@ -914,7 +1020,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
       if( z2-z1 > eDZmax )    break;
 
       ncount++;
-      printf("\b\b\b\b%3d%%",(int)((double)ncount/double(ntot)*100.));
+      //printf("\b\b\b\b%3d%%",(int)((double)ncount/double(ntot)*100.));
       fflush(stdout);
       
       int nc2=c2->GetEntries();
@@ -946,13 +1052,12 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
     }
   }
 
-  printf("\b\b\b\b%3d%%\n",100);
+  //printf("\b\b\b\b%3d%%\n",100);
 
   printf("  %6d pairs -> %d vertices accepted\n", ncombin, nvtx);
 
   return nvtx;
 }
-
 
 //______________________________________________________________________________
 float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
@@ -974,8 +1079,7 @@ float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
   p1[0] = s1->X();
   p1[1] = s1->Y();
   p1[2] = s1->Z();
-  if(zpos1) dz = -eDZmax;
-  else      dz =  eDZmax;
+  dz = zpos1? -eDZmax : eDZmax;
   p2[0] = s1->X() + dz*s1->TX();
   p2[1] = s1->Y() + dz*s1->TY();
   p2[2] = s1->Z() + dz;
@@ -983,8 +1087,7 @@ float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
   p3[0] = s2->X();
   p3[1] = s2->Y();
   p3[2] = s2->Z();
-  if(zpos2) dz = -eDZmax;
-  else      dz =  eDZmax;
+  dz = zpos2? -eDZmax : eDZmax;
   p4[0] = s2->X() + dz*s2->TX();
   p4[1] = s2->Y() + dz*s2->TY();
   p4[2] = s2->Z() + dz;
@@ -994,17 +1097,62 @@ float EdbVertexRec::CheckImpact( EdbSegP *s1,   EdbSegP *s2,
   return EdbMath::Magnitude3( pa, pb );
 }
 
+
+//______________________________________________________________________________
+float EdbVertexRec::CheckImpactN( EdbSegP *s1,   EdbSegP *s2,
+			          float pv[3], bool &parallel, float dzMax )
+{
+  // Return: the distance between 2 lines defined by s1 and s2
+  // Output: pv - "vertex position" - the nearest point to the both lines
+
+  float imp = 1e+10;
+  float p1[3], p2[3];  // first line
+  float p3[3], p4[3];  // second line
+  float pa[3], pb[3];  // shortest line
+  double mua, mub;
+
+  p1[0] = s1->X() - dzMax*s1->TX();
+  p1[1] = s1->Y() - dzMax*s1->TY();
+  p1[2] = s1->Z() - dzMax;
+  p2[0] = s1->X() + dzMax*s1->TX();
+  p2[1] = s1->Y() + dzMax*s1->TY();
+  p2[2] = s1->Z() + dzMax;
+  
+  p3[0] = s2->X() - dzMax*s2->TX();
+  p3[1] = s2->Y() - dzMax*s2->TY();
+  p3[2] = s2->Z() - dzMax;
+  p4[0] = s2->X() + dzMax*s2->TX();
+  p4[1] = s2->Y() + dzMax*s2->TY();
+  p4[2] = s2->Z() + dzMax;
+  
+  if( EdbMath::LineLineIntersect( p1, p2, p3, p4, pa, pb, mua, mub ) ) {
+    parallel = false;
+    for (int i = 0; i<3; i++) pv[i] = 0.5*(pa[i] + pb[i]);
+    imp =  EdbMath::Magnitude3( pa, pb );
+  } else  { // the lines are parallel: take as vertex the mean point, calc. the distance to line
+    parallel = true;
+    pv[0] = 0.5*(s1->X()+s2->X());
+    pv[1] = 0.5*(s1->Y()+s2->Y());
+    pv[2] = 0.5*(s1->Z()+s2->Z());
+    bool inside=0;
+    imp = 2. * EdbMath::DistancePointLine3(pv, p1,p2, &inside);
+  }
+  return imp;
+}
+
 //______________________________________________________________________________
 EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
 				      int zpos1,      int zpos2 )
 {
   // Check if 2 tracks can form the vertex. If yes - return the pointer to the new EdbVertex object
+  Log(3,"EdbVertexRec::ProbVertex2", "try tracks %d and %d", tr1->ID(), tr2->ID() );
   
   if(!tr1)     return 0;
   if(!tr2)     return 0;
   if(tr1==tr2) return 0;
-  EdbSegP *s1 = zpos1? tr1->TrackZmin(eUseSegPar):tr1->TrackZmax(eUseSegPar);
-  EdbSegP *s2 = zpos2? tr2->TrackZmin(eUseSegPar):tr2->TrackZmax(eUseSegPar);
+  EdbSegP *s1 = tr1->TrackExtremity(zpos1,eUseSegPar);
+  EdbSegP *s2 = tr2->TrackExtremity(zpos2,eUseSegPar);
+//zpos2? tr2->TrackZmin(eUseSegPar):tr2->TrackZmax(eUseSegPar);
   if(!s1)      return 0;
   if(!s2)      return 0;
 
@@ -1029,11 +1177,15 @@ EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
 
   // check the impact
   float vestim[3];
-  float imp = CheckImpact( s1, s2, zpos1, zpos2, vestim );
+  //float imp = CheckImpact( s1, s2, zpos1, zpos2, vestim );
+  bool parallel;
+  float imp = CheckImpactN( s1, s2, vestim, parallel, eDZmax );
+  Log(3,"EdbVertexRec::ProbVertex2", "impact = %f", imp );
   if(imp>eImpMax)                                         return 0;
 
   // create the new EdbVertex
   EdbVertex *vtx =  new EdbVertex();
+  vtx->SetXYZ(vestim[0],vestim[1],vestim[2]);
 
   EdbVTA    *vta1 =  new EdbVTA(tr1,vtx);
   vta1->SetZpos(zpos1);
@@ -1045,18 +1197,18 @@ EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
   vta2->SetFlag(2);
   vtx->AddVTA(vta2);
   
-  if(MakeV(*vtx))
-    if( vtx->V() )
-      if( vtx->V()->valid() )
-	if( vtx->V()->prob() >= eProbMin )
-	  if( CheckDZ2( s1->Z(), s2->Z(), zpos1,zpos2, vtx->VZ() ) )
-	    {                    // if everything is fine:
-	      vtx->SetFlag( EstimateVertexFlag(zpos1,zpos2) );
-	      return vtx;
-	    }
-
-  // TODO: very importent cut is the fiducial volume where we looking for the vertices
-
+  if(MakeV(*vtx)) {
+    vtx->SetFlag( EstimateVertexFlag(zpos1,zpos2) );
+    //if(imp<eImpMaxV)     // accept the vertex even if prob is small (parallel tracks)
+    //  return vtx;
+    //else                 // do additional checks
+       if( vtx->V()->prob() >= eProbMin ) {
+        Log(3,"EdbVertexRec::ProbVertex2", "prob = %f",  vtx->V()->prob());
+	vtx->Print();
+	if( CheckDZ2( s1->Z(), s2->Z(), zpos1,zpos2, vtx->VZ() ) )
+	    return vtx;
+    }
+  } 
   SafeDelete(vta1);
   SafeDelete(vta2);
   SafeDelete(vtx); 
@@ -1067,6 +1219,7 @@ EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
 int EdbVertexRec::EstimateVertexFlag(int zpos1, int zpos2)
 {
     if      (zpos1 == 0 && zpos2 == 1)   return 1;         // end   & start
+    else if (zpos1 == 1 && zpos2 == 0)   return 1;         // end   & start
     else if (zpos1 == 1 && zpos2 == 1)   return 0;         // start & start
     else if (zpos1 == 0 && zpos2 == 0)   return 2;         // end   & end
     return -1;
@@ -1088,7 +1241,7 @@ Bool_t EdbVertexRec::IsInsideLimits(EdbSegP &s)
 //______________________________________________________________________________
 Bool_t EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z )
 {
-  // return 1 if the vertex position (z) is in agreement with limits defined by  eZbin and DZmax
+  // return 1 if the vertex position (z) is in agreement with limits defined by  eZbin and eDZmax
 
   float zvmin,zvmax;
   if (zpos1 == 0 && zpos2 == 1)            // ends & starts
@@ -1115,8 +1268,12 @@ Bool_t EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z 
 //______________________________________________________________________________
 int EdbVertexRec::ProbVertexN()
 {
+  printf("*** on entry to ProbVertexN: nv = %d\n", eVTX->GetEntries());
   ProbVertexNpos(0);  // find n-track vtx attached to left edges
+  printf("*** npoz     0  ProbVertexN: nv = %d\n", eVTX->GetEntries());
   ProbVertexNpos(1);  // to right edges
+  printf("*** npoz     1  ProbVertexN: nv = %d\n", eVTX->GetEntries());
+
   CheckVTX();         // rank the vertices and reassign tracks according to the major rank
   StatVertexN();      // print vertex statistics
   return 0;
@@ -1131,7 +1288,7 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
   int nv2 = eVTX->GetEntries();    // number of vertices
   if(nv2<2)  return 0;
 
-  Log(2,"EdbVertexRec::ProbVertexN_new","%d vertices as input",nv2);
+  Log(2,"EdbVertexRec::ProbVertexNpos","%d vertices as input",nv2);
 
   // first group vertices with a common track
 
@@ -1141,10 +1298,10 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
   EdbTrackP *t=0;
   for( int i=0; i<nv2; i++) {
     vtx = GetVertex(i);
-    if(!vtx) Log(1,"EdbVertexRec::ProbVertexN_new","vertex not found!");
+    if(!vtx) Log(1,"EdbVertexRec::ProbVertexNpos","vertex not found!");
     for( int j=0; j<vtx->N(); j++) {
       t = vtx->GetTrack(j);
-      if(!t) Log(1,"EdbVertexRec::ProbVertexN_new","track not found!");
+      if(!t) Log(1,"EdbVertexRec::ProbVertexNpos","track not found!");
       if(!(vtx->Zpos(j)==zpos)) continue;
       arr = (TObjArray*)maptr.GetValue(t);
       if(!arr) {
@@ -1161,6 +1318,7 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
     t  = (EdbTrackP*)a->Key();
     arr = (TObjArray*)a->Value();
     int nv = arr->GetEntries();
+    printf( "nv = %d\n", nv );
     if(nv<2)    continue;
     TObjArray arrvta;        // group of vta of tracks attached to t
     for(int iv=0; iv<nv; iv++) {
@@ -1170,10 +1328,13 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
       }
     }
     EdbVertex *newvtx=TestVTAGroup(arrvta);
-    if(newvtx) eVTX->Add(newvtx);
+    if(newvtx) {
+      printf("add new vtx with %d tracks and flag = %d\n",newvtx->N(),newvtx->Flag() );
+      eVTX->Add(newvtx);
+    }
   }
 
-  Log(2,"EdbVertexRec::ProbVertexN_new","%d entries in the map for zpos = %d",maptr.GetEntries(), zpos);
+  Log(2,"EdbVertexRec::ProbVertexNpos","%d entries in the map for zpos = %d",maptr.GetEntries(), zpos);
 
   return 0;
 }
@@ -1183,13 +1344,17 @@ void  EdbVertexRec::CheckVTX()
 {
   // rank the vertices and reassign tracks according to the major vertex weight
 
+  if(!eVTX)   return;
   int nvtx = eVTX->GetEntries();
+  Log(2,"EdbVertexRec::CheckVTX","%d vertices",nvtx);
+  if(nvtx<1)  return;
 
   TArrayF   weight(nvtx);  // the vertex "weight" = 10*ntr+prob
   TArrayI   ind(nvtx);
   EdbVertex *vtx=0;
   for(int i=0; i<nvtx; i++)  {
     vtx = GetVertex(i);
+    //vtx->SetFlag(0);       // to check!!!
     weight[i] = 10*vtx->N() + vtx->V()->prob();
   }
   TMath::Sort(nvtx,weight.GetArray(),ind.GetArray(),0); // sort in ascending order
@@ -1198,10 +1363,16 @@ void  EdbVertexRec::CheckVTX()
     vtx->ResetTracks();
   }
 
-  // discard vertices with the lost tracks
+  // discard vertices with the detached tracks
   for(int i=0; i<nvtx; i++)  {
     vtx = GetVertex(ind[i]);
-    if(vtx->CheckDiscardedTracks()>0) vtx->SetFlag(-10);
+    int ndisc = vtx->CheckDiscardedTracks();
+    if(ndisc>0) {
+      Log(2,"EdbVertexRec::CheckVTX","discard vtx i=%d ntr=%d flag before: %d  disc tracks: %d",i, vtx->N(), vtx->Flag(), ndisc);
+      vtx->SetFlag(-10);
+    } else {
+      vtx->EstimateVertexFlag();
+    }
   }
 
   // reassign the vertex id's
@@ -1218,6 +1389,8 @@ EdbVertex *EdbVertexRec::TestVTAGroup(TObjArray &arrvta)
   // return the new vertex if successful
 
   int nvta=arrvta.GetEntries();
+  printf("nvta = %d\n",nvta);
+
   EdbVTA *vta=0, *newvta=0;
   EdbVertex *newvtx = new EdbVertex();
   for(int i=0; i<nvta; i++) {
@@ -1231,14 +1404,18 @@ EdbVertex *EdbVertexRec::TestVTAGroup(TObjArray &arrvta)
 
   if(MakeV(*newvtx))
     if( newvtx->V() )
-      if( newvtx->V()->valid() )
+      if( newvtx->V()->valid() ) {
+	printf("prob = %f\n", newvtx->V()->prob() );
 	if( newvtx->V()->prob() >= eProbMin )   // accept new N-tracks vertex
 	  {
-	    for(int i=0; i<nvta; i++)
-	      ((EdbVTA*)arrvta.At(i))->GetVertex()->SetFlag(-10);
+	    for(int i=0; i<nvta; i++)	{
+	      if( ((EdbVTA*)arrvta.At(i))->GetVertex() != newvtx )
+					  ((EdbVTA*)arrvta.At(i))->GetVertex()->SetFlag(-10);
+	    }
+	    printf("accepted!\n");
 	    return newvtx;
 	  }
-
+      }
   SafeDelete(newvtx);   // discard new vertex
   return 0;
 }
@@ -1753,7 +1930,7 @@ int EdbVertexRec::AddSegmentToVertex(EdbSegP *s, float ImpMax, float ProbMin, fl
     }
     else
     {
-	printf("Track not added! May be Prob < ProbMin. Change ProbMin with 'TrackParams' button!\n");
+	printf("Track not added! May be Prob < ProbMin=%f. Change ProbMin with 'TrackParams' button!\n",ProbMin);
 	fflush(stdout);
 	delete Tr;
 
@@ -2884,6 +3061,36 @@ double EdbVertexRec::TdistanceChi2(const EdbSegP &s1, const EdbSegP &s2, float m
 //________________________________________________________________________
 EdbTrackP *EdbVertexRec::GetEdbTrack(const int index)
 {
-  if (!eEdbTracks) return (EdbTrackP *)eEdbTracks->At(index);
-  return 0;
+  if (eEdbTracks) return (EdbTrackP *)eEdbTracks->At(index);
+  else            return 0;
+}
+
+//________________________________________________________________________
+int EdbVertexRec::CheckTrack(EdbTrackP &track, int zpos)
+{
+  // loop for all tracks and check if some of them can form the vertex with tr
+  int ntr  = eEdbTracks->GetEntries();
+  if(ntr<1) return 0;
+  int nvtx=0; 
+
+  EdbTrackP *t=0;
+  for(int itr=0; itr<ntr; itr++)   {
+    t = (EdbTrackP*)(eEdbTracks->At(itr));
+    if (t == &track)                                          continue;
+    if (t->Flag() < 0)                                        continue;
+
+    EdbVertex *vtx0 = ProbVertex2( &track, t, zpos, 0 );
+    if(vtx0) {
+      AddVertex(vtx0);
+      nvtx++;
+    }
+    EdbVertex *vtx1 = ProbVertex2( &track, t, zpos, 1 );
+    if(vtx1) {
+      AddVertex(vtx1);
+      nvtx++;
+    }
+    
+  }
+  Log(2,"EdbVertexRec::CheckTrack","%d couples found",nvtx);
+  return nvtx;
 }

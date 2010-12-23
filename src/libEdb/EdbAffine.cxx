@@ -17,6 +17,8 @@
 ClassImp(EdbAffine2D)
 ClassImp(EdbAffine3D)
 
+  using namespace TMath;
+
 inline Double_t sqr(Double_t x) {return (x*x);};
 
 //______________________________________________________________________________
@@ -90,8 +92,10 @@ void EdbAffine2D::Invert()
   Float_t   a11,a12,a21,a22,b1,b2;
 
   d = eA11*eA22 - eA12*eA21;
-  if( d==0. ) printf("EdbAffine2D::Inverse: Error: Determinant = 0\n");
-  
+  if( Abs(d)<0.0000001 ) {
+    Log(1,"EdbAffine2D::Invert","ERROR: Determinant is too small!  %f. Do nothing!", d);
+    return;
+  }
   a11 =  eA22/d;
   a12 = -eA12/d;
   b1  = (eA12*eB2 - eA22*eB1)/d;
@@ -180,15 +184,11 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     Double_t    sq0 = sx0y1 - sx0*sy1;
     Double_t    sq1 = sy0y1 - sy0*sy1;
 
-    //        printf(" sp0,sp1, sq0,sq1: %f %f \t %f %f\n", sp0,sp1, sq0,sq1);
- 
     Double_t    sar = sx0x0 - sx0*sx0;
     Double_t    sbr = sx0y0 - sx0*sy0;
     Double_t    scr = sbr;
     Double_t    sdr = sy0y0 - sy0*sy0;
     Double_t    det = sar*sdr-sbr*scr;
-
-    //        printf(" sar,sbr,scr,sdr, det: %f %f %f %f \t %f\n", sar,sbr,scr,sdr, det);
 
     if ( det == 0 )                           return 0;
 
@@ -196,8 +196,6 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     Double_t    sb = -sbr/det;
     Double_t    sc = -scr/det;
     Double_t    sd =  sar/det;
-
-    //        printf(" sa,sb,sc,sd: %f %f %f %f \n\n", sa,sb,sc,sd);
 
     a = sa*sp0+sb*sp1;
     b = sc*sp0+sd*sp1;
@@ -207,9 +205,8 @@ Int_t EdbAffine2D::CalculateFull(int n, float *x0, float *y0, float *x1, float *
     q = sy1-c*sx0-d*sy0;
   }
 
-  if (gEDBDEBUGLEVEL > 1) 
-    printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", 
-	   n, a,b,c,d,p,q);
+  Log(3,"CalculateFull","Aff2D( %6d ): %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f", 
+      n, a,b,c,d,p,q);
 
   Set(a,b,c,d,p,q);
 
@@ -291,15 +288,11 @@ Int_t EdbAffine2D::Calculate( EdbPointsBox2D *b0, EdbPointsBox2D *b1 )
     Double_t    sq0 = sx0y1 - sx0*sy1;
     Double_t    sq1 = sy0y1 - sy0*sy1;
 
-    //    printf("%f %f \t %f %f\n", sp0,sp1, sq0,sq1);
- 
     Double_t    sar = sx0x0 - sx0*sx0;
     Double_t    sbr = sx0y0 - sx0*sy0;
     Double_t    scr = sbr;
     Double_t    sdr = sy0y0 - sy0*sy0;
     Double_t    det = sar*sdr-sbr*scr;
-
-    //    printf("%f %f %f %f \t %f\n", sar,sbr,scr,sdr, det);
 
     if ( det == 0 )                           return 0;
 
@@ -316,10 +309,11 @@ Int_t EdbAffine2D::Calculate( EdbPointsBox2D *b0, EdbPointsBox2D *b1 )
     q = sy1-c*sx0-d*sy0;
   }
 
-  printf("Aff2Dbox( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", n, a,b,c,d,p,q);
-
+  Log(3,"Calculate","Aff2D( %6d ): %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f", 
+      n, a,b,c,d,p,q);
+  
   Set(a,b,c,d,p,q);
-
+  
   return  1;
 }
 
@@ -491,8 +485,9 @@ Int_t EdbAffine2D::CalculateTurn(int n, float *x0, float *y0, float *x1, float *
       q = a2*TMath::Sin(teta2) - b2*TMath::Cos(teta2);
     }
   }
-  if (gEDBDEBUGLEVEL > 1)
-    printf("Aff2D   ( %6d ) : %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f \n", n, a,b,c,d,p,q);
+
+  Log(3,"CalculateTurn","Aff2D( %6d ): %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f", 
+      n, a,b,c,d,p,q);
 
   Set(a,b,c,d,p,q);
   return  1;

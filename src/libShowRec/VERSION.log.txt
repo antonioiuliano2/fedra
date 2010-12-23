@@ -1,0 +1,559 @@
+// TODO....//======================================================================
+// TODO:
+// TODO: IF InBTArray and gALI given over in the constructor, then CHECK what to be reset eUse_LT or e_USEALIBT_ or something esle!!!
+// TODO:    
+// TODO:    
+// TODO: First Skeleton Class of a general ID class. Try to make this class that its children can make separations for example: electron-pion, electron-photon ...Similar to EdbShowerAlg, this class takes an array of reconstructed showers (maybe later also tracks....). and extracts out of some parametrisations characteristic values to assign IsAPion, IsAElectron, IsAPhoton values...   
+// TODO:
+// TODO: Finish the implementation of NN Alg; check all inpuneurons and
+// TODO: layout structures! // Works for the first attempt: ToDo: write it in A way that parameters
+// TODO: can be given over in default.par!
+// TODO:
+// TODO: check the SHOW_ALG_USE_ALISUB # if, this has to be still under investigation cause if lnk.lst is in reverse order it might not work...
+// TODO:
+// TODO: Fix crash possibility mentioned in # 24042009
+// TODO:  
+// TODO:  Implement also BuildParametrizationsMCInfo_Event for dario Event structure.
+// TODO:  
+// TODO: If SetInBTArray was done manually, then update the EdbPVRec Input data type: andEdbPVRec Input data type eUse_AliLT ( which value???, should be sthg like 999 or so....(but dont use magic numbers...); 
+// TODO:
+// TODO: IRGENDAWS IST HIER FALSCH MIT BEM BRACH FILLING !!! in EdbShowRec::WriteParametrisation_YY(
+// TODO:
+// TODO:  Make also a EdbShowRec constructor with eAli and treebranch tree and create the showers 
+// TODO:  w.r.t. the segment adressesd of eAli to have the shower consistent within the eAli object!
+// TODO:
+// TODO:	Error in <TTree::Fill>: Failed filling branch:Para_FJ.longprofile, nbytes=-1
+// TODO  :This error is symptomatic of a Tree created as a memory-resident Tree
+// TODO:  this happens calling edbshowrec from a treebranch file and the write parametrisation....
+// TODO:
+// TODO:  when reconstructing Shower.root with _ShowRec_ program we have Shower_idb different for 1st and other basetracks???? check this.
+// TODO:
+// TODO: shower sorting always by ascending Z (lowest Z: first element in shower after sorting). seems to be done.
+// TODO:
+// TODO: TxtToRecoShowerArray_Feedback: Not all tracks are correctly converted to showers....
+// TODO:
+// TODO: EdbPVRQuality: the new building of eAli_modified after the new Chi2 cuts is not yet 
+// TODO: supported, since I dont know how to create a EdbPVRec objcet by pvr->Add(segment)
+// TODO:
+// TODO:
+// TODO....//======================================================================
+
+
+
+# 11082010
+* Improved EdbPVRQuality. Also now a modified EdbPVRec object can be given back.
+* But this eAli_modified object has NOT the full properties of eAli_orig. It
+* should be only used for Shower Reco.
+
+# 24072010
+* Added small class EdbPVRQuality. This is usefull for checking BT dens. Plate by Plate.
+* Since its purpose is mainly for shower reco, we did not put it into EdbPattern/PVRec Class...
+* See todo list....: only the Chi2/Dist cut values can be given back. 
+
+
+# 11062010
+* In EdbShowerP: N0() is the sum of all empty plates for the shower. Added now
+* N00() giving the largest consecutive hole plates.
+
+
+# 04062010
+* Treebranch_To_RecoShowerArray: Reading shower.root file produced with Frederics algo
+* gave wrong MCEvt number for Basetrack (0 instead of -999). Fixed.
+
+# 02062010
+* Added Help() function for the major classes. This will be filled on and on with the
+* most important commands. This is complementary to Print() and not in contradiction.
+
+
+# 27052010
+* List of minor modifications;
+* First skeleton of a simple ID class (not the general ID class!) itsfor test purposes:
+* EdbShowAlgID_E_G_Simple, taking the FJ parametrisation as input.
+
+
+# 20052010
+* Try Adding a very simple shower parametrisation: Para_SE ("SimpleEasy"). Taking only:
+* angle, nseg, npl, scan-efficiency. Note the small inconsistency, that scan-efficiency is
+* NOT a property of the shower itsself, since its determined by cosmic muon scan efficiency
+* So the default valeu for scan-efficencie is (without prior information) set to ??? which
+* value ?
+
+
+# 20052010
+* Bugfix: in BuildParametrisation_FJ . Building a parametrisation is done when the 
+* reconstruction of a shower was already done (either by EdbShowAlg, or ShowRec program
+* of by giving the shower by hand. No more cut should be applied when making a shower parametrisation.
+* In __if (dist<Dr[nfilmb[ibtke]-1]&&nfilmb[ibtke]<=nbfilm)__  this was done, explicitly it was checked
+* the BTs within the conesize. But ConeSize is algorithmspecific and therefore should be
+* kept out at this part of shower building.
+* Figured this out when trying to Read the Hamada Gamma no4 of The Event which all BTs 
+* actually lay (smallly) slightly outside this con dR[] condition so none of the (manually) 
+* checked BTs was kept.
+* Solution: we drop the dR[] condition in BuildParametrisation_FJ part.
+* (By the way: in ShowRec program this part of the code is not there anymore, at some point..
+* ... I took it out.. already.)
+*
+* Added TxtToRecoShowerArray_SimpleListNagoya fora segment list sent by Osam Sato.
+*
+* TxtToRecoShowerTxtToRecoShowerArray_Feedback :N ot all tracks are correctly converted to showers yet....
+* 
+
+
+# 18052010
+* EdbShowRec::TxtToRecoShowerArray_SimpleList function to read simple text list is ok.
+* But showers are correct only in thecase that they are ordered in ascending z position.
+* Shower Lists - or shower creation - with descending (or random) Z values are not yet
+* supported.
+* Added EdbShowerP::Sort() that sorts the segments array in ascending Z direction and updates
+* the shower.
+* Added EdbShowerP::IsSorted() that check is shower is sorted.
+
+# 18052010
+* Started adding a constructor EdbShowRec::EdbShowRec(TString TxtFileName, Int_t TxtFileType).
+* Takes a list of segments and makes out a shower array out of it.
+* I hope to support different filetypes -including official feedback file- to ease
+* the interface when one has manual segments to read in.
+
+
+# 17052010
+* Added unique ShowerID when reading in showers from treebranch.root file.
+* Almost finished the SimpleRemoveTrackSegmentsFromShower() method. Whats missing.
+* Make sth. like a casesswitch to determine which tracks to be removed: passing,
+* starting, ending after the shower... and so on. In prinicpal we could make it like
+* reading the valueswitches from defaultpar file, but now itseems to much effort.
+* SimpleRemoveDoubleBTViewOverlap() method seems to work fine.
+
+
+
+# 12052010
+* Extended the EdbShowAlgClean class. Build some preliminary functions, which work forthe shower-track
+* as source-dirt. 
+* Fixed RemoveSegment() in EdbShowerP. TObjArray is not automatically compressed by ::Remove(); One has to execute
+* Compress() manully. Now done in EdbShowerP::RemoveSegment().
+
+
+# 06052010
+* Added ExtendParaextraInfo to write also InBT_IPToVtx in the Parametrisation.
+* Correct order to write Parametrisations: Build/ WritePara_MCINfo(); BuildPara_ExtraInfo,Extend_ParaExtraInfo, WriteParaExtrainfo.
+
+
+# 20042010
+* Extension: start to implement in EdbShowRec to make Add() functions for InBTArray, RecoShowerArray, ShowAlgArray.
+* Dont do it for AddEdbPVRec, since the handling of more than one EdbPVRec is not yet defined and thougt.
+
+
+# 25022010
+* Bugfix: in write_para_as double scping for loopvariable
+
+# 06022010
+* Bugfix: MergeShowerByPosition was wrong. Now corrected and set as default (instead of 
+* MergeByAddress).
+* Improved EdbShowAlg_GS: now has more Cut parameters (like in the script FindGamma before)
+* and also cleaned up the code of this class. Default values search for good Pairing basetracks.
+
+
+# 19012010
+* New Parametrisation ePara_AS (All Segments) added. Contains for each(!) segment six im-
+* portant variables, that can be used maybe... for low energy showers (=more precise!).
+
+
+# 11012010
+* Bugfix: EdbShowRec.cpp adapted right minimium reseting in RecoShowerArray_To_Treebranch().
+* Bugfix: Two Segments in same Z: showerangle was not correcltly calculated.
+* Update: In WriteParametrizations, XX(). Last_... Variable added.
+
+# 06012010
+* Added the Maximmum and the LastBinCenter into XX Parametrisation to avoid disambiguities.
+* If there is no clear Maximum (i.e. equally bins filled) then return the Mean of the specific
+* profile.
+
+
+# 06012010
+* Added BuildParametrization_FC into EdbShowerP class. 
+
+
+# 14122009
+* Update in BuildParametrization_FJ: the deltathetab and deltarb are now cut at 150microns and
+* 150 mrad to handle consistency in the variables as like in the "official" algo.
+* Bugfix: move minimum interims compare value (min_shower_deltathetab) out the loop.
+
+
+# 14122009
+* Added Check_InBTArray for the constructor when only EdbPvRec is given over. 
+
+
+# 22112009
+* Add InVtx (as lik InBT) array for GS(GammaSearch) Algorithm. I dont know yet if this is usefull
+* for the other algorithms as well, so first I will include it only in GS. This should be easy
+* to switch to general class, if needed later...
+
+
+# 21112009
+* The usage of this package in EDA (A.Ariga) forces me to put Reset(), ResetRecoShowerArray(),
+* ResetInBTArray() to be declared as  protected functions that these can be accessed also
+* from outside. I do not know if this has sever consequences to the classes and functionality
+* on the libraries itsself, so better be aware of that!
+
+
+# 18112009
+* Wrote first skeleton for EdbShowAlg_GS  Gamma Search Algorithm. This is intended to find Gamma Pairings
+* (two segments only) in the volume. For now a InBT has to be given. Later this should be done
+* on a vertex also.
+
+
+# 17112009
+* Only BackupTar.
+
+
+# 01102009
+* EdbShowerP: Changed the way for BuildParametrisation_PP() by
+* using CalcOpenAngle() for  the shower. Searches for dMin pairings out
+* of the shower Basetracks. This seems to be more reasonable than the existing code now.
+* 
+
+
+# 20082009
+* Fixed Bug in BuildShowerProfile();
+* Changed Order in WriteParametrization() First go into file, then create TTree.
+* 
+
+
+# 16082009   
+* The NEURAL NETWORK in ROOT DOES NOT FUNCTION ANYMORE !!!
+* Even if I mak a script like in tutorials, then its not working anymore. Only the built in file works.... Is my ANNTree corrupt???? 
+* (Crash-> Debug Problem see in: http://root.cern.ch/phpBB2/viewtopic.php?t=9007  )
+* Solved easyly: in the String there was a ":" instead of a ","
+
+# 16082009    
+* Start a new, quick class for Energy estimation (possible also for ID estimation). Usefull for quick qchecks and tests.
+* This is not to replace the original class with lots of options, but maybe for quicker everyday use.
+* Fixed bug in RecoShowerArray_To_Treebranch eShowerTree->Branch("plateb",shower_plateb,"plateb[sizeb]/I");; 
+* Forgot second [sizeb] in Branch. this lead to fact that shower_plateb wasnt saved as array, but as single number.
+* (In ShowRec.cpp this was already correct). Now also YC para has again the correct "alpha" and "nmax" values again.
+
+
+# 14082009    
+* Cosmetics in Parametrisations; 
+* Small Fix in WriteParametrisation_MCInfo_PGun; 
+* WriteParametrisation also in EdbShowRec;
+* Added (data) structures for Reco_ID, Reco_E, Reco_Vtx. Still to fill in the ID class and the reconstruction routines.
+
+
+# 12082009    
+* Difficulty in the reconstruction. reco via the gAli_Sub doesnt work cause the adressing is not done for the original Ali but 
+* for ali_sub. but when thats deleted, then also the adresses for the segments are deleted and one cannot obtain the shower-segments
+* anymore..... 
+* HOW TO WORKAROUND THIS ???? -> See in EdbShowAlg.cxx Transform_eAli() for comment.
+
+
+# 11082009
+* RECONSTRUCTTESTSTANDARD() as Reconstruction method for all Parasets and Algs now.
+* Made the labeling between ShowRec.cpp and EdbShowAlg.cxx equal
+* Diverse cout cosmetics
+
+
+# 08082009
+* Fixed now Parametrisation longprofile[]:Then the array 0 starts with delta PID from actual plate to plate with the Initiator BT; 
+* So the array longprofile[] has indices from [0..56] (0 is plate where shower starts; 56 is plate where maximum shower can end: in this case the shower would
+* go over the full brick).
+* Adapted Calculation of GravityCenter BT with the new weihgting. (Weights according to deltaZ dist to first BT); this has mainly effect on XX parametrisation
+* which changes the mean and max values of the profile w.r.t. shower axis.
+* Also made minor changes in the Profile (Transversal) Binning, to set both histogram binnings equal.
+*
+* Added the EdbShowAlg_RC class, in order to hopefully improve reconstruction. 
+* STILL TODO: check why  it doenst run on simulation_ test_ directories.....
+* STILL TODO: LET OI and RC run PARALLEL FROM THE ___EDBSHOWREC___ module to see the direct comparison !!!!
+    
+
+# 06082009
+* Wrote down FINAL scheme for the shower parametrisation. Just have to scan it. It will be put in ShowerParametrisationScheme.png/.txt. 
+* Todo: implement this scheme correct in the BuildParametrisation array stuff...
+* Todo: Add also the shower axis angle to the Parametrisation as first variable.
+    
+    
+# 11062009
+* BugFixes in WriteParametrisation_MCInfo_PGun: Fixed the forgotten filling vtxposx,y,z.
+    
+    
+# 27052009
+* BugFixes in BuildParametrisation_YC(): nfilmb[58]->nfilmb[sizeb];
+* BugFixes in WriteParametrisation_xxx(): Branches with arrays as variables fixed (""->"[58]/I").
+* Cosmetics: Unnnecessary couts removed. 
+    
+    
+# 26052009            
+* Continuation on WriteParametrisation_xxx in order to write Parametrisations of a shower into an own root file for processing.
+* First Steps of Using a structure to store the PGun Info in the shower. Useful for gammas for example, where one canNOT get full information from the Shower. Will be called: MCInfo_PGun, and MCInfo_Event (for dario beamfiles).
+* MCInfo_PGun done, MCInfo_Event still todo.
+* Also WriteParamerizations seems to work now, Problem: check for FileIsOpen() wasnt done and then doing 
+* "Update" option, ROOT was confused.
+* Todo.... Remove the EnergyShotParticle from the ShowerParametrizations, since now this can be done in
+* MCInfo_PGun, and is not related to the Para_xxx itself anymore.
+    
+    
+    
+# 27042009        
+* Update to: Strange Crash when reading Shower.root: this may be due to the Histograms, which are attached to the
+* input files! in case this input file is closed or input file pointer is deleted, these histograms cannot be accesed
+* anymore and will lead to segfault of these pointers!
+*
+* Fixed small bug in labeling the variable "tagprimary", mismatch from 0 to 1 and -1 to 0 corrected (formerly, not
+* primary were tagged with -1, but in official libShower it is 0 and first is tagged as 1. Made changes also in 
+* ShowRec.cpp
+
+    
+    
+# 24042009        
+* Strange Crash when reading Shower.root with treebranchtree in; in case the file contains one event, 
+* after BuildProfile, the Longitudinal and Transversal Profile exist somehow, but not as TH1F anymore, but 
+* only as memory. We do not observe this crash having more Events  in this file. Maybe a temporary solution:
+* In EdbShowRec comment "delet file" and use the internal Variable eFile_In_treebranch and dont delete file 
+* at the end of constructor, but at Destructor. (Keep it in memory all the runtime).
+*
+* The question of setting the values for deltathetab" and "deltarb" for the first BT artificially to 0.5 and 200 
+* remains, since it makes no sense to set them just somehow! You cold exprapolate the first BT to itsself,
+* which would be more consistent w.r.t th etreatment of all BTs then you get "0" and "0" for these values.
+* Then the histograms in the FJ_Parametrsation (which was originally adopted from Frederics e/pi separation)
+* would also look more consistent. Since the NN of the ID does not take for this deltarb and deltathetab the first 
+* BT, it is rather more consistent. So we do it also in FJ Para (and LT,JC Para, wherever these variables have to 
+* be calculated) that we do not use the first BT to fill this with the set values.
+* 
+* Incorporated now Parametrisation LT; now only JC and PP parametrisations for showers are missing. 
+    
+
+# 23042009    
+* Try to fix (== make equal to the calulations in libShower) the FJ_Parametrisation values. Test of 
+* Event of 4GeV electrons showed that "deltathetab" and "deltarb" are now equivalent to the ones
+* calculated in libShower.
+*
+* Started an option to have also the parametrisation not only in the showers but direct in EdbShowRec in
+* order to write them to file. ... Not yet clear, if like RecoShowerArray also an array of Parametrised
+* trees should be stored....
+*
+* Think also of a structure like Para_YC named MC_Info or so to store important MC information for the shower...
+
+
+# 22042009    
+* Added CalcSphericity to EdbShowerP
+
+
+# 20042009    
+* Added cutvalue CUT_P and CUT_ALISUBSIZE to ALG_SA.
+    
+    
+# 17042009    
+* Test roughly NN Alg Reconstruction Class, results seem to be consistent with the ShowRec Program.
+    
+    
+# 16042009    
+* Added Skeleton for NN Alg Reconstruction Class, but this time in extra file (for clarity).
+* Not all is finished in this EdbShowAlg_NN yet!! (Wait first LXPLUS studies nad weightfiles...)
+
+    
+    
+# 08042009    
+* Minor Corrections in BuildParametrizations and PrintParametrizations.    
+ 
+    
+    
+# 08042009    
+* Added Functions GetSpatialDist and GetdeltaRNoPropagation (synchronized these functions to the external ShowRec program);
+* Changed Default Values of Parametrisations to the ones we have recently updated (frme80.wordpress.com)
+* Added Printing Function of YC Parametrisation for EdbShowerP
+    
+    
+# 16032009
+* Fixed some error when reconstructing, because Plate Stepping ordering was not considered correctly in the Stopping Condition for the Patterns loop.
+
+
+# 11032009
+* Cleaned something and save for backup. Submitted LXBatch Jobs for CA_ALG and for OI_ALG to find best values for standard settings.
+
+
+# 09032009
+* Add functions to calculate dTheta in another way in ShowAlg.cxx; Add more general function IsInConeTube to check if BT is in ConeTube around any starting track. Started working on extraction of a photon shower 
+parametrisation....
+* Found out (11.03.2009) that the angle functions used in GetConeOrTubeDistanceToInBT() do not give the 
+  same result as TVector3.Angle(&TVector3) in ROOT. Therefore we let the old angle method in  GetConeOrTubeDistanceToInBT() and implement the ROOT like version in IsInConeTube().
+
+* Added the OI_Alg with ALGType==5 and ALGNAME = OI, Official Implementation:
+  This ALG is similar to CT or CA but uses different ways to calc CylinderAngleCone and PreceedingBT dr/dTheta. Then parametervalues are different for CT/CA Cones/Tubes!
+  
+* Modified the Adding method in the _Execute functions. InBT is added always first since it has to be at position At(0) for the RecoShowerArray Basetracks. If not shower axis and logitudinal profiles, but also cone tube stuff will be wrong!  
+
+* Still the question remains, if CA_ALG has been measuere with wrong deltaTheta values, then is it worth to remake the best parameterset with Abs(Theta1)-Abs(Theta2) (old was just Theta1-Theta2 so it could have been negative.) ???
+  
+
+
+# 06032009
+* Try: Add Constructor for EdbShowRec with Shower.root file containing treebranch
+  to convert it directly into EdbShowerP array into EdbShowRec. Seems to work. But keep in mind, that 
+  during libShower Reconstruction the treebranch entry PID does not correspond to the actual gAli PID!
+  (Drawback of the "official" shower reconsntruction)
+
+
+# 24022009
+
+* Resave only for backup purposes...
+
+
+
+#########################################################################################################
+#####################  2009:   log order reversed: latest post come first...  ###########################
+#########################################################################################################
+
+
+# 17112008
+
+*       Add possibility to read parameters from default.par file.
+*       But not to be used yet, only that they are stored
+*       Write() crash is still not solved.
+*
+
+
+# 18112008
+
+*       log  was los.
+
+
+# 19112008
+
+*       log  was los.
+
+# 20112008
+
+*       Convert TObjArray (containing EdbShowerP objects) to treebranch style
+*       and write to file.
+*       Move cout to gEDBDEBUGLEVEL niveau in EdbShowerP (to get rid of all messages)
+*       Implemented CA Algorithm (ConeAdvanced)
+*       Possibility to write Treebranch file with different algorithms on same input data set.
+*       - but not yet in a nice way
+*       Read AddParamSet in default.par.
+*				Issues with eActualAlgParameterset[2]; IN PROGRESS....
+
+# 21112008
+
+*       Issues with eActualAlgParameterset fixed.
+*       Implemented Transformation of eAli in EdbShowAlg (make reco faster)
+*       Cleaned up code, mainly remove cout Debug statements.
+*       SetAlg and ResetAlg Function implemented: reset Alg array.
+
+# 24112008
+
+*       ReadShowerPar: Read Proposed Number of Plates in. 
+*				Implement Checks if these are valid and store them before reconstruction (write default eAli values over).
+*       But they do not properly work i guess.... Better not to use them right now.
+
+
+# 25112008
+
+*       Included purity in treebranch.
+*       Included Parametrisation_XX with 7 variables.
+*       EdbShowRec can now parametrize showers (XX para only) which are stored in eShowerArray.
+*       Fixed bug in EdbShowAlg_CA::Reconstruct  (only MC evt was taken).
+*       Left out EdbShowerP::Finalize method, which destroy Profile histograms, since they are needed
+*       when doing parametrization. (They should not take to much memory anyway, only 2 Th1F).
+*       Reading eAliNPat data: changed gettign PID not from BT but from Pattern, since whe ther is no BT in
+*       Pattersn this crashed.
+
+# 27112008
+
+*       Added  EdbShowAlgE class doing the energy Measurement. Takes over the  eShowerRecoArray  address.
+*       Set Run/Train Method.
+*       Added ReadIn Possiblility for the main events in the library: SHOW_DO_RECONSTRUCTION,SHOW_DO_PARAMETRISATION,
+*       SHOW_DO_ID, SHOW_DO_ENERGY, SHOW_DO_VERTEXATTACH
+*       (SHOW_DO_ID,SHOW_DO_VERTEXATTACH not done yet.).  But not yet any effect if setting these variables. Just for testing
+*       purposes.
+*       If more Parametrisations given in default.par (SHOW_DO_PARA_NAME) then all wich are given will be applied
+*       For now only XX para is working
+*       Made the showere parametrizations public (instead private)  to have acces also from EdbShowAlgE class.
+
+
+
+# 28112008  
+
+*       Issue with Histogram replacing name still not solved. This may be the cause of untracable segmentation fauls
+*       which appear from time to time...
+*       Added now Possiblity to call EdbShowerP with N and AlgValue, which should identify the histograms associated to 
+*       the specific shower uniquely and remove the "potenial memory leak" warnings"
+
+
+
+# 03122008  
+
+*       Implemented and tested skeleton of EdbShowAlgE class which makes Energy measurement,
+*       This one class contains "all" (but not yet implemented yet...) functions for shower
+*       parametrisation to estimate with different ANNs. (This may not totally follow the basic
+*       pricniple that a class does its own things, cause one instance of a class makes on para
+*       metrisation energy estimation. But the class itself holds the implementations for all
+*       possible parameterisation.
+*
+*       Weightfiles can be added giving parametrisation name, number of plates and names.
+*       Preliminary testing of training an run for an ANN with XX parametrisation was running
+*       succesfully. Now refining code and make it more general.
+
+# 04122008 
+
+*       Preliminary testing of training an run for an ANN with XX parametrisation was running
+*       succesfully. Now refining code and make it more general.
+
+# 04122008 
+
+*	YY Parametrisation included.
+*	More useful Print functions.
+*       Preliminary testing of training an run for an ANN with YY parametrisation was running
+*       succesfully. Now refining code and make it more general.
+*	ShowAlgE: use a second branch eInfoAnn[] which contains more informations and are taken
+*	for input for example E, Npl, Id, Esum ... Now rewrite ShowAlgE parts for the input tree
+*	files for the MLP to use this branch...
+*	Search in EdbShowAlgE::Run() for the weightfile with plates reconstructed closest to Npl of
+*	the reconstructed shower. Sort Weightfiles to plates (ascending) before!
+
+# 11122008 
+
+* Found out that deleting gAli_Sub causes segfaults, because addresses of segments for showers are
+* also deleted. Change to keep gAliSub in a loop and delete it. For many InBT this may cause memory leak!
+* If to be observed, then think again of how to change it.
+* Implemented that Train() takes the most longest reconstructed plates for setting the right MLP layout.
+
+
+# 13122008 
+* Added flag if to recreate gAliSub or if to use gAli global (slowlier (slightly) but memory leak safe).
+* Changed SHOW_ENERGY_FILE_WEIGHTFILE and so on parameters to have a mandatory para name behind. Then this will take Effect if right parametrisation matches only.
+* Implemented Print Function for  EdbShowRec to have a global overview over all settings.
+* Modifed EdbShowRec, Get ShowAlg From ShowAlgarray, from inherited classes is done correctly.
+* Modifed ShowAlgE, minor improvements and minor checks.
+
+
+#15122008
+
+* Added small  showrec  tool, just like recset which does standard reconstruction (no Energy yet, really just reconstruction)
+
+
+# 17122008
+* Implementes YC Parametrisation. Since in its code shower Axis is defined by first BaseTrack, it is also considered here.
+* ShowerGravity Center does not point very good (average 300microns distance) to the very first base track. Reasons could be the weighting in the 
+* GravityCenter FitFunction. To be investigated.
+
+# 18122008
+
+* Started to Check if important files (lnk.def, linked_tracks.root) are there, but in case they are not, yet only a warning is printed out.
+
+
+#07012009
+
+* Resave only for backup purposes...
+
+
+
+// TODO....//======================================================================
+
+*     MAKE POSSIBLE TO TREAT DIFFERENT ALGOS CONSITENTLY
+*     IMPLEMENT ENERGY MODULE
+*     LOW ENERGY GAMMA ALG optimised.
+*     FillINBT also methods c and d ....
+*	    CHeck if struct in showerP couases segfaults.....: done. not anymore...
+*     Structure of parametrization is not yet written in the ShowerP.root file. Done only for XX;YY,YC; Parametrization. MISSING PARAMETRISATIONS:  LT,YC!!
+*	    IF WEIGHTFEILES ARE ADDED IN MIXED ORDER WE HAVE TO SORT THEM MANUALLY
+*     INVESTIGATE THOMAS VORSCHLAG TO WEIGHT BT BY DIST TO 1st BT in gravity center search!
+

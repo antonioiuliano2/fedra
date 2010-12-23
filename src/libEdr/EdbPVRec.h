@@ -13,12 +13,14 @@
 #include "EdbPattern.h"
 #include "TIndexCell.h"
 #include "EdbLayer.h"
+#include "EdbScanCond.h"
 
 class EdbAffine2D;
 class TIndexCell;
 class EdbVertex;
 class EdbVTA;
 class TIndex2;
+class EdbScanSet;
 
 //______________________________________________________________________________
 class EdbSegCouple : public TObject {
@@ -255,6 +257,9 @@ class EdbPVRec : public EdbPatternsVolume {
   int    LinkSlow();
   int    Link();
   int    Align(int alignFlag);
+  int    AlignOld(int alignFlag);
+  int    AlignPlates( EdbScanSet &sci, EdbScanSet &sca, const char *reportdir=0);
+
   //  int    AlignA();
   //  int    LinkTracks();
   void   FillTracksCellFast();
@@ -320,6 +325,13 @@ class EdbPVRec : public EdbPatternsVolume {
 
   static bool AttachSeg(  EdbTrackP& tr, EdbSegP *s,
 			  const float X0, const float ProbMin, float &prob );
+
+  EdbPattern  *GetPatternByPID(int pid);
+  int          AddSegments(EdbPVRec &ali);
+  int          AddSegments(EdbTrackP &track);
+  EdbSegP     *AddSegment(EdbSegP &s);
+  void         SetScanIDPatSeg(EdbID id);
+  void         SetScanIDTrackSeg(EdbID id);
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };

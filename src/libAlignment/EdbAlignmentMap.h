@@ -6,6 +6,7 @@
 #include <TVector2.h>
 #include <TVector3.h>
 #include <TEnv.h>
+#include "EdbBrick.h"
 #include "EdbPattern.h"
 #include "EdbAffine.h"
 #include "EdbPositionAlignment.h"
@@ -18,6 +19,8 @@ class EdbAlignmentMap : public TObject
   EdbPattern *ePat1;            // big patterns to be splitted and aligned piece by piece
   EdbPattern *ePat2;
   float eDensityMax;           // the max segments density for patterns selection (in N/100/100 microns)
+
+  EdbPlateP *ePlate; // 
 
   EdbPositionAlignment  eGlobal; // service object for the zones selection
 
@@ -47,7 +50,20 @@ class EdbAlignmentMap : public TObject
   void  SaveMap( const char *file );
   void  ExtractMapFromTree();
 
-  int   ApplyMap(EdbPattern &pat1, EdbPattern &pat2);
+  int   ApplyMap(EdbPattern &pat);
+
+  void  CheckPattern(EdbPattern &p, const char *suffix);
+  int   CheckDZbase(TEnv &cenv, EdbPattern &p1, EdbPattern &p2);
+
+  int   SelectSampleForShrinkageCorr(EdbPattern &p, EdbPattern &psel, float wmin, float wmax, float tmin, float tmax  );
+  int   Link();
+  int   Link(TEnv &cenv, EdbPattern &p1, EdbPattern &p2, EdbPlateP &plate);
+
+  void   Link( const char *file, EdbPlateP &plate );
+  void  get_run_patterns(const char *runfile, TEnv *cenv, EdbPattern &p1, EdbPattern &p2);
+  static void  GetPostreeAsPat(EdbPattern &pat, const char *filename);
+
+  int   CheckXY(TEnv &cenv, EdbPattern &p1all, EdbPattern &p2all);
 
   ClassDef(EdbAlignmentMap,1)  // 2-d alignment map finder
 };

@@ -40,11 +40,11 @@ EdbView::~EdbView()
 {
   //  Clear();
 
-  if(eClusters)  { eClusters->Delete(); delete eClusters; }
-  if(eSegments)  { eSegments->Delete(); delete eSegments; }
-  if(eTracks)    { eTracks->Delete();   delete eTracks;   }
-  if(eHeader)    delete eHeader;
-  if(eFrames)    { eFrames->Delete();   delete eFrames;   }
+  if(eClusters)  { eClusters->Delete(); SafeDelete(eClusters); }
+  if(eSegments)  { eSegments->Delete(); SafeDelete(eSegments); }
+  if(eTracks)    { eTracks->Delete();   SafeDelete(eTracks);   }
+  if(eHeader)    SafeDelete(eHeader);
+  if(eFrames)    { eFrames->Delete();   SafeDelete(eFrames);   }
 }
 
 //______________________________________________________________________________

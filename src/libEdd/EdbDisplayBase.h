@@ -51,11 +51,11 @@ protected:
 
 public:
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5,15,0)
-   Edb3DView() : TView3D()
+   Edb3DView() : TView3D() { fRotateMode = false; }
 #else
-   Edb3DView() : TView(1) 
+   Edb3DView() : TView(1)  { fRotateMode = false; }
 #endif
-{ fRotateMode = false;};
+
 
    ~Edb3DView() {};
 
@@ -138,6 +138,7 @@ public:
 //   virtual TCanvas   *GetCanvas() { return fCanvas; }
 //   virtual TCanvas   *GetCanvasVTX() { return fCanvasVTX; }
    virtual void      Set0();
+   virtual void      Clear() { fPad->Clear("nodelete"); fView=0; }
    virtual void      Refresh() {}
    virtual void      ExecuteEvent(Int_t event, Int_t px, Int_t py);
    virtual void      DisplayButtons();

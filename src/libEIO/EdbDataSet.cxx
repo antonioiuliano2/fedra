@@ -293,7 +293,7 @@ int EdbDataPiece::ReadPiecePar(const char *file)
     Log(1,"ReadPiecePar","ERROR open file: %s", file);
     return -1;
   }
-  else Log(2,"ReadPiecePar","Read piece parameters from file: %s", file );
+  else Log(3,"ReadPiecePar","Read piece parameters from file: %s", file );
 
   int id,mode;
   float z,zmin,zmax,shr;
@@ -813,7 +813,7 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   b_s2->SetAddress( &s2  );
 
   int nseg = 0;
-  int nentr = (int)(tree->GetEntries());
+  int nentr = (int)(tree->GetEntries());  if(nentr<1) return 0;
 
   TCut *cut = GetRCut(0);
   TEventList *lst =0;
@@ -821,7 +821,7 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
   else          tree->Draw(">>lst", "" );
   lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
 
-  if(!lst) Log(1,"EdbDataPiece::GetCPData_new","ERROR!: lst do not found! empty couples tree??");
+  if(!lst) {Log(1,"EdbDataPiece::GetCPData_new","ERROR!: lst do not found! empty couples tree??"); return 0;}
 
   int nlst =lst->GetN();
 
@@ -1120,7 +1120,7 @@ int EdbDataPiece::GetRawData(EdbPVRec *ali)
       }
       nseg++;
       segP.SetVid(iv,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
 
       if(side==1) pat1->AddSegment( segP );
       else if(side==2) pat2->AddSegment( segP );
@@ -1165,7 +1165,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
       }
       nseg++;
       segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
       pat->AddSegment( segP);
     }
   }
@@ -2118,7 +2118,7 @@ int EdbDataProc::InitVolumeTracks(EdbPVRec    *ali, const char *rcut)
     ali->SetScanCond( cond );
   }
 
-  ReadTracksTree( *ali, "linked_tracks.root", 2, 0.01, rcut );
+  ReadTracksTree( *ali, "linked_tracks.root", rcut );
 
   ali->SetSegmentsTracks();  // reset the id of tracks????? to check that it is really necessary!!
   ali->SetSegmentsErrors();
@@ -2565,8 +2565,8 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 //---------------------------------------------------------------------------
 int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 				 const char     *fname,
-				 int      nsegMin,
-				 float    probMin,
+				 //				 int      nsegMin,
+				 //				 float    probMin,
 				 const char *rcut )
 {
   TFile f(fname);

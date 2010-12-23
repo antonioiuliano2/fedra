@@ -190,7 +190,7 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID, const char* options)
    // ePuls = (sum of clust areas)*1000 + (number of clusters) 
    const char *key=0;
    int cutcl=0;
-   if( key = strstr(options,"CUTCL") )  sscanf(key+5,"%d",&cutcl);
+   if( (key = strstr(options,"CUTCL")) )  sscanf(key+5,"%d",&cutcl);
 
    EdbView*    edbView = run->GetView();
    EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);

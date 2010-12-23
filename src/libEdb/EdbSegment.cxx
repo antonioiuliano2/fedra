@@ -85,7 +85,7 @@ EdbSegment::EdbSegment( float x, float y, float z, float tx, float ty,
 //______________________________________________________________________________
 EdbSegment::~EdbSegment()
 {
-	if(eElements)  {delete eElements; eElements=0;}
+  if(eElements)  SafeDelete(eElements);
 }
 
 //______________________________________________________________________________

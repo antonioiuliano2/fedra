@@ -5,7 +5,7 @@
 //                                                                      //
 // EdbPattern                                                           //
 //                                                                      //
-// pattern of seglemts                                                  //
+// pattern of segments                                                  //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -14,169 +14,14 @@
 #include "TObjArray.h"
 #include "TSortedList.h"
 #include "TArrayL.h"
-#include "TMatrixD.h"
-#include "EdbVirtual.h"
 #include "TClonesArray.h"
-#include "TRefArray.h"
+#include "EdbSegP.h"
 
 class EdbAffine2D;
 class TIndexCell;
 class EdbVTA;
 class EdbVertex;
 
-//______________________________________________________________________________
-class EdbSegP : public TObject, public EdbTrack2D {
- 
- private:
-  Int_t      ePID;            // mother pattern ID
-  Int_t      eID;             // segment id (unique in plate)
-  Int_t      eVid[2];         // [0]-view entry in the input tree, [1]-segment entry in the view
-  Int_t      eAid[2];         // [0]-AreaID, [1]-ViewID
-  Int_t      eFlag;
-  Int_t      eTrack;          // id of the track (-1) if no track
-  Float_t    eX , eY, eZ;     // coordinates
-  Float_t    eTX, eTY;        // direction tangents
-  Float_t    eSZ;             // square of the Z-error
-  Float_t    eChi2;           // chi-square 
-  Float_t    eProb;           // probability
-  Float_t    eW;              // weight
-  Float_t    eVolume;         // segment volume
-  Float_t    eDZ;             // the length of segment along z-axis
-  Float_t    eDZem;           // the length of segment along z-axis in the emulsion
-  Float_t    eP;              // momentum of the particle
-  Int_t      eMCTrack;        // MC track number
-  Int_t      eMCEvt;          // MC event number
-  TRefArray *eEMULDigitArray; //! AM+AC 27/07/07
-
- protected: 
-
-  TMatrixD   *eCOV;            // covariance matrix of the parameters (x,y,tx,ty,p)
-
- public:
-
-  EdbSegP() {
-    eEMULDigitArray =0;
-    Set0();
-  }
-  EdbSegP(int id, float x, float y, float tx, float ty, float w=0, int flag=0);
-  EdbSegP(const EdbSegP &s) {  
-    eEMULDigitArray = 0;
-    Set0(); Copy(s); 
-  }
-
-  virtual ~EdbSegP() { 
-    SafeDelete(eCOV);
-    SafeDelete(eEMULDigitArray);
-  }
-
-  //void Transform(EdbAffine2D &aff) { ((EdbTrack2D*)this)->Transform(&aff); }
-  static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
-  void    PropagateTo( float z );
-  void    PropagateToCOV( float z );
-  void    MergeTo( EdbSegP &s );
-  Float_t ProbLink( EdbSegP &s1, EdbSegP &s2 );
-  bool    IsCompatible(EdbSegP &s, float nsigx, float nsigt) const;
-
-  void    addEMULDigit(TObject* a) {
-    if(!eEMULDigitArray) eEMULDigitArray = new TRefArray();
-    eEMULDigitArray->Add(a);
-  }
-
-  TRefArray* EMULDigitArray() const  { return eEMULDigitArray;}
-
-  void    Set0();
-  void    Copy(const EdbSegP &s);
-  void    Clear() { eCOV->Clear(); }
-  void    Set(int id, float x, float y, float tx, float ty, float w, int flag)
-             { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
-  void    SetErrors() {SetErrors( 1.,1.,0.,.0001,.0001,1.);}
-  void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );
-  void    SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );
-  
-  void    SetErrorP( float sp2 ) {
-    if(!eCOV) eCOV = new TMatrixD(5,5);
-    (*eCOV)(4,4) = (double)sp2;
-  }
-  
-  void    SetCOV( TMatrixD &cov) { 
-    if(!(&cov)) return;
-    if(eCOV) eCOV->Copy(cov);
-    else eCOV = new TMatrixD(cov);
-  }
-
-  void SetCOV( double *array, int dim=5) { 
-    if(!array) return;
-    if(!eCOV)  eCOV = new TMatrixD(5,5);
-    for(int k=0; k<dim; k++) 
-      for(int l=0; l<dim; l++) (*eCOV)(k,l) = array[k*dim + l];
-  }
-
-  TMatrixD &COV() const {return *eCOV;}
-  void    SetSZ( float sz )             { eSZ=sz; }
-  void    SetZ( float z )               { eZ=z; }
-  void    SetDZ( float dz )             { eDZ=dz; }
-  void    SetDZem( float dz )           { eDZem=dz; }
-  void    SetID( int id )               { eID=id; }
-  void    SetPID( int pid )             { ePID=pid; }
-  void    SetFlag( int flag )           { eFlag=flag; }
-  void    SetTrack( int trid )          { eTrack=trid; }
-  void    SetW( float w )               { eW=w; }
-  void    SetP( float p )               { eP=p; }
-  void    SetProb( float prob )         { eProb=prob; }
-  void    SetChi2( float chi2 )         { eChi2=chi2; }
-  void    SetVolume( float w )          { eVolume=w; }
-  void    SetVid(int vid, int sid)      { eVid[0]=vid; eVid[1]=sid; }
-  void    SetAid(int a,   int v)        { eAid[0]=a; eAid[1]=v; }
-  void    SetProbability( float p )     { eProb=p; }
-  void    SetMC( int mEvt, int mTrack ) { eMCEvt=mEvt; eMCTrack=mTrack; }
-
-  Int_t   MCEvt()   const {return eMCEvt;}
-  Int_t   MCTrack() const {return eMCTrack;}
-  Int_t   ID()      const {return eID;}
-  Int_t   PID()     const {return ePID;}
-  Int_t   Flag()    const {return eFlag;}
-  Int_t   Track()   const {return eTrack;}
-  Float_t W()       const {return eW;}
-  Float_t P()       const {return eP;}
-  Float_t Z()       const {return eZ;}
-  Float_t DZ()      const {return eDZ;}
-  Float_t DZem()    const {return eDZem;}
-  Float_t Prob()    const {return eProb;}
-  Float_t Chi2()    const {return eChi2;}
-  Float_t Volume()  const {return eVolume;}
-
-  Float_t SX()  const  { if(!eCOV) return 0; return (Float_t)(*eCOV)(0,0); }
-  Float_t SY()  const  { if(!eCOV) return 0; return (Float_t)(*eCOV)(1,1); }
-  Float_t STX() const  { if(!eCOV) return 0; return (Float_t)(*eCOV)(2,2); }
-  Float_t STY() const  { if(!eCOV) return 0; return (Float_t)(*eCOV)(3,3); }
-  Float_t SP()  const  { if(!eCOV) return 0; return (Float_t)(*eCOV)(4,4); }
-  Float_t SZ()  const  { return eSZ; }
-  Int_t   Vid(int i) const {return (i < 0 || i > 1) ? -1 : eVid[i];}
-  Int_t   Aid(int i) const {return (i < 0 || i > 1) ? -1 : eAid[i];} 
-
-  // mandatory virtual functions:
-  Float_t X()           const {return eX;}
-  Float_t Y()           const {return eY;}
-  Float_t TX()          const {return eTX;}
-  Float_t TY()          const {return eTY;}
-  void    SetX(  Float_t x )  { eX=x; }
-  void    SetY(  Float_t y )  { eY=y; }
-  void    SetTX( Float_t tx ) { eTX=tx; }
-  void    SetTY( Float_t ty ) { eTY=ty; }
- 
-  //other functions
-  Float_t Phi()      const {return TMath::ATan2(eTY,eTX);}
-  Float_t Theta()    const {return TMath::Sqrt(eTY*eTY+eTX*eTX);}
- 
-  void    Print( Option_t *opt="") const;
-  void    PrintNice() const;
-
-  Bool_t  IsEqual(const TObject *obj) const;
-  Bool_t  IsSortable() const { return kTRUE; }
-  Int_t   Compare(const TObject *obj) const;
-
-  ClassDef(EdbSegP,16)  // segment
-};
 
 //______________________________________________________________________________
 class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
@@ -226,6 +71,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   void      SetSegmentsZ();
   void      SetSegmentsDZ(float dz);
 
+  void      SetSegmentsPlate(int plate);
+
   // mandatory virtual functions:
 
   void      SetX(float x) { eX=x; }
@@ -238,7 +85,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Int_t     N()       const {return GetN();}
   EdbPoint *At(int i) const {return (EdbPoint*)GetSegment(i);}
  
-  // other finctions
+  // other functions
 
   void    Print( Option_t *opt="") const;
   void    Set0();
@@ -251,6 +98,10 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Int_t   CalculateAXAY(EdbSegmentsBox *p , EdbAffine2D *affA );
   Float_t DiffAff( EdbAffine2D *aff );
   Float_t Diff( EdbSegmentsBox &p );
+  Float_t GetSize(Int_t XorY);
+  Float_t GetSizeX() { return GetSize(0); }
+  Float_t GetSizeY() { return GetSize(1); }
+  Float_t GetSizeXY();
 
   ClassDef(EdbSegmentsBox,1)  // collection of segments
 };
@@ -273,6 +124,7 @@ class EdbTrackP : public EdbSegP {
  public:
 
   EdbTrackP(int nseg=0);
+  EdbTrackP(EdbSegP &seg);
   EdbTrackP(EdbSegP *seg, float m=0.12);
   EdbTrackP(EdbTrackP &track) { Set0(); Copy(track); }
 
@@ -332,6 +184,9 @@ class EdbTrackP : public EdbSegP {
   EdbSegP *TrackZmin(bool usesegpar=false) const { if(usesegpar || (!eSF)) return GetSegmentFirst(); else return GetSegmentFFirst(); }
   EdbSegP *TrackZmax(bool usesegpar=false) const { if(usesegpar || (!eSF)) return GetSegmentLast();  else return GetSegmentFLast(); }
 
+  EdbSegP *TrackExtremity(bool zpos, bool usesegpar=false) 
+    const { return zpos? TrackZmin(usesegpar) : TrackZmax(usesegpar); } // 0-end, 1-strart (as in vertex class)
+
   const EdbSegP *TrackStart() const;
   const EdbSegP *TrackEnd()   const;
 
@@ -371,6 +226,7 @@ class EdbTrackP : public EdbSegP {
   int   SetSegmentsTrack() {return SetSegmentsTrack(ID());}
   int   FitTrackKFS( bool zmax=false, float X0=5810., int design = 0 );
   int   MakeSelector( EdbSegP &ss, bool followZ=true );
+  float MakePredictionTo( Float_t z, EdbSegP &ss );
   float CHI2();
   float CHI2F();
   void  FitTrack();
@@ -398,6 +254,8 @@ class EdbPattern : public EdbSegmentsBox {
   Float_t     eSigma[4];       // accuracy in comparison to neibour pattern
   Int_t       eFlag;           // pattern flag
   Int_t       eNAff;           // number of segments selected for affine calculation
+  EdbID       eScanID;         //! main scanning ID for this pattern, defined when possible
+  Int_t       eSide;           //! emulsion side 0/1/2, defined when possible
 
  public:
 
@@ -407,6 +265,7 @@ class EdbPattern : public EdbSegmentsBox {
   virtual ~EdbPattern();
  
   void  Set0();
+  void  SetScanID(EdbID id) {eScanID=id;}
   void  SetSigma(float sx,float sy,float stx,float sty) 
                 {eSigma[0]=sx; eSigma[1]=sy; eSigma[2]=stx; eSigma[3]=sty;}
   void  SetStep(float stepx, float stepy, float steptx, float stepty ) 
@@ -416,6 +275,7 @@ class EdbPattern : public EdbSegmentsBox {
   void  FillCell( float stepx, float stepy, float steptx, float stepty );
   int   FindCompliments(EdbSegP &s, TObjArray &arr, float nsig, float nsigt);
   void  SetSegmentsPID();
+  void  SetSegmentsScanID(EdbID id);
   EdbPattern *ExtractSubPattern(float min[5], float max[5], int MCevt=-1);
 
   void  SetID(int id)   {eID=id;}
@@ -431,9 +291,13 @@ class EdbPattern : public EdbSegmentsBox {
   int         PID()    const {return ePID;}
   TIndexCell *Cell()   const {return eCell;}
   EdbSegP    *FindSegment(int id);
+  float      Xmean();
+  float      Ymean();
 
+  Int_t      Plate() const {return eScanID.ePlate;}
+  Int_t      Side()  const {return eSide;}
 
-  ClassDef(EdbPattern,1)  // pattern of segments
+  ClassDef(EdbPattern,2)  // pattern of segments
 };
 
 //______________________________________________________________________________
@@ -449,6 +313,8 @@ class EdbPatternsVolume : public TObject {
 
   TIndexCell *eTracksCell;    //! "vidt:vids" - connected segments cell
   TIndexCell *ePatternsCell;  //! "pid:id1:chi2:id2" - all found couples
+
+  Bool_t      eDescendingZ;    // if =0 - z increase in the pattrens array; if =1 - decrease 
 
  public:
   EdbPatternsVolume();
@@ -476,6 +342,8 @@ class EdbPatternsVolume : public TObject {
   void         AddPattern( EdbPattern *pat );
   void         AddPatternAt( EdbPattern *pat, int id );
   EdbPattern  *GetPattern( int id ) const;
+  EdbPattern  *GetPatternZLowestHighest(Bool_t lowestZ=1) const;
+  
 
   EdbPattern  *NextPattern(float z, int dir) const;
 
@@ -494,6 +362,10 @@ class EdbPatternsVolume : public TObject {
     {return GetPattern(Pid(vid))->GetSegment( Sid(vid) );}
 
   int FindComplimentsVol(EdbSegP &s, TObjArray &arr, float nsig, float nsigt, int dpat);
+
+  EdbPattern  *GetPatternByPlate(int plate, int side);
+  EdbPattern  *InsertPattern(EdbPattern *pat, Bool_t descendingZ=0);
+  void         SortPatternsByZ(Bool_t descendingZ=0);
 
   void   Print() const;
 

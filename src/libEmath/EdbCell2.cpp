@@ -7,6 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TMath.h"
 #include "EdbCell2.h"
 #include "EdbLog.h"
 
@@ -58,11 +59,16 @@ EdbH2::~EdbH2()
 void EdbH2::Delete()
 {
   if(eNC)    { delete [] eNC;    eNC = 0;  }
+  eNcell=0;
+  eN[0] = eN[1] = 0;
+  eMin[0] = eMin[1] = 0;
+  eMax[0] = eMax[1] = 0;
 }
 
 //____________________________________________________________________________
 int EdbH2::InitH2(int n[2], float min[2], float max[2])
 { 
+  Delete();
   for(int i=0; i<2; i++) {
     if(n[i]<1) return 0;
     eN[i]=n[i];
@@ -102,21 +108,21 @@ int EdbH2::DiscardHighCells(int nmax)
 }
 
 //____________________________________________________________________________________
-TH1I *EdbH2::DrawSpectrum(const char *name)
+TH1I *EdbH2::DrawSpectrum(const char *name, const char *title)
 {
   int imax = MaxBin();
-  TH1I *h = new TH1I(name,"EdbH2 spectrum plot", imax,0,imax);
+  TH1I *h = new TH1I(name, title, imax,0,imax);
   for(int i=0; i<eNcell; i++)    h->Fill( eNC[i] );
   return h;
 }
 
 //____________________________________________________________________________________
-TH2F *EdbH2::DrawH2(const char *name)
+TH2F *EdbH2::DrawH2(const char *name, const char *title)
 {
-  TH2F *h = new TH2F(name, "EdbH2 2D plot", eN[0],eMin[0],eMax[0],eN[1],eMin[1],eMax[1]);
+  TH2F *h = new TH2F(name, title, eN[0],eMin[0],eMax[0],eN[1],eMin[1],eMax[1]);
   for(int i=0; i<eN[0]; i++)
     for(int j=0; j<eN[1]; j++)
-      h->Fill( X(i), Y(j), eNC[Jcell(i,j)] );
+      if(Bin(i,j)>0) h->Fill( X(i), Y(j), Bin(i,j) );
   return h;
 }
 
@@ -165,12 +171,36 @@ int EdbH2::MaxBin()
 
 
 //____________________________________________________________________________
+void EdbPeak2::Delete()
+{
+  ((EdbH2*)this)->Delete();
+  eNpeaks=0;
+}
+
+//____________________________________________________________________________
+void EdbPeak2::Init( const EdbH2 &h, int npeaks )
+{
+  Delete();
+  ((EdbH2*)this)->Copy(h);
+  InitPeaks(npeaks);
+}
+
+//____________________________________________________________________________
 void EdbPeak2::InitPeaks( int npeaks )
 {
   eNpeaks=0;
-  ePeak.Set(npeaks);
-  eMean3.Set(npeaks);
-  eMean.Set(npeaks);
+  ePeak.Set(npeaks);  ePeak.Reset(0);
+  eMean3.Set(npeaks); eMean3.Reset(0);
+  eMean.Set(npeaks);  eMean.Reset(0);
+  eNorm = 1.;  // default norm factor;
+}
+
+//____________________________________________________________________________
+void EdbPeak2::Print()
+{
+  printf("%d peaks:\n", eNpeaks);
+  for(int i=0; i<eNpeaks; i++) 
+	  printf("%d :  %f %f %f \n", i, ePeak[i], eMean3[i], eMean[i]);
 }
 
 
@@ -211,7 +241,7 @@ float EdbPeak2::ProbPeak(int iv[2], int ir[2])
   int   nbinPeak   = (2*ir[0]+1)*(2*ir[1]+1);
   float meanNeib   = 1.*(Integral(iv,ir) - npeak)/(nbinPeak-1);
   float meanNoPeak = 1.*(Integral() - Integral(iv,ir))/(Ncell()-nbinPeak);
-  printf("ProbPeak found at (%d %d):  %d  %6.3f  %6.3f \n", iv[0],iv[1],npeak, meanNeib,meanNoPeak);
+  Log(3,"ProbPeak","found at (%3d %3d): %4d  %6.3f  %6.3f", iv[0],iv[1],npeak, meanNeib,meanNoPeak);
   ePeak[eNpeaks]  = npeak;
   eMean3[eNpeaks] = meanNeib;
   eMean[eNpeaks]  = meanNoPeak;
@@ -232,6 +262,30 @@ int EdbPeak2::WipePeak(int iv[2], int ir[2])
 }
 
 //____________________________________________________________________________
+float EdbPeak2::FindPeak9( float &x, float &y)
+{
+  // particular case of 3x3 peak neiboring, return peak volume and estimate mean position
+  int iv[2], ir[2]={1,1};
+  FindPeak(iv);
+  return EstimatePeakMeanPosition(iv, ir, x, y);
+}
+
+//____________________________________________________________________________
+float EdbPeak2::EstimatePeakMeanPosition(int iv[2], int ir[2], float &x, float &y)
+{
+  double x0=0, y0=0, volume=0;
+  for(int ix=iv[0]-ir[0]; ix<=iv[0]+ir[0]; ix++) 
+    for(int iy=iv[1]-ir[1]; iy<=iv[1]+ir[1]; iy++) 
+      { 
+	x0     += Bin(ix,iy)*X(ix);
+	y0     += Bin(ix,iy)*Y(iy);
+	volume += Bin(ix,iy);
+      }
+  if(volume>0) { x =  x0/volume;  y = y0/volume; }
+  return volume;
+}
+
+//____________________________________________________________________________
 int EdbPeak2::FindPeak(int iv[2])
 {
   int peak=0;
@@ -244,6 +298,7 @@ int EdbPeak2::FindPeak(int iv[2])
         iv[1] = iy;
       }
     }
+  Log(4,"EdbPeak2::FindPeak","of %d at %d %d", peak, iv[0],iv[1] );
   return peak;
 }
 
@@ -255,6 +310,177 @@ int EdbPeak2::FindPeak(float v[2])
   v[0] = X(iv[0]);
   v[1] = Y(iv[1]);
   return peak;
+}
+
+//____________________________________________________________________________
+int EdbPeak2::FindPeak(float &x, float &y)
+{
+  int iv[2];
+  int peak=FindPeak(iv);
+  x = X(iv[0]);
+  y = Y(iv[1]);
+  return peak;
+}
+
+//____________________________________________________________________________
+float EdbPeak2::EstimatePeakVolumeSafe(int ipeak)
+{
+  // add to the background one standard deviation for the safety
+  if(ipeak>(eNpeaks-1)||ipeak<0)  return 0;
+  return ePeak[ipeak] + 8*eMean3[ipeak] - 9*(eMean[ipeak] + Sqrt(eMean[ipeak]));
+}
+
+//____________________________________________________________________________
+float EdbPeak2::EstimatePeakVolume(int ipeak)
+{
+  if(ipeak>(eNpeaks-1)||ipeak<0)  return 0;
+  return ePeak[ipeak] + 8*eMean3[ipeak] - 9*eMean[ipeak];
+}
+
+//____________________________________________________________________________
+float EdbPeak2::Xmean()
+{
+  Double_t mean=0, sum=0;
+  for(int ix=0; ix<eN[0]; ix++) {
+    float x = X(ix);
+    for(int iy=0; iy<eN[1]; iy++) {
+      int j = Jcell(ix,iy);
+      mean += x*eNC[j];
+      sum  += eNC[j];
+    }
+  }
+  mean /= sum;
+  return mean;
+}
+
+//____________________________________________________________________________
+float EdbPeak2::Ymean()
+{
+  Double_t mean=0, sum=0;
+  for(int iy=0; iy<eN[1]; iy++) {
+    float y = Y(iy);
+    for(int ix=0; ix<eN[0]; ix++) {
+      int j = Jcell(ix,iy);
+      mean += y*eNC[j];
+      sum  += eNC[j];
+    }
+  }
+  mean /= sum;
+  return mean;
+}
+
+//____________________________________________________________________________
+float EdbPeak2::FindGlobalPeak(float &x, float &y, float ratio)
+{
+  // to find the center of wide multibin peak select ratio*Nbin of highest bins and calculate CoG
+  int n = Ncell();
+  TArrayI ind(n);
+  Sort(n, eNC , ind.GetArray(), 0);  // sort encreasing order
+  Int_t nwipe = Min( (Int_t)((1.-ratio)*n), n-1 );
+  double mean=0;
+  for(int i=0; i<nwipe; i++) {
+    mean += eNC[ind[i]];
+    eNC[ind[i]] = 0;
+  }
+  mean /= nwipe;
+  x = Xmean();
+  y = Ymean();
+  float peakvolume = Integral() - (n-nwipe)*mean;
+  Log(3,"EdbPeak2::FindGlobalPeak","of volume %8.2f at %10.2f %10.2f using %d bins", 
+      peakvolume,x,y, n-nwipe );
+  return peakvolume;
+}
+
+//______________________________________________________________________________
+float EdbPeak2::Smooth(Option_t *option)
+{
+   // Smooth bin contents of this 2-d histogram using kernel algorithms
+   // similar to the ones used in the raster graphics community.
+   // Bin contents in the active range are replaced by their smooth values.
+   //
+   // This code is copied from root_5.22 mainly to not depend on the newest root versions
+   // Adopted to fedra by VT
+   // to speedup processing do all calculations as integer, so the histogram do not normalised at output
+   // return value - norm-factor of the kernel
+
+   if(NX()<1||NY()<1)  return 1.;
+
+   Int_t k5a[5][5] =  { { 0, 0, 1, 0, 0 }, 
+			{ 0, 2, 2, 2, 0 }, 
+			{ 1, 2, 5, 2, 1 }, 
+			{ 0, 2, 2, 2, 0 }, 
+			{ 0, 0, 1, 0, 0 } };   // norm = 25
+   Int_t k5b[5][5] =  { { 0, 1, 2, 1, 0 },
+			{ 1, 2, 4, 2, 1 },
+			{ 2, 4, 8, 4, 2 },
+			{ 1, 2, 4, 2, 1 },
+			{ 0, 1, 2, 1, 0 } };
+   Int_t k3a[3][3] =  { { 0, 1, 0 },
+			{ 1, 2, 1 },
+			{ 0, 1, 0 } };      // norm = 6
+   Int_t k3b[3][3] =  { { 1, 2, 1 },        //gauss smoothing
+			{ 2, 4, 2 },
+			{ 1, 2, 1 } };      // norm = 16
+
+   Int_t ksize_x, ksize_y;
+   TString opt = option;
+   opt.ToLower();
+   Int_t *kernel = &k5a[0][0];
+   if (opt.Contains("k5a")) {
+     kernel = &k5a[0][0];
+     ksize_x = ksize_y = 5;
+   }
+   else if (opt.Contains("k5b")) {
+     kernel = &k5b[0][0];
+     ksize_x = ksize_y = 5;
+   }
+   else if (opt.Contains("k3a")) {
+      kernel = &k3a[0][0];
+      ksize_x = ksize_y = 3;
+   } 
+   else if (opt.Contains("k3b")) {
+      kernel = &k3b[0][0];
+      ksize_x = ksize_y = 3;
+   } 
+   else return 1.;
+
+   // Kernel tail sizes (kernel sizes must be odd for this to work!) 
+   Int_t x_push = (ksize_x-1)/2;
+   Int_t y_push = (ksize_y-1)/2; 
+
+   Int_t norm=0;
+   for(int i=0; i<ksize_x; i++)
+     for(int j=0; j<ksize_y; j++) norm += kernel[i*ksize_y +j];
+
+   int nx = NX(), ny= NY();
+
+   EdbH2 buf( *((EdbH2*)this) );
+
+   Long_t content;
+   int bin=0, k=0;
+
+   for (int i=0; i<nx; i++){             // input hist
+     for (int j=0; j<=ny; j++) { 
+       
+       content = 0;
+       for (int n=0; n<ksize_x; n++) {          // kernel
+	 for (int m=0; m<ksize_y; m++) { 
+	   Int_t xb = i+(n-x_push);
+	   Int_t yb = j+(m-y_push); 
+	   bin = buf.Bin(xb,yb);                      // out of dimensions - return 0;
+	   if (!bin) continue;
+	   k = kernel[n*ksize_y +m];
+	   if (!k) continue;
+	   content += k*bin;
+	 }
+       }
+       //SetBin( i, j, Nint(1.*content/norm) );
+       SetBin( i, j, content );
+     } 
+   } 
+
+   eNorm = (float)norm; 
+   return eNorm;
 }
 
 //____________________________________________________________________________
@@ -272,6 +498,13 @@ EdbCell2::~EdbCell2()
 }
 
 //____________________________________________________________________________________
+void  EdbCell2::PrintStat() 
+{
+  printf("EdbCell2 limit = %4d\n",eCellLim);
+  ((EdbH2*)this)->PrintStat();
+}
+
+//____________________________________________________________________________________
 void EdbCell2::Delete()
 {
   if(epC)    { delete [] epC;    epC = 0;  }
@@ -282,7 +515,11 @@ void EdbCell2::Delete()
 //____________________________________________________________________________
 int EdbCell2::InitCell(int maxpercell, int n[2], float min[2], float max[2])
 {
+  Log(3,"EdbCell2::InitCell","%d %f %f %d %f %f", n[0],min[0],max[0],n[1],min[1],max[1] );
+  Delete();
   InitH2(n, min, max);
+  Log(3,"EdbCell2::InitCell","reserve space for maxpercell(%d) * eNcell(%d) = %d objects", 
+      maxpercell, eNcell, maxpercell*eNcell);
   eCellLim = maxpercell;
   epO     = new TObject*[eNcell*eCellLim];    //- pointers to objects
   epC     = new TObject**[eNcell];            //- pointers to cells
@@ -309,10 +546,10 @@ bool EdbCell2::AddObject(float x, float y, TObject *obj)
 //____________________________________________________________________________
 bool EdbCell2::AddObject(int j, TObject *obj)
 { 
-  if(j>=eNcell)        return 0;
-  if(j<0)              return 0;
-  if(eNC[j]>=eCellLim) return 0;
-  if(!obj)             return 0;
+  if(!obj)                    return 0;
+  if(j>=eNcell)               return 0;
+  if(j<0)                     return 0;
+  if( eNC[j] >= eCellLim )    return 0;
   epC[j][eNC[j]] = obj;
   eNC[j]++;
   return 1;
@@ -346,6 +583,17 @@ int EdbCell2::SelectObjects(int min[2], int max[2], TObjArray &arr)
 	if(eNC[jcell]<1)      continue;
 	for(int k=0; k<eNC[jcell]; k++)   { arr.Add( epC[jcell][k] );  nobj++; }
       }
-  //Log(3,"SelectObjects","%d objects selecte in limits min(%d %d) max(%d %d)",nobj,min[0],min[1],max[0],max[1]);
+  return nobj;
+}
+
+//____________________________________________________________________________
+int EdbCell2::SelectObjects(TObjArray &arr)
+{
+  // select all objects
+  int nobj  = 0;
+  for(int jcell=0; jcell<eNcell; jcell++) {
+    if(eNC[jcell]<1)      continue;
+    for(int k=0; k<eNC[jcell]; k++)   { arr.Add( epC[jcell][k] );  nobj++; }
+  }
   return nobj;
 }

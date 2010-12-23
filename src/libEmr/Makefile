@@ -7,7 +7,7 @@ NAME          = Emr
 
 headers       = EdbEmrIO.h
 
-PROJECT_LIBS  = $(PROJECT_LIBS) -lEdr
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEdb -lEmath -lvt -lEbase -lEdr
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

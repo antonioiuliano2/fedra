@@ -67,7 +67,7 @@ int  EdbTestAl::DubletsFilterOut(EdbPattern &p, float xbin, float ybin, float dM
     if( Abs(s2->Y()-s1->Y())   > dyMin )                     continue;
     if( Abs(s2->TX()-s1->TX()) > dtxMin )                    continue;
     if( Abs(s2->TY()-s1->TY()) > dtyMin )                    continue;
-    if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) )   continue;
+    if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s1->Side()==s2->Side() )   continue;
     if( s2->W()>s1->W() ) s1->SetFlag(-10);
     else                  s2->SetFlag(-10);
     nout++;
@@ -284,8 +284,8 @@ int EdbTestAl::CheckMaxBin(float gdz, float phi, float &meanbin, float &xmax, fl
     y2p = s2->X()*Sin(phi)+s2->Y()*Cos(phi);
     // todo - transform angles?
 
-    dx= (x2p+s2->TX()*gdz) - s1->X();
-    dy= (y2p+s2->TY()*gdz) - s1->Y();
+    dx= (x2p-s2->TX()*gdz) - s1->X();
+    dy= (y2p-s2->TY()*gdz) - s1->Y();
     h2.Fill(dx,dy);    
   }
 

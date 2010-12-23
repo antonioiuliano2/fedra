@@ -1,5 +1,6 @@
 #include <iostream>
 #include "EdbDataSet.h"
+// #include "EdbPVRec.h"
 
 //
 //   recset -ccd -l -ang -a -f -t5 -raw -nu
@@ -22,12 +23,13 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle in [GeV])\n";
       //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
+			cout<< "\t\t  -wPVR - write the EdbPVRec object into PVR.root (usefull for batch processing)\n";
       cout<<endl;
       return 0;
     };
 
   int doCCD=0, doLink=0, doAlign=0, doTrack=0, doTrackCarbonium=0,
-    doFine=0, doZ=0, doAngles=0, doRaw=0, noUpdate=0;
+    doFine=0, doZ=0, doAngles=0, doRaw=0, noUpdate=0, doWritePVR=0;
 
   float doPropagation=-1;
 
@@ -70,10 +72,11 @@ int main(int argc, char* argv[])
       if(strlen(key)>2)
 	sscanf(key+2,"%f",&doPropagation);
     }
+    else if(!strcmp(key,"-wPVR"))    doWritePVR=1;
   }
 
-  printf("%d %d %d %d %d %d %d %d %f %d %s\n",
-	 doCCD, doLink, doAlign, doTrack, doFine, doZ, doAngles, doRaw, doPropagation, noUpdate, name);
+  printf("recset options:  %d %d %d %d %d %d %d %d %f %d %d %s\n",
+	 doCCD, doLink, doAlign, doTrack, doFine, doZ, doAngles, doRaw, doPropagation, noUpdate, doWritePVR, name);
 
   EdbDataProc proc(name);
 

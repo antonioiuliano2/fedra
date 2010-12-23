@@ -9,7 +9,7 @@ headers       = EGraphTool.h EGraphRec.h EGraphRecProc.h
 
 EXTRALIBS     = -lThread -lGui
 
-PROJECT_LIBS  = $(EXTRALIBS) -lEdb -lScan -lEdr -lEDD -lEIO
+PROJECT_LIBS  = $(EXTRALIBS) -lEmath -lvt -lEdb -lScan -lEbase -lEdr -lEDD -lEIO
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

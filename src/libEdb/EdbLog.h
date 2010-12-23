@@ -18,6 +18,6 @@ R__EXTERN TNtuple   *gDIFF;
 /* }; */
 
 extern void Log0(Int_t level, const char *location, const char *msgfmt, va_list va);
-extern void Log(Int_t level, const char *location, const char *msgfmt, ...);
+extern bool Log(Int_t level, const char *location, const char *msgfmt, ...);
 
 #endif /* ROOT_EdbLog */

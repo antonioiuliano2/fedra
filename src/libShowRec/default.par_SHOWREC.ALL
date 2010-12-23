@@ -1,0 +1,221 @@
+####################################################################################
+#
+#   OPTIONS to be chosen for SHOWREC library,
+#
+####################################################################################
+
+
+####################################################################################
+
+#   GENERAL SETTINGS
+#   SPEC SETTINGS TO BE SCECIFIED SEPERATELY(!)
+
+####################################################################################
+
+
+SHOW_DO_RECONSTRUCTION  (Run reconstruction algorithm or not, bool)
+
+SHOW_DO_PARAMETRISATION (Run parametrisation algorithm(s) or not, bool)
+
+SHOW_DO_ID              (Run e/pi sep algorithm or not, bool)
+
+SHOW_DO_ENERGY          (Run energy algorithm(s) onf parametrized showers or not, bool)
+
+SHOW_DO_VERTEXATTACH    (Run vtx attach algorithm(s) on showers or not, bool)
+
+
+
+
+
+
+####################################################################################
+
+#   SELECTING Initiator BASETRACKS
+
+####################################################################################
+
+
+
+SHOW_INBTCUT    s.eX-1000.0<30.0&&s.eW>18       (string to cut special Initiator BaseTracks,  TCut)
+SHOW_INBTCUT    s.PdgId==-13                    (string to cut special Initiator BaseTracks,  TCut)
+
+#--------------------------------------------------------------------------------------
+
+SHOW_FIRSTPLATE 3 (Firstplate of EdbPVRec object defined by EdbDataproc object, defined by lnk.def  int)
+SHOW_LASTTPLATE 3 (Lastplate of EdbPVRec object defined by EdbDataproc object, defined by lnk.def  int)
+SHOW_MIDDLEPLATE 3 (Middleplate of EdbPVRec object defined by EdbDataproc object, defined by lnk.def  int)
+SHOW_NUMBERPLATE 3 (Number of plates to used for Shower Reco, defined by lnk.def  int)
+
+
+#--------------------------------------------------------------------------------------
+
+SHOW_USE_LT     0   (Use linked tracks file,  bool)
+SHOW_FILE_LT    0   (name of linked tracks file,  char)
+
+SHOW_USE_PVREC  0   (Use file containing an EdbPVRecObject,  bool)
+SHOW_FILE_PVREC 0   (name of file containing an EdbPVRecObject,  char)
+
+SHOW_USE_ALIBT  0 (Use BT from eAli,  bool)
+# (no filename here necessary)
+SHOW_USE_ALILT  0 (Use LT from eAli , if not there, do tracking,  bool)
+# (no filename here necessary)
+
+
+####################################################################################
+
+#   ADDING / SELECTING ALGORITHMS FOR RECONSTRUCTION
+
+####################################################################################
+
+
+SHOW_SETALG 0 0 (Algtype,  int)
+SHOW_SETALG 0 1
+SHOW_SETALG 0 2
+SHOW_SETALG 0 3
+SHOW_SETALG 0 4
+SHOW_SETALG 0 5
+SHOW_SETALG 0 6
+SHOW_SETALG 0 7
+
+SHOW_SETALG 1 CT (Algname,  char)
+SHOW_SETALG 1 CL
+SHOW_SETALG 1 CA
+SHOW_SETALG 1 NN
+SHOW_SETALG 1 OI
+SHOW_SETALG 1 SA
+SHOW_SETALG 1 TC
+SHOW_SETALG 1 RC
+
+
+SHOW_ADDALG 0 0 (Algtype,  int)
+SHOW_ADDALG 0 1
+SHOW_ADDALG 0 2
+SHOW_ADDALG 0 3
+SHOW_ADDALG 0 4
+SHOW_ADDALG 0 5
+SHOW_ADDALG 0 6
+SHOW_ADDALG 0 7
+
+SHOW_ADDALG 1 CT (Algname,  char)
+SHOW_ADDALG 1 CL
+SHOW_ADDALG 1 CA
+SHOW_ADDALG 1 NN
+SHOW_ADDALG 1 OI
+SHOW_ADDALG 1 SA
+SHOW_ADDALG 1 TC
+SHOW_ADDALG 1 RC
+
+SHOW_SETPARASET 2 (Algtype  int)  500  0.5  100  0.1   (ParamSet, depending on algnummer *float)
+
+SHOW_ADDPARASET 2 (Algtype  int)  500  0.5  100  0.1   (ParamSet, depending on algnummer *float)
+
+
+SHOW_ADDPARASET_FILE 2 (Algtype  int) paradefinition_rootfile.root (name of file containing an paraset def tree,  char)
+# (SHOW_ADDPARASET_FILE 2 ParaDef_CA.root)
+SHOW_SETPARASET_FILE 2 (Algtype  int) paradefinition_rootfile.root (name of file containing an paraset def tree,  char)   (parasetNumber  int)
+# (SHOW_SETPARASET_FILE 2 ParaDef_CA.root 7845)
+
+
+SHOW_ALG_USE_ALISUB 1  (If to extract gAli_Sub from gAli or not, for faster reconstruction(timefactor ca.10),  int) # this has to be still under investigation cause if lnk.lst is in reverse order it might not work...!!!!!
+
+
+####################################################################################
+
+#   ADDING / SELECTING "ALGORITHMS" FOR PARAMETRISATION
+
+####################################################################################
+
+
+SHOW_DO_PARA 0 (Paratype,  int)
+SHOW_DO_PARA 1 (Paratype,  int)
+SHOW_DO_PARA 2 (Paratype,  int)
+SHOW_DO_PARA 3 (Paratype,  int)
+SHOW_DO_PARA 4 (Paratype,  int)
+SHOW_DO_PARA 5 (Paratype,  int)
+SHOW_DO_PARA 6 (Paratype,  int)
+
+SHOW_DO_PARA_NAME FJ (Paraname,  char)
+SHOW_DO_PARA_NAME LT (Paraname,  char)
+SHOW_DO_PARA_NAME YC (Paraname,  char)
+SHOW_DO_PARA_NAME JC (Paraname,  char)
+SHOW_DO_PARA_NAME XX (Paraname,  char)
+SHOW_DO_PARA_NAME YY (Paraname,  char)
+SHOW_DO_PARA_NAME PP (Paraname,  char)
+
+
+
+####################################################################################
+
+#   SPECIFY NAMES OF OUTPUT FILES
+
+####################################################################################
+
+
+SHOW_WRITE_TREEBRANCH       0 (If to write shower as "treebranch",  bool)
+SHOW_WRITE_SHOWERS          0 (If to write "shower" as EdbShowerP,  bool)
+SHOW_WRITE_PARAMETRISATION  0 (If to write parametrisation only of the showers,  bool)
+
+SHOW_FILE_TREEBRANCH       0 (name of file to write shower as "treebranch",  char)
+SHOW_FILE_SHOWERS          0 (name of file to write "shower" as EdbShowerP,  char)
+SHOW_FILE_PARAMETRISATION  0 (name of file to write parametrisation only of the showers,  char)
+
+SHOW_USE_SIMPLEFILENAME   0   1   (type:treebranch, showers, para,  int) (use simple filename,  bool)
+
+
+####################################################################################
+
+#   SETTINGS FOR ENERGY MODULE
+
+####################################################################################
+
+
+SHOW_ENERGY_TRAIN 0 (If to Train ANN with current data sample, obtained from showerArray, int)
+SHOW_ENERGY_RUN   0 (If to run ANN with current data sample, obtained from showerArray, int)
+
+SHOW_ENERGY_TRAINEPOCHS 100 (number of trainingsepochs, int)
+
+
+SHOW_ENERGY_PLATES 11 (additional plate number to give for output names..., int)
+
+
+SHOW_ENERGY_FILE_MLPINPUTFILE    YY  mlpinput.root    
+#(name of Parametrization   char, name of MLPTreeInputFile to be written or read from,  char)
+SHOW_ENERGY_WRITE_MLPINPUTFILE   YY 0                
+#(name of Parametrization   char, If to write MLPTreeInputFile,  bool)
+SHOW_ENERGY_READ_MLPINPUTFILE    YY 0                
+#(name of Parametrization   char, If to read from MLPTreeInputFile,  bool)
+
+SHOW_ENERGY_FILE_WEIGHTFILE     YY train.txt       
+#(name of Parametrization   char, name of weightfile to be written("train.txt")  or read from,  char)
+SHOW_ENERGY_WRITE_WEIGHTFILE     YY 0             
+#(name of Parametrization   char, If to write train weightfile,  bool)
+
+
+
+
+SHOW_ENERGY_READ_WEIGHTFILE_PLATES  XX 11 15 21 27 30 35 41 46 55 56 57 
+#(name of shower Parametrization,  char, plate numbers for weightfiles, int*, default: "ANN_Weight_Energy_FJ_11.txt" (16,21,26,31,36,41,46))
+
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  41 									(name of shower Parametrization		char, plate number		int)
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  42                  (name of shower Parametrization   char, plate number   int)
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  43                  (name of shower Parametrization   char, plate number   int)
+
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  YY  41                   (name of shower Parametrization   char, plate number    int)
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  YY  42                  (name of shower Parametrization   char, plate number   int)
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  YY  43                  (name of shower Parametrization   char, plate number   int)
+
+
+#SHOW_ENERGY_ADD_WEIGHTFILE XX 41 name___4_1___file.txt   
+#(name of shower Parametrization   char, name of file to read ANN weights,  char, plate number   int)
+#SHOW_ENERGY_ADD_WEIGHTFILE XX 46 name___4_6___file.txt   
+#(name of shower Parametrization   char, name of file to read ANN weights,  char, plate number   int)
+#SHOW_ENERGY_ADD_WEIGHTFILE XX 49 name___4_9___file.txt   
+#(name of shower Parametrization   char, name of file to read ANN weights,  char, plate number   int)
+
+
+
+#SHOW_ENERGY_READ_TRAINFILE        XX      shower.root      
+#(name of shower Parametrization   char, name of file to read ANN tree, containing EdbShowerP  char)
+
+
+

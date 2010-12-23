@@ -14,7 +14,6 @@ class TOracleServerE2 : public TOracleServer {
 
 public:
   TString eRTS; // "Remote Tables Suffix" for example "@opita"
-
 public:
   TOracleServerE2(const char *db, const char *uid, const char *pw):
     TOracleServer(db, uid, pw){}
@@ -33,6 +32,7 @@ public:
    Int_t       GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id);
    Int_t       GetProcessOperationID(char *id_eventbrick, char *id_parent_operation, char *id_programsettings, char *id_plate, char *id);
    Int_t       DumpProcessOperations(char *id_eventbrick,char *id_programsettings);
+   Int_t       DumpProcessOperations(char *id_eventbrick, Int_t driverlevel);
    Int_t       GetId_EventBrick (char *id_brick, char*id_set, char *id);
    Int_t       GetId_Zone(char *id_eventbrick,char *id_plate, char *id_process_operation, char *series, char* id);
    Int_t       GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id);
@@ -44,12 +44,14 @@ public:
    Int_t       ReadViewsZone(ULong64_t id_zone, int side, TObjArray &edbviews);
    Int_t       ReadMicrotracksZone(Int_t id_eventbrick, ULong64_t id_zone, int side, TObjArray &edbviews);
    Int_t       ConvertMicrotracksZoneToEdb(Int_t id_eventbrick, ULong64_t id_zone, EdbRun &run);
-   Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0);
+   Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0, bool structure_only=false );
    Int_t       ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor);
 
    Int_t       ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms);
+   Int_t       ReadBrickOffset(Int_t id_brick, EdbMarksSet &ms);
    Int_t       ReadCSPredictions(Int_t id_brick, EdbPattern &pred);
    Int_t       ReadCSPredictions2(Int_t id_brick, EdbPattern &pred);
+   Int_t       ReadVetoTracks(Int_t id_brick, EdbPattern &pred);
 
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };

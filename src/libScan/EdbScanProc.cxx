@@ -7,13 +7,20 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include <iostream>
 #include "Varargs.h"
 #include "TSystem.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TEnv.h"
+#include "TChain.h"
 #include "EdbLog.h"
 #include "EdbTrackFitter.h"
 #include "EdbScanProc.h"
 #include "EdbTestAl.h"
-#include <iostream>
+#include "EdbPlateAlignment.h"
+#include "EdbAlignmentMap.h"
+#include "EdbRunTracking.h"
 
 using namespace std;
 using namespace TMath;
@@ -47,19 +54,43 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, EdbID eid1, EdbID eid2)
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::ReadAffToLayer(EdbLayer &la, EdbID id1, EdbID id2)
+{
+  // read affine tranformation from file, into layer
+  EdbDataPiece piece;
+  TString parfile;
+  MakeAffName(parfile,id1,id2);
+  piece.eFileNamePar = parfile;
+  if (piece.TakePiecePar() < 0) { Log(2,"ReadAFFtoLayer","file %s do not found...", parfile.Data() );    return 0; }
+  la.Copy( *(piece.GetLayer(0)) );
+  la.SetZcorr(piece.GetLayer(0)->Z());
+  la.SetZlayer(0.,0.,0.);
+  if(gEDBDEBUGLEVEL>2) la.Print();
+  return true;
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 {
-  // read affine tranformation from file, form "plate" and add it into EdbScanSet:ePC
+  // read affine tranformation from file, form "plate", add "plate" to EdbScanSet:ePC
 
   EdbDataPiece piece;  
   TString parfile;
   MakeAffName(parfile,id1,id2);
   piece.eFileNamePar = parfile;
-  if (piece.TakePiecePar() < 0) return false;
-  float       dz = piece.GetLayer(0)->Z();
-  EdbAffine2D *a = piece.GetLayer(0)->GetAffineXY();
+  float dz=0;
+  EdbAffine2D *a=0;
+  if (piece.TakePiecePar() < 0) {
+	dz = 1300.*( id2[1]-id1[1] );
+	a = new EdbAffine2D();
+	Log(2,"AddAFFtoScanSet","add default transform with dz = %f",dz);
+  } else {
+	dz = piece.GetLayer(0)->Z();
+	a = piece.GetLayer(0)->GetAffineXY();
+	Log(2,"AddAFFtoScanSet","add read transform with dz = %f",dz);
+  }
   if(gEDBDEBUGLEVEL>2) a->Print();
-  EdbPlateP *p = new EdbPlateP();   // 0-base, 1-up, 2-down
+  EdbPlateP *p = new EdbPlateP();   // in this function  1-one plate, 2-next plate
   p->GetLayer(1)->SetID(id1[1]);
   p->GetLayer(1)->SetZlayer(-dz,-dz,-dz);
   p->GetLayer(1)->SetAffXY(a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
@@ -75,7 +106,8 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 //----------------------------------------------------------------
 int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
-  if (sc.eIDS.GetSize() == 1) {  // add nominal plate
+  if(sc.eIDS.GetSize() < 1)   return 0;
+  else if (sc.eIDS.GetSize() == 1) {  // add nominal plate
     EdbPlateP *plate = new EdbPlateP();
     plate->SetID(sc.GetID(0)->ePlate);
     Float_t z=0, dz0=214,dz1=45,dz2=45;  //TODO!
@@ -99,6 +131,22 @@ int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
   }
 
   return sc.AssembleBrickFromPC();
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::CopyParSet(EdbID idset1,  EdbID idset2)
+{
+  // assuming that exist the scan sets for idset1 and idset2 
+  // copy the plate par files with shrinkage corrections from 1 to 2
+  EdbScanSet *ss1 = ReadScanSet(idset1);   if(!ss1) return;
+  EdbScanSet *ss2 = ReadScanSet(idset2);   if(!ss2) return;
+  int n = ss1->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id1  = ss1->GetID(i);
+    EdbID *id2  = ss2->FindPlateID(id1->ePlate);
+    if(id2) CopyPar(*id1,*id2);
+  }
+  
 }
 
 //----------------------------------------------------------------
@@ -126,7 +174,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
 
   for(int i=0; i<n; i++) {
     EdbID *id    = (EdbID *)(sc.eIDS.At(i));
-    if (ReadFoundSegment(*id,*s) <= 0) continue;
+    if (ReadFoundSegment(*id,*s,flag) <= 0) continue;
     count++;
     plate = sc.GetPlate(id->ePlate);
     pat.Transform(    plate->GetAffineXY()   );
@@ -137,7 +185,7 @@ int EdbScanProc::ReadFoundTrack(EdbScanSet &sc,  EdbTrackP &track, int flag)
     s->SetPID(id->ePlate);
     track.AddSegment( new EdbSegP(*s) );
   }
-
+  track.SetCounters();
   return count;
 }
 
@@ -175,7 +223,54 @@ int EdbScanProc::ReadFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
     }
   }
 
+  int ntr = ali.Ntracks();
+  for(int i=0; i<ntr; i++) ali.GetTrack(i)->SetCounters();
+
   LogPrint(sc.eB.ID(),2,"ReadFoundTracks","%d  segments read\n",count );
+
+  return count;
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadManFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
+{
+  // read all tracks  from *man.found.txt listed in sc.IDS and apply transformations from sc.eB
+  // return the total number of segments added
+
+  EdbPlateP  *plate;
+  int n = sc.eIDS.GetEntries();
+  int count=0;
+
+  for(int i=0; i<n; i++) {
+    EdbPattern pat;
+    EdbID *id  = sc.GetID(i);                 if(!id) continue;
+    if( !ReadPatTXT(pat, *id, "man.found.txt",flag) ) continue;
+    plate = sc.GetPlate(id->ePlate);       if(!plate) continue;
+    pat.SetPID(id->ePlate);
+    pat.SetID(id->ePlate);
+    pat.SetSegmentsPID();
+    pat.Transform(    plate->GetAffineXY()   );
+    pat.TransformA(   plate->GetAffineTXTY() );
+    pat.TransformShr( plate->Shr() );
+    pat.SetZ(plate->Z());
+    //pat.SetSegmentsZ();
+    //pat.SetSegmentsDZ(plate->DZ());  // to check the direction!
+    
+    for(int j=0; j<pat.N(); j++) {
+      EdbSegP *s = pat.GetSegment(j);
+      s->SetVid(id->ePlate,0);
+      int side = s->Flag()%10;
+      if(side==0) s->SetZ(plate->Z());
+      if(side==1) s->SetZ(plate->Z()+107);
+      if(side==2) s->SetZ(plate->Z()-107);
+      EdbTrackP *track = ali.FindTrack(s->ID());
+      if(track)  track->AddSegment( new EdbSegP(*s) );
+      else       ali.AddTrack( new EdbTrackP(new EdbSegP(*s)) );
+      count++;
+    }
+  }
+
+  LogPrint(sc.eB.ID(),2,"ReadManFoundTracks","%d  segments read\n",count );
 
   return count;
 }
@@ -212,6 +307,7 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
     pat   = new EdbPattern();
     cnt += ReadPatCPnopar( *pat, *id, c, do_erase);
 
+    pat->SetScanID(*id);
     pat->SetPID(id->ePlate);
     for(int j=0; j<pat->N(); j++) pat->GetSegment(j)->SetVid( id->ePlate, pat->GetSegment(j)->Vid(1) );
     pat->SetZ(plate->Z());
@@ -219,19 +315,19 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
     pat->Transform(    plate->GetAffineXY()   );
     pat->TransformA(   plate->GetAffineTXTY() );
     pat->TransformShr( plate->Shr() );
+    pat->SetSegmentsPlate(id->ePlate);
     ali.AddPattern( pat );
   }
 
   ali.SetPatternsID();
   for(int i=0; i<n; i++)  ali.GetPattern(i)->SetSegmentsPID();  // PID of the segment must be ID of the pattern!
 
-  /* to be moved into the processing part!!!
+  // to be moved into the processing part???
   ali.SetSegmentsErrors();
   ali.SetCouplesAll();
   ali.SetChi2Max(ali.GetScanCond()->Chi2PMax());
   ali.SetOffsetsMax(ali.GetScanCond()->OffX(),ali.GetScanCond()->OffY());
-  */
-
+  
   return cnt;
 }
 
@@ -286,6 +382,61 @@ bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
   }
   MakeAFFSet(sc);
   return true;
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::AlignSetNewNopar(EdbID id, TEnv &cenv )
+{
+  EdbScanSet *ss = ReadScanSet(id);
+  if(!ss) { Log(1,"AlignSetNewNopar","Error! set for %s do not found",id.AsString()); return; }
+  AlignSetNewNopar(*ss, cenv);
+  ss->eB.ResetAff();
+  WriteScanSet(id,*ss);
+  UpdateSetWithAff(id,id);
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::AlignSetNewNopar(EdbScanSet &sc, TEnv &cenv )
+{
+  if(sc.eIDS.GetEntries()<2) return 0;
+  int n=0;
+  for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
+    EdbID *id1 = (EdbID *)(sc.eIDS.At(i));
+    EdbID *id2 = (EdbID *)(sc.eIDS.At(i+1));
+    EdbAffine2D aff;
+    float dz = cenv.GetValue("fedra.align.DZ"  , -1300);
+    if(sc.GetAffP2P(id1->ePlate, id2->ePlate, aff))
+      dz = sc.GetDZP2P(id1->ePlate, id2->ePlate);
+    n += AlignNewNopar(*id1, *id2, cenv, &aff, dz);
+  }
+  return n;
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::CheckSetQualityRaw( EdbID idss )
+{
+  EdbScanSet *ss = ReadScanSet(idss);
+  int n = ss->eIDS.GetEntries();  if(n<1) return;
+  for(int i=0; i<n; i++) {
+    EdbID *id = (EdbID *)(ss->eIDS.At(i));
+    TString name;
+    MakeFileName(name,*id,"raw.root");
+    EdbRunAccess a(name.Data()); 
+    a.InitRun();
+    a.CheckRunLine();
+  }
+  delete ss;
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::AlignSet(EdbID id, int npre, int nfull, const char *opt  )
+{
+  EdbScanSet *ss = ReadScanSet(id);
+  if(!ss) { Log(1,"AlignSet","Error! set for %s do not found",id.AsString()); return; }
+  AlignSet(*ss, npre,nfull, opt);
+  ss->eB.ResetAff();
+  WriteScanSet(id,*ss);
+  UpdateSetWithAff(id,id);
 }
 
 //----------------------------------------------------------------
@@ -346,8 +497,8 @@ int EdbScanProc::ReadTracksTree(EdbID id, EdbPVRec &ali, TCut cut)
   EdbDataProc dproc;
   TString name; 
   MakeFileName(name,id,"trk.root",false);
-  n = dproc.ReadTracksTree(ali, name.Data(), 2, 0.01, cut);
-  ali.Print();
+  n = dproc.ReadTracksTree(ali, name.Data(), cut);
+  //ali.Print();
   return n;
 }
 
@@ -373,6 +524,25 @@ void EdbScanProc::CheckFiles( EdbScanSet &sc, const char *suffix )
     TString str;
     MakeFileName(str,*id,suffix);
     gSystem->Exec(Form("ls -l %s",str.Data()));
+  }
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::MakeScannedIDList( EdbID id0, EdbScanSet &sc, int pl_from, int pl_to, const char *suffix )
+{
+  // check in all directories from pl_from to pl_to for a files with versions defined in id0 and the given suffix
+  // if found - add EdbID the scan set
+  sc.eIDS.Delete();
+  EdbID id(id0);
+  int step = pl_from>pl_to? -1:1;
+  for(int i=pl_from; i != pl_to+step; i+=step)  {
+    id.ePlate=i;
+    TString str;
+    MakeFileName(str,id,suffix);
+    if( gSystem->AccessPathName(str, kReadPermission) )  
+      {   Log(3,"MakeScannedIDList","not found %s",str.Data()); continue; }
+    else  Log(3,"MakeScannedIDList","use file %s",str.Data());
+    sc.eIDS.Add(new EdbID(id));
   }
 }
 
@@ -663,6 +833,37 @@ int EdbScanProc::CopyAFFPar(int id1c[4], int id2c[4], int id1p[4], int id2p[4], 
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *aff0 )
+{
+  // update the aff par file witgh the values defined in the EdbLayer
+
+  TString parout;  MakeAffName(parout,id1,id2);
+  LogPrint(id1.eBrick,2,"UpdateAFFPar","%s ", parout.Data());
+  char card[80];
+
+  TDatime t;
+  sprintf(card,"\n## %s", t.AsSQLString());
+  if(!AddParLine(parout.Data(),card)) return false;
+
+  sprintf(card,"ZLAYER \t %d \t %f %f %f",l.ID(), l.Zcorr() ,0.,0. );
+  if(!AddParLine(parout.Data(),card)) return false;
+
+  EdbAffine2D &aff = *(l.GetAffineXY());
+  if(aff0) aff.Transform(aff0);
+
+  sprintf(card,"AFFXY \t %d \t %f %f %f %f %f %f", l.ID(), 
+	  aff.A11(),aff.A12(),aff.A21(),aff.A22(),aff.B1(),aff.B2() );
+  if(!AddParLine(parout.Data(),card)) return false;
+
+  EdbAffine2D &afftxy = *(l.GetAffineTXTY());
+  sprintf(card,"AFFTXY \t %d \t %f %f %f %f %f %f", l.ID(), 
+	  afftxy.A11(),afftxy.A12(),afftxy.A21(),afftxy.A22(),afftxy.B1(),afftxy.B2() );
+  if(!AddParLine(parout.Data(),card)) return false;
+
+  return true;
+}
+
+//----------------------------------------------------------------
 bool EdbScanProc::SetAFF0(int id1[4], int id2[4])
 {
   TString str;
@@ -920,12 +1121,13 @@ int EdbScanProc::TestAl(int id1[4], int id2[4])
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::TestAl(const char *cpfile1, const char *cpfile2, TCut &cut, float dz)
+int EdbScanProc::TestAl(const char *cpfile1, const char *cpfile2, TCut &cut, float dz, EdbAffine2D *aff)
 {
   EdbPattern p1,p2;
-  ReadPatCPnopar(p2, cpfile2, cut, false);
+  ReadPatCPnopar(p2, cpfile2, cut);
   p2.SetZ(0);  p2.SetSegmentsZ();
-  ReadPatCPnopar(p1, cpfile1, cut, false);
+  ReadPatCPnopar(p1, cpfile1, cut);
+  if(aff) p1.Transform(aff);
   p1.SetZ(-dz);  p1.SetSegmentsZ();
   return TestAl(p1,p2);
 }
@@ -941,7 +1143,7 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
   ta.HDistance(p1,p2);
 
   float bin[4]={20,20, 25,0.001};                  // default values for normal alignment (expected dz=1300)
-  ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]=  1200; ta.eDmin[3]=-0.015;
+  ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]=  -1500; ta.eDmin[3]=-0.015;
   ta.eDmax[0]= 5000; ta.eDmax[1]= 5000; ta.eDmax[2]=  1500; ta.eDmax[3]= 0.015;
 
   FILE *f = fopen("testal.par","r");
@@ -976,30 +1178,32 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
 }
   
 //----------------------------------------------------------------
-int EdbScanProc::AlignAll(int id1[4], int id2[4], int npre, int nfull, const char *opt)
+void EdbScanProc::MergeSetSBT(EdbID id)
 {
-  int nal=0;
-  if (npre > 0) {
-    MakeInPar(id1,"prealignment");
-    MakeInPar(id2,"prealignment");
-    for (Int_t i = 0; i < npre; i++) {
-      // find affine transformation from id1 to id2 and update par of id1
-      nal = Align(id1, id2, "");	
-      if (nal == -1) return -1;
-    }
+  EdbScanSet  *ss = ReadScanSet(id);
+  if(ss) MergeSetSBT(id, *ss);
+  delete ss;
+}
+  
+//----------------------------------------------------------------
+void EdbScanProc::MergeSetSBT(EdbID id, EdbScanSet &ss)
+{
+  // merge all sbt files for a given scan set into bxxxxx.x.x.x.sbt.root
+  if(!CheckBrickDir(id)) return;
+  int npl = ss.eIDS.GetEntries();
+  if(npl<1) return;
+  TString filename;
+  TChain allsbt("sbt");
+
+  for( int i=0; i<npl; i++ ) {
+    EdbID *idp  = ss.GetID(i);
+    Log(2,"MergeSetSBT", "Adding plate %d...",idp->ePlate);
+    MakeFileName(filename,*idp,"sbt.root");
+    allsbt.Add(filename.Data());
   }
-  if (nfull > 0) {
-    MakeInPar(id1,"fullalignment");
-    MakeInPar(id2,"fullalignment");
-    for (Int_t i = 0; i < nfull; i++) {
-      // find affine transformation from id1 to id2 and update par of id1
-      nal = Align(id1, id2, opt);	
-      if (nal == -1) return -1;
-    }
-  }
-  LogPrint(id1[0],1,"AlignAll","%d.%d.%d.%d to %d.%d.%d.%d with %d pre and %d full.  The final pattern is: %d", 
-	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3],npre,nfull,nal);
-  return nal;
+  MakeFileName(filename,id,"sbt.root",false);
+  Log(2,"MergeSetSBT","Writing %s file...",filename.Data());
+  allsbt.Merge(filename.Data());
 }
 
 //----------------------------------------------------------------
@@ -1052,6 +1256,7 @@ int EdbScanProc::WriteScanSet(EdbID id, EdbScanSet &ss)
   TFile f(name.Data(),"UPDATE");
   if(!f.IsOpen()) return 0;
   ss.Write("set");
+  f.Purge(3);  f.Close();
   return 1;
 }
 
@@ -1061,6 +1266,7 @@ EdbScanSet *EdbScanProc::ReadScanSet(EdbID id)
   TString name;
   MakeFileName(name,id,"set.root",false);
   TFile f(name.Data());
+  Log(2,"ReadScanSet","from %s",name.Data());
   if(!f.IsOpen()) return 0;
   TObject *ss = f.Get("set");
   if(ss) return (EdbScanSet *)ss;
@@ -1093,17 +1299,20 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
   return pred.N();
 }
 
+//----------------------------------------------------------------
 int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag)
 {
   TString str;
   MakeFileName(str,id,suffix);
 
   ReadPatTXT(str.Data(),pred,flag);
+  EdbID sid(id[0],id[1],id[2],id[3]);
+  pred.SetSegmentsScanID(sid);
 
   LogPrint(id[0], 2, "ReadPatTXT","%s with %d predictions with flag: %d", 
 	   str.Data(), pred.N(), flag);
 
-  return(pred.N());
+  return pred.N();
 }
 
 
@@ -1113,6 +1322,10 @@ int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
   // read ascii predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
   //        man      - for manual check by sysal
   //                 - overvise complete format
+  // flag convention:
+  //     -1 read all: basetracks, microtracks and holes (extrapolated predictions)
+  //    >=0 read only segments with this flag
+  //    -11 read basetracks or microtracks, skip holes (expected behaviour for display users)
 
   EdbSegP s;
   Int_t   ids = 0, flag = 0, ic = 0;
@@ -1140,9 +1353,18 @@ int EdbScanProc::ReadPatTXT(const char *file, EdbPattern &pred, int flag0)
 
   while (fgets (buffer, sizeof(buffer), f)) {
     if (sscanf(buffer,"%d %f %f %f %f %d", 
-	       &ids,&x,&y,&tx,&ty,&flag) !=ncolumns ) break;
-    if (flag0 > -1 && flag0 != flag) continue;
-    s.Set(ids,x,y,tx,ty,50.,flag);
+	       &ids,&x,&y,&tx,&ty,&flag) !=ncolumns )      break;
+    if (flag0 > -1 && flag0 != flag)                       continue;
+    if (flag0 == -11 && EdbRunTracking::GetMTHoles(flag)>0) continue;
+    int side = flag%10;
+    float ww=50; 
+    s.SetDZ(-214);
+    if(side!=0)       ww=25;
+    if(side==1)  s.SetDZ(45);
+    if(side==2)  s.SetDZ(-45);
+
+    s.Set(ids,x,y,tx,ty,ww,flag);
+    s.SetSide( side );
     if (ncolumns==10) s.SetErrors(sx,sy,0.,stx,sty);
     else s.SetErrors(50,50,0.,0.6,0.6);
     pred.AddSegment(s);
@@ -1201,6 +1423,11 @@ int EdbScanProc::WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, i
 int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, int flag)
 {
   // read root predictions file as .../bXXXXXX/pYYY/a.a.a.a.suffix
+  // flag convention:
+  //     -1 read all: basetracks, microtracks and holes (extrapolated predictions)
+  //    >=0 read only segments with this flag
+  //    -11 read basetracks or microtracks, skip holes (expected behaviour for display users)
+
   int n=0;
   TString str;
   MakeFileName(str,id,suffix);
@@ -1224,9 +1451,14 @@ int EdbScanProc::ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, in
   f.GetObject("pat",p);
   if (!p) {f.Close(); return 0;}
   for(int i=0; i<p->N(); i++) {
-    if (flag > -1 && flag != p->GetSegment(i)->Flag()) continue;
-    pred.AddSegment(*(p->GetSegment(i))); n++;
+    EdbSegP *s = p->GetSegment(i);
+    if (flag > -1  && flag != s->Flag()) continue;
+    if (flag == -11 && EdbRunTracking::GetMTHoles(s->Flag())>0) continue;
+    pred.AddSegment(*s)->SetSide( s->Flag()%10 );
+    n++;
   }
+  EdbID sid(id[0],id[1],id[2],id[3]);
+  pred.SetSegmentsScanID(sid);
   f.Close();
   p->Delete();
   LogPrint(id[0],2,"ReadPatRoot","%s with %d predictions with flag: %d", str.Data(),n,flag);
@@ -1387,6 +1619,17 @@ bool EdbScanProc::AddParLine(const char *file, const char *line)
 }
 
 //-------------------------------------------------------------------
+void EdbScanProc::MakeInParSet(EdbID id, const char *option)
+{
+  EdbScanSet *ss = ReadScanSet(id);
+  int n = ss->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id  = ss->GetID(i);
+	if(id) MakeInPar(*id,option);
+  }
+}
+
+//-------------------------------------------------------------------
 bool EdbScanProc::MakeInPar(int id[4], const char *option)
 {
   // prepare x.x.x.x.in.par file for the process defined in the option string
@@ -1432,7 +1675,28 @@ int EdbScanProc::LinkRun(int id[4], int noUpdate)
 }
 
 //----------------------------------------------------------------------------------------
-int EdbScanProc::FindPredictionsRaw(int idp[4], int idr[4])
+int EdbScanProc::FindPredictionsRawSet(EdbID idp, EdbScanSet &ss, int last_plate)
+{
+  bool direction = idp.ePlate<last_plate ? true : false;
+  int count=0;
+  EdbID *idthis = ss.FindPlateID(idp.ePlate);
+  if(!idthis) return 0;
+  EdbID *idnext = 0;
+  while(1) {
+    FindPredictionsRaw(*idthis, *idthis);
+    count++;
+    idnext = ss.FindNextPlateID( idthis->ePlate, direction );  // find next plate
+    if(!idnext) break;
+    if(  direction && idnext->ePlate>last_plate ) break;
+    if( !direction && idnext->ePlate<last_plate ) break;
+    ProjectFound(*idthis,*idnext);
+    idthis=idnext;
+  }
+  return count;
+}
+
+//----------------------------------------------------------------------------------------
+int EdbScanProc::FindPredictionsRaw(EdbID idp, EdbID idr)
 {
   // find raw microtracks for the predictions of idp in raw data of idr
   // Input:  idp.pred.root, idr.raw.root
@@ -1452,6 +1716,7 @@ int EdbScanProc::FindPredictionsRaw(int idp[4], int idr[4])
   float puls_min    = 7;
   float chi2max     = 1.6;
   int nfound = FindPredictionsRaw(pred,found,ra, condBT,condMT, delta_theta, puls_min, chi2max);
+  WriteFound(found, idp);
 
   return nfound;
 }
@@ -1566,7 +1831,7 @@ int EdbScanProc::FindPredictionsRaw( EdbPattern &pred, EdbPattern &fnd, EdbRunAc
 	  //s3.Print();
 	  //s.Print();
 	  chi = EdbTrackFitter::Chi2Seg(&s3, &s);
-	  printf("chi = %7.4f\n",chi);
+	  //printf("chi = %7.4f\n",chi);
 	  fprintf(out,"chi = %7.4f\n",chi);
 	  if(chi<chimin) {                           //select the best basetrack
 	    chimin = chi;
@@ -1593,7 +1858,7 @@ int EdbScanProc::FindPredictionsRaw( EdbPattern &pred, EdbPattern &fnd, EdbRunAc
     } else if(sfmt.Chi2()<chi2max) {  // found good microtrack
       //float zmean = ra.GetLayer(0)->Z();
       float zmean = s.Z();
-      printf("Zmt = %f  zmean = %f   Zs = %f \n",sfmt.Z(),zmean,s.Z());
+      //printf("Zmt = %f  zmean = %f   Zs = %f \n",sfmt.Z(),zmean,s.Z());
       sf.SetX( sfmt.X() + s.TX()*(zmean-sfmt.Z()) );
       sf.SetY( sfmt.Y() + s.TY()*(zmean-sfmt.Z()) );
       sf.SetZ(zmean);
@@ -1638,9 +1903,9 @@ int EdbScanProc::FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found,
   TArrayI   ind(maxcand);
   
   int nseg = pat.FindCompliments(s,arr,30,200);  // acceptance (prelim): s.SX()*30; s.STX*200
-  printf("\nnseg = %d\n",nseg);
+  //printf("\nnseg = %d\n",nseg);
   if(nseg>maxcand)  {
-    printf("Warning!: Too many segments %d, accept only the first %d \n", nseg, maxcand);
+    Log(1,"FindCompliments","Warning!: Too many segments %d, accept only the first %d", nseg, maxcand);
     nseg = maxcand;
   }
   if(nseg<=0) return 0;
@@ -1662,7 +1927,7 @@ int EdbScanProc::FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found,
     nfound++;
   }
 
-  printf("nfound = %d\n",nfound);
+  //printf("nfound = %d\n",nfound);
   return nfound;
 }
 
@@ -1702,15 +1967,22 @@ bool EdbScanProc::InitRunAccess(EdbRunAccess &ra, int id[4], bool do_update)
   if(!InitPiece(p,id)) return false;
   if(gEDBDEBUGLEVEL>2) p.Print();
   ra.eAFID = p.eAFID;
-  LogPrint(id[0],2,"InitRunAccess","open file %s",p.GetRunFile(0));
   if( !ra.InitRun(p.GetRunFile(0), do_update) ) {
     LogPrint(id[0],1,"InitRunAccess","ERROR open file %s !!!",p.GetRunFile(0));
     return false;
-  }
+  } else
+    LogPrint(id[0],2,"InitRunAccess"," %s with %d views",p.GetRunFile(0), ra.GetRun()->GetEntries() );
+
   ra.GetLayer(1)->SetZlayer( p.GetLayer(1)->Z(),p.GetLayer(1)->Zmin(),p.GetLayer(1)->Zmax());
   ra.GetLayer(2)->SetZlayer( p.GetLayer(2)->Z(),p.GetLayer(2)->Zmin(),p.GetLayer(2)->Zmax());
   ra.GetLayer(1)->SetShrinkage( p.GetLayer(1)->Shr());
   ra.GetLayer(2)->SetShrinkage( p.GetLayer(2)->Shr());
+
+  EdbAffine2D *a1 =  p.GetLayer(1)->GetAffineTXTY();
+  EdbAffine2D *a2 =  p.GetLayer(2)->GetAffineTXTY();
+  ra.GetLayer(1)->SetAffTXTY( a1->A11(),a1->A12(),a1->A21(),a1->A22(), a1->B1(), a1->B2() );
+  ra.GetLayer(2)->SetAffTXTY( a2->A11(),a2->A12(),a2->A21(),a2->A22(), a2->B1(), a2->B2() );
+
   return true;
 }
 
@@ -1725,7 +1997,7 @@ bool EdbScanProc::InitPiece(EdbDataPiece &piece, int id[4])
   piece.AddRunFile(runfile);
   piece.eFileNameCP  = cpfile;
   piece.eFileNamePar = parfile;
-  if(piece.TakePiecePar()<0) return false;
+  if(piece.TakePiecePar()<0) Log(1,"InitPiece","Warning: file %s do not exist!",parfile.Data());
   return true;
 }
 
@@ -1741,6 +2013,10 @@ int EdbScanProc::ReadPatCP(EdbPattern &pat, int id[4], TCut cut)
   int n = ReadPiece(piece, pat);
   pat.SetZ(piece.GetLayer(0)->Z());
   pat.SetSegmentsZ();
+
+  EdbID sid(id[0],id[1],id[2],id[3]);
+  pat.SetSegmentsScanID(sid);  
+
   return n;
 }
 
@@ -1767,6 +2043,11 @@ int EdbScanProc::FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found,
   //      maxholes - the maximum number of holes (missed segments) for doing extrapolation
   // Output: found - pattern with found tracks
   //         x.x.x.x.found.txt summary file with all candidats
+  //
+
+  //   Probably obsolete function - to investigate if it in use now - in most 
+  //   of cases it can be substituted by EdbRunTracking::FindPredictions            (VT, AC)
+  //
 
   EdbPVRec ali;
   EdbPattern *pat=0;
@@ -1956,6 +2237,33 @@ bool  EdbScanProc::ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4])
   return true;
 }
 
+//----------------------------------------------------------------
+int EdbScanProc::AlignAll(int id1[4], int id2[4], int npre, int nfull, const char *opt)
+{
+  int nal=0;
+  if (npre > 0) {
+    MakeInPar(id1,"prealignment");
+    MakeInPar(id2,"prealignment");
+    for (Int_t i = 0; i < npre; i++) {
+      // find affine transformation from id1 to id2 and update par of id1
+      nal = Align(id1, id2, "");	
+      if (nal == -1) return -1;
+    }
+  }
+  if (nfull > 0) {
+    MakeInPar(id1,"fullalignment");
+    MakeInPar(id2,"fullalignment");
+    for (Int_t i = 0; i < nfull; i++) {
+      // find affine transformation from id1 to id2 and update par of id1
+      nal = Align(id1, id2, opt);	
+      if (nal == -1) return -1;
+    }
+  }
+  LogPrint(id1[0],1,"AlignAll","%d.%d.%d.%d to %d.%d.%d.%d with %d pre and %d full.  The final pattern is: %d", 
+	   id1[0],id1[1],id1[2],id1[3],id2[0],id2[1],id2[2],id2[3],npre,nfull,nal);
+  return nal;
+}
+
 //-------------------------------------------------------------------
 int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
 {
@@ -1992,7 +2300,8 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   pat->SetSegmentsZ();
   ali.AddPattern(pat);
 
-  printf("EdbScanProc::Align: Z1 = %f z2 = %f\n",piece1.GetLayer(0)->Z(),piece2.GetLayer(0)->Z());
+  Log(2,"EdbScanProc::Align","Z1 = %f z2 = %f with option: %s",
+      piece1.GetLayer(0)->Z(),piece2.GetLayer(0)->Z(), option );
   
   EdbScanCond *cond = piece1.GetCond(0);
   cond->SetChi2Mode(3);
@@ -2003,17 +2312,15 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   ali.SetChi2Max(cond->Chi2PMax());
   ali.SetOffsetsMax(cond->OffX(),cond->OffY());
 
-  if( strstr( option,"-a")> 0 && strstr( option,"-a2")==0 )
-    ali.Align(0);                                              //GS: 25-07-07
-  else
-    ali.Align(2); 
-//ali.Align(2);
+  if( strstr( option,"-a") && strstr( option,"-a2")==0 )    ali.Align(0);
+  else                                                      ali.Align(2); 
+
   ali.PrintAff();
   npat = ali.GetCouple(0)->Ncouples();
 
+  EdbAffine2D  aff;
   MakeAffName(parfileOUT,id1,id2);
   piece1.eFileNamePar = parfileOUT;
-  EdbAffine2D  aff;
   ali.GetPattern(0)->GetKeep(aff);
   piece1.UpdateAffPar(0,aff);
   
@@ -2038,6 +2345,285 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   return npat;
  }
 
+//-------------------------------------------------------------------
+int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *aff, float dz)
+{
+  // Align 2 patterns. All necessary information should be in the envfile
+  // Convension about Z(setted while process): the z of id2 is 0, the z of id1 is (-deltaZ) where
+  // deltaZ readed from aff.par file in a way that pattern of id1 projected 
+  // to deltaZ correspond to pattern of id2
+
+  int npat=0;
+  
+  EdbPlateAlignment av;
+  av.eOffsetMax =   cenv.GetValue("fedra.align.OffsetMax"  , 500. );
+  av.SetSigma(      cenv.GetValue("fedra.align.SigmaR"     , 10.  ), 
+	            cenv.GetValue("fedra.align.SigmaT"     , 0.005) );
+  av.eDoFine      = cenv.GetValue("fedra.align.DoFine"     , 1);
+  av.eDZ          = cenv.GetValue("fedra.align.DZ"         , 120.);
+  av.eDPHI        = cenv.GetValue("fedra.align.DPHI"    ,   0.008 );
+  const char *cut = cenv.GetValue("fedra.readCPcut" , "eCHI2P<2.5&&s1.eW>7&&s2.eW>7&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.5");
+
+  EdbPattern p1,p2;
+  ReadPatCPnopar( p1, id1, cut );
+  ReadPatCPnopar( p2, id2, cut );
+  if(aff) { aff->Print(); p1.Transform(aff);}
+
+  TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
+  av.InitOutputFile( dataout );
+  av.Align( p1, p2 , dz);
+  av.CloseOutputFile();
+  UpdateAFFPar( id1, id2, av.eCorrL[0], aff );
+
+  return npat;
+ }
+
+//______________________________________________________________________________
+void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idset1, EdbID idset2)
+{
+  // in this function the geometry of the brick of idset is updated with the affine transformations
+  // found for the couple idset1 idset2 (same plate rescanning transformations)
+  EdbScanSet *ss  = ReadScanSet(idset);    if(!ss)  return;
+  EdbScanSet *ss1 = ReadScanSet(idset1);   if(!ss1) return;
+  EdbScanSet *ss2 = ReadScanSet(idset2);   if(!ss2) return;
+  int n = ss->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id   = ss->GetID(i);
+    EdbID *id1  = ss1->FindPlateID(id->ePlate);    if(!id1) continue;
+    EdbID *id2  = ss2->FindPlateID(id->ePlate);    if(!id2) continue;
+
+    EdbLayer la;    ReadAffToLayer( la, *id1, *id2);
+    EdbPlateP *p = ss->GetPlate(id->ePlate);
+    if(p) {
+      p->SetZcorr(la.Zcorr());
+      p->GetAffineXY()->Transform(la.GetAffineXY());
+    }
+  }
+  WriteScanSet( idset ,*ss );
+  SafeDelete(ss);   SafeDelete(ss1);   SafeDelete(ss2);
+}
+
+//______________________________________________________________________________
+void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idsetu )
+{
+  // in this function the geometry of the brick of idset is updated with the affine transformations
+  // found for plate-to-plate alignment of idset
+  EdbScanSet  *ss  = ReadScanSet(idset);     if(!ss)  return;
+  EdbScanSet *ssu  = ReadScanSet(idsetu);    if(!ssu)  return;
+  int n = ssu->eIDS.GetEntries();            if(n<2)  return;
+  for(int i=0; i<n-1; i++) {
+    EdbID *id1   = ssu->GetID(i);
+    EdbID *id2   = ssu->GetID(i+1);
+    EdbLayer la;    if(!ReadAffToLayer( la, *id1, *id2)) continue;
+    ss->UpdateBrickWithP2P(la,id1->ePlate,id2->ePlate);
+  }
+  WriteScanSet( idset ,*ss );
+  SafeDelete(ss);  SafeDelete(ssu);
+}
+
+//______________________________________________________________________________
+void EdbScanProc::MakeAlignSetSummary(EdbID idset1, EdbID idset2, const char *file, const char *mode )
+{
+  // assuming that exist the scan sets for idset1 and idset2 
+  // read id1_id2.aff.par and make a summary tree
+
+  Log(2,"MakeAlignSetSummary","open file %s for %s",file,mode);
+  TFile *f = file?  new TFile(file,mode): 0;
+  if(!f) return;
+  TTree *tree = (TTree*)f->Get("alsum");
+  if(!tree) {
+    tree  = new TTree("alsum","Alignment Summary");
+    Int_t   peak=0;
+    //Float_t x0,y0,dx,dy,dz1,dz2;
+    EdbID *id1=0, *id2=0;
+    EdbLayer *corr = 0;
+    EdbPeak2 *peak2c = 0;
+    Float_t xoffset=0,yoffset=0;
+    tree->Branch("id1", "EdbID", &id1);
+    tree->Branch("id2", "EdbID", &id2);
+    tree->Branch("corr", "EdbLayer", &corr);
+    tree->Branch("peak2c","EdbPeak2", &peak2c);
+    tree->Branch("peak",  &peak,"peak/I");
+    tree->Branch("xoffset",  &xoffset,"xoffset/F");
+    tree->Branch("yoffset",  &yoffset,"yoffset/F");
+  }
+  EdbScanSet *ss1 = ReadScanSet(idset1);   if(!ss1) return;
+  EdbScanSet *ss2 = ReadScanSet(idset2);   if(!ss2) return;
+  gStyle->SetPalette(1);
+  int n = ss1->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id1  = ss1->GetID(i);
+    EdbID *id2  = ss2->FindPlateID(id1->ePlate);
+    if(id2) UpdateAlignSummaryTree(*id1,*id2,*tree);
+  }
+  tree->AutoSave();
+  f->Close();
+}
+
+//______________________________________________________________________________
+void EdbScanProc::MakeAlignSetSummary(EdbID idset, const char *file, const char *mode )
+{
+  // assuming that exist the scan sets for idset  
+  // read id.n_id.n+1.aff.par and make a summary tree
+
+  Log(2,"MakeAlignSetSummary","open file %s for %s",file,mode);
+  TFile *f = file?  new TFile(file,mode): 0;
+  if(!f) return;
+  TTree *tree = (TTree*)f->Get("alsum");
+  if(!tree) {
+    tree  = new TTree("alsum","Alignment Summary");
+    Int_t   peak=0;
+    //Float_t x0,y0,dx,dy,dz1,dz2;
+    EdbID *id1=0, *id2=0;
+    EdbLayer *corr = 0;
+    EdbPeak2 *peak2c = 0;
+    Float_t xoffset=0,yoffset=0;
+    tree->Branch("id1", "EdbID", &id1);
+    tree->Branch("id2", "EdbID", &id2);
+    tree->Branch("corr", "EdbLayer", &corr);
+    tree->Branch("peak2c","EdbPeak2", &peak2c);
+    tree->Branch("peak",  &peak,"peak/I");
+    tree->Branch("xoffset",  &xoffset,"xoffset/F");
+    tree->Branch("yoffset",  &yoffset,"yoffset/F");
+  }
+  EdbScanSet *ss = ReadScanSet(idset);    if(!ss) return;
+  int n = ss->eIDS.GetEntries();          if(n<2)  return;
+  for(int i=0; i<n-1; i++) {
+    EdbID *id1  = ss->GetID(i);
+    EdbID *id2  = ss->GetID(i+1);
+    UpdateAlignSummaryTree(*id1,*id2,*tree);
+  }
+  tree->AutoSave();
+  f->Close();
+}
+
+//______________________________________________________________________________
+void EdbScanProc::UpdateAlignSummaryTree(EdbID id1s, EdbID id2s, TTree &tree)
+{
+  TString dataout;  MakeAffName(dataout,id1s,id2s,"al.root");
+  TFile *f = new TFile(dataout,"READ");
+  if(!f) return;
+  EdbLayer *corr = (EdbLayer*)f->Get("corr_layer1");
+  EdbPeak2 *peak2c = (EdbPeak2*)f->Get("peak2c");
+  if(!corr)   {Log(1,"UpdateAlignSummaryTree","Warning no corr for %s_%s",id1s.AsString(), id2s.AsString()); return;}
+  if(!peak2c) {Log(1,"UpdateAlignSummaryTree","Warning no peak2c for %s_%s",id1s.AsString(), id2s.AsString()); return;}
+  EdbAffine2D *aXY=corr->GetAffineXY();
+  int peak = (int)(peak2c->Peak(0));
+  float xcenter1 = corr->X();
+  float ycenter1 = corr->Y();
+  float xoffset= aXY->A11()*xcenter1 + aXY->A12()*ycenter1 + aXY->B1() - xcenter1;
+  float yoffset= aXY->A21()*xcenter1 + aXY->A22()*ycenter1 + aXY->B2() - ycenter1;
+
+  EdbID *id1=&id1s, *id2=&id2s;
+  tree.SetBranchAddress("id1" ,  &id1);
+  tree.SetBranchAddress("id2" ,  &id2);
+  tree.SetBranchAddress("corr" ,  &corr);
+  tree.SetBranchAddress("peak2c",  &peak2c);
+  tree.SetBranchAddress("peak",  &peak);
+  tree.SetBranchAddress("xoffset",  &xoffset);
+  tree.SetBranchAddress("yoffset",  &yoffset);
+  tree.Fill();
+  Log(1,"UpdateAlignSummaryTree","peak: %7.0f/%7.2f/%7.3f   dx,dy,dz: %7.3f %7.3f %7.3f  for %s_%s", 
+      peak2c->Peak(),peak2c->Mean3(),peak2c->Mean(), xoffset,yoffset,corr->Zcorr(), id1s.AsString(),id2s.AsString() );
+
+  TCanvas *c = (TCanvas*)f->Get("report_al");
+  if(c) {
+    c->SetName(Form("%s_%s",id1s.AsString(), id2s.AsString()));
+    c->Draw();
+  }
+  SafeDelete(f);
+}
+
+//______________________________________________________________________________
+void EdbScanProc::AlignRawSet(EdbID idset1, EdbID idset2, TEnv &cenv)
+{
+  // assuming that exist the scan sets for idset1 and idset2 
+  // for each plate do the alignment raw from 1 to 2 and write id1_id2.aff.par
+  EdbScanSet *ss1 = ReadScanSet(idset1);   if(!ss1) return;
+  EdbScanSet *ss2 = ReadScanSet(idset2);   if(!ss2) return;
+  int n = ss1->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id1  = ss1->GetID(i);
+    EdbID *id2  = ss2->FindPlateID(id1->ePlate);
+    if(id2) AlignRaw(*id1,*id2,cenv);
+  }
+}
+
+//______________________________________________________________________________
+int EdbScanProc::AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
+{
+  // Align raw segments patterns. Typical application: align 2 different scannings of the same emulsion plate.
+
+  int npat=0;
+  Log(1,"\nAlignRaw","%s_%s", id1.AsString(), id2.AsString() );
+  int       side1      = cenv.GetValue("fedra.alignRaw.side1"     , 1);
+  int       side2      = cenv.GetValue("fedra.alignRaw.side2"     , 1);
+  float        z1      = cenv.GetValue("fedra.alignRaw.Z1"        , 0);
+  float        z2      = cenv.GetValue("fedra.alignRaw.Z2"        , 0);
+  float     wmin1      = cenv.GetValue("fedra.alignRaw.Wmin1"     , 8);
+  float     wmin2      = cenv.GetValue("fedra.alignRaw.Wmin2"     , 8);
+  float      sigmaR    = cenv.GetValue("fedra.alignRaw.sigmaR"    , 2.5 );
+  float      sigmaT    = cenv.GetValue("fedra.alignRaw.sigmaT"    , 0.005 );
+  float      offsetMax = cenv.GetValue("fedra.alignRaw.offsetMax" , 500. );
+  float      thetaMax  = cenv.GetValue("fedra.alignRaw.thetaMax"  ,   1. );
+  int        path1     = cenv.GetValue("fedra.alignRaw.path1"      , -1 );
+  int        path2     = cenv.GetValue("fedra.alignRaw.path2"      , -1 );
+
+  float      xmin1  = cenv.GetValue("fedra.alignRaw.xmin1"  ,   -500. );
+  float      xmax1  = cenv.GetValue("fedra.alignRaw.xmax1"  ,    500. );
+  float      xmin2  = cenv.GetValue("fedra.alignRaw.xmin2"  ,   -500. );
+  float      xmax2  = cenv.GetValue("fedra.alignRaw.xmax2"  ,    500. );
+  float      ymin1  = cenv.GetValue("fedra.alignRaw.ymin1"  ,   -500. );
+  float      ymax1  = cenv.GetValue("fedra.alignRaw.ymax1"  ,    500. );
+  float      ymin2  = cenv.GetValue("fedra.alignRaw.ymin2"  ,   -500. );
+  float      ymax2  = cenv.GetValue("fedra.alignRaw.ymax2"  ,    500. );
+
+  float      DZ     = cenv.GetValue("fedra.alignRaw.DZ"     ,     25.   );
+  float      DPHI   = cenv.GetValue("fedra.alignRaw.DPHI"   ,     0.003 );
+
+
+  EdbRunAccess r1;  if(!InitRunAccess(r1,id1)) return 0;
+  EdbRunAccess r2;  if(!InitRunAccess(r2,id2)) return 0;
+  r1.eAFID = r2.eAFID = cenv.GetValue("fedra.alignRaw.AFID"   , 1);
+
+  float min1[5] = {xmin1,ymin1,-thetaMax,-thetaMax, wmin1 };
+  float max1[5] = {xmax1,ymax1, thetaMax, thetaMax, 100   };
+  r1.AddSegmentCut(side1, 1, min1, max1);
+  float min2[5] = {xmin2,ymin2,-thetaMax,-thetaMax, wmin2 };
+  float max2[5] = {xmax2,ymax2, thetaMax, thetaMax, 100   };
+  r2.AddSegmentCut(side2, 1, min2, max2);
+
+  EdbPattern p1, p2;
+  r1.GetPatternDataForPrediction( path1, side1, p1 );
+
+  if(applyAff) p1.Transform(applyAff);
+
+  if(path2>=0)  r2.GetPatternDataForPrediction( path2, side2, p2 );
+  else  {
+    float xmin=p1.Xmin(),  xmax=p1.Xmax();
+    float ymin=p1.Ymin(),  ymax=p1.Ymax();
+    EdbSegP s(0, (xmin+xmax)/2., (ymin+ymax)/2., 0,0);
+    float dx=(xmax-xmin)/2., dy=(ymax-ymin)/2.;
+    float size = Sqrt( dx*dx+dy*dy ) + offsetMax+200.;
+    r2.GetPatternXY(s, side2, p2, size);
+  }
+
+  EdbPlateAlignment av;
+  av.SetSigma(sigmaR,sigmaT);
+  av.eOffsetMax = offsetMax;
+  av.eDZ        = DZ;
+  av.eDPHI      = DPHI;
+  av.eDoFine = 1;
+  TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
+  av.InitOutputFile( dataout );
+
+  av.Align( p1, p2, z2-z1);
+  av.CloseOutputFile();
+
+  //av.eCorrL[0].Print();
+  UpdateAFFPar( id1, id2, av.eCorrL[0] );
+  return npat;
+ }
 
 //______________________________________________________________________________
 int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer, char shape)
@@ -2055,7 +2641,7 @@ int EdbScanProc::ReadMarksSet(EdbMarksSet &ms, int brick, const char *filename, 
 }
 
 //______________________________________________________________________________
-int EdbScanProc::WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer, char shape)
+int EdbScanProc::WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename, char spacer, char shape, int plate)
 {
   // Reads an EdbMarksSet object and uses its content to write a map file
   // With "spacer" you can choose the character that you want to insert
@@ -2064,7 +2650,7 @@ int EdbScanProc::WriteMarksSet(EdbMarksSet &ms, int brick, const char *filename,
   sprintf(str,"%s/b%6.6d/b%6.6d.%s",
 	  eProcDirClient.Data(),brick,brick,filename);
 
-  ms.WriteMap(str,spacer,shape);
+  ms.WriteMap(str,spacer,shape,plate);
 
   return(1);
 }
@@ -2090,4 +2676,156 @@ void EdbScanProc::LogPrint(int brick, int level, const char *location, const cha
 
   if(gEDBLOGFILE) fclose(gEDBLOGFILE);
   gEDBLOGFILE=0;
+}
+
+//--------------------------------------------------------------------
+void EdbScanProc::LinkRunNew( EdbID id, EdbPlateP &plate, TEnv &cenv)
+{
+  TString rawfile, cpfile;
+  MakeFileName(rawfile,id,"raw.root");
+  MakeFileName(cpfile,id,"cp.root");
+  EdbAlignmentMap amap( cpfile.Data(), "RECREATE");
+  amap.eEnv = &cenv;
+  amap.Link( rawfile.Data(), plate );
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::LinkSetNew(EdbScanSet &sc, TEnv &cenv )
+{
+  if(sc.eIDS.GetEntries()<1) return;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++) {
+    EdbID *id = (EdbID *)(sc.eIDS.At(i));
+    EdbPlateP *plate = sc.GetPlate(id->ePlate);
+    LinkRunNew(*id, *plate, cenv);
+  }
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::MakeTracksPred(TObjArray &tracks, EdbID id, EdbLayer &layer)
+{
+  // Extrapolate each track of array tracks to layer.Z(), apply layer.Aff() and prepare 
+  // id.pred.root 
+
+  int ntr = tracks.GetEntries();
+  Log(2,"MakeTracksPred","%d tracks",ntr );
+  id.Print(); layer.Print();
+
+  EdbPattern pred(0,0, layer.Z(), ntr);
+  EdbSegP s;
+  for(int i=0; i<ntr; i++) {
+    EdbTrackP *t = (EdbTrackP*)tracks.At(i);
+    t->MakePredictionTo( layer.Z(), s );
+    pred.AddSegment(s);
+  }
+  EdbAffine2D aff(*(layer.GetAffineXY()));
+  aff.Invert();
+  pred.Transform( &aff );
+  WritePred(pred,id);
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::ExtractRawVolume(EdbID id, EdbID idnew, EdbSegP pred, int plateid, TEnv &cenv)
+{
+  // from EdbScanSet id extract volume around pred and save into idnew
+  // Note: the z of pred is assumed to be the z of plate in this function
+  
+  int   nplBefore =   cenv.GetValue("fedra.ExtractVol.NplBefore"  , 4    );
+  int   nplAfter  =   cenv.GetValue("fedra.ExtractVol.NplAfter"   , 5    );
+  float dR        =   cenv.GetValue("fedra.ExtractVol.DR"         , 1000.);
+  Log(2,"ExtractRawVolume","%s --> %s  ref plate: %d (%d %d) at (%f %f)",
+      id.AsString(),idnew.AsString(), plateid, plateid-nplBefore, plateid+nplAfter, pred.X(),pred.Y() );
+  if(gEDBDEBUGLEVEL>2) cenv.Print();
+
+  EdbScanSet *ss = ReadScanSet(id);   if(!ss) return;
+  EdbScanSet ssnew; ssnew.Copy(*ss);
+  ssnew.eB.SetID(idnew.eBrick);
+  ssnew.eIDS.Clear();
+  ssnew.SetID(idnew);
+
+  EdbPlateP *pl = ss->GetPlate(plateid);
+  if(!pl) Log(1,"ExtractRawVolume","ERROR: the plate %d is missing in scan set",plateid);
+  Log(3,"ExtractRawVolume","assign to the prediction z = %f of the plate %d",pl->Z(),plateid );
+  pred.SetZ(pl->Z());
+
+  int n = ss->eIDS.GetEntries();
+  for(int i=0; i<n; i++ ) {
+    EdbID *id = ss->GetID(i);
+    if( (id->ePlate >= plateid-nplBefore) && (id->ePlate <= plateid+nplAfter) ) {
+      EdbID *newid = new EdbID(*id);
+      newid->eBrick = idnew.eBrick;
+      newid->eMajor = idnew.eMajor;
+      newid->eMinor = idnew.eMinor;
+      ssnew.eIDS.Add( newid );
+    }
+  }
+  ssnew.MakePIDList();
+
+  //ss->Print();
+  //ssnew.Print();
+
+  ExtractRawVolume(*ss, ssnew, pred, dR);
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::FindRawTrack( EdbTrackP &pred,  EdbTrackP &found, EdbID idset, int plate)
+{
+  // found segments will be added to track tr
+  TEnv env;    //env.SaveLevel(kEnvLocal);
+  return FindRawTrack( pred,found,idset,plate,env );
+}
+
+//----------------------------------------------------------------
+int EdbScanProc::FindRawTrack( EdbTrackP &pred,  EdbTrackP &found, EdbID idset, int plate, TEnv &env )
+{
+  // found segments will be added to track tr
+
+  EdbRunTracking rt;
+  rt.eDeltaRview           = env.GetValue( "fedra.RawTrack.DeltaRview",          700.       );
+  rt.eDeltaTheta           = env.GetValue( "fedra.RawTrack.DeltaTheta",            0.15     );
+  rt.eDeltaR               = env.GetValue( "fedra.RawTrack.DeltaR",               20.       );
+  rt.ePreliminaryPulsMinMT = env.GetValue( "fedra.RawTrack.PreliminaryPulsMinMT",  8.       );
+  rt.ePreliminaryChi2MaxMT = env.GetValue( "fedra.RawTrack.PreliminaryChi2MaxMT",  5.       );
+  rt.ePulsMinMT            = env.GetValue( "fedra.RawTrack.PulsMinMT",            10.       );
+  rt.eChi2MaxMT            = env.GetValue( "fedra.RawTrack.Chi2MaxMT",             1.6      );
+  rt.ePulsMinBT            = env.GetValue( "fedra.RawTrack.PulsMinBT",            18.       );
+  rt.eChi2MaxBT            = env.GetValue( "fedra.RawTrack.Chi2MaxBT",             1.5      );
+  rt.eDegradPos            = env.GetValue( "fedra.RawTrack.DegradPos",             3.       );
+  rt.eDegradSlope          = env.GetValue( "fedra.RawTrack.DegradSlope",           0.001    );
+  SetDefaultCondBT(rt.eCondBT);
+  SetDefaultCondMT(rt.eCondMT);
+
+  EdbScanSet *ss = ReadScanSet(idset);          if(!ss) return 0;
+  EdbID      *id = ss->FindPlateID(plate);      if(!id) return 0;
+  EdbPlateP  *pl = ss->GetPlate(plate);         if(!pl) return 0;
+  MakeInPar( *id, "tracking" );
+  InitRunAccess(rt,*id);
+
+  return rt.FindTrack(pred,found, *pl);
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::ExtractRawVolume(EdbScanSet &ss, EdbScanSet &ssnew, EdbSegP &pred, float dR)
+{
+  // from EdbScanSet ss extract volume for plates defined in ssnew around pred with dR
+  int n = ssnew.eIDS.GetEntries();    if(n<1) return;
+  if(!CheckBrickDir(ssnew.eID,true))          return;
+  WriteScanSet(ssnew.eID,ssnew);
+
+  for(int i=0; i<n; i++ ) {
+    EdbID *newid = ssnew.GetID(i);
+    newid->Print();
+    EdbPlateP *plate = ssnew.GetPlate(newid->ePlate);
+    EdbSegP newpred(pred);
+    newpred.PropagateTo(plate->Z());
+
+    EdbID *id = ss.FindPlateID(newid->ePlate);
+    EdbRunAccess ra; if(!InitRunAccess(ra,*id)) return;   // TODO: check transformations used to select views!
+
+    if(CheckProcDir(*newid,true)) {
+      TString runfile;
+      MakeFileName(runfile,*newid,"raw.root");
+      ra.CopyRawDataXY( newpred.X(), newpred.Y(), dR,runfile.Data() );
+    }
+  }
+
 }

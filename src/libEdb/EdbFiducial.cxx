@@ -173,22 +173,17 @@ int   EdbArea::MakeSpiralPath( int N, int *x, int *y)
  
   int step[4][2] = { {1,0}, {0,1}, {-1,0}, {0,-1} };   // loop directions
  
-  int a = 0;
-  int b = 0;
-  int k = 0;
+  int a = 0, b = 0, k = 0;
 
-  int i;
+  int i=0;
   for( i=0; i<N; i++ ) {
     
     x[i] = a;
     y[i] = b;
 
     if( TMath::Abs(a) == TMath::Abs(b) ) {
-      k = ++k%4;
-      if( a>=0 && b<=0 ) {
-	a += 1;
-	continue;
-      }
+      ++k%=4;
+      if( a>=0 && b<=0 ) {a++;	continue; }
     }
 
     a += step[k][0];
@@ -441,7 +436,7 @@ Int_t  EdbMarksSet::ReadMap( char *file, char spacer, char shape)
 }
 
 //______________________________________________________________________________
-Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape)
+Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape, int plate)
 {
   // Create a map string starting from the informations stored in this class
   // and in the EdbMarksBox object eAbsolute
@@ -454,10 +449,10 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape)
   TString str_mark;
 
   if (shape=='S'||shape=='X') {
-    str_header = "mapext:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
+    str_header = "mapext:_%ld_%02d_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
     str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
   } else if (shape=='L') {
-    str_header = "mapx:_%ld_1_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
+    str_header = "mapx:_%ld_%02d_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
     str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
   } else {
     Log(1,"EdbMarksSet::ReadMap","ERROR: shape '%c' is not implemented\n", shape); return 0;
@@ -471,7 +466,7 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape)
   
   int nmarks = GetAbsolute()->GetN();
   
-  fprintf(fp, str_header.Data(), eBrick,nmarks,eXmin,eYmin,eXmax,eYmax);
+  fprintf(fp, str_header.Data(), eBrick,plate,nmarks,eXmin,eYmin,eXmax,eYmax);
   
   for (int imarks=0;imarks<nmarks;imarks++)
     {

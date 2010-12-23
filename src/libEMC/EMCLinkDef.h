@@ -6,8 +6,6 @@
 
 #pragma link C++ class EdbPVGen;
 
-#pragma link C++ class EdbBrickP;
-#pragma link C++ class EdbPlateP;
 #pragma link C++ class EdbBrickGen;
 #pragma link C++ class EdbBeamGen;
 

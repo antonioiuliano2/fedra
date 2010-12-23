@@ -59,21 +59,23 @@ class EdbH2 : public TObject {
   float Xbin()                const {return eBin[0];}
   float Ybin()                const {return eBin[1];}
 
-  int   Bin(int ix, int iy) const {if(Jcell(ix,iy)>-1) return eNC[Jcell(ix,iy)]; else return 0; }
+  int   Bin(int ix, int iy) const {return (Jcell(ix,iy)>-1)? eNC[Jcell(ix,iy)] : 0; }
   int   Bin(int iv[2])      const {return Bin(iv[0],iv[1]);}
 
   int   MaxBin();
 
-  int     Fill(float x, float y) { return Fill(x,y,1); }
-  int     Fill(float x, float y, int n);
+  void  AddBin(int jcell, int n) { if(jcell>=0&&jcell<eNcell) eNC[jcell]+=n; }
+  int   Fill(float x, float y) { return Fill(x,y,1); }
+  int   Fill(float x, float y, int n);
+  void  SetBin(int ix, int iy, int n) { if(Jcell(ix,iy)>-1) eNC[Jcell(ix,iy)] = n; }
  
   Long_t  Integral();
   Long_t  Integral(int iv[2], int ir[2]);
 
   Float_t Mean() { return 1.*Integral()/eNcell; }
 
-  TH1I   *DrawSpectrum(const char *name="EdbH2plot1D");
-  TH2F   *DrawH2(const char *name="EdbH2plot2D");
+  TH1I   *DrawSpectrum( const char *name="plot1d", const char *title="EdbH2 DrawSpectrun");
+  TH2F   *DrawH2(       const char *name="plot2d", const char *title="EdbH2plot2D");
 
   ClassDef(EdbH2,1)  // fast 2-dim histogram class (used as a basis for EdbCell2)
 };
@@ -83,23 +85,39 @@ class EdbPeak2 : public EdbH2 {
 
  public:
   Int_t    eNpeaks;  // number of found peaks
-  TArrayI  ePeak;    //
+  TArrayF  ePeak;    //
   TArrayF  eMean3;   //
   TArrayF  eMean;    //
+  Float_t  eNorm;    // the norm-factor in case of the smoothing applied
 
  public:
   EdbPeak2() { InitPeaks(10); }
   EdbPeak2( const EdbH2 &h ) : EdbH2( h ) { InitPeaks(10); }
   ~EdbPeak2() {}
 
-  void    InitPeaks(int npeaks);
-  int     FindPeak(int iv[2]);
-  int     FindPeak(float v[2]);
+  void    Delete();
+  void    Init(const EdbH2 &h, int npeaks=10);
+  void    Print();
+  void    InitPeaks( int npeaks);
+  int     FindPeak(  int iv[2]);
+  int     FindPeak(  float v[2]);
+  int     FindPeak(  float &x, float &y);
+  float   FindPeak9( float &x, float &y);
+  float   FindGlobalPeak(float &x, float &y, float ratio=0.1);
   float   ProbPeak();
   float   ProbPeak(int iv[2], int ir[2]);
   int     WipePeak(int iv[2], int ir[2]);
   int     ProbPeaks(int npeak);
   int     ProbPeaks(int npeak, int ir[2]);
+  float   EstimatePeakVolume(int ipeak);
+  float   EstimatePeakVolumeSafe(int ipeak);
+  float   EstimatePeakMeanPosition(int iv[2], int ir[2], float &x, float &y);
+  float   Smooth(Option_t *option="k5a");
+  float   Xmean();
+  float   Ymean();
+  float   Peak(int i=0)  const { if(i>=0&&i<eNpeaks) return ePeak[i];  else return -1; }
+  float   Mean3(int i=0) const { if(i>=0&&i<eNpeaks) return eMean3[i]; else return -1; }
+  float   Mean(int i=0)  const { if(i>=0&&i<eNpeaks) return eMean[i];  else return -1; }
 
   ClassDef(EdbPeak2,1)  // peak analyser for EdbH2
 };
@@ -126,6 +144,7 @@ class EdbCell2 : public EdbH2 {
   bool  AddObject( int ix, int iy, TObject *obj );
   bool  AddObject( int j, TObject *obj );
 
+  int SelectObjects(TObjArray &arr);
   int SelectObjects(int   min[2], int max[2], TObjArray &arr);
   int SelectObjects(float min[2], float max[2], TObjArray &arr);
   int SelectObjectsC(int iv[2], int ir[2], TObjArray &arr);
@@ -138,6 +157,7 @@ class EdbCell2 : public EdbH2 {
     if(j>=0&&j<eNcell&&ientr>=0&&ientr<eCellLim) return epC[j][ientr];
     else return 0;
   }
+  void  PrintStat();
 
   ClassDef(EdbCell2,1)  // class to group 2-dim objects
 };

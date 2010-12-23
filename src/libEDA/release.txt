@@ -1,0 +1,249 @@
+
+--------------------------------------------------------------------
+Author: ariga
+New Revision: 978
+
+EDA Updates
+
+DecaySearch
+Add Microtrack search in the TrackSearch
+Add 2nd daughter selection in the TrackSearch
+Add Small kink search in the TrackSearch
+Summary table of TrackSearch
+MakeFakeVertex function added.
+Skip pl57 for the calculation of dTRMS.
+
+MainTab
+Add MicroTrackSearch
+New Animation option. (EdbEDA.C)
+Change of Feedback file OutputMode.
+Bug in List Tab fixed.
+
+TrackSet
+TrackSet file IO changed.
+ReadFile() added
+Change of color for MT
+ReadPredictionScan() modified. affine parameter of that ScanSet will not be used. but affine params of MainScanSet will be used.
+MicrotrackSearch is moved in TrackSet
+Scan ID management is changed. (EdbTrackSetTab)
+Management of BT and MT for ScanBack/Forth changed.
+Imprementation of MT/BT EdbSegP::Side() (Everywhere)
+
+EdbEDAUtil
+CleanTrack() : Remove also MicroTrack
+GUI input functions added. InputNumberInteger(), InputNumberReal(), InputID(), AskYesNo()
+delta-theta-RMS minimum value was changed to decaysearch procedure.
+Automatic setting of EdbScanProc::eProcDirClient using "ONLINE" in path name. (EdbEDAUtil)
+Automatic setting of BrickID path name. (EdbEDAUtil)
+
+Small bugs.
+
+
+--------------------------------------------------------------------
+Author: ariga
+Date: 2009-11-20 12:13:18 +0100 (Fri, 20 Nov 2009)
+New Revision: 969
+
+Modified:
+   trunk/src/libEDA/EDALinkDef.h
+   trunk/src/libEDA/EdbEDA.C
+   trunk/src/libEDA/EdbEDA.h
+   trunk/src/libEDA/EdbEDADecaySearch.C
+   trunk/src/libEDA/EdbEDADecaySearch.h
+   trunk/src/libEDA/EdbEDAMainTab.C
+   trunk/src/libEDA/EdbEDAPlotTab.C
+   trunk/src/libEDA/EdbEDASets.C
+   trunk/src/libEDA/EdbEDATabs.C
+   trunk/src/libEDA/EdbEDATrackSet.C
+   trunk/src/libEDA/EdbEDATrackSet.h
+   trunk/src/libEDA/Makefile
+Log:
+
+-- EDA Update --
+
+1. new Feedback format support
+   however, it includes comments.
+   if you publish it, remove all the comment lines start with "//".
+   some flags are still to be edited by hand.
+
+2. Support more input format.
+    - Link def file (EdbDataSet style)
+    - Linked_tracks style (also ID4.trk.root) 
+    - ScanSet (ID4.set.root)
+   Try 
+    root [0] EdbEDA e
+   a file dialog will appear. and just select a target file.
+
+3. Microtrack search added on DecaySearch tab.
+   Using EdbScanProc inside of EDA. eProcDirClient is set automatically "ONLINE" directory.
+   change if it is not correct. it is accessible via EdbEDA::ScanProc().
+
+4. Shower tab added by FWM. currently work only under "EdbDataSet" style. 
+
+
+--------------------------------------------------------------------
+Author: ariga
+Date: 2009-11-05 19:37:35 +0100 (Thu, 05 Nov 2009)
+New Revision: 965
+
+Modified:
+   trunk/src/libEDA/EdbEDA.h
+   trunk/src/libEDA/EdbEDAMainTab.C
+   trunk/src/libEDA/EdbEDATabs.C
+Log:
+
+A few bug correction.
+ - vertexing of calibration data.
+ - behavior when the calibration is not done. (just give fake ID).
+note: not all functions are adapted for EdbScanSet. please wait... please send your request.
+
+the makefile by valeri works also under windows.
+
+--------------------------------------------------------------------
+Author: ariga
+Date: 2009-11-05 14:56:51 +0100 (Thu, 05 Nov 2009)
+New Revision: 963
+
+Modified:
+   trunk/src/appl/eda/Makefile
+   trunk/src/appl/eda/eda.cpp
+   trunk/src/libEDA/EdbEDA.C
+   trunk/src/libEDA/EdbEDA.h
+   trunk/src/libEDA/EdbEDADecaySearch.C
+   trunk/src/libEDA/EdbEDADecaySearch.h
+   trunk/src/libEDA/EdbEDAMainTab.C
+   trunk/src/libEDA/EdbEDAPlotTab.C
+   trunk/src/libEDA/EdbEDAPlotTab.h
+   trunk/src/libEDA/EdbEDASets.C
+   trunk/src/libEDA/EdbEDASets.h
+   trunk/src/libEDA/EdbEDATabs.C
+   trunk/src/libEDA/EdbEDATrackSet.C
+   trunk/src/libEDA/EdbEDATrackSet.h
+   trunk/src/libEDA/EdbEDAUtil.C
+   trunk/src/libEDA/EdbEDAUtil.h
+   trunk/src/libEDA/Makefile
+Log:
+Major changes of EDA.
+- support EdbScanProc. example below.
+- support New Feedback format. save all vertices and tracks in current view.
+- IP cut in Track search is a function of dZ.
+
+
+--------------------------------------------------------------------
+Author: ariga
+Date: 2009-11-05 13:17:15 +0100 (Thu, 05 Nov 2009)
+New Revision: 962
+
+Modified:
+   trunk/src/libEbase/EdbSegP.cxx
+   trunk/src/libEbase/EdbSegP.h
+   trunk/src/libEdr/EdbPattern.cxx
+   trunk/src/libEdr/EdbPattern.h
+   trunk/src/libScan/EdbScanProc.cxx
+Log:
+Plate Number is added for each segment, by Valeri.
+ePlateID in EdbSegP.
+work under EdbScanProc.
+
+--------------------------------------------------------------------
+Author: ariga
+Date: 2009-10-22 09:33:37 +0200 (Thu, 22 Oct 2009)
+New Revision: 958
+
+Modified:
+   trunk/src/libEDA/EdbEDADecaySearch.C
+   trunk/src/libEDA/EdbEDADecaySearch.h
+   trunk/src/libEDA/EdbEDAPlotTab.C
+   trunk/src/libEDA/EdbEDASets.C
+   trunk/src/libEDA/EdbEDASets.h
+   trunk/src/libEDA/EdbEDAUtil.C
+Log:
+Minor modifications before major modifications.
+
+
+--------------------------------------------------------------------
+SVN commit version 946. 2009/8/25
+
+Kink search re-organized, better plot, showing vertex in the 3D view.
+a bag to calculate daughter momentum was fixed.
+
+Extend possibility to add your auto-redrawing-objects, via EdbEDA::AddDrawObject(TObject *)
+The object should be inherited from TObject, and method Draw should be override(and the class should be compiled?).
+
+some class for store decay search data were added for the test.
+
+some bag fixed.
+
+
+
+SVN commit version 945. 2009/8/17
+
+Small kink search added. implemented in Plot tab.
+EdbEDAPlotTab::CheckKink(EdbTrackP *t) 
+EdbEDAUtil::CleanTrack(EdbTrackP *)
+EdbEDAUtil::DTRMS1Kink(EdbTrackP *t, int *NKinkAngleUsed)
+EdbEDAUtil::CalcDTTransLongi(double tx1, double ty1, double tx2, double ty2, double *dtTransverse, double *dtLongitudinal)
+EdbEDAUtil::DTRMSTL(EdbTrackP *t, double *rmsspace, double *rmstransverse, double *rmslongitudinal, int *ndata)
+EdbEDAUtil::DTRMSTL1Kink(EdbTrackP *t, double *rmsspace, double *rmstransverse, double *rmslongitudinal, int *NKinkAngleUsed)
+
+Speed up Sideout function. not to use EdbPointsBox2D::Xmax()
+
+Bug for Japanese mode has been fixed.
+
+EdbEDA::SetScaleZ(double z) added. you can change Z scale.
+
+EdbEDASelection::GetSelectedTrack(EdbSegP *s) added. search a pointer of a track in selected tracks which has a indicated segment.
+
+
+
+SVN commit version 944. 2009/8/7
+
+EdbEDADecaySearch, indevepndent from the EDA display part. can be used for the batch mode. 2009/8/7
+
+Bag on clicking the extention line fixed. 2009/8/7
+
+Ready to use Andrea's momentum code with "new statistical treatment".
+waiting for the validation of the tool.
+
+Temporarily work with only EdbPVRec object. 2009/8/6
+via EdbEDA::EdbEDA(EdbPVRec *pvr). to be used for MC from OpEmuRec.
+output dummy fils for EdbDataProc. (lnkdummy.def, lnkdummy.lst, pardummy folder and files)
+waiting better solution (directly OpEmuRec -> EdbDataProc).
+waiting OpEmuRec work under ROOT 5.22. EDA can work later than 5.22.
+
+Reading additional Basetrack file in existing EdbPVRec object. 2008/8/5
+
+Viewer management changed for more than 2 TEveViewer. 2009/8/3
+
+Filtered text. output also scanning area. 2009/7/31
+
+Search BT. dmin, ip search. debug to clear previous selected BT if "clear prev" is ON. 2009/7/29
+
+print chi2 also for segment information. 2009/7/29
+
+
+Text file format. support a data from Manual-Check result. if affine-flag is 2, it assume the track position at Bottom. 3 at Top. no need to propagate to the middle of base. (if 1, middle of base). 2009/7/29
+	// Read Text file data
+	// the format should be : itrk ipl ph x y ax ay flag_trans
+	// flag_trans control Transformation. Affine=plate->global
+	// flag_trans==1 (Affine)
+	// flag_trans==2 (Affine)+(Bottom->Middle of base). For manualcheck data
+	// flag_trans==3 (Affine)+(Top->Middle of base). For manualcheck data
+
+Rejection of Penetration and Side-out added. impremented to Main tab. 2009/7/28
+at same time, the ID search was moved into a bottun to eliminate the space
+
+kicked out ID search in a dedicated small window, because we don't use so much.
+
+output of CalcDmin for prediction scan corrected. 2009/7/27
+ -1 x -1 -> SBID x SBID
+EdbEDATrackSet::ReadPredictionScan corrected. (add seg->SetTrack(seg->ID());)
+
+Track selection by angle with different dTX and dTY is supported. 2009/7/27
+gEDA->GetTrackSet("TS")->SetDT(0.05,2); // SetDT(dTX, dTY)
+gEDA->GetTrackSet("TS")->DoSelection();
+gEDA->Redraw();
+
+
+
+

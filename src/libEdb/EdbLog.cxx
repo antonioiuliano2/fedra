@@ -72,13 +72,15 @@ void Log(int level, const char *rout, const char *fmt, ...)
 }
 */
 //______________________________________________________________________________
-void Log(int level, const char *location, const char *fmt, ...)
+bool Log(int level, const char *location, const char *fmt, ...)
 {
 // Print message to the logfile and to stdout.
+  if(level>gEDBDEBUGLEVEL) return 0;
   va_list ap;
   va_start(ap,va_(fmt));
   Log0(level, location, va_(fmt), ap);
   va_end(ap);
+  return 1;
 }
 
 //______________________________________________________________________________
@@ -87,7 +89,6 @@ void Log0(int level, const char *location, const char *fmt, va_list ap)
 // Print message to the logfile and to stdout.
 
   R__LOCKGUARD2(gErrorMutex);
-  if(level>gEDBDEBUGLEVEL) return;
 
   static Int_t buf_size = 2048;
   static char *buf = 0;
@@ -118,8 +119,10 @@ void Log0(int level, const char *location, const char *fmt, va_list ap)
   }
   va_end(sap);
   
-  fprintf(stdout, "%-16s: ", location);
-  fprintf(stdout, "%s\n", buf);
+  if(level<=gEDBDEBUGLEVEL)   {
+	  fprintf(stdout, "%-16s: ", location);
+	  fprintf(stdout, "%s\n", buf);
+  }
   if(level>2)       return;     // do not print to file not important mesages
   TDatime t;
   if(gEDBLOGFILE) {

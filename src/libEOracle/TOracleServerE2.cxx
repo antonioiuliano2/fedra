@@ -75,12 +75,12 @@ Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
              (select idcand, cand, posx, posy, slopex, slopey, id_plate, grains, row_number() \
              over (partition by idcand order by grains desc, id_plate desc) as rnum from \
              vw_local_cs_candidates where id_cs_eventbrick in \
-             (select id from tb_eventbricks where id_brick=%d)) \
+             (select id from tb_eventbricks where mod(id_brick,1000000)=%d)) \
              where rnum = 1 order by cand",
 	    id_brick);
     
     fStmt->setSQL(query);
-    Log(2,"ReadCSPredictions","execute sql query: %s ...",query);
+    Log(2,"ReadCSPredictions2","execute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
@@ -92,11 +92,49 @@ Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
     delete rs;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE::ReadCSPredictions", "Error!!! %s", (oraex.getMessage()).c_str());
+    Error("TOracleServerE::ReadCSPredictions2", "Error!!! %s", (oraex.getMessage()).c_str());
     return false;
   }
   return (pred.N());
 }
+
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadVetoTracks(Int_t id_brick, EdbPattern &veto)
+{
+  // Fills an EdbPattern object with veto tracks
+  // The query reads from the table tb_veto_tracks
+
+  veto.Reset();
+  EdbSegP seg;
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,
+	    "select track,posx,posy,slopex,slopey from tb_veto_tracks%s where mod(id_cs_eventbrick,1000000)=%d",
+	    eRTS.Data(),id_brick);
+    
+    fStmt->setSQL(query);
+    Log(2,"ReadVetoTracks","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      seg.Set(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),0,0);
+      seg.SetPID(57);
+      veto.AddSegment(seg);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadVetoTracks", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return (veto.N());
+}
+
 
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms)
@@ -111,7 +149,7 @@ Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms)
       fStmt = fConn->createStatement();
 
     sprintf(query,
-	    "select minx,maxx,miny,maxy from tb_eventbricks%s where id_brick=%d",
+	    "select minx,maxx,miny,maxy from tb_eventbricks%s where mod(id_brick,1000000)=%d",
 	    eRTS.Data(),id_brick);
     fStmt->setSQL(query);
     Log(2,"ReadTemplateMarks","execute sql query: %s ...",query);
@@ -127,7 +165,7 @@ Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms)
 
     sprintf(query,
 	    "select id_mark,posx,posy,side from tb_templatemarksets%s where id_eventbrick in \
-             (select id from tb_eventbricks where id_brick=%d) and shape='X'",
+             (select id from tb_eventbricks where mod(id_brick,1000000)=%d) and shape='X'",
 	    eRTS.Data(),id_brick);
 
     fStmt->setSQL(query);
@@ -144,6 +182,43 @@ Int_t  TOracleServerE2::ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms)
     return false;
   }
   return (ms.GetAbsolute()->N());
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadBrickOffset(Int_t id_brick, EdbMarksSet &ms)
+{
+  ms.GetAbsolute()->GetMarks()->Clear("C");
+  ms.eBrick = id_brick;
+
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,
+	    "select MINX_CM*10000,MINY_CM*10000 from tb_opera_predicted_bricks%s \
+             where id_event in \
+             (select id_event from tb_b_bmm_brick_extractions%s where id_eventbrick = 1000000+%d) \
+             and id_eventbrick = 1000000+%d",
+	    eRTS.Data(),eRTS.Data(),id_brick,id_brick);
+    fStmt->setSQL(query);
+    Log(2,"ReadBrickOffset","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      ms.eXmin = rs->getFloat(1);
+      ms.eXmax = 0.;
+      ms.eYmin = rs->getFloat(2);
+      ms.eYmax = 0.;
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadBrickOffset", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return (0);
 }
 
 //------------------------------------------------------------------------------------
@@ -639,10 +714,12 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
   try{
     if (!fStmt)
       fStmt = fConn->createStatement();
+
     sprintf(query, "SELECT \
-  ID_EVENTBRICK, id_zone, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, PH, SIGMA, SIDE, ID_VIEW\
+  ID_EVENTBRICK, id_zone, ID, POSX, POSY, SLOPEX, SLOPEY, GRAINS, AREASUM, SIGMA, SIDE, ID_VIEW \
   from TB_MIPMICROTRACKS%s where id_eventbrick=%d and %s",eRTS.Data(),
 	    id_eventbrick, selection);
+
     fStmt->setSQL(query);
     fStmt->setPrefetchRowCount(2000);
     Log(2,"ReadMicrotracksPattern","execute sql query: %s ...",query);
@@ -664,7 +741,7 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
       seg.SetDZ(45.);                          //!!! a kind of hack
       seg.SetVolume(rs->getInt(9));     //areasum
       seg.SetVid(pat.PID(),0);          // keep in a segment also plate ID (by Ale)
-      seg.SetAid(0,rs->getInt(13));     // area id, view id
+      seg.SetAid(0,rs->getInt(12), rs->getInt(11));     // area id, view id, side
       pat.AddSegment(seg);
       ntracks++;
     }
@@ -677,7 +754,7 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major, int minor)
+Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major, int minor, bool structure_only)
 {
   // Input: id_volume (from tb_volumes)
   //        outdir - where to write the dataset
@@ -727,25 +804,31 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
 
   sproc.eProcDirClient=outdir;
   int id[4]={brick,0,major,minor};
+  ss.eB.SetID(brick);
+  ss.MakePIDList();
   ss.Print();
   sproc.WriteScanSet(id,ss);
+  sproc.MakeAFFSet(ss);
 
-  int plate0 =-999;
-  EdbRun *run=0;
-  map<int,ULong64_t>::const_iterator iter;
-  for (iter=pl_zones.begin(); iter != pl_zones.end(); ++iter) {
-    plate= iter->first;
-    zone = iter->second;
-    Log(2,"ConvertMicrotracksVolumeToEdb","for plate: %d read zone: %lld", plate,zone);
-    id[0] = brick; id[1]=plate; id[2]=major; id[3]=minor;
-    TString str; sproc.MakeFileName(str,id,"raw.root");
-    sproc.CheckProcDir(id);
-    if(plate!=plate0) {
-      plate0=plate;
-      run = new EdbRun(str.Data(),"RECREATE");
-    } else run = new EdbRun(str.Data(),"UPDATE");
-    nviewtot+=ConvertMicrotracksZoneToEdb(brick,zone,*run);
-    if(run) run->Close();      SafeDelete(run);
+  if(!structure_only) {
+    int plate0 =-999;
+    EdbRun *run=0;
+    map<int,ULong64_t>::const_iterator iter;
+    for (iter=pl_zones.begin(); iter != pl_zones.end(); ++iter) {
+      plate= iter->first;
+      zone = iter->second;
+      Log(2,"ConvertMicrotracksVolumeToEdb","for plate: %d read zone: %lld", plate,zone);
+      id[0] = brick; id[1]=plate; id[2]=major; id[3]=minor;
+      TString str; sproc.MakeFileName(str,id,"raw.root");
+      sproc.CheckProcDir(id);
+      if(plate!=plate0) {
+	plate0=plate;
+	run = new EdbRun(str.Data(),"RECREATE");
+      } else run = new EdbRun(str.Data(),"UPDATE");
+      nviewtot+=ConvertMicrotracksZoneToEdb(brick,zone,*run);
+      if(run) run->Close();      SafeDelete(run);
+    }
+
   }
   Log(2,"ConvertMicrotracksVolumeToEdb","%d views is extracted from db for the volume %lld",nviewtot,id_volume);
   return nviewtot;
@@ -838,7 +921,38 @@ Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick,char *id_progra
     delete rs;
 
   } catch (SQLException &oraex) {
-    Error("TOracleServerE2", "GetProcessOperationID; failed: (error: %s)", (oraex.getMessage()).c_str());
+    Error("TOracleServerE2", "DumpProcessOperations; failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick, Int_t driverlevel)
+{
+  // Dump on the screen the list of process operation IDs related to a given brick with a driverlevel greater or equal than the given value
+
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select ID,to_char(starttime),to_char(notes) from tb_proc_operations%s where id_eventbrick=%s and driverlevel>=%d",
+	    eRTS.Data(), id_eventbrick, driverlevel);
+
+    fStmt->setSQL(query);
+    Log(2,"DumpProcessOperations","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      printf("Operation: %s, start time: %s, notes: %s\n",
+	     rs->getString(1).c_str(),rs->getString(2).c_str(),rs->getString(3).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "DumpProcessOperations; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
   return 0;
 }
@@ -857,9 +971,10 @@ Int_t TOracleServerE2::GetId_EventBrick(char *id_brick,char *id_set, char *id)
     sprintf(query,"select ID from tb_eventbricks%s where id_brick=%s and id_set=%s ",
 	    eRTS.Data(), id_brick, id_set);
 
-    fStmt->setSQL(query);
+    //    fStmt->setSQL(query);
     Log(2,"GetId_EventBrick","execute sql query: %s ...",query);
-    fStmt->execute();
+    //    fStmt->execute();
+    Query(query);
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
       strcpy(id,rs->getString(1).c_str());

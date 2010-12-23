@@ -1,12 +1,13 @@
 void rootlogon()
 {
-  // project lib path should be setted in LD_LIBRARY_PATH
+  // fedra lib path should be setted in LD_LIBRARY_PATH
   
   if( strncmp(gSystem->GetName(),"Unix",4)==0 )
     loadlib( "libvt"   , "CMatrix" );
-  loadlib( "libEdb"  , "EdbView" );
   loadlib( "libEmath", "EdbMath" );
   loadlib( "libEphys", "EdbPhysics" );
+  loadlib( "libEdb"  , "EdbView" );
+  loadlib( "libEbase", "EdbLayer" );
   loadlib( "libEdr"  , "EdbPattern" );
   loadlib( "libEIO"  , "EdbRunAccess" );
 
@@ -19,8 +20,12 @@ void rootlogon()
     printf("libDataConversion do NOT loaded!\n"); 
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
-  loadlib( "libAlignment", "EdbPositionAlignment" );         // optional, beta-version
+  loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlibEOracle();                               // optional
+  loadlib( "libEmr", "EdbEmrFileAccess" );        // optional
+
+  loadlib( "libEve", "TEveVector" );              // optional required for EDA
+  loadlib( "libEDA",  "EdbEDA");                  // optional
 
   gStyle->SetPalette(1);
 }

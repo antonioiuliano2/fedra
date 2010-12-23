@@ -9,16 +9,23 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "EdbTrackFitter.h"
+#include "TCanvas.h"
 
 class TGraphErrors;
+class TGraphAsymmErrors;
 class TF1;
 
 //______________________________________________________________________________
 class EdbMomentumEstimator : public EdbTrackFitter {
  
  public:
+
+  int   eAlg;                // select the algorithm for PMS estimation
+  int   eStatus;             // status of the estimation (-1 nothing was done)
+
+  int   eMinEntr;            // min number of entries in the cell to accept it for fitting (def=1)
+
   // input parameters for PMS_mag
-  int   eFlagt;              // if =0, returns P, if =1 returns Px, if =2 returns Py (set in the function)
   float eDT0,  eDT1,  eDT2;  // detheta  = eDT0 *(1+ eDT1*theta0- eDT2*theta0*theta0);
   float eDTx0, eDTx1, eDTx2; // dethetaX = eDTx0*(1+eDTx1*theta0-eDTx2*theta0*theta0);
   float eDTy0, eDTy1, eDTy2; // dethetaY = eDTy0*(1+eDTy1*theta0-eDTy2*theta0*theta0);
@@ -31,31 +38,45 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   float ePYmin, ePYmax;      // momentum 90% errors range
 
   // the output of PMSang
-  float eP;
+  float eP, eDP;
   float ePmin, ePmax;         // momentum 90% errors range
 
+  EdbTrackP    eTrack;        // the copy of the track to be used for plots
+
+  bool          eVerbose;
   TF1          *eF1X;         //! fit function
   TF1          *eF1Y;         //!
+  TF1          *eF1;          //!
+  TGraphErrors *eG;           //! 3D component of the momentum
   TGraphErrors *eGX;          //! longitudianl component of the momentum
   TGraphErrors *eGY;          //! transverse   component of the momentum
+
+  TGraphAsymmErrors *eGA;           //! 3D component of the momentum
+  TGraphAsymmErrors *eGAX;          //! longitudianl component of the momentum
+  TGraphAsymmErrors *eGAY;          //! transverse   component of the momentum
 
  public:
   EdbMomentumEstimator();
   virtual ~EdbMomentumEstimator();
 
   void    SetParPMS_Mag();
-  float   PMSang(EdbTrackP tr);
+  void    Set0();
+  float   PMS(EdbTrackP &tr);
+  float   PMSang(EdbTrackP &tr);
+  float   PMScoordinate(EdbTrackP &tr);
   float   CellWeight(int npl, int m);
   void    EstimateMomentumError(float P, int npl, float ang, float &pmin, float &pmax);
   double  Mat(float P, int npl, float ang);
   TF1    *MCSErrorFunction(const char *name, float x0, float dtx);
+  TF1    *MCSCoordErrorFunction(const char *name, float tmean);
 
-  float   PMS_Mag(EdbTrackP &tr);
-  float   PMS_Mag(EdbTrackP &tr,TGraphErrors *h_p,TF1 *itf,TF1 *itf_min,TF1 *itf_max);
-  float*  GetDP(float P, int npl, float ang);
+  int     PMSang_base(EdbTrackP &tr);
+  int     PMSang_base_A(EdbTrackP &tr);
+  TF1    *MCSErrorFunction_base(const char *name, float x0, float dtx);
 
   float   P_MS(EdbTrackP &tr);
   void    DrawPlots();
+  void    DrawPlots(TCanvas *c1);
 
   void    Print();
 

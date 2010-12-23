@@ -75,8 +75,8 @@ class EdbRunTracking : public EdbRunAccess {
   void SetPred(const EdbSegP &pred);
 
   int UpdateFlag(int flag, int status);
-  int GetBTHoles(int flag);
-  int GetMTHoles(int flag);
+  static int GetBTHoles(int flag) { return(flag/10000);     }
+  static int GetMTHoles(int flag) { return((flag/100)%100); }
   int ExtrapolateCond(EdbScanCond &inputcond, int flag, EdbScanCond &outputcond );
 
   int FindCompliments( EdbSegP &s, EdbPattern &pat, TObjArray &found, float chi2max, TArrayF &chiarr );
@@ -90,8 +90,7 @@ class EdbRunTracking : public EdbRunAccess {
   //void TransformToPlateRS( EdbPlateP &plate);
   void TransformFromPlateRS( EdbPlateP &plate);
 
-  int FindTrack(EdbTrackP &track, EdbPlateP &plate);
-  float TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps);
+  int FindTrack(EdbTrackP &pred,EdbTrackP &found, EdbPlateP &plate);
 
   void Print();
 

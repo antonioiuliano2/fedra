@@ -16,6 +16,9 @@
 // 2008-09-01 L.S.Esposito
 // Read multiSession TLG : File::Format = 7
 
+// 2008-09-01 L.S.Esposito
+// Cut tracks according to header parameters. Methods modified tlg2patterns, Add_MIPBaseTrack.
+
 #include "Riostream.h"
 //#include "TFile.h"
 //#include "EdbPVRec.h"
@@ -225,6 +228,7 @@ void Add_MIPEmulsionTrack( en_side side, int i, EdbPattern &ptop, EdbPattern &pb
 		s->SetDZ( TopZ-BottomZ );
 		s->SetDZem( 0 );
 	}
+	//	s->PrintNice();
 }
 
 //___________________________________________________________________________
@@ -234,6 +238,9 @@ void Add_MIPBaseTrack(int i, EdbPattern &base, EdbPattern &ptop, EdbPattern &pbo
 
 	EdbSegP* t = ptop.GetSegment(TopId);
 	EdbSegP* b = pbot.GetSegment(BottomId);
+
+	if(t==0) return;
+	if(b==0) return;
 
 	float x_ = X + SX*( project_dz ) ;
 	float y_ = Y + SY*( project_dz ) ;
@@ -274,6 +281,11 @@ void tlg2patterns( const char* input_file ,
 	Header::Transform::TY  = 0 ;
 	Header::Transform::RX  = 0 ;
 	Header::Transform::RY  = 0 ;
+
+	double minx=-10000000;
+	double maxx=10000000;
+	double miny=-10000000;
+	double maxy=10000000;
 
 	// Read File
 	//fstream infile(input_file, ios::in | ios::binary);
@@ -333,7 +345,7 @@ void tlg2patterns( const char* input_file ,
 		infile.read( (Char_t*) &Center::Y             , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Extents::MinX         , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Extents::MaxX         , sizeof(Double_t)         );
-		infile.read( (Char_t*) &Extents::MinX         , sizeof(Double_t)         );
+		infile.read( (Char_t*) &Extents::MinY         , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Extents::MaxY         , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Transform::MXX        , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Transform::MXY        , sizeof(Double_t)         );
@@ -344,6 +356,10 @@ void tlg2patterns( const char* input_file ,
 		infile.read( (Char_t*) &Transform::RX         , sizeof(Double_t)         );
 		infile.read( (Char_t*) &Transform::RY         , sizeof(Double_t)         );
 
+		minx=Extents::MinX;
+		maxx=Extents::MaxX;
+		miny=Extents::MinY;
+		maxy=Extents::MaxY;
 
 		infile.read( (Char_t*) &TopViewsLength        , sizeof(Int_t)            ); // n. of View
 		infile.read( (Char_t*) &BottomViewsLength     , sizeof(Int_t)            ); // n. of View
@@ -392,6 +408,10 @@ void tlg2patterns( const char* input_file ,
 				infile.read( (Char_t*) &viewid                , sizeof(Int_t)            );            
 
 				// print_MIPEmulsionTrack( s, i ) ;
+				if(X<minx-1000)   continue;
+				if(X>maxx+1000)   continue;
+				if(Y<miny-1000)   continue;
+				if(Y>maxy+1000)   continue;
 				Add_MIPEmulsionTrack ( side, i, ptop,pbot) ;
 			}
 		}
@@ -435,9 +455,14 @@ void tlg2patterns( const char* input_file ,
 		infile.read( (Char_t*) &Center::Y           , sizeof(Double_t)  );
 		infile.read( (Char_t*) &Extents::MinX       , sizeof(Double_t)  );
 		infile.read( (Char_t*) &Extents::MaxX       , sizeof(Double_t)  );
-		infile.read( (Char_t*) &Extents::MinX       , sizeof(Double_t)  );
+		infile.read( (Char_t*) &Extents::MinY       , sizeof(Double_t)  );
 		infile.read( (Char_t*) &Extents::MaxY       , sizeof(Double_t)  );
 		infile.read( (Char_t*) &dummyf              , sizeof(Float_t)   ); // for format compliance
+
+		minx=Extents::MinX;
+		maxx=Extents::MaxX;
+		miny=Extents::MinY;
+		maxy=Extents::MaxY;
 
 		// 16 bytes
 		infile.read( (Char_t*) &TopTracksLength     , sizeof(Int_t)     ); // n. of MIPIndexedEmulsionTrack
@@ -475,6 +500,10 @@ void tlg2patterns( const char* input_file ,
 				infile.read( (Char_t*) &BottomZ        , sizeof(Double_t)  );            
 
 				//print_MIPEmulsionTrack( s, i ) ;
+				if(X<minx-1000)   continue;
+				if(X>maxx+1000)   continue;
+				if(Y<miny-1000)   continue;
+				if(Y>maxy+1000)   continue;
 				Add_MIPEmulsionTrack ( side, i, ptop, pbot );
 			}
 		}

@@ -45,14 +45,12 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
 
    Set0();
    fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
-   if(gEDBDEBUGLEVEL>2) printf("create display in limits: \nX = %f : %f   \nY = %f : %f   \nZ = %f : %f\n",x0,x1,y0,y1,z0,z1);
+   if(gEDBDEBUGLEVEL>2) printf("create display in limits: \nX = %f : %f   \nY = %f : %f   \nZ = %f : %f\n",
+			       x0,x1,y0,y1,z0,z1);
 
-   // Set front view by default
-//   fTheta = 0;
-//   fPhi   = -90;
-//   fPsi   = 0;
-   fTheta = 90;
-   fPhi   = 180;
+   // Set side view by default
+   fTheta = 180;
+   fPhi   = 90;
    fPsi   = 90;
 
    fDrawAllViews  = kFALSE;
@@ -64,7 +62,7 @@ EdbDisplayBase::EdbDisplayBase(const char *title,
    strcpy(fTitle, title);
    ptitle = fTitle;
    while (*ptitle) { if (*ptitle == ' ') *ptitle = '_'; ptitle++; }
-   this->SetName(&fTitle[0]);
+    this->SetName(&fTitle[0]);
    this->SetTitle("FEDRA Event Display");
    strcpy(fCanvasName, "Canvas-");
    strcat(fCanvasName, title);
@@ -257,7 +255,7 @@ void EdbDisplayBase::Set0()
   fStyle     = 0;
   fLineWidth = 1;
   fColorBG   = kBlack;
-  if(!fDetector){fDetector = 0;}
+  fDetector  = 0;
   fDrawDet = 0;
   for (int i=0; i<50; i++) fRemBut[i] = 0;
 }
@@ -397,10 +395,10 @@ void EdbDisplayBase::DrawTitle(Option_t *option)
 {
 //    Draw the event title
 
-   Float_t xmin = gPad->GetX1();
-   Float_t xmax = gPad->GetX2();
-   Float_t ymin = gPad->GetY1();
-   Float_t ymax = gPad->GetY2();
+   Float_t xmin = fPad->GetX1();
+   Float_t xmax = fPad->GetX2();
+   Float_t ymin = fPad->GetY1();
+   Float_t ymax = fPad->GetY2();
    Float_t dx   = xmax-xmin;
    Float_t dy   = ymax-ymin;
 
@@ -458,7 +456,7 @@ void EdbDisplayBase::DisplayButtons()
    y -= dbutton +dy;
    char but4[256];
    sprintf(but4,
-   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(90,180,90)",fTitle);
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(180,90,90)",fTitle);
    button = new TButton("Side View",but4,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
@@ -466,7 +464,7 @@ void EdbDisplayBase::DisplayButtons()
    y -= dbutton +dy;
    char but5[256];
    sprintf(but5,
-   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(0,-90,0)",fTitle);
+   "((EdbDisplay*)(gROOT->GetListOfSpecials()->FindObject(\"%s\")))->SetView(180,0,90)",fTitle);
    button = new TButton("Front View",but5,x0,y-dbutton,x1,y);
    button->SetFillColor(butcolor);
    button->Draw();
@@ -580,8 +578,9 @@ void EdbDisplayBase::SetRange(Float_t x0, Float_t x1 , Float_t y0, Float_t y1, F
    fVx0=x0; fVx1=x1; fVy0=y0; fVy1=y1; fVz0=z0; fVz1=z1;
 
    if (!fPad) return;
-   fPad->Clear();
-   Draw();
+   fPad->Modified(kTRUE);
+   //fPad->Clear();
+   //Draw();
 }
 
 //_____________________________________________________________________________
@@ -589,10 +588,10 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 {
 //    Draw a view of DataSet
 
-   gPad->SetCursor(kWatch);
-   gPad->SetFillColor(fColorBG);
+   fPad->SetCursor(kWatch);
+   fPad->SetFillColor(fColorBG);
 
-//   TList *li = gPad->GetListOfPrimitives();
+//   TList *li = fPad->GetListOfPrimitives();
 //   int np = li->GetSize();
 //   TObject *o = 0;
 //   for (int i=0; i<np; i++)
@@ -602,16 +601,18 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
 //   }
 //   li->Clear("nodelete");
 
-   gPad->Clear("nodelete");
+   fPad->Clear("nodelete"); fView=0;
 
-   fView = new Edb3DView();
+   if(!fView) { 
+     fView = new Edb3DView(); 
+     fPad->SetView(fView);
+   }
+   if(fPad->GetView()==0) fPad->SetView(fView);
+   if (fPad->GetView() != fView || fView == 0) printf("Error: fView is not defined!\n");
 
-   if (gPad->GetView() != fView || fView == 0) printf("Error!\n");
-
-   fView->SetLongitude((double)phi);
-   fView->SetLatitude((double)theta);
-   fView->SetPsi((double)psi);
    fView->SetRange((double)fVx0,(double)fVy0,(double)fVz0,(double)fVx1,(double)fVy1,(double)fVz1);
+   
+   SetView(theta,phi,psi);
 
    fZoomX0[0] = -1;
    fZoomY0[0] = -1;
@@ -621,9 +622,9 @@ void EdbDisplayBase::DrawView(Float_t theta, Float_t phi, Float_t psi)
    Refresh();
    AppendPad();
 
-   gPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);
-   
-   gPad->Modified(kTRUE);
+   fPad->Range(fZoomX0[fZooms],fZoomY0[fZooms],fZoomX1[fZooms],fZoomY1[fZooms]);   
+   //SetRange(fVx0,fVy0,fVz0,fVx1,fVy1,fVz1);
+   fPad->Modified(kTRUE);
 }
 
 //________________________________________________________________________
@@ -644,28 +645,28 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 //      }
 //      return;
 //   }
-//   if (!fZoomMode && gPad->GetView()) {
-//      gPad->GetView()->ExecuteRotateView(event, px, py);
+//   if (!fZoomMode && fPad->GetView()) {
+//      fPad->GetView()->ExecuteRotateView(event, px, py);
 //      return;
 //   }
 
    // something to zoom ?
 
-   if (!fZoomMode && gPad->GetView())
+   if (!fZoomMode && fPad->GetView())
    {
-	gPad->SetCursor(kPointer);
+	fPad->SetCursor(kPointer);
 	return;
    }
 
-   gPad->SetCursor(kCross);
+   fPad->SetCursor(kCross);
 
    switch (event) {
 
    case kButton1Down:
       gVirtualX->SetLineColor(-1);
-      gPad->TAttLine::Modify();  //Change line attributes only if necessary
-      x0 = gPad->AbsPixeltoX(px);
-      y0 = gPad->AbsPixeltoY(py);
+      fPad->TAttLine::Modify();  //Change line attributes only if necessary
+      x0 = fPad->AbsPixeltoX(px);
+      y0 = fPad->AbsPixeltoY(py);
       px0   = px; py0   = py;
       pxold = px; pyold = py;
       linedrawn = 0;
@@ -680,15 +681,15 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
       return;
 
    case kButton1Up:
-      gPad->GetCanvas()->FeedbackMode(kFALSE);
+      fPad->GetCanvas()->FeedbackMode(kFALSE);
       if (px == px0) return;
       if (py == py0) return;
-      x1 = gPad->AbsPixeltoX(px);
-      y1 = gPad->AbsPixeltoY(py);
+      x1 = fPad->AbsPixeltoX(px);
+      y1 = fPad->AbsPixeltoY(py);
 
       if (x1 < x0) {temp = x0; x0 = x1; x1 = temp;}
       if (y1 < y0) {temp = y0; y0 = y1; y1 = temp;}
-      gPad->Range(x0,y0,x1,y1);
+      fPad->Range(x0,y0,x1,y1);
       if (fZooms < kMAXZOOMS-1) {
          fZooms++;
          fZoomX0[fZooms] = x0;
@@ -696,7 +697,7 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
          fZoomX1[fZooms] = x1;
          fZoomY1[fZooms] = y1;
       }
-      gPad->Modified(kTRUE);
+      fPad->Modified(kTRUE);
       return;
    }
 
@@ -704,7 +705,8 @@ void EdbDisplayBase::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 //_____________________________________________________________________________
 void EdbDisplayBase::SetView(Float_t theta, Float_t phi, Float_t psi)
 {
-//  change viewing angles for current event
+  //  change viewing angles for current event
+  Log(3,"EdbDisplayBase::SetView", "theta,phi,psi= %f %f %f",theta,phi,psi );
 
    if (fView) fView->SetRotateMode(false);
 
@@ -715,11 +717,11 @@ void EdbDisplayBase::SetView(Float_t theta, Float_t phi, Float_t psi)
    fPsi   = psi;
    Int_t iret = 0;
 
-   TView *view = gPad->GetView();
-   if (view) view->SetView(fPhi, fTheta, fPsi, iret);
+   TView *view = fPad->GetView();
+   if (view) view->SetView(fTheta, fPhi, fPsi, iret);
    else      Draw();
 
-   gPad->Modified(kTRUE);
+   fPad->Modified(kTRUE);
 }
 
 //_____________________________________________________________________________
@@ -760,12 +762,11 @@ void EdbDisplayBase::DrawViewGL()
 {
 //    Draw current view using OPENGL
 
-   TPad *pad = (TPad*)gPad->GetPadSave();
-   pad->cd();
-   TView *view = pad->GetView();
-   if (!view) return;
-   pad->GetViewer3D("ogl");
-   //pad->x3d("OPENGL");
+  TPad *pad = (TPad*)fPad->GetPadSave();
+  pad->cd();
+  TView *view = pad->GetView();
+  if (!view) return;
+  pad->GetViewer3D("ogl");
 }
 
 //_____________________________________________________________________________
@@ -773,11 +774,10 @@ void EdbDisplayBase::DrawViewX3D()
 {
 //    Draw current view using X3D
 
-   TPad *pad = (TPad*)gPad->GetPadSave();
+   TPad *pad = (TPad*)fPad->GetPadSave();
    pad->cd();
    TView *view = pad->GetView();
    if (!view) return;
-   //pad->x3d();
    pad->GetViewer3D("x3d");
 }
 
@@ -816,7 +816,7 @@ void EdbDisplayBase::SetPickMode()
 
    fArcButton->SetY1(fPickButton->GetYlowNDC()+0.5*fPickButton->GetHNDC());
    fTrigPad->Modified(kTRUE);
-   gPad->SetCursor(kPointer);
+   fPad->SetCursor(kPointer);
 }
 
 //_____________________________________________________________________________
@@ -831,7 +831,7 @@ void EdbDisplayBase::SetZoomMode()
 
    fArcButton->SetY1(fZoomButton->GetYlowNDC()+0.5*fZoomButton->GetHNDC());
    fTrigPad->Modified(kTRUE);
-   gPad->SetCursor(kCross);
+   fPad->SetCursor(kCross);
 }
 
 //_____________________________________________________________________________
@@ -876,23 +876,23 @@ Int_t EdbDisplayBase::DistancetoPrimitive(Int_t px, Int_t py)
 // Compute distance from point px,py to objects in event
 
 
-   if (gPad == fTrigPad) return 9999;
-   if (gPad == fButtons) return 9999;
+   if (fPad == fTrigPad) return 9999;
+   if (fPad == fButtons) return 9999;
 
-//   gPad->SetCursor(kCross);
+//   fPad->SetCursor(kCross);
 
    const Int_t kbig = 9999;
    Int_t dist   = kbig;
-   Float_t xmin = gPad->GetX1();
-   Float_t xmax = gPad->GetX2();
+   Float_t xmin = fPad->GetX1();
+   Float_t xmax = fPad->GetX2();
    Float_t dx   = 0.002*(xmax - xmin);
-   Float_t x    = gPad->AbsPixeltoX(px);
+   Float_t x    = fPad->AbsPixeltoX(px);
    if (x < xmin+dx || x > xmax-dx) return dist;
 /*
-   Float_t ymin = gPad->GetY1();
-   Float_t ymax = gPad->GetY2();
+   Float_t ymin = fPad->GetY1();
+   Float_t ymax = fPad->GetY2();
    Float_t dy   = 0.02*(ymax - ymin);
-   Float_t y    = gPad->AbsPixeltoX(py);
+   Float_t y    = fPad->AbsPixeltoX(py);
    if (y < ymin+dy || y > ymax-dy) return dist;
 */
    if (fZoomMode) return 0;

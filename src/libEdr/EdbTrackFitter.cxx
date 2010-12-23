@@ -10,11 +10,13 @@
 #include "TF1.h"
 #include "TArrayF.h"
 #include "TGraphErrors.h"
+#include "TVector3.h"
 
 #include "EdbLog.h"
 #include "EdbPhys.h"
 #include "EdbAffine.h"
 #include "EdbLayer.h"
+#include "EdbScanCond.h"
 #include "EdbTrackFitter.h"
 
 #include "vt++/CMatrix.hh"
@@ -57,6 +59,7 @@ void EdbTrackFitter::Print()
 //________________________________________________________________________
 float EdbTrackFitter::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 {
+  // Estimation of chi2 using the covariance matrix
   // Return value:        Prob: is Chi2 probability (area of the tail of Chi2-distribution)
   //                      If we accept couples with Prob >= ProbMin then ProbMin is the 
   //                      probability to reject the good couple
@@ -116,6 +119,97 @@ float EdbTrackFitter::Chi2Seg( EdbSegP *tr, EdbSegP *s)
 }
 
 //______________________________________________________________________________
+float EdbTrackFitter::Chi2ACP( EdbSegP s1, EdbSegP s2, EdbScanCond &cond)
+{
+  // Exact copy of the function traditionally used for the linking of couples
+  //
+  // fast estimation of chi2 in the special case when the position 
+  // errors of segments are negligible in respect to angular errors: 
+  // sigmaXY/dz << sigmaTXY
+  // application: up/down linking, alignment (offset search)
+  //
+  // All calculation are done in the track plane which remove the 
+  // dependency of the polar angle (phi)
+
+  TVector3 v1,v2,v;
+  v1.SetXYZ( s1.TX(), s1.TY() , -1. );
+  v2.SetXYZ( s2.TX(), s2.TY() , -1. );
+  v.SetXYZ(  -( s2.X() - s1.X() ),
+	     -( s2.Y() - s1.Y() ),
+	     -( s2.Z() - s1.Z() ) );
+
+  float phi = v.Phi();
+  v.RotateZ(  -phi );
+  v1.RotateZ( -phi );
+  v2.RotateZ( -phi );
+
+  float dz  = v.Z();
+  float tx  = v.X()/dz;
+  float ty  = v.Y()/dz;
+  float stx   = cond.SigmaTX(tx);
+  float sty   = cond.SigmaTY(ty);
+
+  float prob1=1., prob2=1.;
+  //if(iprob) {
+  prob1 = cond.ProbSeg(tx,ty,s1.W());
+  prob2 = cond.ProbSeg(tx,ty,s2.W());
+    // }
+  float dtx1 = (v1.X()-tx)*(v1.X()-tx)/stx/stx/prob1;
+  float dty1 = (v1.Y()-ty)*(v1.Y()-ty)/sty/sty/prob1;
+  float dtx2 = (v2.X()-tx)*(v2.X()-tx)/stx/stx/prob2;
+  float dty2 = (v2.Y()-ty)*(v2.Y()-ty)/sty/sty/prob2;
+
+  float chi2a=TMath::Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+  return chi2a;
+}
+
+//______________________________________________________________________________
+float EdbTrackFitter::Chi2ASeg( EdbSegP s1, EdbSegP s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
+{
+  // fast estimation of chi2 in the special case when the position
+  // errors of segments are negligible in respect to angular errors:
+  // sigmaXY/dz << sigmaTXY
+  // application: up/down linking,
+  //
+  // All calculation are done in the track plane which remove the
+  // dependency of the polar angle (phi)
+
+  Float_t dz =  s2.Z() - s1.Z();
+  seg.Set( 0,
+	   0.5*(s1.X() + s2.X()),
+	   0.5*(s1.Y() + s2.Y()),
+	   (s2.X() - s1.X())/dz,
+	   (s2.Y() - s1.Y())/dz,
+	   s1.W() + s2.W(),
+	   0);
+  seg.SetZ( 0.5*(s2.Z()+s1.Z()) );
+
+  Float_t  phi = -seg.Phi();
+  Double_t s   = TMath::Sin(phi);
+  Double_t c   = TMath::Cos(phi);
+  Float_t  tx  = seg.TX()*c-seg.TY()*s;
+  Float_t  ty  = seg.TX()*s+seg.TY()*c;
+  Float_t  tx1 = s1.TX()*c-s1.TY()*s;
+  Float_t  ty1 = s1.TX()*s+s1.TY()*c;
+  Float_t  tx2 = s2.TX()*c-s2.TY()*s;
+  Float_t  ty2 = s2.TX()*s+s2.TY()*c;
+
+  Float_t stx   = cond1.SigmaTX(tx);
+  Float_t sty   = cond1.SigmaTY(ty);
+  Float_t prob1 = cond1.ProbSeg(tx,ty,s1.W());
+  Float_t prob2 = cond2.ProbSeg(tx,ty,s2.W());
+
+  Float_t dtx1  = (tx1-tx)*(tx1-tx)/stx/stx/prob1;
+  Float_t dty1  = (ty1-ty)*(ty1-ty)/sty/sty/prob1;
+  Float_t dtx2  = (tx2-tx)*(tx2-tx)/stx/stx/prob2;
+  Float_t dty2  = (ty2-ty)*(ty2-ty)/sty/sty/prob2;
+  Float_t chi2a = Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+
+  seg.SetChi2(chi2a);
+  return chi2a;
+}
+
+//______________________________________________________________________________
 float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2)
 {
   // full estimation of chi2 without covariance matrix - the result seems to be identical to Chi2Seg 
@@ -123,7 +217,6 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   //
   // Input: 2 segments passed by value because them will be modified during calculations
   // Return value - the result of the fit - passed by value
-  // TODO: remove in this function the dependency of the COV
 
   // 1) calcualte the mean direction vector for the 2-seg group
 
@@ -132,21 +225,23 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   if(Abs(dz) > 0.1 ) {
     tbx = (s2.X() - s1.X())/(s2.Z() - s1.Z());
     tby = (s2.Y() - s1.Y())/(s2.Z() - s1.Z());
-    wbx = Sqrt(s1.SX() + s2.SX())/dz;                  
-    wby = Sqrt(s1.SY() + s2.SY())/dz;
+    wbx = Sqrt( cond1.SigmaX(tbx)*cond1.SigmaX(tbx) + cond2.SigmaX(tbx)*cond2.SigmaX(tbx) ) / dz;                  
+    wby = Sqrt( cond1.SigmaY(tby)*cond1.SigmaY(tby) + cond2.SigmaY(tby)*cond2.SigmaY(tby) ) / dz;
   }
-  float w1x = 1./s1.STX();
-  float w1y = 1./s1.STY();
-  float w2x = 1./s2.STX();
-  float w2y = 1./s2.STY();
+  float w1x = 1./cond1.SigmaTX(s1.TX());  w1x*=w1x;
+  float w1y = 1./cond1.SigmaTY(s1.TY());  w1y*=w1y;
+  float w2x = 1./cond2.SigmaTX(s2.TX());  w2x*=w2x;
+  float w2y = 1./cond2.SigmaTY(s2.TY());  w2y*=w2y;
 
   float TX = (s1.TX()*w1x + s2.TX()*w2x + tbx*wbx)/(w1x+w2x+wbx);
   float TY = (s1.TY()*w1y + s2.TY()*w2y + tby*wby)/(w1y+w2y+wby);
 
   // 2) calcualte the COG of the 2-seg group
 
-  w1x = 1./s1.SX();  w1y = 1./s1.SY();
-  w2x = 1./s2.SX();  w2y = 1./s2.SY();
+  w1x = 1./cond1.SigmaX(TX);    w1x *= w1x;
+  w1y = 1./cond1.SigmaY(TY);    w1y *= w1y;
+  w2x = 1./cond2.SigmaX(TX);    w2x *= w2x;
+  w2y = 1./cond2.SigmaY(TY);    w2y *= w2y;
   float Z = (s1.Z()*(w1x+w1y) + s2.Z()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
   float X = (s1.X()*(w1x+w1y) + s2.X()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
   float Y = (s1.Y()*(w1x+w1y) + s2.Y()*(w2x+w2y))/(w1x+w1y+w2x+w2y);
@@ -160,7 +255,7 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   s.SetZ(Z);
 
   float PHI = ATan2(TY,TX);   // angle of the 2-seg group plane
-  float T = Sqrt(TX*TX+TY*TY);
+  float T   = Sqrt(TX*TX+TY*TY);
 
   EdbAffine2D aff;
   aff.Rotate(PHI);

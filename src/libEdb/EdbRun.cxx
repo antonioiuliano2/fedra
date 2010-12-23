@@ -100,7 +100,7 @@ EdbRun::~EdbRun()
   SafeDelete(eHeader);
   SafeDelete(ePredictions);
   SafeDelete(eMarks);
-  SafeDelete(eView);
+  //SafeDelete(eView);    // provocate crash in EdbRunAccess::CopyRawDataXY  - to understand!
 }
 
 //______________________________________________________________________________

@@ -70,6 +70,7 @@ void EdbRunAccess::Set0()
   eLastArea  = 0;
   eNareas=0;
   eXmin=eXmax=eYmin=eYmax=0;
+  eUseExternalSurface=false;
 }
 
 ///_________________________________________________________________________
@@ -126,7 +127,8 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
   eYmin = eVP[1]->Ymin();
   eYmax = eVP[1]->Ymax();
 
-  if(gEDBDEBUGLEVEL>1) PrintStat();
+  //Log(2,"EdbRunAccess::InitRun","%s with %d views\n",eRunFileName.Data(), eRun->GetEntries());
+  if(gEDBDEBUGLEVEL>2) PrintStat();
 
   eXstep=400;  //TODO
   eYstep=400;
@@ -344,7 +346,7 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
       }
       nseg++;
       segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      segP.SetAid(view->GetAreaID(),view->GetViewID(), side);
       
       vol.GetPattern(side-1)->AddSegment( segP);
     }
@@ -390,7 +392,7 @@ int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
       }
       nseg++;
       segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      segP.SetAid(view->GetAreaID(),view->GetViewID(), side);
       pat.AddSegment( segP);
     }
   }
@@ -404,9 +406,9 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
 {
   // get raw segments belonging to views having a given id (view->GetHeader()->GetTrack()) and a given side
   // the result is stored into an EdbPattern object
-  
   // this routine is called by EdbRunTracking::FindCandidates and to select microtracks from a raw.root file 
   // acquired for a specific prediction
+  // Special case: if id=-1 - accept all views for the given side
 
   EdbSegP    segP;
   EdbView    *view = eRun->GetView();
@@ -421,7 +423,7 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
     }
     else view = eRun->GetEntry(entry);
 
-    if (view->GetHeader()->GetTrack()!=id) continue;
+    if( id>=0 && view->GetHeader()->GetTrack()!=id) continue;
 
     nsegV = view->Nsegments();
     if( ViewSide(view) != side )   continue;
@@ -432,10 +434,11 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
       }
       nseg++;
       segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID());
+      segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
       pat.AddSegment( segP);
     }
   }
+  Log(2,"GetPatternDataForPrediction","%d segments for pred %d, side %d",nseg,id,side);
   return nseg;
 }
 
@@ -838,4 +841,24 @@ void EdbRunAccess::AddSegmentCut(int layer, int xi, float min[5], float max[5])
   cut->SetMin(min);
   cut->SetMax(max);
   eCuts[layer]->Add( cut );
+}
+
+///______________________________________________________________________________
+bool EdbRunAccess::CopyRawDataXY( float x0, float y0, float dR, const char *file )
+{
+  Log(2,"CopyRawDataXY", "dR = %f around (%f %f) into file %s",dR, x0,y0, file);
+  if(!eRun) return false;
+  EdbRun r(*eRun, file);
+  EdbView    *view = eRun->GetView();
+  for(int side=1; side<=2; side++) {
+    TArrayI entr(100000);
+    int nv = GetViewsXY(side,entr,x0,y0, dR);
+    for(int i=0; i<nv; i++) {
+      view = eRun->GetEntry(entr[i]);
+      r.AddView(view);
+    }
+    Log(2,"CopyRawDataXY", "%d views copied for side %d",nv, side);
+  }
+  r.Close();
+  return true;
 }

@@ -23,6 +23,28 @@ namespace SHOWER_PAR
   
   const char *def = "pi0.def";  // is needed if you want to generate the linked_tracks.root file 
   int event = 1;                // only used for MC data  
+
+  int DATA = 1;                 // REAL DATA OPTION - DATA = 1 for real data DATA = 0 for MC
+                                // to use the affine trans. (real data) or not (MC) 
+}
+
+void SetShowerPar(int down, int plate, int maxplate, int piece2, int piece2par, int data)
+{
+	SHOWER_PAR::DOWN      = down      ;
+	SHOWER_PAR::PLATE     = plate     ;
+	SHOWER_PAR::MAXPLATE  = maxplate  ;
+	SHOWER_PAR::piece2    = piece2    ;
+	SHOWER_PAR::piece2par = piece2par ;
+	SHOWER_PAR::DATA      = data      ;
+}
+
+void PrintShowerPar()
+{
+	 std::cout << "DOWN: "      << SHOWER_PAR::DOWN      << "\n" <<
+                  "PLATE: "     << SHOWER_PAR::PLATE     << "\n" <<
+	              "MAX_PLATE: " << SHOWER_PAR::MAXPLATE  << "\n" <<
+	              "piece2: "    << SHOWER_PAR::piece2    << "\n" <<
+	              "piece2par: " << SHOWER_PAR::piece2par << std::endl ;
 }
 
 void link()
@@ -59,6 +81,10 @@ void  shower_tr()
   double z0[10000];
   double tx0[10000];
   double ty0[10000];
+  double chi20[10000];
+  double P0[10000];
+  int   W0[10000];
+  int   Flag0[10000];
   int   MCid[10000];
   int   TRid[10000];
   int   id[10000];
@@ -107,6 +133,10 @@ void  shower_tr()
     z0[Ncand]  = s->Z() ;
     tx0[Ncand] =  s->TX();
     ty0[Ncand] =  s->TY();
+    chi20[Ncand] = s->Chi2();
+    W0[Ncand] = s->W();
+    P0[Ncand] = s->P();
+    Flag0[Ncand] = s->Flag();
     TRid[Ncand] = s->MCEvt();//this has to be a positive number
     Esim[Ncand] = s->P();
     id[Ncand] = s->ID();
@@ -119,10 +149,17 @@ void  shower_tr()
   
   file1->Close();
 
-  // Here call of the shower algorithm using x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim as seed 
-  // The results will be put in Shower.root file
-  
-  shower.rec(PLATE,MAXPLATE,0,Ncand,x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim,piece2,piece2par,DOWN);
+    /* --- Depreciated  
+    // Here call of the shower algorithm using x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim as seed 
+    // The results will be put in Shower.root file
+    shower.rec(PLATE,MAXPLATE,0,Ncand,x0,y0,z0,tx0,ty0,Pid,id,TRid,Esim,piece2,piece2par,DOWN);   
+    */ 
+    
+  int num    = PLATE ;
+  int UPDOWN = DOWN  ;
+    // Here call of the shower algorithm using x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim as seed 
+    // chi20,W0,P0,Flag0 are not necessary but if not given first segment in shower will not have these values!
+    shower.rec(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim,piece2,piece2par,UPDOWN);
 
   gROOT->ProcessLine(".q");
 }

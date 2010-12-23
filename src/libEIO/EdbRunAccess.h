@@ -11,6 +11,7 @@
 #include "EdbRun.h"
 #include "EdbPattern.h"
 #include "EdbLayer.h"
+#include "EdbScanCond.h"
 
 //______________________________________________________________________________
 class EdbRunAccess : public TObject {
@@ -125,6 +126,7 @@ class EdbRunAccess : public TObject {
 
   ///////
 
+  bool CopyRawDataXY( float x0, float y0, float dR, const char *file );
 
   ClassDef(EdbRunAccess,1)  // helper class for access to the run data
 };

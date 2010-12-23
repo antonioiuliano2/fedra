@@ -23,7 +23,7 @@ fi
 PROJECT_INC=$installdir/include
 PROJECT_SRC=$installdir/src
 
-LIBS="libEdb libDataConversion libEmath libEGA libEphys libEdr libEIO libEdd libEMC libAlignment libScan libShower libEOracle"
+LIBS="libEdb libEbase libDataConversion libEmath libEGA libEphys libEdr libEIO libEdd libEMC libAlignment libScan libShower libEOracle libEmr libEDA"
 
 for lib in ${LIBS} ; do
     echo "set links for ${lib} ..."

@@ -118,7 +118,7 @@ class EdbMarksSet : public TObject {
 
   Int_t           ChangeMapStringSpacer( TString &str, char oldspacer, char newspacer);
   Int_t           ReadMap( char *file, char spacer='_', char shape='S');
-  Int_t           WriteMap( char *file, char spacer='_', char shape='S');
+  Int_t           WriteMap( char *file, char spacer='_', char shape='S', int plate=1);
 
   void            DrawA( Option_t *opt="") const;
   void            DrawS( Option_t *opt="") const;

@@ -64,6 +64,8 @@ class EdbDisplay: public EdbDisplayBase {
   Double_t eTImpMax;       // Maximal impact for interactive add track
   Double_t eTProbMin;      // Minimal probability for interactive add track
 
+  TObjArray *eArrSegG;     // additional array of segments for the presentation purpose only
+
  public:
 
   EdbDisplay() : EdbDisplayBase() {Set0();}
@@ -84,10 +86,11 @@ class EdbDisplay: public EdbDisplayBase {
   static EdbDisplay *EdbDisplayExist(const char *title);
   void Delete();
   void Set0();
-  void GuessRange();
+  void GuessRange( float margZmin=3000,float margZmax=1000,float margR=300 );
   void SetVerRec(EdbVertexRec *evr) { eVerRec = evr; };
 
   void Refresh();
+  void SetArrSegG(TObjArray *arrg) {eArrSegG = arrg;}
   void SetArrSegP(TObjArray *arr);
   void SetArrTr(TObjArray *arr);
   void SetDrawTracks(int opt) {eDrawTracks=opt;}
@@ -196,6 +199,7 @@ class EdbSegG : public TPolyLine3D {
 
  public:
   EdbSegG() {eSeg=0; eD=0;}
+  EdbSegG(EdbSegP &s);
   EdbSegG(EdbDisplay *D) {eSeg=0; eD=D;}
   EdbSegG(Int_t nhits):TPolyLine3D(nhits) {eSeg=0; eD=0;}
   EdbSegG(Int_t nhits, EdbDisplay *D):TPolyLine3D(nhits) {eSeg=0; eD=D;}

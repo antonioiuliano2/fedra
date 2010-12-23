@@ -12,6 +12,7 @@
 #include <TTree.h>
 #include <TVector3.h>
 #include <TGraphErrors.h>
+#include <TGraphAsymmErrors.h>
 #include "EdbPattern.h"
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"
@@ -82,6 +83,7 @@ class EdbVertex: public TObject {
 		      // 3 - neutral, linked (has common track with other vertex)
 		      // 4 - charge, linked
 		      // 5 - back neutral, linked
+  Int_t   eMCEvt;
   Int_t	  eID;
   Float_t eQuality;   // Probability/(vsigmax**2+vsigmay**2)
 
@@ -116,6 +118,7 @@ class EdbVertex: public TObject {
   Int_t      Nn()         const  {return eVTn.GetSize();}
   Int_t      Nv();
   Int_t      Flag()       const  {return eFlag;}
+  Int_t      MCEvt()      const  {return eMCEvt;}
   Int_t      ID()         const  {return eID;}
   Int_t      Zpos(int i)         {return GetVTa(i)->Zpos();}
   ULong_t    Hash()       const  {return eID;}
@@ -132,8 +135,7 @@ class EdbVertex: public TObject {
   EdbVTA    *GetVTa(int i)       {return (EdbVTA*)(eVTa.At(i));}
   EdbVTA    *GetVTn(int i)       {return (EdbVTA*)(eVTn.At(i));}
   EdbTrackP *GetTrack(int i)     {return GetVTa(i)->GetTrack();}
-  EdbSegP   *GetTrackV(int i, bool usesegpar=false)    
-    {return Zpos(i) ? GetTrack(i)->TrackZmin(usesegpar):GetTrack(i)->TrackZmax(usesegpar);}
+  EdbSegP   *GetTrackV(int i, bool usesegpar=false);
 
   EdbVTA    *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   Float_t    Impact(int i);
@@ -146,13 +148,15 @@ class EdbVertex: public TObject {
   void       SetID(int ID = 0)                 {eID = ID;}
   void       SetXYZ(float x, float y, float z) {eX=x; eY=y; eZ=z;} 
   void       SetFlag(int flag = 0 )            {eFlag = flag;}
+  void       SetMC(int mEvt=0) 		       {eMCEvt=mEvt;}
   void       SetV(VERTEX::Vertex *v)           {eV=v;}
   void       SetQuality( float q = 0 )         {eQuality = q;}
 
   Bool_t     TrackInVertex( EdbTrackP *t );
   Int_t      CheckDiscardedTracks();
+  Int_t      EstimateVertexFlag();
 
-  ClassDef(EdbVertex,2)  // vertex class for OPERA emulsion data
+  ClassDef(EdbVertex,3)  // vertex class for OPERA emulsion data
 };
 
 //_________________________________________________________________________
@@ -175,6 +179,7 @@ class EdbVertexRec: public TObject {
   Float_t    eDZmax;        // maximum z-gap in the track-vertex group
   Float_t    eProbMin;      // minimum acceptable probability for chi2-distance between tracks
   Float_t    eImpMax;       // maximal acceptable impact parameter (preliminary check)
+  Float_t    eImpMaxV;      // if the impact is <= eImpMaxV the 2-vertex is accepted disregard to it's probability
   Bool_t     eUseMom;       // use or not track momentum for vertex calculations
   Bool_t     eUseSegPar;    // use only the nearest measured segments for vertex fit (as Neuchatel)
   Int_t      eQualityMode;  // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
@@ -208,6 +213,12 @@ class EdbVertexRec: public TObject {
   Bool_t     CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
   Bool_t     IsInsideLimits(EdbSegP &s);
   Int_t      FindSimilarTracks(EdbTrackP &t, TObjArray &found, int nsegmin=2, float dMax=100., float dTheta=0.01, float dZmax=50000.);
+  Int_t      FindSimilarTracksE(EdbSegP &spred, TObjArray &found, bool startend,
+				float impact, float dthetaMax, float dxy, float zminT, float zmaxT, float zminV, float zmaxV);
+  bool       CompatibleSegments(EdbSegP &spred, EdbSegP &stest,
+				float impact, float dthetaMax, float dxy, float zminT, float zmaxT, float zminV, float zmaxV);
+  Int_t      FindSimilarSegments(EdbSegP &spred, TObjArray &found, EdbPattern &pat,
+				float impact, float dthetaMax, float dxy, float zminT, float zmaxT, float zminV, float zmaxV);
 
   Int_t	     LinkedVertexes();
   Int_t      LoopVertex(TIndexCell &list1, TIndexCell &list2, int zpos1, 
@@ -230,6 +241,7 @@ class EdbVertexRec: public TObject {
 			     float ImpMax = 1000000., TObjArray *aseg = 0, 
 			     TObjArray *atr = 0, TObjArray *arv = 0);
   Float_t    CheckImpact( EdbSegP *s1,   EdbSegP *s2, int zpos1, int zpos2, float pv[3] );
+  Float_t    CheckImpactN( EdbSegP *s1,   EdbSegP *s2, float pv[3], bool &parallel, float dzMax=6000. );
   Bool_t     EstimateVertexQuality(EdbVertex &v);
   Bool_t     EstimateVertexPosition(EdbVertex &v);
   Double_t   Tdistance(const VERTEX::Track& t1, const VERTEX::Track& t2);
@@ -254,6 +266,9 @@ class EdbVertexRec: public TObject {
     if (!eVTX) eVTX = new TObjArray();
     eVTX->Add((TObject*)vtx);
   }
+
+  int CheckTrack(EdbTrackP &track, int zpos);
+
 
   ClassDef(EdbVertexRec,2) //reconstruct vertexes in OPERA emulsion data
 };

@@ -5,9 +5,9 @@ include ../config/RootDef.mk
 
 NAME          = Edr
 
-headers       = EdbPattern.h EdbPVRec.h EdbVertex.h EdbLayer.h EdbVertexSpace.h EdbTrackFitter.h EdbMomentumEstimator.h EdbAlignment.h
+headers       = EdbPattern.h EdbPVRec.h EdbVertex.h EdbVertexSpace.h EdbTrackFitter.h EdbMomentumEstimator.h EdbPlateTracking.h
 
-PROJECT_LIBS  = $(PROJECT_LIBS) -lvt -lEmath -lEdb -lEphys
+PROJECT_LIBS  = $(PROJECT_LIBS) -lvt -lEmath -lEdb -lEbase -lEphys -lAlignment
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

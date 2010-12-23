@@ -7,7 +7,7 @@ NAME          = Edd
 
 headers       = EdbDisplayBase.h  EdbDisplay.h
 
-PROJECT_LIBS  = $(PROJECT_LIBS) $(GLIBS) -lEmath -lEdb -lvt -lEdr
+PROJECT_LIBS  = $(PROJECT_LIBS) $(GLIBS) -lEmath -lEdb -lvt -lEdr -lEbase
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk

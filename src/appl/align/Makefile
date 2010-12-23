@@ -5,7 +5,7 @@ include ../../config/RootDef.mk
 
 APPL = aln
 
-PROJECT_LIBS = -lEdr -lEdb -lEmath
+PROJECT_LIBS = -lEdr -lEdb -lEmath -lEbase
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

@@ -18,6 +18,8 @@
 #include "EdbMath.h"
 #include "EdbMomentumEstimator.h"
 #include "EdbLog.h"
+#include "EdbScanSet.h"
+#include "EdbPlateAlignment.h"
 
 #include "vt++/CMatrix.hh"
 #include "vt++/VtVector.hh"
@@ -645,7 +647,7 @@ int EdbPatCouple::CheckSegmentsDuplication(EdbPattern *pat)
 				       );
 		if( s1->Flag()<0 ) continue;
 		if( s2->Flag()<0 ) continue;
-		if( s1->Aid(0) == s2->Aid(0)&& s1->Aid(1) == s2->Aid(1)) continue;
+		if( s1->Aid(0) == s2->Aid(0)&& s1->Aid(1) == s2->Aid(1) && s1->Side()==s2->Side() ) continue;
 		if( TMath::Abs(s2->X()-s1->X()) > 3.) continue;
 		if( TMath::Abs(s2->Y()-s1->Y()) > 3.) continue;
 		s2->W()>s1->W() ? s1->SetFlag(-1):s2->SetFlag(-1);
@@ -938,6 +940,11 @@ void EdbPVRec::ResetCouples()
 //______________________________________________________________________________
 void EdbPVRec::ResetTracks()
 {
+  for(int i=0; i<Npatterns(); i++ ) {
+    EdbPattern *p =  GetPattern(i);
+    if(!p) continue;
+    for(int j=0; j<p->N(); j++ ) p->GetSegment(j)->SetTrack(-1);
+  }
   SafeDelete(eTracks);
   SafeDelete(eTracksCell);
 }
@@ -1110,6 +1117,76 @@ int EdbPVRec::Link()
 
 //______________________________________________________________________________
 int EdbPVRec::Align(int alignFlag)
+{
+  if(alignFlag<10)  return AlignOld(alignFlag);
+  else {
+    EdbScanSet sci, sca;
+    for(int i=0; i<Npatterns(); i++) {
+      EdbPlateP *pl = new EdbPlateP();
+      EdbPattern *p = GetPattern(i);
+      pl->SetID( p->PID() );
+      pl->SetZlayer( p->Z(), p->Z(), p->Z() );
+      sci.eB.AddPlate(pl);
+    }
+    sci.MakePIDList();
+    sca.Copy(sci);
+    return AlignPlates( sci, sca );
+  }
+}
+
+//______________________________________________________________________________
+int EdbPVRec::AlignPlates( EdbScanSet &sc, EdbScanSet &sca, const char *reportdir)
+{
+  int npat = Npatterns();
+  if(npat<2) return 0;
+  for(int i=0; i<npat-1; i++) {
+    EdbPattern *p1 = GetPattern(i);
+    EdbPattern *p2 = GetPattern(i+1);
+    EdbPlateP *plate1 = sc.GetPlate(p1->PID());
+    EdbPlateP *plate2 = sc.GetPlate(p2->PID());
+    Log(1,"AlignPlates","\n align %d -> %d", p1->PID(), p2->PID() );
+    EdbPlateP *pc = new EdbPlateP(); // "couple" to be used for the alignment
+    pc->GetLayer(1)->SetID(plate1->ID());
+    pc->GetLayer(2)->SetID(plate2->ID());
+    float DZ = plate2->Z()-plate1->Z();
+
+    gROOT->SetBatch();
+    EdbPlateAlignment av;
+
+    if(reportdir)
+      av.InitOutputFile( Form("%6d/%2.2d_%2.2d.al.root",sc.eB.ID(),p1->PID(),p2->PID()) );
+
+    av.Align( *p1, *p2 , DZ );
+    p1->SetNAff( av.eNcoins );
+
+    if(reportdir)
+      av.CloseOutputFile();
+
+    if( av.eStatus ) {
+      pc->GetLayer(1)->CopyCorr( av.eCorrL[0] );
+      pc->GetLayer(2)->CopyCorr( av.eCorrL[1] );
+      pc->GetLayer(1)->SetZlayer( -(pc->GetLayer(1)->Zcorr()), 0, 0);
+    } else pc->GetLayer(1)->SetZlayer( -DZ, 0, 0 );
+
+    sca.ePC.Add(pc);
+  }
+  sca.eB.SetID(sca.eB.ID());
+  sca.AssembleBrickFromPC();
+  sca.SetAsReferencePlate( sc.eB.GetPlate(npat-1)->ID() );   // last plate is the reference one
+
+  for(int i=0; i<npat; i++) {
+    EdbPattern *p = GetPattern(i);
+    p->Transform( sca.eB.GetPlate(i)->GetAffineXY() );
+    p->SetZ( sca.eB.GetPlate(i)->Z() );
+    p->SetSegmentsZ();
+    p->SetSegmentsDZ(300);
+  }
+
+  return npat;
+}
+
+//______________________________________________________________________________
+int EdbPVRec::AlignOld(int alignFlag)
 {
   // align patterns in volume
   int npat=Npatterns();
@@ -2719,3 +2796,93 @@ int EdbPVRec::ExtractDataVolumeSegAll( TObjArray &arr )
   return nseg;
 }
 
+///______________________________________________________________________________
+EdbPattern  *EdbPVRec::GetPatternByPID(int pid)
+{
+  EdbPattern *p=0;
+  for(int i=0; i<Npatterns(); i++) {
+    p = GetPattern(i);
+    if(p) if(p->PID()==pid) return p;
+  }
+  return 0;
+}
+
+///______________________________________________________________________________
+EdbSegP *EdbPVRec::AddSegment(EdbSegP &s)
+{
+  // add new segment to this 
+  // create and insert new pattern if needed
+  // plate, side and Z for the segment should be correctly defined
+  // Note: slow function - use for additional segments only as "manual check" etc
+
+  EdbPattern *p  = GetPatternByPlate( s.Plate(), s.Side() );
+  if(!p) {
+    Log(1,"EdbPVRec::AddSegment",
+	"WARNING: The pattern for plate/side %d/%d  does not found, add new one with z = %f ", 
+	s.Plate(), s.Side(), s.Z() );
+    p = new EdbPattern( 0., 0., s.Z() );
+    p->SetID(s.PID());
+    p->SetScanID( s.ScanID() );
+    InsertPattern(p, eDescendingZ);
+  }
+  return p->AddSegment(s);
+}
+
+///______________________________________________________________________________
+int  EdbPVRec::AddSegments(EdbPVRec &ali)
+{
+  // copy the segments from ali and add them to this
+  int nseg=0;
+  for(int i=0; i<ali.Npatterns(); i++) {
+    EdbPattern *pa = GetPattern(i);
+    for(int j=0; j<pa->N(); j++) {
+      AddSegment(  *(pa->GetSegment(j)) );
+      nseg++;
+    }
+  }
+  Log(2,"EdbPVRec::AddSegments","%d new segments are inserted",nseg);
+  return nseg;
+}
+
+///______________________________________________________________________________
+int  EdbPVRec::AddSegments(EdbTrackP &track)
+{
+  // copy the segments from track and add them to this
+  int nseg=0;
+  for(int i=0; i<track.N(); i++) {
+    AddSegment(  *(track.GetSegment(i)) );
+    nseg++;
+  }
+  Log(2,"EdbPVRec::AddSegments","%d new segments are inserted for using track %d",nseg, track.ID() );
+  return nseg;
+}
+
+///______________________________________________________________________________
+void  EdbPVRec::SetScanIDPatSeg(EdbID id)
+{
+  // set eBrick,eMajor and eMinor for all segments of all volume patterns
+  // leave ePlate as is
+  for(int i=0; i<Npatterns(); i++) {
+    EdbPattern *p = GetPattern(i);
+    for(int j=0; j<p->N(); j++) {
+      EdbSegP *s = p->GetSegment(j);
+      id.ePlate = s->Plate();
+      s->SetScanID(id);
+    }
+  }
+}
+
+///______________________________________________________________________________
+void  EdbPVRec::SetScanIDTrackSeg(EdbID id)
+{
+  // set eBrick,eMajor and eMinor for all segments of all volume patterns
+  // leave ePlate as is
+  for(int i=0; i<Ntracks(); i++) {
+    EdbTrackP *t = GetTrack(i);
+    for(int j=0; j<t->N(); j++) {
+      EdbSegP *s = t->GetSegment(j);
+      id.ePlate = s->Plate();
+      s->SetScanID(id);
+    }
+  }
+}

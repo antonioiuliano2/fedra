@@ -11,6 +11,10 @@
 #pragma link C++ class EdbMath;
 #pragma link C++ class TIndex2;
 
+#pragma link C++ class EdbH1;
+#pragma link C++ class EdbCell1;
+//#pragma link C++ class EdbPeak1;
+
 #pragma link C++ class EdbH2;
 #pragma link C++ class EdbCell2;
 #pragma link C++ class EdbPeak2;

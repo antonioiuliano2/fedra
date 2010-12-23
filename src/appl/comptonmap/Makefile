@@ -5,9 +5,7 @@ include ../../config/RootDef.mk
 
 TARGET	=	$(BIN_DIR)/comptonmap$(ExeSuf)
 
-PROJECT_LIBS = -lEdb -lEdr -lEmath -lEphys -lvt -lEIO -lDataConversion -lAlignment -lScan -lEMC
-
-##PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lDataConversion
+PROJECT_LIBS = -lEdb -lEbase -lEdr -lEbase -lEmath -lEphys -lvt -lEIO -lDataConversion -lAlignment -lScan -lEMC
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

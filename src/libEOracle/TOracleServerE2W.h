@@ -36,7 +36,7 @@ class TOracleServerE2W : public TOracleServerE2 {
     Int_t       AddMicroTrack(char *datamicro);
     Int_t       AddBaseTrack(char *database);
     Int_t       AddScanbackPath(char *datapath);
-    Int_t       AddScanbackPath(char *id_eventbrick, char *id_header_operation, int id_path, int id_start_plate);
+    Int_t       AddScanbackPath(char *id_eventbrick, char *id_header_operation, int id_path, int id_start_plate, int skipCSconnection=0);
     Int_t       AddScanbackPrediction(char *dataprediciton);
     Int_t       AddTemplateMarkSets(char *datamarks);
     

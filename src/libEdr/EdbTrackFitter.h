@@ -44,6 +44,8 @@ class EdbTrackFitter : public TNamed {
   int            SplitTrackByKink( EdbTrackP *t, TObjArray &tracks, float maxkink );
   float          PMS_KF(EdbTrackP &t, float p0=10., float probbest=0.5);
 
+  static float   Chi2ACP( EdbSegP s1, EdbSegP s2, EdbScanCond &cond);
+  static float   Chi2ASeg( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   static float   Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   void           Print();
 

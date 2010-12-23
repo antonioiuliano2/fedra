@@ -86,6 +86,8 @@ void EdbRunTracking::Print()
 //----------------------------------------------------------------------------------------
 int EdbRunTracking::UpdateFlag(int flag, int status)
 {
+  // status: -1 -found nothing, 0-bt, 1-mt1, 2-mt2
+
   int bth = flag/10000;
   int mth = (flag/100)%100;
   int tb  = flag%10;
@@ -101,21 +103,14 @@ int EdbRunTracking::UpdateFlag(int flag, int status)
 }
 
 //----------------------------------------------------------------------------------------
-int EdbRunTracking::GetBTHoles(int flag)
-{
-  return(flag/10000);
-}
-
-//----------------------------------------------------------------------------------------
-int EdbRunTracking::GetMTHoles(int flag)
-{
-  return((flag/100)%100);
-}
-
-//----------------------------------------------------------------------------------------
 int EdbRunTracking::ExtrapolateCond(EdbScanCond &inputcond, int flag, EdbScanCond &outputcond )
 {
   // TODO: tuning the dependency of sigma
+  // NOTED by Artem: when we do jumping we have no "holes" stored in the flag, so this function do not 
+  //                 extrapolate errors correctly so one had to encrease the acceptance manually, 
+  //                 possible solution can be to add total plates number before the last found 
+  //                 track into the flag and use it only for extrapolation
+
   int bth = GetBTHoles(flag);
   int mth = GetMTHoles(flag);
   outputcond = inputcond;
@@ -427,25 +422,10 @@ int EdbRunTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnd
       eScnd.N(),eS1cnd.N(),eS2cnd.N(),
       eSpre.N(),eS1pre.N(),eS2pre.N()
       );
-
-//   for(int i=0; i<eSpre.N(); i++) {
-//     EdbSegP *s = eSpre.GetSegment(i);
-//     printf("%2d    %8.1f %8.1f %8.1f %7.4f %7.4f %9d %4.1f %5.2f\n", 
-// 	   i, s->X(), s->Y(), s->Z(), 
-// 	   s->TX(), s->TY(), s->Flag(), 
-// 	   s->W(), s->Chi2() );
-//     printf("      %8.1f %8.1f          %7.4f %7.4f\n",
-// 	   s->X()  - spred.X(), 
-// 	   s->Y()  - spred.Y(),  
-// 	   s->TX() - spred.TX(), 
-// 	   s->TY() - spred.TY() );
-//   }
-
   snewpred.Copy(eNext);
   fndbt.Copy(eS);
   fnds1.Copy(eS1);
   fnds2.Copy(eS2);
-
   return eStatus;
 }
 
@@ -576,10 +556,11 @@ void EdbRunTracking::CloseSBtree(TTree *tree)
   tree=0;
 }
 
+/*
 //______________________________________________________________________________
 float EdbRunTracking::TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps)
 {
-  if     (z<=t.Zmin()) ps.Copy(*t.GetSegmentFFirst());
+  if     (z<=t.Zmin()) ps.Copy(*t.());
   else if(z>=t.Zmax()) ps.Copy(*t.GetSegmentFLast());
   else         // z is inside the track
     { Log(2, "EdbRunTracking::TrackExtrapolationToZ", " TODO!\n"); }
@@ -587,9 +568,10 @@ float EdbRunTracking::TrackExtrapolationToZ(EdbTrackP &t, float z, EdbSegP &ps)
   ps.PropagateTo( z );
   return dz;
 }
+*/
 
 //______________________________________________________________________________
-int EdbRunTracking::FindTrack(EdbTrackP &track, EdbPlateP &plate)
+int EdbRunTracking::FindTrack(EdbTrackP &pred, EdbTrackP &found, EdbPlateP &plate)
 {
   // look for tracks in this plate
   // track - input track in brick RS - will be updated on output
@@ -602,24 +584,25 @@ int EdbRunTracking::FindTrack(EdbTrackP &track, EdbPlateP &plate)
   EdbAffine2D b2p(p2b); b2p.Invert();        // from brick to plate
 
   EdbSegP ps;
-  float dz = TrackExtrapolationToZ( track, plate.Z(), ps );   //TODO
-  if(Abs(dz)>DZmax)              return status;
-  if(GetBTHoles(track.Flag())>5) return status;
-  if(GetMTHoles(track.Flag())>3) return status;
+  float dz = pred.MakePredictionTo(plate.Z(), ps);
 
-  ps.SetFlag(track.Flag());
+  if(Abs(dz)>DZmax)               return status;
+  if(GetBTHoles(pred.Flag())>5)   return status;
+  if(GetMTHoles(pred.Flag())>3)   return status;
+
+  ps.SetFlag(pred.Flag());
   ps.Transform(&b2p);                     // plate.Transoform(seg) ???
  
   EdbSegP fndbt, fnds1, fnds2, snewpred;
   status = FindPrediction( ps, fndbt, fnds1, fnds2, snewpred ); // -1: not found; 0-bt, 1-bot, 2-top
-  track.SetFlag(snewpred.Flag());
+  found.SetFlag(snewpred.Flag());
 
   TransformFromPlateRS(plate);      // transform all components into brick RS
 
   if(status>=0) {
-    track.AddSegment(  new EdbSegP(eNext) );
-    track.AddSegmentF( new EdbSegP(ePred) );   // add prediction as "fitted segment" because it is an extrapolation
-    track.SetSegmentsTrack();
+    found.AddSegment(  new EdbSegP(eNext) );
+    found.AddSegmentF( new EdbSegP(ePred) );   // add prediction as "fitted segment" because it is an extrapolation
+    found.SetSegmentsTrack();
   }
 
   Log(2,"EdbRunTracking::FindTracks","status = %d",status);
