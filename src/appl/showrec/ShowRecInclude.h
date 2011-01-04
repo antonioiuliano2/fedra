@@ -72,7 +72,8 @@
 #include "EdbDataSet.h"
 #include "EdbMath.h"
 #include "EdbSegP.h"
+#include "EdbPVRQuality.h"
 
 #include "vt++/VtTrack.hh"
 #include "vt++/VtVertex.hh"
-#include "vt++/CMatrix.hh"	
+#include "vt++/CMatrix.hh"

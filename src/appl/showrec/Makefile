@@ -6,7 +6,7 @@ CXXFLAGS += -I$(FEDRA_ROOT)/include
 
 LDFLAGS  += $(shell root-config --nonew --libs --glibs)
 LDFLAGS  += -L$(ROOTSYS)/lib -lMLP -lTreePlayer -lSpectrum
-LDFLAGS  += -L$(FEDRA_ROOT)/lib -lEdb -lEdr -lEbase -lAlignment -lEmath -lvt -lEphys -lDataConversion -lEIO 
+LDFLAGS  += -L$(FEDRA_ROOT)/lib -lEdb -lEdr -lEbase -lAlignment -lEmath -lvt -lEphys -lDataConversion -lEIO -lShower
 
 #====================================================================================
 

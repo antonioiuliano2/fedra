@@ -27,9 +27,9 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
         cout << "---      \t\t :	 -ALI		use gALI either from cp.root file (0) or from LinkedTrack.root(1) or from root file...(2:BTali.root) (3:lnTr.ali.root)\n";
         cout << "---      \t\t :	 -MIXMC		Extract Subpattern with all MCEvents mixed! --!WARNING!--  \n";
-        cout << "---      \t\t :	 -PADI		ParentDirectory  \n";
-        cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  \n";
-        cout << "---      \t\t :	 -BGTP		BackgroundType  \n";
+        cout << "---      \t\t :	 -PADI		ParentDirectory     (only for naming the output file)\n";
+        cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  (only for naming the output file)\n";
+        cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
         cout << "---      \t\t :	 -ALTP		AlgorythmType  \n";
         cout << "---      \t\t\t :	 0:		ReconstructShowers_?  (?).. \n";
         cout << "---      \t\t\t :	 2:		ReconstructShowers_CA  \n";
@@ -45,14 +45,15 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -PASTART	ParametersetStart  \n";
         cout << "---      \t\t :	 -PAEND		ParameterSetEnd  \n";
         cout << "---      \t\t :	 -CUTTP		Algorithm CutType: 0: standard, 1:high_pur 2: high_eff  3: FJ_HighPur 4: FJ_Standard \n";
-
-        cout << "---      \t\t :	 -FILETP	Filetype: Additional (distinguish-) variable to be written into treebranch. \n";
-
-        cout << "---      \t\t :	 -DEBUG	 gEDBDEBUGLEVEL \t (1..5)\n";
-        cout << "---      \t\t :	 -OUT		  OUTPUTLEVEL  \t (1,2,3)\n";
-        cout << "---      \t\t :	 -STOP		  STOPLEVEL  \t (0,1,2,3)\n";
+        cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+        cout << "---      \t\t :	 -FILETP	Filetype: Additional (distinguish-) variable to be written into treebranch. (only for naming the output tree)\n";
+        cout << "---      \t\t :	 -DEBUG		gEDBDEBUGLEVEL \t (1..5)\n";
+        cout << "---      \t\t :	 -OUT			OUTPUTLEVEL  \t (1,2,3)\n";
+        cout << "---      \t\t :	 -STOP		STOPLEVEL  \t (0,1,2,3)\n";
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP1 -NP30 -FZHP1 -MC1 -ALTP4  -PASTART0 -PAEND0  lnk.def ---" << endl<< endl;
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP30 -NP30 -FZHP1 -MC1 -ALTP4 lnk_all.def ---" << endl<< endl;
+				cout << "---      Usage:	 ShowRec  -FZHP1 -MC1 lnk_all.def ---" << endl<< endl;
+				cout << "---      Usage:	 ShowRec  -LT1 -MC1 lnk_all.def ---" << endl<< endl;
         cout << "-----------------------------------------------"<<endl;
         return 0;
     }
@@ -127,6 +128,12 @@ int main(int argc, char *argv[])
         else if (!strncmp(key,"-CUTTP",6)) {
             if (strlen(key)>6) {
                 sscanf(key+6,"%d",&cmd_CUTTP);
+            }
+        }
+
+        else if (!strncmp(key,"-CLEAN",6)) {
+            if (strlen(key)>6) {
+                sscanf(key+6,"%d",&cmd_CLEAN);
             }
         }
 
@@ -210,6 +217,7 @@ int main(int argc, char *argv[])
     cout << "---      \t\t :	 -PASTART	ParametersetStart " << cmd_PASTART << endl;
     cout << "---      \t\t :	 -PAEND		ParameterSetEnd " << cmd_PAEND << endl;
     cout << "---      \t\t :	 -CUTTP		Algo Cuttype " << cmd_CUTTP << endl;
+    cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning " << cmd_CLEAN << endl;
     cout << "---      \t\t :	 -FILETP	FILE Type tag " << cmd_FILETP << endl;
     cout << "---      \t\t :	 -DEBUG		DEBUGLEVEL " << cmd_gEDBDEBUGLEVEL << endl;
     cout << "---      \t\t :	 -OUT		OUTPUTLEVEL " << cmd_OUTPUTLEVEL << endl;
@@ -244,16 +252,25 @@ int main(int argc, char *argv[])
     GLOBAL_gAli = ReadEdbPVRecObjectFromCurrentDirectory();
     GLOBAL_gAli->Print();
     RewriteSegmentPIDs_BGPID_To_SGPID(GLOBAL_gAli); // I checked, this is not necessary, since PID is set new when Reading EdbVRec object.
+
+		Float_t BGTargetDensity=0;
+// 		cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+		if (cmd_CLEAN==1) BGTargetDensity=20;
+		if (cmd_CLEAN==2) BGTargetDensity=40;
+		if (cmd_CLEAN==3) BGTargetDensity=10;
+		if (cmd_CLEAN==4) BGTargetDensity=60;
+		if (cmd_CLEAN==0) BGTargetDensity=1000;
+		EdbPVRQuality* PVRQualCheck;
+		EdbPVRec* new_GLOBAL_gAli;
+    if (cmd_CLEAN!=0) {
+			PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
+			new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
+			PVRQualCheck->Print();
+			GLOBAL_gAli=new_GLOBAL_gAli;
+		}
     if (cmd_STOPLEVEL==2) return 1;
     //----------------------------------------------------------------------------------
 
-    /*
-    int kk=GLOBAL_gAli->Npatterns();
-    for (Int_t i=0; i<kk; i++) {
-    EdbPattern* pat=GLOBAL_gAli->GetPattern(i);
-    cout << "i N dens " << i << " " << pat->N() << "  " << pat->GetSegmentDensity() << "   " << endl;
-    }
-    */
 
     //----------------------------------------------------------------------------------
     // Fill the Initiator BT array:
@@ -1158,7 +1175,7 @@ void FillGlobalInBTArray()
         for (Int_t nn=0; nn<99999; ++nn) {
             isMCThere[nn]=0;
         }
-        if (gEDBDEBUGLEVEL>2) cout << "Printing double counted MCEvt basetracks:" << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "INFO    Printing double counted MCEvt basetracks:" << endl;
         int maxEvt=0;
         int tmp=0;
         for (Int_t nn=0; nn<GLOBAL_InBTArray->GetEntries(); ++nn) {
@@ -1177,7 +1194,7 @@ void FillGlobalInBTArray()
                 cout << " MC Event ---  " << nn << "  is not contained in InBTArray"<<endl;
             }
             if (isMCThere[nn]>1) {
-                cout << " MC Event ---  " << nn << "  is :  " << isMCThere[nn] << " times contained in InBTArray"<<endl;
+                cout << "INFO   MC Event ---  " << nn << "  is :  " << isMCThere[nn] << " times contained in InBTArray"<<endl;
 
             }
         }
@@ -2694,7 +2711,7 @@ void ReconstructShowers_OI()
         // CounterOutPut
         if (gEDBDEBUGLEVEL==2) if ((i%1)==0) cout << GLOBAL_InBTArrayEntries <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
         if (gEDBDEBUGLEVEL==1) {
-            int modulo=GLOBAL_InBTArrayEntries/20;
+            int modulo=TMath::Max(GLOBAL_InBTArrayEntries/20,1);
             if ((i%modulo)==0) cout << i <<" : 5% more done"<<endl;
         }
         //-----------------------------------
@@ -7252,9 +7269,7 @@ void TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TTree* treebrancht
 
         if (ii>=5000) {
             cout << "WARNING: shower_sizeb ( " << shower_sizeb<< ") greater than SHOWERARRAY.   Set sizeb to 4999 and  Stop filling!."<<endl;
-            cout << "seg->MCEvt() == " << seg->MCEvt() << endl;
             shower_sizeb=4999;
-            //gEDBDEBUGLEVEL=3;
             continue;
         }
         seg=(EdbSegP*)segarray->At(ii);

@@ -23,6 +23,7 @@ Int_t cmd_FZHP=0;
 Int_t cmd_ALI=0;  // 0 gAli from cp, 1: gALI from Linkd_tracks
 Int_t cmd_MCMIX=0;
 Int_t cmd_vtx=0;
+Int_t cmd_CLEAN=0;
 Int_t cmd_FILETP=0; // addition variable to distinguis different treebranches...
 
 char *cmd_lnkdef_name = "lnk.def";
