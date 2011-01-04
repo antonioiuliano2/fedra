@@ -7,9 +7,12 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emalign$(ExeSuf)      \
 		$(BIN_DIR)/makescanset$(ExeSuf)      \
 		$(BIN_DIR)/emtra$(ExeSuf)      \
+		$(BIN_DIR)/emshow$(ExeSuf)      \
 		$(BIN_DIR)/emrec$(ExeSuf)      
 
-PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion
+
+ROOTLIBS      += -lMLP
+PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lShower -lTreePlayer
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk
