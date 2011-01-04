@@ -5,6 +5,7 @@
 #include "TFile.h"
 #include "TF1.h"
 #include "TH2.h"
+#include "TProfile.h"
 #include "TVector3.h"
 #include "TIndexCell.h"
 #include "TArrayF.h"
@@ -39,6 +40,8 @@ private:
     EdbPVRec* eAli_modified;
     Bool_t		eIsSource;
 
+		Int_t 		eHistGeometry;
+
     // Variables related for calculation Issues
     Int_t			eCutMethod;
     Float_t		eBTDensityLevel;
@@ -55,6 +58,8 @@ private:
 // 		Int_t			NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
+		// TProfile: BT dens/mm2 versus PID()
+		TProfile* eProfileBTdens_vs_PID;
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
@@ -80,6 +85,7 @@ public:
 
     EdbPVRQuality();
     EdbPVRQuality(EdbPVRec* ali);
+		EdbPVRQuality(EdbPVRec* ali, Float_t BTDensityTargetLevel);
 
     void SetCutMethod(Int_t CutMethod);
     inline void SetBTDensityLevel(Float_t BTDensityLevel) {
@@ -90,6 +96,7 @@ public:
         return eAli_orig;
     }
     inline EdbPVRec* GetEdbPVRec(Int_t EdbPVRecType) {
+				cout << "Inline EdbPVRecType= " <<  EdbPVRecType << endl;
         if (EdbPVRecType==1) {
             return eAli_modified;
         }
@@ -97,9 +104,12 @@ public:
             return eAli_orig;
         }
     }
+    
+    inline EdbPVRec* GetEdbPVRec_orig() { return GetEdbPVRec(0); }
+    inline EdbPVRec* GetEdbPVRec_modified() { return GetEdbPVRec(1); }
 
     inline void				SetEdbPVRec(EdbPVRec* Ali_orig) {
-        eAli_orig=eAli_orig;
+        eAli_orig=Ali_orig;
         eIsSource=kTRUE;
     }
 

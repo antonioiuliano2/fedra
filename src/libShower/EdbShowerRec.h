@@ -17,6 +17,7 @@
 #include "TSystem.h"
 #include "TF1.h"
 #include "TVector3.h"
+#include "TLorentzVector.h"
 #include "EdbLog.h"
 #include "TROOT.h"
 
@@ -712,6 +713,7 @@ public:
     Double_t  DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest);
     Bool_t    FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbTrackP* shower);
     Bool_t    IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegment, Double_t CylinderRadius, Double_t ConeAngle);
+		Double_t  InvariantMass(EdbSegP* s1, EdbSegP* s2, Double_t Momentum1=-1, Double_t Momentum2=-1,  Double_t ID1=22, Double_t ID2=22);
 
     // Execute  -- the reconstruction function:
     void      Execute();

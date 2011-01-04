@@ -1184,3 +1184,35 @@ void EdbShowerRec::CalcTrackDensity(EdbPattern* pat_interim,Int_t pat_interim_ha
     }
     return;
 }
+
+
+//------------------------------------------------------------------------------------------------------
+
+Double_t EdbShowerRec::InvariantMass(EdbSegP* s1, EdbSegP* s2, Double_t Momentum1,Double_t Momentum2, Double_t ID1, Double_t ID2)
+{
+	cout << "EdbShowerRec::InvariantMass()" << endl;
+	cout << "s1->P()  " << s1->P() << endl;
+	cout << "s2->P()  " << s2->P() << endl;
+
+	// If no momentum is specified, then it will be taken from segments momentum:
+	if (Momentum1<0) Momentum1=s1->P();
+	if (Momentum2<0) Momentum2=s2->P();
+
+  //mass reconstruction for Pi0 using 2 tracks
+  //you have to know the momentum of the 2 tracks and their slopes (Tx,Ty)
+	//first implementation: frederic juget
+	TLorentzVector v1;
+	TLorentzVector v2;
+	Double_t energy1=0;
+	Double_t energy2=0;
+	v1.SetPxPyPzE(s1->TX(),s1->TY(),1,Momentum1);
+	v2.SetPxPyPzE(s2->TX(),s2->TY(),1,Momentum2);
+	TLorentzVector vsum=v1+v1;
+	Double_t invM=vsum.Mag2();
+	cout << v1.Mag() << endl;
+	cout << v2.Mag() << endl;
+	cout << vsum.Mag() << endl;
+	return invM;
+}
+
+//------------------------------------------------------------------------------------------------------

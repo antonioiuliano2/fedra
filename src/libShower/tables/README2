@@ -1,0 +1,22 @@
+*
+*
+**********************************************************************
+*
+*				HOW TO MAKE THE SYSTEMATIC RESULT TABLES
+*
+*
+*				a)	have All sub systematics files produced....
+-rw-r--r-- 1 meisel meisel 1.5K 2010-11-25 13:08 libShower_Energy_Systematics_EFFICIENCY_Gamma.txt
+-rw-r--r-- 1 meisel meisel 1.3K 2010-11-25 13:09 libShower_Energy_Systematics_PLATEMISMATCH_Gamma.txt
+-rw-r--r-- 1 meisel meisel 1.3K 2010-11-25 13:10 libShower_Energy_Systematics_ANNMETHOD_Gamma.txt
+-rw-r--r-- 1 meisel meisel 1.3K 2010-11-25 14:05 libShower_Energy_Systematics_IDMISMATCH_Gamma.txt
+-rw-r--r-- 1 meisel meisel 1.3K 2010-11-25 14:40 libShower_Energy_Systematics_Gamma.txt
+*
+*
+*				b)	adapt and execute merge_Energy_SystematicsSources*.C
+*
+*
+*				c)  execute Draw_Systematics_ALLCOMBINED_*.C
+*
+*
+***********************************************************************

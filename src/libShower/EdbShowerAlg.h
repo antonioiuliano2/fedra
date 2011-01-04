@@ -259,9 +259,9 @@ protected:
     // = generic weightFileString.
 
     // Array for the specific specification: see GetSpecifications() for explanation...
-    Int_t		eSpecificationType[6];
-    TString	eSpecificationTypeString[6];
-    TString	eSpecificationTypeStringArray[6][6];
+    Int_t		eSpecificationType[7];
+    TString	eSpecificationTypeString[7];
+    TString	eSpecificationTypeStringArray[7][7];
     Bool_t 	eSpecificationIsChanged;
     Bool_t  eForceSpecificationReload;
 
@@ -499,6 +499,10 @@ protected:
     // Variables for the output:
     Double_t   eIDEnergySigmaCorr;
     Double_t   eANNIDCutValue;
+		// Type for the ID cut: 0: BestMinDist to (1,1) in the ROI curve
+		// Type for the ID cut: 1: ca. 90% eff
+		// Type for the ID cut: 2: ca.  1% cont.
+		Double_t	eIDCutTypeValue[3];
 
 public:
 
@@ -517,7 +521,8 @@ public:
         eANNIDCutValue=ANNIDCutValue;
     }
     void SetSpecificationType(Int_t SpecificationType, Int_t SpecificationTypeVal);
-
+		void PrintSpecifications();
+		
     void CreateANN();
 
     void Update();
@@ -527,6 +532,11 @@ public:
     void ReadTables_ID(); // to be implemented...
 
     void DoRun(EdbTrackP*);
+		void DoRun(TObjArray* trackarray);
+		void DoRun();
+
+		Int_t DetermineIDType(Double_t val, Int_t SpecificationType);
+		Int_t DetermineIDFlag(Int_t IDType);
 
     void Print();
     void Help();
