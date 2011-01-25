@@ -562,24 +562,36 @@ EdbMask *EdbScanProc::ReadEraseMask(EdbID id)
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut, bool do_erase)
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut, bool do_erase, bool read_mt)
 {
   TString cpfile;
   MakeFileName(cpfile,id,"cp.root");
   EdbMask* mask = 0;
   if(do_erase) mask = ReadEraseMask(id);
-  return ReadPatCPnopar(pat,cpfile.Data(),cut, mask );
+  return ReadPatCPnopar(pat,cpfile.Data(),cut, mask, read_mt );
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, EdbMask *mask)
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, EdbMask *mask, bool read_mt)
 {
   EdbDataPiece piece;
   piece.eFileNameCP  = cpfile;
   piece.AddRCut(0,cut);
   if(!piece.InitCouplesTree("READ")) return 0;
   piece.eEraseMask = mask;
-  return piece.GetCPData_new( &pat,0,0,0 );
+  int nread=0;
+  if(!read_mt) nread = piece.GetCPData_new( &pat,0,0,0 );
+  else {             // add microtracks as "digits" to the basetrack
+    EdbPattern p1, p2;
+    nread = piece.GetCPData_new( &pat,&p1,&p2,0 );
+    for(int i=0; i<pat.N(); i++) {
+      EdbSegP *s = pat.GetSegment(i);
+      s->addEMULDigit( new EdbSegP(*(p1.GetSegment(i))) );
+      s->addEMULDigit( new EdbSegP(*(p2.GetSegment(i))) );
+      s->EMULDigitArray()->SetOwner();
+    }
+  }
+  return nread;
 }
 
 //----------------------------------------------------------------
