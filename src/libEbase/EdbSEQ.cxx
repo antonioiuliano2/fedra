@@ -9,6 +9,7 @@
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TArrayF.h"
+#include "TClonesArray.h"
 #include "EdbSegP.h"
 #include "EdbSEQ.h"
 
@@ -111,10 +112,11 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, float area)
   hEq.Print();
   hEq.DrawH1()->Draw();
 
-  EdbH1   hw[hEq.N()];                  // create W-hist per each theta bin
+  TClonesArray  hw("EdbH1",hEq.N());                  // create W-hist per each theta bin
   TArrayF thres(hEq.N());               // W-thresholds to be defined
   for(int i=0; i<hEq.N(); i++) {
-    hw[i].InitH1( 200, 0., 20. );
+	new(hw[i]) EdbH1();
+	((EdbH1*)hw[i])->InitH1( 200, 0., 20. );
   }
 
   int nseg = mti.GetEntriesFast();
@@ -123,17 +125,17 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, float area)
     int jtheta = hEq.IX(s->Theta());
     if(jtheta>hEq.N()-1)  continue;
     float w = s->W();                               // TODO: smear with chi2 or with other criteria?
-    hw[jtheta].Fill(w);
+    ((EdbH1*)hw[jtheta])->Fill(w);
   }
 
   for(int i=0; i<hEq.N(); i++) {
-    int eccess = hw[i].Integral() - hEq.Bin(i);
+    int eccess = ((EdbH1*)hw[i])->Integral() - hEq.Bin(i);
     if( eccess <= 0 ) continue;  // the threshold remains 0
 
     int nsum=0;
-    for(int j=0; j<hw[i].N(); j++) {
-      nsum+=hw[i].Bin(j);
-      if( nsum >= eccess ) { thres[i] = hw[i].X(j)-hw[i].Xbin(); break; }
+    for(int j=0; j<((EdbH1*)hw[i])->N(); j++) {
+      nsum+=((EdbH1*)hw[i])->Bin(j);
+      if( nsum >= eccess ) { thres[i] = ((EdbH1*)hw[i])->X(j)-((EdbH1*)hw[i])->Xbin(); break; }
     }    
   }
 
