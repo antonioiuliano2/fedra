@@ -189,7 +189,7 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
   ExtrapolateCond(eCondBT,spred.Flag(),condBT);
   if (gEDBDEBUGLEVEL>=3) condBT.Print();
 
-  spred.SetZ(107.);                                      // TODO!
+  //spred.SetZ(107.);                                      // TODO! sonoqui
   spred.SetErrors();
   condBT.FillErrorsCov( spred.TX(), spred.TY(), spred.COV() );
 
