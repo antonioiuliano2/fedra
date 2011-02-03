@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -STOP		STOPLEVEL  \t (0,1,2,3)\n";
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP1 -NP30 -FZHP1 -MC1 -ALTP4  -PASTART0 -PAEND0  lnk.def ---" << endl<< endl;
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP30 -NP30 -FZHP1 -MC1 -ALTP4 lnk_all.def ---" << endl<< endl;
-				cout << "---      Usage:	 ShowRec  -FZHP1 -MC1 lnk_all.def ---" << endl<< endl;
-				cout << "---      Usage:	 ShowRec  -LT1 -MC1 lnk_all.def ---" << endl<< endl;
+        cout << "---      Usage:	 ShowRec  -FZHP1 -MC1 lnk_all.def ---" << endl<< endl;
+        cout << "---      Usage:	 ShowRec  -LT1 -MC1 lnk_all.def ---" << endl<< endl;
         cout << "-----------------------------------------------"<<endl;
         return 0;
     }
@@ -253,21 +253,23 @@ int main(int argc, char *argv[])
     GLOBAL_gAli->Print();
     RewriteSegmentPIDs_BGPID_To_SGPID(GLOBAL_gAli); // I checked, this is not necessary, since PID is set new when Reading EdbVRec object.
 
-		Float_t BGTargetDensity=0;
-// 		cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
-		if (cmd_CLEAN==1) BGTargetDensity=20;
-		if (cmd_CLEAN==2) BGTargetDensity=40;
-		if (cmd_CLEAN==3) BGTargetDensity=10;
-		if (cmd_CLEAN==4) BGTargetDensity=60;
-		if (cmd_CLEAN==0) BGTargetDensity=1000;
-		EdbPVRQuality* PVRQualCheck;
-		EdbPVRec* new_GLOBAL_gAli;
+    Float_t BGTargetDensity=0;
+    // cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+    if (cmd_CLEAN==1) BGTargetDensity=20;
+    if (cmd_CLEAN==2) BGTargetDensity=40;
+    if (cmd_CLEAN==3) BGTargetDensity=10;
+    if (cmd_CLEAN==4) BGTargetDensity=60;
+    if (cmd_CLEAN==0) BGTargetDensity=1000;
+    EdbPVRQuality* PVRQualCheck;
+    EdbPVRec* new_GLOBAL_gAli;
+
     if (cmd_CLEAN!=0) {
-			PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
-			new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
-			PVRQualCheck->Print();
-			GLOBAL_gAli=new_GLOBAL_gAli;
-		}
+        PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
+        new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
+        PVRQualCheck->Print();
+        GLOBAL_gAli=new_GLOBAL_gAli;
+    }
+
     if (cmd_STOPLEVEL==2) return 1;
     //----------------------------------------------------------------------------------
 
@@ -284,6 +286,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // Loop over (possible) Parametersets and Reconstruct Showers!
     //----------------------------------------------------------------------------------
+    if (cmd_PASTART>0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
     for (Int_t i=cmd_PASTART; i<=cmd_PAEND; i++) {
         GLOBAL_PARASETNR=i;
         if (gEDBDEBUGLEVEL>2) cout << "Doing PARASET		"<< i <<endl;
@@ -799,6 +802,11 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_FOR_DR",&cut_for_dr);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_FOR_DZ",&cut_for_dz);
     }
+
+
+    // Check: if PASTART is given (a number),  but PAEND is default, then set
+    // PAEND to PASTART
+    if (cmd_PASTART>0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
 
     if (gEDBDEBUGLEVEL>2) cout << "--- Updated commandline values: cmd_PASTART=" << cmd_PASTART << " and  cmd_PAEND=" << cmd_PAEND << endl;
 
@@ -2750,6 +2758,32 @@ void ReconstructShowers_OI()
         // 1) Make local_gAli with cut parameters:
         //-----------------------------------
         local_gAli = TransformEdbPVRec(GLOBAL_gAli, InBT);
+
+        /*
+        //-----------------------------------
+        // 1) BG Clean of local_gAli
+        // that maybe not necessary always , only for the large
+        // MC pasted Backgrounds...
+        //-----------------------------------
+        Float_t BGTargetDensity=0;
+        // 		cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+        if (cmd_CLEAN==1) BGTargetDensity=20;
+        if (cmd_CLEAN==2) BGTargetDensity=40;
+        if (cmd_CLEAN==3) BGTargetDensity=10;
+        if (cmd_CLEAN==4) BGTargetDensity=60;
+        if (cmd_CLEAN==0) BGTargetDensity=1000;
+
+        EdbPVRQuality* localPVRQualCheck = new EdbPVRQuality(local_gAli,BGTargetDensity);
+         EdbPVRec* new_local_gAli;
+         new_local_gAli = localPVRQualCheck->GetEdbPVRec(1);
+         localPVRQualCheck->Print();
+         local_gAli=new_local_gAli;
+        */
+
+// 				InBT->PrintNice();
+// 				gSystem->Exit(1);
+
+        //-----------------------------------
         // Add InBT to GLOBAL_ShowerSegArray
         GLOBAL_ShowerSegArray -> Add(InBT);
         //-----------------------------------
@@ -2815,6 +2849,7 @@ void ReconstructShowers_OI()
             GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
             GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
+
 
 
         //-----------------------------------
@@ -5603,15 +5638,16 @@ EdbPVRec* TransformEdbPVRec(EdbPVRec* gAli, EdbSegP* InitiatorBT)
     Float_t InBTZ= InitiatorBT->Z();
 
     if (gEDBDEBUGLEVEL>2) {
-        cout << "--- DOWNSTREAM ORDER = " <<endl;
-        cout << "--- npat = " << npat << endl;
-        cout << "--- firstplate = " << firstplate << endl;
-        cout << "--- middleplate = " << middleplate << endl;
-        cout << "--- lastplate = " << lastplate << endl;
-        cout << "--- InBTplate = " << InBTplate << endl;
-        cout << "--- InBTplateandNplate = " << InBTplateandNplate << endl;
-        cout << "--- endlplatetopropagate = " << endlplatetopropagate << endl;
-        cout << "--- InBTZ = " << InBTZ << endl;
+        cout << "--- TransformEdbPVRec --- DOWNSTREAM ORDER = " <<endl;
+        cout << "--- TransformEdbPVRec --- npat = " << npat << endl;
+        cout << "--- TransformEdbPVRec --- firstplate = " << firstplate << endl;
+        cout << "--- TransformEdbPVRec --- middleplate = " << middleplate << endl;
+        cout << "--- TransformEdbPVRec --- lastplate = " << lastplate << endl;
+        cout << "--- TransformEdbPVRec --- InBTplate = " << InBTplate << endl;
+        cout << "--- TransformEdbPVRec --- InBTplateandNplate = " << InBTplateandNplate << endl;
+        cout << "--- TransformEdbPVRec --- endlplatetopropagate = " << endlplatetopropagate << endl;
+        cout << "--- TransformEdbPVRec --- InBTZ = " << InBTZ << endl;
+        cout << "--- TransformEdbPVRec --- InBTplate = " << InBTplate << endl;
     }
 
     // has to be deleted in some part of the script outside this function...
@@ -8186,6 +8222,7 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
     }
 
 
+    cout << "BuildParametrizationsMCInfo_PGun.... done." << endl;
     return;
 }
 
