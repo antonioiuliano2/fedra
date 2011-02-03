@@ -400,16 +400,54 @@ int EdbScanProc::AlignSetNewNopar(EdbScanSet &sc, TEnv &cenv )
 {
   if(sc.eIDS.GetEntries()<2) return 0;
   int n=0;
+  int minPlate = cenv.GetValue("fedra.align.minPlate"  ,-999);
+  int maxPlate = cenv.GetValue("fedra.align.maxPlate"  , 999);
   for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
-    EdbID *id1 = (EdbID *)(sc.eIDS.At(i));
-    EdbID *id2 = (EdbID *)(sc.eIDS.At(i+1));
+    EdbID *id1 = sc.GetID(i);
+    EdbID *id2 = sc.GetID(i+1);
+    if(id1->ePlate<minPlate||id1->ePlate>maxPlate) continue;
+    if(id2->ePlate<minPlate||id2->ePlate>maxPlate) continue;
     EdbAffine2D aff;
-    float dz = cenv.GetValue("fedra.align.DZ"  , -1300);
+    float dz = -1300;
     if(sc.GetAffP2P(id1->ePlate, id2->ePlate, aff))
       dz = sc.GetDZP2P(id1->ePlate, id2->ePlate);
     n += AlignNewNopar(*id1, *id2, cenv, &aff, dz);
   }
   return n;
+}
+
+//-------------------------------------------------------------------
+int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *aff, float dz)
+{
+  // Align 2 patterns. All necessary information should be in the envfile
+  // Convension about Z(setted while process): the z of id2 is 0, the z of id1 is (-deltaZ) where
+  // deltaZ readed from aff.par file in a way that pattern of id1 projected 
+  // to deltaZ correspond to pattern of id2
+
+  int npat=0;
+  
+  EdbPlateAlignment av;
+  av.eOffsetMax =   cenv.GetValue("fedra.align.OffsetMax"   , 500. );
+  av.SetSigma(      cenv.GetValue("fedra.align.SigmaR"      , 13.  ), 
+	            cenv.GetValue("fedra.align.SigmaT"      , 0.008) );
+  av.eDoFine      = cenv.GetValue("fedra.align.DoFine"      , 1);
+  av.eDZ          = cenv.GetValue("fedra.align.DZ"          , 120.);
+  av.eDPHI        = cenv.GetValue("fedra.align.DPHI"        , 0.008 );
+  const char *cut = cenv.GetValue("fedra.readCPcut"         , "eCHI2P<2.5&&s.eW>18&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.5");
+  av.eSaveCouples = cenv.GetValue("fedra.align.SaveCouples" , 1);
+
+  EdbPattern p1,p2;
+  ReadPatCPnopar( p1, id1, cut );
+  ReadPatCPnopar( p2, id2, cut );
+  if(aff) { aff->Print(); p1.Transform(aff);}
+
+  TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
+  av.InitOutputFile( dataout );
+  av.Align( p1, p2 , dz);
+  av.CloseOutputFile();
+  UpdateAFFPar( id1, id2, av.eCorrL[0], aff );
+
+  return npat;
 }
 
 //----------------------------------------------------------------
@@ -456,8 +494,17 @@ int EdbScanProc::AlignSet(EdbScanSet &sc, int npre, int nfull, const char *opt )
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
+//int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
+int EdbScanProc::TrackSetBT(EdbScanSet &sc, TEnv &cenv)
 {
+  EdbScanCond cond;
+  TCut  c        = cenv.GetValue("fedra.readCPcut"     , "eCHI2P<2.5&&s.eW>13&&eN1==1&&eN2==1&&s1.eFlag>=0&&s2.eFlag>=0");
+  int   nsegmin  = cenv.GetValue("fedra.track.nsegmin"  , 2 );
+  int   ngapmax  = cenv.GetValue("fedra.track.ngapmax"  , 4 );
+  float probmin  = cenv.GetValue("fedra.track.probmin"  , 0.01 );
+  float momentum = cenv.GetValue("fedra.track.momentum" , 2 );
+  float mass     = cenv.GetValue("fedra.track.mass"     , 0.14 );
+
   if(sc.eIDS.GetEntries()<2) return 0;
   int n=0;
   EdbID *id=0;
@@ -471,12 +518,6 @@ int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
   ali->SetScanCond( &cond );
   ReadScanSetCP(sc,  *ali, c, false);
   ali->Print();
-
-  int   nsegmin  = 2;
-  int   ngapmax  = 4;
-  float probmin  = 0.01;
-  float momentum = 2;
-  float mass     = 0.14;
 
   n = dproc.LinkTracksWithFlag( ali, momentum, probmin, nsegmin, ngapmax, 0 );
   ali->FitTracks( momentum, mass );
@@ -2357,38 +2398,6 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   return npat;
  }
 
-//-------------------------------------------------------------------
-int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *aff, float dz)
-{
-  // Align 2 patterns. All necessary information should be in the envfile
-  // Convension about Z(setted while process): the z of id2 is 0, the z of id1 is (-deltaZ) where
-  // deltaZ readed from aff.par file in a way that pattern of id1 projected 
-  // to deltaZ correspond to pattern of id2
-
-  int npat=0;
-  
-  EdbPlateAlignment av;
-  av.eOffsetMax =   cenv.GetValue("fedra.align.OffsetMax"  , 500. );
-  av.SetSigma(      cenv.GetValue("fedra.align.SigmaR"     , 10.  ), 
-	            cenv.GetValue("fedra.align.SigmaT"     , 0.005) );
-  av.eDoFine      = cenv.GetValue("fedra.align.DoFine"     , 1);
-  av.eDZ          = cenv.GetValue("fedra.align.DZ"         , 120.);
-  av.eDPHI        = cenv.GetValue("fedra.align.DPHI"    ,   0.008 );
-  const char *cut = cenv.GetValue("fedra.readCPcut" , "eCHI2P<2.5&&s1.eW>7&&s2.eW>7&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.5");
-
-  EdbPattern p1,p2;
-  ReadPatCPnopar( p1, id1, cut );
-  ReadPatCPnopar( p2, id2, cut );
-  if(aff) { aff->Print(); p1.Transform(aff);}
-
-  TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
-  av.InitOutputFile( dataout );
-  av.Align( p1, p2 , dz);
-  av.CloseOutputFile();
-  UpdateAFFPar( id1, id2, av.eCorrL[0], aff );
-
-  return npat;
- }
 
 //______________________________________________________________________________
 void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idset1, EdbID idset2)

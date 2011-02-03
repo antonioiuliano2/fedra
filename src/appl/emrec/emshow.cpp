@@ -24,6 +24,23 @@ void print_help_message()
     cout<<endl;
 }
 
+void set_default(TEnv &cenv)
+{
+  // default parameters for shower reconstruction
+  cenv.SetValue("emshow.cpcut" ,"s.eW>13&&eCHI2P<2.5&&s1.eFlag>=0&&s2.eFlag>=0&&eN1==1&&eN2==1");
+/*  cenv.SetValue("fedra.track.minPlate"  ,-999 );
+  cenv.SetValue("fedra.track.maxPlate"  , 999 );
+  cenv.SetValue("fedra.track.refPlate"  , 999 );
+  cenv.SetValue("fedra.track.nsegmin"   , 2 );
+  cenv.SetValue("fedra.track.ngapmax"   , 4 );
+  cenv.SetValue("fedra.track.probmin"   , 0.01 );
+  cenv.SetValue("fedra.track.momentum"  , 2 );
+  cenv.SetValue("fedra.track.mass"      , 0.14 );*/
+  cenv.SetValue("emshow.outdir"          , "..");
+  cenv.SetValue("emshow.env"             , "shower.rootrc");
+  cenv.SetValue("emshow.EdbDebugLevel"   , 1);
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2)   {
@@ -31,8 +48,11 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    const char *outdir    = gEnv->GetValue("emrec.outdir"   , "./");
-    gEDBDEBUGLEVEL        = gEnv->GetValue("emrec.EdbDebugLevel" , 1);
+    TEnv cenv("showerenv");
+    set_default(cenv);
+    gEDBDEBUGLEVEL        = cenv.GetValue("emshow.EdbDebugLevel" , 1);
+    const char *env       = cenv.GetValue("emshow.env"            , "shower.rootrc");
+    const char *outdir    = cenv.GetValue("emshow.outdir"         , "./");
 
     bool      do_set      = false;
     bool      do_pred     = false;
@@ -99,6 +119,10 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    cenv.SetValue("emshow.env"                  , env);
+    cenv.ReadFile( cenv.GetValue("emshow.env"   , "shower.rootrc") ,kEnvLocal);
+    cenv.SetValue("emshow.outdir"               , outdir);
+    cenv.WriteFile("shower.save.rootrc");
 
     if (do_set) {
         EdbScanProc sproc;
@@ -115,9 +139,10 @@ int main(int argc, char* argv[])
 
         TCut c = gEnv->GetValue("emshow.cpcut" ,"s.eW>13&&eCHI2P<2.5&&s1.eFlag>=0&&s2.eFlag>=0&&eN1==1&&eN2==1");
 
-        EdbScanCond cond;
-        cond.Print();
-        sproc.TrackSetBT(*ss,cond,c);
+        //EdbScanCond cond;
+        //cond.Print();
+        //sproc.TrackSetBT(*ss,cond,c);
+	sproc.TrackSetBT(*ss,cenv);
 
     }
     if (do_VSB) {

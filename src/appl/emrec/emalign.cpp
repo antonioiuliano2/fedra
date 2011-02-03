@@ -25,7 +25,7 @@ void print_help_message()
   cout<< "\t\t  -check   - check the alignment\n";
   cout<< "\t\t  -readaff - read par files and update set file\n";
   cout<< "\nExample: \n";
-  cout<< "\t  o2root -id=4554.10.1.0 -o=/scratch/BRICKS \n";
+  cout<< "\t  emalign -set=4554.0.1.1 -o=/scratch/BRICKS -new -v2\n";
   cout<< "\n If the data location directory if not explicitly defined\n";
   cout<< " the current directory will be assumed to be the brick directory \n";
   cout<< "\n If the parameters file (align.rootrc) is not presented - the default \n";
@@ -36,16 +36,18 @@ void print_help_message()
 void set_default(TEnv &cenv)
 {
   // default parameters for the new alignment
-  cenv.SetValue("fedra.align.OffsetMax"  , 500. );
-  cenv.SetValue("fedra.align.SigmaR"     , 10.  );
-  cenv.SetValue("fedra.align.SigmaT"     , 0.005);
-  cenv.SetValue("fedra.align.DoFine"     , 1);
-  cenv.SetValue("fedra.readCPcut"        , "eCHI2P<2.5&&s1.eW>7&&s2.eW>7&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.45");
-  cenv.SetValue("fedra.align.DZ"         , 120.);
-  cenv.SetValue("fedra.align.DPHI"       ,   0.009 );
-  cenv.SetValue("emalign.outdir"         , "..");
-  cenv.SetValue("emalign.env"            , "align.rootrc");
-  cenv.SetValue("emalign.EdbDebugLevel"  , 1);
+  cenv.SetValue("fedra.align.OffsetMax"   , 500. );
+  cenv.SetValue("fedra.align.DZ"          , 120.);
+  cenv.SetValue("fedra.align.DPHI"        ,   0.009 );
+  cenv.SetValue("fedra.align.SigmaR"      , 10.  );
+  cenv.SetValue("fedra.align.SigmaT"      , 0.005);
+  cenv.SetValue("fedra.align.DoFine"      , 1);
+  cenv.SetValue("fedra.readCPcut"         , "eCHI2P<2.5&&s1.eW>7&&s2.eW>7&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.45");
+  cenv.SetValue("fedra.align.SaveCouples" , 1);
+
+  cenv.SetValue("emalign.outdir"          , "..");
+  cenv.SetValue("emalign.env"             , "align.rootrc");
+  cenv.SetValue("emalign.EdbDebugLevel"   , 1);
 }
 
 int main(int argc, char* argv[])
@@ -153,6 +155,7 @@ int main(int argc, char* argv[])
     printf("\n----------------------------------------------------------------------------\n");
     printf("align set %d.%d.%d.%d\n", brick,plate, major,minor);
     printf("----------------------------------------------------------------------------\n\n");
+    cenv.WriteFile("align.save.rootrc");
 
     EdbID id(brick,plate,major,minor);
     EdbScanSet *ss = sproc.ReadScanSet(id);

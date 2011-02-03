@@ -17,6 +17,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   Bool_t   eDoTestAl, eTestAlOK;
   Bool_t   eDoCoarse, eCoarseOK;
   Bool_t   eDoFine,   eFineOK;
+  Bool_t   eSaveCouples;          // save couples tree with the report file
   Bool_t   eStatus;               // overall alignment result (true - OK)
   Int_t    eNcoins;               // final number of coinsidence used for affine calc
 
@@ -44,6 +45,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   void SetParCoarseAl( float zcorr, float dpos=300, float dang=0.015, float dz=122, float dphi=0.01 );
   void SetParFineAl();
   void ProduceReport();
+  void SaveCouplesTree();
   void InitOutputFile(const char *file="report_al.root", const char *option="RECREATE");
   void CloseOutputFile();
 

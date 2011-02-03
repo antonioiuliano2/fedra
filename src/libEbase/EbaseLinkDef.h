@@ -19,4 +19,7 @@
 #pragma link C++ class EdbSigma;
 #pragma link C++ class EdbSEQ;
 
+#pragma link C++ class EdbCouplesTree;
+#pragma link C++ class EdbSegCouple;
+
 #endif

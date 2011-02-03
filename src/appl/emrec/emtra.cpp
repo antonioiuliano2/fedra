@@ -21,12 +21,32 @@ void print_help_message()
   cout<<endl;
 }
 
+void set_default(TEnv &cenv)
+{
+  // default parameters for tracking
+  cenv.SetValue("fedra.readCPcut"       , "eCHI2P<2.5&&s.eW>13&&eN1==1&&eN2==1&&s1.eFlag>=0&&s2.eFlag>=0");
+  cenv.SetValue("fedra.track.minPlate"  ,-999 );
+  cenv.SetValue("fedra.track.maxPlate"  , 999 );
+  cenv.SetValue("fedra.track.refPlate"  , 999 );
+  cenv.SetValue("fedra.track.nsegmin"   , 2 );
+  cenv.SetValue("fedra.track.ngapmax"   , 4 );
+  cenv.SetValue("fedra.track.probmin"   , 0.01 );
+  cenv.SetValue("fedra.track.momentum"  , 2 );
+  cenv.SetValue("fedra.track.mass"      , 0.14 );
+  cenv.SetValue("emtra.outdir"          , "..");
+  cenv.SetValue("emtra.env"             , "track.rootrc");
+  cenv.SetValue("emtra.EdbDebugLevel"   , 1);
+}
+
 int main(int argc, char* argv[])
 {
   if (argc < 2)   { print_help_message();  return 0; }
   
-  const char *outdir    = gEnv->GetValue("emrec.outdir"   , "..");
-  gEDBDEBUGLEVEL        = gEnv->GetValue("emrec.EdbDebugLevel" , 1);
+  TEnv cenv("trackenv");
+  set_default(cenv);
+  gEDBDEBUGLEVEL        = cenv.GetValue("emtra.EdbDebugLevel" , 1);
+  const char *env       = cenv.GetValue("emtra.env"            , "track.rootrc");
+  const char *outdir    = cenv.GetValue("emtra.outdir"         , "..");
 
   bool      do_set      = false;
   bool      do_pred     = false;
@@ -68,7 +88,11 @@ int main(int argc, char* argv[])
 
   if(!do_set)   { print_help_message(); return 0; }
 
- 
+  cenv.SetValue("emtra.env"                  , env);
+  cenv.ReadFile( cenv.GetValue("emtra.env"   , "track.rootrc") ,kEnvLocal);
+  cenv.SetValue("emtra.outdir"               , outdir);
+  cenv.WriteFile("track.save.rootrc");
+
   if(do_set) {
     EdbScanProc sproc;
     sproc.eProcDirClient=outdir;
@@ -82,11 +106,12 @@ int main(int argc, char* argv[])
     //ss->MakePIDList();
     //sproc.AssembleScanSet(*ss);
 
-    TCut c = gEnv->GetValue("emtra.cpcut" ,"s.eW>13&&eCHI2P<2.5&&s1.eFlag>=0&&s2.eFlag>=0&&eN1==1&&eN2==1");
-
-    EdbScanCond cond;
-    cond.Print();
-    sproc.TrackSetBT(*ss,cond,c);
+//    TCut c = gEnv->GetValue("emtra.cpcut" ,"s.eW>13&&eCHI2P<2.5&&s1.eFlag>=0&&s2.eFlag>=0&&eN1==1&&eN2==1");
+//    EdbScanCond cond;
+//    cond.Print();
+//    sproc.TrackSetBT(*ss,cond,c);
+    
+    sproc.TrackSetBT(*ss,cenv);
 
   }
   /*
@@ -155,6 +180,7 @@ int main(int argc, char* argv[])
     */
 
   }
+  cenv.WriteFile("track.save.rootrc");
 
   return 1;
 }

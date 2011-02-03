@@ -18,6 +18,7 @@
 #include "EdbLog.h"
 #include "EdbPlateAlignment.h"
 #include "EdbLayer.h"
+#include "EdbCouplesTree.h"
 
 ClassImp(EdbPlateAlignment)
 
@@ -37,7 +38,8 @@ EdbPlateAlignment::EdbPlateAlignment()
   eDoTestAl =false; eTestAlOK =true;
   eDoCoarse =true;  eCoarseOK =false;
   eDoFine   =true;  eFineOK   =false;
-
+  eSaveCouples=false;
+  
   eNcoins    = 0;
   eCoarseMin = 5;
   eFineMin   = 5;
@@ -105,6 +107,19 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
  END:
 
   ProduceReport();
+ if(eSaveCouples) SaveCouplesTree();
+}
+
+//---------------------------------------------------------------------
+void EdbPlateAlignment::SaveCouplesTree()
+{
+  EdbCouplesTree ect;
+  ect.InitCouplesTree();
+  int nseg = CheckEqualArr(eS[0],eS[1]);
+  for(int i=0; i<nseg; i++) {
+    ect.Fill( (EdbSegP*)eS[0].UncheckedAt(i), (EdbSegP*)eS[1].UncheckedAt(i) );
+  }
+  ect.WriteTree();
 }
 
 //---------------------------------------------------------------------

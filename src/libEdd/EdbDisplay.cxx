@@ -666,7 +666,7 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       else               line->SetLineColor(kYellow);
       line->SetLineWidth(1);
       line->SetBit(kCannotPick);
-      printf("**** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
+      //printf("**** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
       line->Draw();
 
       TPolyLine3D *trline = new TPolyLine3D(2);
@@ -677,7 +677,7 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       else               trline->SetLineColor(kWhite);
       trline->SetLineWidth(1);
       trline->SetBit(kCannotPick);
-      printf("*** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
+      //printf("*** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
       trline->Draw();
 
     }
