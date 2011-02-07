@@ -8,7 +8,12 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "TFile.h"
+#include "TTree.h"
+#include "TEventList.h"
 #include "EdbLog.h"
+#include "EdbMath.h"
+#include "EdbBrick.h"
+#include "EdbPattern.h"
 #include "EdbCouplesTree.h"
 
 ClassImp(EdbCouplesTree)
@@ -16,12 +21,27 @@ ClassImp(EdbCouplesTree)
 //---------------------------------------------------------------------
 EdbCouplesTree::EdbCouplesTree()
 {
-  eS1=eS2=eS=0;
+  eS1=0;
+  eS2=0;
+  eS=0;
   eCP=0;
   eXv=eYv=0;
   ePid1=ePid2=0;
-  //eDZ1=eDZ2=eChi2=0;
-  //eFlag=0;
+  eApplyCorrections=0;
+  eCut="1";
+  eEraseMask=0;
+}
+
+//---------------------------------------------------------------------
+EdbCouplesTree::~EdbCouplesTree()
+{
+// most of the members pointers can be the property of other objects
+// If the file should be closed - use Close()
+  //SafeDelete(eTree);
+  //SafeDelete(eS);
+  //SafeDelete(eS1);
+  //SafeDelete(eS2);
+ //SafeDelete(eEraseMask);
 }
 
 //---------------------------------------------------------------------
@@ -32,6 +52,20 @@ void EdbCouplesTree::Print()
   if(eS2) eS2->PrintNice();
   if(eS)  eS->PrintNice();
   if(eCP) eCP->Print();
+}
+
+///______________________________________________________________________________
+void EdbCouplesTree::Close()
+{
+  if (eTree) {
+    TFile *f = eTree->GetDirectory()->GetFile();
+    if (f) {
+      if(f->IsWritable()) eTree->AutoSave();
+      SafeDelete(eTree);
+      SafeDelete(f);
+    }
+    eTree=NULL;
+  }
 }
 
 //---------------------------------------------------------------------
@@ -137,4 +171,69 @@ Int_t EdbCouplesTree::Fill( EdbSegP *s1, EdbSegP *s2, EdbSegP *s, EdbSegCouple *
 Int_t EdbCouplesTree::Fill()
 {
   return eTree->Fill();
+}
+
+///______________________________________________________________________________
+int   EdbCouplesTree::GetEntry(int i)
+{
+  int size = eTree->GetEntry(i);
+  if(eApplyCorrections)  ApplyCorrections();
+  return size;
+}
+
+///______________________________________________________________________________
+void   EdbCouplesTree::ApplyCorrections()
+{
+}
+
+///______________________________________________________________________________
+int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
+{
+  if(!eTree)  return  0;
+  int nentr = (int)(eTree->GetEntries());  if(nentr<1) return 0;
+
+  eTree->Draw(">>lst", eCut );
+  TEventList *lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
+  if(!lst) {Log(1,"EdbCouplesTree::GetCPData","ERROR!: events list (lst) did not found! In couples tree %d entries",nentr); return 0;}
+  int nlst =lst->GetN();
+
+  int nseg = 0;
+  pat->SetID(0);
+  
+  int entr=0;
+  for(int i=0; i<nlst; i++ ) {
+    entr = lst->GetEntry(i);
+
+//     if(trseg) {           //exclude segments participating in tracks
+//       if( (trseg->Find(ePlate*1000+ePiece,entr) >= 0) )  continue;
+//     }
+
+    if(eEraseMask) if(eEraseMask->At(entr)) continue;
+
+    GetEntry(entr);
+
+    if(pat) {
+      eS->SetZ( eS->Z() + pat->Z() );   /// TO CHECK !!!
+      //ToDo: s->SetVid(ePlate*1000+ePiece,entr);
+      eS->SetChi2(eCP->CHI2P());
+      pat->AddSegment( *eS  );
+      nseg++;
+    }
+    if(p1)  { 
+      eS1->SetZ( eS1->Z() + pat->Z() );
+      p1->AddSegment(  *eS1 ); 
+      nseg++; 
+    }
+    if(p2)  { 
+      eS2->SetZ( eS2->Z() + pat->Z() );
+      p2->AddSegment(  *eS2 ); 
+      nseg++; 
+    }
+  }
+
+  SafeDelete(lst);
+
+  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s",nlst, nentr, eCut.GetTitle() );
+
+  return nseg;
 }

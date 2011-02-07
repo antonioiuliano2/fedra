@@ -11,7 +11,7 @@ TARGET	=	$(BIN_DIR)/rwc2edb$(ExeSuf)      \
 #		$(BIN_DIR)/getacqstatus$(ExeSuf)
 #		$(BIN_DIR)/edb2rwc$(ExeSuf)    
 
-PROJECT_LIBS  = -lEdb -lEmath -lEbase -lDataConversion -lvt
+PROJECT_LIBS  = -lEdb -lEmath -lDataConversion
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

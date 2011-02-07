@@ -19,4 +19,6 @@
 #pragma link C++ class EdbCell2;
 #pragma link C++ class EdbPeak2;
 
+#pragma link C++ class EdbMask;
+
 #endif

@@ -21,6 +21,7 @@
 #include "EdbPlateAlignment.h"
 #include "EdbAlignmentMap.h"
 #include "EdbRunTracking.h"
+#include "EdbCouplesTree.h"
 
 using namespace std;
 using namespace TMath;
@@ -612,6 +613,7 @@ int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut, bool do_era
   return ReadPatCPnopar(pat,cpfile.Data(),cut, mask, read_mt );
 }
 
+/*
 //----------------------------------------------------------------
 int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, EdbMask *mask, bool read_mt)
 {
@@ -632,6 +634,31 @@ int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, E
       s->EMULDigitArray()->SetOwner();
     }
   }
+  return nread;
+}
+*/
+
+//----------------------------------------------------------------
+int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, EdbMask *mask, bool read_mt)
+{
+  EdbCouplesTree ect;
+  if(!ect.InitCouplesTree("couples",cpfile,"READ")) return 0;;
+  ect.eCut=cut;
+  ect.eEraseMask = mask;
+
+  int nread=0;
+  if(!read_mt) nread = ect.GetCPData( &pat );
+  else {             // add microtracks as "digits" to the basetrack
+    EdbPattern p1, p2;
+    nread = ect.GetCPData( &pat,&p1,&p2,0 );
+    for(int i=0; i<pat.N(); i++) {
+      EdbSegP *s = pat.GetSegment(i);
+      s->addEMULDigit( new EdbSegP(*(p1.GetSegment(i))) );
+      s->addEMULDigit( new EdbSegP(*(p2.GetSegment(i))) );
+      s->EMULDigitArray()->SetOwner();
+    }
+  }
+  ect.Close();
   return nread;
 }
 

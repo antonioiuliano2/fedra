@@ -11,7 +11,6 @@
 #pragma link C++ class EdbTrackFitter;
 #pragma link C++ class EdbMomentumEstimator;
 
-#pragma link C++ class EdbSegCouple;
 #pragma link C++ class EdbPatCouple;
 #pragma link C++ class EdbPVRec;
 
