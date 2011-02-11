@@ -839,8 +839,7 @@ int EdbDataPiece::GetCPData_new( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2
     b_s->GetEntry(entr);                             // !!!
     if( !TakeCPSegment(*cp,*s) )      continue;
     if(pat) {
-      s->SetZ( s->Z() ); //
-      //s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
+      s->SetZ( s->Z() + pat->Z() );   /// TO CHECK !!!
       //s->SetPID( ePlate*10 );       /// TO CHECK !!!
       s->SetVid(ePlate*1000+ePiece,entr);
       s->SetChi2(cp->CHI2P());
