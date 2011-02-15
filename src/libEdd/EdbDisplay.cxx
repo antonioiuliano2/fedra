@@ -276,7 +276,6 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
 	zmax=s->Z()+margZmax;
 	zmin=s->Z()-margZmin;
       }
-
       if(xmax<s->X()+margR) xmax=s->X()+margR;
       if(xmin>s->X()-margR) xmin=s->X()-margR;
       if(ymax<s->Y()+margR) ymax=s->Y()+margR;
@@ -286,7 +285,26 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
     }
   }
 
-  if (eArrV) {}
+  if (eArrV) {
+    for(int i=0; i<eArrV->GetEntries(); i++) {
+      EdbVertex *v = (EdbVertex *)(eArrV->At(i));
+      if(xmax-xmin<margR) {
+	xmax=v->VX()+margR;
+	xmin=v->VX()-margR;
+	ymax=v->VY()+margR;
+	ymin=v->VY()-margR;
+	zmax=v->VZ()+margZmax;
+	zmin=v->VZ()-margZmin;
+      }
+      if(xmax<v->VX()+margR) xmax=v->VX()+margR;
+      if(xmin>v->VX()-margR) xmin=v->VX()-margR;
+      if(ymax<v->VY()+margR) ymax=v->VY()+margR;
+      if(ymin>v->VY()-margR) ymin=v->VY()-margR;
+      if(zmax<v->VZ()+margZmax) zmax=v->VZ()+margZmax;
+      if(zmin>v->VZ()-margZmin) zmin=v->VZ()-margZmin;
+    }
+  }
+  
   if (eArrTr) {
     EdbTrackP *t;
     EdbSegP   *s;

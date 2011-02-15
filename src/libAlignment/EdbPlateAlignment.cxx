@@ -114,12 +114,13 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
 void EdbPlateAlignment::SaveCouplesTree()
 {
   EdbCouplesTree ect;
-  ect.InitCouplesTree();
+  ect.InitCouplesTree("couples",0,"NEW");
   int nseg = CheckEqualArr(eS[0],eS[1]);
   for(int i=0; i<nseg; i++) {
     ect.Fill( (EdbSegP*)eS[0].UncheckedAt(i), (EdbSegP*)eS[1].UncheckedAt(i) );
   }
-  ect.WriteTree();
+  ect.eTree->AutoSave();
+  //ect.WriteTree();
 }
 
 //---------------------------------------------------------------------

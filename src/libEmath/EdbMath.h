@@ -36,7 +36,9 @@ class EdbMath {
 
   static int LFIT3( float *X, float *Y, float *Z, float *W, int L, 
 		    float &X0, float &Y0, float &Z0, float &TX, float &TY, float &EX, float &EY );
-
+  
+  static int ArrStat( int n, float *x, float par[4] );
+  
   ClassDef(EdbMath,2)  // general matematical algorithms
 };
 

@@ -18,6 +18,26 @@
 ClassImp(EdbMath)
 ClassImp(TIndex2)
 
+using namespace TMath;
+//-------------------------------------------------------------------------------------
+int EdbMath::ArrStat( int n, float *x, float par[4] )
+{
+  // calculate array statistics: 
+  // output: par (mean, rms, xmin, xmax);
+  
+  if(n<1) return 0;
+  par[0]=par[2]=par[3]=x[0];
+  double xs=0;  for(int i=0; i<n; i++) xs+=x[i];
+  double x0 = xs/n;
+  double dxs=0;  for(int i=0; i<n; i++) dxs += ((x[i]-x0)*(x[i]-x0));
+  double rms = Sqrt(dxs/n);
+  for(int i=0; i<n; i++) par[2] = par[2]<x[i]?par[2]:x[i];
+  for(int i=0; i<n; i++) par[3] = par[3]>x[i]?par[3]:x[i];
+  par[0]=x0;
+  par[1]=rms;
+  return n;
+}
+
 //-------------------------------------------------------------------------------------
 double EdbMath::Magnitude3( float Point1[3], float Point2[3] )
 {
