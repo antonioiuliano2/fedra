@@ -1217,7 +1217,9 @@ void EdbShowerAlgESimple::Set0()
     for (int i=0; i<7; i++) {
         eSpecificationType[i]=-1;
         eSpecificationTypeString[i]="";
-				for (int j=0; j<7; j++) { eSpecificationTypeStringArray[i][j]=""; }
+        for (int j=0; j<7; j++) {
+            eSpecificationTypeStringArray[i][j]="";
+        }
     }
     for (int i=0; i<15; i++) {
         ANN_MLP_ARRAY[i]=NULL;
@@ -1230,8 +1232,8 @@ void EdbShowerAlgESimple::Set0()
     cout << "EdbShowerAlgESimple::Set0()   Reset to the Neuch eff." << endl;
     cout << "EdbShowerAlgESimple::Set0()   eEfficiencyParametrisation= " << eEfficiencyParametrisation << endl;
     //if (NULL!=eEfficiencyParametrisation) delete eEfficiencyParametrisation;
-    Double_t xarr[6]={0,0.1,0.2,0.3,0.4,0.5};
-    Double_t yarr[6]={0.95,0.9,0.80,0.75,0.6,0.5};
+    Double_t xarr[6]= {0,0.1,0.2,0.3,0.4,0.5};
+    Double_t yarr[6]= {0.95,0.9,0.80,0.75,0.6,0.5};
     eEfficiencyParametrisation = new TSpline3("",xarr,yarr,5,0,0,0.6);
     cout << "EdbShowerAlgESimple::Set0()   Reset to the Neuch eff. ...done." << endl;
 
@@ -1262,7 +1264,7 @@ void EdbShowerAlgESimple::Init()
     ePlateBinning[13]=45;
     ePlateBinning[14]=45; // 12,13,14 are the same, cause I have seen that it makes no sense to produce these,
     // since E,and sigmaE for 45 plates doesnt change anymore at all...
-		// and how often !can! we scan more than 45 plates for a shower? 
+    // and how often !can! we scan more than 45 plates for a shower?
 
     ePlateNumber=20; // 20 plates by default...
     eSpecificationType[0] = 1;  // cp files by default...
@@ -1297,8 +1299,8 @@ void EdbShowerAlgESimple::Init()
     // Standard supposed efficiency of the showers/tracks that are to be evaluated:
     // The correct EffFunc_* is then choosen by taking the closes eff func to that one.
     // Initial parameters are the efficiency parameters for the "Neuch" parametrisation
-    Double_t xarr[7]={0,0.1,0.2,0.3,0.4,0.5,0.6};
-    Double_t yarr[7]={0.95,0.9,0.80,0.75,0.6,0.5,0.4};
+    Double_t xarr[7]= {0,0.1,0.2,0.3,0.4,0.5,0.6};
+    Double_t yarr[7]= {0.95,0.9,0.80,0.75,0.6,0.5,0.4};
     //if (NULL!=eEfficiencyParametrisation) delete eEfficiencyParametrisation;
     eEfficiencyParametrisation = new TSpline3("",xarr,yarr,5,0,0,0.65);
 
@@ -2597,8 +2599,8 @@ void EdbShowerAlgESimple::ReadTables_Energy()
     Int_t   	E_ASCEND[12]  = {0,4,1,5,2,6,3,7,8,9,10,11};
     Int_t npl;
     Float_t energyresolution;
-    Double_t E_Array_Ascending[12]={0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0};
-    Double_t E_Resolution[12]={0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0}; // initialize with 100% resolution...
+    Double_t E_Array_Ascending[12]= {0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0};
+    Double_t E_Resolution[12]= {0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0}; // initialize with 100% resolution...
 
     // First Create the ObjArray storing the Splines...
     eSplineArray_Energy_Stat_Electron = new TObjArray();
@@ -2783,7 +2785,7 @@ EdbShowerAlgIDSimple::EdbShowerAlgIDSimple()
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgIDSimple::EdbShowerAlgIDSimple()   Default Constructor"<<endl;
     Set0();
     Init();
-		cout << "EdbShowerAlgIDSimple::EdbShowerAlgIDSimple()   Default Constructor...done."<<endl;
+    cout << "EdbShowerAlgIDSimple::EdbShowerAlgIDSimple()   Default Constructor...done."<<endl;
 }
 
 
@@ -2903,11 +2905,11 @@ void EdbShowerAlgIDSimple::ReadTables_ID()
 {
     cout << "EdbShowerAlgIDSimple::ReadTables_ID"<<endl;
 
-		/// First guess until tables are fully read in.
-		cout << "First guess until tables are fully read in." << endl;
-		eIDCutTypeValue[0]=0.5;
-		eIDCutTypeValue[1]=0.75;
-		eIDCutTypeValue[2]=0.25;
+    /// First guess until tables are fully read in.
+    cout << "First guess until tables are fully read in." << endl;
+    eIDCutTypeValue[0]=0.5;
+    eIDCutTypeValue[1]=0.75;
+    eIDCutTypeValue[2]=0.25;
     cout << "EdbShowerAlgIDSimple::ReadTables_ID...done"<<endl;
     return;
 }
@@ -2918,7 +2920,7 @@ void EdbShowerAlgIDSimple::ReadTables_ID()
 void EdbShowerAlgIDSimple::Print()
 {
     cout << "EdbShowerAlgIDSimple::Print"<<endl;
-    cout << "EdbShowerAlgESimple::Print...done"<<endl;
+    cout << "EdbShowerAlgIDSimple::Print...done"<<endl;
     return;
 }
 
@@ -2928,7 +2930,7 @@ void EdbShowerAlgIDSimple::Print()
 void EdbShowerAlgIDSimple::Help()
 {
     cout << "EdbShowerAlgIDSimple::Help"<<endl;
-    cout << "EdbShowerAlgESimple::Help...done"<<endl;
+    cout << "EdbShowerAlgIDSimple::Help...done"<<endl;
     return;
 }
 
@@ -3019,16 +3021,16 @@ void EdbShowerAlgIDSimple::Update() {
 
     // (*) SpecType 3 :
     // Which addiditonal variables to use....
-// 		0: shoowershape only
-// 		1: and vtx IP
-// 		2: and vtx delta Z
-// 		3: shoowershape only No first plate
-// 		4: shoowershape only No first & second plate
-		if (eSpecificationType[3]==4) {
+// 	0: showershape only
+// 	1: and vtx IP
+// 	2: and vtx delta Z
+// 	3: shoowershape only, No first plate
+// 	4: shoowershape only, No first & second plate
+    if (eSpecificationType[3]==4) {
         addstring+="showerInfoSpec_SHAPEWOPL12/";
         eSpecificationTypeString[3]="SHAPEWOPL12";
     }
-		else if (eSpecificationType[3]==3) {
+    else if (eSpecificationType[3]==3) {
         addstring+="showerInfoSpec_SHAPEWOPL1/";
         eSpecificationTypeString[3]="SHAPEWOPL1";
     }
@@ -3057,24 +3059,16 @@ void EdbShowerAlgIDSimple::Update() {
     // generic file EnergyCorrections_Npl_%d.txt
     // For the ID class we do NOT need the correction factors, so we skip these files anyway....
     for (int ll=0; ll<15; ll++) {
-
-				TString mkdirstring=basicstring+addstring;
-// 				cout << "mkdirstring= " << mkdirstring << endl;
+        TString mkdirstring=basicstring+addstring;
         TString weigthstring=basicstring+addstring+TString(Form("weights_Npl_%d.txt",ANN_nPlates_ARRAY[ll]));
         if (gEDBDEBUGLEVEL >1) cout << "weigthstring = " << weigthstring << endl;
         ANN_MLP_ARRAY[ll]->LoadWeights(weigthstring);
         ANN_WeightFile_ARRAY[ll]=weigthstring;
-
-        //TString correctionsfactorstring=basicstring+addstring+TString(Form("EnergyCorrections_Npl_%d.txt",ANN_nPlates_ARRAY[ll]));
-        //if (gEDBDEBUGLEVEL >2) cout << "correctionsfactorstring = " << correctionsfactorstring << endl;
         Float_t p0,p1;
         p0=0.0;
         p1=1.0;
-        //if (ll<10) ReadCorrectionFactors(correctionsfactorstring,p0,p1);
-        // Correction files for ll>11 dont exist yet..
         eANN_MLP_CORR_0[ll]=p0;
         eANN_MLP_CORR_1[ll]=p1;
-
     }
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgIDSimple::Update  * According to the switch: set the right ANN of the Array as generic one." << endl;
 
@@ -3087,13 +3081,13 @@ void EdbShowerAlgIDSimple::Update() {
     if (check_Npl_index==1) eSpecificationTypeString[4]="Before";
     eSpecificationTypeString[5]=TString(Form("%d",ePlateNumber));
 
-		// (*) SpecType 5:
+    // (*) SpecType 5:
     // HigEfficiency Cut, HighPurityCut, MinDistCut
-		if (eSpecificationType[6]==1) {
+    if (eSpecificationType[6]==1) {
         addstring+="cutType/";
         eSpecificationTypeString[6]="cutType_HighEff";
     }
-		else if (eSpecificationType[6]==2) {
+    else if (eSpecificationType[6]==2) {
         addstring+="cutType/";
         eSpecificationTypeString[6]="cutType_HighPur";
     }
@@ -3102,15 +3096,18 @@ void EdbShowerAlgIDSimple::Update() {
         eSpecificationTypeString[6]="cutType_minDist";
     }
 
-    
+    if (gEDBDEBUGLEVEL >2)  cout << "EdbShowerAlgIDSimple:: The path for the ID weightfile is. " << endl;
+    if (gEDBDEBUGLEVEL >2)  cout << addstring << endl;
+
+
     // Set Generic ANN_Layout
     ANN_MLP=ANN_MLP_ARRAY[check_Npl_index];
 
 
-		// Re-Read ID lookup tables, because of the possibility to
-		// change the cutType threshold.
+    // Re-Read ID lookup tables, because of the possibility to
+    // change the cutType threshold.
     ReadTables_ID();
-		
+
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgIDSimple::Update  WARNING:: Weightfiles for _LT_  not produced yet!...." << endl;
     cout << "EdbShowerAlgIDSimple::Update...done." << endl;
     return;
@@ -3138,7 +3135,7 @@ void EdbShowerAlgIDSimple::Init()
     ePlateBinning[13]=45;
     ePlateBinning[14]=45; // 12,13,14 are the same, cause I have seen that it makes no sense to produce these,
     // since E,and sigmaE for 45 plates doesnt change anymore at all...
-		// and how often !can! we scan more than 45 plates for a shower?
+    // and how often !can! we scan more than 45 plates for a shower?
 
     ePlateNumber=20; // 20 plates by default...
     eSpecificationType[0] = 1;  // cp files by default...
@@ -3155,7 +3152,7 @@ void EdbShowerAlgIDSimple::Init()
     eSpecificationTypeString[3]="SHAPEONLY";
     eSpecificationTypeString[4]="Next";
     eSpecificationTypeString[5]="20";
-		eSpecificationTypeString[6]="cutType_minDist";
+    eSpecificationTypeString[6]="cutType_minDist";
 
     eForceSpecificationReload=kFALSE;
 
@@ -3175,8 +3172,8 @@ void EdbShowerAlgIDSimple::Init()
     // Standard supposed efficiency of the showers/tracks that are to be evaluated:
     // The correct EffFunc_* is then choosen by taking the closes eff func to that one.
     // Initial parameters are the efficiency parameters for the "Neuch" parametrisation
-    Double_t xarr[7]={0,0.1,0.2,0.3,0.4,0.5,0.6};
-    Double_t yarr[7]={0.95,0.9,0.80,0.75,0.6,0.5,0.4};
+    Double_t xarr[7]= {0,0.1,0.2,0.3,0.4,0.5,0.6};
+    Double_t yarr[7]= {0.95,0.9,0.80,0.75,0.6,0.5,0.4};
     if (NULL!=eEfficiencyParametrisation) delete eEfficiencyParametrisation;
     eEfficiencyParametrisation = new TSpline3("",xarr,yarr,5,0,0,0.65);
 
@@ -3234,18 +3231,18 @@ void EdbShowerAlgIDSimple::InitStrings()
     eSpecificationTypeStringArray[3][0]="SHAPEONLY";
     eSpecificationTypeStringArray[3][1]="ANDVTXIP";
     eSpecificationTypeStringArray[3][2]="ANDVTXDELTAZ";
-		eSpecificationTypeStringArray[3][3]="SHAPEWOPL1";
-		eSpecificationTypeStringArray[3][4]="SHAPEWOPL12";
+    eSpecificationTypeStringArray[3][3]="SHAPEWOPL1";
+    eSpecificationTypeStringArray[3][4]="SHAPEWOPL12";
 
-		eSpecificationTypeStringArray[4][0]="Next";
+    eSpecificationTypeStringArray[4][0]="Next";
     eSpecificationTypeStringArray[4][1]="Before";
 
-		eSpecificationTypeStringArray[5][0]="10";
+    eSpecificationTypeStringArray[5][0]="10";
 
-		eSpecificationTypeStringArray[6][0]="cutType_minDist";
-		eSpecificationTypeStringArray[6][1]="cutType_HighEff";
-		eSpecificationTypeStringArray[6][2]="cutType_HighPur";
-		
+    eSpecificationTypeStringArray[6][0]="cutType_minDist";
+    eSpecificationTypeStringArray[6][1]="cutType_HighEff";
+    eSpecificationTypeStringArray[6][2]="cutType_HighPur";
+
     cout << "EdbShowerAlgIDSimple::InitStrings()...done."<< endl;
     return;
 }
@@ -3366,11 +3363,11 @@ void EdbShowerAlgIDSimple::DoRun(EdbTrackP* shower)
         inANN[7+ii]= eParalongprofile[ii];
     }
     /// Last two variables are reserved for vtxIP and vtxDeltaZ values!!
-		
-		/// ALSO, IF first (two) plate information shall be used...
-		/// DONE IN THE WEIGHTFILE (weight of pl1&2 is then zero),
-		/// so dont have to do it here...
-		
+
+    /// ALSO, IF first (two) plate information shall be used...
+    /// DONE IN THE WEIGHTFILE (weight of pl1&2 is then zero),
+    /// so dont have to do it here...
+
 
     // Fill Tree:
     ANNTree->Fill();
@@ -3410,16 +3407,16 @@ void EdbShowerAlgIDSimple::DoRun(EdbTrackP* shower)
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgIDSimple::DoRun()   After  Correction: ANN_MLP->Evaluate(0,params)= " <<  val << " (Inputvar=" << inANN[0]  << ")." << endl;
 
 
-		// Determining the type: if its SHID like or if its SPID like...
-		Int_t type=DetermineIDType(val,eSpecificationType[6]);
-		DetermineIDFlag(type);
-		
+    // Determining the type: if its SHID like or if its SPID like...
+    Int_t type=DetermineIDType(val,eSpecificationType[6]);
+    DetermineIDFlag(type);
+
 // 		if (val>eANNIDCutValue) cout << "val>eANNIDCutValue" << endl;
-// 
+//
 // 		cout << "UUUUUUUUUUUUUUUUUU   val= " <<  val << endl;
-// 		
+//
 // 		shower->SetP(val);
-// 
+//
 //     cout << "EdbShowerAlgIDSimple::DoRun() Finally, set values..." <<  endl;
 // 		cout << "EdbShowerAlgIDSimple::DoRun() /// VERY PRELIMINARY...." <<  endl;
 // 		cout << "EdbShowerAlgIDSimple::DoRun() Finally, set values..." <<  endl;
@@ -3433,37 +3430,37 @@ void EdbShowerAlgIDSimple::DoRun(EdbTrackP* shower)
 
 Int_t EdbShowerAlgIDSimple::DetermineIDType(Double_t val, Int_t SpecificationType)
 {
-	if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgIDSimple::DetermineIDType()" << endl;
+    if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgIDSimple::DetermineIDType()" << endl;
 
-	// Depending on cutthresholdvalue and -type we assign the ANN output into
-	// 0 (i.e. SHID) or 1 (i.e. SPID):
-	if (val>eIDCutTypeValue[SpecificationType]) return 1;
-	return 1;
+    // Depending on cutthresholdvalue and -type we assign the ANN output into
+    // 0 (i.e. SHID) or 1 (i.e. SPID):
+    if (val>eIDCutTypeValue[SpecificationType]) return 1;
+    return 1;
 }
 
 //______________________________________________________________________________________________________________
 
 Int_t EdbShowerAlgIDSimple::DetermineIDFlag(Int_t IDType)
 {
-	if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgIDSimple::DetermineIDFlag()" << endl;
+    if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgIDSimple::DetermineIDFlag()" << endl;
 
-	// Depending on the SHID<->SPID type we assign the ID output into
-	// 22, -11, -211 (PdgIds of Gamma,Electron,Pion)
+    // Depending on the SHID<->SPID type we assign the ID output into
+    // 22, -11, -211 (PdgIds of Gamma,Electron,Pion)
 
-	Int_t Flag=0;
-	if (eSpecificationType[1]==2) {
-		if (IDType==0) Flag=-211;
-		if (IDType==1) Flag=22;
-	}
-	else if (eSpecificationType[1]==1) {
-		if (IDType==0) Flag=-11;
-		if (IDType==1) Flag=-211;
-	}
-	else {
-		if (IDType==0) Flag=22;
-		if (IDType==1) Flag=-11;
-	}
-	return Flag;
+    Int_t Flag=0;
+    if (eSpecificationType[1]==2) {
+        if (IDType==0) Flag=-211;
+        if (IDType==1) Flag=22;
+    }
+    else if (eSpecificationType[1]==1) {
+        if (IDType==0) Flag=-11;
+        if (IDType==1) Flag=-211;
+    }
+    else {
+        if (IDType==0) Flag=22;
+        if (IDType==1) Flag=-11;
+    }
+    return Flag;
 }
 
 //____________________________________________________________________________________________________
@@ -3526,7 +3523,7 @@ void EdbShowerAlgIDSimple::PrintSpecifications() {
     cout << "EdbShowerAlgIDSimple::   eSpecificationType[3]  (E range:    0..20/0..40) = " << GetSpecType(3) << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationType[4]  (Npl weight: next before/after) = " <<GetSpecType(4) << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationType[5]  (Npl weight: 10,12,...,45) = " << GetSpecType(5) << endl;
-		cout << "EdbShowerAlgIDSimple::   eSpecificationType[6]  (CutType: MinDist/HighEff/HighPur) = " << GetSpecType(6) << endl;
+    cout << "EdbShowerAlgIDSimple::   eSpecificationType[6]  (CutType: MinDist/HighEff/HighPur) = " << GetSpecType(6) << endl;
     cout << "EdbShowerAlgIDSimple::   " << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[0]  (take CP or linked_tracks)   = " << eSpecificationTypeString[0] << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[1]  (gamma_vs_electron/electron_vs_pion/pion_vs_gamma) = " << eSpecificationTypeString[1] << endl;
@@ -3534,7 +3531,7 @@ void EdbShowerAlgIDSimple::PrintSpecifications() {
     cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[3]  (E range: 0..20/0..40) = " << eSpecificationTypeString[3] << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[4]  (Npl weight: next before/after) = " << eSpecificationTypeString[4] << endl;
     cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[5]  (Npl weight: 10,12,...,45) = " << eSpecificationTypeString[5] << endl;
-		cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[6]  (CutType: MinDist/HighEff/HighPur) = " << eSpecificationTypeString[6] << endl;
+    cout << "EdbShowerAlgIDSimple::   eSpecificationTypeString[6]  (CutType: MinDist/HighEff/HighPur) = " << eSpecificationTypeString[6] << endl;
     cout << "EdbShowerAlgIDSimple::   " << endl;
     cout << "EdbShowerAlgIDSimple::   In case you want to change a specification then do for example:" << endl;
     cout << "EdbShowerAlgIDSimple::   EdbShowerAlgIDSimple->SetSpecification(2,3) " << endl;
