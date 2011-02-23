@@ -48,6 +48,7 @@ public:
    Int_t       ConvertMicrotracksDataSetToEdb(const char *query, const char *outdir, int major=0, int minor=0, bool structure_only=false );
    Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0, bool structure_only=false );
    Int_t       ConvertMicrotracksProcessToEdb(ULong64_t processoperation, const char *outdir, int major=0, int minor=0, bool structure_only=false );
+   Int_t       ConvertMicrotracksParentProcessToEdb(ULong64_t parentprocessoperation, const char *outdir, int major=0, int minor=0, bool structure_only=false );
    
    Int_t       ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor);
 
