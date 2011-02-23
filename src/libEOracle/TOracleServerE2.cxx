@@ -755,6 +755,112 @@ Int_t  TOracleServerE2::ReadMicrotracksPattern(int id_eventbrick, char *selectio
 
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major, int minor, bool structure_only)
+{  
+  char query[2048];
+   sprintf(query,"\
+    select sl.id_eventbrick,sl.id_plate,sl.id_zone, pl.z from TB_VOLUME_SLICES%s sl, TB_PLATES%s pl where \
+    sl.id_volume=%lld and sl.id_eventbrick=pl.id_eventbrick and sl.id_plate=pl.id order by pl.id",
+	    eRTS.Data(),
+	    eRTS.Data(),
+	    id_volume);
+  int nv= ConvertMicrotracksDataSetToEdb( query, outdir, major, minor, structure_only );
+  Log(1,"ConvertMicrotracksVolumeToEdb","%d views are extracted from db for the volume %lld",nv,id_volume);
+  return nv;
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ConvertMicrotracksProcessToEdb(ULong64_t processoperation, const char *outdir, int major, int minor, bool structure_only)
+{  
+  char query[2048];
+   sprintf(query,"\
+    select tz.id_eventbrick,tz.id_plate,tz.ID,tp.Z from TB_ZONES%s tz, TB_PLATES%s tp where \
+    tz.id_processoperation=%lld and tz.id_eventbrick=tp.id_eventbrick and tz.id_plate=tp.id order by tp.id",
+	    eRTS.Data(),
+	    eRTS.Data(),
+	    processoperation);
+  int nv= ConvertMicrotracksDataSetToEdb( query, outdir, major, minor, structure_only );
+  Log(1,"ConvertMicrotracksProcessToEdb","%d views are extracted from db for the processoperation %lld",nv,processoperation);
+  return nv;
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ConvertMicrotracksDataSetToEdb(const char *query, const char *outdir, int major, int minor, bool structure_only)
+{
+  // Input: query providing the list of zones to be extracted
+  //        outdir - where to write the dataset
+  //        major,minor - versions for the files names like: brick.plate,major.minor.raw.root
+
+  //check if outdir is accessible:
+  EdbScanProc sproc;
+  if(!sproc.CheckDirWritable(outdir))     return 0;
+  EdbScanSet  ss;
+
+  int  nviewtot=0;
+  std::map<int,ULong64_t> pl_zones;
+  int brick =-999, plate=0;
+  ULong64_t zone=0;
+  Float_t   z=0;
+
+  try{
+    if (!fStmt)      fStmt = fConn->createStatement();
+    fStmt->setSQL(query);
+    Log(2,"ConvertMicrotracksDataSetToEdb","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      sscanf( (rs->getString(1)).c_str(),"%d"  , &brick );
+      sscanf( (rs->getString(2)).c_str(),"%d"  , &plate );
+      sscanf( (rs->getString(3)).c_str(),"%lld", &zone );
+      sscanf( (rs->getString(4)).c_str(),"%f"  , &z );
+      pl_zones[plate]=zone;
+
+      EdbPlateP *plt = new EdbPlateP();
+      plt->SetID(plate);
+      plt->SetZlayer(z,z-150,z+150);
+      ss.eB.AddPlate(plt);
+      ss.eIDS.Add(new EdbID(brick,plate,major,minor));
+    }
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE", "ConvertMicrotracksDataSetToEdb: failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+    
+  Log(1,"ConvertMicrotracksDataSetToEdb","found ScanSet: %d %d %d %d with %d plates",brick,0,major,minor,ss.eB.Npl() );
+
+  sproc.eProcDirClient=outdir;
+  int id[4]={brick,0,major,minor};
+  ss.eB.SetID(brick);
+  ss.MakePIDList();
+  if(gEDBDEBUGLEVEL>2) ss.Print();
+  sproc.WriteScanSet(id,ss);
+  sproc.MakeAFFSet(ss);
+
+  if(!structure_only) {
+    int plate0 =-999;
+    EdbRun *run=0;
+    map<int,ULong64_t>::const_iterator iter;
+    for (iter=pl_zones.begin(); iter != pl_zones.end(); ++iter) {
+      plate= iter->first;
+      zone = iter->second;
+      Log(2,"ConvertMicrotracksDataSetToEdb","for plate: %d read zone: %lld", plate,zone);
+      id[0] = brick; id[1]=plate; id[2]=major; id[3]=minor;
+      TString str; sproc.MakeFileName(str,id,"raw.root");
+      sproc.CheckProcDir(id);
+      if(plate!=plate0) {
+	plate0=plate;
+	run = new EdbRun(str.Data(),"RECREATE");
+      } else run = new EdbRun(str.Data(),"UPDATE");
+      nviewtot+=ConvertMicrotracksZoneToEdb(brick,zone,*run);
+      if(run) run->Close();      SafeDelete(run);
+    }
+
+  }
+  Log(1,"ConvertMicrotracksDataSetToEdb","%d views are extracted from db for the brick %d",nviewtot,brick);
+  return nviewtot;
+}
+
+/*
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major, int minor, bool structure_only)
 {
   // Input: id_volume (from tb_volumes)
   //        outdir - where to write the dataset
@@ -833,7 +939,7 @@ Int_t  TOracleServerE2::ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const
   Log(2,"ConvertMicrotracksVolumeToEdb","%d views is extracted from db for the volume %lld",nviewtot,id_volume);
   return nviewtot;
 }
-
+*/
 //------------------------------------------------------------------------------------
 Int_t TOracleServerE2::GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id)
 {

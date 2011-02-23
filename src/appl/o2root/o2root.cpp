@@ -11,6 +11,7 @@ using namespace std;
 void print_help_message()
 {
   cout<< "\nUsage: \n\t  o2root -vVOLUME [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
+  cout<< "\t  o2root -pPROCESSOPERATION [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
   cout<< "\t  o2root -sbPATH -brickBRICK [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n\n";
   cout<< "\t\t  VOLUME  - volume id as stored in database \n";
   cout<< "\t\t  PATH    - the scanback path id \n";
@@ -46,8 +47,10 @@ int main(int argc, char* argv[])
   gEDBDEBUGLEVEL        = gEnv->GetValue("o2root.EdbDebugLevel" , 1);
 
   bool      do_volume   = false;
+  bool      do_processoperation   = false;
   bool      do_scanback = false;
   ULong64_t id_volume = 0LL;
+  ULong64_t processoperation = 0LL;
   int       major=0;
   int       minor=0;
 
@@ -60,12 +63,12 @@ int main(int argc, char* argv[])
     if     (!strncmp(key,"-v",2)) 
       {
 	if(strlen(key)>2)       sscanf(key+2,"%lld",&id_volume);
-// #if defined(R__WIN32)
-//          id_volume=_atoi64(key+2);
-// #else
-//          id_volume=atoll(key+2);
-// #endif
 	do_volume=true;
+      }
+    else if(!strncmp(key,"-p",2)) 
+      {
+	if(strlen(key)>2)       sscanf(key+2,"%lld",&processoperation);
+	do_processoperation=true;
       }
     else if(!strncmp(key,"-o",2)) 
       {
@@ -94,7 +97,7 @@ int main(int argc, char* argv[])
       }
   }
 
-  if(!(do_volume||do_scanback))   { print_help_message(); return 0; }
+  if(!(do_volume||do_scanback||do_processoperation))   { print_help_message(); return 0; }
 
   TOracleServerE2 *db = new TOracleServerE2(dbname,user,password);
   if(!db) { Log(1,"o2root","ERROR: the database connection is failed!"); return 0; }
@@ -106,7 +109,14 @@ int main(int argc, char* argv[])
     printf("----------------------------------------------------------------------------\n\n");
     db->ConvertMicrotracksVolumeToEdb(id_volume, outdir, major, minor);
   }
-  if(do_scanback) {
+   if(do_processoperation) {
+    printf("\n----------------------------------------------------------------------------\n");
+    printf("Read processoperation: \t\t\t%lld \nfrom the database: \t\t%s %s \nand save into directory: \t%s \nwith versions: \t\t\t%d.%d\n",
+	   processoperation, dbname, rdb, outdir, major,minor);
+    printf("----------------------------------------------------------------------------\n\n");
+    db->ConvertMicrotracksProcessToEdb(processoperation, outdir, major, minor);
+  }
+ if(do_scanback) {
     printf("\n----------------------------------------------------------------------------\n");
     printf("Read scanback path: \t\t%d of brick %ld \nfrom the database: \t\t%s %s \nand save into directory: \t%s \nwith versions: \t\t\t%d.%d\n",
 	   path, id_brick, dbname, rdb, outdir, major,minor);

@@ -112,7 +112,6 @@ public:
     {int id41[4]; id1.Get(id41); int id42[4]; id2.Get(id42); return AlignAll(id41, id42, npre, nfull, opt);}
   
   int     TrackSetBT( EdbScanSet &sc, TEnv &cenv);
-  //int     TrackSetBT( EdbScanSet &sc, EdbScanCond &cond, TCut c="1");
   int     ReadTracksTree(EdbID id, EdbPVRec &ali, TCut cut="1");
 
   bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);

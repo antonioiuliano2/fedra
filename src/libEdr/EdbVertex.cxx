@@ -206,6 +206,15 @@ Bool_t EdbVertex::TrackInVertex( EdbTrackP *t )
 }
 
 //______________________________________________________________________________
+float EdbVertex::MaxImpact()
+{
+  int   ntr = N();  if(ntr<2)                      return 0;
+  float imp=0.;
+  for (int i=0; i<ntr; i++)    if(Impact(i)>imp) imp=Impact(i);
+  return imp;
+}
+
+//______________________________________________________________________________
 float EdbVertex::MaxAperture()
 {
   float aper=0.;

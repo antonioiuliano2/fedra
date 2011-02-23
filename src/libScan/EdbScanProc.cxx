@@ -495,7 +495,6 @@ int EdbScanProc::AlignSet(EdbScanSet &sc, int npre, int nfull, const char *opt )
 }
 
 //----------------------------------------------------------------
-//int EdbScanProc::TrackSetBT(EdbScanSet &sc, EdbScanCond &cond, TCut c)
 int EdbScanProc::TrackSetBT(EdbScanSet &sc, TEnv &cenv)
 {
   EdbScanCond cond;

@@ -110,6 +110,7 @@ class EdbVertex: public TObject {
   Float_t    Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
 
   Float_t    MaxAperture();
+  Float_t    MaxImpact();
   EdbVertex *GetConnectedVertex(int nv);
   EdbVertex *GetConnectedVertexForTrack(int it);
   Bool_t     IsEqual(const TObject *o) const;

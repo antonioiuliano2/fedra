@@ -44,7 +44,11 @@ public:
    Int_t       ReadViewsZone(ULong64_t id_zone, int side, TObjArray &edbviews);
    Int_t       ReadMicrotracksZone(Int_t id_eventbrick, ULong64_t id_zone, int side, TObjArray &edbviews);
    Int_t       ConvertMicrotracksZoneToEdb(Int_t id_eventbrick, ULong64_t id_zone, EdbRun &run);
+   
+   Int_t       ConvertMicrotracksDataSetToEdb(const char *query, const char *outdir, int major=0, int minor=0, bool structure_only=false );
    Int_t       ConvertMicrotracksVolumeToEdb(ULong64_t id_volume, const char *outdir, int major=0, int minor=0, bool structure_only=false );
+   Int_t       ConvertMicrotracksProcessToEdb(ULong64_t processoperation, const char *outdir, int major=0, int minor=0, bool structure_only=false );
+   
    Int_t       ConvertScanbackPathToEdb(Int_t id_eventbrick, Int_t path, const char *outdir, int major, int minor);
 
    Int_t       ReadTemplateMarks(Int_t id_brick, EdbMarksSet &ms);
