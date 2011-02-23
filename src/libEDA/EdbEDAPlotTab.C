@@ -7,6 +7,7 @@ using namespace EdbEDAUtil;
 void EdbEDAPlotTab::CheckEff(EdbPVRec *pvr, TObjArray *tracks){
 	// Plot efficiencies for each plate or each angle.
 	// Using the tracks in the given PVRec object.
+	// Use minimum number of segment bigger equal than eEffMinSeg(default=4).
 	printf("Efficiency plot\n");
 	int i,j,k;
 

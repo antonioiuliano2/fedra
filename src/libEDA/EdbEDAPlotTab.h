@@ -25,7 +25,7 @@ class EdbEDAPlotTab {
 	void SetEffNbins(int nbins, double tmax=0.7) { eEffNbins=nbins; eEffTmax = tmax;}
 	void SetEffMinSeg(int nseg) { eEffMinSeg=nseg;}
 	
-	TCanvas * CreateCanvas(char *plot_name){
+	static TCanvas * CreateCanvas(char *plot_name){
 		// --- Create an embedded canvas
 		
 		TCanvas *c1;
