@@ -984,16 +984,17 @@ Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick, Int_t driverle
     if (!fStmt)
       fStmt = fConn->createStatement();
 
-    sprintf(query,"select ID,to_char(starttime),to_char(notes) from tb_proc_operations%s where id_eventbrick=%s and driverlevel>=%d",
+    sprintf(query,"select ID, id_plate,to_char(starttime),to_char(notes) from tb_proc_operations%s where id_eventbrick=%s and driverlevel>=%d",
 	    eRTS.Data(), id_eventbrick, driverlevel);
 
     fStmt->setSQL(query);
     Log(2,"DumpProcessOperations","execute sql query: %s ...",query);
     fStmt->execute();
     ResultSet *rs = fStmt->getResultSet();
+    printf("\n OperationID     Plate   Date      Comment\n");
     while (rs->next()){
-      printf("Operation: %s, start time: %s, notes: %s\n",
-	     rs->getString(1).c_str(),rs->getString(2).c_str(),rs->getString(3).c_str());
+      printf("%s  %3d  %s  %s\n",
+	     rs->getString(1).c_str(), rs->getInt(2), rs->getString(3).c_str(),rs->getString(4).c_str());
     }
     delete rs;
 
@@ -1003,6 +1004,67 @@ Int_t TOracleServerE2::DumpProcessOperations(char *id_eventbrick, Int_t driverle
   return 0;
 }
 
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::DumpBrickVolumesID(char *id_eventbrick)
+{
+  // Dump on the screen the list of volumes IDs and correspondent process operation IDs
+
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select volume, id_processoperation, id from tb_volumes%s where id_eventbrick=%s",
+	    eRTS.Data(), id_eventbrick);
+
+    fStmt->setSQL(query);
+    Log(2,"DumpProcessOperations","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    printf("\nVolume      ProcessID       volumeID\n");
+    while (rs->next()){
+      printf(" %s    %s    %s\n",
+	     rs->getString(1).c_str(), rs->getString(2).c_str(), rs->getString(3).c_str());
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "DumpBrickVolumesID: failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------------
+Int_t TOracleServerE2::DumpEventsID(char *id_eventbrick)
+{
+  // Dump on the screen the list of volumes IDs and correspondent process operation IDs
+
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    sprintf(query,"select event  from tb_predicted_events%s where ID in \
+                   (select id_event from tb_cs_candidates%s where id_eventbrick in \
+                   (select id from tb_eventbricks%s where id_brick=%s))",
+	    eRTS.Data(),eRTS.Data(),eRTS.Data(), id_eventbrick);
+
+    fStmt->setSQL(query);
+    Log(2,"DumpEventsID","execute sql query: %s ...\n",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      printf("Event \t%s  is associated with brick %s\n", rs->getString(1).c_str(), id_eventbrick);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2", "DumpEventsID: failed: (error: %s)", (oraex.getMessage()).c_str());
+  }
+  return 0;
+}
 
 //------------------------------------------------------------------------------------
 Int_t TOracleServerE2::GetId_EventBrick(char *id_brick,char *id_set, char *id)
@@ -1121,8 +1183,6 @@ Int_t TOracleServerE2::GetId_Volume(char *id_eventbrick, char *id_process_operat
   return 0;
 }
 
-
-
 //------------------------------------------------------------------------------------
 Int_t TOracleServerE2::GetProcessType(char *IDPROCESS)
 {
@@ -1166,4 +1226,19 @@ in (select id_eventbrick, id from tb_proc_operations where id = %s))",
     Error("TOracleServerE", "GetProcessType; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
   return scanback;
+}
+
+//------------------------------------------------------------------------------------
+void TOracleServerE2::PrintBrickInfo(Long_t brick, int level)
+{
+  printf("----------------- all     operations ------------------------\n");
+  DumpProcessOperations( Form("%ld",brick), 0);
+  printf("\n----------------- level 2 operations ----------------------\n");
+  DumpProcessOperations( Form("%ld",brick), 2);
+  printf("\n------------ Volumes stored for brick %ld -------------\n",brick);
+  DumpBrickVolumesID( Form("%ld",brick));
+  printf("\n------------ Events defined for brick %ld -------------\n",brick);
+  if(brick>10000000) DumpEventsID( Form("%ld",brick%10000000));
+  else               DumpEventsID( Form("%ld",brick%1000000));
+  printf("-------------------------------------------------------------\n");
 }

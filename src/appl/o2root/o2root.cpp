@@ -13,7 +13,8 @@ void print_help_message()
   cout<< "\nUsage: \n\t  o2root -vVOLUME [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
   cout<< "\t  o2root -pPROCESSOPERATION [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
   cout<< "\t  o2root -PPARENTPROCESSOPERATION [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
-  cout<< "\t  o2root -sbPATH -brickBRICK [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n\n";
+  cout<< "\t  o2root -sbPATH -brickBRICK [-maMAJOR -miMINOR -oOUTDIR -rdbRDB] \n";
+  cout<< "\t  o2root -brickBRICK -info \n\n";
   cout<< "\t\t  VOLUME  - volume id as stored in database \n";
   cout<< "\t\t  PATH    - the scanback path id \n";
   cout<< "\t\t  BRICK   - the brick ID (if scanback path should be extracted)\n";
@@ -51,6 +52,7 @@ int main(int argc, char* argv[])
   bool      do_processoperation   = false;
   bool      do_parentprocessoperation   = false;
   bool      do_scanback = false;
+  bool      do_brickinfo = false;
   ULong64_t id_volume = 0LL;
   ULong64_t processoperation = 0LL;
   ULong64_t parentprocessoperation = 0LL;
@@ -103,9 +105,13 @@ int main(int argc, char* argv[])
 	if(strlen(key)>3)	path=atol(key+3);
 	do_scanback=true;
       }
-  }
+     else if(!strncmp(key,"-info",5))
+      {
+        do_brickinfo=true;
+      }
+ }
 
-  if(!(do_volume||do_scanback||do_processoperation||do_parentprocessoperation))   { print_help_message(); return 0; }
+  if(!(do_volume||do_scanback||do_processoperation||do_parentprocessoperation||do_brickinfo))   { print_help_message(); return 0; }
 
   TOracleServerE2 *db = new TOracleServerE2(dbname,user,password);
   if(!db) { Log(1,"o2root","ERROR: the database connection is failed!"); return 0; }
@@ -137,6 +143,13 @@ int main(int argc, char* argv[])
 	   path, id_brick, dbname, rdb, outdir, major,minor);
     printf("----------------------------------------------------------------------------\n\n");
     db->ConvertScanbackPathToEdb(id_brick, path, outdir, major, minor);
+  }
+ if(do_brickinfo) {
+    printf("\n----------------------------------------------------------------------------\n");
+    printf("Print info for brick: \t%ld from the database: \t\t%s %s\n",
+	   id_brick, dbname, rdb);
+    printf("----------------------------------------------------------------------------\n\n");
+    db->PrintBrickInfo(id_brick,0);
   }
   delete db;
   return 1;
