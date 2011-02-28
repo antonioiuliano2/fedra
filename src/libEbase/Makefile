@@ -7,7 +7,7 @@ NAME          = Ebase
 
 headers       = EdbLayer.h EdbScanCond.h EdbBrick.h EdbScanSet.h EdbID.h EdbSegP.h EdbSigma.h EdbSEQ.h EdbCouplesTree.h EdbSegCouple.h
 
-PROJECT_LIBS  = $(PROJECT_LIBS) -lEdb -lEmath -lvt
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEdb -lEmath -lvt -lEdr
 
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk
