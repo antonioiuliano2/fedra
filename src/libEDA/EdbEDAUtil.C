@@ -869,9 +869,10 @@ EdbPVRec * EdbEDAUtil::ReadFeedbackPVR(char *filename){
 			// fill COV for vertexing
 			s->SetErrors();
 			cond.FillErrorsCov(s->TX(), s->TY(), s->COV());
-
-			t->AddSegment(s);
-			pvr->AddSegment(*s);
+			
+			// Add segment in PVRec and Track, keeping consistency of pointer in them.
+			EdbSegP *s_in_pattern = pvr->AddSegment(*s);
+			t->AddSegment( s_in_pattern);
 		}
 	}
 	

@@ -334,7 +334,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	
 	void Clear() { 
 		// Clear Tracks and TracksBase.
-		ClearTracks(); ClearTracksBase();
+		ClearTracks(); ClearTracksBase(); eAreaSet->Clear();
 	}
 	
 	void SetTracksAll(void) { *eTracks = *eTracksBase;}

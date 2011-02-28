@@ -756,6 +756,9 @@ void EdbEDAIO::WriteFeedbackFile2008(EdbVertex *v, char *filename){
 void EdbEDAIO::ReadFeedbackFile(char *filename){
 	// Read feedback file format (ver 2009 Oct).
 	
+	gEDA->Reset();
+	
+	
 	char FlagPart[][10]={"", "mu", "charm", "e", "e-pair"};
 	char FlagCS[][10]   ={"", "cs"};
 	
@@ -904,8 +907,9 @@ void EdbEDAIO::ReadFeedbackFile(char *filename){
 			s->SetErrors();
 			cond.FillErrorsCov(s->TX(), s->TY(), s->COV());
 			
-			t->AddSegment(s);
-			pvr->AddSegment(*s);
+			// Add segment in PVRec and Track, keeping consistency of pointer in them.
+			EdbSegP *s_in_pattern = pvr->AddSegment(*s);
+			t->AddSegment( s_in_pattern);
 			
 			if(NULL!=tx){
 				EdbSegP seg(*s);
@@ -930,17 +934,17 @@ void EdbEDAIO::ReadFeedbackFile(char *filename){
 		EdbPattern *pat = pvr->GetPattern(i);
 		pat->SetPID(gEDA->GetPID(pat->ID()));
 	}
-	gEDA->GetTrackSet("TS")->Clear();
+
 	gEDA->SetPVR(pvr);
 	gEDA->GetTrackSet("TS")->AddTracksPVR(pvr);
 	gEDA->GetVertexSet()->AddVertices(pvr->eVTX);
-
+	
 	if(aset){
 		EdbEDATrackSet *set = gEDA->GetTrackSet(asetname);
 		if(set) set->SetAreaSet(aset);
 	}
-
 	gEDA->Redraw();
+	gEDA->UpdateScene();
 }
 
 

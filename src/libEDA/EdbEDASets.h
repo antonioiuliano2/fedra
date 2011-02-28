@@ -134,6 +134,8 @@ class EdbEDAAreaSet : public TObject{
 	EdbEDAArea * GetArea(int i) { if(0<=i&&i<N()) return (EdbEDAArea *) eAreas->At(i); else return NULL;}
 	EdbEDAArea * GetAreaIPL(int ipl) { for(int i=0; i<N(); i++) if(GetArea(i)->Plate()==ipl) return GetArea(i); return NULL;}
 	
+	void Clear() { eAreas->Clear();}
+	
 	
 	ClassDef(EdbEDAAreaSet,0) // class for scanning area draw.
 };

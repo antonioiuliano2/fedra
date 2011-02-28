@@ -538,6 +538,7 @@ class EdbEDA :
 	
 	void AddDrawObject(EdbEDAObject *o) { eDrawObjects->Add(o);}
 	void RemoveDrawObject(TObject *o){ eDrawObjects->Remove(o); eDrawObjects->Sort();}
+	void ClearDrawObjects(){ eDrawObjects->Clear();}
 	int  NDrawObjects(){ return eDrawObjects->GetEntries();}
 	EdbEDAObject *GetDrawObject(int i){ return (EdbEDAObject*) eDrawObjects->At(i);}
 
@@ -634,6 +635,13 @@ class EdbEDA :
 	void Draw(int redraw = kFALSE);
 	
 	void Redraw() { if(gEve)Draw(kTRUE);}
+	void UpdateScene() { if(gEve) gEve->GetDefaultGLViewer()->UpdateScene();}
+	
+	void Reset(){ 
+		for(int i=0;i<NTrackSets();i++) GetTrackSet(i)->Clear();
+		ClearDrawObjects();
+		ClearVertices();
+	}
 	
 	void StorePrevious() {
 		for(int i=0;i<NTrackSets();i++) GetTrackSet(i)->StorePrevious();
