@@ -408,8 +408,8 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
     float Rcut = eAlgoParameterConnectionDR;
     float  Tcut = eAlgoParameterConnectionDT;
 
-    float mini[5] ={-20000.,-20000.,-1,-1,0};
-    float maxi[5] ={20000.,20000.,1,1,100};
+    float mini[5] = {-20000.,-20000.,-1,-1,0};
+    float maxi[5] = {20000.,20000.,1,1,100};
     /*
     for (int d=num+1; d<MAXPLATE+1; d++) {
         index++;
@@ -932,8 +932,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     float Rcut = 150.;
     float  Tcut = 0.15;
 
-    float mini[5] ={-20000.,-20000.,-1,-1,0};
-    float maxi[5] ={20000.,20000.,1,1,100};
+    float mini[5] = {-20000.,-20000.,-1,-1,0};
+    float maxi[5] = {20000.,20000.,1,1,100};
 
 //    for (int d=num+1; d<MAXPLATE+1; d++){
 //  if (DOWN==0) break;
@@ -2490,7 +2490,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     Double_t sigma_val_corr;
     Double_t sigma_val;
 
-    Int_t NrOfANNInputNeurons[]={11,16,21,26,31,36,41,46};
+    Int_t NrOfANNInputNeurons[]= {11,16,21,26,31,36,41,46};
     for (Int_t i=0; i<8; ++i) NrOfANNInputNeurons[i]=NrOfANNInputNeurons[i]+1+4;
     //=C= -----------------------------------------------------
 
@@ -2790,7 +2790,7 @@ Float_t EdbShowerRec::Energy_CalcSigma(Float_t Energy, Int_t type)
     //=C= -----------------------------------------------------
     // To understand where these values come from, please look in
     // the note of energy measurement by FWM. to be found on the opera doc server.
-    Float_t SigmaParametrizationArray[8][3]={ { 1.27,0.0,0.28}, {0.79,0.0,0.26}, {0.48,0.0,0.23}, {0.50,0.0,0.15} ,{0.49,0.0,0.10} ,{0.50,0.17,0.04}, {0.49,0.24,0.00},{0.45,0.37,0.03} };
+    Float_t SigmaParametrizationArray[8][3]= { { 1.27,0.0,0.28}, {0.79,0.0,0.26}, {0.48,0.0,0.23}, {0.50,0.0,0.15} ,{0.49,0.0,0.10} ,{0.50,0.17,0.04}, {0.49,0.24,0.00},{0.45,0.37,0.03} };
 
     eEnergyResolutionFitFunction_All->SetParameter(0,SigmaParametrizationArray[type][0]);
     eEnergyResolutionFitFunction_All->SetParameter(1,SigmaParametrizationArray[type][1]);
@@ -2836,8 +2836,8 @@ void EdbShowerRec::Energy_CreateANNTree()
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Energy_CreateANNTree() === CreateANNTree()  is done."<<endl;
     //gEDBDEBUGLEVEL=3;
 
-    Int_t ReconstructedPlatesArray[]  ={11,16,21,26,31,36,41,46};
-    Int_t NrOfANNInputNeurons[]       ={11,16,21,26,31,36,41,46};
+    Int_t ReconstructedPlatesArray[]  = {11,16,21,26,31,36,41,46};
+    Int_t NrOfANNInputNeurons[]       = {11,16,21,26,31,36,41,46};
     eEnergyANN = new TObjArray(9);
 
     //=C= -----------------------------------------------------
