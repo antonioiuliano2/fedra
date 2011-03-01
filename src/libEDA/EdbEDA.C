@@ -841,6 +841,7 @@ void EdbEDAIO::ReadFeedbackFile(char *filename){
 			sscanf(line.Data(),"%d %f %f %f %d %d %d", &id, &x, &y, &z, &isprimary, &ischarm, &istau);
 			EdbVertex *v = new EdbVertex();
 			v->SetXYZ(x,y,z); v->SetID(id);
+			v->SetFlag(isprimary);
 			pvr->AddVertex(v);
 			printf("Vertex %d %f %f %f\n",v->ID(), v->X(), v->Y(), v->Z());
 		}
