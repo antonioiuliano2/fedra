@@ -112,6 +112,9 @@ public:
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
     }
+    
+     inline   TH2F* GetHistChi2W() {return eHistChi2W;}
+     inline   TH2F* GetHistYX() {return eHistYX;}
 
 
 
@@ -175,6 +178,7 @@ public:
 
 
     void CreateEdbPVRec();
+    void GetFilledXYSize();
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);

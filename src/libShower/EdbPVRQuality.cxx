@@ -197,7 +197,8 @@ void EdbPVRQuality::CheckEdbPVRec()
 
         // failsafe warning in case that there are many bins with zero content.
         // for now we print a error message:
-        if (nemptybinsXY>nbins/10) cout << "WARNING !!! more than 10 percent empty bins for pattern i= " << i << endl;
+	Int_t percentage=(nemptybinsXY*100)/nbins;
+        if (percentage>10) cout << "WARNING !!! About " << percentage << " percent empty bins for pattern i= " << i << endl;
 
         ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
         histPatternBTDensity->Reset();
@@ -526,7 +527,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
             // failsafe warning in case that there are many bins with zero content.
             // for now we print a error message:
-            if (nemptybinsXY>nbins/10) cout << "WARNING !!! more than 10 percent empty bins for pattern i= " << i << endl;
+						Int_t percentage=(nemptybinsXY*100)/nbins;
+            if (percentage>10) cout << "WARNING !!! About " << percentage << " percent empty bins for pattern i= " << i << endl;
 
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -680,6 +682,43 @@ void EdbPVRQuality::CreateEdbPVRec() {
 
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...done." << endl;
     return;
+}
+
+
+
+
+//___________________________________________________________________________________
+
+void EdbPVRQuality::GetFilledXYSize()
+{
+    cout << "----------------------------------------------" << endl;
+    cout << "-----     void EdbPVRQuality::GetFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
+    Int_t nbx,nby=0;
+    nbx=eHistYX->GetNbinsX();
+    nby=eHistYX->GetNbinsY();
+    Double_t nbxMin,nbyMin=0;
+    Double_t nbxMax,nbyMax=0;
+    Double_t xcenter,ycenter=0;
+    Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+    
+    // This function is NOT optimized for speed :-)
+    for (Int_t i=0; i<nbins; ++i) {
+      if (eHistYX->GetBinContent(i)==0) continue;
+      xcenter=eHistYX->GetXaxis()->GetBinCenter(i);
+      ycenter=eHistYX->GetYaxis()->GetBinCenter(i);
+      cout << "i:" << i <<"  xc  = " << xcenter << ",   yc= " << ycenter << endl;
+      if ( xcenter < nbxMin) nbxMin=xcenter;
+      if ( xcenter > nbxMax) nbxMax=xcenter;
+      if ( ycenter < nbyMin) nbyMin=ycenter;
+      if ( ycenter > nbyMax) nbyMax=ycenter;
+    }
+    cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;
+    cout << "----      nbxMin= " << nbxMin << endl;
+    cout << "----      nbxMax= " << nbxMax << endl;
+    cout << "----      nbyMin= " << nbyMin << endl;
+    cout << "----      nbyMax= " << nbyMax << endl;
+    cout << "-----     void EdbPVRQuality::GetFilledXYSize() ... done. " << endl;
+    cout << "----------------------------------------------" << endl;
 }
 
 

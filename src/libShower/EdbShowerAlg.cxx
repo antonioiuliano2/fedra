@@ -1427,6 +1427,8 @@ void EdbShowerAlgESimple::DoRun()
 
 void EdbShowerAlgESimple::DoRun(TObjArray* trackarray)
 {
+    // Runs over the object array of showers.
+    
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgESimple::DoRun(TObjArray* trackarray)" << endl;
 
     eRecoShowerArrayN=trackarray->GetEntries();
@@ -1452,6 +1454,8 @@ void EdbShowerAlgESimple::DoRun(TObjArray* trackarray)
 
 void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
 {
+    // What i write here? It will appear in html root documentation.
+    
 
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlgESimple::DoRun(EdbTrackP* shower)" << endl;
 
@@ -1499,7 +1503,6 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
         inANN[k]=0;
     }
 
-
     // inANN[0] is ALWAYS Reseverd for the quantity value to be estimated
     // (E,Id,...)
     // Test with private variables:
@@ -1512,7 +1515,6 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
     for (int ii=0; ii<57; ii++) {
         inANN[7+ii]= eParalongprofile[ii];
     }
-
 
     // Fill Tree:
     ANNTree->Fill();
@@ -1545,8 +1547,6 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
     val=(val-eCalibrationOffset)/eCalibrationSlope;
 
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   After  Correction: ANN_MLP->Evaluate(0,params)= " <<  val << " (Inputvar=" << inANN[0]  << ")." << endl;
-
-
 
     // ---------------------------------
     // Evaluation of the statistical andsystematical errors by lookup tables and splines:
