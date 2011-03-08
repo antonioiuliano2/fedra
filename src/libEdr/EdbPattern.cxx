@@ -375,6 +375,8 @@ void EdbTrackP::Set0()
   eVTAE = 0;
   eNpl=0;
   eN0=0;
+  ePerrUp=0;
+  ePerrDown=0;
 }
 
 //______________________________________________________________________________
@@ -403,6 +405,8 @@ void EdbTrackP::Copy(const EdbTrackP &tr)
   SetNpl(tr.Npl());  
   SetN0(tr.N0());
   SetDE(tr.DE());
+  SetP(tr.P());
+  SetPerr(tr.PerrUp(),tr.PerrDown());
   AddVTA(tr.VTAS());
   AddVTA(tr.VTAE());
 

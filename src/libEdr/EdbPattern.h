@@ -118,8 +118,12 @@ class EdbTrackP : public EdbSegP {
   Float_t      eM;     // invariant mass of the particle
   Float_t      eDE;    // total energy loss of the particle between first and last segments
   Int_t        ePDG;   // particle ID from PDG
+  Float_t      ePerrUp;    // error of P() in upper direction, obtained by MCS,or shower-algorithm
+  Float_t      ePerrDown;    // error of P() in lower direction, obtained by MCS,or shower-algorithm
   EdbVTA      *eVTAS;  //! vertex track start is attached to
   EdbVTA      *eVTAE;  //! vertex track end is attached to
+  
+  
 
  public:
 
@@ -141,6 +145,13 @@ class EdbTrackP : public EdbSegP {
 
   void    SetPDG( int pdg )  { ePDG=pdg; }
   Int_t   PDG()      const {return ePDG;}
+  
+  void    SetPerrUp( Float_t err )  { ePerrUp=err; }
+  void    SetPerrDown( Float_t err )  { ePerrDown=err; }
+  void    SetPerr( Float_t errUp, Float_t errDown )  { ePerrUp=errUp; ePerrDown=errDown; }
+  Float_t   PerrUp()      const {return ePerrUp;}
+  Float_t   PerrDown()      const {return ePerrDown;}
+  
 
   void    SetM( float m )  { eM=m; }
   Float_t M()      const {return eM;}
