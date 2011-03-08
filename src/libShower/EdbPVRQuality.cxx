@@ -128,8 +128,8 @@ void EdbPVRQuality::Init()
     /// TEMPORARY, later the Standard Geometry should default be OPERA.
     if (eHistGeometry==0) SetHistGeometry_OPERA();
 
-    cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_MC " <<  endl;
-    SetHistGeometry_MC();
+    cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
+    SetHistGeometry_OPERAandMC();
     return;
 }
 
@@ -197,8 +197,7 @@ void EdbPVRQuality::CheckEdbPVRec()
 
         // failsafe warning in case that there are many bins with zero content.
         // for now we print a error message:
-	Int_t percentage=(nemptybinsXY*100)/nbins;
-        if (percentage>10) cout << "WARNING !!! About " << percentage << " percent empty bins for pattern i= " << i << endl;
+        CheckFilledXYSize();
 
         ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
         histPatternBTDensity->Reset();
@@ -216,20 +215,30 @@ void EdbPVRQuality::CheckEdbPVRec()
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_OPERA()
 {
+    // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(100,0,100000,120,0,120000);
-    cout << eHistYX->GetBinWidth(1) << endl;
+    cout << "SetHistGeometry_OPERA :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_MC()
 {
+    // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(100,-50000,50000,100,-50000,50000);
-    cout << eHistYX->GetBinWidth(1) << endl;
+    cout << "SetHistGeometry_MC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
-
+//______________________________________________________________________________
+void EdbPVRQuality::SetHistGeometry_OPERAandMC()
+{
+    // BinArea is 1mmx1mm
+    eHistYX->Reset();
+    eHistYX->SetBins(250,-125000,125000,250,-125000,125000);
+    cout << "SetHistGeometry_OPERAandMC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    return;
+}
 //______________________________________________________________________________
 void EdbPVRQuality::Print() {
 
@@ -329,7 +338,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             cout << "ERROR     EdbPVRQuality::Execute_ConstantBTDensity() Check it! " << endl;
             break;
         }
-        cout << "Execute_ConstantBTDensity   Doing Pattern " << i << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantBTDensity   Doing Pattern " << i << endl;
 
         // Now the condition loop:
         // Loop over 20 steps a 0.15,0.145,0.14 ...  down to
@@ -367,11 +376,11 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             }
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
-            cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eCutp1[i] : " << eCutp1[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+            if (gEDBDEBUGLEVEL>2) cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eCutp1[i] : " << eCutp1[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
 
             // Now the condition check:
             if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
-                cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
+                if (gEDBDEBUGLEVEL>2)  cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
                 break;
             }
             else {
@@ -527,9 +536,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
             // failsafe warning in case that there are many bins with zero content.
             // for now we print a error message:
-						Int_t percentage=(nemptybinsXY*100)/nbins;
-            if (percentage>10) cout << "WARNING !!! About " << percentage << " percent empty bins for pattern i= " << i << endl;
-
+            CheckFilledXYSize();
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
             cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eAggreementChi2WDistCut : " << eAggreementChi2WDistCut[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
@@ -603,30 +610,31 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_
 
 void EdbPVRQuality::CreateEdbPVRec() {
 
-    cout << "-----     ----------------------------------------------" << endl;
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()     -----" << endl;
-    cout << "-----     This function makes out of the original eAli" << endl;
-    cout << "-----     a new EdbPVRec object having only those seg-" << endl;
-    cout << "-----     ments in it which satisfy the cutcriteria " << endl;
-    cout << "-----     determined in Execute_ConstantBTDensity, Execute_ConstantQuality" << endl;
-    cout << "-----     " << endl;
-    cout << "-----     WARNING: the couples structure and the tracking structure" << endl;
-    cout << "-----     will be lost, this PVR object is only useful for the" << endl;
-    cout << "-----     list of Segments (==ShowReco...) ... " << endl;
-    cout << "-----     DO NOT USE THIS ROUTINE FOR GENERAL I/O and/or EdbPVRec operations!" << endl;
-    cout << "-----     " << endl;
-    cout << "CreateEdbPVRec()  Mode 0:" << eCutMethodIsDone[0] << endl;
-    cout << "CreateEdbPVRec()  Mode 1:" << eCutMethodIsDone[1] << endl;
-    cout << "-----     " << endl;
-    cout << "-----     ----------------------------------------------" << endl;
-
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "-----     " << endl;
+        cout << "-----     This function makes out of the original eAli" << endl;
+        cout << "-----     a new EdbPVRec object having only those seg-" << endl;
+        cout << "-----     ments in it which satisfy the cutcriteria " << endl;
+        cout << "-----     determined in Execute_ConstantBTDensity, Execute_ConstantQuality" << endl;
+        cout << "-----     " << endl;
+        cout << "-----     WARNING: the couples structure and the tracking structure" << endl;
+        cout << "-----     will be lost, this PVR object is only useful for the" << endl;
+        cout << "-----     list of Segments (==ShowReco...) ... " << endl;
+        cout << "-----     DO NOT USE THIS ROUTINE FOR GENERAL I/O and/or EdbPVRec operations!" << endl;
+        cout << "-----     " << endl;
+        cout << "CreateEdbPVRec()  Mode 0:" << eCutMethodIsDone[0] << endl;
+        cout << "CreateEdbPVRec()  Mode 1:" << eCutMethodIsDone[1] << endl;
+        cout << "-----     " << endl;
+        cout << "-----     ----------------------------------------------" << endl;
+    }
     if (NULL==eAli_orig || eIsSource==kFALSE) {
-        cout << "WARNING!   NULL==eAli_orig   || eIsSource==kFALSE   return."<<endl;
+        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    NULL==eAli_orig   || eIsSource==kFALSE   return."<<endl;
         return;
     }
 
     if (eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE) {
-        cout << "WARNING!   eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE   return."<<endl;
+        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE   return."<<endl;
         return;
     }
 
@@ -676,10 +684,9 @@ void EdbPVRQuality::CreateEdbPVRec() {
         }
         eAli_modified->AddPattern(pt);
     }
-
+    //---------------------
     eAli_orig->Print();
     eAli_modified->Print();
-
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...done." << endl;
     return;
 }
@@ -689,10 +696,16 @@ void EdbPVRQuality::CreateEdbPVRec() {
 
 //___________________________________________________________________________________
 
-void EdbPVRQuality::GetFilledXYSize()
+void EdbPVRQuality::CheckFilledXYSize()
 {
-    cout << "----------------------------------------------" << endl;
-    cout << "-----     void EdbPVRQuality::GetFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
+    // Check the bins filled in the actual pattern.
+    // The histogram of the XY distribution is analysed.
+    // A warning is given if more than 10 percent of
+    // the bins are empty.
+    // In this case one should look closer at the specific
+    // plate distribution.
+
+    if (gEDBDEBUGLEVEL>2)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
     Int_t nbx,nby=0;
     nbx=eHistYX->GetNbinsX();
     nby=eHistYX->GetNbinsY();
@@ -700,25 +713,47 @@ void EdbPVRQuality::GetFilledXYSize()
     Double_t nbxMax,nbyMax=0;
     Double_t xcenter,ycenter=0;
     Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
-    
+
+    Int_t n1x= eHistYX->FindFirstBinAbove(0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
+    Int_t n1y= eHistYX->FindFirstBinAbove(0,2);
+    Int_t n2x= eHistYX->FindLastBinAbove(0,1);
+    Int_t n2y= eHistYX->FindLastBinAbove(0,2);
+    Int_t width_x=0;
+    Int_t width_y=0;
+    width_x=TMath::Abs(eHistYX->GetXaxis()->GetBinCenter(n1x)-eHistYX->GetXaxis()->GetBinCenter(n2x));
+    width_y=TMath::Abs(eHistYX->GetYaxis()->GetBinCenter(n1y)-eHistYX->GetYaxis()->GetBinCenter(n2y));
+
+    // Now check the number of empty bins between! the filled area
+    // within (FindFirstBinAbove,FindLastBinAbove)
     // This function is NOT optimized for speed :-)
-    for (Int_t i=0; i<nbins; ++i) {
-      if (eHistYX->GetBinContent(i)==0) continue;
-      xcenter=eHistYX->GetXaxis()->GetBinCenter(i);
-      ycenter=eHistYX->GetYaxis()->GetBinCenter(i);
-      cout << "i:" << i <<"  xc  = " << xcenter << ",   yc= " << ycenter << endl;
-      if ( xcenter < nbxMin) nbxMin=xcenter;
-      if ( xcenter > nbxMax) nbxMax=xcenter;
-      if ( ycenter < nbyMin) nbyMin=ycenter;
-      if ( ycenter > nbyMax) nbyMax=ycenter;
+    int NonEmptyBins=0;
+    int nBins=0;
+    for (Int_t i=n1x; i<n2x; ++i) {
+        for (Int_t j=n1y; j<n2y; ++j) {
+            ++nBins;
+            if (eHistYX->GetBinContent(i,j)==0) continue;
+            if (eHistYX->GetBinContent(i,j)==0) continue;
+            ++NonEmptyBins;
+        }
     }
-    cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;
-    cout << "----      nbxMin= " << nbxMin << endl;
-    cout << "----      nbxMax= " << nbxMax << endl;
-    cout << "----      nbyMin= " << nbyMin << endl;
-    cout << "----      nbyMax= " << nbyMax << endl;
-    cout << "-----     void EdbPVRQuality::GetFilledXYSize() ... done. " << endl;
-    cout << "----------------------------------------------" << endl;
+    Float_t FractionOfEmptyBins=1-(Float_t(NonEmptyBins)/Float_t(nBins));
+    if (FractionOfEmptyBins>0.1) cout << "WARNING: void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "----      NonEmptyBins bins in der covered area:  = " << NonEmptyBins << endl;
+        cout << "----      nBins totale bins in der covered area:  = " << nBins << endl;
+        cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;
+        cout << "----      nbxMin= " << n1x << endl;
+        cout << "----      nbxMax= " << n1y << endl;
+        cout << "----      nbyMin= " << n2x << endl;
+        cout << "----      nbyMax= " << n2y << endl;
+        cout << "----      nbxMin= " << eHistYX->GetXaxis()->GetBinCenter(n1x) << endl;
+        cout << "----      nbxMax= " << eHistYX->GetYaxis()->GetBinCenter(n1y) << endl;
+        cout << "----      nbxMin= " << eHistYX->GetXaxis()->GetBinCenter(n2x) << endl;
+        cout << "----      nbxMax= " << eHistYX->GetYaxis()->GetBinCenter(n2y) << endl;
+        cout << "-----     void EdbPVRQuality::CheckFilledXYSize() ... done. " << endl;
+    }
+    return;
 }
 
 
@@ -747,10 +782,10 @@ void EdbPVRQuality::Help()
 
 
 
-EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource) {
+EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
+{
 
-    /// Quick and Dirty implementations !!!
-
+    // Quick and Dirty implementation !
     cout << "-----     void EdbPVRQuality::Remove_DoubleBT()" << endl;
     cout << "-----     void EdbPVRQuality::Take source EdbPVRec from " << aliSource << endl;
 
@@ -828,8 +863,7 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource) {
 EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 {
 
-    /// Quick and Dirty implementations !!!
-
+    // Quick and Dirty implementation !
     EdbPVRec* eAli_source=aliSource;
 
     if (NULL==aliSource) {
@@ -915,8 +949,8 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 
 void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray) {
 
-    /// Quick and Dirty implementations !!!
-    // track array
+    // Quick and Dirty implementation !
+    // Remove a whole track array.
     EdbPVRec* eAli_source=NULL;
     EdbPVRec* aliSource=NULL;
 
@@ -1003,8 +1037,8 @@ void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray) {
 
 void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray) {
 
-    /// Quick and Dirty implementations !!!
-    // track array
+    // Quick and Dirty implementation !
+    // Remove a segment array of EdbSegP's
     EdbPVRec* eAli_source=NULL;
     EdbPVRec* aliSource=NULL;
 

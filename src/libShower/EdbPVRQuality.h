@@ -40,7 +40,7 @@ private:
     EdbPVRec* eAli_modified;
     Bool_t		eIsSource;
 
-		Int_t 		eHistGeometry;
+    Int_t 		eHistGeometry;
 
     // Variables related for calculation Issues
     Int_t			eCutMethod;
@@ -58,8 +58,8 @@ private:
 // 		Int_t			NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
-		// TProfile: BT dens/mm2 versus PID()
-		TProfile* eProfileBTdens_vs_PID;
+    // TProfile: BT dens/mm2 versus PID()
+    TProfile* eProfileBTdens_vs_PID;
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
@@ -85,7 +85,7 @@ public:
 
     EdbPVRQuality();
     EdbPVRQuality(EdbPVRec* ali);
-		EdbPVRQuality(EdbPVRec* ali, Float_t BTDensityTargetLevel);
+    EdbPVRQuality(EdbPVRec* ali, Float_t BTDensityTargetLevel);
 
     void SetCutMethod(Int_t CutMethod);
     inline void SetBTDensityLevel(Float_t BTDensityLevel) {
@@ -96,7 +96,7 @@ public:
         return eAli_orig;
     }
     inline EdbPVRec* GetEdbPVRec(Int_t EdbPVRecType) {
-				cout << "Inline EdbPVRecType= " <<  EdbPVRecType << endl;
+        cout << "Inline EdbPVRecType= " <<  EdbPVRecType << endl;
         if (EdbPVRecType==1) {
             return eAli_modified;
         }
@@ -104,17 +104,25 @@ public:
             return eAli_orig;
         }
     }
-    
-    inline EdbPVRec* GetEdbPVRec_orig() { return GetEdbPVRec(0); }
-    inline EdbPVRec* GetEdbPVRec_modified() { return GetEdbPVRec(1); }
+
+    inline EdbPVRec* GetEdbPVRec_orig() {
+        return GetEdbPVRec(0);
+    }
+    inline EdbPVRec* GetEdbPVRec_modified() {
+        return GetEdbPVRec(1);
+    }
 
     inline void				SetEdbPVRec(EdbPVRec* Ali_orig) {
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
     }
-    
-     inline   TH2F* GetHistChi2W() {return eHistChi2W;}
-     inline   TH2F* GetHistYX() {return eHistYX;}
+
+    inline   TH2F* GetHistChi2W() {
+        return eHistChi2W;
+    }
+    inline   TH2F* GetHistYX() {
+        return eHistYX;
+    }
 
 
 
@@ -164,6 +172,7 @@ public:
 
     void SetHistGeometry_OPERA();
     void SetHistGeometry_MC();
+    void SetHistGeometry_OPERAandMC();
 
     void CheckEdbPVRec();
     void Execute_ConstantBTDensity();
@@ -178,7 +187,7 @@ public:
 
 
     void CreateEdbPVRec();
-    void GetFilledXYSize();
+    void CheckFilledXYSize();
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
