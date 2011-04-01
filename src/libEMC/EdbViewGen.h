@@ -19,9 +19,10 @@ public:
   ~EdbViewGen(){}
 
   //  void  SetDef();
+  int   GenFrames(EdbView &v);         // generate frames in the view
   int   GenGrains(EdbView &v);         // generate grains in the view
   int   GenSegGrains(EdbSegment &s);   // generate grains for one segment
-  int   GenFogGrains(EdbSegment &sfog);
+  int   GenFogGrains(int ngr, TObjArray &grains, int side=0);
   int   GenAlfaGrains(){return 0;}   // bg from alfa-particles
   int   GenDeltaGrains(){return 0;}  // bg from delta-electrons
   int   GenGrainClusters(EdbView &v, EdbCluster &g);

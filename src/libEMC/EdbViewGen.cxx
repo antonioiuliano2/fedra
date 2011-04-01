@@ -24,6 +24,17 @@ EdbViewGen::EdbViewGen()
 }
 
 //____________________________________________________________________________________
+int EdbViewGen::GenFrames(EdbView &v)
+{
+   v.SetNframes(eNframes,0);
+   float step=(eZmax-eZmin-1.)/(eNframes-1);
+   for(int i=0; i<eNframes; i++)
+     v.AddFrame( i, eZmin + 0.5 + i*step );
+   
+   return eNframes;
+ }
+
+//____________________________________________________________________________________
 int EdbViewGen::GenGrains(EdbView &v)
 {
   TObjArray grains;
@@ -41,12 +52,9 @@ int EdbViewGen::GenGrains(EdbView &v)
   }
   //printf("ngrseg = %d\n", ngrseg);
   
-  int nfog = (int)(eFogDens*(eXmax-eXmin)*(eYmax-eYmin)*(eZmax-eZmin)/1000);
-  //printf("ngrfog = %d\n", nfog);
-  EdbSegment sfog;
-  sfog.SetPuls(nfog);
-  GenFogGrains(sfog);
-  for(int igr=0; igr<nfog; igr++) grains.Add(sfog.GetElements()->At(igr));
+  int nfog = (int)(eFogDens*(eXmax-eXmin)*(eYmax-eYmin)*(eZmax-eZmin)/1000.);
+  printf("ngrfog = %d\n", nfog);
+  GenFogGrains(nfog,grains);
 
   EdbCluster *g;
   ngr = grains.GetEntries();
@@ -66,7 +74,6 @@ int EdbViewGen::GenGrains(EdbView &v)
     //v.AddCluster(new EdbCluster(*g));
   }
   
-  if(sfog.GetElements()) sfog.GetElements()->Delete();
   for(int iseg=0; iseg<nseg; iseg++) 
     if( v.GetSegment(iseg)->GetElements() )
       v.GetSegment(iseg)->GetElements()->Delete();
@@ -83,7 +90,7 @@ int EdbViewGen::GenGrainClusters(EdbView &v, EdbCluster &g)
   if( g.GetArea()==0 ) return ncl;
   int nfr= v.GetNframes();
   float z;
-  float dz = 0.5 * gRandom->Gaus(eClaSZ,eClaSZvar);
+  float dz = 0.5 * gRandom->Gaus(eGrainSZ,eGrainSZ/3.);
   //eClaSZ*TMath::Sqrt(g.GetArea())/3;  //ToDo
   float dx,dy;
   EdbCluster *c;
@@ -202,11 +209,10 @@ float EdbViewGen::GrainPathMip(float lambda)
 }
 
 //____________________________________________________________________________________
-int EdbViewGen::GenFogGrains(EdbSegment &sfog)
+int EdbViewGen::GenFogGrains(int ngr, TObjArray &grains, int side)
 {
   float  x,y,z;
   int    area;
-  int    ngr = sfog.GetPuls();
   int    n=0;
 
   printf("GenFogGrains: X:(%f %f)  Y:(%f %f) \n", eXmin,eXmax, eYmin,eYmax );
@@ -216,7 +222,7 @@ int EdbViewGen::GenFogGrains(EdbSegment &sfog)
     z      = eZmin + gRandom->Rndm()*(eZmax-eZmin);
 
     area = (int)(eFogGrainArea); // + gRandom->Poisson(4) - 2);
-    sfog.AddElement( new EdbCluster(x,y,z, area, 0, 0, sfog.GetSide(), -1) );
+    grains.Add( new EdbCluster(x,y,z, area, 0, 0, side, -1) );
     n++;
   }
   return n;
