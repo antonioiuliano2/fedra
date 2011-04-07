@@ -14,4 +14,6 @@
 #pragma link C++ class EdbTestAl;
 #pragma link C++ class EdbPlateAlignment;
 
+#pragma link C++ class EdbLinking;
+
 #endif

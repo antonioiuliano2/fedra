@@ -32,7 +32,6 @@ EdbPlateAlignment::EdbPlateAlignment()
   eOffsetMax = 500.;
   eDZ        = 120;
   eDPHI      = 0.009;
-  eOutputFile    = 0;
 
   eStatus   =false;
   eDoTestAl =false; eTestAlOK =true;
@@ -49,22 +48,6 @@ EdbPlateAlignment::EdbPlateAlignment()
 EdbPlateAlignment::~EdbPlateAlignment()
 {
   CloseOutputFile();
-}
-
-//---------------------------------------------------------------------
-void EdbPlateAlignment::InitOutputFile(const char *file, const char *option)
-{
-  CloseOutputFile();
-  eOutputFile = new TFile(file,option);
-}
-
-//---------------------------------------------------------------------
-void EdbPlateAlignment::CloseOutputFile()
-{
-  if(eOutputFile) {
-    eOutputFile->Close();
-    SafeDelete(eOutputFile);
-  }
 }
 
 //---------------------------------------------------------------------
@@ -107,7 +90,7 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
  END:
 
   ProduceReport();
- if(eSaveCouples) SaveCouplesTree();
+  if(eSaveCouples) SaveCouplesTree();
 }
 
 //---------------------------------------------------------------------
@@ -128,6 +111,7 @@ void EdbPlateAlignment::ProduceReport()
 {
   TH2F *zphiCoarse=0, *xyCoarse=0;
   TH2F *xyFine=0;
+  gStyle->SetPalette(1);
   if( eDoTestAl&&eTestAlOK ) {
     Log(1,"Alignment Report","TestAl OK");
   }
@@ -173,13 +157,15 @@ void EdbPlateAlignment::ProduceReport()
      }
   }
 
+
   if(eOutputFile) {
     Log(2,"Alignment Report","Save to file %s", eOutputFile->GetName());
     gStyle->SetPalette(1);
     bool batch = gROOT->IsBatch();
     gROOT->SetBatch();
+    
     TCanvas *cc = new TCanvas("cc","Alignment report",800,800);
-
+    
     EdbAffine2D *aXY = eCorrL[0].GetAffineXY();
     float xcenter1 = (ePC[0].Xmin()+ePC[0].Xmax())/2.;
     float ycenter1 = (ePC[0].Ymin()+ePC[0].Ymax())/2.;
@@ -192,21 +178,20 @@ void EdbPlateAlignment::ProduceReport()
 			    eS[0].GetEntries(),(int)eH_xy_coarse.ePeak[0], eH_xy_coarse.eMean[0], 
 			    xoffset, yoffset, eCorrL[0].Zcorr() );
     Log(1,"Alignment Report","%s", str);
-    TPaveLabel *title = new TPaveLabel(0.01,0.95,0.99,0.99,str);
-    //title->SetFillColor(21);
-    title->SetTextSize(0.37);
-    title->Draw();
     
-    TPad *c = new TPad("c",
-		       "plots",0.03,0.01,0.97,0.94);
+    TPaveText *ctit = new TPaveText(0.01,0.943,0.99,0.998);
+    ctit->AddText( Form("Alignment of  %s",eOutputFile->GetName()) );
+    ctit->AddText( str );
+    ctit->Draw();
+    
+    TPad *c = new TPad("c","plots",0.01,0.05,0.99,0.94);
     c->Divide(3,3);
     c->Draw();
-
-    TH2F *hp1 = ePC[0].DrawH2("hp1","Pattern1"); c->cd(1); hp1->Draw("colz");
-    TH2F *hp2 = ePC[1].DrawH2("hp2","Pattern2"); c->cd(2); hp2->Draw("colz");
-    if(zphiCoarse)  { c->cd(3); zphiCoarse->Draw("colz"); }
-    if(xyCoarse)    { c->cd(4); xyCoarse->Draw("colz");   }
-    if(xyFine)      { c->cd(5); xyFine->Draw("colz");     }
+    TH2F *hp1 = ePC[0].DrawH2("hp1","Pattern1"); c->cd(1); hp1->SetStats(0); hp1->Draw("colz");
+    TH2F *hp2 = ePC[1].DrawH2("hp2","Pattern2"); c->cd(2); hp2->SetStats(0); hp2->Draw("colz");
+    if(zphiCoarse)  { c->cd(3); zphiCoarse->SetStats(0); zphiCoarse->Draw("colz"); }
+    if(xyCoarse)    { c->cd(4); xyCoarse->SetStats(0);   xyCoarse->Draw("colz");   }
+    if(xyFine)      { c->cd(5); xyFine->SetStats(0);     xyFine->Draw("colz");     }
 
 
     float xmin = Min( ePC[0].Xmin(), ePC[1].Xmin() );
@@ -230,7 +215,7 @@ void EdbPlateAlignment::ProduceReport()
       float dty  =   TY(1,*s2) - TY(0,*s1);
       hdtxy->Fill(dtx,dty);
     }
-    hdtxy->Draw("colz");
+    hdtxy->SetStats(0); hdtxy->Draw("colz");
 
     c->cd(8);
 
@@ -307,10 +292,13 @@ void EdbPlateAlignment::ProduceReport()
     cc->Write("report_al");
     eCorrL[0].Write("corr_layer1");
     eCorrL[1].Write("corr_layer2");
+    SafeDelete(c);
+    
     SafeDelete(cc);
-
+    
     gROOT->SetBatch(batch);
   }
+
   SafeDelete(zphiCoarse);
   SafeDelete(xyCoarse);
   SafeDelete(xyFine);
@@ -344,8 +332,8 @@ void EdbPlateAlignment::FineAlAff(EdbPattern &p1, EdbPattern &p2, EdbLayer &la1)
   float dxlim = eH[0][0].Xmax()-eH[0][0].Xmin();
   float dylim = eH[0][1].Xmax()-eH[0][1].Xmin();
 
-  //eDVsame[0] = dxlim/2.;  eDVsame[1] = dylim/2.;
-  eDVsame[0] = dxlim;  eDVsame[1] = dylim;
+  eDVsame[0] = dxlim/2.;  eDVsame[1] = dylim/2.;
+  //eDVsame[0] = dxlim;  eDVsame[1] = dylim;
   eDVsame[2]=eDVsame[3]=3.*eSigma[1];
   FillCombinations( eDVsame, dxlim, dylim, 1);
 
@@ -375,8 +363,8 @@ void EdbPlateAlignment::FineAl(EdbPattern &p1, EdbPattern &p2)
   float dxlim = eH[0][0].Xmax()-eH[0][0].Xmin();
   float dylim = eH[0][1].Xmax()-eH[0][1].Xmin();
 
-  //eDVsame[0] = dxlim/2.;  eDVsame[1] = dylim/2.;
-  eDVsame[0] = dxlim;  eDVsame[1] = dylim;
+  eDVsame[0] = dxlim/2.;  eDVsame[1] = dylim/2.;
+  //eDVsame[0] = dxlim;  eDVsame[1] = dylim;
 
   //eDVsame[2]=eDVsame[3]=0.01;
   eDVsame[2]=eDVsame[3]=3.*eSigma[1];

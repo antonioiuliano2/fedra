@@ -10,7 +10,7 @@ class EdbSegCorr : public TObject
 {
  private:
   TArrayF  eV;           // variables: dx,dy,dz, dtx,dty, shr, phy
-                         //             0  1  2    3   4    5    6 
+                         //             0  1  2    3   4    5    6
  public:
   Bool_t   eApplyCorr;   // do correction
 
@@ -35,6 +35,8 @@ class EdbSegCorr : public TObject
 
   float TX(EdbSegP &s)    { return eApplyCorr? s.eTX/eV[5]+eV[3] : s.eTX; }
   float TY(EdbSegP &s)    { return eApplyCorr? s.eTY/eV[5]+eV[4] : s.eTY; }
+  
+  void  ApplyCorrections( EdbSegP &s );
 
   void Print();
 

@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #include "TMath.h"
+#include "TFile.h"
 #include "TVector2.h"
 #include "EdbLog.h"
 #include "EdbAlignmentV.h"
@@ -23,6 +24,7 @@ EdbAlignmentV::EdbAlignmentV()
   eXmarg = eYmarg = 0.0001;        // margins for the cell definition
   eDoubletsRate=0;
   eUseAffCorr = false;   // by default use eCorr (separated corrections)
+  eOutputFile=0;
 }
 
 //---------------------------------------------------------------------
@@ -31,6 +33,22 @@ EdbAlignmentV::~EdbAlignmentV()
   eS[0].Clear();
   eS[1].Clear();
   SafeDelete(eDoubletsRate);
+}
+
+//---------------------------------------------------------------------
+void EdbAlignmentV::InitOutputFile(const char *file, const char *option)
+{
+  CloseOutputFile();
+  eOutputFile = TFile::Open(file,option);
+}
+
+//---------------------------------------------------------------------
+void EdbAlignmentV::CloseOutputFile()
+{
+  if(eOutputFile) {
+    eOutputFile->Close();
+    SafeDelete(eOutputFile);
+  }
 }
 
 //---------------------------------------------------------------------
@@ -134,6 +152,18 @@ float EdbAlignmentV::CoupleQuality( EdbSegP &s1, EdbSegP &s2 )
 }
 
 //---------------------------------------------------------------------
+void EdbAlignmentV::FillThetaHist(int side, EdbH2 &htxy)
+{
+  if( side<0 || side>1 ) return;
+  TObjArray arr(10000);
+  int n = ePC[side].SelectObjects(arr);
+  for(int i=0; i<n; i++) {
+    EdbSegP *s = (EdbSegP*)arr.UncheckedAt(i);
+    htxy.Fill( s->TY(), s->TX() );
+  }
+}
+
+//---------------------------------------------------------------------
 int EdbAlignmentV::FillCombinations()
 {
   float dxMax = 2*Max( ePC[0].Xbin(), ePC[1].Xbin() );
@@ -167,19 +197,19 @@ int EdbAlignmentV::FillCombinations(float dv[4], float dxMax, float dyMax, bool 
   for(int i=0; i<n1; i++) {
     ncomb=0;
     s1 = (EdbSegP*)arr1.UncheckedAt(i);
-    if(s1->Flag()==-10)                                        continue;
+    if(s1->Flag()==-10)                                   continue;
     arr2.Clear();
     v[0] = X( 0, *s1);
     v[1] = Y( 0, *s1);
     int n2 = ePC[1].SelectObjectsC(v,ir2,arr2);
 
-    if(n2<1)                                                    continue;
+    if(n2<1)                                              continue;
     float tx1 = TX(0, *s1);
     float ty1 = TY(0, *s1);
     for(int i2=0; i2<n2; i2++) {
       s2 = (EdbSegP*)arr2.UncheckedAt(i2);
-      if(s2->Flag()==-10)                                       continue;
-      if( s2==s1 )                                              continue;
+      if(s2->Flag()==-10)                                 continue;
+      if( s2==s1 )                                        continue;
       if( Abs(X(1, *s2) - v[0]) > dv[0] )                 continue;
       if( Abs(Y(1, *s2) - v[1]) > dv[1] )                 continue;
       if( Abs(TX(1, *s2)- tx1)  > dv[2] )                 continue;
@@ -224,21 +254,24 @@ void EdbAlignmentV::OptimiseVar1(int side, int ivar,  EdbH2 *hdxy, EdbH2 *hdtxy)
     {
       float var= h.X(i);
       eCorr[side].SetV( ivar, var );
-      
-      int npk = Ncoins(eDVsame, hdxy); 
+
+      int npk = Ncoins(eDVsame, hdxy);
+
       float dx=0, dy=0;
       if(hdxy){
 	EdbPeak2 pk2(*hdxy);
-	npk = pk2.FindPeak( dx, dy );
+	npk = (int)(pk2.ProbPeak( dx, dy ));
+        //hdxy->DrawH2(Form("hdxy%d_%2.2d",side,i),Form("OptimiseVar1: ivar=%d var=%f npk=%d",ivar, var,npk) )->Write();
       }
       h.SetBin( i, npk );
       if( npk > npk0 ) { npk0=npk; dx0 = dx; dy0=dy; var0 = var; }
       Log(4,"OptimiseVar1"," %d %f %d (%f %f)", i, h.X(i), h.Bin(i), dx,dy );
     }
 
-  eCorr[side].AddV(0,dx0);      // set x-y corrections if any
-  eCorr[side].AddV(1,dy0);
+  //eCorr[side].AddV(0,dx0);      // set x-y corrections if any
+  //eCorr[side].AddV(1,dy0);
   eCorr[side].SetV(ivar,var0);
+  if(hdxy) Ncoins(eDVsame, hdxy);  // to keep the optimal histogram in hdxy
 
   Log(3,"OptimiseVar1"," side:var (%d:%d): found %d at var=%f  xy:(%f %f)", side, ivar, npk0, var0, dx0,dy0 );
 }
@@ -592,54 +625,78 @@ void EdbAlignmentV::InitPatCellBin( int side, EdbPattern &pat, float binx, float
 }
 
 //---------------------------------------------------------------------
-void  EdbAlignmentV::FillGuessCell( EdbPattern &p1, EdbPattern &p2, float binOK, float offsetMax)
+void  EdbAlignmentV::ApplyLimitsOffset( float &xmin1, float &xmax1, float &xmin2, float &xmax2, float offsetMax)
 {
-  // binOK - is the mean number of entries requested per bin
-
-  int np1 = p1.N(), np2 = p2.N();
-
-  EdbSegP s1min(0,p1.Xmin(), p1.Ymin(), 0,0 );
-  EdbSegP s1max(0,p1.Xmax(), p1.Ymax(), 0,0 );
-  EdbSegP s2min(0,p2.Xmin(), p2.Ymin(), 0,0 );
-  EdbSegP s2max(0,p2.Xmax(), p2.Ymax(), 0,0 );
-  float xmin1=X(0,s1min), ymin1=Y(0,s1min), xmax1=X(0,s1max), ymax1=Y(0,s1max);
-  float xmin2=X(1,s2min), ymin2=Y(1,s2min), xmax2=X(1,s2max), ymax2=Y(1,s2max);
-
   if(Abs(xmin2-xmin1)>offsetMax)                                                // cut useless patterns margins
     if(xmin2>xmin1) xmin1=xmin2-offsetMax; 
-    else  xmin2=xmin1-offsetMax;  
+    else  xmin2=xmin1-offsetMax;
   if(Abs(xmax2-xmax1)>offsetMax) 
     if(xmax2>xmax1) xmax2=xmax1+offsetMax; 
     else  xmax1=xmax2+offsetMax;
+}
 
-  if(Abs(ymin2-ymin1)>offsetMax)                                                // cut useless patterns margins
-    if(ymin2>ymin1) ymin1=ymin2-offsetMax; 
-    else  ymin2=ymin1-offsetMax;  
-  if(Abs(ymax2-ymax1)>offsetMax) 
-    if(ymax2>ymax1) ymax2=ymax1+offsetMax; 
-    else  ymax1=ymax2+offsetMax;
-  
-
+//---------------------------------------------------------------------
+void  EdbAlignmentV::DefineGuessCell( float xmin1, float xmax1, float ymin1, float ymax1, 
+                                      float xmin2, float xmax2, float ymin2, float ymax2, int np1, int np2, float binOK)
+{
   float s1 = (xmax1-xmin1)*(ymax1-ymin1);
   float xbin1 = Sqrt( s1/(np1/binOK)  );
+  
   float s2 = (xmax2-xmin2)*(ymax2-ymin2);
   float xbin2 = Sqrt( s2/(np2/binOK)  );
+  
   float xbin = Min(xbin1,xbin2);
 
   float min[2] = { Min(xmin1,xmin2)-eXmarg, Min(ymin1,ymin2)-eYmarg };
   float max[2] = { Max(xmax1,xmax2)+eXmarg, Max(ymax1,ymax2)+eYmarg };
   int   n[2]   = { (int)((max[0]-min[0])/xbin+1), (int)((max[1]-min[1])/xbin+1) };
- 
+  
   int maxcell1 = np1/n[0]/n[1]+10;   maxcell1 += (int)(5*Sqrt(maxcell1));
   ePC[0].InitCell(maxcell1,n,min,max);
-
   int maxcell2 = np2/n[0]/n[1]+10;    maxcell2 += (int)(5*Sqrt(maxcell2));
   ePC[1].InitCell(maxcell2,n,min,max);
+}
+
+//---------------------------------------------------------------------
+void  EdbAlignmentV::FillGuessCell( EdbPattern &p1, EdbPattern &p2, float binOK, float offsetMax)
+{
+  // binOK - is the mean number of entries requested per bin
+
+  float xmin1=Xmin(0,p1), ymin1=Ymin(0,p1), xmax1=Xmax(0,p1), ymax1=Ymax(0,p1);
+  float xmin2=Xmin(1,p2), ymin2=Ymin(1,p2), xmax2=Xmax(1,p2), ymax2=Ymax(1,p2);
+  ApplyLimitsOffset( xmin1, xmax1, xmin2, xmax2, offsetMax);
+  ApplyLimitsOffset( ymin1, ymax1, ymin2, ymax2, offsetMax);
+  int np1 = p1.N(), np2 = p2.N();
+
+  DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
 
   FillCell( 0, p1 );
   FillCell( 1, p2 );
 
   if( Log(3, "FillGuessCell", "with patterns of %d %d  statistics:",np1,np2) ) {
+    ePC[0].PrintStat();
+    ePC[1].PrintStat();
+  }
+}
+
+//---------------------------------------------------------------------
+void  EdbAlignmentV::FillGuessCell( TObjArray &p1, TObjArray &p2, float binOK, float offsetMax)
+{
+  // binOK - is the mean number of entries requested per bin
+
+  float xmin1=Xmin(0,p1), ymin1=Ymin(0,p1), xmax1=Xmax(0,p1), ymax1=Ymax(0,p1);
+  float xmin2=Xmin(1,p2), ymin2=Ymin(1,p2), xmax2=Xmax(1,p2), ymax2=Ymax(1,p2);
+  ApplyLimitsOffset( xmin1, xmax1, xmin2, xmax2, offsetMax);
+  ApplyLimitsOffset( ymin1, ymax1, ymin2, ymax2, offsetMax);
+  int np1 = p1.GetEntries(), np2 = p2.GetEntries();
+
+  Log(3, "FillGuessCell", "xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK: %f %f %f %f   %f %f %f %f   %d %d   %f",xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
+  DefineGuessCell( xmin1, xmax1, ymin1, ymax1, xmin2, xmax2, ymin2, ymax2, np1, np2, binOK);
+
+  FillCell( 0, p1 );
+  FillCell( 1, p2 );
+
+  if( Log(3, "FillGuessCell", "with arrays of %d %d  statistics:",np1,np2) ) {
     ePC[0].PrintStat();
     ePC[1].PrintStat();
   }
@@ -702,6 +759,20 @@ Int_t  EdbAlignmentV::CalculateAffTXTY(TObjArray &arr1, TObjArray &arr2, EdbAffi
 }
 
 //---------------------------------------------------------------------
+void EdbAlignmentV::Corr2Aff(EdbSegCorr &corr, EdbLayer &layer)
+{
+  EdbAffine2D &a0 = *(layer.GetAffineXY());
+  a0.Reset();
+  a0.ShiftX(  corr.V(0) );  a0.ShiftY( corr.V(1) );
+  a0.Rotate(  corr.V(6) );
+  EdbAffine2D &atxty = *(layer.GetAffineTXTY());
+  atxty.Reset();
+  atxty.ShiftX(corr.V(3)); atxty.ShiftY(corr.V(4));
+  layer.SetShrinkage( corr.V(5) );
+  layer.SetZcorr(     corr.V(2) );
+}
+
+//---------------------------------------------------------------------
 void EdbAlignmentV::Corr2Aff(EdbLayer &layer)
 {
   EdbAffine2D &a0 = *(layer.GetAffineXY());
@@ -713,3 +784,92 @@ void EdbAlignmentV::Corr2Aff(EdbLayer &layer)
   layer.SetZcorr(     eCorr[0].V(2) );
 }
 
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Xmin(int side,EdbPattern &p)
+{
+  int n=p.N();  float xmin = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = p.GetSegment(i);
+     float x=X(side,*s);
+     if(!i) xmin=x;     else if( x<xmin) xmin=x;
+  }
+  return xmin;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Xmax(int side,EdbPattern &p)
+{
+  int n=p.N();  float xmax = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = p.GetSegment(i);
+     float x=X(side,*s);
+     if(!i) xmax=x;     else if( x>xmax) xmax=x;
+  }
+  return xmax;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Ymin(int side,EdbPattern &p)
+{
+  int n=p.N();  float ymin = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = p.GetSegment(i);
+     float y=Y(side,*s);
+     if(!i) ymin=y;     else if( y<ymin) ymin=y;
+  }
+  return ymin;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Ymax(int side,EdbPattern &p)
+{
+  int n=p.N();  float ymax = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = p.GetSegment(i);
+     float y=Y(side,*s);
+     if(!i) ymax=y;     else if( y>ymax) ymax=y;
+  }
+  return ymax;
+}
+
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Xmin(int side,TObjArray &p)
+{
+  int n=p.GetEntries();  float xmin = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = (EdbSegP*)(p.At(i));
+     float x=X(side,*s);
+     if(!i) xmin=x;     else if( x<xmin) xmin=x;
+  }
+  return xmin;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Xmax(int side,TObjArray &p)
+{
+  int n=p.GetEntries();  float xmax = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = (EdbSegP*)(p.At(i));
+     float x=X(side,*s);
+     if(!i) xmax=x;     else if( x>xmax) xmax=x;
+  }
+  return xmax;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Ymin(int side,TObjArray &p)
+{
+  int n=p.GetEntries();  float ymin = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = (EdbSegP*)(p.At(i));
+     float y=Y(side,*s);
+     if(!i) ymin=y;     else if( y<ymin) ymin=y;
+  }
+  return ymin;
+}
+//---------------------------------------------------------------------
+float  EdbAlignmentV::Ymax(int side,TObjArray &p)
+{
+  int n=p.GetEntries();  float ymax = 0;
+  for(int i=0; i<n; i++) {
+     EdbSegP *s = (EdbSegP*)(p.At(i));
+     float y=Y(side,*s);
+     if(!i) ymax=y;     else if( y>ymax) ymax=y;
+  }
+  return ymax;
+}

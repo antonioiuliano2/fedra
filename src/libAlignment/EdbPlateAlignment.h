@@ -24,8 +24,6 @@ class EdbPlateAlignment : public EdbAlignmentV
   Int_t    eFineMin;              // minimum coinsidences to accept alignment
   Int_t    eCoarseMin;            // minimum coinsidences to accept alignment
 
-  TFile    *eOutputFile;
-
   EdbPeak2  eH_zphi_coarse;   // the results of the coarse alignment
   EdbPeak2  eH_xy_coarse;
   EdbPeak2  eH_xy_final;      // the final alignment peak
@@ -46,9 +44,6 @@ class EdbPlateAlignment : public EdbAlignmentV
   void SetParFineAl();
   void ProduceReport();
   void SaveCouplesTree();
-  void InitOutputFile(const char *file="report_al.root", const char *option="RECREATE");
-  void CloseOutputFile();
-
   void SetSigma(float spos, float sang) { eSigma[0]=spos; eSigma[1]=sang; }
 
   ClassDef(EdbPlateAlignment,1)  // plate-to-plate alignment
