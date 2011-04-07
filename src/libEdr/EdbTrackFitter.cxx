@@ -164,7 +164,7 @@ float EdbTrackFitter::Chi2ACP( EdbSegP s1, EdbSegP s2, EdbScanCond &cond)
 }
 
 //______________________________________________________________________________
-float EdbTrackFitter::Chi2ASeg( EdbSegP s1, EdbSegP s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
+float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
 {
   // fast estimation of chi2 in the special case when the position
   // errors of segments are negligible in respect to angular errors:
@@ -208,7 +208,6 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP s1, EdbSegP s2, EdbSegP &seg, EdbScanCon
   seg.SetChi2(chi2a);
   return chi2a;
 }
-
 //______________________________________________________________________________
 float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2)
 {

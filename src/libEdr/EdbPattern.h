@@ -131,6 +131,7 @@ class EdbTrackP : public EdbSegP {
   virtual ~EdbTrackP();
 
   void       Set0();
+  void       SetOwner() { if(eS) eS->SetOwner(true); }
   void       AddVTA(EdbVTA *vta);
   void       ClearVTA(EdbVTA *vta);
   EdbVTA    *VTAS() const {return eVTAS;}
