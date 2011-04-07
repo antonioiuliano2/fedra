@@ -126,6 +126,8 @@ void EdbPVRQuality::Set0()
 void EdbPVRQuality::Init()
 {
     /// TEMPORARY, later the Standard Geometry should default be OPERA.
+    /// For now we use a very large histogram that can contain both case
+    /// x-y ranges. This takes slightly more memory but it shouldnt matter.
     if (eHistGeometry==0) SetHistGeometry_OPERA();
 
     cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
@@ -709,9 +711,6 @@ void EdbPVRQuality::CheckFilledXYSize()
     Int_t nbx,nby=0;
     nbx=eHistYX->GetNbinsX();
     nby=eHistYX->GetNbinsY();
-    Double_t nbxMin,nbyMin=0;
-    Double_t nbxMax,nbyMax=0;
-    Double_t xcenter,ycenter=0;
     Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
 
     Int_t n1x= eHistYX->FindFirstBinAbove(0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
