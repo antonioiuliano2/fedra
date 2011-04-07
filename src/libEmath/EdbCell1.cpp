@@ -7,6 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TDirectory.h"
 #include "TMath.h"
 #include "EdbCell1.h"
 #include "EdbLog.h"
@@ -20,7 +21,12 @@ ClassImp(EdbCell1)
 //____________________________________________________________________________
 EdbH1::EdbH1()
 {
-  for(int i=0; i<2; i++) eN=0;
+  Set0();
+}
+//____________________________________________________________________________
+void EdbH1::Set0()
+{
+  eN=0;
   eNcell=0;
   eNC=0;
 }
@@ -107,9 +113,11 @@ TH1I *EdbH1::DrawSpectrum(const char *name)
 }
 
 //____________________________________________________________________________________
-TH1F *EdbH1::DrawH1(const char *name)
+TH1F *EdbH1::DrawH1(const char *name, const char *title)
 {
-  TH1F *h = new TH1F(name, "EdbH1 plot", eN,eMin,eMax);
+  TObject *obj=0;
+  if((obj=gDirectory->FindObject(name))) delete obj;
+  TH1F *h = new TH1F(name, title, eN,eMin,eMax);
   for(int i=0; i<eN; i++)    h->Fill( X(i), eNC[Jcell(i)] );
   return h;
 }

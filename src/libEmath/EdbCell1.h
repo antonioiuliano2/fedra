@@ -28,9 +28,11 @@ class EdbH1 : public TObject {
 
  public:
   EdbH1();
+  EdbH1(int n, float min, float max) { Set0(); InitH1(n,min,max); }
   EdbH1( const EdbH1 &h );
   ~EdbH1();
 
+  void Set0();
   void Copy( const EdbH1 &h );
 
   int   InitH1( int n, float min, float max );
@@ -65,7 +67,7 @@ class EdbH1 : public TObject {
   Float_t Mean() { return 1.*Integral()/eNcell; }
 
   TH1I   *DrawSpectrum(  const char *name="EdbH1spectrun" );
-  TH1F   *DrawH1(        const char *name="EdbH1plot"     );
+  TH1F   *DrawH1(        const char *name="EdbH1plot" , const char *title="EdbH1plot1D");
 
   ClassDef(EdbH1,1)  // fast 2-dim histogram class (used as a basis for EdbCell1)
 };

@@ -7,6 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TDirectory.h"
 #include "TMath.h"
 #include "EdbCell2.h"
 #include "EdbLog.h"
@@ -19,6 +20,12 @@ ClassImp(EdbPeak2)
 
 //____________________________________________________________________________
 EdbH2::EdbH2()
+{
+  Set0();
+}
+
+//____________________________________________________________________________
+void EdbH2::Set0()
 {
   for(int i=0; i<2; i++) eN[i]=0;
   eNcell=0;
@@ -63,6 +70,24 @@ void EdbH2::Delete()
   eN[0] = eN[1] = 0;
   eMin[0] = eMin[1] = 0;
   eMax[0] = eMax[1] = 0;
+}
+
+//____________________________________________________________________________
+int EdbH2::InitH2(const EdbH2 &h)
+{
+  int n[2]={h.NX(),h.NY()};
+  float min[2]={h.Xmin(),h.Ymin()};
+  float max[2]={h.Xmax(),h.Ymax()};
+  return InitH2(n,min,max);
+}
+
+//____________________________________________________________________________
+int EdbH2::InitH2(int nx, float minx, float maxx, int ny, float miny, float maxy)
+{
+  int n[2]={nx,ny};
+  float min[2]={minx,miny};
+  float max[2]={maxx,maxy};
+  return InitH2(n,min,max);
 }
 
 //____________________________________________________________________________
@@ -119,6 +144,8 @@ TH1I *EdbH2::DrawSpectrum(const char *name, const char *title)
 //____________________________________________________________________________________
 TH2F *EdbH2::DrawH2(const char *name, const char *title)
 {
+  TObject *obj=0;
+  if((obj=gDirectory->FindObject(name))) delete obj;
   TH2F *h = new TH2F(name, title, eN[0],eMin[0],eMax[0],eN[1],eMin[1],eMax[1]);
   for(int i=0; i<eN[0]; i++)
     for(int j=0; j<eN[1]; j++)
@@ -203,6 +230,16 @@ void EdbPeak2::Print()
 	  printf("%d :  %f %f %f \n", i, ePeak[i], eMean3[i], eMean[i]);
 }
 
+//____________________________________________________________________________
+float EdbPeak2::ProbPeak( float &x, float &y )
+{
+  int   iv[2];
+  FindPeak(iv);
+  x = X(iv[0]);
+  y = Y(iv[1]);
+  int   ir[2]={1,1};              // 3x3 neigbouring
+  return ProbPeak(iv,ir);
+}
 
 //____________________________________________________________________________
 float EdbPeak2::ProbPeak()
@@ -245,6 +282,7 @@ float EdbPeak2::ProbPeak(int iv[2], int ir[2])
   ePeak[eNpeaks]  = npeak;
   eMean3[eNpeaks] = meanNeib;
   eMean[eNpeaks]  = meanNoPeak;
+  prob = npeak - meanNoPeak;                       // ToDo: this is not normalised value
   eNpeaks++;
   return prob;
 }

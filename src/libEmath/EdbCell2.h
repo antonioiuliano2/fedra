@@ -29,12 +29,16 @@ class EdbH2 : public TObject {
 
  public:
   EdbH2();
+  EdbH2(int nx, float minx, float maxx, int ny, float miny, float maxy) { Set0(); InitH2(nx, minx, maxx, ny, miny, maxy); }
   EdbH2( const EdbH2 &h );
   ~EdbH2();
 
+  void Set0();
   void Copy( const EdbH2 &h );
 
+  int   InitH2( const EdbH2 &h );
   int   InitH2(int n[2], float min[2], float max[2]);
+  int   InitH2(int nx, float minx, float maxx, int ny, float miny, float maxy);
   void  CleanCells();
   void  PrintStat();
   void  Delete();
@@ -105,6 +109,7 @@ class EdbPeak2 : public EdbH2 {
   float   FindPeak9( float &x, float &y);
   float   FindGlobalPeak(float &x, float &y, float ratio=0.1);
   float   ProbPeak();
+  float   ProbPeak(float &x, float &y);
   float   ProbPeak(int iv[2], int ir[2]);
   int     WipePeak(int iv[2], int ir[2]);
   int     ProbPeaks(int npeak);
