@@ -69,6 +69,8 @@ class EdbAffine2D : public TObject{
   Int_t     CalculateTurn( int n, float *x0, float *y0, float *x1, float *y1 );
   Double_t  Phi(Double_t x, Double_t y) const;
 
+  const char *AsString() const;
+
   void Print(Option_t *opt="") const;
 
   ClassDef(EdbAffine2D,2)  // 2D affine parameters  

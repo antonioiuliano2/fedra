@@ -53,6 +53,11 @@ void EdbAffine2D::Print( Option_t *opt ) const
 {
   printf("EdbAffine2D:  %9.6f %9.6f %9.6f %9.6f %12.6f %12.6f\n",  eA11, eA12, eA21, eA22, eB1, eB2 );
 }
+//______________________________________________________________________________
+const char *EdbAffine2D::AsString() const
+{
+  return Form("%9.6f %9.6f %9.6f %9.6f %12.6f %12.6f",  eA11, eA12, eA21, eA22, eB1, eB2 );
+}
  
 //______________________________________________________________________________
 void EdbAffine2D::Reset()
