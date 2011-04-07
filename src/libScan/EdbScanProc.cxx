@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include "Varargs.h"
+#include "TROOT.h"
 #include "TSystem.h"
 #include "TCanvas.h"
 #include "TStyle.h"
@@ -22,6 +23,7 @@
 #include "EdbAlignmentMap.h"
 #include "EdbRunTracking.h"
 #include "EdbCouplesTree.h"
+#include "EdbLinking.h"
 
 using namespace std;
 using namespace TMath;
@@ -441,13 +443,12 @@ int EdbScanProc::AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *af
   ReadPatCPnopar( p1, id1, cut );
   ReadPatCPnopar( p2, id2, cut );
   if(aff) { aff->Print(); p1.Transform(aff);}
-
+ 
   TString dataout;  MakeAffName(dataout,id1,id2,"al.root");
   av.InitOutputFile( dataout );
   av.Align( p1, p2 , dz);
   av.CloseOutputFile();
   UpdateAFFPar( id1, id2, av.eCorrL[0], aff );
-
   return npat;
 }
 
@@ -914,7 +915,7 @@ int EdbScanProc::CopyAFFPar(int id1c[4], int id2c[4], int id1p[4], int id2p[4], 
 //----------------------------------------------------------------
 bool EdbScanProc::UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *aff0 )
 {
-  // update the aff par file witgh the values defined in the EdbLayer
+  // update the aff par file with the values defined in the EdbLayer
 
   TString parout;  MakeAffName(parout,id1,id2);
   LogPrint(id1.eBrick,2,"UpdateAFFPar","%s ", parout.Data());
@@ -938,6 +939,25 @@ bool EdbScanProc::UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *
   sprintf(card,"AFFTXY \t %d \t %f %f %f %f %f %f", l.ID(), 
 	  afftxy.A11(),afftxy.A12(),afftxy.A21(),afftxy.A22(),afftxy.B1(),afftxy.B2() );
   if(!AddParLine(parout.Data(),card)) return false;
+
+  return true;
+}
+
+//----------------------------------------------------------------
+bool EdbScanProc::UpdatePlatePar( EdbID id, EdbLayer &l)
+{
+  // update the plate par file with the values defined in the EdbLayer
+
+  TString parout;  MakeFileName(parout,id,"par");
+  LogPrint(id.eBrick,2,"UpdatePar","%s ", parout.Data());
+  char card[80];
+
+  TDatime t;
+  sprintf(card,"\n## %s", t.AsSQLString());             if(!AddParLine(parout.Data(),card)) return false;
+  sprintf(card,"SHRINK \t %d \t %f",l.ID(), l.Shr() );  if(!AddParLine(parout.Data(),card)) return false;
+
+  EdbAffine2D &aff = *(l.GetAffineTXTY());
+  sprintf( card,"AFFXY \t %d %s", l.ID(), aff.AsString() );  if(!AddParLine(parout.Data(),card)) return false;
 
   return true;
 }
@@ -2508,40 +2528,48 @@ void EdbScanProc::MakeAlignSetSummary(EdbID idset1, EdbID idset2, const char *fi
 }
 
 //______________________________________________________________________________
-void EdbScanProc::MakeAlignSetSummary(EdbID idset, const char *file, const char *mode )
+void EdbScanProc::MakeAlignSetSummary(EdbID idset)
 {
   // assuming that exist the scan sets for idset  
   // read id.n_id.n+1.aff.par and make a summary tree
 
-  Log(2,"MakeAlignSetSummary","open file %s for %s",file,mode);
-  TFile *f = file?  new TFile(file,mode): 0;
-  if(!f) return;
-  TTree *tree = (TTree*)f->Get("alsum");
-  if(!tree) {
-    tree  = new TTree("alsum","Alignment Summary");
-    Int_t   peak=0;
-    //Float_t x0,y0,dx,dy,dz1,dz2;
-    EdbID *id1=0, *id2=0;
-    EdbLayer *corr = 0;
-    EdbPeak2 *peak2c = 0;
-    Float_t xoffset=0,yoffset=0;
-    tree->Branch("id1", "EdbID", &id1);
-    tree->Branch("id2", "EdbID", &id2);
-    tree->Branch("corr", "EdbLayer", &corr);
-    tree->Branch("peak2c","EdbPeak2", &peak2c);
-    tree->Branch("peak",  &peak,"peak/I");
-    tree->Branch("xoffset",  &xoffset,"xoffset/F");
-    tree->Branch("yoffset",  &yoffset,"yoffset/F");
-  }
+  TString name;
+  MakeFileName(name,idset,"align.pdf",false);
+  Log(2,"MakeAlignSetSummary","%s",name.Data());
+  gStyle->SetOptDate(1);
+  gStyle->SetPalette(1);
+  gStyle->SetOptStat(1001111);
   EdbScanSet *ss = ReadScanSet(idset);    if(!ss) return;
   int n = ss->eIDS.GetEntries();          if(n<2)  return;
   for(int i=0; i<n-1; i++) {
     EdbID *id1  = ss->GetID(i);
     EdbID *id2  = ss->GetID(i+1);
-    UpdateAlignSummaryTree(*id1,*id2,*tree);
+
+    TString dataout;  MakeAffName(dataout,*id1,*id2,"al.root");
+    TFile *f = new TFile(dataout,"READ");
+    if(!f) continue;
+
+    EdbLayer *corr   = (EdbLayer*)f->Get("corr_layer1");
+    EdbPeak2 *peak2c = (EdbPeak2*)f->Get("peak2c");
+    float xcenter1 = corr->X();
+    float ycenter1 = corr->Y();
+    EdbAffine2D *aXY=corr->GetAffineXY();
+    float xoffset= aXY->A11()*xcenter1 + aXY->A12()*ycenter1 + aXY->B1() - xcenter1;
+    float yoffset= aXY->A21()*xcenter1 + aXY->A22()*ycenter1 + aXY->B2() - ycenter1;
+
+    Log(1,"UpdateAlignSummaryTree","peak: %7.0f/%7.2f/%7.3f   dx,dy,dz: %7.3f %7.3f %7.3f  for %s_%s", 
+       peak2c->Peak(),peak2c->Mean3(),peak2c->Mean(), xoffset,yoffset,corr->Zcorr(), id1->AsString(),id2->AsString() );
+
+    TCanvas *c = (TCanvas*)f->Get("report_al");
+    if(c) {
+      c->SetName(Form("%s_%s",id1->AsString(), id2->AsString()));
+    //c->Draw();
+      if(i==0)         c->Print(Form("%s(",name.Data()),"pdf");
+      else if(i==n-2)  c->Print(Form("%s)",name.Data()),"pdf");
+      else             c->Print(name,"pdf");
+    }
+    f->Close();
   }
-  tree->AutoSave();
-  f->Close();
 }
 
 //______________________________________________________________________________
@@ -2579,6 +2607,39 @@ void EdbScanProc::UpdateAlignSummaryTree(EdbID id1s, EdbID id2s, TTree &tree)
     c->Draw();
   }
   SafeDelete(f);
+}
+
+///______________________________________________________________________________
+void EdbScanProc::MakeLinkSetSummary(EdbID idset)
+{
+  // assuming that exist the scan sets for idset  
+  // read id.n_id.n+1.aff.par and make a summary tree
+ 
+  TString name;
+  MakeFileName(name,idset,"link.pdf",false);
+ 
+  EdbScanSet *ss = ReadScanSet(idset);    if(!ss) return;
+  int n = ss->eIDS.GetEntries();          if(n<1)  return;
+  gStyle->SetOptDate(1);
+  gStyle->SetPalette(1);
+  gStyle->SetOptStat(1001111);
+  for(int i=0; i<n; i++) {
+    EdbID *id  = ss->GetID(i);
+    TString dataout;  MakeFileName(dataout, *id, "cp.root");
+    TFile *f = new TFile(dataout,"READ");
+    if(!f) return;
+    TCanvas *c = (TCanvas*)f->Get("report");
+    if(c) {
+      c->SetName(Form("%s",id->AsString()));
+//      c->Draw();
+      if(i==0)         c->Print(Form("%s(",name.Data()),"pdf");
+      else if(i==n-1)  c->Print(Form("%s)",name.Data()),"pdf");
+      else             c->Print(name,"pdf");
+   }
+    SafeDelete(f);
+  }
+  //tree->AutoSave();
+  //f->Close();
 }
 
 //______________________________________________________________________________
@@ -2726,6 +2787,45 @@ void EdbScanProc::LogPrint(int brick, int level, const char *location, const cha
 }
 
 //--------------------------------------------------------------------
+void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
+{
+  EdbRunAccess r;
+  TString runfile;
+  MakeFileName(runfile,id,"raw.root");
+  if( !r.InitRun(runfile) ) return;
+  r.eAFID =  cenv.GetValue("fedra.link.AFID"      , 1);
+  EdbLayer l1=(*plate.GetLayer(1));       // +105
+  EdbLayer l2=(*plate.GetLayer(2));       // -105 
+  *(r.GetLayer(2)) = l1;
+  *(r.GetLayer(1)) = l2;
+
+ //float min1[5] = {-500,-500,-0.9,-0.9, 9    };
+  //float max1[5] = { 500, 500, 0.9, 0.9, 100   };
+  //r.AddSegmentCut(1, 1, min1, max1);
+  //r.AddSegmentCut(2, 1, min1, max1);
+  //float min2[5] = {-500,-500,-0.05,-0.05, 0   };
+  //float max2[5] = { 500, 500, 0.05, 0.05, 100 };
+  //r.AddSegmentCut(1, 0, min2, max2);
+  //r.AddSegmentCut(2, 0, min2, max2);
+
+  EdbPattern p1, p2;
+  r.GetPatternDataForPrediction( -1, 2, p1 );
+  r.GetPatternDataForPrediction( -1, 1, p2 );
+
+  EdbLinking link;
+  TString cpfile;
+  MakeFileName(cpfile,id,"cp.root");
+  link.InitOutputFile( cpfile );
+
+  link.Link( p2, p1, l2, l1, cenv );
+  //link.Link( p1, p2, l1, l2, cenv );
+
+  link.CloseOutputFile();
+  UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
+  UpdatePlatePar( id, link.eL2 );
+}
+
+//--------------------------------------------------------------------
 void EdbScanProc::LinkRunNew( EdbID id, EdbPlateP &plate, TEnv &cenv)
 {
   TString rawfile, cpfile;
@@ -2734,6 +2834,17 @@ void EdbScanProc::LinkRunNew( EdbID id, EdbPlateP &plate, TEnv &cenv)
   EdbAlignmentMap amap( cpfile.Data(), "RECREATE");
   amap.eEnv = &cenv;
   amap.Link( rawfile.Data(), plate );
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::LinkSetNewTest(EdbScanSet &sc, TEnv &cenv )
+{
+  if(sc.eIDS.GetEntries()<1) return;
+  for(int i=0; i<sc.eIDS.GetEntries(); i++) {
+    EdbID *id = (EdbID *)(sc.eIDS.At(i));        if(!id)    continue;
+    EdbPlateP *plate = sc.GetPlate(id->ePlate);  if(!plate) continue;
+    LinkRunTest(*id, *plate, cenv);
+  }
 }
 
 //----------------------------------------------------------------
@@ -2806,9 +2917,6 @@ void EdbScanProc::ExtractRawVolume(EdbID id, EdbID idnew, EdbSegP pred, int plat
     }
   }
   ssnew.MakePIDList();
-
-  //ss->Print();
-  //ssnew.Print();
 
   ExtractRawVolume(*ss, ssnew, pred, dR);
 }

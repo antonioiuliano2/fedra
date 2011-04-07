@@ -92,14 +92,17 @@ public:
   int     LinkRunAll(EdbID id, int npre=3, int nfull=1, int correct_ang=1)  {int id4[4]; id.Get(id4); return LinkRunAll(id4,npre,nfull,correct_ang);}
   int     LinkSet(EdbScanSet &sc, int npre=3, int nfull=1, int correct_ang=1);
 
+  void     LinkRunTest(EdbID id, EdbPlateP &plate, TEnv &cenv);
   void     LinkRunNew(EdbID id, EdbPlateP &plate, TEnv &cenv);
   void     LinkSetNew(EdbScanSet &sc, TEnv &cenv);
+  void     LinkSetNewTest(EdbScanSet &sc, TEnv &cenv);
 
   //void     WriteSetGeom(EdbScanSet &sc);
   //void     ReadSetGeom(EdbScanSet &sc);
 
   int     AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *aff=0, float dz=0);
   bool    UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *aff0=0);
+  bool    UpdatePlatePar( EdbID id, EdbLayer &l);
   int     AlignSetNewNopar(EdbScanSet &sc, TEnv &cenv);
   void    AlignSetNewNopar(EdbID id, TEnv &cenv);
 
@@ -178,7 +181,9 @@ public:
   void    UpdateSetWithAff( EdbID id, EdbID id1, EdbID id2 );
   void    UpdateSetWithAff( EdbID id,  EdbID idu );
 
-  void    MakeAlignSetSummary( EdbID id, const char *fout, const char *opt="UPDATE" );
+  void    MakeLinkSetSummary( EdbID id );
+  
+  void    MakeAlignSetSummary( EdbID id );
   void    MakeAlignSetSummary( EdbID id1, EdbID id2, const char *fout, const char *opt="UPDATE" );
 
   int     FindRawTrack( EdbTrackP &pred, EdbTrackP &found, EdbID idset, int plate,  TEnv &cenv);
