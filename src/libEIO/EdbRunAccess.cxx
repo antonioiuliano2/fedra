@@ -718,9 +718,12 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
   ty   = seg->GetTy()/layer->Shr();
-  x    = seg->GetX0() + layer->Zmin()*tx;
-  y    = seg->GetY0() + layer->Zmin()*ty;
-  z    = layer->Z() + layer->Zmin();
+  //x    = seg->GetX0() + layer->Zmin()*tx;                 //TODO: check that old algorithms works properly after this correction
+  //y    = seg->GetY0() + layer->Zmin()*ty;
+  //z    = layer->Z() + layer->Zmin();
+  x    = seg->GetX0() + layer->Zcorr()*tx;
+  y    = seg->GetY0() + layer->Zcorr()*ty;
+  z    = layer->Z() + layer->Zcorr();
   if(eAFID==0) {
     x+=view->GetXview();
     y+=view->GetYview();
