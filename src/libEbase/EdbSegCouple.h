@@ -32,7 +32,11 @@ class EdbSegCouple : public TObject {
   Int_t   eN1tot, eN2tot;   // total number of entries for the segment
 
  public:
-  EdbSegP  *eS;   //!  the result of the fit
+  EdbSegP  *eS;    //!  the result of the fit
+  EdbSegP  *eS1;   //!  pointers - useful when all segments are in memory
+  EdbSegP  *eS2;   //!
+  bool     eIsOwner; //!
+  
  private:
   static int egSortFlag; //! 0: chi2p only; 1: N1()*10000+N2()*10000000 + CHI2()/100
 

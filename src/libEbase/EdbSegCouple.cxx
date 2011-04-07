@@ -4,26 +4,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-// #include "TROOT.h"
-// #include "TFile.h"
-// #include "TVector3.h"
-// #include "TIndexCell.h"
-// #include "TArrayF.h"
-// #include "TBenchmark.h"
-// #include "EdbVertex.h"
-// #include "EdbPVRec.h"
-// #include "EdbPhys.h"
-// #include "EdbMath.h"
-// #include "EdbMomentumEstimator.h"
-// #include "EdbLog.h"
-// #include "EdbScanSet.h"
 #include "EdbSegCouple.h"
-// 
-// #include "vt++/CMatrix.hh"
-// #include "vt++/VtVector.hh"
-// #include "vt++/VtDistance.hh"
-// #include "smatrix/Functions.hh"
-// #include "smatrix/SVector.hh"
 
 ClassImp(EdbSegCouple)
 
@@ -38,6 +19,8 @@ EdbSegCouple::EdbSegCouple()
 EdbSegCouple::~EdbSegCouple() 
 { 
   SafeDelete(eS);
+  if(eIsOwner) SafeDelete(eS1);
+  if(eIsOwner) SafeDelete(eS2);
 }
 
 ///______________________________________________________________________________
@@ -52,6 +35,9 @@ void EdbSegCouple::Set0()
   eCHI2=0;
   eCHI2P=0;
   eS=0;
+  eS1=0;
+  eS2=0;
+  eIsOwner=0;
 }
 
 ///______________________________________________________________________________

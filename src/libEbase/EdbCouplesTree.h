@@ -23,11 +23,11 @@ public:
   TTree *eTree;                   // couples tree
 
   EdbMask     *eEraseMask;                // id's (entries) of segments to be erased when read couples tree
-   
-   //Correction parameters
-   TCut         eCut;                      // cut to be applied on read
-   bool         eApplyCorrections;         // if true - apply corrections stored in ePlate when do GetEntry
-   EdbPlateP    ePlate;
+
+  //Correction parameters
+  TCut         eCut;                      // cut to be applied on read
+  bool         eApplyCorrections;         // if true - apply corrections stored in ePlate when do GetEntry
+  EdbPlateP    ePlate;
 
 public:
   EdbCouplesTree();

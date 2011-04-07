@@ -30,6 +30,7 @@ EdbCouplesTree::EdbCouplesTree()
   eApplyCorrections=0;
   eCut="1";
   eEraseMask=0;
+  eTree=0;
 }
 
 //---------------------------------------------------------------------
@@ -58,23 +59,29 @@ void EdbCouplesTree::Print()
 void EdbCouplesTree::Close()
 {
   if (eTree) {
-    TFile *f = eTree->GetDirectory()->GetFile();
+    TFile *f = (TFile*)(eTree->GetDirectory()->GetFile());
     if (f) {
+      //f->Print();
       if(f->IsWritable()) eTree->AutoSave();
-      SafeDelete(eTree);
-      SafeDelete(f);
+      f->Close();
+      //SafeDelete(eTree);
+      //SafeDelete(f);
     }
-    eTree=NULL;
+     //SafeDelete(eTree);
+     //eTree=NULL;
   }
 }
 
 //---------------------------------------------------------------------
 bool EdbCouplesTree::InitCouplesTree(const char *name, const char *fname, Option_t *mode)
 {
-  Log(3,"EdbCouplesTree::InitCouplesTree","%s from file %s for %s",name,fname,mode);
+  Log(3,"EdbCouplesTree::InitCouplesTree","%s at file %s as %s",name,fname,mode);
   if(fname) {                                      // if fname==0 - assumed that file is already opened 
-    TFile *f = new TFile(fname, mode);
-    if (!f->IsOpen()) return 0;
+    //TFile *f = new TFile(fname, mode);
+    //printf("\n ROOT dir before:\n"); gDirectory->ls();  printf("\n");
+   TFile *f = TFile::Open(fname, mode);
+    //printf("\n ROOT dir after:\n"); gDirectory->ls();  printf("\n");
+   if (!f->IsOpen()) return 0;
     f->cd();
   }
   if( (strcmp(mode,"READ")==0)||(strcmp(mode,"UPDATE")==0)) {
