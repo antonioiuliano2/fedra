@@ -3,11 +3,13 @@
 #include <string.h>
 #include <iostream>
 #include <TEnv.h>
+#include <TRint.h>
 #include "EdbLog.h"
 #include "EdbScanProc.h"
 
 using namespace std;
 
+//----------------------------------------------------------------------------------------
 void print_help_message()
 {
   cout<< "\nUsage: \n\t  emlink -id=ID [-p=NPRE -f=NFULL -o=DATA_DIRECTORY -a -v=DEBUG] \n";
@@ -16,26 +18,58 @@ void print_help_message()
   cout<< "\t\t  NPRE  - number of the prealignments (default is 0)\n";
   cout<< "\t\t  NFULL - number of the fullalignments (default is 0)\n";
   cout<< "\t\t  -a    - apply the angular correction when do prelinking (default is not)\n";
-  cout<< "\t\t  -new  - new linking\n";
+  cout<< "\t\t  -new  - new linking (renewed 06-04-11)\n";
   cout<< "\t\t  DEBUG - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\nExample: \n";
   cout<< "\t  o2root -id4554.10.1.0 -o/scratch/BRICKS \n";
-  cout<< "\nThe data location directory if not explicitly defined will be taken from .rootrc as: \n";
-  cout<< "\t  emrec.outdir:      /scratch/BRICKS \n";
-  cout<< "\t  emrec.EdbDebugLevel:      1\n";
+  cout<< "\n If the data location directory if not explicitly defined\n";
+  cout<< " the current directory will be assumed to be the brick directory \n";
+  cout<< "\n If the parameters file (link.rootrc) is not presented - the default \n";
+  cout<< " parameters will be used. After the execution them are saved into link.save.rootrc file\n";
   cout<<endl;
 }
 
+//----------------------------------------------------------------------------------------
+void set_default(TEnv &cenv)
+{
+  // default parameters for the new linking
+  cenv.SetValue("fedra.link.BinOK"               , 6.   );
+  cenv.SetValue("fedra.link.NcorrMin"            , 100  );
+  cenv.SetValue("fedra.link.DoCorrectShrinkage"  , true );
+  cenv.SetValue("fedra.link.shr.NsigmaEQ"        , 7.5  );
+  cenv.SetValue("fedra.link.shr.Shr0"            , .85  );
+  cenv.SetValue("fedra.link.shr.DShr"            , .3   );
+  cenv.SetValue("fedra.link.shr.ThetaLimits","0.005  1.");
+  cenv.SetValue("fedra.link.DoCorrectAngles"     , true );
+  cenv.SetValue("fedra.link.ang.Chi2max"         , 1.5  );
+  cenv.SetValue("fedra.link.DoFullLinking"       , true );
+  cenv.SetValue("fedra.link.full.NsigmaEQ"       , 5.5  );
+  cenv.SetValue("fedra.link.full.DR"             , 30.  );
+  cenv.SetValue("fedra.link.full.DT"             , 0.1  );
+  cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
+  cenv.SetValue("fedra.link.DoSaveCouples"       , true );
+  cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
+
+  cenv.SetValue("emlink.outdir"          , "..");
+  cenv.SetValue("emlink.env"             , "link.rootrc");
+  cenv.SetValue("emlink.EdbDebugLevel"   , 1);
+}
+
+//----------------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
   if (argc < 2)   { print_help_message();  return 0; }
-  
-  const char *outdir    = gEnv->GetValue("emrec.outdir"   , "./");
-  gEDBDEBUGLEVEL        = gEnv->GetValue("emrec.EdbDebugLevel" , 1);
+
+  TEnv cenv("linkenv");
+  set_default(cenv);
+  gEDBDEBUGLEVEL        = cenv.GetValue("emlink.EdbDebugLevel" , 1);
+  const char *env       = cenv.GetValue("emlink.env"           , "link.rootrc");
+  const char *outdir    = cenv.GetValue("emlink.outdir"        , "..");
 
   bool      do_id      = false;
   bool      do_set     = false;
   bool      do_new     = false;
+  bool      do_check   = false;
   Int_t     brick=0, plate=0, major=0, minor=0;
   Int_t     npre=0,  nfull=0;
   Int_t     correct_ang=0;
@@ -73,6 +107,10 @@ int main(int argc, char* argv[])
       {
 	do_new=true;
       }
+    else if(!strncmp(key,"-check",6))
+      {
+	do_check=true;
+      }
     else if(!strncmp(key,"-v=",3))
       {
 	if(strlen(key)>3)	gEDBDEBUGLEVEL = atoi(key+3);
@@ -80,6 +118,11 @@ int main(int argc, char* argv[])
   }
 
   if(!(do_id||do_set))   { print_help_message(); return 0; }
+
+  cenv.SetValue("emlink.env"            , env);
+  cenv.ReadFile( cenv.GetValue("emlink.env"   , "link.rootrc") ,kEnvLocal);
+  cenv.SetValue("emlink.outdir"         , outdir);
+
 
   EdbScanProc sproc;
   sproc.eProcDirClient=outdir;
@@ -89,7 +132,15 @@ int main(int argc, char* argv[])
     printf("----------------------------------------------------------------------------\n\n");
 
     EdbID id(brick,plate,major,minor);
-    sproc.LinkRunAll(id, npre, nfull, correct_ang);
+    if(do_new) {
+      EdbID id0=id; id0.ePlate=0;
+      EdbScanSet *ss = sproc.ReadScanSet(id0);
+      if(ss) {
+        EdbPlateP *plate = ss->GetPlate(id.ePlate);
+        if(plate) sproc.LinkRunTest(id, *plate, cenv);
+     }
+    }
+    else if(npre+nfull>0) sproc.LinkRunAll(id, npre, nfull, correct_ang);
   }
   if(do_set) {
     printf("\n----------------------------------------------------------------------------\n");
@@ -99,47 +150,23 @@ int main(int argc, char* argv[])
     EdbID id(brick,plate,major,minor);
     EdbScanSet *ss = sproc.ReadScanSet(id);
     if(ss) {
-      if(do_new) sproc.LinkSetNew(*ss, *gEnv);
-      else       sproc.LinkSet(*ss, npre, nfull, correct_ang);
+      if(do_new) {
+        sproc.LinkSetNewTest(*ss, cenv);
+        sproc.MakeLinkSetSummary(id);
+      }
+      else  if(npre+nfull>0)  sproc.LinkSet(*ss, npre, nfull, correct_ang);
     }
+    
+    if(do_check) 
+       {
+	 //int argc2=1;
+	 //char *argv2[]={"-l"};
+	 //TRint app("APP",&argc2, argv2);
+	 sproc.MakeLinkSetSummary(id);
+	 //app.Run();
+       }
   }
+  cenv.WriteFile("link.save.rootrc");
 
   return 1;
 }
-
-
-
-/*
-
-//--------------------------------------------------------------------
-void FedraLink::LinkPlate( int iplate )
-{
-  EdbPattern p1(0,0,0,500000),p2(0,0,0,500000);
-
-  ReadPlate(iplate, p1, p2);
-
-  float  z1 = eEnv.GetValue( "fedra.link.z1", 214.);
-  float  z2 = eEnv.GetValue( "fedra.link.z2",   0.);
-  EdbPlateP plate;
-  float dz   = z2-z1;
-  int   pm = (int)(dz/Abs(dz));
-  plate.SetPlateLayout( dz, pm*45, pm*45);  if(gEDBDEBUGLEVEL>2) plate.PrintPlateLayout();
-
-  p1.SetZ( plate.GetLayer(1)->Z() );  p1.SetSegmentsZ();
-  p2.SetZ( plate.GetLayer(2)->Z() );  p2.SetSegmentsZ();
-
-  Log(1,"\nFedraLink::LinkPlate", "with %d and %d segments at dz = %6.1f", p1.N(), p2.N(), dz );
-
-  EdbAlignmentMap amap(Form("link%2.2d.root", iplate), "RECREATE");
-  amap.eEnv   = &eEnv;
-  amap.ePat1  = &p1;
-  amap.ePat2  = &p2;
-  amap.ePlate = &plate;
-  //p1.Print();
-  //p2.Print();
-  amap.Link();
-  //amap.SaveAll();
-}
-
-
-*/

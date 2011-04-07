@@ -18,9 +18,9 @@ void rootlogon()
   loadlib( "libEMC"  , "EdbPVGen" );              // optional
   if(gSystem->Load("libDataConversion"))          // optional
     printf("libDataConversion do NOT loaded!\n"); 
+  loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
-  loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlibEOracle();                               // optional
   loadlib( "libEmr", "EdbEmrFileAccess" );        // optional
 

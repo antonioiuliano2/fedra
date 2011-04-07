@@ -36,18 +36,18 @@ void print_help_message()
 void set_default(TEnv &cenv)
 {
   // default parameters for the new alignment
-  cenv.SetValue("fedra.align.OffsetMax"   , 500. );
-  cenv.SetValue("fedra.align.DZ"          , 120.);
-  cenv.SetValue("fedra.align.DPHI"        ,   0.009 );
-  cenv.SetValue("fedra.align.SigmaR"      , 10.  );
-  cenv.SetValue("fedra.align.SigmaT"      , 0.005);
-  cenv.SetValue("fedra.align.DoFine"      , 1);
-  cenv.SetValue("fedra.readCPcut"         , "eCHI2P<2.5&&s1.eW>7&&s2.eW>7&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.45");
-  cenv.SetValue("fedra.align.SaveCouples" , 1);
+  cenv.SetValue("fedra.align.OffsetMax"   , 1000. );
+  cenv.SetValue("fedra.align.DZ"          ,  250. );
+  cenv.SetValue("fedra.align.DPHI"        ,  0.02 );
+  cenv.SetValue("fedra.align.SigmaR"      ,  25.  );
+  cenv.SetValue("fedra.align.SigmaT"      ,  0.012);
+  cenv.SetValue("fedra.align.DoFine"      ,  1    );
+  cenv.SetValue("fedra.readCPcut"         , "eCHI2P<2.0&&s.eW>10&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.99");
+  cenv.SetValue("fedra.align.SaveCouples" ,  1    );
 
-  cenv.SetValue("emalign.outdir"          , "..");
+  cenv.SetValue("emalign.outdir"          , ".."  );
   cenv.SetValue("emalign.env"             , "align.rootrc");
-  cenv.SetValue("emalign.EdbDebugLevel"   , 1);
+  cenv.SetValue("emalign.EdbDebugLevel"   ,  1    );
 }
 
 int main(int argc, char* argv[])
@@ -56,10 +56,10 @@ int main(int argc, char* argv[])
   
   TEnv cenv("alignenv");
   set_default(cenv);
-  gEDBDEBUGLEVEL        = cenv.GetValue("emalign.EdbDebugLevel" , 1);
-
+  gEDBDEBUGLEVEL     = cenv.GetValue("emalign.EdbDebugLevel" , 1);
   const char *env    = cenv.GetValue("emalign.env"            , "align.rootrc");
   const char *outdir = cenv.GetValue("emalign.outdir"         , "..");
+  
   bool      do_ida      = false;
   bool      do_idb      = false;
   bool      do_new      = false;    // apply new alignment algorithm
@@ -147,7 +147,15 @@ int main(int argc, char* argv[])
     printf("----------------------------------------------------------------------------\n\n");
 
     if(do_new) {
-      sproc.AlignNewNopar(idA,idB,cenv);
+      EdbID id0=idA; id0.ePlate=0;
+      EdbScanSet *ss = sproc.ReadScanSet(id0);
+      if(ss) {
+	EdbAffine2D aff;
+	float dz = -1300;
+	if(ss->GetAffP2P(idA.ePlate, idB.ePlate, aff))
+	  dz = ss->GetDZP2P(idA.ePlate, idB.ePlate);
+	sproc.AlignNewNopar(idA,idB,cenv,&aff, dz);
+      }
     }
     else       sproc.AlignAll(idA,idB, npre, nfull);
   }  
@@ -171,14 +179,11 @@ int main(int argc, char* argv[])
     else if(do_new) 
       {
 	sproc.AlignSetNewNopar(*ss, cenv);
+	sproc.MakeAlignSetSummary(id);
       }    
      else if(do_check) 
        {
-	 int argc2=1;
-	 char *argv2[]={"-l"};
-	 TRint app("APP",&argc2, argv2);
-	 sproc.MakeAlignSetSummary(id, "align_summary.root","RECREATE");
-	 app.Run();
+	 sproc.MakeAlignSetSummary(id);
        } 
    else sproc.AlignSet(*ss, npre, nfull);
 
