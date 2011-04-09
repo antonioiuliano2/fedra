@@ -375,6 +375,9 @@ void EdbTrackP::Set0()
   eVTAE = 0;
   eNpl=0;
   eN0=0;
+  ePerrUp=0;
+  ePerrDown=0;
+  return;
 }
 
 //______________________________________________________________________________
@@ -1095,6 +1098,22 @@ Float_t EdbTrackP::Zmax() const
   Float_t zmax = Z(); 
   if (N() && GetSegmentLast()->Z() > zmax) zmax = GetSegmentLast()->Z();
   return zmax;
+}
+//______________________________________________________________________________
+void EdbTrackP::SetPerrUp(Float_t perrUp)
+{
+  ePerrUp=perrUp;
+}
+//______________________________________________________________________________
+void EdbTrackP::SetPerrDown(Float_t perrDown)
+{
+  ePerrDown=perrDown;
+}
+//______________________________________________________________________________
+void EdbTrackP::SetPerr(Float_t perrDown, Float_t perrUp)
+{
+  ePerrUp=perrUp;
+  ePerrDown=perrDown;
 }
 
 //______________________________________________________________________________
