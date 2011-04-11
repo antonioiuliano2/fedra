@@ -1129,9 +1129,13 @@ void EdbPVRQuality::Remove_Segment(EdbSegP* seg) {
 //___________________________________________________________________________________
 
 Int_t EdbPVRQuality::FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
-  // code taken from
+  // The TH1 function  FindFirstBinAbove  is only implemented in
+  // root version >= 5.24. But since many scanning labs use old root
+  // versions persistently, I had to copy the TH1 function as a 
+  // memberfunction of EdbPVRQuality
+  // Code taken from
   // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
-  TAxis* ax;
+  TAxis* ax=0;
   if (axis==1) ax = hist->GetXaxis();
   if (axis==2) ax = hist->GetYaxis();
   if (axis==3) ax = hist->GetZaxis();
@@ -1139,14 +1143,19 @@ Int_t EdbPVRQuality::FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis
   for (Int_t i=0; i<=nb; i++) {
    if (hist->GetBinContent(i)>threshold) return i; 
   }
+  return 0;
 }
 
 //___________________________________________________________________________________
 
 Int_t EdbPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
-  // code taken from
+  // The TH1 function  FindFirstBinAbove  is only implemented in
+  // root version >= 5.24. But since many scanning labs use old root
+  // versions persistently, I had to copy the TH1 function as a 
+  // memberfunction of EdbPVRQuality
+  // Code taken from
   // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
-  TAxis* ax;
+  TAxis* ax=0;
   if (axis==1) ax = hist->GetXaxis();
   if (axis==2) ax = hist->GetYaxis();
   if (axis==3) ax = hist->GetZaxis();
@@ -1154,4 +1163,5 @@ Int_t EdbPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis)
   for (Int_t i=nb; i>=1; i--) {
    if (hist->GetBinContent(i)>threshold) return i; 
   }
+  return 0;
 }

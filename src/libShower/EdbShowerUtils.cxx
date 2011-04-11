@@ -413,6 +413,9 @@ void EdbShowerRec::Execute()
         // This has to be done, since by definition the first BT in the RecoShower is the InBT.
         // Otherwise, also the definition of shower axis and transversal profiles is wrong!
         RecoShower -> AddSegment(InBT);
+	// Attention: If you have a EdbTrackP object and you add a segment, then
+	// you have to manually set Counters for N(), NPl(). It is not done auto.
+	RecoShower -> SetCounters();
         //cout << "Segment  (InBT) " << Segment << " was added to RecoShower." <<  endl;
 
         // Transform (make size smaller, extract only events having same MC) the  eAli  object:
@@ -471,6 +474,9 @@ void EdbShowerRec::Execute()
                 }
                 else {
                     RecoShower -> AddSegment(Segment);
+		    	// Attention: If you have a EdbTrackP object and you add a segment, then
+			// you have to manually set Counters for N(), NPl(). It is not done auto.
+			RecoShower -> SetCounters();
                 }
                 if (gEDBDEBUGLEVEL>4) cout << "Segment  " << Segment << " was added at  &Segment : " << &Segment  <<  endl;
 
@@ -1072,6 +1078,9 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
             //showseg->PrintNice();
 
             show->AddSegment(showseg);
+	    	// Attention: If you have a EdbTrackP object and you add a segment, then
+	    // you have to manually set Counters for N(), NPl(). It is not done auto.
+	    show -> SetCounters();
         } // Loop over shower Entries (==different basetracks):
 
 
