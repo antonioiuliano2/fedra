@@ -188,6 +188,8 @@ public:
 
     void CreateEdbPVRec();
     void CheckFilledXYSize();
+    Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
+    Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);

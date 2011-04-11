@@ -64,6 +64,33 @@ EdbShowerRec::EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA
     rec(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim,piece2,piece2par,UPDOWN,pvr);
 
 }
+
+
+//----------------------------------------------------------------
+EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
+{
+    // Constructor giving a EdbPVRec object directly.
+    // We try to do the reconstruction in the following way:
+    // a) if EdbPVRec has tracking already done then take eTracks for 
+    //    Inititator Basetracks
+    // b) if EdbPVRec has vertexing already done then take eVertex for
+    //    additional cut of the Initiator Basetracks which are in 
+    //    an IP of less than 250 microns.
+    // c) Start BGEstimation, Reconstruction, Energy, ID  directly
+    //    from this EdbPVRec object
+    
+    cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr) " << endl;
+    cout << "Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
+    cout << "a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
+    cout << "b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
+    cout << "c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
+    
+    cout <<"-------------------    T O D O -----------------------" << endl;
+    
+    Set0();
+    
+}
+
 //----------------------------------------------------------------
 EdbShowerRec::~EdbShowerRec()
 {

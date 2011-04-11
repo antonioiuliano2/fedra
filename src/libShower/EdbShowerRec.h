@@ -157,8 +157,7 @@ public:
 
     EdbShowerRec();
     EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA, int piece2, int piece2par,int DOWN,EdbPVRec  *pvr);
-//    EdbShowerRec(float x, float y, float z, float tx, float ty, int trid, int size=0, float dz=0, float output=0, int id=0);
-//    EdbShowerRec(float x, float y, float z, float tx, float ty, int trid);
+    EdbShowerRec(EdbPVRec  *pvr);
 
     virtual ~EdbShowerRec();
 

@@ -713,10 +713,10 @@ void EdbPVRQuality::CheckFilledXYSize()
     nby=eHistYX->GetNbinsY();
     Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
 
-    Int_t n1x= eHistYX->FindFirstBinAbove(0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
-    Int_t n1y= eHistYX->FindFirstBinAbove(0,2);
-    Int_t n2x= eHistYX->FindLastBinAbove(0,1);
-    Int_t n2y= eHistYX->FindLastBinAbove(0,2);
+    Int_t n1x= FindFirstBinAbove(eHistYX,0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
+    Int_t n1y= FindFirstBinAbove(eHistYX,0,2);
+    Int_t n2x= FindLastBinAbove(eHistYX,0,1);
+    Int_t n2y= FindLastBinAbove(eHistYX,0,2);
     Int_t width_x=0;
     Int_t width_y=0;
     width_x=TMath::Abs(eHistYX->GetXaxis()->GetBinCenter(n1x)-eHistYX->GetXaxis()->GetBinCenter(n2x));
@@ -1124,4 +1124,34 @@ void EdbPVRQuality::Remove_Segment(EdbSegP* seg) {
     segArray->Add(seg);
     Remove_SegmentArray(segArray);
     delete segArray;
+}
+
+//___________________________________________________________________________________
+
+Int_t EdbPVRQuality::FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
+  // code taken from
+  // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
+  TAxis* ax;
+  if (axis==1) ax = hist->GetXaxis();
+  if (axis==2) ax = hist->GetYaxis();
+  if (axis==3) ax = hist->GetZaxis();
+  int nb = ax->GetNbins();
+  for (Int_t i=0; i<=nb; i++) {
+   if (hist->GetBinContent(i)>threshold) return i; 
+  }
+}
+
+//___________________________________________________________________________________
+
+Int_t EdbPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
+  // code taken from
+  // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
+  TAxis* ax;
+  if (axis==1) ax = hist->GetXaxis();
+  if (axis==2) ax = hist->GetYaxis();
+  if (axis==3) ax = hist->GetZaxis();
+  int nb = ax->GetNbins();
+  for (Int_t i=nb; i>=1; i--) {
+   if (hist->GetBinContent(i)>threshold) return i; 
+  }
 }
