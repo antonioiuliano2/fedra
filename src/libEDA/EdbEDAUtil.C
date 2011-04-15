@@ -345,19 +345,25 @@ bool EdbEDAUtil::AskYesNo(char *message){
 }
 
 EdbTrackP * EdbEDAUtil::CleanTrack(EdbTrackP *t0){
-	// remove fake-segment/Microtrack. if nseg<=4, just return t0.
-	// if fake-segments exist, create a new track without the segments and return the pointer.
-	// if no fake-segments, return the track itself.
-	// 1st segment will not be rejected in any cases.
+	// remove fake-segment/Microtrack/pl57. if no segment is rejected, return t0;
+	// if Nseg<=4, no fake-segment will be removed.
+	// if fake-segments exist, create a new track without the fake segments and return the pointer.
+	// 1st segment will not be rejected as fake.
+	// segment on pl57 will be rejected every time.
 	
 	EdbTrackP *t1 = new EdbTrackP;
 	t1->Copy(*t0);
-	// remove microtrack
+	// remove microtrack and pl 57.
 	for(int i=0; i<t1->N()&&t1->N()>1; i++){
 		EdbSegP *s = t1->GetSegment(i);
 		if(s==NULL) break;
 		if(s->Side()!=0) {
 			printf("Microtrack removed pl%d\n", s->Plate());
+			t1->RemoveSegment(s);
+			i--;
+		}
+		if(s->Plate()>=57){
+			printf("Segment on plate 57 removed.\n");
 			t1->RemoveSegment(s);
 			i--;
 		}
@@ -420,7 +426,7 @@ EdbTrackP * EdbEDAUtil::CleanTrack(EdbTrackP *t0){
 	if(t1->N()!=t0->N()) return t1;
 
 	delete t1;
-	// if no fake-segment, return the track itself.
+	// if no fake-segment nor microtracks, return the track itself.
 	return t0;
 }
 
@@ -834,6 +840,7 @@ EdbPVRec * EdbEDAUtil::ReadFeedbackPVR(char *filename){
 			t->Set(id_track, x, y, ax, ay, 0, 0);
 			t->SetZ(z);
 			t->SetTrack(id_track);
+			t->SetFlag(particle_id);
 			pvr->AddTrack(t);
 			
 			// fill COV for vertexing
