@@ -4,6 +4,7 @@
 #include "TTree.h"
 
 TTree *cr_tree=0;
+TCut cut("1");
 
 //-------------------------------------------------------
 void init()
@@ -13,9 +14,11 @@ void init()
 }
 
 //-------------------------------------------------------
-void craw()
+void craw(const char *inputcut="1")
 {
+  cut=inputcut;
   printf("Check of the very raw (clusters only) data\n\n");
+  cut.Print();
   printf("Red  line: Top    side\n");
   printf("Blue line: Bottom side\n");
   init();
@@ -33,10 +36,10 @@ void check_z()
   c->Clear();
   c->Divide(2,2);
 
-  c->cd(1);       cr_tree->Draw("eZ1:eXview:eYview");
-  c->cd(2);       cr_tree->Draw("eZ1:eAreaID*121+eViewID");
-  c->cd(3);       cr_tree->Draw("eNcl:eZframe-eZ2");
-  c->cd(4);       cr_tree->Draw("eZ2-eZ3");
+  c->cd(1);       cr_tree->Draw("eZ1:eXview:eYview",cut);
+  c->cd(2);       cr_tree->Draw("eZ1:eAreaID*121+eViewID",cut);
+  c->cd(3);       cr_tree->Draw("eNcl:eZframe-eZ2",cut);
+  c->cd(4);       cr_tree->Draw("eZ2-eZ3",cut);
 
   //c->SaveAs("raw_z.gif");
 }
@@ -46,10 +49,10 @@ void check_view()
 {
   TCanvas *c = new TCanvas("cview","check view");
   c->Divide(2,2);
-  c->cd(3); cr_tree->Draw("eY:eX>>hvb(42,-210,210,36,-180,180)","eNframesBot>0","colZ",300);
-  c->cd(1); cr_tree->Draw("eY:eX>>hvt(42,-210,210,36,-180,180)","eNframesTop>0","colZ",300);
-  c->cd(4); cr_tree->Draw("eY:eX>>hvb1(42,-210,210,36,-180,180)","eNframesBot>0","lego2",300);
-  c->cd(2); cr_tree->Draw("eY:eX>>hvt1(42,-210,210,36,-180,180)","eNframesTop>0","lego2",300);
+  c->cd(3); cr_tree->Draw("eY:eX>>hvb(42,-210,210,36,-180,180)",cut && "eNframesBot>0","colZ",300);
+  c->cd(1); cr_tree->Draw("eY:eX>>hvt(42,-210,210,36,-180,180)",cut && "eNframesTop>0","colZ",300);
+  c->cd(4); cr_tree->Draw("eY:eX>>hvb1(42,-210,210,36,-180,180)",cut && "eNframesBot>0","lego2",300);
+  c->cd(2); cr_tree->Draw("eY:eX>>hvt1(42,-210,210,36,-180,180)",cut && "eNframesTop>0","lego2",300);
 
   //c->SaveAs("raw_view.gif");
 }
@@ -62,11 +65,11 @@ void check_a(float meanw=2200.)
 
   cr_tree->SetAlias("nclm","Sum$(eNcl)/Length$(eNcl)");
 
-  cr_tree->Draw("eYview:eXview>>h(200,0,1000,200,0,1000)","","goff");
+  cr_tree->Draw("eYview:eXview>>h(200,0,1000,200,0,1000)",cut,"goff");
 
   c->cd(1);
   cr_tree->SetMarkerStyle(1);
-  cr_tree->Draw("eYview:eXview","nclm*(eNframesTop>0)");
+  cr_tree->Draw("eYview:eXview","nclm*(eNframesTop>0)",cut);
   int   nraws = cr_tree->GetSelectedRows();
   Double_t *x = cr_tree->GetV1();
   Double_t *y = cr_tree->GetV2();
@@ -81,7 +84,7 @@ void check_a(float meanw=2200.)
   }
   cr_tree->SetMarkerColor(kBlue);
   cr_tree->SetMarkerStyle(6);
-  cr_tree->Draw("eYview:eXview","eNframesBot>0","same");
+  cr_tree->Draw("eYview:eXview",cut && "eNframesBot>0","same");
 
   c->cd(2);
   cr_tree->SetMarkerStyle(1);
@@ -100,7 +103,7 @@ void check_a(float meanw=2200.)
   }
   cr_tree->SetMarkerColor(kRed);
   cr_tree->SetMarkerStyle(6);
-  cr_tree->Draw("eYview:eXview","eNframesTop>0","same");
+  cr_tree->Draw("eYview:eXview",cut && "eNframesTop>0","same");
 }
 
 //-------------------------------------------------------
@@ -113,39 +116,39 @@ void check_ss()
   cr_tree->SetLineColor(1);
   cr_tree->Draw("nclm");
   cr_tree->SetLineColor(kRed);
-  cr_tree->Draw("nclm","eNframesTop>0","same");
+  cr_tree->Draw("nclm",cut && "eNframesTop>0","same");
   cr_tree->SetLineColor(kBlue);
-  cr_tree->Draw("nclm","eNframesBot>0","same");
+  cr_tree->Draw("nclm",cut && "eNframesBot>0","same");
 
   c->cd(2);
   cr_tree->SetMarkerStyle(6);
-  cr_tree->Draw("eZframe:eYview:eXview:eNcl");
+  cr_tree->Draw("eZframe:eYview:eXview:eNcl", cut);
 
   c->cd(3);
   cr_tree->SetLineColor(1);
-  cr_tree->Draw("eNcl");
+  cr_tree->Draw("eNcl",cut);
   cr_tree->SetLineColor(kRed);
-  cr_tree->Draw("eNcl","eNframesTop>0","same");
+  cr_tree->Draw("eNcl",cut && "eNframesTop>0","same");
   cr_tree->SetLineColor(kBlue);
-  cr_tree->Draw("eNcl","eNframesBot>0","same");
+  cr_tree->Draw("eNcl",cut && "eNframesBot>0","same");
 
   c->cd(4);
   cr_tree->SetMarkerStyle(1);
   cr_tree->SetMarkerColor(1);
-  cr_tree->Draw("eNcl:eZframe");
+  cr_tree->Draw("eNcl:eZframe", cut );
   cr_tree->SetMarkerStyle(6);
   cr_tree->SetMarkerColor(kBlue);
-  cr_tree->Draw("eNcl:eZframe","eNframesBot>0","same");
+  cr_tree->Draw("eNcl:eZframe",cut && "eNframesBot>0","same");
   cr_tree->SetMarkerColor(kRed);
-  cr_tree->Draw("eNcl:eZframe","eNframesTop>0","same");
+  cr_tree->Draw("eNcl:eZframe",cut && "eNframesTop>0","same");
 
   c->cd(5);
   cr_tree->SetMarkerStyle(6);
   cr_tree->SetMarkerColor(kBlue);
-  cr_tree->Draw("eNcl:eZframe-eZ2","eNframesBot>0");
+  cr_tree->Draw("eNcl:eZframe-eZ2",cut && "eNframesBot>0");
   c->cd(6);
   cr_tree->SetMarkerColor(kRed);
-  cr_tree->Draw("eNcl:eZframe-eZ3","eNframesTop>0");
+  cr_tree->Draw("eNcl:eZframe-eZ3",cut && "eNframesTop>0");
 
 
 }
@@ -162,28 +165,28 @@ void check_e()
   cr_tree->Draw("eNclusters:Entry$+0.5");
   cr_tree->SetMarkerStyle(6);
   cr_tree->SetMarkerColor(kBlue);
-  cr_tree->Draw("eNclusters:Entry$+0.5","eNframesBot>0","same");
+  cr_tree->Draw("eNclusters:Entry$+0.5",cut && "eNframesBot>0","same");
   cr_tree->SetMarkerColor(kRed);
-  cr_tree->Draw("eNclusters:Entry$+0.5","eNframesTop>0","same");
+  cr_tree->Draw("eNclusters:Entry$+0.5",cut && "eNframesTop>0","same");
 
   c->cd(2);
   cr_tree->SetMarkerStyle(1);
   cr_tree->SetMarkerColor(1);
-  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5>>hee(10000)");
+  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5>>hee(10000)", cut );
   cr_tree->SetMarkerStyle(6);
   cr_tree->SetMarkerColor(kBlue);
-  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5","eNframesBot>0","same");
+  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5",cut && "eNframesBot>0","same");
   cr_tree->SetMarkerColor(kRed);
-  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5","eNframesTop>0","same");
+  cr_tree->Draw("eNcl:eFrameID+100*Entry$+0.5",cut && "eNframesTop>0","same");
 
   c->cd(3);
   cr_tree->SetMarkerStyle(1);
   cr_tree->SetMarkerColor(1);
-  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5>>hzf(10000)");
+  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5>>hzf(10000)", cut );
   cr_tree->SetMarkerStyle(6);
   cr_tree->SetMarkerColor(kBlue);
-  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5","eNframesBot>0","same");
+  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5",cut && "eNframesBot>0","same");
   cr_tree->SetMarkerColor(kRed);
-  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5","eNframesTop>0","same");
+  cr_tree->Draw("eZframe:eFrameID+100*Entry$+0.5",cut && "eNframesTop>0","same");
 }
 //-------------------------------------------------------
