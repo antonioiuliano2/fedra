@@ -249,7 +249,7 @@ class EdbTrackP : public EdbSegP {
   void  Print();
   void  PrintNice();
 
-  ClassDef(EdbTrackP,6)  // track consists of segments
+  ClassDef(EdbTrackP,7)  // track consists of segments
 };
 
 //______________________________________________________________________________
