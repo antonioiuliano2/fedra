@@ -2631,10 +2631,9 @@ void EdbScanProc::MakeLinkSetSummary(EdbID idset)
     TCanvas *c = (TCanvas*)f->Get("report");
     if(c) {
       c->SetName(Form("%s",id->AsString()));
-//      c->Draw();
-      if(i==0)         c->Print(Form("%s(",name.Data()),"pdf");
-      else if(i==n-1)  c->Print(Form("%s)",name.Data()),"pdf");
-      else             c->Print(name,"pdf");
+      if(i==0&&n>1)         c->Print(Form("%s(",name.Data()),"pdf");
+      else if(i==n-1&&n>1)  c->Print(Form("%s)",name.Data()),"pdf");
+      else                  c->Print(name,"pdf");
    }
     SafeDelete(f);
   }

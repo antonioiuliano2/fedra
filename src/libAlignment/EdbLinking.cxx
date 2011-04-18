@@ -33,7 +33,7 @@ void EdbLinking::GetPar(TEnv &env)
 {
   eBinOK               = env.GetValue("fedra.link.BinOK"              , 6. );
 
-  eNcorrMin            = env.GetValue("fedra.link.NcorrMin"           , 100 );
+  eNcorrMin            = env.GetValue("fedra.link.NcorrMin"           , 50 );
 
   eDoCorrectShrinkage  = env.GetValue("fedra.link.DoCorrectShrinkage" , true );
   eNsigmaEQshr         = env.GetValue("fedra.link.shr.NsigmaEQ"        , 7. );
@@ -88,14 +88,14 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   EdbSEQ seq;
   GetPreselectionPar(seq,env);
   seq.eNsigma=eNsigmaEQshr;
-  seq.PrintLimits();
+  //seq.PrintLimits();
 
   TObjArray p1pre(p1.N()), p1shr;
   seq.PreSelection(p1,p1pre);
   seq.EqualizeMT(p1pre, p1shr, area1);
   TH1F *hTshr1 = seq.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
   TH1F *hTall1 = seq.ThetaPlot(p1, "hTall1","Theta plot all, side 1 ");    hTall1->Write();
-  
+
   TObjArray p2pre(p2.N()), p2shr;
   seq.PreSelection(p2,p2pre);
   seq.EqualizeMT(p2pre, p2shr, area2);
@@ -103,7 +103,6 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   TH1F *hTall2 = seq.ThetaPlot(p2, "hTall2","Theta plot all, side 2 ");    hTall2->Write();
 
   DoubletsFilterOut(p1shr,p2shr);
-  
 
   FillCombinationsAtMeanZ(p1shr,p2shr);
 
@@ -112,18 +111,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     eCorr[1].SetV(5,eShr0);
     CorrectShrinkage( eDShr );
     CorrectShrinkage( eDShr*0.8 );
-    if( eCorr[0].V(5) > eShr0*(1+eDShr) ||  eCorr[0].V(5)< eShr0/(1+eDShr) ) {
-      Log(1,"EdbLinking::Link","Shrinkage correction side 1 out of range: %f [%f %f] reset to default: %f", 
-             eCorr[0].V(5), eShr0/(1+eDShr), eShr0*(1+eDShr), eShr0 );
-      eCorr[0].SetV(5,eShr0);
-      eDoCorrectShrinkage = false;
-    }
-    if( eCorr[1].V(5) > eShr0*(1+eDShr) ||  eCorr[1].V(5)< eShr0/(1+eDShr) ) {
-      Log(1,"EdbLinking::Link","Shrinkage correction side 2 out of range: %f [%f %f] reset to default: %f", 
-             eCorr[1].V(5), eShr0/(1+eDShr), eShr0*(1+eDShr), eShr0 );
-      eCorr[1].SetV(5,eShr0);
-      eDoCorrectShrinkage = false;
-    }
+    eDoCorrectShrinkage = VerifyShrinkageCorr(0) * VerifyShrinkageCorr(1);
   }
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
@@ -152,16 +140,37 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     seq.eNsigma = eNsigmaEQlnk;
     TObjArray p1lnk(p1pre.GetEntriesFast());
     seq.EqualizeMT(p1pre, p1lnk, area1);
+    TH1F *hTlnk1 = seq.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
     TObjArray p2lnk(p2pre.GetEntriesFast());
     seq.EqualizeMT(p2pre, p2lnk, area2);
+    TH1F *hTlnk2 = seq.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
     FullLinking(p1lnk,p2lnk);
   }
 
   ProduceReport();
   Corr2Aff(eCorr[0],eL1);
   Corr2Aff(eCorr[1],eL2);
-  eL1.Print();                     // layers with the corrections
-  eL2.Print();
+  //eL1.Print();                     // layers with the corrections
+  //eL2.Print();
+}
+
+//---------------------------------------------------------------------
+bool EdbLinking::VerifyShrinkageCorr( int side )
+{
+  if( eCorr[side].V(5) > eShr0*(1+eDShr) ||  eCorr[side].V(5)< eShr0/(1+eDShr) ) {
+      Log(1,"EdbLinking::Link","Shrinkage correction side %d out of range: %f [%f %f] reset shrinkage to default: %f",
+             side, eCorr[side].V(5), eShr0/(1+eDShr), eShr0*(1+eDShr), eShr0 );
+      eCorr[side].SetV(5,eShr0);
+      return  false;
+  }
+  if(eNshr[side]<eNcorrMin) { 
+     Log(1,"EdbLinking::Link","Shrinkage correction side %d not enough coins: %d < %d reset shrinkage to default: %f",
+            side, eNshr[side],eNcorrMin,eShr0 );
+     eCorr[side].SetV(5,eShr0);
+     return false;
+   }
+  
+  return true;
 }
 
 //---------------------------------------------------------------------
@@ -196,7 +205,8 @@ void EdbLinking::CorrectAngles(TObjArray &p1, TObjArray &p2)
       dty2+= TY( 1, *(sc->eS2) ) - sc->eS->TY();
       nc++;
     }
-    if(nc<eNcorrMin) {Log(1,"EdbLinking::CorrectAngles","Warning: number of the selected segments too small: %d < %d do nothing",nc,eNcorrMin); return;}
+    if(nc<eNcorrMin) {Log(1,"EdbLinking::CorrectAngles","Warning: number of the selected segments too small: %d < %d do not correct angles",
+         nc,eNcorrMin); return;}
     
     float cc=1.8;
     dtx1 /= nc;  dty1 /= nc;  dtx2 /= nc;  dty2 /= nc;
@@ -344,13 +354,13 @@ void EdbLinking::CorrectShrinkage(float dshr)
   
   eHdxyShr[0].InitH2(7, -35, 35, 7, -35, 35);
   eCorr[0].SetV(2,dz);  eCorr[1].SetV(2,   0);
-  OptimiseVar1( 0, 5, &eHdxyShr[0] );              // variate shr1
+  eNshr[0] = OptimiseVar1( 0, 5, &eHdxyShr[0] );              // variate shr1
   EdbSegCorr c0_opt = eCorr[0];
 
   eHdxyShr[1].InitH2(7, -35, 35, 7, -35, 35);
   eCorr[0]=c0;                                     // to remove the dependency on the correction order
   eCorr[0].SetV(2, 0);  eCorr[1].SetV(2, -dz);
-  OptimiseVar1( 1, 5, &eHdxyShr[1]);               // variate shr2
+  eNshr[1] = OptimiseVar1( 1, 5, &eHdxyShr[1]);               // variate shr2
   eCorr[0]=c0_opt;                                 // return to the optimized value
 
   Log(2,"EdbLinking::CorrectShrinkage","side1: %f (%f)   side2: %f (%f)", eCorr[0].V(5), c0.V(5), eCorr[1].V(5), c1.V(5) );
@@ -474,24 +484,28 @@ void EdbLinking::ProduceReport()
     TPad *c = new TPad("c","plots",0.01,0.03,0.99,0.94);
     c->Divide(4,4);    c->Draw();
 
-    float densAll=0,densShr=0;
+    float densAll=0,densShr=0, densLnk=0;
     
     h2 = (TH2F*)eOutputFile->Get("hxy_shr1");    if(h2) {c->cd(1); h2->SetStats(0); h2->Draw("colz"); h2=0;}
     h2 = (TH2F*)eOutputFile->Get("hxy_shr2");    if(h2) {c->cd(2); h2->SetStats(0); h2->Draw("colz"); h2=0;}
     
     h1 = (TH1F*)eOutputFile->Get("hTall1");      if(h1) {c->cd(3);  h1->Draw(); densAll=h1->Integral();h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hTshr1");      if(h1) {c->cd(3);  h1->Draw("same"); densShr=h1->Integral(); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("hTlnk1");      if(h1) {c->cd(3);  h1->Draw("same"); densLnk=h1->Integral(); h1=0;}
     c->cd(3);
     TPaveText *lable1 = new TPaveText(0.2,0.6,0.6,0.8,"NDC");
     lable1->AddText(Form("all: %7.0f",densAll));
     lable1->AddText(Form("shr: %7.0f",densShr));
+    lable1->AddText(Form("lnk: %7.0f",densLnk));
     lable1->Draw();
     h1 = (TH1F*)eOutputFile->Get("hTall2");      if(h1) {c->cd(4);  h1->Draw(); densAll=h1->Integral(); h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hTshr2");      if(h1) {c->cd(4);  h1->Draw("same"); densShr=h1->Integral(); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("hTlnk2");      if(h1) {c->cd(4);  h1->Draw("same"); densLnk=h1->Integral(); h1=0;}
     c->cd(4);
     TPaveText *lable2 = new TPaveText(0.2,0.6,0.6,0.8,"NDC");
     lable2->AddText(Form("all: %7.0f",densAll));
     lable2->AddText(Form("shr: %7.0f",densShr));
+    lable2->AddText(Form("lnk: %7.0f",densLnk));
     lable2->Draw();
     
     h2 = (TH2F*)eOutputFile->Get("hdxy_shr");  if(h2) {c->cd(5); h2->SetStats(0); h2->Draw("colz"); h2=0;}

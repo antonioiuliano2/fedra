@@ -14,6 +14,7 @@ class EdbLinking : public EdbAlignmentV
    bool   eDoCorrectAngles;
    bool   eDoCorrectShrinkage;
    bool   eDoFullLinking;
+   
    float  eDRfull, eDTfull;       // acceptance for the full linking
    float  eCHI2Pmax;              // acceptance to save into couples tree
    float  eChi2Acorr;             // acceptance to save into couples tree
@@ -23,7 +24,8 @@ class EdbLinking : public EdbAlignmentV
    float  eDShr;                  // range for the shrinkage correction
    float  eBinOK;                 // mean cell occupancy
   
-   int    eNcorrMin;                // min number of segments for the correction calculation
+   int    eNshr[2];               // number of coins found for shrinkage correction
+   int    eNcorrMin;              // min number of segments for the correction calculation
  
   TObjArray   eSegCouples;       // segment couples objects to fill couples format tree
   
@@ -35,6 +37,7 @@ class EdbLinking : public EdbAlignmentV
   EdbLinking();
   virtual ~EdbLinking(){}
 
+  bool     VerifyShrinkageCorr( int side );
   void     GetPar(TEnv &env);
   void     GetPreselectionPar(EdbSEQ &seq, TEnv &env);
   void     SaveCouplesTree();

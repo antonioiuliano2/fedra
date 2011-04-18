@@ -234,15 +234,15 @@ int EdbAlignmentV::FillCombinations(float dv[4], float dxMax, float dyMax, bool 
 }
 
 //---------------------------------------------------------------------
-void EdbAlignmentV::OptimiseVar1(int side, int ivar,  EdbH2 *hdxy, EdbH2 *hdtxy)
+int EdbAlignmentV::OptimiseVar1(int side, int ivar,  EdbH2 *hdxy, EdbH2 *hdtxy)
 {
   // use already preselected "couples" - useful to test small variations of parameters
-  if(!SideOK(side)) return;
+  if(!SideOK(side)) return 0;
 
   EdbH1 &h = eH[side][ivar];
   if( h.N() < 1 ) {
     Log(1,"OptimiseVar1","ERROR: var %d of side %d have %d steps - skipped", ivar,side, h.N() );
-    return;
+    return 0;
   }
 
   h.CleanCells();
@@ -272,8 +272,9 @@ void EdbAlignmentV::OptimiseVar1(int side, int ivar,  EdbH2 *hdxy, EdbH2 *hdtxy)
   //eCorr[side].AddV(1,dy0);
   eCorr[side].SetV(ivar,var0);
   if(hdxy) Ncoins(eDVsame, hdxy);  // to keep the optimal histogram in hdxy
-
+  
   Log(3,"OptimiseVar1"," side:var (%d:%d): found %d at var=%f  xy:(%f %f)", side, ivar, npk0, var0, dx0,dy0 );
+  return npk0;
 }
 
 

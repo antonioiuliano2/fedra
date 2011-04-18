@@ -39,7 +39,7 @@ class EdbAlignmentV : public TObject
 
   void    InitOutputFile(const char *file="report_al.root", const char *option="RECREATE");
   void    CloseOutputFile();
-  void    OptimiseVar1(int side, int ivar,  EdbH2 *hdxy=0, EdbH2 *hdtxy=0);
+  int     OptimiseVar1(int side, int ivar,  EdbH2 *hdxy=0, EdbH2 *hdtxy=0);
   void    OptimiseVar2(int side1, int ivar1, int side2, int ivar2, EdbH2 &h12, EdbH2 *hdxy=0, EdbH2 *hdtxty=0);
   Int_t   Ncoins( float dvlim[4], EdbH2 *hdxy=0, EdbH2 *hdtxty=0, TObjArray *sel1=0, TObjArray *sel2=0 );
   Bool_t  ValidCoinsidence(EdbSegP &s1, EdbSegP &s2, float dvlim[4], float dvfound[4] );

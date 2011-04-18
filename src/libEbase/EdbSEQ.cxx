@@ -226,7 +226,7 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, Double_t area)
   // Output: mto  - selected microtracks array
 
   eArea=area;
-  EdbH1 hEq;  hEq.InitH1( 16, 0, 0.8 );
+  EdbH1 hEq;  hEq.InitH1( 40, 0, 0.8 );
   CalculateDensityMT(hEq);         // define critical theta density
   if(gEDBDEBUGLEVEL>2) hEq.Print();
   //hEq.DrawH1()->Draw();
