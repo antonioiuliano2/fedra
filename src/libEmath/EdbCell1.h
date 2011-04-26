@@ -55,6 +55,8 @@ class EdbH1 : public TObject {
   float  Xbin()             const { return eBin; }
   int    Bin(int ix)        const { if(Jcell(ix)>-1) return eNC[Jcell(ix)]; else return 0; }
   int    MaxBin();
+  float  XminA(float level=0);
+  float  XmaxA(float level=0);
 
   void  AddBin(int jcell, int n) { if(jcell>=0&&jcell<eNcell) eNC[jcell]+=n; }
   int   Fill(float x) { return Fill(x,1); }

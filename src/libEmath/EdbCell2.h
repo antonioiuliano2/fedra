@@ -13,6 +13,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TObjArray.h"
+#include "EdbCell1.h"
 
 //__________________________________________________________________________
 class EdbH2 : public TObject {
@@ -50,15 +51,25 @@ class EdbH2 : public TObject {
   int NY() const {return eN[1];}
   int IX(float x)             const {return (int)((x-eMin[0])/eBin[0]); }
   int IY(float y)             const {return (int)((y-eMin[1])/eBin[1]); }
+  int IX(int jcell)           const {return jcell%eN[0]; }
+  int IY(int jcell)           const {return jcell/eN[0]; }
   int Jcell(int ix, int iy)   const {if(ix>=0&&ix<eN[0]&&iy>=0&&iy<eN[1]) return iy*eN[0]+ix; else return -1;}
   int Jcell(float x, float y) const {return Jcell( IX(x), IY(y)); }
   int Jcell(float v[2])       const {return Jcell(IX(v[0]),IY(v[1])); }
-  float X(int i)              const {return eMin[0]+eBin[0]*(i+0.5);}
-  float Y(int i)              const {return eMin[1]+eBin[1]*(i+0.5);}
+  float X(int ix)             const {return eMin[0]+eBin[0]*(ix+0.5);}
+  float Y(int iy)             const {return eMin[1]+eBin[1]*(iy+0.5);}
   float Xmin()                const {return eMin[0];}
   float Xmax()                const {return eMax[0];}
   float Ymin()                const {return eMin[1];}
   float Ymax()                const {return eMax[1];}
+
+  float XminA(float level=0);
+  float XmaxA(float level=0);
+  float YminA(float level=0);
+  float YmaxA(float level=0);
+  
+  EdbH1 *ProjectionX();
+  EdbH1 *ProjectionY();
 
   float Xbin()                const {return eBin[0];}
   float Ybin()                const {return eBin[1];}
@@ -72,7 +83,7 @@ class EdbH2 : public TObject {
   int   Fill(float x, float y) { return Fill(x,y,1); }
   int   Fill(float x, float y, int n);
   void  SetBin(int ix, int iy, int n) { if(Jcell(ix,iy)>-1) eNC[Jcell(ix,iy)] = n; }
- 
+
   Long_t  Integral();
   Long_t  Integral(int iv[2], int ir[2]);
 

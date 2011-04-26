@@ -104,6 +104,24 @@ int EdbH1::DiscardHighCells(int nmax)
 }
 
 //____________________________________________________________________________________
+float EdbH1::XminA(float level)
+{
+// return X of the first bin >= given ratio in respect to the maximum amplitude (level range: [0:1] )
+  float thres = MaxBin()*level;
+  for(int i=0; i<eNcell; i++)    if( eNC[i] >= thres ) return X(i);
+  return 0;
+}
+
+//____________________________________________________________________________________
+float EdbH1::XmaxA(float level)
+{
+ // return X of the last bin >= given ratio in respect to the maximum amplitude (level range: [0:1] )
+  float thres = MaxBin()*level;
+  for(int i=eNcell-1; i>=0; i--)    if( eNC[i] >= thres ) return X(i);
+  return 0;
+}
+
+//____________________________________________________________________________________
 TH1I *EdbH1::DrawSpectrum(const char *name)
 {
   int imax = MaxBin();

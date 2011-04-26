@@ -133,6 +133,43 @@ int EdbH2::DiscardHighCells(int nmax)
 }
 
 //____________________________________________________________________________________
+EdbH1 *EdbH2::ProjectionX()
+{
+  EdbH1 *h = new EdbH1(eN[0],eMin[0],eMax[0]);
+  for(int i=0; i<eNcell; i++)   h->Fill( X(IX(i)), eNC[i] );
+  return h;
+}
+
+//____________________________________________________________________________________
+EdbH1 *EdbH2::ProjectionY()
+{
+  EdbH1 *h = new EdbH1(eN[1],eMin[1],eMax[1]);
+  for(int i=0; i<eNcell; i++)    h->Fill( Y(IY(i)), eNC[i] );
+  return h;
+}
+
+//____________________________________________________________________________________
+float EdbH2::XminA(float level)
+{
+  EdbH1 *h = ProjectionX();  return h->XminA(level); SafeDelete(h);
+}
+//____________________________________________________________________________________
+float EdbH2::XmaxA(float level)
+{
+  EdbH1 *h = ProjectionX();  return h->XmaxA(level); SafeDelete(h);
+}
+//____________________________________________________________________________________
+float EdbH2::YminA(float level)
+{
+  EdbH1 *h = ProjectionY();  return h->XminA(level); SafeDelete(h);
+}
+//____________________________________________________________________________________
+float EdbH2::YmaxA(float level)
+{
+  EdbH1 *h = ProjectionY();  return h->XmaxA(level); SafeDelete(h);
+}
+
+//____________________________________________________________________________________
 TH1I *EdbH2::DrawSpectrum(const char *name, const char *title)
 {
   int imax = MaxBin();
