@@ -58,7 +58,7 @@ TH1F *EdbSEQ::ThetaPlot(EdbPattern &arr, const char *name, const char *title )
 {
   int n = arr.N();
   if(!n) return 0;
-  TH1F *h = new TH1F( name, Form("%s normalised to area = %8.1f mm²",title,eArea/1000./1000.), 80, 0., 0.8 );
+  TH1F *h = new TH1F( name, Form("%s normalised to area of %8.1f mm²",title,eArea/1000./1000.), 80, 0., 0.8 );
   for(int i=0; i<n; i++) {
     EdbSegP *s = arr.GetSegment(i);
     //h->Fill(s->Theta()*s->Theta());

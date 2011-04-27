@@ -156,4 +156,6 @@ int EdbSegmentCut::PassCutI(float var[5])
 ///______________________________________________________________________________
 void EdbSegmentCut::Print()
 {
+  printf("min: %f %f %f %f %f\n",eMin[0], eMin[1], eMin[2], eMin[3], eMin[4] );
+  printf("max: %f %f %f %f %f\n",eMax[0], eMax[1], eMax[2], eMax[3], eMax[4] );
 }
