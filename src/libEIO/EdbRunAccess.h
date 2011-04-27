@@ -8,7 +8,9 @@
 // OPERA data Run Access helper class                                   //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include "TH2F.h"
 #include "EdbRun.h"
+#include "EdbCell2.h"
 #include "EdbPattern.h"
 #include "EdbLayer.h"
 #include "EdbScanCond.h"
@@ -21,6 +23,9 @@ class EdbRunAccess : public TObject {
   Int_t     eCLUST;       // 1-use clusters, 0 - do not
   Bool_t    eUseExternalSurface;  // if true - set segment position corrisponding to the very external cluster
 
+  Bool_t    eDoViewAnalysis;     // fill or not the histograms for optional view analysis
+  EdbH2     eHViewXY[3];         // XY segments distribution in a view local coords
+  
  private:
   TString  eRunFileName;
   EdbRun   *eRun;        // pointer to the run to be accessed
@@ -39,9 +44,11 @@ class EdbRunAccess : public TObject {
 
   Float_t eXmin,eXmax,eYmin,eYmax;  //run limits
 
-  Float_t eXstep;
-  Float_t eYstep;
-
+  Float_t eXstep[3];
+  Float_t eYstep[3];
+  Float_t eViewXmin[3], eViewXmax[3];
+  Float_t eViewYmin[3], eViewYmax[3];
+  
  public:
   EdbRunAccess();
   EdbRunAccess(EdbRun *run);
@@ -55,8 +62,13 @@ class EdbRunAccess : public TObject {
   bool AddRWDToRun(char *rwdname, const char* options="");
   void Print();
   void PrintStat();
+  
   void CheckRunLine();
-  int CheckEmptyViews(EdbPattern &pat);
+  int  CheckEmptyViews(EdbPattern &pat);
+  void CheckViewStep();
+  void CheckViewStep(int ud);
+  TH2F *CheckUpDownOffsets();
+  void CheckViewSize();
 
   EdbRun *GetRun() const {return eRun;}
   EdbLayer *GetMakeLayer(int id);
@@ -124,9 +136,15 @@ class EdbRunAccess : public TObject {
   EdbScanCond *GetCond(int ud)
     { if(eCond[ud]) return (EdbScanCond *)eCond[ud]; else return 0; }
 
-  ///////
+  float OverlapX(int ud) {return (ud>0&&ud<3)? (eViewXmax[ud]-eViewXmin[ud] - eXstep[ud]): 0.; }
+  float OverlapY(int ud) {return (ud>0&&ud<3)? (eViewYmax[ud]-eViewYmin[ud] - eYstep[ud]): 0.; }
 
   bool CopyRawDataXY( float x0, float y0, float dR, const char *file );
+
+  void SetCutLeft(   int ud, float wmin );
+  void SetCutRight(  int ud, float wmin );
+  void SetCutTop(    int ud, float wmin );
+  void SetCutBottom( int ud, float wmin );
 
   ClassDef(EdbRunAccess,1)  // helper class for access to the run data
 };

@@ -71,6 +71,9 @@ void EdbRunAccess::Set0()
   eNareas=0;
   eXmin=eXmax=eYmin=eYmax=0;
   eUseExternalSurface=false;
+  eDoViewAnalysis=true;
+  eHViewXY[1].InitH2(500,-250,250, 500, -250, 250);
+  eHViewXY[2].InitH2(500,-250,250, 500, -250, 250);
 }
 
 ///_________________________________________________________________________
@@ -130,10 +133,45 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
   //Log(2,"EdbRunAccess::InitRun","%s with %d views\n",eRunFileName.Data(), eRun->GetEntries());
   if(gEDBDEBUGLEVEL>2) PrintStat();
 
-  eXstep=400;  //TODO
-  eYstep=400;
+  for(int i=0; i<3; i++) { eXstep[i]=400;   eYstep[i]=400; }
+
   return true;
 }
+///_________________________________________________________________________
+void EdbRunAccess::SetCutLeft(int side, float wmin)
+{
+   //float xmin[5]={ eViewXmin[side]                 , eViewYmin[side] + OverlapY(side), -1, -1, wmin};
+   //float xmax[5]={ eViewXmin[side] + OverlapX(side), eViewYmax[side] - OverlapY(side),  1,  1, 50};
+   float xmin[5]={ eViewXmin[side]                 , eViewYmin[side], -1, -1, wmin};
+   float xmax[5]={ eViewXmin[side] + OverlapX(side), eViewYmax[side],  1,  1, 50};
+   ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
+   GetCut(side,0)->Print();
+}
+///_________________________________________________________________________
+void EdbRunAccess::SetCutRight(int side, float wmin)
+{
+   //float xmin[5]={ eViewXmax[side] - OverlapX(side), eViewYmin[side] + OverlapY(side), -1, -1, wmin};
+   //float xmax[5]={ eViewXmax[side]                 , eViewYmax[side] - OverlapY(side),  1,  1, 50};
+   float xmin[5]={ eViewXmax[side] - OverlapX(side), eViewYmin[side], -1, -1, wmin};
+   float xmax[5]={ eViewXmax[side]                 , eViewYmax[side],  1,  1, 50};
+   ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
+   GetCut(side,0)->Print();
+}
+///_________________________________________________________________________
+void EdbRunAccess::SetCutTop(int side, float wmin)
+{
+   float xmin[5]={ eViewXmin[side] + OverlapX(side), eViewYmax[side] - OverlapY(side), -1, -1, wmin};
+   float xmax[5]={ eViewXmax[side] - OverlapX(side), eViewYmax[side]                 ,  1,  1, 50};
+   ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
+}
+///_________________________________________________________________________
+void EdbRunAccess::SetCutBottom(int side, float wmin)
+{
+   float xmin[5]={ eViewXmin[side] + OverlapX(side), eViewYmin[side]                , -1, -1, wmin};
+   float xmax[5]={ eViewXmax[side] - OverlapX(side), eViewYmin[side]+ OverlapY(side),  1,  1, 50};
+   ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
+}
+
 ///_________________________________________________________________________
 bool EdbRunAccess::InitRunFromRWC(char *rwcname, bool bAddRWD, const char* options)
 {
@@ -273,14 +311,14 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
   float xmin,xmax,ymin,ymax;
   int n1 = GetViewsArea( 1, entr1, area, xmin,xmax,ymin,ymax);
   TArrayI entr2(maxA);
-  xmin -= eXstep+eXstep/10.;
-  xmax += eXstep+eXstep/10.;
-  ymin -= eYstep+eYstep/10.;
-  ymax += eYstep+eYstep/10.;
+  xmin -= eXstep[1]+eXstep[1]/10.;
+  xmax += eXstep[1]+eXstep[1]/10.;
+  ymin -= eYstep[1]+eYstep[1]/10.;
+  ymax += eYstep[1]+eYstep[1]/10.;
   int n2 = GetViewsArea( 2, entr2, xmin,xmax,ymin,ymax );
   //  int n2 = GetViewsAreaMarg( 2, entr2, area, eXstep+eXstep/10.,eYstep+eYstep/10. );
 
-  //printf("n1=%d n2=%d\n",n1,n2);
+  printf("n1=%d n2=%d\n",n1,n2);
 
   TArrayI eall(n1+n2);
   int ic=0;
@@ -300,7 +338,7 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 #else
   Log(2,"GetVolumeArea","Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
 #endif
-	 area, 100*area/eNareas, n1,n2, 
+	 area, 100*area/eNareas, n1,n2,
 	 vol.GetPattern(0)->N(),
 	 vol.GetPattern(1)->N(),
 	 nrej );
@@ -339,6 +377,7 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
     //printf(" EdbRunAccess::GetVolumeData: %d nsegV = %d side=%d\n",iu, nsegV,side);
     if(side<1||side>2) continue;
 
+    //vol.Print();
     for(int j=0;j<nsegV;j++) {
       if(!AcceptRawSegment(view,j,segP,side)) {
 	nrej++;
@@ -634,6 +673,45 @@ int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
 }
 
 ///_________________________________________________________________________
+void EdbRunAccess::CheckViewStep()
+{
+  CheckViewStep(1);
+  CheckViewStep(2);
+}
+
+///_________________________________________________________________________
+void EdbRunAccess::CheckViewStep(int ud)
+{
+  // assumed that in the tree (and in eVP) views are consecutive in the order of acquisition
+  if(ud<0 || ud>2)                        return;
+  EdbPattern *pat=GetVP(ud);    if(!pat)  return;
+
+  //TFile f("test.root","RECREATE");
+  TH1F hx("viewXstep","viewXstep",3000,200,500);
+  TH1F hy("viewYstep","viewYstep",3000,200,500);
+  int n=pat->N();               if(n<2)   return;
+  for( int i=0; i<n-1; i++ ) {
+    EdbSegP *s1 = pat->GetSegment(i);
+    EdbSegP *s2 = pat->GetSegment(i+1);
+    if( s1->Aid(0) != s1->Aid(0) )  continue;   // skip different areas
+    if( s1->Aid(1) == s2->Aid(1) )  continue;   // skip same view
+    float dx = Abs(s2->X()-s1->X());
+    float dy = Abs(s2->Y()-s1->Y());
+    if(dx>dy) 
+      if(dx>50&&dx<500&&dy<50)   //check that steps are in reasonable limits
+        hx.Fill(dx);
+    if(dy>dx) 
+      if(dy>50&&dy<500&&dx<50)   //check that steps are in reasonable limits
+        hy.Fill(dy);
+  }
+  //hx.Write(); hy.Write(); f.Close();
+  eXstep[ud] = hx.GetMean();
+  eYstep[ud] = hy.GetMean();
+  Log(2,"EdbRunAccess::CheckViewStep","side %d:   stepX(%d) = %f +- %f    stepY(%d) = %f +- %f",
+      ud, (int)(hx.GetEntries()), hx.GetMean(),hx.GetRMS(), (int)(hy.GetEntries()), hy.GetMean(),hy.GetRMS() );
+}
+
+///_________________________________________________________________________
 int EdbRunAccess::FillVP()
 {
   // fill patterns up/down with dummy segments with center of view coordinates 
@@ -712,6 +790,10 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
     }
   }
 
+  if(eDoViewAnalysis) {
+    eHViewXY[side].Fill( seg->GetX0(), seg->GetY0());
+  }
+
   EdbLayer  *layer=GetLayer(side);
   if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
 
@@ -737,7 +819,6 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
-
   return true;
 }
 
@@ -865,3 +946,40 @@ bool EdbRunAccess::CopyRawDataXY( float x0, float y0, float dR, const char *file
   r.Close();
   return true;
 }
+
+///______________________________________________________________________________
+void EdbRunAccess::CheckViewSize()
+{
+  for(int ud=1; ud<3; ud++ ) {
+    eViewXmin[ud] = eHViewXY[ud].XminA(0.1);
+    eViewXmax[ud] = eHViewXY[ud].XmaxA(0.1);
+    eViewYmin[ud] = eHViewXY[ud].YminA(0.1);
+    eViewYmax[ud] = eHViewXY[ud].YmaxA(0.1);
+    Log(2,"EdbRunAccess::CheckViewSize"," side%d    X:[%f %f]   Y:[%f %f]", ud,
+     eViewXmin[ud],eViewXmax[ud],eViewYmin[ud],eViewYmax[ud] );
+  }
+}
+
+///______________________________________________________________________________
+TH2F *EdbRunAccess::CheckUpDownOffsets()
+{
+  TH2F *h = new TH2F("UpDownOffsets","dXdY offsets between Up and correspondent Down views",100,-10,10,100,-10,10 );
+  EdbPattern *p1 = GetVP(1); if(!p1) { Log(1,"EdbRunAccess::CheckUpDownOffsets","Error: GetVP(1) empty"); return h;}
+  EdbPattern *p2 = GetVP(2); if(!p1) { Log(1,"EdbRunAccess::CheckUpDownOffsets","Error: GetVP(2) empty"); return h;}
+  if(p1->N() != p2->N()) Log(1,"EdbRunAccess::CheckUpDownOffsets","Warning: different number of views: %d -up,  %d - down", p1->N(), p2->N() );
+  int n = TMath::Min( p1->N(), p2->N() );
+
+  for(int i=0; i<n; i++) {
+    EdbSegP *s1=p1->GetSegment(i);
+    EdbSegP *s2=p2->GetSegment(i);
+    h->Fill( s2->X()-s1->X(), s2->Y()-s1->Y() );
+  }
+  float sx = h->GetRMS(1);
+  float sy = h->GetRMS(2);
+  if(sx>0.5 || sy>0.5)
+      Log(1,"EdbRunAccess::CheckUpDownOffsets","WARNING!!! XY stage possible malfunction (rms>0.5 micron) rmsX = %7.4f  rmsY = %7.4f (by %d views)",
+	  h->GetRMS(1), h->GetRMS(2), n );
+  else Log(2,"EdbRunAccess::CheckUpDownOffsets","rmsX = %7.4f  rmsY = %7.4f (by %d views)", sx, sy, n );
+  return h;
+}
+
