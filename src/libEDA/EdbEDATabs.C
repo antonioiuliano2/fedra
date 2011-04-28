@@ -894,7 +894,7 @@ void EdbEDAOperationTab::ConnectTracks(EdbTrackP *t0, EdbTrackP *t1){
 		int flag_double=0;
 		for(j=0;j<t0->N();j++) { // check double entry in a plate.
 			s0 = t0->GetSegment(j);
-			if(s1->PID()==s0->PID()) {
+			if(s1->Plate()==s0->Plate()) {
 				flag_double=1;
 				break;
 			}
@@ -910,6 +910,7 @@ void EdbEDAOperationTab::ConnectTracks(EdbTrackP *t0, EdbTrackP *t1){
 				t0->AddSegment(s1);
 			}
 			*/
+			printf("double segment on plate %d. ignore the segments from track %d.\n", s1->Plate(), t1->ID());
 		}
 		else t0->AddSegment(s1);
 	}

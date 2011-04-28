@@ -226,7 +226,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	enum { kEnd, kTop, kMiddle};
 	
 	EdbEDATrackSet(char *title, TObjArray *EdbTrackPArray=NULL) 
-			: eID(0,0,1,-999), ePVR(NULL), eDataSet(NULL), eScanSet(NULL){
+			: eID(0,0,1,0), ePVR(NULL), eDataSet(NULL), eScanSet(NULL){
 		SetName(title);
 		eTracks         = new TObjArray;
 		eTracksBase     = new TObjArray;

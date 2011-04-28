@@ -1989,11 +1989,11 @@ void EdbEDA::Run(){
 	
 	if(gEve==NULL){
 		// TEve setting
-	#ifdef __BEFORE_ROOT_5_22__
+#if ROOT_VERSION_CODE<ROOT_VERSION(5,22,00)
 		TEveManager::Create();
 		eViewer = gEve->GetGLViewer();
 
-	#else
+#else
 		TEveManager::Create(kTRUE,"V");
 		eViewer = gEve->GetDefaultGLViewer();
 		gEve->GetWindowManager()->HideAllEveDecorations();
@@ -2003,7 +2003,7 @@ void EdbEDA::Run(){
 		tab->GetCurrentTab()->SetName("Viewer1");
 		tab->Connect("Selected(Int_t)", "EdbEDA", this, "GetGLViewer()");
 
-	#endif // __BEFORE_ROOT_5_22__
+#endif 
 		
 		gEve->GetMainWindow()->Resize(1024,730); // resize for note book size 1280x800
 

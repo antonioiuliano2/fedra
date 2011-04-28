@@ -362,12 +362,12 @@ void EdbEDATrackSet::DrawSingleTrack(EdbTrackP *t){
 		char elname[256];
 		// set name
 		if(gEDA->Japanese()) sprintf(elname,
-			"%3s seg  itrk %4d pl %2d(%2d) id %6d %3s ph %2d %8.1f %8.1f %8.1f %7.4f %7.4f chi2 %4.2f sflag %3d", 
-			GetName(), t->ID(), s->Plate(), 58-s->Plate(), (int)s->ID(), s->Side()? s->Side()==1? "MT1" : "MT2" : "BT", (int)s->W(), 
+			"%3s %4d seg  itrk %4d pl %2d(%2d) id %6d %3s ph %2d %8.1f %8.1f %8.1f %7.4f %7.4f chi2 %4.2f sflag %3d", 
+			GetName(), s->ScanID().eMinor, t->ID(), s->Plate(), 58-s->Plate(), (int)s->ID(), s->Side()? s->Side()==1? "MT1" : "MT2" : "BT", (int)s->W(), 
 			s->X(), s->Y(), s->Z(), s->TX(), s->TY(), s->Chi2(), s->Flag());
 		else sprintf(elname,
-			"%3s seg  itrk %4d pl %2d id %6d %3s ph %2d %8.1f %8.1f %8.1f %7.4f %7.4f chi2 %4.2f sflag %3d", 
-			GetName(), t->ID(), s->Plate(), (int)s->ID(), s->Side()? s->Side()==1? "MT1" : "MT2" : "BT", (int)s->W(), 
+			"%3s %4d seg  itrk %4d pl %2d id %6d %3s ph %2d %8.1f %8.1f %8.1f %7.4f %7.4f chi2 %4.2f sflag %3d", 
+			GetName(), s->ScanID().eMinor, t->ID(), s->Plate(), (int)s->ID(), s->Side()? s->Side()==1? "MT1" : "MT2" : "BT", (int)s->W(), 
 			s->X(), s->Y(), s->Z(), s->TX(), s->TY(), s->Chi2(), s->Flag());
 		if(s->MCEvt()>=0) sprintf(elname,"%s MCEvt %d P %7.4f PdgID %6d",elname,s->MCEvt(),s->P(), s->Flag());
 
@@ -718,10 +718,13 @@ EdbDataProc *EdbEDATrackSet::ReadLinkedTracks (char *lnkdef, TCut cut){
 EdbDataProc *EdbEDATrackSet::ReadLinkedTracks (EdbDataProc *dproc){
 	// read tracks from linked_tracks.root for old structure.
 	// plate number will be filled from link-list file.
-
+	
+	printf("EdbEDATrackSet::ReadLinkedTracks(EdbDataProc *)\n");
+	
 	eDataSet  = dproc->GetDataSet();
 	EdbPVRec    *pvr   = dproc->PVR();
 	
+	// set plate number to segment.
 	for(int j=0;j<pvr->Ntracks();j++){
 		EdbTrackP *t = pvr->GetTrack(j);
 		
@@ -734,7 +737,13 @@ EdbDataProc *EdbEDATrackSet::ReadLinkedTracks (EdbDataProc *dproc){
 		}
 		t->SetPlate(t->GetSegmentFirst()->Plate());
 	}
+	
 	AddTracksPVR(pvr);
+	
+	EdbID id =pvr->GetTrack(0)->GetSegment(0)->ScanID();
+	
+	SetID( EdbID(id.eBrick, 0, id.eMajor, id.eMinor));
+	
 	return dproc;
 }
 
@@ -792,7 +801,7 @@ void EdbEDATrackSet::ReadPredictionScan(EdbID id, bool force_update_setroot){
 	// if there is "set.root" already exist, ask whether overwrite or not.
 	// if force_update_setroot == kTRUE, overwrite without asking.
 	
-	if(id.eMinor==-999) {
+	if(id.eMinor==0) {
 		printf("ReadPredictionScan: strange id.eMinor %d, stop\n", id.eMinor);
 		ErrorMessage(Form("ReadPredictionScan: strange id.eMinor %d, stop\n", id.eMinor));
 		return;
@@ -1268,16 +1277,11 @@ int EdbEDATrackSet::PrepareScanSetForMT(){
 
 // Scan id check
 	EdbID& id = GetID();
-	if(id.eMinor==-999){
+	if(id.eMinor==0){
 		id.eBrick = gEDA->GetBrick();
 		InputID("Please input EdbID for TS.",id);
 		SetID(id);
 	}
-	if(id.eMinor==-999) {
-		ErrorMessage("Error: Please set Run ID. stop.");
-		return -1;
-	}
-	
 	
 	// get ScanSet of Total scan.
 	// normally it's not filled even if TS are read via ReadTracksTree(id)
