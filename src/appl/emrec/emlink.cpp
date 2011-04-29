@@ -19,13 +19,14 @@ void print_help_message()
   cout<< "\t\t  NFULL - number of the fullalignments (default is 0)\n";
   cout<< "\t\t  -a    - apply the angular correction when do prelinking (default is not)\n";
   cout<< "\t\t  -new  - new linking (renewed 06-04-11)\n";
+  cout<< "\t\t  -view - check view overlaps\n";
   cout<< "\t\t  DEBUG - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\nExample: \n";
   cout<< "\t  o2root -id4554.10.1.0 -o/scratch/BRICKS \n";
-  cout<< "\n If the data location directory if not explicitly defined\n";
-  cout<< " the current directory will be assumed to be the brick directory \n";
+  cout<< "\n If the data location directory is not explicitly defined\n";
+  cout<< " the current directory assumed to be the brick directory \n";
   cout<< "\n If the parameters file (link.rootrc) is not presented - the default \n";
-  cout<< " parameters will be used. After the execution them are saved into link.save.rootrc file\n";
+  cout<< " parameters are used. After the execution them will be saved into link.save.rootrc\n";
   cout<<endl;
 }
 
@@ -49,6 +50,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
   cenv.SetValue("fedra.link.DoSaveCouples"       , true );
   cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
+  cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
 
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");
@@ -70,6 +72,7 @@ int main(int argc, char* argv[])
   bool      do_set     = false;
   bool      do_new     = false;
   bool      do_check   = false;
+  bool      do_check_view   = false;
   Int_t     brick=0, plate=0, major=0, minor=0;
   Int_t     npre=0,  nfull=0;
   Int_t     correct_ang=0;
@@ -111,6 +114,10 @@ int main(int argc, char* argv[])
       {
 	do_check=true;
       }
+    else if(!strncmp(key,"-view",5))
+      {
+	do_check_view=true;
+      }
     else if(!strncmp(key,"-v=",3))
       {
 	if(strlen(key)>3)	gEDBDEBUGLEVEL = atoi(key+3);
@@ -140,6 +147,7 @@ int main(int argc, char* argv[])
         if(plate) sproc.LinkRunTest(id, *plate, cenv);
      }
     }
+    else if(do_check_view) sproc.CheckViewOverlaps(id, cenv);
     else if(npre+nfull>0) sproc.LinkRunAll(id, npre, nfull, correct_ang);
   }
   if(do_set) {

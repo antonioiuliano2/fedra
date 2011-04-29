@@ -2816,12 +2816,71 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   MakeFileName(cpfile,id,"cp.root");
   link.InitOutputFile( cpfile );
 
+  if( cenv.GetValue("fedra.link.CheckUpDownOffset"      , 1) ) r.CheckUpDownOffsets()->Write();
+  if(r.eDoViewAnalysis)   {
+     r.eHViewXY[1].DrawH2("ViewXY1","XY segments distribution in a view coord side 1")->Write();
+     r.eHViewXY[2].DrawH2("ViewXY2","XY segments distribution in a view coord side 2")->Write();
+     r.CheckViewSize();
+     //r.CheckStepSize();
+  }
+
   link.Link( p2, p1, l2, l1, cenv );
   //link.Link( p1, p2, l1, l2, cenv );
 
   link.CloseOutputFile();
   UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
   UpdatePlatePar( id, link.eL2 );
+}
+
+//--------------------------------------------------------------------
+void EdbScanProc::AlignOverlaps(EdbID id, EdbPattern &p1,EdbPattern &p2, TEnv &cenv, const char *suff)
+{
+  float      sigmaR    = cenv.GetValue("fedra.alignRaw.sigmaR"    , 0.7 );
+  float      sigmaT    = cenv.GetValue("fedra.alignRaw.sigmaT"    , 0.019 );
+  float      offsetMax = cenv.GetValue("fedra.alignRaw.offsetMax" , 10. );
+  float      DZ        = cenv.GetValue("fedra.alignRaw.DZ"        , 10.   );
+  float      DPHI      = cenv.GetValue("fedra.alignRaw.DPHI"      , 0.0015 );
+  EdbPlateAlignment av;
+  av.SetSigma(sigmaR,sigmaT);
+  av.eOffsetMax = offsetMax;
+  av.eDZ        = DZ;
+  av.eDPHI      = DPHI;
+  av.eDoFine = 1;
+
+  TString dataout;  MakeFileName(dataout,id,suff);
+  av.InitOutputFile( dataout );
+  av.eSaveCouples=true;
+  av.Align( p1, p2, 0);
+  av.CloseOutputFile();
+}
+
+//--------------------------------------------------------------------
+void EdbScanProc::CheckViewOverlaps(EdbID id, TEnv &cenv)
+{
+  float pulsMin1 = 6;
+  float pulsMin2 = 6;
+  EdbRunAccess r;  if(!InitRunAccess(r,id)) return;
+  r.CheckViewStep();
+  EdbPatternsVolume vol; vol.AddPattern(new EdbPattern()); vol.AddPattern(new EdbPattern());
+  r.GetVolumeArea(vol, 1);
+  r.CheckViewSize();
+
+  EdbPattern p1l,p1r, p2l,p2r;
+  r.SetCutLeft(1, pulsMin1);  r.GetPatternDataForPrediction( -1, 1, p1l );
+  r.SetCutLeft(2, pulsMin1);  r.GetPatternDataForPrediction( -1, 2, p2l );
+  r.SetCutRight(1, pulsMin1); r.GetPatternDataForPrediction( -1, 1, p1r );
+  r.SetCutRight(2, pulsMin1); r.GetPatternDataForPrediction( -1, 2, p2r );
+
+  EdbPattern p1t,p1b, p2t,p2b;
+  r.SetCutTop(1, pulsMin2);     r.GetPatternDataForPrediction( -1, 1, p1t );
+  r.SetCutTop(2, pulsMin2);     r.GetPatternDataForPrediction( -1, 2, p2t );
+  r.SetCutBottom(1, pulsMin2);  r.GetPatternDataForPrediction( -1, 1, p1b );
+  r.SetCutBottom(2, pulsMin2);  r.GetPatternDataForPrediction( -1, 2, p2b );
+
+  AlignOverlaps(id, p1l,p1r, cenv, "al.vlr1.root");
+  AlignOverlaps(id, p2l,p2r, cenv, "al.vlr2.root");
+  AlignOverlaps(id, p1t,p1b, cenv, "al.vtb1.root");
+  AlignOverlaps(id, p2t,p2b, cenv, "al.vtb2.root");
 }
 
 //--------------------------------------------------------------------

@@ -153,6 +153,9 @@ public:
   int     ReadManFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
 
   void    CheckSetQualityRaw( EdbID idss );
+  
+  void    AlignOverlaps(EdbID id, EdbPattern &p1,EdbPattern &p2, TEnv &cenv, const char *suff);
+  void    CheckViewOverlaps( EdbID id, TEnv &cenv );
 
   int     WriteScanSet(EdbID id, EdbScanSet &ss);
   EdbScanSet  *ReadScanSet(EdbID id);
@@ -197,6 +200,7 @@ public:
 
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();
+  
   ClassDef(EdbScanProc,1)  // scanned data processing
 };
 #endif /* ROOT_EdbScanProc */

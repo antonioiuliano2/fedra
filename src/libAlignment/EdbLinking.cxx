@@ -94,13 +94,13 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   seq.PreSelection(p1,p1pre);
   seq.EqualizeMT(p1pre, p1shr, area1);
   TH1F *hTshr1 = seq.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
-  TH1F *hTall1 = seq.ThetaPlot(p1, "hTall1","Theta plot all, side 1 ");    hTall1->Write();
+  TH1F *hTall1 = seq.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
 
   TObjArray p2pre(p2.N()), p2shr;
   seq.PreSelection(p2,p2pre);
   seq.EqualizeMT(p2pre, p2shr, area2);
   TH1F *hTshr2 = seq.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
-  TH1F *hTall2 = seq.ThetaPlot(p2, "hTall2","Theta plot all, side 2 ");    hTall2->Write();
+  TH1F *hTall2 = seq.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
 
   DoubletsFilterOut(p1shr,p2shr);
 

@@ -130,6 +130,7 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
   eYmin = eVP[1]->Ymin();
   eYmax = eVP[1]->Ymax();
 
+  eNareas=eRun->GetHeader()->GetNareas();
   //Log(2,"EdbRunAccess::InitRun","%s with %d views\n",eRunFileName.Data(), eRun->GetEntries());
   if(gEDBDEBUGLEVEL>2) PrintStat();
 
@@ -140,22 +141,16 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
 ///_________________________________________________________________________
 void EdbRunAccess::SetCutLeft(int side, float wmin)
 {
-   //float xmin[5]={ eViewXmin[side]                 , eViewYmin[side] + OverlapY(side), -1, -1, wmin};
-   //float xmax[5]={ eViewXmin[side] + OverlapX(side), eViewYmax[side] - OverlapY(side),  1,  1, 50};
    float xmin[5]={ eViewXmin[side]                 , eViewYmin[side], -1, -1, wmin};
    float xmax[5]={ eViewXmin[side] + OverlapX(side), eViewYmax[side],  1,  1, 50};
    ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
-   GetCut(side,0)->Print();
 }
 ///_________________________________________________________________________
 void EdbRunAccess::SetCutRight(int side, float wmin)
 {
-   //float xmin[5]={ eViewXmax[side] - OverlapX(side), eViewYmin[side] + OverlapY(side), -1, -1, wmin};
-   //float xmax[5]={ eViewXmax[side]                 , eViewYmax[side] - OverlapY(side),  1,  1, 50};
    float xmin[5]={ eViewXmax[side] - OverlapX(side), eViewYmin[side], -1, -1, wmin};
    float xmax[5]={ eViewXmax[side]                 , eViewYmax[side],  1,  1, 50};
    ClearCuts(); AddSegmentCut(side,1,xmin,xmax);
-   GetCut(side,0)->Print();
 }
 ///_________________________________________________________________________
 void EdbRunAccess::SetCutTop(int side, float wmin)
@@ -334,14 +329,16 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
   int nseg = GetVolumeData(vol, ic, srt, nrej);
 
 #ifdef _WINDOWS
-  Log(2,"GetVolumeArea","Area:%3d (%3d%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+  Log(2,"GetVolumeArea","Area:%3d (%3.0f %%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected"
 #else
-  Log(2,"GetVolumeArea","Area:%3d (%3d\%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected\n",
+  Log(2,"GetVolumeArea","Area:%3d (%3.0f \%%)  views:%4d/%4d   %6d +%6d segments are accepted; %6d - rejected"
 #endif
-	 area, 100*area/eNareas, n1,n2,
-	 vol.GetPattern(0)->N(),
-	 vol.GetPattern(1)->N(),
-	 nrej );
+        ,area, 100.*area/eNareas
+        ,n1,n2
+	,vol.GetPattern(0)->N()
+	,vol.GetPattern(1)->N()
+	,nrej );
+	 
   if(nseg != vol.GetPattern(0)->N()+vol.GetPattern(1)->N()) 
   Log(2,"GetVolumeArea","WARNING!!! nseg = %d != %d\n", nseg,vol.GetPattern(0)->N()+vol.GetPattern(1)->N());
   return ic;
