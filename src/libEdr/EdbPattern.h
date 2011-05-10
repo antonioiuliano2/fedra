@@ -292,7 +292,7 @@ class EdbPattern : public EdbSegmentsBox {
   void  SetID(int id)   {eID=id;}
   void  SetPID(int pid) {ePID=pid;}
   void  SetNAff(int n)  {eNAff=n;}
-  void  SetSide(float side)  {eSide=side;}
+  void  SetSide(int side)  {eSide=side;}
 
   Int_t       NAff()   const {return eNAff;}
   float       StepX()  const {return eStepX;}
