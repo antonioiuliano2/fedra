@@ -1,6 +1,16 @@
 #include "EdbPVRQuality.h"
 using namespace std;
 
+// Base class for checks of the scanned data, especially for shower reconstruction.
+// The observed bastrack density can vary from brick to brick with a large
+// fluctuation.
+// The shower algorithm in its standard implementation is sensitive to their
+// level of tracks per unit area. In case there are too many of them, purity shower
+// reco goes down and gives not reliable results anymore.
+// The EdbPVRQuality class basically equals the number of basetracks per unit area
+// to a maximum upper value (if necessary) by adapting the quality cut for a single
+// basetrack.
+
 ClassImp(EdbPVRQuality)
 
 //______________________________________________________________________________
@@ -18,7 +28,12 @@ EdbPVRQuality::EdbPVRQuality()
 
 EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 {
-    // Default Constructor
+    // Default Constructor with a EdbPVRec object.
+    // (the EdbPVRec object corresponds to the collection of plates scanned with the collection
+    //  of basetracks (and additionally linked tracks)).
+    // This constructor automatically checks the original data for background level and
+    // creates a new EdbPVRec object that contains only segments that fulfill the quality
+    // cut in accordance with the desired (predefined) background level.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
     Set0();
     Init();
@@ -42,7 +57,9 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 
 EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
 {
-    // Default Constructor
+    // Default Constructor with a EdbPVRec object and the desired basetrack density target level.
+    // Does same as constructor EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali) but now with adjustable
+    // background level.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
     Set0();
     Init();
@@ -72,7 +89,6 @@ EdbPVRQuality::~EdbPVRQuality()
 {
     // Default Destructor
     cout << "EdbPVRQuality::~EdbPVRQuality()"<<endl;
-
     delete 		eHistChi2W;
     delete 		eHistYX;
     delete 		eProfileBTdens_vs_PID;
@@ -106,7 +122,7 @@ void EdbPVRQuality::Set0()
         ePatternBTDensity_modified[i]=0;
         eCutp1[i]=0.15;
         eCutp0[i]=1.0; // Maximum Cut Value for const, BT dens
-        eAggreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
+        eagreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
     }
 
     eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",57,0,57,0,100);
@@ -114,10 +130,10 @@ void EdbPVRQuality::Set0()
     //  nbinsx, Double_t xlow, Double_t xup, Option_t* option = ""
 
     // Default values for cosmics, taken from a brick data:
-    eAggreementChi2CutMeanChi2=1.0;
-    eAggreementChi2CutRMSChi2=0.3;
-    eAggreementChi2CutMeanW=23;
-    eAggreementChi2CutRMSW=3;
+    eagreementChi2CutMeanChi2=1.0;
+    eagreementChi2CutRMSChi2=0.3;
+    eagreementChi2CutMeanW=23;
+    eagreementChi2CutRMSW=3;
     return;
 }
 
@@ -139,6 +155,10 @@ void EdbPVRQuality::Init()
 //______________________________________________________________________________
 void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 {
+    // Set Cut Method of the background reduction:
+    // 0: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b
+    // 1: (testing): Do cut based on a chi2-variable that compares with passing tracks
+    // (if available), i.e. cosmics.
     eCutMethod=CutMethod;
     cout << "EdbPVRQuality::SetCutMethod  eCutMethod=  " << eCutMethod << endl;
     if (CutMethod>1) {
@@ -154,6 +174,16 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 
 void EdbPVRQuality::CheckEdbPVRec()
 {
+    // Main function to check if the EdbPVRec object of the scanned data is of low/high background.
+    // Following steps are carried out:
+    //  Get plate, count number of basetracks in the unit area (1x1cm^2).
+    //  Fill (draw if desired (like in EDA display)) histogram with the entries of the unit area.
+    //  Get mean of the histogram, compare this value with the reference value.
+    // The histogram covers all the area of one emulsion. (for the record: the old ORFEO MC
+    // simulation gives not the same position as data does. The area of the histogramm was largely
+    // increased to cover both cases).
+    // It gives a good estimation of the density. Spikes in some plates, or in some zones are not
+    // checked for, this is on the todo list, but maybe not so important.
     if (!eIsSource) {
         cout << "EdbPVRQuality::CheckEdbPVRec  eIsSource=  " << eIsSource << ". This means no source set. Return!" << endl;
         return;
@@ -217,7 +247,9 @@ void EdbPVRQuality::CheckEdbPVRec()
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_OPERA()
 {
-    // BinArea is 1mmx1mm
+    // Set the geometry of the basetrack density evaluation using OPERA case,
+    // European Scanning System size conventions: x=0..125000;y=0..100000).
+    // BinArea is 1mmx1mm.
     eHistYX->Reset();
     eHistYX->SetBins(100,0,100000,120,0,120000);
     cout << "SetHistGeometry_OPERA :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
@@ -226,6 +258,8 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_MC()
 {
+    // Set the geometry of the basetrack density evaluation using simulation case,
+    // MC ORFEO size conventions: x=-xmax..0..+xmax;y=-ymax..0..ymax).
     // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(100,-50000,50000,100,-50000,50000);
@@ -235,6 +269,8 @@ void EdbPVRQuality::SetHistGeometry_MC()
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_OPERAandMC()
 {
+    // Set the geometry of the basetrack density evaluation covering MC and DATA case,
+    // size conventions: x=-125000..0..+125000;y=-125000..0..125000).
     // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(250,-125000,125000,250,-125000,125000);
@@ -242,7 +278,9 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     return;
 }
 //______________________________________________________________________________
-void EdbPVRQuality::Print() {
+void EdbPVRQuality::Print()
+{
+    // Print either cut type values if cut method 1 or if cut method 2 had been chosen.
 
     cout << "----------void EdbPVRQuality::Print()----------" << endl;
     cout << " eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
@@ -258,6 +296,10 @@ void EdbPVRQuality::Print() {
 //______________________________________________________________________________
 void EdbPVRQuality::PrintCutType0()
 {
+    //     Prints quality cut values for each plate of the original EdbPVRec object that were
+    //     applied to achieve the basetrack density level, after application the specific cut
+    //     on the Segments of the specific plate (pattern).
+
     if (!eIsSource) return;
     cout << "----------void EdbPVRQuality::PrintCutType0()----------" << endl;
     cout << "Pattern || Z() || Nseg || eCutp0[i] || eCutp1[i] || BTDensity_orig ||...|| Nseg_modified || BTDensity_modified ||"<< endl;
@@ -291,6 +333,10 @@ void EdbPVRQuality::PrintCutType0()
 //______________________________________________________________________________
 void EdbPVRQuality::PrintCutType1()
 {
+    //     Prints quality cut values for each plate of the original EdbPVRec object that were
+    //     applied to achieve the basetrack density level, after application the specific cut
+    //     on the Segments of the specific plate (pattern).
+
     if (!eIsSource) return;
     cout << "----------void EdbPVRQuality::PrintCutType1()----------" << endl;
 
@@ -312,9 +358,9 @@ void EdbPVRQuality::PrintCutType1()
 
         cout << i;
         cout << "	";
-        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_orig->Z(),npatO, eAggreementChi2CutMeanChi2 , eAggreementChi2CutRMSChi2,  eAggreementChi2CutMeanW , eAggreementChi2CutRMSW, eAggreementChi2WDistCut[i], ePatternBTDensity_orig[i]);
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_orig->Z(),npatO, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_orig[i]);
         cout << "	...	";
-        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_modified->Z(),npatM, eAggreementChi2CutMeanChi2 , eAggreementChi2CutRMSChi2,  eAggreementChi2CutMeanW , eAggreementChi2CutRMSW, eAggreementChi2WDistCut[i], ePatternBTDensity_modified[i]);
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_modified->Z(),npatM, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_modified[i]);
         cout << endl;
 
     }
@@ -326,6 +372,11 @@ void EdbPVRQuality::PrintCutType1()
 
 void EdbPVRQuality::Execute_ConstantBTDensity()
 {
+    //     Prints quality cut values for each plate of the original EdbPVRec object that were
+    //     applied to achieve the basetrack density level, after application the specific cut
+    //     on the Segments of the specific plate (pattern).
+
+
     if (!eIsSource) return;
     cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()----------" << endl;
 
@@ -436,7 +487,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
     Float_t rmsChi2=0.2;
     Float_t meanW=22;
     Float_t rmsW=4;
-    Float_t aggreementChi2=100;
+    Float_t agreementChi2=100;
 
     // No  eAli.Tracks ? Look for tracks in linked_track.root:
     if (NULL == eAli_orig->eTracks) {
@@ -470,17 +521,17 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
         // since this is calcualted for the whole Volume,
         // this is valid for all plates.
-        eAggreementChi2CutMeanChi2=meanChi2;
-        eAggreementChi2CutRMSChi2=rmsChi2;
-        eAggreementChi2CutMeanW=meanW;
-        eAggreementChi2CutRMSW=rmsW;
+        eagreementChi2CutMeanChi2=meanChi2;
+        eagreementChi2CutRMSChi2=rmsChi2;
+        eagreementChi2CutMeanW=meanW;
+        eagreementChi2CutRMSW=rmsW;
     }
 
-    /// ______  now same code as in the funciton above __________________________________
+    /// ______  now same code as in the function above __________________________________
 
     int Npat = eAli_orig->Npatterns();
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",100,0,200);
-    TH1F* histaggreementChi2 = new TH1F("histaggreementChi2","histaggreementChi2",100,0,5);
+    TH1F* histagreementChi2 = new TH1F("histagreementChi2","histagreementChi2",100,0,5);
 
     for (int i=0; i<Npat; i++) {
         if (i>56) {
@@ -492,7 +543,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
         cout << "Execute_ConstantQuality   Doing Pattern " << i << endl;
 
         // Now the condition loop:
-        // Loop over 30 steps aggreementChi2 step 0.05
+        // Loop over 30 steps agreementChi2 step 0.05
         for (int l=0; l<30; l++) {
 
             eHistYX->Reset(); // important to clean the histogram
@@ -514,11 +565,11 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // Constant BT density cut:
                 //if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
                 // Constant BT quality cut:
-                aggreementChi2=TMath::Sqrt( ( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
+                agreementChi2=TMath::Sqrt( ( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
 
-                histaggreementChi2->Fill(aggreementChi2);
+                histagreementChi2->Fill(agreementChi2);
 
-                if (aggreementChi2>eAggreementChi2WDistCut[i]) continue;
+                if (agreementChi2>eagreementChi2WDistCut[i]) continue;
 
                 eHistYX->Fill(seg->Y(),seg->X());
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
@@ -541,7 +592,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
             CheckFilledXYSize();
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
-            cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eAggreementChi2WDistCut : " << eAggreementChi2WDistCut[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+            cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eagreementChi2WDistCut : " << eagreementChi2WDistCut[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
 
             // Now the condition check:
             if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
@@ -549,15 +600,15 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // But dont forget to set values:
                 eCutDistChi2[i]=meanChi2;
                 eCutDistW[i]=meanW;
-                eAggreementChi2CutMeanChi2=meanChi2;
-                eAggreementChi2CutRMSChi2=rmsChi2;
-                eAggreementChi2CutMeanW=meanW;
-                eAggreementChi2CutRMSW=rmsW;
+                eagreementChi2CutMeanChi2=meanChi2;
+                eagreementChi2CutRMSChi2=rmsChi2;
+                eagreementChi2CutMeanW=meanW;
+                eagreementChi2CutRMSW=rmsW;
                 break;
             }
             else {
                 // Tighten cut:
-                eAggreementChi2WDistCut[i]+=  -0.05;
+                eagreementChi2WDistCut[i]+=  -0.05;
             }
 
         } // of condition loop...
@@ -578,6 +629,10 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
 Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg)
 {
+    // Core function to check if a basetrack of the specific pattern matches the expectations
+    // for the desired quality cut (calculated on the estimations in CheckEdbPVRec(). ).
+    // Implementation for the Cuttype 0: Constant BT Density
+    // ---
     // Note: since the eCutp1[i] values are calculated with
     // this pattern->At() scheme labelling,
     // its not necessaryly guaranteed that seg->PID gives correct this
@@ -598,10 +653,14 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, In
 
 Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg)
 {
+    // Core function to check if a basetrack of the specific pattern matches the expectations
+    // for the desired quality cut (calculated on the estimations in CheckEdbPVRec(). ).
+    // Implementation for the Cuttype 1: Constant Quality.
+    // ---
     // See comments in CheckSegmentQualityInPattern_ConstBTDens
     // Constant BT quality cut:
-    Float_t aggreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAggreementChi2CutMeanChi2)/eAggreementChi2CutRMSChi2)*((seg->Chi2()-eAggreementChi2CutMeanChi2)/eAggreementChi2CutRMSChi2)  +   ((seg->W()-eAggreementChi2CutMeanW)/eAggreementChi2CutRMSW)*((seg->W()-eAggreementChi2CutMeanW)/eAggreementChi2CutRMSW) );
-    if (aggreementChi2>eAggreementChi2WDistCut[PatternAtNr]) return kFALSE;
+    Float_t agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)*((seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)  +   ((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW)*((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW) );
+    if (agreementChi2>eagreementChi2WDistCut[PatternAtNr]) return kFALSE;
 
     if (gEDBDEBUGLEVEL>3) cout <<"EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual()   Segment " << seg << " has passed ConstQual cut!" << endl;
     return kTRUE;
@@ -610,8 +669,8 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_
 //___________________________________________________________________________________
 
 
-void EdbPVRQuality::CreateEdbPVRec() {
-
+void EdbPVRQuality::CreateEdbPVRec()
+{
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()     -----" << endl;
     if (gEDBDEBUGLEVEL>2) {
         cout << "-----     " << endl;
@@ -647,7 +706,7 @@ void EdbPVRQuality::CreateEdbPVRec() {
     // 	EdbScanCond* scancond = eAli_orig->GetScanCond();
     // 	eAli_modified->SetScanCond(*scancond);
 
-    Float_t aggreementChi2;
+    Float_t agreementChi2;
 
     // This makes pointer copies of patterns with segments list.
     // wARNING: the couples structure and the tracking structure
@@ -674,8 +733,8 @@ void EdbPVRQuality::CreateEdbPVRec() {
             }
             else if (eCutMethodIsDone[1]==kTRUE) {
                 // Constant Quality cut:
-                aggreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAggreementChi2CutMeanChi2)/eAggreementChi2CutRMSChi2)*((seg->Chi2()-eAggreementChi2CutMeanChi2)/eAggreementChi2CutRMSChi2)  +   ((seg->W()-eAggreementChi2CutMeanW)/eAggreementChi2CutRMSW)*((seg->W()-eAggreementChi2CutMeanW)/eAggreementChi2CutRMSW) );
-                if (aggreementChi2>eAggreementChi2WDistCut[i]) continue;
+                agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)*((seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)  +   ((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW)*((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW) );
+                if (agreementChi2>eagreementChi2WDistCut[i]) continue;
             }
             else {
                 // do nothing;
@@ -1129,39 +1188,39 @@ void EdbPVRQuality::Remove_Segment(EdbSegP* seg) {
 //___________________________________________________________________________________
 
 Int_t EdbPVRQuality::FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
-  // The TH1 function  FindFirstBinAbove  is only implemented in
-  // root version >= 5.24. But since many scanning labs use old root
-  // versions persistently, I had to copy the TH1 function as a 
-  // memberfunction of EdbPVRQuality
-  // Code taken from
-  // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
-  TAxis* ax=0;
-  if (axis==1) ax = hist->GetXaxis();
-  if (axis==2) ax = hist->GetYaxis();
-  if (axis==3) ax = hist->GetZaxis();
-  int nb = ax->GetNbins();
-  for (Int_t i=0; i<=nb; i++) {
-   if (hist->GetBinContent(i)>threshold) return i; 
-  }
-  return 0;
+    // The TH1 function  FindFirstBinAbove  is only implemented in
+    // root version >= 5.24. But since many scanning labs use old root
+    // versions persistently, I had to copy the TH1 function as a
+    // memberfunction of EdbPVRQuality
+    // Code taken from
+    // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
+    TAxis* ax=0;
+    if (axis==1) ax = hist->GetXaxis();
+    if (axis==2) ax = hist->GetYaxis();
+    if (axis==3) ax = hist->GetZaxis();
+    int nb = ax->GetNbins();
+    for (Int_t i=0; i<=nb; i++) {
+        if (hist->GetBinContent(i)>threshold) return i;
+    }
+    return 0;
 }
 
 //___________________________________________________________________________________
 
 Int_t EdbPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis) {
-  // The TH1 function  FindFirstBinAbove  is only implemented in
-  // root version >= 5.24. But since many scanning labs use old root
-  // versions persistently, I had to copy the TH1 function as a 
-  // memberfunction of EdbPVRQuality
-  // Code taken from
-  // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
-  TAxis* ax=0;
-  if (axis==1) ax = hist->GetXaxis();
-  if (axis==2) ax = hist->GetYaxis();
-  if (axis==3) ax = hist->GetZaxis();
-  int nb = ax->GetNbins();
-  for (Int_t i=nb; i>=1; i--) {
-   if (hist->GetBinContent(i)>threshold) return i; 
-  }
-  return 0;
+    // The TH1 function  FindFirstBinAbove  is only implemented in
+    // root version >= 5.24. But since many scanning labs use old root
+    // versions persistently, I had to copy the TH1 function as a
+    // memberfunction of EdbPVRQuality
+    // Code taken from
+    // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
+    TAxis* ax=0;
+    if (axis==1) ax = hist->GetXaxis();
+    if (axis==2) ax = hist->GetYaxis();
+    if (axis==3) ax = hist->GetZaxis();
+    int nb = ax->GetNbins();
+    for (Int_t i=nb; i>=1; i--) {
+        if (hist->GetBinContent(i)>threshold) return i;
+    }
+    return 0;
 }

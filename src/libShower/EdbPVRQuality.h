@@ -69,11 +69,11 @@ private:
     // eCutMethod == 1: Constant Chi2W quality
     Float_t		eCutDistChi2[57];
     Float_t		eCutDistW[57];
-    Float_t 	eAggreementChi2WDistCut[57];
-    Float_t 	eAggreementChi2CutMeanChi2;
-    Float_t		eAggreementChi2CutRMSChi2;
-    Float_t 	eAggreementChi2CutMeanW;
-    Float_t 	eAggreementChi2CutRMSW;
+    Float_t 	eagreementChi2WDistCut[57];
+    Float_t 	eagreementChi2CutMeanChi2;
+    Float_t		eagreementChi2CutRMSChi2;
+    Float_t 	eagreementChi2CutMeanW;
+    Float_t 	eagreementChi2CutRMSW;
 
 protected:
 
@@ -150,24 +150,24 @@ public:
         return eCutp1[patNR];
     }
 
-    inline Float_t    GetAggreementChi2CutMeanChi2() {
-        return eAggreementChi2CutMeanChi2;
+    inline Float_t    GetagreementChi2CutMeanChi2() {
+        return eagreementChi2CutMeanChi2;
     }
-    inline Float_t    GetAggreementChi2CutRMSChi2() {
-        return eAggreementChi2CutRMSChi2;
+    inline Float_t    GetagreementChi2CutRMSChi2() {
+        return eagreementChi2CutRMSChi2;
     }
-    inline Float_t    GetAggreementChi2CutMeanW() {
-        return eAggreementChi2CutMeanW;
+    inline Float_t    GetagreementChi2CutMeanW() {
+        return eagreementChi2CutMeanW;
     }
-    inline Float_t    GetAggreementChi2CutRMSW() {
-        return eAggreementChi2CutRMSW;
+    inline Float_t    GetagreementChi2CutRMSW() {
+        return eagreementChi2CutRMSW;
     }
 
-    inline Float_t*   GetAggreementChi2Cut() {
-        return eAggreementChi2WDistCut;
+    inline Float_t*   GetagreementChi2Cut() {
+        return eagreementChi2WDistCut;
     }
-    inline Float_t    GetAggreementChi2Cut(Int_t patNR) {
-        return eAggreementChi2WDistCut[patNR];
+    inline Float_t    GetagreementChi2Cut(Int_t patNR) {
+        return eagreementChi2WDistCut[patNR];
     }
 
     void SetHistGeometry_OPERA();
