@@ -2,9 +2,9 @@
 using namespace std;
 
 // Base class for checks of the scanned data, especially for shower reconstruction.
-// The observed bastrack density can vary from brick to brick with a large
+// The observed basetrack density can vary from brick to brick with a large
 // fluctuation.
-// The shower algorithm in its standard implementation is sensitive to their
+// The shower algorithm in its standard implementation is sensitive to the
 // level of tracks per unit area. In case there are too many of them, purity shower
 // reco goes down and gives not reliable results anymore.
 // The EdbPVRQuality class basically equals the number of basetracks per unit area
@@ -34,6 +34,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     // This constructor automatically checks the original data for background level and
     // creates a new EdbPVRec object that contains only segments that fulfill the quality
     // cut in accordance with the desired (predefined) background level.
+    // If general basetrack density is lower than 20BT/mm2 then no cleaning is done.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
     Set0();
     Init();
@@ -60,6 +61,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
     // Default Constructor with a EdbPVRec object and the desired basetrack density target level.
     // Does same as constructor EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali) but now with adjustable
     // background level.
+    // If general basetrack density is lower than BTDensityTargetLevel BT/mm2 then no cleaning is done.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
     Set0();
     Init();
@@ -127,9 +129,9 @@ void EdbPVRQuality::Set0()
 
     eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",57,0,57,0,100);
     cout << "eProfileBTdens_vs_PID->GetBinWidth(1)" << eProfileBTdens_vs_PID->GetBinWidth(1) << endl;
-    //  nbinsx, Double_t xlow, Double_t xup, Option_t* option = ""
 
     // Default values for cosmics, taken from a brick data:
+    // (I cant remember which one, I hope it doesnt matter).
     eagreementChi2CutMeanChi2=1.0;
     eagreementChi2CutRMSChi2=0.3;
     eagreementChi2CutMeanW=23;
@@ -192,13 +194,16 @@ void EdbPVRQuality::CheckEdbPVRec()
     int Npat = eAli_orig->Npatterns();
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
 
+    // Loop over the patterns of the EdbPVRec:
     for (Int_t i=0; i<Npat; i++) {
         eHistYX->Reset(); // important to clean the histogram
         eHistChi2W->Reset(); // important to clean the histogram
 
         EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
         Int_t npat=pat->N();
+
         EdbSegP* seg=0;
+        // Loop over the segments of the pattern
         for (Int_t j=0; j<npat; j++) {
             seg=(EdbSegP*)pat->At(j);
             // Very important:
@@ -207,6 +212,7 @@ void EdbPVRQuality::CheckEdbPVRec()
             // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
             if (seg->MCEvt() > 0) continue;
 
+            // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
             eHistChi2W->Fill(seg->W(),seg->Chi2());
         }
@@ -214,7 +220,8 @@ void EdbPVRQuality::CheckEdbPVRec()
         histPatternBTDensity->Reset();
         Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
 
-
+        // Search for empty bins, because they can spoil the overall calulation
+        // of the mean value.
         Int_t nemptybinsXY=0;
         Int_t bincontentXY=0;
         for (int k=1; k<nbins-1; k++) {
@@ -231,6 +238,7 @@ void EdbPVRQuality::CheckEdbPVRec()
         // for now we print a error message:
         CheckFilledXYSize();
 
+        // Save the density in the variable.
         ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
         histPatternBTDensity->Reset();
     }
@@ -281,14 +289,11 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
 void EdbPVRQuality::Print()
 {
     // Print either cut type values if cut method 1 or if cut method 2 had been chosen.
-
-    cout << "----------void EdbPVRQuality::Print()----------" << endl;
-    cout << " eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
-    cout << " eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
-
+    cout << "EdbPVRQuality::Print()   " << endl;
+    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
+    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
     if (eCutMethodIsDone[0]) PrintCutType0();
     if (eCutMethodIsDone[1]) PrintCutType1();
-
     return;
 }
 
@@ -298,33 +303,31 @@ void EdbPVRQuality::PrintCutType0()
 {
     //     Prints quality cut values for each plate of the original EdbPVRec object that were
     //     applied to achieve the basetrack density level, after application the specific cut
-    //     on the Segments of the specific plate (pattern).
+    //     on the segments of the specific plate (=pattern).
 
     if (!eIsSource) return;
+
     cout << "----------void EdbPVRQuality::PrintCutType0()----------" << endl;
     cout << "Pattern || Z() || Nseg || eCutp0[i] || eCutp1[i] || BTDensity_orig ||...|| Nseg_modified || BTDensity_modified ||"<< endl;
-
-    int Npat_orig = eAli_orig->Npatterns();
 
     if (NULL==eAli_modified) {
         eAli_modified=eAli_orig;
         cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To calculate eAli_modified please run (not supported yet...)" << endl;
     }
 
+    int Npat_orig = eAli_orig->Npatterns();
     for (int i=0; i<Npat_orig; i++) {
-
         EdbPattern* pat_orig = (EdbPattern*)eAli_orig->GetPattern(i);
         Int_t npatO=pat_orig->N();
         EdbPattern* pat_modified = (EdbPattern*)eAli_modified->GetPattern(i);
         Int_t npatM=pat_modified->N();
-
+        //
         cout << i;
         cout << "	";
         printf("%.1f  %d  %.3f  %.3f  %.1f",pat_orig->Z(),npatO, eCutp0[i], eCutp1[i] , ePatternBTDensity_orig[i]);
         cout << "	...	";
         printf("%.1f  %d  %.3f  %.3f  %.1f",pat_modified->Z(),npatM,  eCutp0[i] ,eCutp1[i],  ePatternBTDensity_modified[i]);
         cout << endl;
-
     }
 
     return;
@@ -335,36 +338,31 @@ void EdbPVRQuality::PrintCutType1()
 {
     //     Prints quality cut values for each plate of the original EdbPVRec object that were
     //     applied to achieve the basetrack density level, after application the specific cut
-    //     on the Segments of the specific plate (pattern).
+    //     on the segments of the specific plate (=pattern).
 
     if (!eIsSource) return;
     cout << "----------void EdbPVRQuality::PrintCutType1()----------" << endl;
 
     cout << "Pattern || Z() || Nseg || BTDensity_orig || Chi2CutMeanChi2 || Chi2CutRMSChi2 || Chi2CutMeanW || Chi2CutRMSW || Chi2Cut[i] || BTDensity_modified ||"<< endl;
 
-    int Npat_orig 		= eAli_orig->Npatterns();
-
     if (NULL==eAli_modified) {
         eAli_modified=eAli_orig;
         cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To calculate eAli_modified please run (not supported yet...)" << endl;
     }
 
+    int Npat_orig = eAli_orig->Npatterns();
     for (int i=0; i<Npat_orig; i++) {
-
         EdbPattern* pat_orig = (EdbPattern*)eAli_orig->GetPattern(i);
         Int_t npatO=pat_orig->N();
         EdbPattern* pat_modified = (EdbPattern*)eAli_modified->GetPattern(i);
         Int_t npatM=pat_modified->N();
-
         cout << i;
         cout << "	";
         printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_orig->Z(),npatO, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_orig[i]);
         cout << "	...	";
         printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_modified->Z(),npatM, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_modified[i]);
         cout << endl;
-
     }
-
     return;
 }
 
@@ -372,19 +370,18 @@ void EdbPVRQuality::PrintCutType1()
 
 void EdbPVRQuality::Execute_ConstantBTDensity()
 {
-    //     Prints quality cut values for each plate of the original EdbPVRec object that were
-    //     applied to achieve the basetrack density level, after application the specific cut
-    //     on the Segments of the specific plate (pattern).
-
+    // Execute the modified cut routines to achieve the basetrack density level, after application the specific cut on the segments of the specific plate (pattern).
+    // The Constant BT Density is defined by the number of BT/mm2 in the histogram.
 
     if (!eIsSource) return;
-    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()----------" << endl;
+    if (NULL==eAli_orig) return;
 
     int Npat = eAli_orig->Npatterns();
     cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()   Npat=" << Npat << endl;
 
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
 
+    // Loop over the patterns:
     for (int i=0; i<Npat; i++) {
         if (i>56) {
             cout << "ERROR     EdbPVRQuality::Execute_ConstantBTDensity() Your EdbPVRec object has more than 57 plates! " << endl;
@@ -394,9 +391,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
         if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantBTDensity   Doing Pattern " << i << endl;
 
         // Now the condition loop:
-        // Loop over 20 steps a 0.15,0.145,0.14 ...  down to
+        // Loop over 20 steps a 0.15,0.145,0.14 ...  down to 0.07
         for (int l=0; l<20; l++) {
-
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
             histPatternBTDensity->Reset(); // important to clean the histogram
@@ -404,6 +400,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
             Int_t npat=pat->N();
             EdbSegP* seg=0;
+            // Loop over the segments.
             for (int j=0; j<npat; j++) {
                 seg=(EdbSegP*)pat->At(j);
 
@@ -437,7 +434,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 break;
             }
             else {
-                // Tighten cut:
+                // Next step, tighten cut:
                 eCutp1[i] += -0.005;
             }
 
@@ -446,7 +443,6 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     } // of Npattern loops..
 
     eCutMethodIsDone[0]=kTRUE;
-
 
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
@@ -474,14 +470,23 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
 
 void EdbPVRQuality::Execute_ConstantQuality()
 {
+    // The cut method that compares the passing muon tracks with all scanned segments.
+    // This may help to improve, since it takes into account the actual segment quality,
+    // which varies from scan to scan anyway.
+    // Works for tracks passing the volume to extract their mean chi2/W
+    // If eAli->Tracks is there we take them from there.
+    // If not, we try if there is a file linked_tracks.root, and we take tracks from there.
+    // If that doesnt work either, nothing is done.
+
     if (!eIsSource) return;
     cout << "----------void EdbPVRQuality::Execute_ConstantQuality()----------" << endl;
-
-    cout << "----------    Worsk for tracks passing the volume to extract their mean chi2/W " << endl;
+    cout << "----------    Works for tracks passing the volume to extract their mean chi2/W " << endl;
     cout << "----------    If eAli->Tracks is there we take them from there." << endl;
-    cout << "----------    If not w try if there is  a file linkedtracks.root " << endl;
+    cout << "----------    If not, we try if there is a file linked_tracks.root " << endl;
+    cout << "----------    we take tracks from there. " << endl;
+    cout << "----------    If that doesnt work either, nothing is done." << endl;
 
-    cout << "eAli_orig.eTracks :" << eAli_orig->eTracks << endl;
+    cout << "EdbPVRQuality::Execute_ConstantQuality()   eAli_orig.eTracks :" << eAli_orig->eTracks << endl;
 
     Float_t meanChi2=0.5;
     Float_t rmsChi2=0.2;
@@ -498,7 +503,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
         tracks->Draw("nseg>>h(60,0,60)","","");
         TH1F *h1 = (TH1F*)gPad->GetPrimitive("h");
 
-        // Short Implementation of getting the last bin filled:
+        // Short implementation of getting the last bin filled:
         int lastfilledbin=0;
         for (int k=1; k<h1->GetNbinsX()-1; k++) {
             if (h1->GetBinContent(k)>0) lastfilledbin=k;
@@ -510,6 +515,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
         cout << hChi2->GetMean() << " " << hChi2->GetRMS() << endl;
 
         TCanvas* c1 = new TCanvas();
+        c1->cd();
         tracks->Draw("s.eW>>hW(50,0,50)",cutstring);
         TH1F *hW = (TH1F*)gPad->GetPrimitive("hW");
         cout << hW->GetMean() << " " << hW->GetRMS() << endl;
@@ -519,15 +525,16 @@ void EdbPVRQuality::Execute_ConstantQuality()
         meanW=hW->GetMean();
         rmsW=hW->GetRMS();
 
-        // since this is calcualted for the whole Volume,
-        // this is valid for all plates.
+        // since the values for the passing tracks are
+        // calculated for the whole volume, we assume that the cutvalues
+        // are valid for all plates.
         eagreementChi2CutMeanChi2=meanChi2;
         eagreementChi2CutRMSChi2=rmsChi2;
         eagreementChi2CutMeanW=meanW;
         eagreementChi2CutRMSW=rmsW;
     }
 
-    /// ______  now same code as in the function above __________________________________
+    /// ______  now same code as in the function Execute_ConstantBTDensity  ___________________
 
     int Npat = eAli_orig->Npatterns();
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",100,0,200);
@@ -562,8 +569,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // Sim (MCEvt>0) will not be taken for BTdens calculation
                 if (seg->MCEvt() > 0) continue;
 
-                // Constant BT density cut:
-                //if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
+                // Change here to the quality with values obtained from the tracks.
                 // Constant BT quality cut:
                 agreementChi2=TMath::Sqrt( ( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
 
@@ -584,7 +590,6 @@ void EdbPVRQuality::Execute_ConstantQuality()
                     continue;
                 }
                 histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
-                //cout <<"(eHistYX->GetBinContent(k)" <<eHistYX->GetBinContent(k) << endl;
             }
 
             // failsafe warning in case that there are many bins with zero content.
@@ -596,7 +601,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
             // Now the condition check:
             if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
-                cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
+                if (gEDBDEBUGLEVEL>2)  cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
                 // But dont forget to set values:
                 eCutDistChi2[i]=meanChi2;
                 eCutDistW[i]=meanW;
@@ -607,7 +612,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 break;
             }
             else {
-                // Tighten cut:
+                // Next step, tighten cut:
                 eagreementChi2WDistCut[i]+=  -0.05;
             }
 
@@ -635,7 +640,7 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, In
     // ---
     // Note: since the eCutp1[i] values are calculated with
     // this pattern->At() scheme labelling,
-    // its not necessaryly guaranteed that seg->PID gives correct this
+    // its not necessarily guaranteed that seg->PID gives correct this
     // number back. Thats why we have to give the PatternAtNr here again.
     //
     // And: it is not checked here if seg is contained in this specific
@@ -671,6 +676,12 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_
 
 void EdbPVRQuality::CreateEdbPVRec()
 {
+    // Creates the cleaned EdbPVRec object, containing only segments that
+    // satisfied the cutcriteria.
+    // Attention: the couples structure and the tracking structure will be lost,
+    // this EdbPVRec object is only useful for the list of segments (shower reco).
+    // DO NOT USE THIS ROUTINE FOR GENERAL I/O and/or GENERAL EdbPVRec operations!
+
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()     -----" << endl;
     if (gEDBDEBUGLEVEL>2) {
         cout << "-----     " << endl;
@@ -689,11 +700,13 @@ void EdbPVRQuality::CreateEdbPVRec()
         cout << "-----     " << endl;
         cout << "-----     ----------------------------------------------" << endl;
     }
+
+    // Checks
     if (NULL==eAli_orig || eIsSource==kFALSE) {
         cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    NULL==eAli_orig   || eIsSource==kFALSE   return."<<endl;
         return;
     }
-
+    // Checks
     if (eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE) {
         cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE   return."<<endl;
         return;
@@ -714,7 +727,9 @@ void EdbPVRQuality::CreateEdbPVRec()
     // list of Segments (==ShowReco...) ...
 
     // Priority has the Execute_ConstantQuality cut.
-    // If this was done we take this...
+    // If this was done we take this...:
+
+    // Loop over patterns
     for (int i = 0; i <eAli_orig->Npatterns(); i++ ) {
         EdbPattern* pat = eAli_orig->GetPattern(i);
         EdbPattern* pt= new EdbPattern();
@@ -723,6 +738,7 @@ void EdbPVRQuality::CreateEdbPVRec()
         pt->SetPID(pat->PID());
         pt->SetZ(pat->Z());
 
+        // Loop over segments
         for (int j = 0; j <pat->N(); j++ ) {
             EdbSegP* seg = pat->GetSegment(j);
 
@@ -770,7 +786,6 @@ void EdbPVRQuality::CheckFilledXYSize()
     Int_t nbx,nby=0;
     nbx=eHistYX->GetNbinsX();
     nby=eHistYX->GetNbinsY();
-    Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
 
     Int_t n1x= FindFirstBinAbove(eHistYX,0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
     Int_t n1y= FindFirstBinAbove(eHistYX,0,2);
@@ -784,8 +799,8 @@ void EdbPVRQuality::CheckFilledXYSize()
     // Now check the number of empty bins between! the filled area
     // within (FindFirstBinAbove,FindLastBinAbove)
     // This function is NOT optimized for speed :-)
-    int NonEmptyBins=0;
-    int nBins=0;
+    Int_t NonEmptyBins=0;
+    Int_t nBins=0;
     for (Int_t i=n1x; i<n2x; ++i) {
         for (Int_t j=n1y; j<n2y; ++j) {
             ++nBins;
@@ -819,6 +834,8 @@ void EdbPVRQuality::CheckFilledXYSize()
 
 void EdbPVRQuality::Help()
 {
+    // Basic Help Function.
+
     cout << "----------------------------------------------" << endl;
     cout << "-----     void EdbPVRQuality::Help()     -----" << endl;
     cout << "-----" << endl;
@@ -830,7 +847,7 @@ void EdbPVRQuality::Help()
     cout << "-----     from the cp files). Then you can get the CutValues with" << endl;
     cout << "-----     GetCutp0() (for each//all plate) back." << endl;
     cout << "-----" << endl;
-    cout << "-----     After holidays it will be interfaced with the libShower reconstruction mode." << endl;
+    cout << "-----     On TODO list: to be interfaced with the libShower reconstruction mode." << endl;
     cout << "-----" << endl;
     cout << "-----     void EdbPVRQuality::Help()     -----" << endl;
     cout << "----------------------------------------------" << endl;
@@ -842,6 +859,14 @@ void EdbPVRQuality::Help()
 
 EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 {
+    // Remove double counted basetracks. This is a scanning induced error, at the
+    // edges of the objective field, corrections are different, thus one
+    // basetrack is seen differently in two different views.
+    // In Bern data, we do see clearly this double bump, that is characterized by
+    // _very_ close values of two BTs in X,Y,TX,TY (and also Chi2 and W).
+    // Separation threshold values are 2microns in postion and 10 mrad in angle.
+    // (again obtained from Bern data).
+
 
     // Quick and Dirty implementation !
     cout << "-----     void EdbPVRQuality::Remove_DoubleBT()" << endl;
@@ -920,6 +945,11 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
 EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 {
+    // Removes Passing Tracks from the EdbPVRec source object.
+    // Still TODO: Take (as in Execute_ConstantQuality) tracks from linked_tracks
+    // file.
+    // Unfortunately, there does Not Exist an easy function like
+    // ->RemoveSegment from EdbPVRec object. That makes implementation complicated.
 
     // Quick and Dirty implementation !
     EdbPVRec* eAli_source=aliSource;
@@ -957,11 +987,10 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
         pt->SetZ(pat->Z());
 
         for (int j = 0; j <pat->N(); j++ ) {
-            // 		for (int j = 0; j <10; j++ ) {
             EdbSegP* seg = pat->GetSegment(j);
-            seg->PrintNice();
+            //seg->PrintNice();
 
-            if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment nr=" << j << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment nr= " << j << endl;
             for (int ll = 0; ll<TracksN; ll++ ) {
                 track=(EdbTrackP*)Tracks->At(ll);
                 //track->PrintNice();
@@ -992,7 +1021,7 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
             if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
             pt->AddSegment(*seg);
         }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add AddPattern:" << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
         eAli_target->AddPattern(pt);
     }
 
@@ -1005,10 +1034,13 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 
 //___________________________________________________________________________________
 
-void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray) {
+void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)
+{
+    // Remove a whole track array (Array of EdbTrackP type).
 
-    // Quick and Dirty implementation !
-    // Remove a whole track array.
+    cout << "-----     void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)...." << endl;
+
+    // Quick and Dirty implementation!
     EdbPVRec* eAli_source=NULL;
     EdbPVRec* aliSource=NULL;
 
@@ -1077,14 +1109,14 @@ void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray) {
             if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
             pt->AddSegment(*seg);
         }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add AddPattern:" << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
         eAli_modified->AddPattern(pt);
     }
 
     if (gEDBDEBUGLEVEL>2) eAli_source->Print();
     if (gEDBDEBUGLEVEL>2) eAli_target->Print();
 
-    cout << "-----     void EdbPVRQuality::Remove_Passing()...done." << endl;
+    cout << "-----     void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)...done." << endl;
     return;
 }
 
@@ -1095,8 +1127,11 @@ void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray) {
 
 void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray) {
 
+    // Remove a whole segment array (Array of EdbSegP type).
+
+    cout << "-----     void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray)...." << endl;
+
     // Quick and Dirty implementation !
-    // Remove a segment array of EdbSegP's
     EdbPVRec* eAli_source=NULL;
     EdbPVRec* aliSource=NULL;
 
@@ -1162,7 +1197,7 @@ void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray) {
     if (gEDBDEBUGLEVEL>2) eAli_source->Print();
     if (gEDBDEBUGLEVEL>2) eAli_target->Print();
 
-    cout << "-----     void EdbPVRQuality::Remove_Passing()...done." << endl;
+    cout << "-----     void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray)...done." << endl;
     return;
 }
 

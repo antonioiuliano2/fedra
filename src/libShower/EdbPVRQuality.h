@@ -55,7 +55,7 @@ private:
     TH2F*			eHistChi2W;
     TH2F*			eHistYX;
     Int_t			NbinsX,NbinsY;
-// 		Int_t			NbinsX,NbinsY;
+
     Float_t		minX,maxX;
     Float_t		minY,maxY;
     // TProfile: BT dens/mm2 versus PID()
@@ -63,10 +63,9 @@ private:
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
-    // Condition:  Chi2() < p1* W() - p0
+    // eCutMethod == 1: Constant Chi2W quality
     Float_t		eCutp0[57];
     Float_t		eCutp1[57];
-    // eCutMethod == 1: Constant Chi2W quality
     Float_t		eCutDistChi2[57];
     Float_t		eCutDistW[57];
     Float_t 	eagreementChi2WDistCut[57];
@@ -77,7 +76,6 @@ private:
 
 protected:
 
-    // Reset All Default Variables:
     void 								Set0();
     void 								Init();
 
@@ -200,7 +198,7 @@ public:
     void PrintCutType0();
     void PrintCutType1();
     void Help();
-    ClassDef(EdbPVRQuality,1);         // Root Class Definition for my Objects
+    ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };
 
 //______________________________________________________________________________

@@ -2,6 +2,22 @@
 //                                                                      //
 // EdbShowerRec                                                         //
 //                                                                      //
+// Base Class for the shower reconstruction in OPERA brick.             //
+// This class has been initially developed by F. Juget, G. Lutter       //
+// and is ongoingly modified and developed by Frank Meisel, which is    //
+// currently corresponding author: frank.meisel@lhep.unibe.ch           //
+//                                                                      //
+// The main goal of this library is to make the shower search in the    //
+// scanned emulsion data as easy as possible, and as most automatically.//
+// There exist also two manuals, to be found under "documentation". In  //
+// these some general handling of the package is explained.             //
+//                                                                      //
+// The EdbShowerRec class makes following things:                       //
+// Starting from the emulsion scanned data (represented as an EdbPVRec  //
+// object in FEDRA), it does search and reconstruction of showers,      //
+// based on different algorithms, which the user can set indivially     //
+// (normaly not necessary). After that, we try to identify              //
+// characteristics of the shower, as it is: energy and particle ID.     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -71,24 +87,24 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
 {
     // Constructor giving a EdbPVRec object directly.
     // We try to do the reconstruction in the following way:
-    // a) if EdbPVRec has tracking already done then take eTracks for 
+    // a) if EdbPVRec has tracking already done then take eTracks for
     //    Inititator Basetracks
     // b) if EdbPVRec has vertexing already done then take eVertex for
-    //    additional cut of the Initiator Basetracks which are in 
+    //    additional cut of the Initiator Basetracks which are in
     //    an IP of less than 250 microns.
     // c) Start BGEstimation, Reconstruction, Energy, ID  directly
     //    from this EdbPVRec object
-    
+
     cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr) " << endl;
     cout << "Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
     cout << "a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
     cout << "b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
     cout << "c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
-    
+
     cout <<"-------------------    T O D O -----------------------" << endl;
-    
+
     Set0();
-    
+
 }
 
 //----------------------------------------------------------------
