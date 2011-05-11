@@ -104,6 +104,17 @@ namespace EdbEDAUtil{
 	double CalcIP(EdbSegP *s, double x, double y, double z);
 	double CalcIP(EdbSegP *s, EdbVertex *v);
 	double CalcDmin(EdbSegP *seg1, EdbSegP *seg2, double *dminz = NULL);
+	
+	double CalcMinimumKinkAngle( TVector3 vertex, TVector3 daupos,    TVector3 daumom);
+	double CalcMinimumKinkAngle( EdbVertex *v1ry, EdbSegP *tdaughter, int z_is_middle_of_base=1);
+	double CalcMinimumKinkAngle( EdbSegP *t1ry,   EdbSegP *tdaughter, int z_is_middle_of_base=1);
+	double CalcPtmin( TVector3 vertex, TVector3 daupos,    TVector3 daumom);
+	double CalcPtmin( EdbVertex *v1ry, EdbSegP *tdaughter, int z_is_middle_of_base=1);
+	double CalcPtmin( EdbSegP *t1ry,   EdbSegP *tdaughter, int z_is_middle_of_base=1);
+	double CalcKinkAngle(EdbSegP *tparent, EdbSegP *tdaughter);
+	double CalcPt(EdbSegP *tparent, EdbSegP *tdaughter);
+	double CalcEMCSelectron(EdbTrackP *t);
+	
 	EdbVertex * CalcVertex(TObjArray *segments); // calc vertex from the segments array (EdbSegP*)
 	EdbMomentumEstimator *CalcP(EdbTrackP *t, double& p, double& pmin, double& pmax, bool print=kTRUE);
 //	void   CalcP2(EdbTrackP *t, double& p, double& pmin, double& pmax);
@@ -116,6 +127,7 @@ namespace EdbEDAUtil{
 	void CalcDXTransLongi(EdbSegP *s1, EdbSegP *s2, double *dxt, double *dxl);
 	
 	double DTRMS(EdbTrackP *t);
+	double DTRMSelectron(EdbTrackP *t);
 	double DTRMS1Kink(EdbTrackP *t, int *NKinkAngleUsed=NULL);
 	double DTRMSTL(EdbTrackP *t, double *rmsspace, double *rmstransverse, double *rmslongitudinal, int *ndata=NULL);
 	double DTRMSTL1Kink(EdbTrackP *t, double *rmsspace, double *rmstransverse, double *rmslongitudinal, int *NKinkAngleUsed=NULL);

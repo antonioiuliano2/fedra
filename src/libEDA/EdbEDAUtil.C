@@ -117,6 +117,124 @@ double EdbEDAUtil::CalcIP(EdbSegP *s, EdbVertex *v){
 }
 
 
+double EdbEDAUtil::CalcMinimumKinkAngle(TVector3 vertex, TVector3 daupos, TVector3 daumom){
+	TVector3 parent = daupos-vertex;
+
+	return daumom.Angle(parent);
+}
+
+double EdbEDAUtil::CalcMinimumKinkAngle( EdbVertex *v1ry, EdbSegP *tdaughter, int z_is_middle_of_base){
+	// Minimum kink angle calculation in case that 1ry vertex is define && 1 daughter.
+	
+	EdbSegP td = *tdaughter;
+	
+	td.PrintNice();
+	printf("%lf %lf %lf\n",v1ry->X(), v1ry->Y(), v1ry->Z());
+	
+	if(z_is_middle_of_base) td.PropagateTo( td.Z()-150);
+	
+	TVector3 vertex( v1ry->X(), v1ry->Y(), v1ry->Z());
+	TVector3 daupos( td.X(), td.Y(), td.Z());
+	TVector3 daumom( td.TX(), td.TY(), 1.0);
+	
+	return CalcMinimumKinkAngle( vertex, daupos, daumom);
+}
+
+double EdbEDAUtil::CalcMinimumKinkAngle( EdbSegP *t1ry, EdbSegP *tdaughter, int z_is_middle_of_base){
+	// calculate minimum kink angle 
+	// for the short decay with only 1 track from primary and 1 track from secondary vertex.
+	// move virtual vertex in the lead, find minimimum kink angle.
+	// if z_is_middle_of_base==1, move z position of tracks 150 microns upstream.
+	
+	double min = 1000000000000;
+	EdbSegP t1=*t1ry;
+	EdbSegP td=*tdaughter;
+	
+	if(z_is_middle_of_base){
+		t1.PropagateTo( t1.Z()-150);
+		td.PropagateTo( td.Z()-150);
+	}
+	
+	float z1 = t1.Z();
+	for(int iz=0; iz<1000; iz++) { // move virtual vertex point
+		t1.PropagateTo(z1-iz);
+		TVector3 vertex( t1.X(), t1.Y(), t1.Z());
+		TVector3 daupos( td.X(), td.Y(), td.Z());
+		TVector3 daumom( td.TX(), td.TY(), 1);
+		double theta = CalcMinimumKinkAngle( vertex, daupos, daumom);
+		if(min>theta) min=theta;
+	}
+	
+	return min;
+}
+
+double EdbEDAUtil::CalcPtmin( TVector3 vertex, TVector3 daupos, TVector3 daumom){
+	return daumom.Mag() * sin( CalcMinimumKinkAngle( vertex, daupos, daumom) );
+}
+
+double EdbEDAUtil::CalcPtmin( EdbVertex *v1ry, EdbSegP *tdaughter, int z_is_middle_of_base){
+	// Ptmin calculation in case that 1ry vertex is define && 1 daughter.
+	return tdaughter->P()*sin(CalcMinimumKinkAngle(v1ry, tdaughter, z_is_middle_of_base));
+}
+
+double EdbEDAUtil::CalcPtmin( EdbSegP *t1ry, EdbSegP *tdaughter, int z_is_middle_of_base){
+	// Ptmin calculation in case that only 1ry track at 1ry vertex && 1 daughter.
+	// move virtual vertex to find minimum kink angle. see also CalcMinimumKinkAngle()
+	return tdaughter->P()*sin(CalcMinimumKinkAngle(t1ry, tdaughter, z_is_middle_of_base));
+}
+
+double EdbEDAUtil::CalcKinkAngle(EdbSegP *tparent, EdbSegP *tdaughter){
+	// simple calcuration
+	TVector3 parent(tparent->TX(), tparent->TY(), 1.0);
+	TVector3 daughter(tdaughter->TX(), tdaughter->TY(), 1.0);
+	
+	return parent.Angle(daughter);
+}
+
+double EdbEDAUtil::CalcPt(EdbSegP *tparent, EdbSegP *tdaughter){
+	
+	return tdaughter->P()*sin( CalcKinkAngle(tparent, tdaughter));
+	
+}
+
+
+double EdbEDAUtil::CalcEMCSelectron(EdbTrackP *t){
+	
+	if(t==NULL) return -99.0;
+	
+	int nseg = t->N();
+	
+	if(nseg>8) nseg=8;
+	
+	// trk 1
+	double dtxsq=0., dtysq=0.;
+	EdbSegP *s0 = t->GetSegmentFirst();
+	
+	for(int i=0;i<nseg-1;i++){
+		EdbSegP *s1 = (EdbSegP *) t->GetSegment(i);
+		EdbSegP *s2 = (EdbSegP *) t->GetSegment(i+1);
+		
+		double dz   = fabs( s2->Z()-s0->Z() ) / 1.3; // lead thickness
+		double correction_factor = exp( -dz/5612 );
+		double  dtx = (s1->TX()-s2->TX())*correction_factor;
+		double  dty = (s1->TY()-s2->TY())*correction_factor;
+		dtxsq += dtx*dtx;
+		dtysq += dty*dty;
+	}
+	if(nseg>4){
+		
+		double dtrms = dtxsq/nseg + dtysq/nseg;
+		
+		if(dtrms<0.0) { return 99.;}
+		else {
+			dtrms = sqrt(dtrms/2.);
+			return 0.0136/dtrms*sqrt(1/5.6)*(1+0.038*TMath::Log(1/5.6));
+		}
+	}
+	return -99;
+}
+
+
 
 double EdbEDAUtil::CalcDmin(EdbSegP *seg1, EdbSegP *seg2, double *dminz){
 // calculate minimum distance of 2 lines.
@@ -279,9 +397,11 @@ EdbMomentumEstimator *EdbEDAUtil::CalcP(EdbTrackP *t0, double& p, double& pmin, 
     }
   t0->SetP(p);
   
-	double rms, rmst, rmsl;
-	DTRMSTL(t, &rms, &rmst, &rmsl);
-	if(print) printf("DTRMS (Sp,T,L) = ( %.4lf, %.4lf, %.4lf)\n", rms, rmst, rmsl);
+	if(print){
+		double rms, rmst, rmsl;
+		DTRMSTL(t, &rms, &rmst, &rmsl);
+		printf("DTRMS (Sp,T,L) = ( %.4lf, %.4lf, %.4lf)\n", rms, rmst, rmsl);
+	}
 
   
 
@@ -314,6 +434,29 @@ double EdbEDAUtil::DTRMS(EdbTrackP *t){
 	rms = sqrt(rms);
 	return rms;
 }
+
+double EdbEDAUtil::DTRMSelectron(EdbTrackP *t){
+	int nseg = t->N();
+	if(nseg==1) return 0.0;
+	double rms=0.0;
+	EdbSegP *s0 = t->GetSegmentFirst();
+	
+	for(int i=0;i<nseg-1;i++){
+		EdbSegP *s1 = t->GetSegment(i);
+		EdbSegP *s2 = t->GetSegment(i+1);
+		double dtx  = s1->TX() - s2->TX();
+		double dty  = s1->TY() - s2->TY();
+		double dt2  = dtx*dtx+dty*dty;
+		double dz   = fabs( s2->Z()-s0->Z() ) / 1.3; // lead thickness
+		double correction_factor2 = exp( -2*dz/5612 );
+		dt2 *= correction_factor2;
+		rms+=dt2;
+	}
+	rms /= (nseg-1)*2;
+	rms = sqrt(rms);
+	return rms;
+}
+
 
 //	new TGMsgBox(gClient->GetRoot(),gEve->GetMainWindow(),"baka", "hoge", kMBIconAsterisk, kMBYes|kMBNo|kMBOk,&ret)
 //		new TGMsgBox(gClient->GetRoot(),gEve->GetMainWindow(),"Confirmation", 
