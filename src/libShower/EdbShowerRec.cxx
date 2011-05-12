@@ -35,10 +35,15 @@ EdbShowerRec::EdbShowerRec()
 //----------------------------------------------------------------
 EdbShowerRec::EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA, int piece2, int piece2par,int UPDOWN,EdbPVRec  *pvr)
 {
-    // Constructor giving a TObjArray of EdbSegments as Initiator Basetracks:
+    // Constructor giving a TObjArray of EdbSegments as Initiator Basetracks.
+    // Old style constructor: Fill the array variables (arrays with 10000 indices..) 
+    // from the TObjArray of EdbSegP. 
+    // Though this is the "original" reconstruction function, it should not be used anymore
+    // since it just does everything mixed together and the different steps are not to
+    // clear for the user.
     Set0();
 
-    // Copied from shower_btr.C :
+    // Interim arrays, code structure is copied from shower_btr.C :
     double x0[10000];
     double y0[10000];
     double z0[10000];
@@ -77,6 +82,8 @@ EdbShowerRec::EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA
         cout << chi20[Ncand] << " " <<  W0[Ncand] << "  "  << P0[Ncand] << "  "  << Flag0[Ncand]  << endl;
         Ncand++;
     }
+    
+    // Start the actual reconstruction function:
     rec(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,Pid,id,TRid,Esim,piece2,piece2par,UPDOWN,pvr);
 
 }
@@ -94,14 +101,29 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
     //    an IP of less than 250 microns.
     // c) Start BGEstimation, Reconstruction, Energy, ID  directly
     //    from this EdbPVRec object
+    // 
+    // After these steps showers are stored as an TObjarray of EdbTrackP
+    // in this class and can be accessed.
+    // Showers can also be written in the linked_tracks.root file, or 
+    // in the Shower.root file. But this file stores the showers just as
+    // a tree with leafs and the object structure is lost.
 
     cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr) " << endl;
     cout << "Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
     cout << "a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
     cout << "b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
     cout << "c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
-
-    cout <<"-------------------    T O D O -----------------------" << endl;
+    cout <<"----------  (some of step c are still: )    T O D O -----------------------" << endl;
+    
+    cout << "After these steps showers are stored as an TObjarray of EdbTrackP "<< endl;
+    cout << "in this class and can be accessed. " << endl;
+    cout << "Showers can also be written in the linked_tracks.root file, or  " << endl;
+    cout << "in the Shower.root file. But this file stores the showers just as " << endl;
+    cout << "a tree with leafs and the object structure is lost. " << endl;
+    
+    cout << "WARNING:: EdbShowerRec::EdbShowerRec(EdbPVRec* pvr)   DO NOTHING YET !!!" << endl;
+    cout << "PLEASE DO THESE STEPS MANUALLY UNTIL SHOWER LIBRARY IS FULLY FUNCTIONAL" << endl;
+    cout << "By stopping here, we avoid misunderstandings when all in one is done but not yet fully tested." << endl;
 
     Set0();
 
@@ -110,11 +132,14 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
 //----------------------------------------------------------------
 EdbShowerRec::~EdbShowerRec()
 {
+    // Default Destructor.
 }
 
 //----------------------------------------------------------------
 void EdbShowerRec::Set0()
 {
+    // Reset Variables.
+  
     eShowerTreeIsDone=kFALSE;
     eDoEnergyCalculation=kFALSE;
     eEnergyIsDone=kFALSE;
@@ -174,7 +199,10 @@ void EdbShowerRec::SaveResults()
 //-------------------------------------------------------------------
 void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0, int* Flag0, int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par, int DOWN,EdbPVRec  *pvr)
 {
-    //This function contains also arrays for Chi2,W,P,Flag of the first BT...
+    // General reconstruction intermediate function to differentiate between upstream 
+    // or downstream reco.
+    // This function contains also arrays for Chi2,W,P,Flag of the first BT...
+    
     if (DOWN == 1) {
         recdown(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,piece2, piece2par,pvr);
     }
@@ -189,6 +217,7 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
 //-------------------------------------------------------------------
 void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr)
 {
+    // Another reconstruction function ...
     double chi20[10000];
     double P0[10000];
     int W0[10000];
@@ -210,6 +239,7 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
 
 void EdbShowerRec::rec(TObjArray *sarr, EdbPVRec  *pvr)
 {
+  // Another reconstruction function ...
     int Ncand = 0;
     double x0[10000];
     double y0[10000];
@@ -261,9 +291,16 @@ void EdbShowerRec::rec(TObjArray *sarr, EdbPVRec  *pvr)
 //void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *TRid, int piece2, int piece2par, float Rcut=100., float Tcut=0.05)
 void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,  int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par,EdbPVRec  *pvr)
 {
-
-// shower tree definition
-
+    // Old style implementation of downstream reconstruction.
+    // Starts with arrays that contain Initiator Basetracks,
+    // and uses the EdbPVRec object for source data.
+    // Reconstruction algorithm is the standard "ConeTube" basetrack
+    // connection algorithm.
+    // Reconstructed Showers are first saved as Float_t data in a 
+    // Tree, afterwards they will be converted into an EdbTrackP array.
+    // 
+    
+    // shower tree definition
     treesaveb = new TTree("treebranch","tree of branchtrack");
     treesaveb->Branch("number_eventb",&number_eventb,"number_eventb/I");
     treesaveb->Branch("sizeb",&sizeb,"sizeb/I");

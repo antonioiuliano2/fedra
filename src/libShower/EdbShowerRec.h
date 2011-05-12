@@ -162,27 +162,28 @@ public:
     virtual ~EdbShowerRec();
 
 //definition of treebranch
-    Int_t number_eventb;
-    Int_t sizeb15;
-    Int_t sizeb20;
-    Int_t sizeb30;
-    Float_t output15;
-    Float_t output20;
-    Float_t output30;
-    Float_t E_MC;
-    Float_t output50;
+    Int_t number_eventb;	// MC number of the shower
+    Int_t sizeb15;		// sizeb15: basetracks within the first 15 plates
+    Int_t sizeb20;		// sizeb20: basetracks within the first 20 plates
+    Int_t sizeb30;		// sizeb30: basetracks within the first 30 plates
+    Float_t output15;		// old neural net variables for e/pi separation
+    Float_t output20;		// old neural net variables for e/pi separation
+    Float_t output30;		// old neural net variables for e/pi separation
+    Float_t output50;		// old neural net variables for e/pi separation
+    Float_t E_MC;		// energy of the first starting basetrack
+    
 
-    Int_t sizeb;
-    Int_t isizeb;
-    Int_t showerID;
-    Int_t idb[1000];
-    Int_t plateb[1000];
-    Float_t xb[1000];
-    Float_t yb[1000];
-    Float_t zb[1000];
-    Float_t txb[1000];
-    Float_t tyb[1000];
-    Int_t nfilmb[1000];
+    Int_t sizeb;		// number of basetracks
+    Int_t isizeb;		// ??? forgot what it was ???
+    Int_t showerID;		// ??? forgot what it was ???
+    Int_t idb[1000];		// ??? forgot what it was ???
+    Int_t plateb[1000];		// plate id of segment i
+    Float_t xb[1000];		// position of segment i
+    Float_t yb[1000];		// position of segment i
+    Float_t zb[1000];		// position of segment i
+    Float_t txb[1000];		// position of segment i
+    Float_t tyb[1000];		// position of segment i
+    Int_t nfilmb[1000];		// plate position of segment i w.r.t. starting segment.
     Int_t ngrainb[1000];
     Int_t ntrace1simub[1000];
     Int_t ntrace2simub[1000];
@@ -200,8 +201,8 @@ public:
     Float_t EnergySigmaCorrectedb;
     Float_t EnergySigmaUnCorrectedb;
 
-    Float_t purityb;
-    Float_t trackdensb; // Track density __around__ the shower (BT/mm2) (using eAli_Sub_halfsize).
+    Float_t purityb;    // purity of the shower (MC info needed).
+    Float_t trackdensb; // Track density _around_ the shower (BT/mm2) (using eAli_Sub_halfsize).
 
     Int_t eProb90;
     Int_t eProb1;

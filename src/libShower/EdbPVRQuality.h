@@ -68,11 +68,11 @@ private:
     Float_t		eCutp1[57];
     Float_t		eCutDistChi2[57];
     Float_t		eCutDistW[57];
-    Float_t 	eagreementChi2WDistCut[57];
-    Float_t 	eagreementChi2CutMeanChi2;
-    Float_t		eagreementChi2CutRMSChi2;
-    Float_t 	eagreementChi2CutMeanW;
-    Float_t 	eagreementChi2CutRMSW;
+    Float_t 	eAgreementChi2WDistCut[57];
+    Float_t 	eAgreementChi2CutMeanChi2;
+    Float_t		eAgreementChi2CutRMSChi2;
+    Float_t 	eAgreementChi2CutMeanW;
+    Float_t 	eAgreementChi2CutRMSW;
 
 protected:
 
@@ -149,23 +149,23 @@ public:
     }
 
     inline Float_t    GetagreementChi2CutMeanChi2() {
-        return eagreementChi2CutMeanChi2;
+        return eAgreementChi2CutMeanChi2;
     }
     inline Float_t    GetagreementChi2CutRMSChi2() {
-        return eagreementChi2CutRMSChi2;
+        return eAgreementChi2CutRMSChi2;
     }
     inline Float_t    GetagreementChi2CutMeanW() {
-        return eagreementChi2CutMeanW;
+        return eAgreementChi2CutMeanW;
     }
     inline Float_t    GetagreementChi2CutRMSW() {
-        return eagreementChi2CutRMSW;
+        return eAgreementChi2CutRMSW;
     }
 
     inline Float_t*   GetagreementChi2Cut() {
-        return eagreementChi2WDistCut;
+        return eAgreementChi2WDistCut;
     }
     inline Float_t    GetagreementChi2Cut(Int_t patNR) {
-        return eagreementChi2WDistCut[patNR];
+        return eAgreementChi2WDistCut[patNR];
     }
 
     void SetHistGeometry_OPERA();

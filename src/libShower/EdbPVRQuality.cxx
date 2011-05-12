@@ -124,7 +124,7 @@ void EdbPVRQuality::Set0()
         ePatternBTDensity_modified[i]=0;
         eCutp1[i]=0.15;
         eCutp0[i]=1.0; // Maximum Cut Value for const, BT dens
-        eagreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
+        eAgreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
     }
 
     eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",57,0,57,0,100);
@@ -132,10 +132,10 @@ void EdbPVRQuality::Set0()
 
     // Default values for cosmics, taken from a brick data:
     // (I cant remember which one, I hope it doesnt matter).
-    eagreementChi2CutMeanChi2=1.0;
-    eagreementChi2CutRMSChi2=0.3;
-    eagreementChi2CutMeanW=23;
-    eagreementChi2CutRMSW=3;
+    eAgreementChi2CutMeanChi2=1.0;
+    eAgreementChi2CutRMSChi2=0.3;
+    eAgreementChi2CutMeanW=23;
+    eAgreementChi2CutRMSW=3;
     return;
 }
 
@@ -358,9 +358,9 @@ void EdbPVRQuality::PrintCutType1()
         Int_t npatM=pat_modified->N();
         cout << i;
         cout << "	";
-        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_orig->Z(),npatO, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_orig[i]);
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_orig->Z(),npatO, eAgreementChi2CutMeanChi2 , eAgreementChi2CutRMSChi2,  eAgreementChi2CutMeanW , eAgreementChi2CutRMSW, eAgreementChi2WDistCut[i], ePatternBTDensity_orig[i]);
         cout << "	...	";
-        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_modified->Z(),npatM, eagreementChi2CutMeanChi2 , eagreementChi2CutRMSChi2,  eagreementChi2CutMeanW , eagreementChi2CutRMSW, eagreementChi2WDistCut[i], ePatternBTDensity_modified[i]);
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.1f",pat_modified->Z(),npatM, eAgreementChi2CutMeanChi2 , eAgreementChi2CutRMSChi2,  eAgreementChi2CutMeanW , eAgreementChi2CutRMSW, eAgreementChi2WDistCut[i], ePatternBTDensity_modified[i]);
         cout << endl;
     }
     return;
@@ -485,6 +485,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
     cout << "----------    If not, we try if there is a file linked_tracks.root " << endl;
     cout << "----------    we take tracks from there. " << endl;
     cout << "----------    If that doesnt work either, nothing is done." << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantQuality()----------" << endl << endl;
 
     cout << "EdbPVRQuality::Execute_ConstantQuality()   eAli_orig.eTracks :" << eAli_orig->eTracks << endl;
 
@@ -496,9 +497,14 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
     // No  eAli.Tracks ? Look for tracks in linked_track.root:
     if (NULL == eAli_orig->eTracks) {
+        cout << "EdbPVRQuality::Execute_ConstantQuality()   No eAli.Tracks. Look for tracks in linked_track.root" << endl;
         TFile* trackfile = new TFile("linked_tracks.root");
         trackfile->ls();
         TTree* tracks = (TTree*)trackfile->Get("tracks");
+	if (NULL == tracks) { 
+	  cout << "EdbPVRQuality::Execute_ConstantQuality()   No tracks in linked_track.root file. Return, leave eAli_orig unchanged and dont do any cleaning. You might try Execute_ConstantBTDensity instead. " << endl;
+	  return;
+	}
         // 		TH1F* h1;
         tracks->Draw("nseg>>h(60,0,60)","","");
         TH1F *h1 = (TH1F*)gPad->GetPrimitive("h");
@@ -512,13 +518,16 @@ void EdbPVRQuality::Execute_ConstantQuality()
         TString cutstring = TString(Form("nseg>=%d",int(h1->GetBinCenter(lastfilledbin-3)) ));
         tracks->Draw("s.eChi2>>hChi2(100,0,2)",cutstring);
         TH1F *hChi2 = (TH1F*)gPad->GetPrimitive("hChi2");
-        cout << hChi2->GetMean() << " " << hChi2->GetRMS() << endl;
+	
+	cout << "EdbPVRQuality::Execute_ConstantQuality()   Mean(RMS) of Chi2 distribution of passing tracks: " << hChi2->GetMean() << "+-"  << hChi2->GetRMS() << endl;
+	
 
         TCanvas* c1 = new TCanvas();
         c1->cd();
         tracks->Draw("s.eW>>hW(50,0,50)",cutstring);
         TH1F *hW = (TH1F*)gPad->GetPrimitive("hW");
-        cout << hW->GetMean() << " " << hW->GetRMS() << endl;
+	cout << "EdbPVRQuality::Execute_ConstantQuality()   Mean(RMS) of W distribution of passing tracks: " << hW->GetMean() << "+-"  << hW->GetRMS() << endl;
+	
 
         meanChi2=hChi2->GetMean();
         rmsChi2=hChi2->GetRMS();
@@ -528,10 +537,10 @@ void EdbPVRQuality::Execute_ConstantQuality()
         // since the values for the passing tracks are
         // calculated for the whole volume, we assume that the cutvalues
         // are valid for all plates.
-        eagreementChi2CutMeanChi2=meanChi2;
-        eagreementChi2CutRMSChi2=rmsChi2;
-        eagreementChi2CutMeanW=meanW;
-        eagreementChi2CutRMSW=rmsW;
+        eAgreementChi2CutMeanChi2=meanChi2;
+        eAgreementChi2CutRMSChi2=rmsChi2;
+        eAgreementChi2CutMeanW=meanW;
+        eAgreementChi2CutRMSW=rmsW;
     }
 
     /// ______  now same code as in the function Execute_ConstantBTDensity  ___________________
@@ -542,12 +551,12 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
     for (int i=0; i<Npat; i++) {
         if (i>56) {
-            cout << "ERROR     EdbPVRQuality::Execute_ConstantBTDensity() Your EdbPVRec object has more than 57 plates! " << endl;
-            cout << "ERROR     EdbPVRQuality::Execute_ConstantBTDensity() Check it! " << endl;
+            cout << "ERROR     EdbPVRQuality::Execute_ConstantQuality() Your EdbPVRec object has more than 57 plates! " << endl;
+            cout << "ERROR     EdbPVRQuality::Execute_ConstantQuality() Check it! " << endl;
             break;
         }
 
-        cout << "Execute_ConstantQuality   Doing Pattern " << i << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantQuality   Doing Pattern " << i << endl;
 
         // Now the condition loop:
         // Loop over 30 steps agreementChi2 step 0.05
@@ -575,7 +584,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
                 histagreementChi2->Fill(agreementChi2);
 
-                if (agreementChi2>eagreementChi2WDistCut[i]) continue;
+                if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
 
                 eHistYX->Fill(seg->Y(),seg->X());
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
@@ -597,23 +606,24 @@ void EdbPVRQuality::Execute_ConstantQuality()
             CheckFilledXYSize();
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
-            cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eagreementChi2WDistCut : " << eagreementChi2WDistCut[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+	    
+	    if (gEDBDEBUGLEVEL>2) cout <<"Execute_ConstantQuality      Loop l= " << l << ":  for the eAgreementChi2WDistCut : " << eAgreementChi2WDistCut[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
 
             // Now the condition check:
             if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
-                if (gEDBDEBUGLEVEL>2)  cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
+                if (gEDBDEBUGLEVEL>2)  cout << "Execute_ConstantQuality      We reached the loop end due to good BT density level ... and break loop." << endl;
                 // But dont forget to set values:
                 eCutDistChi2[i]=meanChi2;
                 eCutDistW[i]=meanW;
-                eagreementChi2CutMeanChi2=meanChi2;
-                eagreementChi2CutRMSChi2=rmsChi2;
-                eagreementChi2CutMeanW=meanW;
-                eagreementChi2CutRMSW=rmsW;
+                eAgreementChi2CutMeanChi2=meanChi2;
+                eAgreementChi2CutRMSChi2=rmsChi2;
+                eAgreementChi2CutMeanW=meanW;
+                eAgreementChi2CutRMSW=rmsW;
                 break;
             }
             else {
                 // Next step, tighten cut:
-                eagreementChi2WDistCut[i]+=  -0.05;
+                eAgreementChi2WDistCut[i]+=  -0.05;
             }
 
         } // of condition loop...
@@ -621,6 +631,23 @@ void EdbPVRQuality::Execute_ConstantQuality()
     } // of Npattern loops..
 
     eCutMethodIsDone[1]=kTRUE;
+    
+        // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(2,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(4);
+    eProfileBTdens_vs_PID->Draw("profileZ");
+    c1->cd();
+    histPatternBTDensity->Reset();
+    eHistYX->Reset();
+    eHistChi2W->Reset();
 
     histPatternBTDensity->Reset();
     eHistYX->Reset();
@@ -664,8 +691,8 @@ Bool_t EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_
     // ---
     // See comments in CheckSegmentQualityInPattern_ConstBTDens
     // Constant BT quality cut:
-    Float_t agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)*((seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)  +   ((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW)*((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW) );
-    if (agreementChi2>eagreementChi2WDistCut[PatternAtNr]) return kFALSE;
+    Float_t agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)*((seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)  +   ((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW)*((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW) );
+    if (agreementChi2>eAgreementChi2WDistCut[PatternAtNr]) return kFALSE;
 
     if (gEDBDEBUGLEVEL>3) cout <<"EdbPVRQuality::CheckSegmentQualityInPattern_ConstQual()   Segment " << seg << " has passed ConstQual cut!" << endl;
     return kTRUE;
@@ -749,8 +776,8 @@ void EdbPVRQuality::CreateEdbPVRec()
             }
             else if (eCutMethodIsDone[1]==kTRUE) {
                 // Constant Quality cut:
-                agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)*((seg->Chi2()-eagreementChi2CutMeanChi2)/eagreementChi2CutRMSChi2)  +   ((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW)*((seg->W()-eagreementChi2CutMeanW)/eagreementChi2CutRMSW) );
-                if (agreementChi2>eagreementChi2WDistCut[i]) continue;
+                agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)*((seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)  +   ((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW)*((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW) );
+                if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
             }
             else {
                 // do nothing;
