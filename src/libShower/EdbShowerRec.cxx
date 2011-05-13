@@ -5,7 +5,7 @@
 // Base Class for the shower reconstruction in OPERA brick.             //
 // This class has been initially developed by F. Juget, G. Lutter       //
 // and is ongoingly modified and developed by Frank Meisel, which is    //
-// currently corresponding author: frank.meisel@lhep.unibe.ch           //
+// currently the corresponding author: frank.meisel@lhep.unibe.ch       //
 //                                                                      //
 // The main goal of this library is to make the shower search in the    //
 // scanned emulsion data as easy as possible, and as most automatically.//
@@ -2314,17 +2314,19 @@ void EdbShowerRec::PrintInitiatorBTs()
 //-------------------------------------------------------------------
 void EdbShowerRec::CalculateEnergyValues()
 {
+  //=C= -----------------will be deprecated soon-------------
+
+    if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
+    if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::CalculateEnergyValues()"<<endl;
+    if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
+
 //   if (!gROOT->GetClass("TMultiLayerPerceptron")) {
 //     cout << "Need to load libMLP seperately"<<endl;
 //     gSystem->Load("libMLP");
 //   }
 
     //gEDBDEBUGLEVEL=3;
-
-    if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
-    if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::CalculateEnergyValues()"<<endl;
-    if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
-
+    
 
     ///--------------------------------------------
     ///---CreateANNTree:
@@ -2808,7 +2810,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
 //-------------------------------------------------------------------
 Float_t EdbShowerRec::Energy_CorrectEnergy(Float_t MeasuredEnergy, Int_t NPlatesNr)
 {
-    //=C= -----------------------------------------------------
+    //=C= -----------------will be deprecated soon-------------
     //=C= Correct the given ANN  Energy linear according
     //=C= to the formula
     //=C= E_corr = 1/p1 * ( E_meas -p0 )
@@ -2847,6 +2849,7 @@ Float_t EdbShowerRec::Energy_CorrectEnergy(Float_t MeasuredEnergy, Int_t NPlates
 //-------------------------------------------------------------------
 void EdbShowerRec::Energy_CreateEnergyResolutionFitFunction()
 {
+  //=C= -----------------will be deprecated soon-------------
     eEnergyResolutionFitFunction_All = new TF1("EnergyResolutionFitFunction_All","TMath::Sqrt([0]*[0]/sqrt(x)/sqrt(x)+[2]*[2]+[1]*[1]/x/x)",0.9,48.0);
     eEnergyResolutionFitFunction_All->SetParameter(0,0.5);  //Initialize with A=50%
     eEnergyResolutionFitFunction_All->SetParameter(1,0.2);  //Initialize with B=20%
@@ -2866,10 +2869,10 @@ void EdbShowerRec::Energy_CreateEnergyResolutionFitFunction()
 //-------------------------------------------------------------------
 Float_t EdbShowerRec::Energy_CalcSigma(Float_t Energy, Int_t type)
 {
-    //=C= -----------------------------------------------------
-    //=C= -----------------------------------------------------
+    //=C= -----------------will be deprecated soon-------------
     // To understand where these values come from, please look in
     // the note of energy measurement by FWM. to be found on the opera doc server.
+    //=C= -----------------------------------------------------
     Float_t SigmaParametrizationArray[8][3]= { { 1.27,0.0,0.28}, {0.79,0.0,0.26}, {0.48,0.0,0.23}, {0.50,0.0,0.15} ,{0.49,0.0,0.10} ,{0.50,0.17,0.04}, {0.49,0.24,0.00},{0.45,0.37,0.03} };
 
     eEnergyResolutionFitFunction_All->SetParameter(0,SigmaParametrizationArray[type][0]);
@@ -2886,6 +2889,8 @@ Float_t EdbShowerRec::Energy_CalcSigma(Float_t Energy, Int_t type)
 //-------------------------------------------------------------------
 void EdbShowerRec::Energy_CreateANNTree()
 {
+  //=C= -----------------will be deprecated soon-------------
+  
     if (gEDBDEBUGLEVEL>2) cout  << "------------------------------------------"<<endl;
     if (gEDBDEBUGLEVEL>2) cout  << "void EdbShowerRec::Energy_CreateANNTree()"<<endl;
     if (gEDBDEBUGLEVEL>2) cout  << "------------------------------------------"<<endl;

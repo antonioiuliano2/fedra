@@ -462,6 +462,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     eHistChi2W->Reset();
 
     delete histPatternBTDensity;
+    
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()....done." << endl;
     return;
 }
 
@@ -473,7 +475,10 @@ void EdbPVRQuality::Execute_ConstantQuality()
     // The cut method that compares the passing muon tracks with all scanned segments.
     // This may help to improve, since it takes into account the actual segment quality,
     // which varies from scan to scan anyway.
-    // Works for tracks passing the volume to extract their mean chi2/W
+    // Works for tracks passing the volume to extract their mean chi2/W. Then a distance
+    // measurement Sqrt{0.5*[ ((chi2-chi2mean)/chi2rms)^2 + ((W-Wmean)/Wrms)^2 )] } is
+    // build and the value of single basetracks is compared to this variable. Starting from 
+    // dist_max = 3 going down until desired target level is achieved.
     // If eAli->Tracks is there we take them from there.
     // If not, we try if there is a file linked_tracks.root, and we take tracks from there.
     // If that doesnt work either, nothing is done.
@@ -549,6 +554,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",100,0,200);
     TH1F* histagreementChi2 = new TH1F("histagreementChi2","histagreementChi2",100,0,5);
 
+    cout << "Execute_ConstantQuality   Loop over the patterns..." << endl;
     for (int i=0; i<Npat; i++) {
         if (i>56) {
             cout << "ERROR     EdbPVRQuality::Execute_ConstantQuality() Your EdbPVRec object has more than 57 plates! " << endl;
@@ -561,6 +567,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
         // Now the condition loop:
         // Loop over 30 steps agreementChi2 step 0.05
         for (int l=0; l<30; l++) {
+	  
+	    if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantQuality   Doing condition loop = " << l << endl;
 
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
@@ -569,8 +577,12 @@ void EdbPVRQuality::Execute_ConstantQuality()
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
             Int_t npat=pat->N();
             EdbSegP* seg=0;
+	    
+	    if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantQuality   Loop over segments of pattern " << i << ",Number of segments= " << npat <<  endl;
             for (int j=0; j<npat; j++) {
                 seg=(EdbSegP*)pat->At(j);
+		
+		if (gEDBDEBUGLEVEL>4) cout << "Execute_ConstantQuality   Doing segment= " << j << endl;
 
                 // Very important:
                 // For the data case, we assume the following:
@@ -580,7 +592,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
                 // Change here to the quality with values obtained from the tracks.
                 // Constant BT quality cut:
-                agreementChi2=TMath::Sqrt( ( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
+                agreementChi2=TMath::Sqrt(0.5 *( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
 
                 histagreementChi2->Fill(agreementChi2);
 
@@ -629,10 +641,11 @@ void EdbPVRQuality::Execute_ConstantQuality()
         } // of condition loop...
 
     } // of Npattern loops..
+    cout << "Execute_ConstantQuality   Loop over the patterns...done." << endl;
 
     eCutMethodIsDone[1]=kTRUE;
     
-        // This will be commented when using in batch mode...
+    // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
     TCanvas* c1 = new TCanvas();
     c1->Divide(2,2);
@@ -653,6 +666,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
     eHistYX->Reset();
     eHistChi2W->Reset();
     delete histPatternBTDensity;
+    
+    cout << "----------void EdbPVRQuality::Execute_ConstantQuality()....done." << endl;
     return;
 }
 
@@ -809,7 +824,7 @@ void EdbPVRQuality::CheckFilledXYSize()
     // In this case one should look closer at the specific
     // plate distribution.
 
-    if (gEDBDEBUGLEVEL>2)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
+    if (gEDBDEBUGLEVEL>3)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
     Int_t nbx,nby=0;
     nbx=eHistYX->GetNbinsX();
     nby=eHistYX->GetNbinsY();
@@ -839,7 +854,7 @@ void EdbPVRQuality::CheckFilledXYSize()
     Float_t FractionOfEmptyBins=1-(Float_t(NonEmptyBins)/Float_t(nBins));
     if (FractionOfEmptyBins>0.1) cout << "WARNING: void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
 
-    if (gEDBDEBUGLEVEL>2) {
+    if (gEDBDEBUGLEVEL>3) {
         cout << "----      NonEmptyBins bins in der covered area:  = " << NonEmptyBins << endl;
         cout << "----      nBins totale bins in der covered area:  = " << nBins << endl;
         cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;

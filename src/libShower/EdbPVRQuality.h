@@ -38,18 +38,17 @@ private:
     // The source and target EdbPVRec objects:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
-    Bool_t		eIsSource;
+    Bool_t    eIsSource;
 
     Int_t 		eHistGeometry;
 
     // Variables related for calculation Issues
-    Int_t			eCutMethod;
+    Int_t		eCutMethod;
     Float_t		eBTDensityLevel;
     Bool_t		eCutMethodIsDone[2];
 
     Float_t		ePatternBTDensity_orig[57];
     Float_t		ePatternBTDensity_modified[57];
-
 
     // Histograms for calculations
     TH2F*			eHistChi2W;

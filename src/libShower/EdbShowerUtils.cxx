@@ -3,6 +3,7 @@
 //_____________________________________________________________________________________________
 void EdbShowerRec::PrintRecoShowerArray()
 {
+    // Print the array for the Reconstructed Showers.
     Log(2,"EdbShowerRec::PrintRecoShowerArray","EdbShowerRec::PrintRecoShowerArray");
     EdbTrackP* show=0;
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
@@ -18,6 +19,7 @@ void EdbShowerRec::PrintRecoShowerArray()
 
 Double_t EdbShowerRec::DeltaThetaComponentwise(EdbSegP* s1,EdbSegP* s2)
 {
+    // Calculate Delta Theta of two segments.
     // Be aware that this DeltaTheta function returns the difference between the
     // component values of dTheta!!!
     // Acutally this function should be the normal way to calculate dTheta correctly...
@@ -34,6 +36,9 @@ Double_t EdbShowerRec::DeltaThetaComponentwise(EdbSegP* s1,EdbSegP* s2)
 
 Double_t EdbShowerRec::DeltaR_WithPropagation(EdbSegP* s,EdbSegP* stest)
 {
+    // Calculate Delta R of two segments.
+    // If they have different Z positions, then first segment in the argument of the bracket
+    // is propagated to the position of the second segment.
     if (s->Z()==stest->Z()) return TMath::Sqrt((s->X()-stest->X())*(s->X()-stest->X())+(s->Y()-stest->Y())*(s->Y()-stest->Y()));
     Double_t zorig;
     Double_t dR;
@@ -48,6 +53,7 @@ Double_t EdbShowerRec::DeltaR_WithPropagation(EdbSegP* s,EdbSegP* stest)
 
 Double_t EdbShowerRec::DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest)
 {
+  // Calculate Delta R of two segments using no z propagation.
     return TMath::Sqrt((s->X()-stest->X())*(s->X()-stest->X())+(s->Y()-stest->Y())*(s->Y()-stest->Y()));
 }
 
@@ -55,16 +61,15 @@ Double_t EdbShowerRec::DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest)
 
 Bool_t EdbShowerRec::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegment, Double_t CylinderRadius, Double_t ConeAngle)
 {
+    // General Function which returns kTRUE if the Testing BaeTrack is in a cone defined
+    // by the StartingBaseTrack. In case of same starting Z position, a max distance cut ( in Delta R) 
+    // of 20microns is assumed (i.e. the cone is not totally closed at the start).
+    // In case of TestingSegment==StartingSegment this function should also correctly return kTRUE.
+    
     if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowerAlg::IsInConeTube("<<TestingSegment<< ","<< StartingSegment <<","<< CylinderRadius << "," << ConeAngle << endl;
-
-    // General Function which returns Bool if the Testing BaeTrack is in a cone defined
-    // by the StartingBaseTrack. In case of starting same Z position, a distance cut of
-    // 20microns is assumed....
-    // In case of  TestingSegment==StartingSegment this function should correctly return kTRUE also...
     if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowerAlg::IsInConeTube() Test Segment " << TestingSegment << " vs. Starting Segment " << StartingSegment << endl;
 
     if (TestingSegment->Z()-StartingSegment->Z()<2.0) return kFALSE;
-
 
     TVector3 x1(StartingSegment->X(),StartingSegment->Y(),StartingSegment->Z());
     TVector3 x2(TestingSegment->X(),TestingSegment->Y(),TestingSegment->Z());
@@ -135,8 +140,8 @@ void EdbShowerRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
 
     TFile * fil = new TFile(eFilename_LinkedTracks);
     TTree* tr= (TTree*)fil->Get("tracks");
-    TClonesArray *seg= new TClonesArray("EdbSegP",60);
-    int nentr = int(tr->GetEntries());
+    int nentr = 0; 
+    nentr =int(tr->GetEntries());
 
     //   check if tracks has entries: if so then ok, otherwise return directly:
     if (nentr>0) {
@@ -147,6 +152,8 @@ void EdbShowerRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
         return;
     }
 
+    TClonesArray *seg= new TClonesArray("EdbSegP",60);
+    
     //   check if   eInBTArray  was created, if not do it now.:
     if (!eInBTArray) eInBTArray=new TObjArray(nentr);
 
@@ -198,6 +205,12 @@ void EdbShowerRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
 
 void EdbShowerRec::LoadEdbPVRec()
 {
+    // Function to load the EdbPatterVolumeReconstruction object into memory.
+    // Shower reco needs to have full basetrack data to improve performance.
+    // Because full basetrack data (corresponds to cp.root files) is memory extensive,
+    // standard operations rely on linked tracks only.
+    // Warning: some hardcoded strings are inside herebject for analysis use!
+  
     Log(2,"EdbShowerRec::LoadEdbPVRec","Loads the full cp Basetracks into the  eAli  object.");
     // Loads the full cp Basetracks into the  eAli  object:
     if (!eAli) eAli=new EdbPVRec();
@@ -227,9 +240,11 @@ void EdbShowerRec::LoadEdbPVRec()
 
 void EdbShowerRec::Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize=1000)
 {
-    //    Transform eAli to eAli_Sub:
-    //    the lenght of eAli_Sub is not changed.
+    //    Transform an EdbPVRec Object inot a smaller EdbPVRec object.
+    //    The length (number of plates/patterns) of eAli_Sub is not changed.
     //    Only XY-size (and MC) cuts are applied.
+    // 	  Increases speed of processing.
+    
     Log(3,"EdbShowerRec::Transform_eAli","Transform eAli to eAli_Sub:");
 
     eUseAliSub=kTRUE;
