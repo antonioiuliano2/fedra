@@ -38,7 +38,11 @@
 // TODO:
 // TODO....//======================================================================
 
-
+# 18052011
+* EdbShowRec::FileExists() doenst compile using the 
+* intStat = stat(strFilename.c_str(),&stFileInfo);
+* line, instead, if we use std::ifstream LogFile(strFilename.c_str());
+* it compiles. First test seems to work.
 
 # 11082010
 * Improved EdbPVRQuality. Also now a modified EdbPVRec object can be given back.

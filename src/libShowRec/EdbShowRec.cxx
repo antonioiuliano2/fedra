@@ -3454,30 +3454,17 @@ void EdbShowRec::SetUseAliSub(Int_t type)
 
 bool EdbShowRec::FileExists(string strFilename) {
   
+  std::ifstream LogFile(strFilename.c_str());
+  if(!LogFile) {
+    std::cout << "File not found." << std::endl;
+    return 0;
+  }
   // Code for this function copied veratim from
   // http://www.techbytes.ca/techbyte103.html
-  
-  struct stat stFileInfo;
-  bool blnReturn;
-  int intStat;
-
-  // Attempt to get the file attributes
-  intStat = stat(strFilename.c_str(),&stFileInfo);
-  if(intStat == 0) {
-    // We were able to get the file attributes
-    // so the file obviously exists.
-    blnReturn = true;
-  } else {
-    // We were not able to get the file attributes.
-    // This may mean that we don't have permission to
-    // access the folder which contains this file. If you
-    // need to do that level of checking, lookup the
-    // return values of stat which will give you
-    // more details on why stat failed.
-    blnReturn = false;
-  }
- 
- return(blnReturn);
+  /// This code does not compile anymore with 
+  /// gcc version 4.3.5 (Ubuntu 4.3.5-3ubuntu1) 
+  /// Therefore I skipped it.
+  return 1;
 }
 
 
