@@ -596,6 +596,8 @@ public:
 
 
     // Inline Set Functions:
+    inline void   	SetUseAliSub(Bool_t UseAliSub) {eUseAliSub=UseAliSub;}
+    
     inline void         SetEdbPVRec( EdbPVRec* Ali )          {
         eAli = Ali;
         eAliNpat=eAli->Npatterns();
@@ -625,6 +627,8 @@ public:
             eInBTArrayIsFilled=kTRUE;
         }
     }
+        
+    void SetInBTArray( EdbPVRec* Ali );
 
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN)      {
         eRecoShowerArrayN = RecoShowerArrayN;
@@ -635,7 +639,7 @@ public:
 
     void                SetAlgoParameter(Double_t paravalue, Int_t paranr);
     void                ResetAlgoParameters();
-    inline	void				SetQualityCutValues(Double_t p0, Double_t p1) {
+    inline	void	SetQualityCutValues(Double_t p0, Double_t p1) {
         eQualityPar[0]=p0;
         eQualityPar[1]=p1;
         eUseQualityPar=kTRUE;
@@ -643,6 +647,7 @@ public:
 
 
     // Inline Get Functions:
+    inline Bool_t   	GetUseAliSub() {return eUseAliSub;}
     inline EdbPVRec*    GetEdbPVRec( )      const       {
         return eAli;
     }
@@ -724,7 +729,10 @@ public:
     // Execute  -- Transfer Treebrach Tree into ShowerObjectArray  ;
     void TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* treebranch);
 
-
+    // Standard Print Function:
+    void Print();
+    // Standard Help Function:
+    void Help();
     // Standard Reset Function:
     void								Set0();
 

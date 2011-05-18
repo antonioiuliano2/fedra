@@ -4,7 +4,7 @@ include ../config/RootDef.mk
 #------------------------------------------------------------------------------
 
 NAME          = Shower
-headers       = EdbShowerRec.h EdbShowerUtils.h EdbShowerAlg.h EdbPVRQuality.h 
+headers       = EdbShowerRec.h EdbShowerAlg.h EdbPVRQuality.h 
 
 ROOTLIBS      += -lMLP
 
