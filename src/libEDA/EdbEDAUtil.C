@@ -1299,3 +1299,44 @@ void EdbEDAUtil::WriteTracksMxx(TObjArray *tracks, char *filename){
 }
 
 
+void EdbEDAUtil::MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec& pvr){
+	// convert tracks or segments array into pvr.
+	// if pointers of segments will not be consistent.
+	
+	EdbScanCond cond;
+	
+	for(int i=0; i<tracks_or_segments->GetEntries(); i++){
+		TObject *o = tracks_or_segments->At(i);
+		
+		if(IsSegment(o)){
+			EdbSegP *s = (EdbSegP *)o;
+			
+			// fill COV for vertexing
+			if(s->COV()==0){
+				s->SetErrors();
+				cond.FillErrorsCov(s->TX(), s->TY(), s->COV());
+			}
+			
+			// Add segment in PVRec and Track, keeping consistency of pointer in them.
+			EdbSegP *s_in_pattern = pvr.AddSegment(*s);
+			
+			EdbTrackP *t = new EdbTrackP(*s_in_pattern);
+			t->AddSegment( s_in_pattern);
+			pvr.AddTrack(t);
+		}
+		
+		else if (IsTrack(o)){
+			EdbTrackP *t = (EdbTrackP *) o;
+			
+			for(int j=0; j<t->N(); j++){
+				EdbSegP *s = t->GetSegment(j);
+				EdbSegP *s_in_pattern = pvr.AddSegment(*s);
+			}
+			
+			pvr.AddTrack(t);
+		}
+	}
+	
+	
+}
+

@@ -202,7 +202,6 @@ void EdbEDATrackSelection::DoSelection(TObjArray *tracksbase, TObjArray *tracks)
 double EdbEDATrackSet::GetTrackLength(EdbSegP *s, int updown){  
 	// Calculate Track extrapolation length.
 	// updon : up = -1, down = 1
-	
 	if( eTrackLength>0 ) return eTrackLength;
 	
 	// ScanSet case
@@ -231,6 +230,7 @@ double EdbEDATrackSet::GetTrackLength(EdbSegP *s, int updown){
 				if( pat0->GetSegment(0)==NULL ) continue;
 				if( pat0->GetSegment(0)->Plate() == s->Plate()) {
 					int pidnext = i+updown;
+					if(pidnext<0||pidnext>ePVR->Npatterns()) return 650;
 					EdbPattern *pat1 = ePVR->GetPattern(pidnext);
 					if(pat1==NULL) return 650;
 					else return fabs( pat1->Z()-pat0->Z() )*0.5;
@@ -295,7 +295,6 @@ void EdbEDATrackSet::DrawSingleSegment(EdbSegP *s, char *elname, TEveCompound *c
 	l->SetUserData(s);
 	
 	l->SetLineColor(GetTrackColor(s));
-
 	if(extendup){
 		//Auto calculation of track_line_length
 		double dz = -GetTrackLength(s,-1);
@@ -306,7 +305,6 @@ void EdbEDATrackSet::DrawSingleSegment(EdbSegP *s, char *elname, TEveCompound *c
 	} else {
 		l->SetNextPoint(s->X(), s->Y(), s->Z()*gEDA->GetScaleZ());
 	}
-	
 	if(extenddown){
 		
 		double dz = GetTrackLength(s,1);
@@ -317,7 +315,6 @@ void EdbEDATrackSet::DrawSingleSegment(EdbSegP *s, char *elname, TEveCompound *c
 	} else {
 		l->SetNextPoint(s->X(), s->Y(), s->Z()*gEDA->GetScaleZ());
 	}
-
 	cmp->AddElement(l);
 
 	// sensitive layer.

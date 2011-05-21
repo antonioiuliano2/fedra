@@ -149,6 +149,8 @@ namespace EdbEDAUtil{
 	void WritePVRMxx(EdbPVRec *pvr, char *filename = NULL);
 	void WriteTracksMxx(TObjArray *pvr, char *filename = NULL);
 	
+	void MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec& pvr);
+	
 };
 
 

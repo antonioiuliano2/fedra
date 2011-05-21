@@ -523,6 +523,23 @@ class EdbEDA :
 	EdbEDA(EdbPVRec *pvr, bool autorun=1){
 		Init();
 		ePVR = pvr;
+	
+		// if plate number is not set. set plate number as PID.
+		int flag_plset=0;
+		for(int i=0;i<ePVR->Ntracks();i++){
+			EdbTrackP *t = ePVR->GetTrack(i);
+			EdbSegP *s = t->GetSegmentLast();
+			if(s->Plate()!=0) flag_plset++; // if plate number is set.
+		}
+		
+		if(flag_plset==0){ // in case plate number is not set, set PID as plate number
+			for(int i=0;i<ePVR->Npatterns();i++){
+				EdbPattern *p = ePVR->GetPattern(i);
+				if(p==NULL) continue;
+				p->SetSegmentsPlate(p->ID());
+			}
+		}
+		
 		GetTrackSet("TS")->AddTracksPVR(pvr);
 		GetVertexSet()->AddVertices(pvr->eVTX);
 		if(autorun) Run();
