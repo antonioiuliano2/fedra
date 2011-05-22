@@ -1312,7 +1312,7 @@ void EdbEDAUtil::MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec&
 			EdbSegP *s = (EdbSegP *)o;
 			
 			// fill COV for vertexing
-			if(s->COV()==0){
+			if(s->SX()==0){
 				s->SetErrors();
 				cond.FillErrorsCov(s->TX(), s->TY(), s->COV());
 			}
@@ -1336,7 +1336,30 @@ void EdbEDAUtil::MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec&
 			pvr.AddTrack(t);
 		}
 	}
+}
+
+void EdbEDAUtil::FillTracksFromPatterns(EdbPVRec *pvr){
+	// convert segments in patterns into Tracks in EdbPVRec object.
+	// each track has 1 segment
 	
+	EdbScanCond cond;
+	
+	for(int i=0; i<pvr->Npatterns(); i++){
+		EdbPattern *pat = pvr->GetPattern(i);
+		
+		for(int j=0; j<pat->N(); j++){
+			EdbSegP *s = pat->GetSegment(j);
+			// fill COV for vertexing
+			if(s->SX()==0){
+				s->SetErrors();
+				cond.FillErrorsCov(s->TX(), s->TY(), s->COV());
+			}
+			EdbTrackP *t = new EdbTrackP(*s);
+			t->AddSegment( s);
+			pvr->AddTrack(t);
+		}
+	}
 	
 }
+
 

@@ -150,7 +150,7 @@ namespace EdbEDAUtil{
 	void WriteTracksMxx(TObjArray *pvr, char *filename = NULL);
 	
 	void MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec& pvr);
-	
+	void FillTracksFromPatterns(EdbPVRec *pvr);
 };
 
 
