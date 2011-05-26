@@ -278,6 +278,8 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbSegP     *AddSegment(EdbSegP &s);
   void         SetScanIDPatSeg(EdbID id);
   void         SetScanIDTrackSeg(EdbID id);
+  
+  void 		PrintSummary();
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor
 };
