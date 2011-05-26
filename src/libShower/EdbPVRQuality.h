@@ -39,16 +39,16 @@ private:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
     Bool_t    eIsSource;
-
-    Int_t 		eHistGeometry;
+    Int_t     eHistGeometry;
+    Int_t     eAli_maxNpatterns;
 
     // Variables related for calculation Issues
     Int_t		eCutMethod;
     Float_t		eBTDensityLevel;
     Bool_t		eCutMethodIsDone[2];
 
-    Float_t		ePatternBTDensity_orig[57];
-    Float_t		ePatternBTDensity_modified[57];
+    Float_t		ePatternBTDensity_orig[114];
+    Float_t		ePatternBTDensity_modified[114];
 
     // Histograms for calculations
     TH2F*			eHistChi2W;
@@ -63,11 +63,11 @@ private:
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
     // eCutMethod == 1: Constant Chi2W quality
-    Float_t		eCutp0[57];
-    Float_t		eCutp1[57];
-    Float_t		eCutDistChi2[57];
-    Float_t		eCutDistW[57];
-    Float_t 	eAgreementChi2WDistCut[57];
+    Float_t		eCutp0[114];
+    Float_t		eCutp1[114];
+    Float_t		eCutDistChi2[114];
+    Float_t		eCutDistW[114];
+    Float_t 	eAgreementChi2WDistCut[114];
     Float_t 	eAgreementChi2CutMeanChi2;
     Float_t		eAgreementChi2CutRMSChi2;
     Float_t 	eAgreementChi2CutMeanW;

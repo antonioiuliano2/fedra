@@ -78,11 +78,12 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
 
     // Set BTDensityTargetLevel
     SetBTDensityLevel(BTDensityTargetLevel);
-    cout << " GetBTDensityLevel() " << GetBTDensityLevel() << endl;
+    cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  GetBTDensityLevel() " << GetBTDensityLevel() << endl;
 
     CheckEdbPVRec();
-    Execute_ConstantBTDensity();
-    CreateEdbPVRec();
+    
+//     Execute_ConstantBTDensity();
+//     CreateEdbPVRec();
 }
 
 //______________________________________________________________________________
@@ -104,6 +105,7 @@ void EdbPVRQuality::Set0()
     eAli_orig=NULL;
     eAli_modified=NULL;
     eIsSource=kFALSE;
+    eAli_maxNpatterns=0;
     for (int i=0; i<2; i++) eCutMethodIsDone[i]=kFALSE;
 
     // Default BT density level for which the standard cutroutine
@@ -119,7 +121,7 @@ void EdbPVRQuality::Set0()
     eHistYX->Reset();
     eHistChi2W->Reset();
 
-    for (int i=0; i<57; i++) {
+    for (int i=0; i<114; i++) {
         ePatternBTDensity_orig[i]=0;
         ePatternBTDensity_modified[i]=0;
         eCutp1[i]=0.15;
@@ -127,8 +129,9 @@ void EdbPVRQuality::Set0()
         eAgreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
     }
 
-    eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",57,0,57,0,100);
+    eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",114,-0.5,113.5,0,200);
     cout << "eProfileBTdens_vs_PID->GetBinWidth(1)" << eProfileBTdens_vs_PID->GetBinWidth(1) << endl;
+    cout << "eProfileBTdens_vs_PID->GetBinCenter(1)" << eProfileBTdens_vs_PID->GetBinCenter(1) << endl;
 
     // Default values for cosmics, taken from a brick data:
     // (I cant remember which one, I hope it doesnt matter).
@@ -191,7 +194,15 @@ void EdbPVRQuality::CheckEdbPVRec()
         return;
     }
     // Check the patterns of the EdbPVRec:
-    int Npat = eAli_orig->Npatterns();
+    eAli_maxNpatterns= eAli_orig->Npatterns();
+    cout << "EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
+    if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
+    if (eAli_maxNpatterns>114) {
+      cout << "ERROR! EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
+      eAli_maxNpatterns=114;
+    }
+      
+    int Npat = eAli_maxNpatterns;
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
 
     // Loop over the patterns of the EdbPVRec:
@@ -829,7 +840,7 @@ void EdbPVRQuality::CheckFilledXYSize()
     nbx=eHistYX->GetNbinsX();
     nby=eHistYX->GetNbinsY();
 
-    Int_t n1x= FindFirstBinAbove(eHistYX,0,1);   // Int_t FindFirstBinAbove(Double_t threshold = 0, Int_t axis = 1) const
+    Int_t n1x= FindFirstBinAbove(eHistYX,0,1);  
     Int_t n1y= FindFirstBinAbove(eHistYX,0,2);
     Int_t n2x= FindLastBinAbove(eHistYX,0,1);
     Int_t n2y= FindLastBinAbove(eHistYX,0,2);
@@ -855,8 +866,8 @@ void EdbPVRQuality::CheckFilledXYSize()
     if (FractionOfEmptyBins>0.1) cout << "WARNING: void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
 
     if (gEDBDEBUGLEVEL>3) {
-        cout << "----      NonEmptyBins bins in der covered area:  = " << NonEmptyBins << endl;
-        cout << "----      nBins totale bins in der covered area:  = " << nBins << endl;
+        cout << "----      NonEmptyBins bins in covered area:  = " << NonEmptyBins << endl;
+        cout << "----      nBins totale bins in covered area:  = " << nBins << endl;
         cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;
         cout << "----      nbxMin= " << n1x << endl;
         cout << "----      nbxMax= " << n1y << endl;
@@ -988,7 +999,7 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 {
     // Removes Passing Tracks from the EdbPVRec source object.
-    // Still TODO: Take (as in Execute_ConstantQuality) tracks from linked_tracks
+    // Still todo: Take (as in Execute_ConstantQuality) tracks from linked_tracks
     // file.
     // Unfortunately, there does Not Exist an easy function like
     // ->RemoveSegment from EdbPVRec object. That makes implementation complicated.
@@ -997,12 +1008,12 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
     EdbPVRec* eAli_source=aliSource;
 
     if (NULL==aliSource) {
-        cout << "-----     void EdbPVRQuality::Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
+        cout << "WARNING!----EdbPVRQuality::Remove_Passing()  Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
         eAli_source=eAli_orig;
     }
 
     if (NULL==eAli_orig) {
-        cout << "-----     void EdbPVRQuality::Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+        cout << "WARNING!----EdbPVRQuality::Remove_Passing() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
         return NULL;
     }
 
@@ -1010,6 +1021,12 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
     Int_t TracksN=eAli_source->eTracks->GetEntries();
     EdbTrackP* track;
     EdbSegP* trackseg;
+    
+    // if eAli_source has no tracks, we return here and stop.
+    if (NULL == Tracks) {
+      cout << "WARNING!----EdbPVRQuality::Remove_Passing() NULL == eTracks. Do nothing and return eAli_orig pointer!" << endl;
+      return eAli_orig;
+    }
 
 
     // Make a new PVRec object anyway
@@ -1087,19 +1104,25 @@ void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)
     EdbPVRec* aliSource=NULL;
 
     if (NULL==aliSource) {
-        cout << "-----     void EdbPVRQuality::Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
+        cout << "WARNING!----EdbPVRQuality::Remove_TrackArray()  Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
         eAli_source=eAli_orig;
     }
 
     if (NULL==eAli_orig) {
-        cout << "-----     void EdbPVRQuality::Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+        cout << "WARNING!----EdbPVRQuality::Remove_TrackArray() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
         return;
     }
 
-    TObjArray* Tracks=trackArray;
-    Int_t TracksN=trackArray->GetEntries();
+    TObjArray* Tracks=eAli_source->eTracks;
+    Int_t TracksN=eAli_source->eTracks->GetEntries();
     EdbTrackP* track;
     EdbSegP* trackseg;
+    
+    // if eAli_source has no tracks, we return here and stop.
+    if (NULL == Tracks) {
+      cout << "WARNING!----EdbPVRQuality::Remove_TrackArray() NULL == eTracks. Do nothing and return eAli_orig pointer!" << endl;
+      return;
+    }
 
 
     // Make a new PVRec object anyway

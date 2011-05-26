@@ -96,11 +96,10 @@ void EdbShowerAlg::SetParameters(Float_t* par)
 
 void EdbShowerAlg::Transform_eAli(EdbSegP* InitiatorBT, Float_t ExtractSize=1500)
 {
-// 	cout << "-----------------   void EdbShowerAlg::Transform_eAli(EdbSegP* InitiatorBT, Float_t ExtractSize=1500)   ------------------"<<endl;
+    // --------------------------------------------------------------------------------------
     // 		Transform eAli to eAli_Sub:
     // 		the lenght of eAli_Sub is not changed.
     // 		Only XY-size (and MC) cuts are applied.
-
     // --------------------------------------------------------------------------------------
     // ---
     // --- Whereas in ShowRec.cpp the treebranch file is written directly after each
@@ -119,8 +118,10 @@ void EdbShowerAlg::Transform_eAli(EdbSegP* InitiatorBT, Float_t ExtractSize=1500
     // ---	Use always eAliSub, search BT correspond in eAli, add BT from eAli....May take also long time...
     // ---
     // ---
-    // ---
-    // ---
+    // --- SEVERE warning:  IF gAli is in wrong order it can be that no showers 
+    // --- SEVERE warning:  are reconstructed since most implemented algorithms
+    // --- SEVERE warning:  rely on the order that plate 2 comes directly behind
+    // --- SEVERE warning:  the InBT.  THIS IS STILL ON BUGFIXING LIST!!!
     // --------------------------------------------------------------------------------------
 
 
