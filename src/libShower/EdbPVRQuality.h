@@ -46,6 +46,8 @@ private:
     Int_t		eCutMethod;
     Float_t		eBTDensityLevel;
     Bool_t		eCutMethodIsDone[2];
+    Bool_t		eBTDensityLevelCalcMethodMC;
+    Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
 
     Float_t		ePatternBTDensity_orig[114];
     Float_t		ePatternBTDensity_modified[114];
@@ -88,6 +90,21 @@ public:
     inline void SetBTDensityLevel(Float_t BTDensityLevel) {
         eBTDensityLevel=BTDensityLevel;
     }
+
+    inline void SetBTDensityLevelCalcMethodMC(Bool_t BTDensityLevelCalcMethodMC) {
+        eBTDensityLevelCalcMethodMC=BTDensityLevelCalcMethodMC;
+    }
+    inline void SetBTDensityLevelCalcMethodMCConfirmation(Int_t BTDensityLevelCalcMethodMCConfirmationNumber) {
+        eBTDensityLevelCalcMethodMCConfirmationNumber=BTDensityLevelCalcMethodMCConfirmationNumber;
+    }
+    inline Bool_t GetBTDensityLevelCalcMethodMC() {
+        return eBTDensityLevelCalcMethodMC;
+    }
+    inline Int_t GetBTDensityLevelCalcMethodMCConfirmation() {
+        return eBTDensityLevelCalcMethodMCConfirmationNumber;
+    }
+
+
 
     inline EdbPVRec* GetEdbPVRec() {
         return eAli_orig;
