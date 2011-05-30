@@ -227,6 +227,7 @@ double EdbEDATrackSet::GetTrackLength(EdbSegP *s, int updown){
 		if(ePVR->Npatterns()!=0){
 			for(int i=0;i<ePVR->Npatterns();i++){
 				EdbPattern *pat0 = ePVR->GetPattern(i);
+				if( pat0==NULL) continue;
 				if( pat0->GetSegment(0)==NULL ) continue;
 				if( pat0->GetSegment(0)->Plate() == s->Plate()) {
 					int pidnext = i+updown;
