@@ -526,14 +526,14 @@ class EdbEDA :
 		
 		if(pvr->Ntracks()==0){
 			printf("*******************************************\n");
-			printf(" Error: No tracks in EdbPVRec object! stop!\n");
+			printf(" Worning: No tracks in EdbPVRec object! \n");
 			printf("*******************************************\n");
 			printf("EDA is made to show \"Tracks\". if you want to show segments in PVR, make tracks from the segments. or you may try EdbEDAUtil::FillTracksFromPatterns(EdbPVRec *)\n");
-			return;
 		}
 		
 		// if plate number is not set. set plate number as PID.
 		int flag_plset=0;
+		if(ePVR->eTracks==NULL) ePVR->eTracks = new TObjArray;
 		for(int i=0;i<ePVR->Ntracks();i++){
 			EdbTrackP *t = ePVR->GetTrack(i);
 			EdbSegP *s = t->GetSegmentLast();
