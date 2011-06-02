@@ -1029,6 +1029,7 @@ EdbPVRec * EdbEDAUtil::ReadFeedbackPVR(char *filename){
 	
 	for(int i=0;i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetPID(i);
 	for(int i=0;i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetSegmentsPID();
+	for(int i=0;i<pvr->Ntracks(); i++) pvr->GetTrack(i)->SetCounters();
 	
 	printf("\nEdbPVRec summary. %d vertices, %d tracks.\n", pvr->Nvtx(), pvr->Ntracks());
 	pvr->Print();

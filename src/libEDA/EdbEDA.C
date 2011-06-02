@@ -924,6 +924,7 @@ void EdbEDAIO::ReadFeedbackFile(char *filename){
 	
 	for(int i=0;i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetPID(i);
 	for(int i=0;i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetSegmentsPID();
+	for(int i=0;i<pvr->Ntracks(); i++) pvr->GetTrack(i)->SetCounters();
 	
 	printf("\nEdbPVRec summary. %d vertices, %d tracks.\n", pvr->Nvtx(), pvr->Ntracks());
 	pvr->Print();
@@ -2033,6 +2034,8 @@ void EdbEDA::Run(){
 		//	gEve->GetBrowser()->GetTabBottom()->RemoveTab(0); // remove command tab
 		gEve->GetBrowser()->GetTabBottom()->SetTab(0); // set TrackSetTab in front.
 	}
+	
+	printf("GUI setting finished.\n");
 	//if(eAreaSet->N()==0&&GetTrackSet("TS")->NBase()!=0) eAreaSet->SetAreas( GetTrackSet("TS")->GetTracksBase());
 	Draw(kFALSE);
 	if(gEve->GetCurrentEvent()!=NULL) gEve->Redraw3D(kTRUE);
