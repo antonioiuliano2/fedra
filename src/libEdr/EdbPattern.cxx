@@ -1692,25 +1692,39 @@ void EdbPatternsVolume::SortPatternsByZ(Bool_t descendingZ)
 //______________________________________________________________________________
 EdbPattern* EdbPatternsVolume::GetPatternZLowestHighest(Bool_t lowestZ) const
 {
+  // By default it returns the pattern with the lowest Z position. This is
+  // NOT necessarily the first pattern of the patterns volume.
+  
   if (Npatterns()==0) {
     Log(1,"EdbPatternsVolume::GetPatternZLowestHighest","ERROR: Attempt to get Pattern, but NO patterns are in EdbPatternsVolume!");
     return 0;
   }
+  if (gEDBDEBUGLEVEL>3) cout << "EdbPatternsVolume::GetPatternZLowestHighest  lowestZ = " << lowestZ << endl;
+  
   EdbPattern *pat=0;
   pat=GetPattern(0);
   if (Npatterns()==1) return pat;
   float zpat0,zpat1;
   zpat0=GetPattern(0)->Z();
   zpat1=GetPattern(Npatterns()-1)->Z();
+  if (gEDBDEBUGLEVEL>2) {
+  cout << "EdbPatternsVolume  Pattern At Position 0    has Z = " << zpat0 << endl;
+  cout << "EdbPatternsVolume  Pattern At Position last has Z = " << zpat1 << endl;
+  }
   if (zpat0>zpat1) pat=GetPattern(Npatterns()-1);
-  if (lowestZ) return pat;
-  return GetPattern(0);;
+  if (kTRUE==lowestZ) return pat;
+  if (kFALSE==lowestZ && zpat0<zpat1) return GetPattern(Npatterns()-1);
+  return GetPattern(0);
 }
 
 
 //______________________________________________________________________________
 EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
 {
+  // Return next pattern in either downstream (dir=+1)
+  //                  or in either   upstream (dir=-1)
+  // direction.
+  
   EdbPattern *pat=0;
   float dz=dir*99999999.;
   float zpat;
