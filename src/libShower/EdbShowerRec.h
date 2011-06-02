@@ -628,7 +628,7 @@ public:
         }
     }
         
-    void SetInBTArray( EdbPVRec* Ali );
+    void SetInBTArray( EdbPVRec* Ali, Bool_t firstPlate = kTRUE );
 
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN)      {
         eRecoShowerArrayN = RecoShowerArrayN;

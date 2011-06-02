@@ -304,18 +304,57 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     cout << "SetHistGeometry_OPERAandMC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
-//______________________________________________________________________________
-void EdbPVRQuality::Print()
-{
-    // Print either cut type values if cut method 1 or if cut method 2 had been chosen.
-    cout << "EdbPVRQuality::Print()   " << endl;
-    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
-    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
-    if (eCutMethodIsDone[0]) PrintCutType0();
-    if (eCutMethodIsDone[1]) PrintCutType1();
-    return;
-}
+// //______________________________________________________________________________
+// void EdbPVRQuality::Print()
+// {
+//     // Print Summary of all relevant data for this class.
+//     cout << "EdbPVRQuality::Print()   " << endl;
+//     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
+//     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
+//     if (eCutMethodIsDone[0]) PrintCutType0();
+//     if (eCutMethodIsDone[1]) PrintCutType1();
+//     return;
+// }
 
+
+//______________________________________________________________________________
+    
+void EdbPVRQuality::Print()
+{    
+  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
+  cout << "-"; cout << endl;  
+  cout << "EdbPVRQuality::Print()" << endl;
+  cout << "-"; cout << endl;  
+  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
+  cout << "EdbPVRQuality::Print() --- GENERAL SETTINGS: ---" << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
+  
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eHistGeometry = " << eHistGeometry << endl;
+  
+  cout << "EdbPVRQuality::Print() --- SETTINGS: Input data:" << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_orig = " << eAli_orig << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsSource = " << eIsSource << endl;
+  
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_meanX = " << eProfileBTdens_vs_PID_meanX << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_meanY = " << eProfileBTdens_vs_PID_meanY << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_rmsX = " << eProfileBTdens_vs_PID_rmsX << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_rmsY = " << eProfileBTdens_vs_PID_rmsY << endl;
+  
+  
+  cout << "EdbPVRQuality::Print() --- SETTINGS: Output data:" << endl;
+  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_modified = " << eAli_modified << endl;
+  
+
+  cout << "EdbPVRQuality::Print()....done." << endl;
+  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
+  return;
+}
 
 //______________________________________________________________________________
 void EdbPVRQuality::PrintCutType0()

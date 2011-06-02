@@ -60,7 +60,9 @@ private:
     Float_t		minX,maxX;
     Float_t		minY,maxY;
     // TProfile: BT dens/mm2 versus PID()
-    TProfile* eProfileBTdens_vs_PID;
+    TProfile* 		eProfileBTdens_vs_PID;
+    Float_t  		eProfileBTdens_vs_PID_meanX,eProfileBTdens_vs_PID_meanY;
+    Float_t  		eProfileBTdens_vs_PID_rmsX,eProfileBTdens_vs_PID_rmsY;
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
@@ -129,6 +131,7 @@ public:
     inline void				SetEdbPVRec(EdbPVRec* Ali_orig) {
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
+	eAli_maxNpatterns=Ali_orig->Npatterns();
     }
 
     inline   TH2F* GetHistChi2W() {

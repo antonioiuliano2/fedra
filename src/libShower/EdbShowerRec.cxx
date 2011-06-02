@@ -4656,22 +4656,36 @@ void EdbShowerRec::Print(){
 
 //------------------------------------------------------------------------------------------------------
 
-void EdbShowerRec::SetInBTArray( EdbPVRec* Ali ){
+void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Bool_t firstPlate ){
   
   if (gEDBDEBUGLEVEL>1) {
   cout << "-----------------------------------------------------------------------------" << endl;
-  cout << "-- EdbShowerRec   SetInBTArray( EdbPVRec* Ali )                            --" << endl;
+  cout << "-- EdbShowerRec   SetInBTArray( EdbPVRec* Ali , firstPlate)                --" << endl;
   cout << "-- EdbShowerRec   Set the Initiator BaseTrack Array From the EdbPVRec      --" << endl;
-  cout << "-- EdbShowerRec   object.                                                --  " << endl;
+  cout << "-- EdbShowerRec   object.                                                  --" << endl;
   cout << "-- EdbShowerRec   A) if it has tracks inside, we take first segment of the --" << endl;
   cout << "-- EdbShowerRec   A) tracks              (TO BE IMPLEMENTED...)            --" << endl;
   cout << "-- EdbShowerRec   B) otherwise ALL Basetracks in this EdbPVRec volume.     --" << endl;
   cout << "-- EdbShowerRec   B) ATTENTION...TAKES  VERY  LONG                         --" << endl;
+  cout << "-- EdbShowerRec   C) If  firstPlate  is kTRUE, then we take only the       --" << endl;
+  cout << "-- EdbShowerRec   C) first Z plate ... Mainly DEBUG purpose ....           --" << endl;
   }
   
   TObjArray* InBTArray = new TObjArray();
   
-  int npat=Ali->Npatterns();
+  if (kTRUE==firstPlate) {
+    InBTArray->Clear();
+    EdbPattern* pat = Ali->GetPatternZLowestHighest();
+    int nseg= pat->N();
+    for (int j=0; j<nseg; j++) {
+     EdbSegP* seg = pat->GetSegment(j); 
+     InBTArray->Add(seg);
+    }
+//     EdbSegP* seg = pat->GetSegment(0); 
+//     InBTArray->Add(seg);
+  }
+  else {
+      int npat=Ali->Npatterns();
   for (int i=0; i<npat; i++) {
     EdbPattern* pat = Ali->GetPattern(i);
     int nseg= pat->N();
@@ -4680,8 +4694,10 @@ void EdbShowerRec::SetInBTArray( EdbPVRec* Ali ){
      InBTArray->Add(seg);
     }
   }
+  }
   
-  if (gEDBDEBUGLEVEL>1) cout << "-- EdbShowerRec   InBTArray->GetEntries(): " << InBTArray->GetEntries()  << "       --" << endl;
+  
+  if (gEDBDEBUGLEVEL>1) cout << "-- EdbShowerRec   InBTArray->GetEntries(): " << setw(20) << InBTArray->GetEntries()  << "       --" << endl;
   eInBTArray = InBTArray;
   eInBTArrayN=eInBTArray->GetEntries();
   if (eInBTArrayN>0) {
