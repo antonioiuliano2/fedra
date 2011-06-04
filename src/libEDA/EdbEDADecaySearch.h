@@ -117,7 +117,34 @@ class EdbEDATrackP : public EdbTrackP {
 	ClassDef(EdbEDATrackP, 0) // Tracks with DecaySearch information.
 };
 
-class EdbEDAKink : public EdbVertex{
+class EdbEDADecayVertex : public EdbVertex {
+	
+	private:
+	
+	EdbEDATrackP *eParent;
+	TObjArray *eDaughters;
+	EdbVertex *ePrimaryVertex;
+	void AddTrack(EdbEDATrackP *t);
+	
+	public:
+	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent=NULL, EdbEDATrackP *daugter1=NULL, EdbEDATrackP *daugheter2=NULL, EdbEDATrackP *daughter3=NULL, EdbEDATrackP *daughter4=NULL, EdbEDATrackP *daughter5=NULL);
+	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, TObjArray *daughters);
+	EdbEDADecayVertex():ePrimaryVertex(NULL), eParent(NULL), eDaughters(NULL){};
+	~EdbEDADecayVertex();
+	
+	void SetParent( EdbEDATrackP *parent);
+	void SetDaughter( EdbEDATrackP *daughter);
+	void SetDaughters( TObjArray *daughters);
+	
+	EdbTrackP *GetParent() { return eParent->GetOriginal();}
+	EdbTrackP *GetDaughter(int i=0) { return eDaughters ? ((EdbEDATrackP *) eDaughters->At(i))->GetOriginal() : NULL;}
+	int NDaughters(){ return eDaughters? eDaughters->GetEntries() : 0;}
+	
+	ClassDef(EdbEDADecayVertex, 0) // General decay vertex.
+	
+};
+
+class EdbEDASmallKink : public EdbVertex{
 	public:
 
 	EdbTrackP *eTrack;
@@ -153,7 +180,7 @@ class EdbEDAKink : public EdbVertex{
 	int IPL2();
 
 
-	EdbEDAKink( EdbVertex *v, EdbTrackP *track, EdbSegP *s1, EdbSegP *s2, double dTT, double dTL, double dXT, double dXL, 
+	EdbEDASmallKink( EdbVertex *v, EdbTrackP *track, EdbSegP *s1, EdbSegP *s2, double dTT, double dTL, double dXT, double dXL, 
 			int ndau, double p, double pmin, double pmax, double pt, double rmst, double rmsl): 
 			eTrack(track), eS1(s1),  eS2(s2), eDTT(dTT), eDTL(dTL), eDXT(dXT), eDXL(dXL), 
 			eNdau(ndau), eP(p), ePmin(pmin), ePmax(pmax),ePT(pt), eRMST(rmst), eRMSL(rmsl)
@@ -163,7 +190,7 @@ class EdbEDAKink : public EdbVertex{
 
 
 	void Draw(Option_t *option="");
-	ClassDef(EdbEDAKink,0) //test
+	ClassDef(EdbEDASmallKink,0) //test
 };
 
 class EdbEDADecaySearch{
@@ -226,7 +253,8 @@ class EdbEDADecaySearch{
 	
 	// Kink Search
 	double    eKinkSigma;
-	TObjArray * eKinks;
+	TObjArray *eKinks;
+	TObjArray *eDecayVertices;
 	
 	EdbEDADecaySearch(int DSversion=2):
 		eDSVer     (DSversion),
@@ -234,6 +262,7 @@ class EdbEDADecaySearch{
 		eTracks    (new TObjArray),
 		eSegments  (new TObjArray),
 		eVertices  (new TObjArray),
+		eSet       (NULL),
 		
 		eTSDau      (1),
 		eTSDauNseg  (2),
@@ -248,6 +277,7 @@ class EdbEDADecaySearch{
 		eSmallKink    (0),
 		eSmallKinkNpl (5),
 		eSmallKinkRthreshold(3),
+		
 		eTSPar     (0),
 		eTSParPlate(2),
 		eTSParNseg (1),
@@ -265,7 +295,8 @@ class EdbEDADecaySearch{
 		eVtxUpIP (500),
 		
 		eKinkSigma(3.),
-		eKinks (new TObjArray)
+		eKinks (new TObjArray),
+		eDecayVertices(new TObjArray)
 		
 		{
 			
@@ -296,6 +327,8 @@ class EdbEDADecaySearch{
 			}
 		}
 	virtual ~EdbEDADecaySearch(){}
+	
+	EdbVertex *FindPrimaryVertex();
 	void SetVertex (EdbVertex *v);
 
 	TObjArray * TSDaughterTracks (TObjArray *base);
@@ -308,6 +341,7 @@ class EdbEDADecaySearch{
 	double GetTSDauIP2(double dz);
 
 	void SmallKinkSearch();
+	void KinkSearch();
 
 	TObjArray * TSParentTracks   (TObjArray *base);
 	TObjArray * TSBaseTracks(int ipl);
@@ -324,6 +358,8 @@ class EdbEDADecaySearch{
 	
 	int Ntracks(){ return eTracks->GetEntries();}
 	EdbEDATrackP *GetTrack(int i) { return (EdbEDATrackP *) eTracks->At(i);}
+	int NDecayVertices(){ return eDecayVertices->GetEntries();}
+	EdbEDADecayVertex *GetDecayVertex(int i) { return (EdbEDADecayVertex *)eDecayVertices->At(i);}
 	
 	void SetPVR(EdbPVRec *pvr) { ePVR = pvr;}
 	EdbPVRec *GetPVR() { return ePVR;}
@@ -349,11 +385,17 @@ class EdbEDADecaySearch{
 	TObjArray *CheckInTrackKink(EdbTrackP *trk);
 	TObjArray *GetKinks(void){ return eKinks;}
 	
+	void SetBTSearch( int do_search=1, int npl_up=0, int npl_down=2, float ipcut=20, float phcut=17){
+		eBT = do_search; eBTPlateUp = npl_up; eBTPlateDown = npl_down; eBTIP = ipcut; eBTPH = phcut;}
+	void SetParentSearch( int do_search=1, int npl_down=2, float ipcut=20, float phcut=17){
+		eTSPar = do_search; eTSParPlate = npl_down; eTSParIP = ipcut; eTSParPH = phcut;}
+	
 	//void MicroTrackSearch(EdbSegP *s, int ipl); 
 	// moved to TrackSet.
 	void PrintTracks();
 	void PrintRunTracking(){
-		eSet->eRunTracking.Print();
+		if(eSet) eSet->eRunTracking.Print();
+		else printf("No EdbEDATrackSet is set\n");
 	}
 	EdbVertex * MakeFakeVertex(EdbTrackP *t, double dz=1150);
 	ClassDef(EdbEDADecaySearch, 0) // Class for pick up tracks 
@@ -389,10 +431,10 @@ class EdbEDADecaySearchTab: public EdbEDADecaySearch{
 	TGNumberEntry *fBTPlateDown; 
 	TGNumberEntry *fBTIP;        
 	TGNumberEntry *fBTPH;        
-
+	
 	// Microtrack search
 	TGNumberEntry *fMTIpl;
-
+	
 	TGMainFrame *eParamWindow;
 	TGMainFrame *eTab;
 	

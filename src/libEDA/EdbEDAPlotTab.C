@@ -943,7 +943,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 			
 			int ndau = n-j-1;
 			// put the data in a struct.
-			EdbEDAKink *kink = new EdbEDAKink(v, t, s1, s2, dtt, dtl, dxt, dxl, ndau, p, pmin, pmax, Pt, rmst, rmsl);
+			EdbEDASmallKink *kink = new EdbEDASmallKink(v, t, s1, s2, dtt, dtl, dxt, dxl, ndau, p, pmin, pmax, Pt, rmst, rmsl);
 			kinks->Add(kink);
 			
 			printf("Kink candidate. itrk %d plate %d - %d kink angle %.4lf P %.3lf Pt %.3lf\n", 
@@ -1026,7 +1026,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){
-			EdbEDAKink *kink = (EdbEDAKink *) kinks->At(i);
+			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, fabs(kink->DTT())*1e3, Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTT()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
 	}
@@ -1067,7 +1067,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){
-			EdbEDAKink *kink = (EdbEDAKink *) kinks->At(i);
+			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, fabs(kink->DTL())*1e3, Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTL()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 			
 		}
@@ -1087,7 +1087,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	tree->Draw("dxt:ipl2","","same");
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){
-			EdbEDAKink *kink = (EdbEDAKink *) kinks->At(i);
+			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, kink->DXT(), Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTT()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
 	}
@@ -1107,7 +1107,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){
-			EdbEDAKink *kink = (EdbEDAKink *) kinks->At(i);
+			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, kink->DXL(), Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTL()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
 	}

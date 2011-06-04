@@ -39,7 +39,8 @@
 
 #pragma link C++ class EdbEDAPlotTab;
 
-#pragma link C++ class EdbEDAKink;
+#pragma link C++ class EdbEDADecayVertex;
+#pragma link C++ class EdbEDASmallKink;
 #pragma link C++ class EdbEDATrackP;
 
 #pragma link C++ class EdbEDAObject;

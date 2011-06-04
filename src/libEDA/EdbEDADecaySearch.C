@@ -32,17 +32,77 @@ void EdbEDATrackP::SetFlagsAuto(){
 		printf("      Track: %d is muon\n", ID());
 	}
 	double p, pmin, pmax;
-	CalcP(this, p, pmin, pmax); // pmin = pmin, pmax = pmax
+	CalcP(this, p, pmin, pmax, 0); // pmin = pmin, pmax = pmax
 	SetP(p,pmin,pmax);
 }
 
-ClassImp(EdbEDAKink)
+ClassImp(EdbEDADecayVertex)
+
+EdbEDADecayVertex::EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, EdbEDATrackP *daughter1, EdbEDATrackP *daughter2, EdbEDATrackP *daughter3, EdbEDATrackP *daughter4, EdbEDATrackP *daughter5){
+	
+	
+	TObjArray daughters;
+	if( daughter1 ) daughters.Add(daughter1);
+	if( daughter2 ) daughters.Add(daughter2);
+	if( daughter3 ) daughters.Add(daughter3);
+	if( daughter4 ) daughters.Add(daughter4);
+	if( daughter5 ) daughters.Add(daughter5);
+	
+	EdbEDADecayVertex( v2ry, v1ry, parent, &daughters);
+	
+}
+	
+	
+	
+EdbEDADecayVertex::EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, TObjArray *daughters) {
+	EdbEDADecayVertex();
+	if(v2ry) EdbVertex::SetXYZ( v2ry->X(), v2ry->Y(), v2ry->Z());
+	ePrimaryVertex = v1ry;
+	
+	if(parent) SetParent( parent);
+	if(daughters) SetDaughters( daughters);
+	
+}
+
+EdbEDADecayVertex::~EdbEDADecayVertex(){
+	if(eDaughters) delete eDaughters;
+}
+
+void EdbEDADecayVertex::AddTrack( EdbEDATrackP *t){
+	EdbVTA *vta = new EdbVTA(t->GetOriginal(), (EdbVertex *)this);
+	vta->SetZpos( t->Z()>this->Z() ? 1 : 0);
+	vta->SetFlag(2);
+	vta->SetImp( CalcIP( t, (EdbVertex *) this));
+	AddVTA(vta);
+}
+	
+void EdbEDADecayVertex::SetParent( EdbEDATrackP *parent){
+	eParent = parent;
+	AddTrack( eParent);
+}
+
+void EdbEDADecayVertex::SetDaughter( EdbEDATrackP *daughter){
+	if(eDaughters==NULL) eDaughters=new TObjArray;
+	if(!eDaughters->FindObject(daughter)) {
+		eDaughters->Add(daughter);
+		AddTrack(daughter);
+	}
+}
+
+void EdbEDADecayVertex::SetDaughters( TObjArray *daughters){
+	for(int i=0; i<daughters->GetEntries(); i++){
+		SetDaughter( (EdbEDATrackP *) daughters->At(i));
+	}
+}
 
 
-int EdbEDAKink::IPL1(){ return S1()->Plate();}
-int EdbEDAKink::IPL2(){ return S2()->Plate();}
+ClassImp(EdbEDASmallKink)
 
-void EdbEDAKink::Draw(Option_t *option){
+
+int EdbEDASmallKink::IPL1(){ return S1()->Plate();}
+int EdbEDASmallKink::IPL2(){ return S2()->Plate();}
+
+void EdbEDASmallKink::Draw(Option_t *option){
 	TEvePointSet *ps = new TEvePointSet();
 	ps->SetMarkerStyle(21);
 	ps->SetNextPoint(eS1->X(), eS1->Y(), eS1->Z()*gEDA->GetScaleZ());
@@ -86,7 +146,7 @@ void EdbEDADecaySearch::SmallKinkSearch(){
 }
 
 TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
-	// Search kink. return TObjArray of EdbEDAKink
+	// Search kink. return TObjArray of EdbEDASmallKink
 	
 	if(trk->N()<2) {
 		printf("Track %d nseg=%d, too short for kink search\n", trk->ID(), trk->N());
@@ -104,7 +164,16 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 	
 	TObjArray *kinks = new TObjArray;
 	
-	int vtxpl = gEDA->GetIPLZ(eVertex->Z());
+	int vtxpl;
+	if(gEDA) vtxpl=gEDA->GetIPLZ(eVertex->Z());
+	else
+	for(int i=0; i<ePVR->Npatterns(); i++){
+		EdbPattern *pat = ePVR->GetPattern(i);
+		if( eVertex->Z()<pat->Z()) {
+			vtxpl = pat->Plate();
+			break;
+		}
+	}
 	
 	int n=t->N();
 	for(int j=0;j<n-1;j++){
@@ -142,7 +211,7 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 			
 			int ndau = n-j-1;
 			// put the data in a struct.
-			EdbEDAKink *kink = new EdbEDAKink(v, t, s1, s2, dtt, dtl, dxt, dxl, ndau, p, pmin, pmax, Pt, rmst, rmsl);
+			EdbEDASmallKink *kink = new EdbEDASmallKink(v, t, s1, s2, dtt, dtl, dxt, dxl, ndau, p, pmin, pmax, Pt, rmst, rmsl);
 			
 			gEDA->AddVertex(v);
 			kinks->Add(kink); // for this track
@@ -173,8 +242,11 @@ void EdbEDADecaySearch::PrintTracks(){
 }
 
 void EdbEDADecaySearch::MTSearch2seg(TObjArray *tracks){
+	// Microtrack search for 2 segment track.
+	// if eSet is not set, do nothing.
 	
-	int ret=eSet->PrepareScanSetForMT();
+	// if eSet==NULL or Preparation is failed, do nothing.
+	int ret = eSet ? eSet->PrepareScanSetForMT() : -1; 
 	if(ret==-1) {
 		printf("ScanSet error. stop.\n");
 		return;
@@ -185,7 +257,11 @@ void EdbEDADecaySearch::MTSearch2seg(TObjArray *tracks){
 	}
 }
 void EdbEDADecaySearch::MTSearchAll(TObjArray *tracks){
-	int ret=eSet->PrepareScanSetForMT();
+	// Microtrack search for all tracks.
+	// if eSet is not set, do nothing.
+	
+	// if eSet==NULL or Preparation is failed, do nothing.
+	int ret = eSet ? eSet->PrepareScanSetForMT() : -1; 
 	if(ret==-1) {
 		printf("ScanSet error. stop.\n");
 		return;
@@ -198,14 +274,17 @@ void EdbEDADecaySearch::MTSearchAll(TObjArray *tracks){
 }
 
 TObjArray * EdbEDADecaySearch::DoSearch(){
-	gEDA->StorePrevious();
+	// Do track search
+	
+	
+	// clear previous results.
 	eTracks->Clear();
 	eSegments->Clear();
-
+	
 	int nAll=-1;
 	int nTSDau1=-1;
 	int nTSDau2=-1;
-	gEve->SetStatusLine("Start Track search");
+	if(gEve) gEve->SetStatusLine("Start Track search");
 	printf("######### Track Search #########\n");
 	if(eVertex==NULL) {
 		printf("Vertex is not selected!! End.\n");
@@ -227,6 +306,8 @@ TObjArray * EdbEDADecaySearch::DoSearch(){
 	
 	for(int i=0;i<base->GetEntries();i++) hall[((EdbTrackP *) base->At(i))->N()>=10?10:((EdbTrackP *) base->At(i))->N()]++;
 	nAll=base->GetEntries();
+	
+	// Daughter search 1st
 	if(eTSDau) TSDaughterTracks(base);
 	
 	for(int i=0;i<eTracks->GetEntries();i++) {
@@ -236,14 +317,16 @@ TObjArray * EdbEDADecaySearch::DoSearch(){
 		hdau1[nseg]++;
 	}
 	nTSDau1 = eTracks->GetEntries();
+	printf("%d\n", nTSDau1);
 	
+	// Microtrack search
 	if(eMT2seg&&!eMTAll) MTSearch2seg(eTracks);
 	if(eMTAll) {
 		MTSearchAll(eTracks);
 	}
 	for(int i=0;i<eTracks->GetEntries();i++) hmt[((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()>=10?10:((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()]++;
 	
-	
+	// Daughter cut 2nd.
 	if(eTSDau2){
 		TObjArray tmp = *eTracks;
 		TSDaughterTracks2();
@@ -252,11 +335,10 @@ TObjArray * EdbEDADecaySearch::DoSearch(){
 
 	nTSDau2 = eTracks->GetEntries();
 	
-	if(eSmallKink){
-		SmallKinkSearch();
-	}
+	// small kin search
+	if(eSmallKink) SmallKinkSearch();
 	
-//	if(eTSPar) TSParentTracks(base);
+	if(eTSPar) TSParentTracks(base);
 	
 	if(eBT){
 		printf(" Base track search. ");
@@ -298,15 +380,17 @@ void EdbEDADecaySearch::SetVertex (EdbVertex *v) {
 	if(NULL==v) return;
 	double vertexplz = 1e9;
 	
+	printf("vertex z = %f\n", v->Z());
 	for(int i=0;i<ePVR->Npatterns();i++){
 		EdbPattern *pat = ePVR->GetPattern(i);
 		if(pat==NULL) continue;
 		if(pat->Z()<v->Z()) continue;
 		if(pat->Z()<vertexplz) {
 			vertexplz    = pat->Z();
-			eVertexPlatePID = pat->PID();   // Set eVertexPlatePID
+			eVertexPlatePID = pat->ID();   // Set eVertexPlatePID
 		}
 	}
+	printf("VertexPlatePID=%d\n", eVertexPlatePID);
 }
 
 TObjArray *EdbEDADecaySearch::FindUpstreamVertices(){
@@ -425,6 +509,8 @@ TObjArray * EdbEDADecaySearch::TSParentTracks(TObjArray *base){
 	printf("nseg>=%d, start within %d plates, ip<%.1lf w>%.1lf\n", 
 			eTSParNseg, eTSParPlate, eTSParIP, eTSParPH);
 	
+	printf("eVertexPlatePID=%d\n", eVertexPlatePID);
+	
 	TObjArray *filtered = new TObjArray;
 	int inew=0;
 	for(int i=0;i<base->GetEntries();i++){
@@ -437,7 +523,7 @@ TObjArray * EdbEDADecaySearch::TSParentTracks(TObjArray *base){
 
 		// dPlate cut
 		int dPlate = s->PID() - eVertexPlatePID + 1;
-		if( dPlate < 1 || eTSParPlate < dPlate ) continue; // 0 <= dPlate <= eTSParPlate
+		if( dPlate <= -eTSParPlate || eTSParPlate < dPlate ) continue; // 0 <= dPlate <= eTSParPlate
 		
 		// IP cut
 		double ip = CalcIP(s, eVertex);
@@ -547,6 +633,116 @@ EdbVertex *EdbEDADecaySearch::MakeFakeVertex(EdbTrackP *t, double dz){
 	return v;
 }
 
+EdbVertex * EdbEDADecaySearch::FindPrimaryVertex(){
+	// Find Best Vertex.
+	// select best one from pvr->eVertex
+	
+	printf("FindBestVertex(): \n");
+	if( ePVR->Nvtx()==0 ){
+		printf("No vertex is set. make a fake vertex.");
+		
+		EdbTrackP *tup=NULL;
+		for(int i=0; i<ePVR->Ntracks(); i++){
+			EdbTrackP *t = ePVR->GetTrack(i);
+			if(t->N()<3) continue;
+			if(EdbEDAUtil::DTRMS(t)>0.02) continue;
+			if(tup==NULL) tup=t;
+			if(t->Z()<tup->Z()) tup=t;
+		}
+		if(tup==NULL) return NULL;
+		
+		EdbVertex *v = MakeFakeVertex( tup, -650);
+		
+		return v;
+	}
+	
+	// select most upstream vertex
+	int zero=0;
+	EdbVertex *v_most_upstream = ePVR->GetVertex(zero);
+	for(int i=1; i<ePVR->Nvtx(); i++){
+		EdbVertex *v = ePVR->GetVertex(i);
+		if(v->Z()<v_most_upstream->Z()) v_most_upstream=v;
+	}
+	
+	// gather all vertex near the most upstream vertex
+	// vertices within 200 micron in Z.
+	
+	printf("TODO: FindPrimaryVertex... find real vertex, especially QE like kink event.\n");
+	printf("TODO: use SB info.\n");
+	printf("TODO: constraint for vertex Z < SB stop Z\n");
+	TObjArray *vertices = new TObjArray;
+	for(int i=0; i<ePVR->Nvtx(); i++){
+		EdbVertex *v = ePVR->GetVertex(i);
+		if(v->Z()<v_most_upstream->Z()+200) vertices->Add(v);
+	}
+	
+	// select most high probability vertex
+	EdbVertex *v_highest_prob= (EdbVertex *) vertices->At(0);
+	for(int i=1; i<vertices->GetEntries(); i++){
+		EdbVertex *v= (EdbVertex *) vertices->At(i);
+		if(v->V()->prob()>v_highest_prob->V()->prob()) v_highest_prob = v;
+	}
+	
+	
+	printf("select upstream and high probable vertex: %d vertex\n", ePVR->Nvtx());
+	for(int i=0; i<ePVR->Nvtx();i++){
+		EdbVertex *v = ePVR->GetVertex(i);
+		int flag = 0;
+		for(int j=0; j<vertices->GetEntries(); j++) { if(v==vertices->At(j)) flag=1;}
+		printf("vertex %2d, %2d tracks z=%8.1f prob=%7.5f %s %s, %s\n", i, v->N(), v->Z(), v->V()->prob(), 
+		        v==v_most_upstream?"most":"    ", 
+		        flag?"upstream": "         ", 
+		        v==v_highest_prob?"highest prob":"");
+	}
+	
+	delete vertices;
+	return v_highest_prob;
+	//return v_most_upstream;
+	
+}
+
+void EdbEDADecaySearch::KinkSearch(){
+	
+	printf("Kink search in selected tracks\n");
+	for(int i=0; i<Ntracks(); i++){
+		for(int j=0; j<Ntracks(); j++){
+			
+			if(i==j) continue;
+			
+			EdbEDATrackP *t1 = GetTrack(i);
+			EdbEDATrackP *t2 = GetTrack(j);
+			
+			EdbSegP *s1 = t1->GetSegmentLast();
+			EdbSegP *s2 = t2->GetSegmentFirst();
+			
+			// if last segment of t1 is upstream of first segment of t2.
+			if(s1->Plate() < s2->Plate()){
+				
+				TObjArray segs;
+				segs.Add(s1);
+				segs.Add(s2);
+				EdbVertex *v = EdbEDAUtil::CalcVertex(&segs);
+				float ip1 = EdbEDAUtil::CalcIP(s1, v);
+				float ip2 = EdbEDAUtil::CalcIP(s2, v);
+				
+				// cut with IP and Z. (Z should between 2 segments.)
+				if(ip1<20 && ip2<20 && s1->Z()<v->Z() && v->Z()<s2->Z()){
+					printf("Decay vertex t1 %d t2 %d ip1 %f ip2 %f\n", t1->ID(), t2->ID(), ip1, ip2);
+					EdbEDADecayVertex *dv = new EdbEDADecayVertex;
+					dv->SetXYZ( v->X(), v->Y(), v->Z());
+					dv->SetParent(t1);
+					dv->SetDaughter(t2);
+					printf("kink %d %f %f %f\n", dv->N(), dv->X(), dv->Y(), dv->Z());
+					eDecayVertices->Add(dv);
+				}
+				
+				delete v;
+			}
+		}
+	}
+}
+
+
 void EdbEDADecaySearchTab::DoMicroTrackSearchButton(){
 	
 	EdbSegP *app = gEDA->GetSelected(0);
@@ -594,6 +790,7 @@ void EdbEDADecaySearchTab::DoSearchButton(){
 		}
 	}
 	
+	gEDA->StorePrevious();
 	DoSearch();
 	
 	gEDA->GetVertexSet()->ClearVertices();
