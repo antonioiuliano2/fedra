@@ -39,6 +39,7 @@ private:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
     Bool_t    eIsSource;
+    Bool_t    eIsTarget;
     Int_t     eHistGeometry;
     Int_t     eAli_maxNpatterns;
 
@@ -59,10 +60,14 @@ private:
 
     Float_t		minX,maxX;
     Float_t		minY,maxY;
-    // TProfile: BT dens/mm2 versus PID()
-    TProfile* 		eProfileBTdens_vs_PID;
-    Float_t  		eProfileBTdens_vs_PID_meanX,eProfileBTdens_vs_PID_meanY;
-    Float_t  		eProfileBTdens_vs_PID_rmsX,eProfileBTdens_vs_PID_rmsY;
+    // TProfile: BT dens/mm2 versus PID()	source histogram
+    TProfile* 		eProfileBTdens_vs_PID_source;
+    Float_t  		eProfileBTdens_vs_PID_source_meanX,eProfileBTdens_vs_PID_source_meanY;
+    Float_t  		eProfileBTdens_vs_PID_source_rmsX,eProfileBTdens_vs_PID_source_rmsY;
+    // TProfile: BT dens/mm2 versus PID()	target histogram
+    TProfile* 		eProfileBTdens_vs_PID_target;
+    Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
+    Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
@@ -131,7 +136,7 @@ public:
     inline void				SetEdbPVRec(EdbPVRec* Ali_orig) {
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
-	eAli_maxNpatterns=Ali_orig->Npatterns();
+        eAli_maxNpatterns=Ali_orig->Npatterns();
     }
 
     inline   TH2F* GetHistChi2W() {
@@ -214,6 +219,7 @@ public:
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 
     void Print();
+    void PrintCutType();
     void PrintCutType0();
     void PrintCutType1();
     void Help();

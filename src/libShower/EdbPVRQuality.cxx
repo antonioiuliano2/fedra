@@ -5,8 +5,8 @@ using namespace std;
 // The observed basetrack density can vary from brick to brick with a large
 // fluctuation.
 // The shower algorithm in its standard implementation is sensitive to the
-// level of tracks per unit area. In case there are too many of them, purity shower
-// reco goes down and gives not reliable results anymore.
+// level of tracks per unit area. In case there are too many of them, the purity
+// of shower reconstruction goes down and does not give reliable results anymore.
 // The EdbPVRQuality class basically equals the number of basetracks per unit area
 // to a maximum upper value (if necessary) by adapting the quality cut for a single
 // basetrack.
@@ -36,9 +36,9 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     // cut in accordance with the desired (predefined) background level.
     // If general basetrack density is lower than 20BT/mm2 then no cleaning is done.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
-    Set0();
+
     Init();
-    Help();
+    Set0();
 
     if (NULL == ali || ali->Npatterns()<1) {
         cout << "WARNING   EdbPVRQuality(EdbPVRec* ali)   ali is no good EdbPVRec object! Check!" << endl;
@@ -52,6 +52,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     CheckEdbPVRec();
     Execute_ConstantBTDensity();
     CreateEdbPVRec();
+    Print();
 }
 
 //______________________________________________________________________________
@@ -63,9 +64,9 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
     // background level.
     // If general basetrack density is lower than BTDensityTargetLevel BT/mm2 then no cleaning is done.
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
-    Set0();
+
     Init();
-    Help();
+    Set0();
 
     if (NULL == ali || ali->Npatterns()<1) {
         cout << "WARNING   EdbPVRQuality(EdbPVRec* ali)   ali is no good EdbPVRec object! Check!" << endl;
@@ -83,6 +84,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
     CheckEdbPVRec();
     Execute_ConstantBTDensity();
     CreateEdbPVRec();
+    Print();
 }
 
 //______________________________________________________________________________
@@ -93,7 +95,7 @@ EdbPVRQuality::~EdbPVRQuality()
     cout << "EdbPVRQuality::~EdbPVRQuality()"<<endl;
     delete 		eHistChi2W;
     delete 		eHistYX;
-    delete 		eProfileBTdens_vs_PID;
+    delete 		eProfileBTdens_vs_PID_source;
 }
 
 //______________________________________________________________________________
@@ -104,6 +106,7 @@ void EdbPVRQuality::Set0()
     eAli_orig=NULL;
     eAli_modified=NULL;
     eIsSource=kFALSE;
+    eIsTarget=kFALSE;
     eAli_maxNpatterns=0;
     for (int i=0; i<2; i++) eCutMethodIsDone[i]=kFALSE;
 
@@ -119,8 +122,7 @@ void EdbPVRQuality::Set0()
     // Reset Default Geometry: 0 OperaGeometry, 1: MC Geometry
     eHistGeometry=0;
 
-    eHistChi2W = new TH2F("eHistChi2W","eHistChi2W",40,0,40,90,0,3);
-    eHistYX = new TH2F("eHistYX","eHistYX",100,0,1,100,0,1);
+
 
     eHistYX->Reset();
     eHistChi2W->Reset();
@@ -133,9 +135,15 @@ void EdbPVRQuality::Set0()
         eAgreementChi2WDistCut[i]=3.0;  // Maximum Cut Value for const, BT dens
     }
 
-    eProfileBTdens_vs_PID = new TProfile("eProfileBTdens_vs_PID","eProfileBTdens_vs_PID",114,-0.5,113.5,0,200);
-    cout << "eProfileBTdens_vs_PID->GetBinWidth(1)" << eProfileBTdens_vs_PID->GetBinWidth(1) << endl;
-    cout << "eProfileBTdens_vs_PID->GetBinCenter(1)" << eProfileBTdens_vs_PID->GetBinCenter(1) << endl;
+
+    eProfileBTdens_vs_PID_source_meanX=0;
+    eProfileBTdens_vs_PID_source_meanY=0;
+    eProfileBTdens_vs_PID_source_rmsX=0;
+    eProfileBTdens_vs_PID_source_rmsY=0;
+    eProfileBTdens_vs_PID_target_meanX=0;
+    eProfileBTdens_vs_PID_target_meanY=0;
+    eProfileBTdens_vs_PID_target_rmsX=0;
+    eProfileBTdens_vs_PID_target_rmsY=0;
 
     // Default values for cosmics, taken from a brick data:
     // (I cant remember which one, I hope it doesnt matter).
@@ -150,12 +158,20 @@ void EdbPVRQuality::Set0()
 
 void EdbPVRQuality::Init()
 {
+    // Basic Init function that creates objects in the memory which have
+    // to be created only ONE time per class instance.
+
+    eProfileBTdens_vs_PID_source = new TProfile("eProfileBTdens_vs_PID_source","eProfileBTdens_vs_PID_source",114,-0.5,113.5,0,200);
+    eProfileBTdens_vs_PID_target = new TProfile("eProfileBTdens_vs_PID_target","eProfileBTdens_vs_PID_target",114,-0.5,113.5,0,200);
+
+    eHistChi2W = new TH2F("eHistChi2W","eHistChi2W",40,0,40,90,0,3);
+    eHistYX = new TH2F("eHistYX","eHistYX",100,0,1,100,0,1);
+
     /// TEMPORARY, later the Standard Geometry should default be OPERA.
     /// For now we use a very large histogram that can contain both case
     /// x-y ranges. This takes slightly more memory but it shouldnt matter.
-    if (eHistGeometry==0) SetHistGeometry_OPERA();
-
-    cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
+//     if (eHistGeometry==0) SetHistGeometry_OPERA();
+//     cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
     SetHistGeometry_OPERAandMC();
     return;
 }
@@ -199,7 +215,7 @@ void EdbPVRQuality::CheckEdbPVRec()
     }
     // Check the patterns of the EdbPVRec:
     eAli_maxNpatterns= eAli_orig->Npatterns();
-    cout << "EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
+//     cout << "EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
     if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
     if (eAli_maxNpatterns>114) {
         cout << "ERROR! EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
@@ -211,6 +227,14 @@ void EdbPVRQuality::CheckEdbPVRec()
 
     // Loop over the patterns of the EdbPVRec:
     for (Int_t i=0; i<Npat; i++) {
+
+        if (i>56) {
+            cout << "WARNING     EdbPVRQuality::CheckEdbPVRec()    Your EdbPVRec object has more than 57 patterns! " << endl;
+            cout << "WARNING     EdbPVRQuality::CheckEdbPVRec()    Check it! " << endl;
+        }
+        if (gEDBDEBUGLEVEL>2) cout << "CheckEdbPVRec   Doing Pattern " << i << endl;
+
+
         eHistYX->Reset(); // important to clean the histogram
         eHistChi2W->Reset(); // important to clean the histogram
 
@@ -223,24 +247,37 @@ void EdbPVRQuality::CheckEdbPVRec()
             seg=(EdbSegP*)pat->At(j);
             // Very important:
             // For the data case, we assume the following:
-            // Data (MCEvt==-999) will     be taken for BTdensity calculation
+            // Data (MCEvt<0) will     be taken for BTdensity calculation
             // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
             // We take it ONLY and ONLY into account if it is especially wished
             // by the user!
             // Therefore (s)he needs to know how many Gauge Coupling Parameters
             // in the Standard Model exist (at least)...
-            if ( !(seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) ) continue;
+            Bool_t result=kFALSE;
+            if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
+                result = kTRUE;
+            }
+            else {
+                result = kFALSE;
+            }
+            if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+            // Main decision for segment to be kept or not  (seg is of MC or data type).
+            if ( result == kTRUE ) continue;
 
             // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
             eHistChi2W->Fill(seg->W(),seg->Chi2());
         }
 
+        if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+
+        // Important to reset histogram before it is filled.
         histPatternBTDensity->Reset();
-        Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
 
         // Search for empty bins, because they can spoil the overall calulation
         // of the mean value.
+        Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
         Int_t nemptybinsXY=0;
         Int_t bincontentXY=0;
         for (int k=1; k<nbins-1; k++) {
@@ -250,7 +287,7 @@ void EdbPVRQuality::CheckEdbPVRec()
             }
             bincontentXY=eHistYX->GetBinContent(k);
             histPatternBTDensity->Fill(bincontentXY);
-            eProfileBTdens_vs_PID->Fill(i,bincontentXY);
+            eProfileBTdens_vs_PID_source->Fill(i,bincontentXY);
         }
 
         // failsafe warning in case that there are many bins with zero content.
@@ -259,13 +296,37 @@ void EdbPVRQuality::CheckEdbPVRec()
 
         // Save the density in the variable.
         ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
-        histPatternBTDensity->Reset();
+
     }
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+    // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
+    // This will be done in one of the two Execute_ functions.
+
+
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(2,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(4);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    c1->cd();
 
     eHistYX->Reset();
     eHistChi2W->Reset();
 
-    Print();
+    //Print();
     return;
 }
 
@@ -304,56 +365,67 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     cout << "SetHistGeometry_OPERAandMC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
-// //______________________________________________________________________________
-// void EdbPVRQuality::Print()
-// {
-//     // Print Summary of all relevant data for this class.
-//     cout << "EdbPVRQuality::Print()   " << endl;
-//     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
-//     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
-//     if (eCutMethodIsDone[0]) PrintCutType0();
-//     if (eCutMethodIsDone[1]) PrintCutType1();
-//     return;
-// }
-
 
 //______________________________________________________________________________
-    
-void EdbPVRQuality::Print()
-{    
-  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
-  cout << "-"; cout << endl;  
-  cout << "EdbPVRQuality::Print()" << endl;
-  cout << "-"; cout << endl;  
-  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
-  cout << "EdbPVRQuality::Print() --- GENERAL SETTINGS: ---" << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
-  
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eHistGeometry = " << eHistGeometry << endl;
-  
-  cout << "EdbPVRQuality::Print() --- SETTINGS: Input data:" << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_orig = " << eAli_orig << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsSource = " << eIsSource << endl;
-  
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_meanX = " << eProfileBTdens_vs_PID_meanX << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_meanY = " << eProfileBTdens_vs_PID_meanY << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_rmsX = " << eProfileBTdens_vs_PID_rmsX << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_rmsY = " << eProfileBTdens_vs_PID_rmsY << endl;
-  
-  
-  cout << "EdbPVRQuality::Print() --- SETTINGS: Output data:" << endl;
-  cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_modified = " << eAli_modified << endl;
-  
+void EdbPVRQuality::PrintCutType()
+{
+    // Print PrintCutType data for this class.
+    cout << "EdbPVRQuality::Print()   " << endl;
+    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
+    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
+    if (eCutMethodIsDone[0]) PrintCutType0();
+    if (eCutMethodIsDone[1]) PrintCutType1();
+    return;
+}
 
-  cout << "EdbPVRQuality::Print()....done." << endl;
-  for (int i=0; i<100; ++i) cout << "-"; cout << endl;  
-  return;
+//______________________________________________________________________________
+
+void EdbPVRQuality::Print()
+{
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Print()" << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Print() --- GENERAL SETTINGS: ---" << endl;
+    cout << "-" << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
+
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eHistGeometry = " << eHistGeometry << endl;
+
+    cout << "EdbPVRQuality::Print() --- SETTINGS: Input data:" << endl;
+    cout << "-" << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_orig = " << eAli_orig << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsSource = " << eIsSource << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_meanX = " << eProfileBTdens_vs_PID_source_meanX << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_meanY = " << eProfileBTdens_vs_PID_source_meanY << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_rmsX = " << eProfileBTdens_vs_PID_source_rmsX << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_rmsY = " << eProfileBTdens_vs_PID_source_rmsY << endl;
+
+    cout << "EdbPVRQuality::Print() --- SETTINGS: Output data:" << endl;
+    cout << "-" << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_modified = " << eAli_modified << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsTarget = " << eIsTarget << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_meanX = " << eProfileBTdens_vs_PID_target_meanX << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_meanY = " << eProfileBTdens_vs_PID_target_meanY << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_rmsX = " << eProfileBTdens_vs_PID_target_rmsX << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_rmsY = " << eProfileBTdens_vs_PID_target_rmsY << endl;
+    cout << "-" << endl;
+    cout << "EdbPVRQuality::Print()....done." << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    return;
 }
 
 //______________________________________________________________________________
@@ -365,12 +437,19 @@ void EdbPVRQuality::PrintCutType0()
 
     if (!eIsSource) return;
 
+    if (!eCutMethodIsDone[0]) {
+        cout << "---   EdbPVRQuality::PrintCutType0()----------" << endl;
+        cout << "---      This CutType has not been done. Run  Execute_ConstantBTDensity() ---" << endl;
+        cout << "---      to see the results (return now). ---" << endl;
+        return;
+    }
+
     cout << "----------void EdbPVRQuality::PrintCutType0()----------" << endl;
     cout << "Pattern || Z() || Nseg || eCutp0[i] || eCutp1[i] || BTDensity_orig ||...|| Nseg_modified || BTDensity_modified ||"<< endl;
 
     if (NULL==eAli_modified) {
         eAli_modified=eAli_orig;
-        cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To calculate eAli_modified please run CreateEdbPVRec(eAli_orig)" << endl;
+        cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To build eAli_modified please run CreateEdbPVRec(eAli_orig)" << endl;
     }
 
     int Npat_orig = eAli_orig->Npatterns();
@@ -399,13 +478,20 @@ void EdbPVRQuality::PrintCutType1()
     //     on the segments of the specific plate (=pattern).
 
     if (!eIsSource) return;
+    if (!eCutMethodIsDone[1]) {
+        cout << "---   EdbPVRQuality::PrintCutType1()----------" << endl;
+        cout << "---      This CutType has not been done. Run  Execute_ConstantQuality() ---" << endl;
+        cout << "---      to see the results (return now). ---" << endl;
+        return;
+    }
+
     cout << "----------void EdbPVRQuality::PrintCutType1()----------" << endl;
 
     cout << "Pattern || Z() || Nseg || BTDensity_orig || Chi2CutMeanChi2 || Chi2CutRMSChi2 || Chi2CutMeanW || Chi2CutRMSW || Chi2Cut[i] || BTDensity_modified ||"<< endl;
 
     if (NULL==eAli_modified) {
         eAli_modified=eAli_orig;
-        cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To calculate eAli_modified please run CreateEdbPVRec(eAli_orig)" << endl;
+        cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To build eAli_modified please run CreateEdbPVRec(eAli_orig)" << endl;
     }
 
     int Npat_orig = eAli_orig->Npatterns();
@@ -431,18 +517,26 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     // Execute the modified cut routines to achieve the basetrack density level, after application the specific cut on the segments of the specific plate (pattern).
     // The Constant BT Density is defined by the number of BT/mm2 in the histogram.
 
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Execute_ConstantBTDensity " << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+
     if (!eIsSource) return;
     if (NULL==eAli_orig) return;
 
     // Check the patterns of the EdbPVRec:
     eAli_maxNpatterns= eAli_orig->Npatterns();
-    cout << "EdbPVRQuality::Execute_ConstantBTDensity  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
     if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
     if (eAli_maxNpatterns>114) {
         cout << "ERROR!  EdbPVRQuality::Execute_ConstantBTDensity  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
         eAli_maxNpatterns=114;
     }
-
 
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
 
@@ -469,14 +563,23 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 seg=(EdbSegP*)pat->At(j);
                 // Very important:
                 // For the data case, we assume the following:
-                // Data (MCEvt==-999) will     be taken for BTdensity calculation
+                // Data (MCEvt<0) will     be taken for BTdensity calculation
                 // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
                 // We take it ONLY and ONLY into account if it is especially wished
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                if ( !(seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) ) continue;
+                Bool_t result=kFALSE;
+                if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
+                    result = kTRUE;
+                }
+                else {
+                    result = kFALSE;
+                }
+                if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
+                // Main decision for segment to be kept or not (seg is of MC or data type).
+                if ( result == kTRUE ) continue;
                 // Constant BT density cut:
                 if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
 
@@ -484,9 +587,9 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
             }
 
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
 
             int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
-
             for (int k=1; k<nbins-1; k++) {
                 if (eHistYX->GetBinContent(k)==0) continue;
                 histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
@@ -507,6 +610,10 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
 
         } // of condition loop...
 
+        // Fill target profile histogram:
+        Float_t bincontentXY=histPatternBTDensity->GetMean();
+        eProfileBTdens_vs_PID_target->Fill(i,bincontentXY);
+
     } // of Npattern loops..
 
     eCutMethodIsDone[0]=kTRUE;
@@ -522,16 +629,30 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     c1->cd(3);
     histPatternBTDensity->DrawCopy("");
     c1->cd(4);
-    eProfileBTdens_vs_PID->Draw("profileZ");
-    eProfileBTdens_vs_PID->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_target->SetLineStyle(2);
+    eProfileBTdens_vs_PID_target->Draw("profileZsame");
     c1->cd();
     histPatternBTDensity->Reset();
     eHistYX->Reset();
     eHistChi2W->Reset();
 
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+    eProfileBTdens_vs_PID_target_meanX=eProfileBTdens_vs_PID_target->GetMean(1);
+    eProfileBTdens_vs_PID_target_meanY=eProfileBTdens_vs_PID_target->GetMean(2);
+    eProfileBTdens_vs_PID_target_rmsX=eProfileBTdens_vs_PID_target->GetRMS(1);
+    eProfileBTdens_vs_PID_target_rmsY=eProfileBTdens_vs_PID_target->GetRMS(2);
+
     delete histPatternBTDensity;
 
-    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Cuts are done and saved to obtain desired BT density. If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Cuts are done and saved to obtain desired BT density. " << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
     cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()....done." << endl;
     return;
 }
@@ -553,13 +674,25 @@ void EdbPVRQuality::Execute_ConstantQuality()
     // If that doesnt work either, nothing is done.
 
     if (!eIsSource) return;
-    cout << "----------void EdbPVRQuality::Execute_ConstantQuality()----------" << endl;
+
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Execute_ConstantBTDensity " << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
     cout << "----------    Works for tracks passing the volume to extract their mean chi2/W " << endl;
     cout << "----------    If eAli->Tracks is there we take them from there." << endl;
     cout << "----------    If not, we try if there is a file linked_tracks.root " << endl;
     cout << "----------    we take tracks from there. " << endl;
     cout << "----------    If that doesnt work either, nothing is done." << endl;
-    cout << "----------void EdbPVRQuality::Execute_ConstantQuality()----------" << endl << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
 
     cout << "EdbPVRQuality::Execute_ConstantQuality()   eAli_orig.eTracks :" << eAli_orig->eTracks << endl;
 
@@ -579,7 +712,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
             cout << "EdbPVRQuality::Execute_ConstantQuality()   No tracks in linked_track.root file. Return, leave eAli_orig unchanged and dont do any cleaning. You might try Execute_ConstantBTDensity instead. " << endl;
             return;
         }
-        // 		TH1F* h1;
+        // 		TH1F* h1; Attention the usage of  _npl_ is disvavoured
+        // 		because this can cause problems.
         tracks->Draw("nseg>>h(60,0,60)","","");
         TH1F *h1 = (TH1F*)gPad->GetPrimitive("h");
 
@@ -589,12 +723,15 @@ void EdbPVRQuality::Execute_ConstantQuality()
             if (h1->GetBinContent(k)>0) lastfilledbin=k;
         }
 
+        Float_t travellenghtpercentage=Float_t(lastfilledbin)/Float_t(eAli_maxNpatterns);
+
         TString cutstring = TString(Form("nseg>=%d",int(h1->GetBinCenter(lastfilledbin-3)) ));
         tracks->Draw("s.eChi2>>hChi2(100,0,2)",cutstring);
         TH1F *hChi2 = (TH1F*)gPad->GetPrimitive("hChi2");
 
+        cout << "EdbPVRQuality::Execute_ConstantQuality()   Found tracks in the file! Good. Info:" << endl;
+        cout << "EdbPVRQuality::Execute_ConstantQuality()   The long tracks in the file have an average percentage length of:" << travellenghtpercentage  <<  endl;
         cout << "EdbPVRQuality::Execute_ConstantQuality()   Mean(RMS) of Chi2 distribution of passing tracks: " << hChi2->GetMean() << "+-"  << hChi2->GetRMS() << endl;
-
 
         TCanvas* c1 = new TCanvas();
         c1->cd();
@@ -602,11 +739,19 @@ void EdbPVRQuality::Execute_ConstantQuality()
         TH1F *hW = (TH1F*)gPad->GetPrimitive("hW");
         cout << "EdbPVRQuality::Execute_ConstantQuality()   Mean(RMS) of W distribution of passing tracks: " << hW->GetMean() << "+-"  << hW->GetRMS() << endl;
 
-
         meanChi2=hChi2->GetMean();
         rmsChi2=hChi2->GetRMS();
         meanW=hW->GetMean();
         rmsW=hW->GetRMS();
+
+        // Quick check if these values are reasonable:
+        if (TMath::Abs(meanChi2-0.5)>1 || TMath::Abs(meanW-22)>6) {
+            cout << "WARNING   EdbPVRQuality::Execute_ConstantQuality()   The tracks might have a strange distribution. You are urgently requested to check these manually!!!"<<endl;
+        }
+        else {
+            cout << "EdbPVRQuality::Execute_ConstantQuality()   The tracks have reasonable values."<<endl;
+        }
+
 
         // since the values for the passing tracks are
         // calculated for the whole volume, we assume that the cutvalues
@@ -619,7 +764,6 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
     /// ______  now same code as in the function Execute_ConstantBTDensity  ___________________
 
-    int Npat = eAli_orig->Npatterns();
     // Check the patterns of the EdbPVRec:
     eAli_maxNpatterns= eAli_orig->Npatterns();
     cout << "EdbPVRQuality::Execute_ConstantQuality  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
@@ -632,12 +776,12 @@ void EdbPVRQuality::Execute_ConstantQuality()
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",100,0,200);
     TH1F* histagreementChi2 = new TH1F("histagreementChi2","histagreementChi2",100,0,5);
 
+
     cout << "Execute_ConstantQuality   Loop over the patterns..." << endl;
-    for (int i=0; i<Npat; i++) {
+    for (int i=0; i<eAli_maxNpatterns; i++) {
         if (i>56) {
             cout << "ERROR     EdbPVRQuality::Execute_ConstantQuality() Your EdbPVRec object has more than 57 patterns! " << endl;
             cout << "ERROR     EdbPVRQuality::Execute_ConstantQuality() Check it! " << endl;
-            break;
         }
 
         if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantQuality   Doing Pattern " << i << endl;
@@ -663,29 +807,40 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 if (gEDBDEBUGLEVEL>4) cout << "Execute_ConstantQuality   Doing segment= " << j << endl;
                 // Very important:
                 // For the data case, we assume the following:
-                // Data (MCEvt==-999) will     be taken for BTdensity calculation
+                // Data (MCEvt<0) will     be taken for BTdensity calculation
                 // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
                 // We take it ONLY and ONLY into account if it is especially wished
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                if ( !(seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) ) continue;
+                Bool_t result=kFALSE;
+                if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
+                    result = kTRUE;
+                }
+                else {
+                    result = kFALSE;
+                }
+                if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+                // Main decision for segment to be kept or not (seg is of MC or data type).
+                if ( result == kTRUE ) continue;
 
                 // Change here to the quality with values obtained from the tracks.
                 // Constant BT quality cut:
                 agreementChi2=TMath::Sqrt(0.5 *( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
-
                 histagreementChi2->Fill(agreementChi2);
 
+                // Constant BT quality cut:
                 if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
 
                 eHistYX->Fill(seg->Y(),seg->X());
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
             }
 
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+
             Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
             Int_t nemptybinsXY=0;
-
             for (int k=1; k<nbins-1; k++) {
                 if (eHistYX->GetBinContent(k)==0) {
                     ++nemptybinsXY;
@@ -721,6 +876,11 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
         } // of condition loop...
 
+        // Fill target profile histogram:
+        Float_t bincontentXY=histPatternBTDensity->GetMean();
+        cout << "Execute_ConstantQuality   histPatternBTDensity->GetMean()." << histPatternBTDensity->GetMean() <<  endl;
+        eProfileBTdens_vs_PID_target->Fill(i,bincontentXY);
+
     } // of Npattern loops..
     cout << "Execute_ConstantQuality   Loop over the patterns...done." << endl;
 
@@ -737,17 +897,30 @@ void EdbPVRQuality::Execute_ConstantQuality()
     c1->cd(3);
     histPatternBTDensity->DrawCopy("");
     c1->cd(4);
-    eProfileBTdens_vs_PID->Draw("profileZ");
-    eProfileBTdens_vs_PID->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_target->SetLineStyle(2);
+    eProfileBTdens_vs_PID_target->Draw("profileZsame");
     c1->cd();
-    histPatternBTDensity->Reset();
-    eHistYX->Reset();
-    eHistChi2W->Reset();
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+    eProfileBTdens_vs_PID_target_meanX=eProfileBTdens_vs_PID_target->GetMean(1);
+    eProfileBTdens_vs_PID_target_meanY=eProfileBTdens_vs_PID_target->GetMean(2);
+    eProfileBTdens_vs_PID_target_rmsX=eProfileBTdens_vs_PID_target->GetRMS(1);
+    eProfileBTdens_vs_PID_target_rmsY=eProfileBTdens_vs_PID_target->GetRMS(2);
 
     histPatternBTDensity->Reset();
     eHistYX->Reset();
     eHistChi2W->Reset();
     delete histPatternBTDensity;
+
+
+    cout << "----------void EdbPVRQuality::Execute_ConstantQuality() Cuts are done and saved to obtain desired BT density. " << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantQuality() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
 
     cout << "----------void EdbPVRQuality::Execute_ConstantQuality()....done." << endl;
     return;
@@ -827,7 +1000,7 @@ void EdbPVRQuality::CreateEdbPVRec()
 
     // Checks
     if (NULL==eAli_orig || eIsSource==kFALSE) {
-        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    NULL==eAli_orig   || eIsSource==kFALSE   return."<<endl;
+        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    NULL==eAli_orig   || eIsSource==kFALSE    return."<<endl;
         return;
     }
     // Checks
@@ -885,9 +1058,12 @@ void EdbPVRQuality::CreateEdbPVRec()
         }
         eAli_modified->AddPattern(pt);
     }
+
+    eIsTarget=kTRUE;
+
     //---------------------
-    eAli_orig->Print();
-    eAli_modified->Print();
+    cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...Created new EdbPVR object at address " << eAli_modified << endl;
+    //---------------------
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...done." << endl;
     return;
 }
