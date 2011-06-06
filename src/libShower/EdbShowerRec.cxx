@@ -17,7 +17,11 @@
 // object in FEDRA), it does search and reconstruction of showers,      //
 // based on different algorithms, which the user can set indivially     //
 // (normaly not necessary). After that, we try to identify              //
-// characteristics of the shower, as it is: energy and particle ID.     //
+// characteristics of the shower, as it is: energy and particle ID. 
+//                                                                      //
+//                                                                      //
+// Nota Bene:   all lines in the code trailing with   "///"             //
+//              are todo comments.                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -140,8 +144,15 @@ EdbShowerRec::~EdbShowerRec()
 //----------------------------------------------------------------
 void EdbShowerRec::Set0()
 {
-    // Reset Variables.
-    eUseAliSub=kTRUE;
+    // Reset all internal variables to default values.
+    
+    eUseAliSub=kFALSE; 
+    // This is new/changed (06.June 2011):
+    // If we used eUseAliSub true, then it results in large memory
+    // consumption when having many InitiatorBTs. To avoid this the standard
+    // behaviour is reconstruction on normal EdbPVRec object. Only in case
+    // of either large MC/Data ratio or only few InitiatorBTs, we do it this
+    // way. See also the function: CheckEdbPVRecSetUseAliSub.
     
     eShowerTreeIsDone=kFALSE;
     eDoEnergyCalculation=kFALSE;
@@ -3598,9 +3609,34 @@ void EdbShowerRec::Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize=100
     //      consumption be very high, the reason is that we cannot delete the 
     //      small EdbPVRec objects build for the previous InitiatorBT, since the
     //      addresses of the segments will be deleted as well, segfault will appear.
+    //      In this case the  EdbPattern::ExtractSubPattern function will not only
+    //      clone the InitiatorBTs, but also the EdbPatterns, and the existing
+    //      EdbSegPs in it.
+    //      This method is more intended to use for the standalone program
+    //      __ShowReco__  because in this program the EdbSegP objects are not used
+    //      in its following code way, and then one can easyly delete the 
+    //      eAli_Sub object.
+    //    
     //      In this case, use the SetUseAliSub(0), then reconstruction will operate 
-    //      on the original EdbPVRec Object.
+    //      on the original EdbPVRec object. 
     //    )
+    //
+    //    Test have shown that, the  Transform_eAli  with ExtractSubPattern  method 
+    //    gains highly in speed the more MC BTs are in the volume. For a 
+    //    sample consisting only of data, the only advantage is the loop over a 
+    //    smaller reconstruction area. If many MC BTs are in the volume, the advantage
+    //    by cutting out also the other MC for one eAli_Sub object becomes really
+    //    visible in time (but unfortunately also in memory).
+    //    
+    //    So maybe a good tradeoff is like this:
+    //      If ratio of MC/Data basetracks in the volume is significant then 
+    //      SetUseAliSub(1).
+    //      If number of InitiatorBTs exceeds 5000 (number choosen by me after few
+    //      tests) then we automatically switch to SetUseAliSub(0).
+    //      For volumes containing only Data basetracks (i.e. MCEvt==-999) we
+    //      do right from the start the operation on SetUseAliSub(0).
+    /// IMPLEMENT THIS !!!
+    //
     //    -----------------------------------------------------------------------------
     
     Log(3,"EdbShowerRec::Transform_eAli","Transform eAli to eAli_Sub.");
@@ -3696,6 +3732,78 @@ void EdbShowerRec::Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize=100
     return;
 }
 
+//_____________________________________________________________________________________________
+ 
+Float_t EdbShowerRec::GetEdbPVRecNSeg(EdbPVRec* ali, Int_t mode) 
+{
+  // Return Number of Segments (=BTs) in the EdbPVRec volume.
+  // The mode number is used as following:
+  //    mode = 0 : return ALL BTs.
+  //    mode = 1 : return BTs with s->MCEvt() > 0    (MC)
+  //    mode = 2 : return BTs with s->MCEvt() < 0    (DATA)
+  //    mode = 3 : return fraction nTotalMC/(nTotal);
+  
+  if (NULL==ali) return 0;
+  Int_t nTotal=0;
+  Int_t nTotalMC=0;
+  Int_t nTotalDATA=0;
+  Int_t npat=ali->Npatterns();
+  for (Int_t ii=0; ii<npat; ++ii) {
+    Int_t nseg=ali->GetPattern(ii)->N();
+    nTotal+=nseg;
+    for (Int_t jj=0; jj<nseg; ++jj) {
+      EdbSegP* seg=ali->GetPattern(ii)->GetSegment(jj);   
+      if (seg->MCEvt()>0) ++nTotalMC;
+      if (seg->MCEvt()<0) ++nTotalDATA;
+    }
+  }
+  Float_t ratio=(Float_t)(nTotalMC)/(Float_t)(nTotal);
+//   cout << "nTotalDATA basetracks in volume: " << nTotalDATA << endl;
+//   cout << "nTotalMC basetracks in volume: " << nTotalMC << endl;
+//   cout << "nTotal basetracks in volume: " << nTotal << endl;
+//   cout << "ratio basetracks in volume: " << ratio << endl;
+  
+  if (mode == 1) return (Float_t)nTotalMC;
+  if (mode == 2) return (Float_t)nTotalDATA;
+  if (mode == 3) return ratio;
+  return (Float_t)nTotal;
+  
+}
+ 
+
+//_____________________________________________________________________________________________
+
+
+void EdbShowerRec::CheckEdbPVRecSetUseAliSub()
+{
+    // Small function that test the ratio of MC/Data basetracks in the volume.
+    // If ratio is high (>20%), and number of InitiatorBTN is mediate (<1000), 
+    // then we will use the SetUseAliSub(1) option, which means:
+    //   -faster reconstruction, but higher memory consumption.
+    // If not we switch to the standard reco method SetUseAliSub(0):
+    //   -lower reconstruction, but stable memory consumption.
+    
+    cout << "void EdbShowerRec::CheckEdbPVRecSetUseAliSub()" << endl;
+    cout << "void EdbShowerRec::CheckEdbPVRecSetUseAliSub() GetUseAliSub() = " << GetUseAliSub() << endl;
+    
+    if (gEDBDEBUGLEVEL>2) {
+      cout << "void EdbShowerRec::CheckEdbPVRecSetUseAliSub() " <<  eAli << endl;
+      cout << "void EdbShowerRec::CheckEdbPVRecSetUseAliSub() " <<  GetEdbPVRecNSeg(eAli,3) << endl;
+      cout << "void EdbShowerRec::CheckEdbPVRecSetUseAliSub() " <<  eInBTArrayN << endl;
+    }
+    
+    if (NULL==eAli) return;
+    if (GetEdbPVRecNSeg(eAli,3)<0.20) return;
+    if (eInBTArrayN>1000) return;
+
+    // If we arrived here, it might be time to switch to the fast reconstruction!
+    SetUseAliSub(1);
+    
+    cout << "EdbShowerRec::CheckEdbPVRecSetUseAliSub()   We arrived here, so it might be time to switch to the fast reconstruction!" << endl;
+    cout << "EdbShowerRec::CheckEdbPVRecSetUseAliSub()   GetUseAliSub() = " << GetUseAliSub() << endl;
+    
+    return; 
+}
 
 
 //_____________________________________________________________________________________________
@@ -3709,8 +3817,12 @@ void EdbShowerRec::Execute()
 
     // Check if the eRecoShowerArray exists, if not create it;
     if (!eRecoShowerArray) eRecoShowerArray=new TObjArray();
-    cout << "eRecoShowerArray->GetEntries() " << eRecoShowerArray->GetEntries()  << endl;
+    //cout << "eRecoShowerArray->GetEntries() " << eRecoShowerArray->GetEntries()  << endl;
 
+    // Check the use of eAliSub or not:
+    CheckEdbPVRecSetUseAliSub();
+    
+    
     EdbSegP* InBT;
     EdbSegP* Segment;
     EdbTrackP* RecoShower;
@@ -3763,7 +3875,7 @@ void EdbShowerRec::Execute()
 
 
 
-    // Since eInBTArray is filled in ascending ordering by zpositon
+    // Since eInBTArray is usually filled in ascending ordering by zpositon
     // We use the descending loop to begin with BT with lowest z first.
     for (Int_t i=eInBTArrayN-1; i>=0; --i) {
 //  for (Int_t i=eInBTArrayN-1; i==eInBTArrayN-1; --i) {
@@ -3783,6 +3895,7 @@ void EdbShowerRec::Execute()
         // Get InitiatorBT from eInBTArray
         InBT=(EdbSegP*)eInBTArray->At(i);
         if (gEDBDEBUGLEVEL>2) {
+	    cout << " " << endl;
             cout << "EdbShowerRec::Execute() Start reconstruction for Initiator BaseTrack:" <<  endl;
             InBT->PrintNice();
         }
@@ -3804,7 +3917,7 @@ void EdbShowerRec::Execute()
         Int_t npatN=0;
         // Get greatest Z Value:
         Double_t greatestZValueofeAliSub=TMath::Max(eAli_Sub->GetPattern(0)->Z(),eAli_Sub->GetPattern(eAli_Sub->Npatterns()-1)->Z());
-        if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- --- greatest Z value of eAliSub= " << greatestZValueofeAliSub;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- --- greatest Z value of eAliSub= " << greatestZValueofeAliSub << endl;
 
 
         //-----------------------------------
@@ -3897,7 +4010,7 @@ void EdbShowerRec::Execute()
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
 
-        if (gEDBDEBUGLEVEL>2) cout << "Finshed  __while (StillToLoop)__  Now Adding reconstructed shower to array (only in case it has two or more Basetracks) ..." << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "Finshed  __while (StillToLoop)__  . Now Adding reconstructed shower to the array (only in case it has two or more Basetracks) of reconstructed showers ..." << endl;
         if (gEDBDEBUGLEVEL>2) cout << "Shower Has  ..." << RecoShower->N() << "  basetracks in it." << endl;
 
         // Add Shower Object to Shower Reco Array.
@@ -4148,7 +4261,7 @@ void EdbShowerRec::TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TObj
         if (gEDBDEBUGLEVEL>3) cout << "--- --- ---------------------"<<endl;
         //-------------------------------------
         for (int ii=0; ii<shower_sizeb; ii++)  {
-	  if (gEDBDEBUGLEVEL>3) ; cout << "EdbShowerRec::T-S-O-A-I-E-O-T-S-T   Doing Segment "<< ii << endl;
+	  if (gEDBDEBUGLEVEL>3) cout << "EdbShowerRec::T-S-O-A-I-E-O-T-S-T   Doing Segment "<< ii << endl;
 
             if (ii>=9999) {
                 cout << "EdbShowerRec::T-S-O-A-I-E-O-T-S-T: WARNING: shower_sizeb ( " << shower_sizeb<< ") greater than SHOWERARRAY.   Set sizeb to 9999 and  Stop filling!."<<endl;
@@ -4656,24 +4769,33 @@ void EdbShowerRec::Print(){
 
 //------------------------------------------------------------------------------------------------------
 
-void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Bool_t firstPlate ){
+void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Int_t mode ){
   
   if (gEDBDEBUGLEVEL>1) {
   cout << "-----------------------------------------------------------------------------" << endl;
-  cout << "-- EdbShowerRec   SetInBTArray( EdbPVRec* Ali , firstPlate)                --" << endl;
+  cout << "-- EdbShowerRec   SetInBTArray( EdbPVRec* Ali , Int_t mode )               --" << endl;
   cout << "-- EdbShowerRec   Set the Initiator BaseTrack Array From the EdbPVRec      --" << endl;
   cout << "-- EdbShowerRec   object.                                                  --" << endl;
   cout << "-- EdbShowerRec   A) if it has tracks inside, we take first segment of the --" << endl;
-  cout << "-- EdbShowerRec   A) tracks              (TO BE IMPLEMENTED...)            --" << endl;
-  cout << "-- EdbShowerRec   B) otherwise ALL Basetracks in this EdbPVRec volume.     --" << endl;
+  cout << "-- EdbShowerRec   A) tracks              (TO BE IMPLEMENTED...mode=-1)     --" << endl;
+  cout << "-- EdbShowerRec   B) otherwise (mode is 0) ALL Basetracks in the volume.   --" << endl;
   cout << "-- EdbShowerRec   B) ATTENTION...TAKES  VERY  LONG                         --" << endl;
-  cout << "-- EdbShowerRec   C) If  firstPlate  is kTRUE, then we take only the       --" << endl;
-  cout << "-- EdbShowerRec   C) first Z plate ... Mainly DEBUG purpose ....           --" << endl;
+  cout << "-- EdbShowerRec   C) If  mode  is 1, then we take only the                 --" << endl;
+  cout << "-- EdbShowerRec   C) first Z plate            ... Mainly DEBUG purpose ....--" << endl;
+  cout << "-- EdbShowerRec   D) If  mode  is 2, then we take only 5 random            --" << endl;
+  cout << "-- EdbShowerRec   D) basetracksfirst Z plate  ... Mainly DEBUG purpose ....--" << endl;
   }
   
   TObjArray* InBTArray = new TObjArray();
   
-  if (kTRUE==firstPlate) {
+  Int_t nBT=5;
+  if (mode>10)  {
+    // help construction, i hope noone ever needs to look at this ugly part of code :)
+    nBT=mode;
+    mode=2;
+  }
+  
+  if (1==mode) {
     InBTArray->Clear();
     EdbPattern* pat = Ali->GetPatternZLowestHighest();
     int nseg= pat->N();
@@ -4681,8 +4803,15 @@ void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Bool_t firstPlate ){
      EdbSegP* seg = pat->GetSegment(j); 
      InBTArray->Add(seg);
     }
-//     EdbSegP* seg = pat->GetSegment(0); 
-//     InBTArray->Add(seg);
+  }
+  else if (2==mode) {
+    for (int k=0; k<nBT; k++) {
+      EdbPattern* pat = Ali->GetPattern(gRandom->Uniform(0,Ali->Npatterns()));
+      EdbSegP* seg = pat->GetSegment(gRandom->Uniform(0,pat->N()));
+      //seg->PrintNice();
+      InBTArray->Add(seg);
+    }
+    cout << "-- EdbShowerRec   D) Set " << nBT << " Random BTs for shower reco. --" << endl;
   }
   else {
       int npat=Ali->Npatterns();

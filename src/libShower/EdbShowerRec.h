@@ -628,7 +628,7 @@ public:
         }
     }
         
-    void SetInBTArray( EdbPVRec* Ali, Bool_t firstPlate = kTRUE );
+    void SetInBTArray( EdbPVRec* Ali,  Int_t mode=0 );
 
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN)      {
         eRecoShowerArrayN = RecoShowerArrayN;
@@ -660,6 +660,10 @@ public:
     inline Bool_t       GetAliLoaded()      const       {
         return eAliLoaded;
     }
+    inline EdbPVRec*    GetEdbPVRecSub( )      const       {
+        return eAli_Sub;
+    }
+    
 
     inline TObjArray*   GetInBTArray( )     const       {
         return eInBTArray;
@@ -704,6 +708,8 @@ public:
     void                LoadEdbPVRec();
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize );
     void                CalcTrackDensity(EdbPattern* pat_interim,Int_t pat_interim_halfsize,Int_t& npat_int,Int_t& npat_total,Int_t& npatN);
+    Float_t             GetEdbPVRecNSeg(EdbPVRec* ali, Int_t mode);
+    void 		CheckEdbPVRecSetUseAliSub();
 
     // Print:
     inline void         PrintEdbPVRec() const {
@@ -734,7 +740,7 @@ public:
     // Standard Help Function:
     void Help();
     // Standard Reset Function:
-    void								Set0();
+    void Set0();
 
     ClassDef(EdbShowerRec,3)
 };

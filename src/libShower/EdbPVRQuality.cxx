@@ -19,9 +19,8 @@ EdbPVRQuality::EdbPVRQuality()
 {
     // Default Constructor
     cout << "EdbPVRQuality::EdbPVRQuality()   Default Constructor"<<endl;
-    Set0();
     Init();
-    Help();
+    Set0();
 }
 
 //______________________________________________________________________________
@@ -209,6 +208,9 @@ void EdbPVRQuality::CheckEdbPVRec()
     // increased to cover both cases).
     // It gives a good estimation of the density. Spikes in some plates, or in some zones are not
     // checked for, this is on the todo list, but maybe not so important.
+
+    cout << "EdbPVRQuality::CheckEdbPVRec  " << endl;
+
     if (!eIsSource) {
         cout << "EdbPVRQuality::CheckEdbPVRec  eIsSource=  " << eIsSource << ". This means no source set. Return!" << endl;
         return;
@@ -254,16 +256,20 @@ void EdbPVRQuality::CheckEdbPVRec()
             // Therefore (s)he needs to know how many Gauge Coupling Parameters
             // in the Standard Model exist (at least)...
             Bool_t result=kFALSE;
-            if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
-                result = kTRUE;
+            if (seg->MCEvt()>0) {
+                if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                    result = kTRUE;
+                    // cout << "result = kTRUE !! " << endl;
+                }
+                else {
+                    result = kFALSE;
+                }
             }
-            else {
-                result = kFALSE;
-            }
+
             if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
             // Main decision for segment to be kept or not  (seg is of MC or data type).
-            if ( result == kTRUE ) continue;
+            if ( kFALSE == result ) continue;
 
             // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
@@ -326,7 +332,7 @@ void EdbPVRQuality::CheckEdbPVRec()
     eHistYX->Reset();
     eHistChi2W->Reset();
 
-    //Print();
+    cout << "EdbPVRQuality::CheckEdbPVRec...done." << endl;
     return;
 }
 
@@ -570,12 +576,16 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
                 Bool_t result=kFALSE;
-                if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
-                    result = kTRUE;
+                if (seg->MCEvt()>0) {
+                    if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                        result = kTRUE;
+                        // cout << "result = kTRUE !! " << endl;
+                    }
+                    else {
+                        result = kFALSE;
+                    }
                 }
-                else {
-                    result = kFALSE;
-                }
+
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
@@ -814,12 +824,16 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
                 Bool_t result=kFALSE;
-                if ( seg->MCEvt()>0&& eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE ) {
-                    result = kTRUE;
+                if (seg->MCEvt()>0) {
+                    if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                        result = kTRUE;
+                        // cout << "result = kTRUE !! " << endl;
+                    }
+                    else {
+                        result = kFALSE;
+                    }
                 }
-                else {
-                    result = kFALSE;
-                }
+
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
