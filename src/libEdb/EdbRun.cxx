@@ -288,10 +288,10 @@ void EdbRun::AddView( EdbView *view )
 
   EdbViewHeader *viewHeader = eView->GetHeader();
 
-  Long_t oldtime = eView->GetLastSystemTime();
-  Long_t newtime = gSystem->Now(); 
-  viewHeader->SetTime( (Int_t)((ULong_t)newtime-(ULong_t)oldtime) );
-  eView->SetLastSystemTime(newtime);
+  //Long_t oldtime = eView->GetLastSystemTime();
+  //Long_t newtime = gSystem->Now(); 
+  //viewHeader->SetTime( (Int_t)((ULong_t)newtime-(ULong_t)oldtime) );
+  //eView->SetLastSystemTime(newtime);
 
   viewHeader->SetNclusters(eView->Nclusters());
   viewHeader->SetNsegments(eView->Nsegments());
