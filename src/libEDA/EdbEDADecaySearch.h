@@ -122,11 +122,16 @@ class EdbEDADecayVertex : public EdbVertex {
 	private:
 	
 	EdbEDATrackP *eParent;
+	EdbEDATrackP *ePartner;
 	TObjArray *eDaughters;
 	EdbVertex *ePrimaryVertex;
 	void AddTrack(EdbEDATrackP *t);
+	int type;
 	
 	public:
+	
+	enum TopologyType{ kShort, kLong};
+	
 	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent=NULL, EdbEDATrackP *daugter1=NULL, EdbEDATrackP *daugheter2=NULL, EdbEDATrackP *daughter3=NULL, EdbEDATrackP *daughter4=NULL, EdbEDATrackP *daughter5=NULL);
 	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, TObjArray *daughters);
 	EdbEDADecayVertex():ePrimaryVertex(NULL), eParent(NULL), eDaughters(NULL){};
@@ -135,10 +140,15 @@ class EdbEDADecayVertex : public EdbVertex {
 	void SetParent( EdbEDATrackP *parent);
 	void SetDaughter( EdbEDATrackP *daughter);
 	void SetDaughters( TObjArray *daughters);
+	void SetPartner( EdbEDATrackP *partner) { ePartner = partner;}
+	void SetPrimaryVertex( EdbVertex *v){ ePrimaryVertex = v;}
 	
-	EdbTrackP *GetParent() { return eParent->GetOriginal();}
+	EdbTrackP *GetParent() { return eParent?eParent->GetOriginal():NULL;}
 	EdbTrackP *GetDaughter(int i=0) { return eDaughters ? ((EdbEDATrackP *) eDaughters->At(i))->GetOriginal() : NULL;}
+	EdbTrackP *GetPartner() { return ePartner?ePartner->GetOriginal():NULL;}
 	int NDaughters(){ return eDaughters? eDaughters->GetEntries() : 0;}
+	EdbVertex *GetPrimaryVertex(){ return ePrimaryVertex;}
+	
 	
 	ClassDef(EdbEDADecayVertex, 0) // General decay vertex.
 	
@@ -328,6 +338,7 @@ class EdbEDADecaySearch{
 		}
 	virtual ~EdbEDADecaySearch(){}
 	
+	EdbVertex *GetPrimaryVertex(){ return eVertex;}
 	EdbVertex *FindPrimaryVertex();
 	void SetVertex (EdbVertex *v);
 
@@ -342,6 +353,8 @@ class EdbEDADecaySearch{
 
 	void SmallKinkSearch();
 	void KinkSearch();
+	float GetIPCut(EdbVertex *v, EdbSegP *s);
+	void ShortDecaySearch();
 
 	TObjArray * TSParentTracks   (TObjArray *base);
 	TObjArray * TSBaseTracks(int ipl);

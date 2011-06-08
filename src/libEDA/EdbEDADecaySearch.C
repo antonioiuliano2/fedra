@@ -10,7 +10,7 @@ ClassImp(EdbEDAFeedbackEntryT)
 
 void EdbEDATrackP::Print(){
 	printf("%6d %6d %4d %2d %2d %8.1lf %8.1lf %8.1lf %7.4lf %7.4lf ",
-		gEDA->GetBrick(), ID(), Flag(),  GetSegmentFirst()->Plate(), N(),
+		gEDA?gEDA->GetBrick():0, ID(), Flag(),  GetSegmentFirst()->Plate(), N(),
 		X(), Y(), Z(), TX(), TY());
 	printf("%2d %2d %2d %2d %6.1lf %4d ",
 		 SegmentFirst()->Plate(),
@@ -23,10 +23,10 @@ void EdbEDATrackP::Print(){
 }
 void EdbEDATrackP::SetFlagsAuto(){
 	// check if the track is a scanback track
-	EdbTrackP *tsb = gEDA->CheckScanback(this);
+	EdbTrackP *tsb = gEDA?gEDA->CheckScanback(this):NULL;
 	if(tsb) SetCSTrack(tsb->ID());
 
-	int idmuon     = gEDA->IdMuon();
+	int idmuon     = gEDA?gEDA->IdMuon():-1;
 	if (CSTrack()==idmuon&&idmuon!=-1) {
 		SetParticle(1); // 1: muon
 		printf("      Track: %d is muon\n", ID());
@@ -103,6 +103,7 @@ int EdbEDASmallKink::IPL1(){ return S1()->Plate();}
 int EdbEDASmallKink::IPL2(){ return S2()->Plate();}
 
 void EdbEDASmallKink::Draw(Option_t *option){
+	if(gEDA==NULL) return;
 	TEvePointSet *ps = new TEvePointSet();
 	ps->SetMarkerStyle(21);
 	ps->SetNextPoint(eS1->X(), eS1->Y(), eS1->Z()*gEDA->GetScaleZ());
@@ -139,6 +140,7 @@ void EdbEDADecaySearch::SmallKinkSearch(){
 		EdbEDATrackP *t = GetTrack(i);
 		TObjArray *kinks=CheckInTrackKink(t);
 		if(kinks->GetEntries()!=0) {
+			if(gEDA==NULL) continue;
 			EdbEDAPlotTab *p = gEDA->GetPlotTab();
 			if(p!=NULL) p->CheckKink(t);
 		}
@@ -166,7 +168,11 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 	
 	int vtxpl;
 	if(gEDA) vtxpl=gEDA->GetIPLZ(eVertex->Z());
-	else
+	else {
+		vtxpl=0; // TODO
+		printf("VERTEX plate is not set!!!!! \n");
+	}
+	
 	for(int i=0; i<ePVR->Npatterns(); i++){
 		EdbPattern *pat = ePVR->GetPattern(i);
 		if( eVertex->Z()<pat->Z()) {
@@ -213,7 +219,7 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 			// put the data in a struct.
 			EdbEDASmallKink *kink = new EdbEDASmallKink(v, t, s1, s2, dtt, dtl, dxt, dxl, ndau, p, pmin, pmax, Pt, rmst, rmsl);
 			
-			gEDA->AddVertex(v);
+			if(gEDA) gEDA->AddVertex(v);
 			kinks->Add(kink); // for this track
 			eKinks->Add(kink); // for all tracks.
 			
@@ -668,6 +674,7 @@ EdbVertex * EdbEDADecaySearch::FindPrimaryVertex(){
 	// vertices within 200 micron in Z.
 	
 	printf("TODO: FindPrimaryVertex... find real vertex, especially QE like kink event.\n");
+	printf("memo: currently mostly 2 track vertex is selected.");
 	printf("TODO: use SB info.\n");
 	printf("TODO: constraint for vertex Z < SB stop Z\n");
 	TObjArray *vertices = new TObjArray;
@@ -702,7 +709,7 @@ EdbVertex * EdbEDADecaySearch::FindPrimaryVertex(){
 }
 
 void EdbEDADecaySearch::KinkSearch(){
-	
+	printf("------------------------------\n");
 	printf("Kink search in selected tracks\n");
 	for(int i=0; i<Ntracks(); i++){
 		for(int j=0; j<Ntracks(); j++){
@@ -715,30 +722,219 @@ void EdbEDADecaySearch::KinkSearch(){
 			EdbSegP *s1 = t1->GetSegmentLast();
 			EdbSegP *s2 = t2->GetSegmentFirst();
 			
+			if(s1->Plate() >= s2->Plate()) continue;
 			// if last segment of t1 is upstream of first segment of t2.
-			if(s1->Plate() < s2->Plate()){
-				
-				TObjArray segs;
-				segs.Add(s1);
-				segs.Add(s2);
-				EdbVertex *v = EdbEDAUtil::CalcVertex(&segs);
-				float ip1 = EdbEDAUtil::CalcIP(s1, v);
-				float ip2 = EdbEDAUtil::CalcIP(s2, v);
-				
-				// cut with IP and Z. (Z should between 2 segments.)
-				if(ip1<20 && ip2<20 && s1->Z()<v->Z() && v->Z()<s2->Z()){
-					printf("Decay vertex t1 %d t2 %d ip1 %f ip2 %f\n", t1->ID(), t2->ID(), ip1, ip2);
-					EdbEDADecayVertex *dv = new EdbEDADecayVertex;
-					dv->SetXYZ( v->X(), v->Y(), v->Z());
-					dv->SetParent(t1);
-					dv->SetDaughter(t2);
-					printf("kink %d %f %f %f\n", dv->N(), dv->X(), dv->Y(), dv->Z());
-					eDecayVertices->Add(dv);
-				}
-				
-				delete v;
+			
+			// ignore kink angle < 20 mrad.
+			float kinkangle = sqrt((s1->TX()-s2->TX())*(s1->TX()-s2->TX())+(s1->TY()-s2->TY())*(s1->TY()-s2->TY()));
+			if( kinkangle<0.02) continue;
+			
+			// remove very low momentum
+			double rmss, rmst, rmsl;
+			DTRMSTL(t2, &rmss, &rmst, &rmsl);
+			if( rmst>0.015 && rmsl>0.015) continue;
+			
+			TObjArray segs;
+			segs.Add(s1);
+			segs.Add(s2);
+			EdbVertex *v = EdbEDAUtil::CalcVertex(&segs);
+			float ip1 = EdbEDAUtil::CalcIP(s1, v);
+			float ip2 = EdbEDAUtil::CalcIP(s2, v);
+			
+			// cut with IP and Z. (Z should between 2 segments.)
+			if(ip1<20 && ip2<20 && s1->Z()<v->Z() && v->Z()<s2->Z()){
+				printf("Decay vertex t1 %d t2 %d ip1 %f ip2 %f\n", t1->ID(), t2->ID(), ip1, ip2);
+				EdbEDADecayVertex *dv = new EdbEDADecayVertex;
+				dv->SetXYZ( v->X(), v->Y(), v->Z());
+				dv->SetParent(t1);
+				dv->SetDaughter(t2);
+				printf("kink found, %d %f %f %f\n", dv->N(), dv->X(), dv->Y(), dv->Z());
+				eDecayVertices->Add(dv);
+			}
+			
+			delete v;
+		}
+	}
+}
+
+float EdbEDADecaySearch::GetIPCut(EdbVertex *v, EdbSegP *s){
+	float dZ = fabs( s->Z()-v->Z());
+	return 5.0+0.01*dZ;
+}
+	
+	
+
+void EdbEDADecaySearch::ShortDecaySearch(){
+	printf(" --------------------------\n");
+	printf("// Short decay search    //\n");
+	printf("-------------------------- \n");
+	printf("Using tracks which start from vertex plate and Nseg>=3\n");
+	printf("TODO: Microtrack search!!\n");
+	
+	// select tracks in vertex plate
+	TObjArray tracks;
+	for(int i=0; i<Ntracks(); i++){
+		EdbEDATrackP *t = GetTrack(i);
+		EdbSegP *s1 = t->GetSegmentFirst();
+		
+		// Nseg cut
+		if(t->N()<=2) continue;
+		
+		// use only tracks which start from vertex plate.
+		if(s1->PID()!=eVertexPlatePID) continue;
+		
+		tracks.Add(t);
+	}
+	printf("Tracks selection for short decay : %d -> %d\n", Ntracks(), tracks.GetEntries());
+	
+	if(tracks.GetEntries()==0) return;
+	
+	// Calculate vertex with all tracks.  First time.
+	TObjArray segs;
+	for(int i=0; i<tracks.GetEntries(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
+	EdbVertex *v = CalcVertex(&segs);
+	float ipcut = GetIPCut(v, (EdbSegP *)segs.At(0));
+	printf("Vertex with all tracks: %.1f %.1f %.1f\n", v->X(), v->Y(), v->Z());
+	printf("dZ=%.1f microns -> IP cut %.1f\n", ((EdbSegP *)segs.At(0))->Z()-v->Z(), ipcut);
+	
+	int flag=0;
+	// check if short decay candidate exists or not.
+	
+	if(tracks.GetEntries()==2){ // 2 track case.
+		EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(0);
+		EdbSegP *s1 = t1->GetSegmentFirst();
+		EdbEDATrackP *t2 = (EdbEDATrackP *) tracks.At(1);
+		EdbSegP *s2 = t2->GetSegmentFirst();
+		float ip = CalcDmin(s1,s2);
+		printf("track %5d x track %5d, dmin %4.1f %s\n", t1->ID(), t2->ID(), ip, ip>ipcut?">ipcut":"");
+		if(ip>ipcut) flag=2;
+	}
+	else { // more tracks case
+		float ipmean=0.0;
+		for(int i=0; i<tracks.GetEntries(); i++){
+			EdbEDATrackP *t = (EdbEDATrackP *) tracks.At(i);
+			EdbSegP *s = t->GetSegmentFirst();
+			float ip = CalcIP( s, v);
+			
+			printf("track %5d (%7.4f, %7.4f) ip %4.1f %s\n", t->ID(), t->TX(), t->TY(), ip, ip>ipcut?">ipcut":"");
+			ipmean +=ip;
+			if(ip>ipcut) flag++;
+		}
+		ipmean /= tracks.GetEntries();
+		printf("IP mean %.1lf microns with %d tracks\n", ipmean, tracks.GetEntries());
+	}
+	if(flag==0) {
+		printf("No short decay. stop.\n");
+		return;
+	}
+	printf("%d short decay candidates\n", flag);
+	
+	printf("Vertex refinement by removing one or more tracks.\n");
+	
+	while(flag&&tracks.GetEntries()!=2){
+		// loop to make vertex removing one track.
+		int imax=-1;
+		float ipmax = 0;
+		for(int i=0; i<tracks.GetEntries(); i++){
+			EdbEDATrackP *t = (EdbEDATrackP *) tracks.At(i);
+			EdbSegP *s = t->GetSegmentFirst();
+			
+			TObjArray segs2 = segs;
+			segs2.Remove( s);
+			segs2.Sort();
+			
+			EdbVertex *v2 = CalcVertex(&segs2);
+			float ip = CalcIP(s, v2);
+			
+			if(ip>ipmax) {
+				imax=i;
+				ipmax=ip;
 			}
 		}
+		
+		// if ipmax>ipcut.
+		if(ipmax>ipcut) {
+			EdbEDATrackP *tsd = (EdbEDATrackP *) tracks.At(imax);
+			
+			// Calculate new vertex position.
+			tracks.Remove(tsd);
+			tracks.Sort();
+			segs.Clear();
+			for(int i=0; i<tracks.GetEntries(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
+			EdbVertex *v2 = CalcVertex(&segs);
+			
+			// Set as Primary vertex.
+			eVertex = v2;
+			
+			// remove very low momentum
+			double rmss, rmst, rmsl;
+			DTRMSTL(tsd, &rmss, &rmst, &rmsl);
+			if( rmst>0.015 && rmsl>0.015) continue;
+			
+			// Make Short Decay vertex
+			EdbVertex *vsd = MakeFakeVertex( tsd, -150);
+			EdbEDADecayVertex *vdecay = new EdbEDADecayVertex;
+			vdecay->SetXYZ( vsd->X(), vsd->Y(), vsd->Z());
+			vdecay->SetPrimaryVertex(v2);
+			vdecay->SetDaughter( tsd);
+			eDecayVertices->Add(vdecay);
+			
+			
+			printf("Short decay of track %d is found. ip = %5.1f.  \n", tsd->ID(), ipmax);
+			
+			// Check if no other tracks has ip>ipcut
+			flag=0;
+			if(tracks.GetEntries()==2){
+				EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(0);
+				EdbSegP *s1 = t1->GetSegmentFirst();
+				EdbEDATrackP *t2 = (EdbEDATrackP *) tracks.At(1);
+				EdbSegP *s2 = t2->GetSegmentFirst();
+				float ip = CalcDmin(s1,s2);
+				printf("track %5d x track %5d, dmin %4.1f %s\n", t1->ID(), t2->ID(), ip, ip>ipcut?">ipcut":"");
+				if(ip>ipcut) flag=2;
+			}
+			else {
+				float ipmean=0.0;
+				for(int i=0; i<segs.GetEntries(); i++){
+					EdbSegP *s = (EdbSegP *) segs.At(i);
+					float ip = CalcIP(s, v2);
+					if(ip>ipcut) flag++;
+					ipmean += ip;
+				}
+				ipmean /= segs.GetEntries();
+				printf("IP mean %.1lf microns with %d tracks, removing track %d\n",  ipmean, tracks.GetEntries(), tsd->ID());
+			}
+		} else flag=0;
+		
+	}
+	
+	
+	if( flag && tracks.GetEntries()==2){
+		// Short decay with only 1 partner track. (without vertex)
+		for(int i=0; i<2; i++){
+			EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(i);
+			EdbSegP *s1 = t1->GetSegmentFirst();
+			EdbEDATrackP *t2 = (EdbEDATrackP *) tracks.At(!i);
+			EdbSegP *s2 = t2->GetSegmentFirst();
+			
+			// remove very low momentum
+			double rmss, rmst, rmsl;
+			DTRMSTL(t1, &rmss, &rmst, &rmsl);
+			if( rmst>0.015 && rmsl>0.015) continue;
+			
+			EdbVertex *vsd = MakeFakeVertex( t1, -150);
+			EdbEDADecayVertex *vdecay = new EdbEDADecayVertex;
+			vdecay->SetXYZ( vsd->X(), vsd->Y(), vsd->Z());
+			vdecay->SetDaughter( t1);
+			vdecay->SetPartner( t2);
+			eDecayVertices->Add(vdecay);
+			
+		}
+	}
+	
+	for(int i=0; i<NDecayVertices(); i++){
+		EdbEDADecayVertex *v = GetDecayVertex(i);
+		if(v->GetPrimaryVertex()) v->SetPrimaryVertex(eVertex);
 	}
 }
 
