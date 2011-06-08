@@ -30,6 +30,7 @@ public:
    Int_t       ReadVolume(ULong64_t id_volume, EdbPatternsVolume &vol, Int_t min_pl, Int_t max_pl);
 
    void        PrintBrickInfo(Long_t id_eventbrick, int level );
+   void        PrintBrickInfoFull(Long_t id_eventbrick, int level );
 
    Int_t       GetProcessOperationID(char *id_eventbrick, char *id_programsettings, char *id);
    Int_t       GetProcessOperationID(char *id_eventbrick, char *id_parent_operation, char *id_programsettings, char *id_plate, char *id);
