@@ -39,7 +39,7 @@
 // TODO....//======================================================================
 
 # 18052011
-* EdbShowRec::FileExists() doenst compile using the 
+* EdbShowRec::FileExists() doesnt compile using the 
 * intStat = stat(strFilename.c_str(),&stFileInfo);
 * line, instead, if we use std::ifstream LogFile(strFilename.c_str());
 * it compiles. First test seems to work.
