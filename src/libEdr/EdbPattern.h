@@ -355,8 +355,8 @@ class EdbPatternsVolume : public TObject {
   void         AddPatternAt( EdbPattern *pat, int id );
   EdbPattern  *GetPattern( int id ) const;
   EdbPattern  *GetPatternZLowestHighest(Bool_t lowestZ=kTRUE) const;
-  EdbPattern  *GetPatternZLowest() const;
-  EdbPattern  *GetPatternZHighest() const;
+  //  EdbPattern  *GetPatternZLowest() const;
+  //  EdbPattern  *GetPatternZHighest() const;
   
 
   EdbPattern  *NextPattern(float z, int dir) const;
