@@ -121,20 +121,19 @@ class EdbEDADecayVertex : public EdbVertex {
 	
 	private:
 	
+	EdbVertex *ePrimaryVertex;
 	EdbEDATrackP *eParent;
 	EdbEDATrackP *ePartner;
 	TObjArray *eDaughters;
-	EdbVertex *ePrimaryVertex;
 	void AddTrack(EdbEDATrackP *t);
-	int type;
+	int eType;
 	
 	public:
-	
-	enum TopologyType{ kShort, kLong};
-	
+	enum TopologyType{ kShort=0x01, kLong = 0x02, kSmallKink = 0x04};
+		
 	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent=NULL, EdbEDATrackP *daugter1=NULL, EdbEDATrackP *daugheter2=NULL, EdbEDATrackP *daughter3=NULL, EdbEDATrackP *daughter4=NULL, EdbEDATrackP *daughter5=NULL);
 	EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, TObjArray *daughters);
-	EdbEDADecayVertex():ePrimaryVertex(NULL), eParent(NULL), eDaughters(NULL){};
+	EdbEDADecayVertex():ePrimaryVertex(NULL), eParent(NULL), eDaughters(NULL), eType(0) {};
 	~EdbEDADecayVertex();
 	
 	void SetParent( EdbEDATrackP *parent);
@@ -149,7 +148,12 @@ class EdbEDADecayVertex : public EdbVertex {
 	int NDaughters(){ return eDaughters? eDaughters->GetEntries() : 0;}
 	EdbVertex *GetPrimaryVertex(){ return ePrimaryVertex;}
 	
-	
+	void SetType(int type) { eType=type;}
+	int Type(){ return eType;}
+	bool IsType( int type) { return type&eType? kTRUE:kFALSE;}
+	bool IsShort() { return IsType(kShort);}
+	bool IsLong() { return IsType(kLong);}
+	bool IsSmallKink() { return IsType(kSmallKink);}
 	ClassDef(EdbEDADecayVertex, 0) // General decay vertex.
 	
 };
@@ -240,7 +244,7 @@ class EdbEDADecaySearch{
 	
 	int    eSmallKink;  // Small-Kink search
 	int    eSmallKinkNpl;
-	int    eSmallKinkRthreshold;
+	float  eSmallKinkRmin;
 	
 	
 	int    eTSPar;      // Parent track search
@@ -286,7 +290,7 @@ class EdbEDADecaySearch{
 		
 		eSmallKink    (0),
 		eSmallKinkNpl (5),
-		eSmallKinkRthreshold(3),
+		eSmallKinkRmin(5.),
 		
 		eTSPar     (0),
 		eTSParPlate(2),
@@ -313,6 +317,7 @@ class EdbEDADecaySearch{
 			float ipcutdau_lt_1 = eDSVer==1 ? 500 : 300;
 			float ipcutdau_gt_1 = eDSVer==1 ? 800 : 500;
 			
+			if(gDirectory->Get("eTSDauIPHist1")) gDirectory->Delete("eTSDauIPHist1");
 			eTSDauIPHist1 = new TH1F ("eTSDauIPHist1","IP cut function along dZ, 1st.", 121, -100, 12000);
 			// Fill function
 			TH1F *h = eTSDauIPHist1;
@@ -324,6 +329,7 @@ class EdbEDADecaySearch{
 				else if(1000<=h->GetBinLowEdge(i)&&h->GetBinLowEdge(i)<11700) h->SetBinContent(i, ipcutdau_gt_1);
 				else if(11700<=h->GetBinLowEdge(i)) h->SetBinContent(i,0);
 			}
+			if(gDirectory->Get("eTSDauIPHist1")) gDirectory->Delete("eTSDauIPHist2");
 			eTSDauIPHist2 = new TH1F ("eTSDauIPHist2","IP cut function along dZ, 2nd", 121, -100, 12000);
 			// Fill function
 			h = eTSDauIPHist2;
@@ -400,8 +406,10 @@ class EdbEDADecaySearch{
 	
 	void SetBTSearch( int do_search=1, int npl_up=0, int npl_down=2, float ipcut=20, float phcut=17){
 		eBT = do_search; eBTPlateUp = npl_up; eBTPlateDown = npl_down; eBTIP = ipcut; eBTPH = phcut;}
-	void SetParentSearch( int do_search=1, int npl_down=2, float ipcut=20, float phcut=17){
-		eTSPar = do_search; eTSParPlate = npl_down; eTSParIP = ipcut; eTSParPH = phcut;}
+	void SetParentSearch( int do_search=1, int npl=2, float ipcut=20, float phcut=17){
+		eTSPar = do_search; eTSParPlate = npl; eTSParIP = ipcut; eTSParPH = phcut;}
+	void SetSmallKinkSearch( int do_search=1, int npl_down=5, float Rmin=5.){
+		eSmallKink = do_search; eSmallKinkNpl = npl_down; eSmallKinkRmin = Rmin;}
 	
 	//void MicroTrackSearch(EdbSegP *s, int ipl); 
 	// moved to TrackSet.
@@ -429,7 +437,7 @@ class EdbEDADecaySearchTab: public EdbEDADecaySearch{
 
 	TGCheckButton *fSmallKink;
 	TGNumberEntry *fSmallKinkNpl;
-	TGNumberEntry *fSmallKinkRthreshold;
+	TGNumberEntry *fSmallKinkRmin;
 	
 
 	TGCheckButton *fTSPar;

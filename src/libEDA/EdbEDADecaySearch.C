@@ -7,6 +7,7 @@ ClassImp(EdbEDADecaySearch)
 ClassImp(EdbEDADecaySearchTab)
 ClassImp(EdbEDAFeedbackEditor)
 ClassImp(EdbEDAFeedbackEntryT)
+ClassImp(EdbEDADecayVertex)
 
 void EdbEDATrackP::Print(){
 	printf("%6d %6d %4d %2d %2d %8.1lf %8.1lf %8.1lf %7.4lf %7.4lf ",
@@ -36,7 +37,7 @@ void EdbEDATrackP::SetFlagsAuto(){
 	SetP(p,pmin,pmax);
 }
 
-ClassImp(EdbEDADecayVertex)
+
 
 EdbEDADecayVertex::EdbEDADecayVertex(EdbVertex *v2ry, EdbVertex *v1ry, EdbEDATrackP *parent, EdbEDATrackP *daughter1, EdbEDATrackP *daughter2, EdbEDATrackP *daughter3, EdbEDATrackP *daughter4, EdbEDATrackP *daughter5){
 	
@@ -185,10 +186,10 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 	for(int j=0;j<n-1;j++){
 		EdbSegP *s1 = t->GetSegment(j);
 		EdbSegP *s2 = t->GetSegment(j+1);
-
+		
 		// if s1 is more downstream than 5 plates from vertex, skip. search only kink between 1-x,2-x,3-x,4-x.
-		if(s1->Plate()>vtxpl+3) continue;
-
+		if(s1->Plate()>vtxpl+eSmallKinkNpl) continue;
+		
 		// calculate kink angle in transverse and longitudinal projection.
 		double dtt, dtl;
 		CalcDTTransLongi(s1,s2, &dtt, &dtl);
@@ -198,9 +199,9 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 		double dxt, dxl;
 		CalcDXTransLongi(t->GetSegmentFirst(),s2, &dxt, &dxl);
 		
-		if( fabs(dtt)>rmst*3 || fabs(dtl)>rmsl*3 ) {
+		if( fabs(dtt)>rmst*eSmallKinkRmin || fabs(dtl)>rmsl*eSmallKinkRmin ) {
 			// if there is kink.
-			// if kink angle is bigger than 3 times delta-theta rms in one of the 2 projection.
+			// if kink angle is bigger than 5 times delta-theta rms in one of the 2 projection.
 
 			// momentum calculation using downstream from s2.
 			double p,pmin,pmax;
@@ -222,6 +223,29 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 			if(gEDA) gEDA->AddVertex(v);
 			kinks->Add(kink); // for this track
 			eKinks->Add(kink); // for all tracks.
+			
+			{
+				// Make Decay vertex
+				// this is a temporary solution.
+				EdbEDADecayVertex *vdecay = new EdbEDADecayVertex;
+				vdecay->SetXYZ( v->X(), v->Y(), v->Z());
+				vdecay->SetPrimaryVertex(eVertex);
+				
+				EdbTrackP *tp = new EdbTrackP(*t);
+				tp->Clear();
+				for(int i=0; i<=j; i++) tp->AddSegment( t->GetSegment(i));
+				tp->SetCounters();
+				vdecay->SetParent( new EdbEDATrackP(tp, eVertex));
+				
+				EdbTrackP *td = new EdbTrackP(*t);
+				td->Clear();
+				for(int i=j+1; i<t->N(); i++) td->AddSegment( t->GetSegment(i));
+				td->SetCounters();
+				vdecay->SetDaughter( new EdbEDATrackP(td, eVertex));
+				vdecay->SetType( EdbEDADecayVertex::kSmallKink | EdbEDADecayVertex::kLong);
+				eDecayVertices->Add(vdecay);
+			}
+			
 			
 			printf("Kink candidate. itrk %d plate %d - %d kink angle %.4lf P %.3lf Pt %.3lf ", 
 				t->ID(), s1->PID(), s2->PID(), dt, p, Pt);
@@ -742,12 +766,13 @@ void EdbEDADecaySearch::KinkSearch(){
 			float ip2 = EdbEDAUtil::CalcIP(s2, v);
 			
 			// cut with IP and Z. (Z should between 2 segments.)
-			if(ip1<20 && ip2<20 && s1->Z()<v->Z() && v->Z()<s2->Z()){
+			if(ip1<20 && ip2<20 && s1->Z()-500<v->Z() && v->Z()<s2->Z()+500){
 				printf("Decay vertex t1 %d t2 %d ip1 %f ip2 %f\n", t1->ID(), t2->ID(), ip1, ip2);
 				EdbEDADecayVertex *dv = new EdbEDADecayVertex;
 				dv->SetXYZ( v->X(), v->Y(), v->Z());
 				dv->SetParent(t1);
 				dv->SetDaughter(t2);
+				dv->SetType( EdbEDADecayVertex::kLong);
 				printf("kink found, %d %f %f %f\n", dv->N(), dv->X(), dv->Y(), dv->Z());
 				eDecayVertices->Add(dv);
 			}
@@ -758,7 +783,12 @@ void EdbEDADecaySearch::KinkSearch(){
 }
 
 float EdbEDADecaySearch::GetIPCut(EdbVertex *v, EdbSegP *s){
-	float dZ = fabs( s->Z()-v->Z());
+	// calculate IP cut for given 1ry vertex and segment.
+	// if segment is BT, Z of segment is assumed Z=s->Z()-150;
+	// otherwise, use s->Z();
+	
+	float Z = s->Side()==0? s->Z()-150 : s->Z();
+	float dZ = fabs( Z-v->Z());
 	return 5.0+0.01*dZ;
 }
 	
@@ -877,6 +907,8 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			vdecay->SetXYZ( vsd->X(), vsd->Y(), vsd->Z());
 			vdecay->SetPrimaryVertex(v2);
 			vdecay->SetDaughter( tsd);
+			vdecay->SetType( EdbEDADecayVertex::kShort);
+
 			eDecayVertices->Add(vdecay);
 			
 			
@@ -927,6 +959,7 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			vdecay->SetXYZ( vsd->X(), vsd->Y(), vsd->Z());
 			vdecay->SetDaughter( t1);
 			vdecay->SetPartner( t2);
+			vdecay->SetType(EdbEDADecayVertex::kShort);
 			eDecayVertices->Add(vdecay);
 			
 		}
