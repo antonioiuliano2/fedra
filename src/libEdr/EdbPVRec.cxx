@@ -2823,6 +2823,7 @@ EdbSegP *EdbPVRec::AddSegment(EdbSegP &s)
     p = new EdbPattern( 0., 0., s.Z() );
     p->SetID(s.PID());
     p->SetScanID( s.ScanID() );
+    p->SetSide( s.Side() );
     InsertPattern(p, eDescendingZ);
   }
   return p->AddSegment(s);
