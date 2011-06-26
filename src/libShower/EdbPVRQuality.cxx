@@ -255,7 +255,7 @@ void EdbPVRQuality::CheckEdbPVRec()
             // by the user!
             // Therefore (s)he needs to know how many Gauge Coupling Parameters
             // in the Standard Model exist (at least)...
-            Bool_t result=kFALSE;
+            Bool_t result=kTRUE;
             if (seg->MCEvt()>0) {
                 if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                     result = kTRUE;
@@ -575,7 +575,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                Bool_t result=kFALSE;
+                Bool_t result=kTRUE;
                 if (seg->MCEvt()>0) {
                     if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                         result = kTRUE;
@@ -589,7 +589,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
-                if ( result == kTRUE ) continue;
+                if ( kFALSE == result ) continue;
                 // Constant BT density cut:
                 if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
 
@@ -823,7 +823,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                Bool_t result=kFALSE;
+                Bool_t result=kTRUE;
                 if (seg->MCEvt()>0) {
                     if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                         result = kTRUE;
@@ -837,7 +837,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
-                if ( result == kTRUE ) continue;
+                if ( kFALSE == result ) continue;
 
                 // Change here to the quality with values obtained from the tracks.
                 // Constant BT quality cut:
