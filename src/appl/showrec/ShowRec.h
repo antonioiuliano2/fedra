@@ -23,7 +23,7 @@ Int_t cmd_FZHP=0;
 Int_t cmd_ALI=0;  // 0 gAli from cp, 1: gALI from Linkd_tracks
 Int_t cmd_MCMIX=0;
 Int_t cmd_vtx=0;
-Int_t cmd_CLEAN=0;
+Int_t cmd_CLEAN=0;  // clean gAli Object with tighter Quality Cuts!
 Int_t cmd_FILETP=0; // addition variable to distinguis different treebranches...
 
 char *cmd_lnkdef_name = "lnk.def";
@@ -132,7 +132,7 @@ void ReconstructShowers_TC(); // ALTP=6
 void ReconstructShowers_RC(); // ALTP=7
 void ReconstructShowers_BW(); // ALTP=8 BackWard Algorithm
 void ReconstructShowers_AG(); // ALTP=9 Advanced Gamm Algorithm
-
+void ReconstructShowers_GS(); // ALTP=10 Gamma Search Algorithm (equal to the one in libShowRec)
 void ReconstructShowers_OPENMP();  /// DEBUG OPENMP TEST!!!!!!!
 void ReconstructShowers_OPENMP_TEST(EdbSegP* InBT, TObjArray array);  /// DEBUG OPENMP TEST!!!!!!!
 // -------------------------------

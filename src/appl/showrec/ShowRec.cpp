@@ -31,16 +31,17 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  (only for naming the output file)\n";
         cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
         cout << "---      \t\t :	 -ALTP		AlgorythmType  \n";
-        cout << "---      \t\t\t :	 0:		ReconstructShowers_?  (?).. \n";
+        cout << "---      \t\t\t :	 0:		ReconstructShowers_?  (CT ?).. \n";
         cout << "---      \t\t\t :	 2:		ReconstructShowers_CA  \n";
         cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT FINISHED YET, EXPERIMENTAL)\n";
         cout << "---      \t\t\t :	 3:		ReconstructShowers_NN  \n";
         cout << "---      \t\t\t :	 4:		ReconstructShowers_OI  \n";
-        cout << "---      \t\t\t :	 4:		ReconstructShowers_SA  (MC Events only)\n";
+        cout << "---      \t\t\t :	 5:		ReconstructShowers_SA  (MC Events only)\n";
         cout << "---      \t\t\t :	 6:		ReconstructShowers_TC  \n";
         cout << "---      \t\t\t :	 7:		ReconstructShowers_RC  \n";
         cout << "---      \t\t\t :	 8:		ReconstructShowers_BW  (EXPERIMENTAL, BEST PARAMETERS STILL TO BE SEARCHED)\n";
         cout << "---      \t\t\t :	 9:		ReconstructShowers_AG  (EXPERIMENTAL, BEST PARAMETERS STILL TO BE SEARCHED)\n";
+        cout << "---      \t\t\t :	 10:		ReconstructShowers_GS  (same Implementation as in libShowRec-----NOT FINISHED YET)\n";
 
         cout << "---      \t\t :	 -PASTART	ParametersetStart  \n";
         cout << "---      \t\t :	 -PAEND		ParameterSetEnd  \n";
@@ -317,19 +318,7 @@ int main(int argc, char *argv[])
 
 
 
-
-
-
-
-
-
-
-
-
-
 //-------------------------------------------------------------------------------------------
-
-
 
 void SetDefaultValues_CommandLine() {
 
@@ -454,8 +443,6 @@ void CreateOutPutStructures() {
 //-------------------------------------------------------------------------------------------
 
 
-
-
 EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory()
 {
     Log(2, "ShowRec.cpp", "--- EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory() ---");
@@ -513,8 +500,6 @@ EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory()
     return gAli;
 }
 
-
-
 //-------------------------------------------------------------------------------------------
 
 
@@ -536,7 +521,6 @@ Int_t Check_ParasetDefinitionFile()
 
 //-------------------------------------------------------------------------------------------
 
-
 Int_t Open_ParasetDefinitionFile()
 {
     Log(2, "ShowRec.cpp", "--- Int_t Open_ParasetDefinitionFile() ---");
@@ -554,7 +538,6 @@ Int_t Open_ParasetDefinitionFile()
 
 //-------------------------------------------------------------------------------------------
 
-
 void Read_ParasetDefinitionTree()
 {
     Log(2, "ShowRec.cpp", "--- Int_t Read_ParasetDefinitionTree() ---");
@@ -570,6 +553,14 @@ void Read_ParasetDefinitionTree()
     Double_t distMin_dt_max;
     Double_t cut_back_dmin,cut_for_dmin,cut_back_dtheta,cut_for_dtheta,cut_back_dr,cut_for_dr,cut_back_dz,cut_for_dz;
 
+    // ALTP 10:  GS from libShowRec
+    Double_t cut_gs_cut_dip=150;
+    Double_t cut_gs_cut_dmin=40;
+    Double_t cut_gs_cut_dr=60;
+    Double_t cut_gs_cut_dz=19000;
+    Double_t cut_gs_cut_dtheta=0.06;
+    Double_t cut_gs_cut_piddiff=1;
+    Int_t cut_gs_cut_oppositeflag=0;
 
     // Create on Tree if its not there and fill it with one entry:
     if (TREE_ParaSetDefinitions==0 && (cmd_ALTP==0 || cmd_ALTP==2 || cmd_ALTP==4)) {
@@ -746,6 +737,30 @@ void Read_ParasetDefinitionTree()
     }
 
 
+
+    if (TREE_ParaSetDefinitions==0 && cmd_ALTP==10) {
+        TREE_ParaSetDefinitions = new TTree("ParaSet_Variables","ParaSet_Variables");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DIP",&cut_gs_cut_dip,"CUT_GS_CUT_DIP/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DMIN",&cut_gs_cut_dmin,"CUT_GS_CUT_DMIN/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DR",&cut_gs_cut_dr,"CUT_GS_CUT_DR/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DZ",&cut_gs_cut_dz,"CUT_GS_CUT_DZ/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DTHETA",&cut_gs_cut_dtheta,"CUT_GS_CUT_DTHETA/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_PIDDIFF",&cut_gs_cut_piddiff,"CUT_GS_CUT_PIDDIFF/D");
+        TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_OPPOSITEFLAG",&cut_gs_cut_oppositeflag,"CUT_GS_CUT_OPPOSITEFLAG/I");
+        cut_gs_cut_dip=150;
+        cut_gs_cut_dmin=40;
+        cut_gs_cut_dr=60;
+        cut_gs_cut_dz=19000;
+        cut_gs_cut_dtheta=0.06;
+        cut_gs_cut_piddiff=1;
+        cut_gs_cut_oppositeflag=0;
+        TREE_ParaSetDefinitions -> Fill();
+        TREE_ParaSetDefinitions -> Show(TREE_ParaSetDefinitions -> GetEntries()-1);
+        TREE_ParaSetDefinitions->Print();
+    }
+
+
+
     if 				(cmd_ALTP==0) {
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_R_MAX",&tubedist);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_ANGLE_MAX",&coneangle);
@@ -803,6 +818,15 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_FOR_DZ",&cut_for_dz);
     }
 
+    else if (cmd_ALTP==10) {
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DIP",&cut_gs_cut_dip);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DMIN",&cut_gs_cut_dmin);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DR",&cut_gs_cut_dr);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DZ",&cut_gs_cut_dz);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DTHETA",&cut_gs_cut_dtheta);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_PIDDIFF",&cut_gs_cut_piddiff);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_OPPOSITEFLAG",&cut_gs_cut_oppositeflag);
+    }
 
     // Check: if PASTART is given (a number),  but PAEND is default, then set
     // PAEND to PASTART
@@ -813,10 +837,7 @@ void Read_ParasetDefinitionTree()
     return;
 }
 
-
 //-------------------------------------------------------------------------------------------
-
-
 
 void FillGlobalInBTArray()
 {
@@ -1319,8 +1340,6 @@ void FillGlobalInBTArray()
     return;
 }
 
-
-
 //-------------------------------------------------------------------------------------------
 void GetEvent_ParasetDefinitionTree(Int_t nr)
 {
@@ -1334,6 +1353,14 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
     Int_t tracksegs_max;
     Double_t distMin_dt_max;
     Double_t cut_back_dmin,cut_for_dmin,cut_back_dtheta,cut_for_dtheta,cut_back_dr,cut_for_dr,cut_back_dz,cut_for_dz;
+    // ALTP 10:  GS from libShowRec
+    Double_t cut_gs_cut_dip=150;
+    Double_t cut_gs_cut_dmin=40;
+    Double_t cut_gs_cut_dr=60;
+    Double_t cut_gs_cut_dz=19000;
+    Double_t cut_gs_cut_dtheta=0.06;
+    Double_t cut_gs_cut_piddiff=1;
+    Int_t cut_gs_cut_oppositeflag=0;
 
     if 				(cmd_ALTP==0) {
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_R_MAX",&tubedist);
@@ -1524,20 +1551,44 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         CUT_PARAMETER[7]=cut_for_dz;
     }
 
+    else if   (cmd_ALTP==10) {
+        cout << "--- Got TREE_ParaSetDefinitions->GetEntry(0)   cmd_ALTP==10 "<<endl;
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DIP",&cut_gs_cut_dip);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DMIN",&cut_gs_cut_dmin);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DR",&cut_gs_cut_dr);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DZ",&cut_gs_cut_dz);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_DTHETA",&cut_gs_cut_dtheta);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_PIDDIFF",&cut_gs_cut_piddiff);
+        TREE_ParaSetDefinitions -> SetBranchAddress("CUT_GS_CUT_OPPOSITEFLAG",&cut_gs_cut_oppositeflag);
+
+        TREE_ParaSetDefinitions->GetEntry(nr);
+        if (nr==-1)  {
+            TREE_ParaSetDefinitions->GetEntry(0);
+            if (gEDBDEBUGLEVEL>2) cout << "--- Got TREE_ParaSetDefinitions->GetEntry(0) instead of -1 due to no given PARAMETERSET_DEFINITIONFILE.root file."<<endl;
+        }
+        for (int i=0; i<10; i++ ) {
+            CUT_PARAMETER[i]=0.0;
+        }
+        TREE_ParaSetDefinitions->Show(nr);
+        CUT_PARAMETER[0]=cut_gs_cut_dip;
+        CUT_PARAMETER[1]=cut_gs_cut_dmin;
+        CUT_PARAMETER[2]=cut_gs_cut_dr;
+        CUT_PARAMETER[3]=cut_gs_cut_dz;
+        CUT_PARAMETER[4]=cut_gs_cut_dtheta;
+        CUT_PARAMETER[5]=cut_gs_cut_piddiff;
+        CUT_PARAMETER[6]=cut_gs_cut_oppositeflag;
+    }
+
 
     if (gEDBDEBUGLEVEL>3) { } ;
     if (TREE_ParaSetDefinitions)TREE_ParaSetDefinitions->Show(nr);
-    cout << "--- CUT_PARAMETER 0 1 2 3 4: " << CUT_PARAMETER[0] <<"  "<<CUT_PARAMETER[1]<<"  "<< CUT_PARAMETER[2] <<"  "<< CUT_PARAMETER[3] <<"  "<< CUT_PARAMETER[4] <<endl;
-    cout << "--- CUT_PARAMETER 4 5 6: " << CUT_PARAMETER[4] <<"  "<<CUT_PARAMETER[5]<<"  "<< CUT_PARAMETER[6]<< endl;
+    cout << "--- CUT_PARAMETER 0 1 2 3: " << CUT_PARAMETER[0] <<"  "<<CUT_PARAMETER[1]<<"  "<< CUT_PARAMETER[2] <<"  "<< CUT_PARAMETER[3] <<endl;
+    cout << "--- CUT_PARAMETER 4 5 6 7: " << CUT_PARAMETER[4] <<"  "<<CUT_PARAMETER[5]<<"  "<< CUT_PARAMETER[6]<< "  "<< CUT_PARAMETER[7]<<"  "<<endl;
 
 
     return;
 }
 //-------------------------------------------------------------------------------------------
-
-
-
-
 
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers(Int_t nr)
@@ -1595,6 +1646,10 @@ void ReconstructShowers(Int_t nr)
         cout << "ReconstructShowers::   cmd_ALTP==9   ReconstructShowers_AG()   Reconstruction of ParameterSet: "<< nr <<endl;
         ReconstructShowers_AG();
     }
+    else if   (cmd_ALTP==10) {
+        cout << "ReconstructShowers::   cmd_ALTP==10   ReconstructShowers_GS()   Reconstruction of ParameterSet: "<< nr <<endl;
+        ReconstructShowers_GS();
+    }
 
     else if   (cmd_ALTP==999) {
         cout << "ReconstructShowers::   cmd_ALTP==9999  OpenMP TEST!!!!!"<<endl;
@@ -1633,16 +1688,6 @@ void ReconstructShowers(Int_t nr)
     return;
 }
 //-------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1760,7 +1805,7 @@ void ReconstructShowers_CL()
     Float_t BOXSIZE=50;
     Float_t ClusterBoxSizeX=BOXSIZE;
     Float_t ClusterBoxSizeY=ClusterBoxSizeX;
-    Float_t ClusterBoxSize[]={ClusterBoxSizeX,ClusterBoxSizeY};
+    Float_t ClusterBoxSize[]= {ClusterBoxSizeX,ClusterBoxSizeY};
 
     // Set GLOBAL Boundaries of the BrickSize, depends on your MC Simulation and on your scanned BG size
     // Later we will set the frame size, which can be f.e. 1mmX1mm, 3mmX3mm ...
@@ -2302,12 +2347,6 @@ void ReconstructShowers_OPENMP_TEST(EdbSegP* InBT, TObjArray array) {
 
 
 
-
-
-
-
-
-
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_CT()
 {
@@ -2676,11 +2715,7 @@ void ReconstructShowers_CA()
 //-------------------------------------------------------------------------------------------
 
 
-
-
 /// void ReconstructShowers_CL()  /// Still Missing in the Implementation !!!
-
-
 
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_OI()
@@ -2761,10 +2796,10 @@ void ReconstructShowers_OI()
 
         /*
         //-----------------------------------
-        // 1) BG Clean of local_gAli
+                // 1) BG Clean of local_gAli
         // that maybe not necessary always , only for the large
         // MC pasted Backgrounds...
-        //-----------------------------------
+                //-----------------------------------
         Float_t BGTargetDensity=0;
         // 		cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
         if (cmd_CLEAN==1) BGTargetDensity=20;
@@ -2774,10 +2809,10 @@ void ReconstructShowers_OI()
         if (cmd_CLEAN==0) BGTargetDensity=1000;
 
         EdbPVRQuality* localPVRQualCheck = new EdbPVRQuality(local_gAli,BGTargetDensity);
-         EdbPVRec* new_local_gAli;
-         new_local_gAli = localPVRQualCheck->GetEdbPVRec(1);
-         localPVRQualCheck->Print();
-         local_gAli=new_local_gAli;
+        EdbPVRec* new_local_gAli;
+        new_local_gAli = localPVRQualCheck->GetEdbPVRec(1);
+        localPVRQualCheck->Print();
+        local_gAli=new_local_gAli;
         */
 
 // 				InBT->PrintNice();
@@ -2889,8 +2924,6 @@ void ReconstructShowers_OI()
     return;
 }
 //-------------------------------------------------------------------------------------------
-
-
 
 
 //-------------------------------------------------------------------------------------------
@@ -3074,7 +3107,6 @@ void ReconstructShowers_SA()
 //-------------------------------------------------------------------------------------------
 
 
-
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_OI2()
 {
@@ -3083,8 +3115,6 @@ void ReconstructShowers_OI2()
     return;
 }
 //-------------------------------------------------------------------------------------------
-
-
 
 
 //-------------------------------------------------------------------------------------------
@@ -3875,7 +3905,6 @@ void ReconstructShowers_NN()
 //-------------------------------------------------------------------------------------------
 
 
-
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_TC()
 {
@@ -4331,11 +4360,6 @@ void ReconstructShowers_TC()
 //-------------------------------------------------------------------------------------------
 
 
-
-
-
-
-
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_RC()
 {
@@ -4603,10 +4627,6 @@ void ReconstructShowers_RC()
     return;
 }
 //-------------------------------------------------------------------------------------------
-
-
-
-
 
 
 //-------------------------------------------------------------------------------------------
@@ -4988,12 +5008,6 @@ void ReconstructShowers_BW()
 //-------------------------------------------------------------------------------------------
 
 
-
-
-
-
-
-
 //-------------------------------------------------------------------------------------------
 void ReconstructShowers_AG()
 {
@@ -5217,8 +5231,201 @@ void ReconstructShowers_AG()
 }
 //-------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------
+void ReconstructShowers_GS()
+{
+    Log(2, "ShowRec.cpp", "--- void ReconstructShowers_GS() ---");
+    //-----------------------------------------------------------------
+    // Main function for reconstruction of "Gamma Search" Algorithm
+    //-----------------------------------------------------------------
+
+    //-----------------------------------
+    // For each InitiatorBT this is
+    // divided in several small parts:
+    //
+    // 1) Make local_gAli with cut parameters, Make GetPID of InBT and corresponding of plates
+    // 3) Loop over (whole) local_gAli, search and check BT pairs for suts
+    // 4) Calculate pur/eff/NBT numbers
+    // 5) Fill Trees
+    //-----------------------------------
+
+    // Define Helper Variables:
+    EdbPVRec* local_gAli;
+    EdbSegP* InBT;
+    EdbSegP* seg;
+    Float_t local_gAli_pat_interim_halfsize=0;
+
+    GLOBAL_InBTArrayEntries=GLOBAL_InBTArray->GetEntries();
+    GLOBAL_INBTSHOWERNR=0;
+
+    //-----------------------------------------------------------------
+    // Since GLOBAL_InBTArray is filled in ascending ordering by zpositon
+    // We use the descending loop to begin with BT with lowest z first.
+    for (Int_t i=GLOBAL_InBTArrayEntries-1; i>=0; --i) {
+
+        //-----------------------------------
+        // CounterOutPut
+        if (gEDBDEBUGLEVEL==2) if ((i%1)==0) cout << GLOBAL_InBTArrayEntries <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
+        //-----------------------------------
+
+        //-----------------------------------
+        // Get InitiatorBT from GLOBAL_InBTArray
+        InBT=(EdbSegP*)GLOBAL_InBTArray->At(i);
+        //--------
+        GLOBAL_InBT_E=InBT->P();
+        GLOBAL_InBT_TanTheta=TMath::Sqrt(InBT->TX()*InBT->TX()+InBT->TY()*InBT->TY());
+        GLOBAL_InBT_Flag=InBT->Flag();
+        GLOBAL_InBT_MC=InBT->MCEvt();
+        //--------
+        Int_t local_NBT=0;
+        Int_t local_NBTMC=0;
+        Int_t local_NBTallMC=0;
+        Int_t local_NBTeMC=0;
+        float_t local_pure=-1;
+        float_t local_purall=-1;
+        Int_t npat_int=0;
+        Int_t npat_total=0;
+        Int_t npatN=0;
+        Int_t npat_Neff=0;
+        Int_t NBT_Neff=0;
+        Int_t NBTMC_Neff=0;
+        Int_t NBTMCe_Neff=0;
+        //--------
+
+        if (gEDBDEBUGLEVEL>2) {
+            cout << endl << endl << "--- Starting Shower for Number " << i << " now: "<<endl;
+            InBT->PrintNice();
+        }
+        //-----------------------------------
+
+        //-----------------------------------
+        // 1) Make local_gAli with cut parameters:
+        //-----------------------------------
+        local_gAli = TransformEdbPVRec(GLOBAL_gAli, InBT);
+        // Add InBT to GLOBAL_ShowerSegArray
+        GLOBAL_ShowerSegArray -> Add(InBT);
+        //-----------------------------------
 
 
+        //-----------------------------------
+        // 2) Loop over (whole) local_gAli, check InitiatorBT
+        // 2) compatible with a segment forming a e+e- pair:
+        //-----------------------------------
+        Int_t local_gAli_npat=local_gAli->Npatterns();
+        Int_t btloop_cnt_N=0;
+
+        for (Int_t patterloop_cnt=local_gAli_npat-1; patterloop_cnt>=0; --patterloop_cnt) {
+            if (gEDBDEBUGLEVEL>3) cout << "--- --- Doing patterloop_cnt= " << patterloop_cnt << endl;
+
+            btloop_cnt_N=local_gAli->GetPattern(patterloop_cnt)->GetN();
+
+            // ---   Apply Cut Conditions that are relevant for GS Algo
+            if (local_gAli->GetPattern(patterloop_cnt)->Z()-InBT->Z()>CUT_PARAMETER[6]*1350) continue;
+// 						        CUT_PARAMETER[0]=cut_gs_cut_dip;
+//         CUT_PARAMETER[1]=cut_gs_cut_dmin;
+//         CUT_PARAMETER[2]=cut_gs_cut_dr;
+//         CUT_PARAMETER[3]=cut_gs_cut_dz;
+//         CUT_PARAMETER[4]=cut_gs_cut_dtheta;
+//         CUT_PARAMETER[5]=cut_gs_cut_piddiff;
+//         CUT_PARAMETER[6]=cut_gs_cut_oppositeflag;
+//             if (TMath::Abs(local_gAli->GetPattern(patterloop_cnt)->Z()-InBT->Z())>3000) continue;
+//             if (local_gAli->GetPattern(patterloop_cnt)->Z()<InBT->Z()) continue;
+
+            // Loop over all Segments of a Pattern (Plate)
+            for (Int_t btloop_cnt=0; btloop_cnt<btloop_cnt_N; ++btloop_cnt) {
+                seg = (EdbSegP*)local_gAli->GetPattern(patterloop_cnt)->GetSegment(btloop_cnt);
+                if (gEDBDEBUGLEVEL>3) seg->PrintNice();
+
+                // ---   Apply Cut Conditions that are relevant for GS Algo
+                if (IsSameSegment(seg,InBT)) continue;
+                Int_t PIDDIFF=TMath::Abs(seg->PID()-InBT->PID());
+                if (GetMinimumDist(InBT,seg)>CUT_PARAMETER[1]) continue;
+                if (GetdR(InBT,seg)>CUT_PARAMETER[2]) continue;
+                if (GetdT(InBT,seg)>CUT_PARAMETER[4]) continue;
+                if (PIDDIFF>CUT_PARAMETER[6]) continue;
+
+                AddBTToArrayWithCeck(seg, GLOBAL_ShowerSegArray);
+            }
+
+            // Calc BT density around shower:
+            EdbPattern* pat_interim=local_gAli->GetPattern(patterloop_cnt);
+            CalcTrackDensity(pat_interim,local_gAli_pat_interim_halfsize,npat_int,npat_total,npatN);
+
+            // Calc TrackNumbers for plate for efficency numbers:
+            CalcEfficencyNumbers(pat_interim, InBT->MCEvt(), NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+        }
+
+
+        PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+
+        if (gEDBDEBUGLEVEL>2) PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+
+        Int_t s_NBT=0;
+        Int_t s_NBTMC=0;
+        Int_t s_NBTallMC=0;
+        Int_t s_NBTeMC=0;
+        Double_t  s_eff=0;
+        Double_t s_purall=0;
+        Double_t s_pure=0;
+        CalcEffPurOfShower(GLOBAL_ShowerSegArray, s_NBT, s_NBTMC, s_NBTallMC, s_NBTeMC, s_purall, s_pure);
+
+        //-----------------------------------
+        // 4) Calculate pur/eff/NBT numbers,
+        // not needed when only reconstruction
+        // done:
+        //-----------------------------------
+        if (cmd_OUTPUTLEVEL>=2 || cmd_OUTPUTLEVEL==0 ) {
+            Int_t NBT=0;
+            Int_t NBTMC=0;
+            Int_t NBTallMC=0;
+            Int_t NBTeMC=0;
+            Double_t  eff, purall, pure;
+            CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+            GLOBAL_trckdens=shower_trackdensb;
+            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
+            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
+            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
+            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
+            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
+        }
+
+
+        //-----------------------------------
+        // 5) Fill Tree:
+        //-----------------------------------
+        TREE_ShowRecEff->Fill();
+        if (gEDBDEBUGLEVEL>3) TREE_ShowRecEff->Show(TREE_ShowRecEff->GetEntries()-1);
+
+
+        //-----------------------------------
+        // 6a) Transfer ShowerArray to treebranchTreeEntry:
+        //-----------------------------------
+        if (cmd_OUTPUTLEVEL>0) {
+            TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TREE_ShowShower,GLOBAL_ShowerSegArray);
+        }
+
+
+        //------------------------------------
+        // Reset and delete important things:
+        // also  to avoid memory problems ...
+        //-----------------------------------
+        GLOBAL_ShowerSegArray->Clear();
+        if (gEDBDEBUGLEVEL>3) cout << "--- ---GLOBAL_ShowerSegArray->GetEntries(): "<< GLOBAL_ShowerSegArray->GetEntries() << endl;
+        delete local_gAli;
+        local_gAli=0;
+        ++GLOBAL_INBTSHOWERNR;
+        //------------------------------------
+    }
+    // end of loop over GLOBAL_InBTArrayEntries
+    //-----------------------------------------------------------------
+
+    if (gEDBDEBUGLEVEL==2) cout << endl<<flush;
+    if (gEDBDEBUGLEVEL>3) cout << "---TREE_ShowRecEff->GetEntries() ... " << TREE_ShowRecEff->GetEntries() << endl;
+    if (gEDBDEBUGLEVEL>3) cout << "---GLOBAL_INBTSHOWERNR ... " << GLOBAL_INBTSHOWERNR<< endl;
+
+
+}
+//-------------------------------------------------------------------------------------------
 
 
 
@@ -8266,3 +8473,40 @@ void Fill2GlobalInBTArray() {
     cout << "=====    For GENERATED PHOTONS AND PI0s:           THIS HAS TO BE ADAPTED TO SUITED VALUES! =====" << endl;
     return;
 }
+
+
+
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
+/*
+
+	//  Init with values according to GS Alg:
+	//  Took over from "FindGamma.C" script I develoved before:
+	// IP CUT; this cut is used for the -better- IP of both BTs to Vertex/BT
+	eParaValue[0]=150;
+	eParaString[0]="PARA_GS_CUT_dIP";
+	// min minDist.e between pair BTs
+	eParaValue[1]=40;
+	eParaString[1]="PARA_GS_CUT_dMin";
+	// min dR between pair BTs
+	eParaValue[2]=60;
+	eParaString[2]="PARA_GS_CUT_dR";
+	// max Z distance between pair BTs and Vertex/BT
+	eParaValue[3]=19000;
+	eParaString[3]="PARA_GS_CUT_dZ";
+	// max Angle between pair BTs
+	eParaValue[4]=0.060;
+	eParaString[4]="PARA_GS_CUT_dtheta";
+	// max plates difference between pair BTs
+	eParaValue[5]=1;
+	eParaString[5]="PARA_GS_CUT_PIDDIFF";
+
+	// in MC case: check for opposite flag sign
+	eParaValue[6]=1;
+	eParaString[6]="PARA_GS_CUT_OPPOSITEFLAG";
+*/
+
+
+
+
