@@ -25,6 +25,7 @@ Int_t cmd_MCMIX=0;
 Int_t cmd_vtx=0;
 Int_t cmd_CLEAN=0;  // clean gAli Object with tighter Quality Cuts!
 Int_t cmd_FILETP=0; // addition variable to distinguis different treebranches...
+Int_t cmd_GBMC=0; // addition variable to tell the program which MCEvt is doing (if only one is done).
 
 char *cmd_lnkdef_name = "lnk.def";
 Int_t cmd_gEDBDEBUGLEVEL=2;   //  2: normal; 3: long, 4 very long; 1: none
@@ -399,6 +400,7 @@ Int_t shower_filetype;
 Int_t shower_numberofholesconseq=0;
 Int_t shower_numberofholes=0;
 //---------------------------------------------------------------------------------
+
 
 
 

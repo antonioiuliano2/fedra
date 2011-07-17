@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -NP		NumberofPlates  \t (1..56..)\n";
         cout << "---      \t\t :	 -LT		use LinkedTracks.root (for InBT)  \t (0,1(1st track), 2(last track),3(all tracks),4(track in [fp,mp])\n";
         cout << "---      \t\t :	 -MC		use only MC -Events (for InBT)  \t (0,1)\n";
-        cout << "---      \t\t :	 -VTX 		For InBT: Cut to IP for MC vertex  (needs BRICK.TreePGunInfo.txt and -MC=1) \t (0,1:Ipcut:100,2:Ipcut250)\n";
+        cout << "---      \t\t :	 -VTX 		For InBT: Cut to IP for MC vertex  (needs BRICK.TreePGunInfo.txt and -MC=1) \t (0,1:Ipcut:100,2:Ipcut250,3:500)\n";
         cout << "---      \t\t :	 -FZHP		use a) firstZ position, b) highest P (MC-Events) & first Z pos. (for InBT) c) highest P (for InBT)\t (0,1; only with -MC1)\n";
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
         cout << "---      \t\t :	 -ALI		use gALI either from cp.root file (0) or from LinkedTrack.root(1) or from root file...(2:BTali.root) (3:lnTr.ali.root)\n";
@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -CUTTP		Algorithm CutType: 0: standard, 1:high_pur 2: high_eff  3: FJ_HighPur 4: FJ_Standard \n";
         cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
         cout << "---      \t\t :	 -FILETP	Filetype: Additional (distinguish-) variable to be written into treebranch. (only for naming the output tree)\n";
+        cout << "---      \t\t :	 -GBMC	Global MC: addition variable to tell the program which MCEvt is doing (if only one is done).\n";
         cout << "---      \t\t :	 -DEBUG		gEDBDEBUGLEVEL \t (1..5)\n";
         cout << "---      \t\t :	 -OUT			OUTPUTLEVEL  \t (1,2,3)\n";
         cout << "---      \t\t :	 -STOP		STOPLEVEL  \t (0,1,2,3)\n";
@@ -196,6 +197,14 @@ int main(int argc, char *argv[])
                 sscanf(key+7,"%d",&cmd_FILETP);
             }
         }
+
+        else if (!strncmp(key,"-GBMC",5)) {
+            if (strlen(key)>5) {
+                sscanf(key+5,"%d",&cmd_GBMC);
+            }
+        }
+
+
     }
     gEDBDEBUGLEVEL=cmd_gEDBDEBUGLEVEL;
 
@@ -220,6 +229,7 @@ int main(int argc, char *argv[])
     cout << "---      \t\t :	 -CUTTP		Algo Cuttype " << cmd_CUTTP << endl;
     cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning " << cmd_CLEAN << endl;
     cout << "---      \t\t :	 -FILETP	FILE Type tag " << cmd_FILETP << endl;
+    cout << "---      \t\t :	 -GBMC	  Global MC Evt type tag " << cmd_GBMC << endl;
     cout << "---      \t\t :	 -DEBUG		DEBUGLEVEL " << cmd_gEDBDEBUGLEVEL << endl;
     cout << "---      \t\t :	 -OUT		OUTPUTLEVEL " << cmd_OUTPUTLEVEL << endl;
     cout << "---      \t\t :	 -STOP		STOPLEVEL " << cmd_STOPLEVEL << endl;
@@ -345,6 +355,7 @@ void SetDefaultValues_CommandLine() {
     cmd_ALI=0;
     cmd_MCMIX=0;
     cmd_FILETP=0;
+    cmd_GBMC=0;
     cmd_lnkdef_name = "lnk.def";
 }
 
@@ -1523,7 +1534,7 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
 
 
     else if   (cmd_ALTP==8) {
-        cout << "--- Got TREE_ParaSetDefinitions->GetEntry(0)   cmd_ALTP==8 "<<endl;
+        cout << "--- Get TREE_ParaSetDefinitions->GetEntry(0)   cmd_ALTP==8 "<<endl;
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_BACK_DMIN",&cut_back_dmin);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_BACK_DTHETA",&cut_back_dtheta);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_BACK_DR",&cut_back_dr);
@@ -1533,6 +1544,9 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_FOR_DR",&cut_for_dr);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_FOR_DZ",&cut_for_dz);
         TREE_ParaSetDefinitions->GetEntry(nr);
+        cout << TREE_ParaSetDefinitions->GetEntries() << endl;
+        cout << "GAGA    nr = " << nr << endl;
+
         if (nr==-1)  {
             TREE_ParaSetDefinitions->GetEntry(0);
             if (gEDBDEBUGLEVEL>2) cout << "--- Got TREE_ParaSetDefinitions->GetEntry(0) instead of -1 due to no given PARAMETERSET_DEFINITIONFILE.root file."<<endl;
@@ -8440,12 +8454,17 @@ void Fill2GlobalInBTArray() {
     // if we have a vertex file we can cut for InBT tracks with a given vertex (to pure up the starting inbt sample)
     // (for now 100micron ip). (electrons,pi+-);
     // (for now 250micron ip). (photons.);
+    // (for now 300micron ip). (other.);
 //   if (cmd_vtx!=1) return;
     if (cmd_vtx==0) return;
-    if (cmd_MC!=1) return;
+//     if (cmd_MC!=1) return; // why did we say that we wanna have only starting mc inbts?
+    // also it can be possible that we wanna seacrh all in bt from the volume to an given
+    //  vertex, for a mc event (but not necessarily for mc In BTs).
+    // better comment it out?... ah, i know why because otherwise, we do not know which mc event vtx to take... so what to do???
 
     Float_t cutIPMax=100;
     if (cmd_vtx==2) cutIPMax=250;
+    if (cmd_vtx==3) cutIPMax=500;
 
     Float_t cutZVtxDist=999999;
 
@@ -8453,24 +8472,27 @@ void Fill2GlobalInBTArray() {
     for (Int_t i=0; i<GLOBAL_InBTArray->GetEntries(); ++i) {
         EdbSegP* s1=(EdbSegP*)GLOBAL_InBTArray->At(i);
         // Calculate IP:
+        // in case InBT is of BGType, we check for the GBMC variable set.
         Int_t MCEvt=s1->MCEvt();
+        if (MCEvt<0 && cmd_GBMC>0) MCEvt=cmd_GBMC;
+
         Double_t ip=CalcIP(s1,Double_t(GLOBAL_VtxArrayX[MCEvt]),Double_t(GLOBAL_VtxArrayY[MCEvt]),Double_t(GLOBAL_VtxArrayZ[MCEvt]));
         cutZVtxDist=s1->Z()-Double_t(GLOBAL_VtxArrayZ[MCEvt]);
         if (i==0||i==GLOBAL_InBTArray->GetEntries()-1) {
-            cout << "VTX:X:Y:Z:  " << GLOBAL_VtxArrayX[MCEvt] << " " << GLOBAL_VtxArrayY[MCEvt] << " " << GLOBAL_VtxArrayZ[MCEvt] << " ip= " << ip << " ZdistVtx=  " <<  cutZVtxDist << " MCEvt= " << MCEvt << endl;
+            cout << "INBT " << i << " :VTX:X:Y:Z:  " << GLOBAL_VtxArrayX[MCEvt] << " " << GLOBAL_VtxArrayY[MCEvt] << " " << GLOBAL_VtxArrayZ[MCEvt] << " ip= " << ip << " ZdistVtx=  " <<  cutZVtxDist << " MCEvt= " << MCEvt << endl;
         }
 
         if (ip<cutIPMax) GLOBAL_InBTArray2->Add(s1);
     }
-    cout << "Before IP cut " << GLOBAL_InBTArray->GetEntries() << endl;
-    cout << "After IP cut("<<cutIPMax<<") " << GLOBAL_InBTArray2->GetEntries() << endl;
+
+    cout << endl;
+    cout << "Fill2GlobalInBTArray::Before IP cut " << GLOBAL_InBTArray->GetEntries() << endl;
+    cout << "Fill2GlobalInBTArray::After IP cut("<<cutIPMax<<") " << GLOBAL_InBTArray2->GetEntries() << endl;
 // Swap Arrays:
     GLOBAL_InBTArray= GLOBAL_InBTArray2;
     cout << GLOBAL_InBTArray->GetEntries() <<endl;
 
-    cout << "======   WARNING  IP CUT FROM FIRST BT TO MC-VERTEX WAS SET TO 100                         ======" << endl;
-    cout << "=====    For GENERATED ELECTRONS AND PIONS+-       THIS IS OK.                             ======" << endl;
-    cout << "=====    For GENERATED PHOTONS AND PI0s:           THIS HAS TO BE ADAPTED TO SUITED VALUES! =====" << endl;
+
     return;
 }
 
