@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -CUTTP		Algorithm CutType: 0: standard, 1:high_pur 2: high_eff  3: FJ_HighPur 4: FJ_Standard \n";
         cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
         cout << "---      \t\t :	 -FILETP	Filetype: Additional (distinguish-) variable to be written into treebranch. (only for naming the output tree)\n";
-        cout << "---      \t\t :	 -GBMC	Global MC: addition variable to tell the program which MCEvt is doing (if only one is done).\n";
+        cout << "---      \t\t :	 -GBMC		Global MC: addition variable to tell the program which MCEvt is doing (if only one is done).\n";
         cout << "---      \t\t :	 -DEBUG		gEDBDEBUGLEVEL \t (1..5)\n";
         cout << "---      \t\t :	 -OUT			OUTPUTLEVEL  \t (1,2,3)\n";
         cout << "---      \t\t :	 -STOP		STOPLEVEL  \t (0,1,2,3)\n";
@@ -273,13 +273,39 @@ int main(int argc, char *argv[])
     if (cmd_CLEAN==0) BGTargetDensity=1000;
     EdbPVRQuality* PVRQualCheck;
     EdbPVRec* new_GLOBAL_gAli;
+    EdbPVRec* newnew_GLOBAL_gAli;
 
-    if (cmd_CLEAN!=0) {
+    // Just density cleaning, no double or passing removal.
+    if (cmd_CLEAN!=0&&cmd_CLEAN<10) {
         PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
         new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
         PVRQualCheck->Print();
         GLOBAL_gAli=new_GLOBAL_gAli;
     }
+
+    // Density cleaning, with double and passing removal.
+    if (cmd_CLEAN==10) {
+        cout << " THIS WILL BE THE PART WHERE REMOVE PASSING   WILL BE IMPLEMENTED !!! " << endl;
+        cout << " THIS WILL BE THE PART WHERE REMOVE DOUBLE BT WILL BE IMPLEMENTED !!! " << endl;
+
+        PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,10);
+        new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
+        GLOBAL_gAli=new_GLOBAL_gAli;
+        GLOBAL_gAli->Print();
+        newnew_GLOBAL_gAli=PVRQualCheck->Remove_DoubleBT(GLOBAL_gAli);
+// 			 GLOBAL_gAli=new_GLOBAL_gAli;
+
+// 				PVRQualCheck->Remove_Passing(GLOBAL_gAli);
+// 				PVRQualCheck->Print();
+
+        PVRQualCheck->Remove_Passing(newnew_GLOBAL_gAli);
+
+// 			 PVRQualCheck = new EdbPVRQuality();
+//  				newnew_GLOBAL_gAli=PVRQualCheck->Remove_DoubleBT(GLOBAL_gAli);
+        PVRQualCheck->Print();
+        GLOBAL_gAli=newnew_GLOBAL_gAli;
+    }
+
 
     if (cmd_STOPLEVEL==2) return 1;
     //----------------------------------------------------------------------------------
@@ -758,12 +784,14 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DTHETA",&cut_gs_cut_dtheta,"CUT_GS_CUT_DTHETA/D");
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_PIDDIFF",&cut_gs_cut_piddiff,"CUT_GS_CUT_PIDDIFF/D");
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_OPPOSITEFLAG",&cut_gs_cut_oppositeflag,"CUT_GS_CUT_OPPOSITEFLAG/I");
-        cut_gs_cut_dip=150;
-        cut_gs_cut_dmin=40;
-        cut_gs_cut_dr=60;
-        cut_gs_cut_dz=19000;
-        cut_gs_cut_dtheta=0.06;
-        cut_gs_cut_piddiff=1;
+// 				{ \it Standard}	& 	 192	&	23.5 	&	60.0	&	6583.	\\
+// 				{ \it ($\#$1101)}	& 	0.185	&	2	&	0	&	-
+        cut_gs_cut_dip=192;
+        cut_gs_cut_dmin=23.5;
+        cut_gs_cut_dr=60.;
+        cut_gs_cut_dz=6583;
+        cut_gs_cut_dtheta=0.185;
+        cut_gs_cut_piddiff=2;
         cut_gs_cut_oppositeflag=0;
         TREE_ParaSetDefinitions -> Fill();
         TREE_ParaSetDefinitions -> Show(TREE_ParaSetDefinitions -> GetEntries()-1);
@@ -8418,7 +8446,7 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
     PGunTree->SetBranchAddress("Y",&Y);
     if (gEDBDEBUGLEVEL>2) PGunTree->Print();
 
-    PGunTree->Show(0);
+    if (cmd_GBMC>0) PGunTree->Show(cmd_GBMC);
     cout << "PGunTree->GetEntries();    " <<  PGunTree->GetEntries() <<  endl;
 
 
@@ -8441,7 +8469,6 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
         GLOBAL_VtxArrayY[MCEvt]=vtxposy*1000;
         GLOBAL_VtxArrayZ[MCEvt]=(vtxposz+40.0)*1000;
     }
-
 
     cout << "BuildParametrizationsMCInfo_PGun.... done." << endl;
     return;
