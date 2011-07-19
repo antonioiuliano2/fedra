@@ -25,15 +25,15 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -VTX 		For InBT: Cut to IP for MC vertex  (needs BRICK.TreePGunInfo.txt and -MC=1) \t (0,1:Ipcut:100,2:Ipcut250,3:500)\n";
         cout << "---      \t\t :	 -FZHP		use a) firstZ position, b) highest P (MC-Events) & first Z pos. (for InBT) c) highest P (for InBT)\t (0,1; only with -MC1)\n";
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
-        cout << "---      \t\t :	 -ALI		use gALI either from cp.root file (0) or from LinkedTrack.root(1) or from root file...(2:BTali.root) (3:lnTr.ali.root)\n";
+        cout << "---      \t\t :	 -ALI		use gALI either from cp.root file (0) or from LinkedTrack.root(1) or from root file...(2:ScanVolume_Ali.root) (3:ScanVolumeLinkedTracks_Ali)\n";
         cout << "---      \t\t :	 -MIXMC		Extract Subpattern with all MCEvents mixed! --!WARNING!--  \n";
         cout << "---      \t\t :	 -PADI		ParentDirectory     (only for naming the output file)\n";
         cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  (only for naming the output file)\n";
         cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
         cout << "---      \t\t :	 -ALTP		AlgorythmType  \n";
-        cout << "---      \t\t\t :	 0:		ReconstructShowers_?  (CT ?).. \n";
+        cout << "---      \t\t\t :	 0:		ReconstructShowers_CT  ().. \n";
         cout << "---      \t\t\t :	 2:		ReconstructShowers_CA  \n";
-        cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT FINISHED YET, EXPERIMENTAL)\n";
+        cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT USED ANYMORE, EXPERIMENTAL)\n";
         cout << "---      \t\t\t :	 3:		ReconstructShowers_NN  \n";
         cout << "---      \t\t\t :	 4:		ReconstructShowers_OI  \n";
         cout << "---      \t\t\t :	 5:		ReconstructShowers_SA  (MC Events only)\n";
@@ -47,10 +47,11 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -PAEND		ParameterSetEnd  \n";
         cout << "---      \t\t :	 -CUTTP		Algorithm CutType: 0: standard, 1:high_pur 2: high_eff  3: FJ_HighPur 4: FJ_Standard \n";
         cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+        cout << "---      \t\t :	 		InputData BG Cleaning: 10: Remove DoubleBT and Passing, No dens cut, 11: &&10BT/mm2  12: &&20BT/mm2  13: &&30BT/mm2 ... \n";
         cout << "---      \t\t :	 -FILETP	Filetype: Additional (distinguish-) variable to be written into treebranch. (only for naming the output tree)\n";
         cout << "---      \t\t :	 -GBMC		Global MC: addition variable to tell the program which MCEvt is doing (if only one is done).\n";
         cout << "---      \t\t :	 -DEBUG		gEDBDEBUGLEVEL \t (1..5)\n";
-        cout << "---      \t\t :	 -OUT			OUTPUTLEVEL  \t (1,2,3)\n";
+        cout << "---      \t\t :	 -OUT		OUTPUTLEVEL  \t (1,2,3)\n";
         cout << "---      \t\t :	 -STOP		STOPLEVEL  \t (0,1,2,3)\n";
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP1 -NP30 -FZHP1 -MC1 -ALTP4  -PASTART0 -PAEND0  lnk.def ---" << endl<< endl;
         cout << "---      Usage:	 ShowRec  -FP1 -LP31 -MP30 -NP30 -FZHP1 -MC1 -ALTP4 lnk_all.def ---" << endl<< endl;
@@ -284,26 +285,23 @@ int main(int argc, char *argv[])
     }
 
     // Density cleaning, with double and passing removal.
-    if (cmd_CLEAN==10) {
+    if (cmd_CLEAN>=10&&cmd_CLEAN<=20) {
         cout << " THIS WILL BE THE PART WHERE REMOVE PASSING   WILL BE IMPLEMENTED !!! " << endl;
         cout << " THIS WILL BE THE PART WHERE REMOVE DOUBLE BT WILL BE IMPLEMENTED !!! " << endl;
 
-        PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,10);
+        Int_t rest=cmd_CLEAN-10;
+        Float_t BGTargetDensity=rest*10;
+        if (rest==0) BGTargetDensity=100000;
+        cout << "BGTargetDensity  " << BGTargetDensity << endl;
+
+        PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
         new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
         GLOBAL_gAli=new_GLOBAL_gAli;
         GLOBAL_gAli->Print();
         newnew_GLOBAL_gAli=PVRQualCheck->Remove_DoubleBT(GLOBAL_gAli);
-// 			 GLOBAL_gAli=new_GLOBAL_gAli;
-
-// 				PVRQualCheck->Remove_Passing(GLOBAL_gAli);
-// 				PVRQualCheck->Print();
-
-        PVRQualCheck->Remove_Passing(newnew_GLOBAL_gAli);
-
-// 			 PVRQualCheck = new EdbPVRQuality();
-//  				newnew_GLOBAL_gAli=PVRQualCheck->Remove_DoubleBT(GLOBAL_gAli);
-        PVRQualCheck->Print();
         GLOBAL_gAli=newnew_GLOBAL_gAli;
+        new_GLOBAL_gAli=PVRQualCheck->Remove_Passing(GLOBAL_gAli);
+        GLOBAL_gAli=new_GLOBAL_gAli;
     }
 
 
@@ -490,7 +488,7 @@ EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory()
 //   cmd_ALI==0: read gAli from lnk.def Basetracks
 //   cmd_ALI==1: read gAli from linked.tracks.root
 //   cmd_ALI==2: read gAli from ScanVolume_Ali.root
-//   cmd_ALI==3: read gAli from ScanVolumeLinkedTracks_Ali.tracks.root
+//   cmd_ALI==3: read gAli from ScanVolumeLinkedTracks_Ali.root
 
     if (cmd_ALI==3) {
         TFile* f= new TFile("ScanVolumeLinkedTracks_Ali.root");
@@ -7488,7 +7486,7 @@ void TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TTree* treebrancht
 {
     Log(3, "ShowRec.cpp", "--- void* TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree() ---");
 
-    // SaveCheck if shower has more than one entry:
+    // SaveCheck if shower has at least one basetrack:
     if (segarray->GetEntries()<1) return;
 
     EdbSegP* seg;
@@ -7571,11 +7569,24 @@ void TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TTree* treebrancht
         shower_tagprimary[ii]=0;
         if (ii==0) shower_tagprimary[ii]=1;
         shower_isizeb=1; // always 1, not needed anymore
-        shower_ntrace1simub[ii]=0;
-        if (seg->MCEvt()>0) shower_ntrace1simub[ii]=seg->MCEvt();
-        shower_ntrace2simub[ii]=seg->W();
-        shower_ntrace3simub[ii]=seg->P();
-        shower_ntrace4simub[ii]=seg->Flag();
+        if (seg->MCEvt()>0) {
+            shower_ntrace1simub[ii]=seg->MCEvt();
+            shower_ntrace2simub[ii]=seg->W();
+            shower_ntrace3simub[ii]=seg->P();
+            shower_ntrace4simub[ii]=seg->Flag();
+        }
+        else {
+            // keep the seg->BT settings for BG:
+            // that come out of "normal" scanned data from fedra:
+            // shower_ntrace1simub=-999
+            // shower_ntrace2simub=seg->W();
+            // shower_ntrace3simub=-999
+            // shower_ntrace4simub=0
+            shower_ntrace1simub[ii]=-999;
+            shower_ntrace2simub[ii]=seg->W();
+            shower_ntrace3simub[ii]=-999;
+            shower_ntrace4simub[ii]=0;
+        }
         shower_idb[ii]=seg->ID();
         shower_plateb[ii]=seg->PID();
 
@@ -7594,9 +7605,19 @@ void TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TTree* treebrancht
         // So if other MC-events (like in testbeam simulation case) had been taken, they
         // count as well as "background!"
         shower_sizebNHELP++;
-        if (seg->MCEvt()==shower_number_eventb) shower_sizebMCNHELP++;
+        if (seg->MCEvt()==shower_number_eventb&&shower_number_eventb>0) shower_sizebMCNHELP++;
         // for example: InBT:MCEvt==4 and Basetrack has MCEvt==18 then
         // shower_sizebNHELP++, but not shower_sizebMCNHELP !!
+        // But also: if shower_number_eventb==-999 i.e. we start from a BG basetrack
+        // and all other shower collected BTs have MCEvt==-999 then we get also
+        // a purity of 1.
+        // That means shower consisting only of BG events are in that sense also "very pure".
+        // How to deal with this?
+        // if (shower_number_eventb=-999) then we do NOT increment
+        // shower_sizebMCNHELP , this is by changing the statement from
+        // if (seg->MCEvt()==shower_number_eventb) shower_sizebMCNHELP++;
+        // to
+        // if (seg->MCEvt()==shower_number_eventb&&shower_number_eventb>0) shower_sizebMCNHELP++;
 
         // InBT:
         if (ii==0) {

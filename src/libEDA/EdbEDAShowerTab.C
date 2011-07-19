@@ -467,6 +467,7 @@ void EdbEDAShowerTab::Reco() {
     eShowerRec->ResetInBTArray();
     eShowerRec->ResetRecoShowerArray();
 
+
     cout << " void Reco()   Clear  gEDA->GetTrackSet(BT); Array..." << endl;
     EdbEDATrackSet *set = gEDA->GetTrackSet("BT");
     set->Clear();
@@ -498,6 +499,9 @@ void EdbEDAShowerTab::Reco() {
     cout << " void Reco()   Check For suited BT density cut if needed..." << endl;
     CheckBTDensity(eShowerRec->GetEdbPVRec(),NULL);
 
+		cout << " void Reco()   eShowerRec->SetUseAliSub(0)..." << endl;
+		eShowerRec->SetUseAliSub(0);
+		
     cout << " void Reco()   eShowerRec->Execute()..." << endl;
     eShowerRec->Execute();
 
