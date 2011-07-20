@@ -202,23 +202,25 @@ public:
 
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_Passing(EdbPVRec* aliSource);
-		
-    void Remove_SegmentArray(TObjArray* segArray); // segment array
-    void Remove_TrackArray(TObjArray* trackArray); // track array
-    void Remove_Segment(EdbSegP* seg); // segment
-    void Remove_Track(EdbTrackP* track); // track
-// 		void Remove_SegmentArray(EdbSegP* seg, EdbPVRec* aliSource=NULL, Int_t Option=0);
-// 		void Remove_Segment(TObjArray* segArray, EdbPVRec* aliSource=NULL, Int_t Option=0);
-// 		void Remove_TrackArray(TObjArray* segArray, EdbPVRec* aliSource=NULL, Int_t Option=0);
-// 		void Remove_Track(EdbTrackP* track, EdbPVRec* aliSource=NULL, Int_t Option=0);
-		// All these functions will call Remove_SegmentArray(..,..,..);
+
+//     void Remove_SegmentArray(TObjArray* segArray); // segment array
+//     void Remove_TrackArray(TObjArray* trackArray); // track array
+//     void Remove_Segment(EdbSegP* seg); // segment
+//     void Remove_Track(EdbTrackP* track); // track
+    EdbPVRec* Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource=NULL, Int_t Option=0);
+    EdbPVRec* Remove_Segment(EdbSegP* seg, EdbPVRec* aliSource=NULL, Int_t Option=0);
+    EdbPVRec* Remove_TrackArray(TObjArray* trackArray, EdbPVRec* aliSource=NULL, Int_t Option=0);
+    EdbPVRec* Remove_Track(EdbTrackP* track, EdbPVRec* aliSource=NULL, Int_t Option=0);
+    TObjArray* TrackToSegmentArray(EdbTrackP* track);
+    TObjArray* TrackArrayToSegmentArray(TObjArray* trackArray);
+    // All these functions will call Remove_SegmentArray(..,..,..);
 
 
     void CreateEdbPVRec();
     void CheckFilledXYSize();
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
-		TObjArray* GetTracksFromLinkedTracksRootFile();
+    TObjArray* GetTracksFromLinkedTracksRootFile();
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);

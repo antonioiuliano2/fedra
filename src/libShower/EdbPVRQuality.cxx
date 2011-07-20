@@ -520,7 +520,8 @@ void EdbPVRQuality::PrintCutType1()
 
 void EdbPVRQuality::Execute_ConstantBTDensity()
 {
-    // Execute the modified cut routines to achieve the basetrack density level, after application the specific cut on the segments of the specific plate (pattern).
+    // Execute the modified cut routines to achieve the basetrack density level,
+    // after application the specific cut on the segments of the specific plate (pattern).
     // The Constant BT Density is defined by the number of BT/mm2 in the histogram.
 
     for (int i=0; i<80; ++i) cout << "-";
@@ -1249,9 +1250,9 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
                 // if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
                 // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
                 // I have doubts if I shall take MC events also out, but I guess Yes, because if
-								// in data these small pairings appear, then they will fall also under the 
-								// category "fake doublet" and then be removed, even if they are real double BT 
-								// from a signal.
+                // in data these small pairings appear, then they will fall also under the
+                // category "fake doublet" and then be removed, even if they are real double BT
+                // from a signal.
 
                 ++NdoubleFoundSeg;
                 seg_seg_close=kTRUE;
@@ -1396,51 +1397,110 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 
 //___________________________________________________________________________________
 
-void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)
+
+
+
+EdbPVRec* EdbPVRQuality::Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource, Int_t Option)
 {
+    // Every "Remove_XXY()" function will call Remove_SegmentArray() since the removal of
+    // a segment array is easiest to implement. As said earlier, there is no easy function
+    // to remove tracks from a EdbPVRec object directly. So instead we have to create a
+    // new EdbPVRec object, fill with all basetracks from the old one, except where the
+    // segments of the SegmentArray coincide with those which are in the source EdbPVRec.
 
-    /// DEBUG TO BE MERGED WITH THE OTHER _Remove_xxx FUNCTIONS !!
+    cout << "EdbPVRQuality::Remove_SegmentArray():" << endl;
 
+    if (NULL==aliSource) {
+        cout << "EdbPVRQuality::Remove_SegmentArray()   ERROR   aliSource=NULL pointer. I cannot" << endl;
+        cout << "EdbPVRQuality::Remove_SegmentArray()   ERROR   do something here and I will return a NULL pointer now. Stop." << endl;
+        return NULL;
+    }
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbPVRQuality::Remove_SegmentArray()   INFO   " << endl;
+        cout << "EdbPVRQuality::Remove_SegmentArray()   segarray =    " << segarray << " with " << segarray->GetEntries() << " entries." << endl;
+        cout << "EdbPVRQuality::Remove_SegmentArray()   aliSource =    " << aliSource << " with " << aliSource->Npatterns() << " patterns." << endl;
+        cout << "EdbPVRQuality::Remove_SegmentArray()   Option =    " << Option << "." << endl;
+    }
+
+
+    cout << "EdbPVRQuality::Remove_SegmentArray()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+EdbPVRec* EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray, EdbPVRec* aliSource, Int_t Option) {
     // Remove a whole track array (Array of EdbTrackP type).
-    cout << "-----     void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)...." << endl;
-    cout << "-----     void EdbPVRQuality::Remove_TrackArray(TObjArray* trackArray)...done." << endl;
-    return;
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbPVRQuality::Remove_TrackArray():" << endl;
+    TObjArray* segArray= new TObjArray();
+    segArray=  TrackArrayToSegmentArray(trackArray);
+    Remove_SegmentArray(segArray,aliSource,Option);
+    delete segArray;
+    cout << "EdbPVRQuality::Remove_TrackArray()...done." << endl;
+    return NULL;
 }
 
 //___________________________________________________________________________________
 
-
-//___________________________________________________________________________________
-
-void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray) {
-
-    /// DEBUG TO BE MERGED WITH THE OTHER _Remove_xxx FUNCTIONS !!
-    // Remove a whole segment array (Array of EdbSegP type).
-
-    cout << "-----     void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray)...." << endl;
-    cout << "-----     void EdbPVRQuality::Remove_SegmentArray(TObjArray* segArray)...done." << endl;
-    return;
-}
-
-//___________________________________________________________________________________
-
-
-void EdbPVRQuality::Remove_Track(EdbTrackP* track) {
-    /// DEBUG TO BE MERGED WITH THE OTHER _Remove_xxx FUNCTIONS !!
-    TObjArray* trackArray= new TObjArray();
-    trackArray->Add(track);
-    Remove_TrackArray(trackArray);
-    delete trackArray;
-}
-
-//___________________________________________________________________________________
-
-void EdbPVRQuality::Remove_Segment(EdbSegP* seg) {
-    /// DEBUG TO BE MERGED WITH THE OTHER _Remove_xxx FUNCTIONS !!
+EdbPVRec* EdbPVRQuality::Remove_Segment(EdbSegP* seg, EdbPVRec* aliSource, Int_t Option) {
+    // Remove one segment (EdbSegP* seg type).
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbPVRQuality::Remove_Segment():" << endl;
     TObjArray* segArray= new TObjArray();
     segArray->Add(seg);
-    Remove_SegmentArray(segArray);
+    Remove_SegmentArray(segArray,aliSource,Option);
     delete segArray;
+    cout << "EdbPVRQuality::Remove_Segment()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+EdbPVRec* EdbPVRQuality::Remove_Track(EdbTrackP* track, EdbPVRec* aliSource, Int_t Option) {
+    // Remove one track (EdbTrackP* track type).
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbPVRQuality::Remove_Track():" << endl;
+    TObjArray* segArray= new TObjArray();
+    segArray=  TrackToSegmentArray(track);
+    Remove_SegmentArray(segArray,aliSource,Option);
+    delete segArray;
+    cout << "EdbPVRQuality::Remove_Track()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+TObjArray* EdbPVRQuality::TrackToSegmentArray(EdbTrackP* track) {
+    // Convert segments of a track into an TObjArray containing segments.
+    TObjArray* segArray= new TObjArray();
+    Int_t nSegTotal=0;
+    for (int i=0; i<track->N(); i++) {
+        EdbSegP* seg = track->GetSegment(i);
+        segArray->Add(seg);
+        ++nSegTotal;
+    }
+    if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::TrackToSegmentArray() Totally added: " << nSegTotal << " segments from the track."<<endl;
+    return segArray;
+}
+
+//___________________________________________________________________________________
+
+TObjArray* EdbPVRQuality::TrackArrayToSegmentArray(TObjArray* trackArray) {
+    // Convert segments of tracks of a track array into an TObjArray containing segments.
+    TObjArray* segArray= new TObjArray();
+    Int_t nSegTotal=0;
+    for (int j=0; j<trackArray->GetEntries(); j++) {
+        EdbTrackP* track = (EdbTrackP*)trackArray->At(j);
+        for (int i=0; i<track->N(); i++) {
+            EdbSegP* seg = track->GetSegment(i);
+            segArray->Add(seg);
+            ++nSegTotal;
+        }
+    }
+    if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::TrackArrayToSegmentArray() Totally added: " << nSegTotal << " segments from the track array."<<endl;
+    return segArray;
 }
 
 //___________________________________________________________________________________
