@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
         cout << "---      \t\t :	 -ALTP		AlgorythmType  \n";
         cout << "---      \t\t\t :	 0:		ReconstructShowers_CT  ().. \n";
+				cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT USED ANYMORE, EXPERIMENTAL)\n";
         cout << "---      \t\t\t :	 2:		ReconstructShowers_CA  \n";
-        cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT USED ANYMORE, EXPERIMENTAL)\n";
         cout << "---      \t\t\t :	 3:		ReconstructShowers_NN  \n";
         cout << "---      \t\t\t :	 4:		ReconstructShowers_OI  \n";
         cout << "---      \t\t\t :	 5:		ReconstructShowers_SA  (MC Events only)\n";
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
     cout << "---      \t\t :	 -CUTTP		Algo Cuttype " << cmd_CUTTP << endl;
     cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning " << cmd_CLEAN << endl;
     cout << "---      \t\t :	 -FILETP	FILE Type tag " << cmd_FILETP << endl;
-    cout << "---      \t\t :	 -GBMC	  Global MC Evt type tag " << cmd_GBMC << endl;
+    cout << "---      \t\t :	 -GBMC		Global MC Evt type tag " << cmd_GBMC << endl;
     cout << "---      \t\t :	 -DEBUG		DEBUGLEVEL " << cmd_gEDBDEBUGLEVEL << endl;
     cout << "---      \t\t :	 -OUT		OUTPUTLEVEL " << cmd_OUTPUTLEVEL << endl;
     cout << "---      \t\t :	 -STOP		STOPLEVEL " << cmd_STOPLEVEL << endl;
@@ -264,9 +264,10 @@ int main(int argc, char *argv[])
     GLOBAL_gAli = ReadEdbPVRecObjectFromCurrentDirectory();
     GLOBAL_gAli->Print();
     RewriteSegmentPIDs_BGPID_To_SGPID(GLOBAL_gAli); // I checked, this is not necessary, since PID is set new when Reading EdbVRec object.
-
+    // Clean the input data Objects if necessary:
     Float_t BGTargetDensity=0;
     // cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
+		// cout << "---      \t\t :	 		InputData BG Cleaning: 10: Remove DoubleBT and Passing, No dens cut, 11: &&10BT/mm2  12: &&20BT/mm2  13: &&30BT/mm2 ... \n";
     if (cmd_CLEAN==1) BGTargetDensity=20;
     if (cmd_CLEAN==2) BGTargetDensity=40;
     if (cmd_CLEAN==3) BGTargetDensity=10;
@@ -285,15 +286,14 @@ int main(int argc, char *argv[])
     }
 
     // Density cleaning, with double and passing removal.
+		// Additional BG cleaning, depending on the last number of the number switch:
     if (cmd_CLEAN>=10&&cmd_CLEAN<=20) {
-        cout << " THIS WILL BE THE PART WHERE REMOVE PASSING   WILL BE IMPLEMENTED !!! " << endl;
-        cout << " THIS WILL BE THE PART WHERE REMOVE DOUBLE BT WILL BE IMPLEMENTED !!! " << endl;
-
+        cout << " THIS WILL BE THE PART WHERE REMOVE PASSING   IS IMPLEMENTED !!! " << endl;
+        cout << " THIS WILL BE THE PART WHERE REMOVE DOUBLE BT IS IMPLEMENTED !!! " << endl;
         Int_t rest=cmd_CLEAN-10;
         Float_t BGTargetDensity=rest*10;
         if (rest==0) BGTargetDensity=100000;
-        cout << "BGTargetDensity  " << BGTargetDensity << endl;
-
+        //cout << "BGTargetDensity  " << BGTargetDensity << endl;
         PVRQualCheck = new EdbPVRQuality(GLOBAL_gAli,BGTargetDensity);
         new_GLOBAL_gAli = PVRQualCheck->GetEdbPVRec(1);
         GLOBAL_gAli=new_GLOBAL_gAli;
@@ -303,8 +303,6 @@ int main(int argc, char *argv[])
         new_GLOBAL_gAli=PVRQualCheck->Remove_Passing(GLOBAL_gAli);
         GLOBAL_gAli=new_GLOBAL_gAli;
     }
-
-
     if (cmd_STOPLEVEL==2) return 1;
     //----------------------------------------------------------------------------------
 
@@ -321,7 +319,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // Loop over (possible) Parametersets and Reconstruct Showers!
     //----------------------------------------------------------------------------------
-    if (cmd_PASTART>0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
+    if (cmd_PASTART>=0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
     for (Int_t i=cmd_PASTART; i<=cmd_PAEND; i++) {
         GLOBAL_PARASETNR=i;
         if (gEDBDEBUGLEVEL>2) cout << "Doing PARASET		"<< i <<endl;
@@ -340,8 +338,6 @@ int main(int argc, char *argv[])
     // Done with all reconstruction, fill files now:
     FillOutPutStructures();
     //----------------------------------------------------------------------------------
-
-
     return 0;
 }
 
@@ -867,7 +863,7 @@ void Read_ParasetDefinitionTree()
 
     // Check: if PASTART is given (a number),  but PAEND is default, then set
     // PAEND to PASTART
-    if (cmd_PASTART>0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
+    if (cmd_PASTART>=0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
 
     if (gEDBDEBUGLEVEL>2) cout << "--- Updated commandline values: cmd_PASTART=" << cmd_PASTART << " and  cmd_PAEND=" << cmd_PAEND << endl;
 
@@ -5146,7 +5142,7 @@ void ReconstructShowers_AG()
                 PIDDIFF=TMath::Abs(seg->PID()-InBT->PID());
                 if (GetMinimumDist(InBT,seg)>50) continue;
                 if (GetdR(InBT,seg)>200) continue;
-                if (GetdT(InBT,seg)>0.5) continue;
+                if (GetdeltaThetaSingleAngles(InBT,seg)>0.5) continue;
                 if (PIDDIFF>minPIDDIFF) continue;
                 // 				cout << " GetMinimumDist(InBT,seg); " << GetMinimumDist(InBT,seg) << "PIDDIFF "<< PIDDIFF<< endl;
 
@@ -5297,6 +5293,8 @@ void ReconstructShowers_GS()
 
     GLOBAL_InBTArrayEntries=GLOBAL_InBTArray->GetEntries();
     GLOBAL_INBTSHOWERNR=0;
+		
+		EdbVertex* vtx=new EdbVertex();
 
     //-----------------------------------------------------------------
     // Since GLOBAL_InBTArray is filled in ascending ordering by zpositon
@@ -5338,6 +5336,18 @@ void ReconstructShowers_GS()
         }
         //-----------------------------------
 
+
+
+
+				//-----------------------------------
+				cout << GLOBAL_VtxArrayX[GLOBAL_InBT_MC] << endl;
+				cout << GLOBAL_VtxArrayY[GLOBAL_InBT_MC] << endl;
+				cout << GLOBAL_VtxArrayZ[GLOBAL_InBT_MC] << endl;
+				vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
+				vtx->SetMC(GLOBAL_InBT_MC);
+				cout <<  CalcIP(InBT,vtx) << endl;
+
+
         //-----------------------------------
         // 1) Make local_gAli with cut parameters:
         //-----------------------------------
@@ -5361,7 +5371,7 @@ void ReconstructShowers_GS()
 
             // ---   Apply Cut Conditions that are relevant for GS Algo
             if (local_gAli->GetPattern(patterloop_cnt)->Z()-InBT->Z()>CUT_PARAMETER[6]*1350) continue;
-// 						        CUT_PARAMETER[0]=cut_gs_cut_dip;
+// 				 CUT_PARAMETER[0]=cut_gs_cut_dip;
 //         CUT_PARAMETER[1]=cut_gs_cut_dmin;
 //         CUT_PARAMETER[2]=cut_gs_cut_dr;
 //         CUT_PARAMETER[3]=cut_gs_cut_dz;
@@ -5375,15 +5385,20 @@ void ReconstructShowers_GS()
             for (Int_t btloop_cnt=0; btloop_cnt<btloop_cnt_N; ++btloop_cnt) {
                 seg = (EdbSegP*)local_gAli->GetPattern(patterloop_cnt)->GetSegment(btloop_cnt);
                 if (gEDBDEBUGLEVEL>3) seg->PrintNice();
+								
+								//cout << "TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx) = " << TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx)) << endl;
 
-                // ---   Apply Cut Conditions that are relevant for GS Algo
+								// ---   Apply Cut Conditions that are relevant for GS Algo
                 if (IsSameSegment(seg,InBT)) continue;
                 Int_t PIDDIFF=TMath::Abs(seg->PID()-InBT->PID());
                 if (GetMinimumDist(InBT,seg)>CUT_PARAMETER[1]) continue;
-                if (GetdR(InBT,seg)>CUT_PARAMETER[2]) continue;
-                if (GetdT(InBT,seg)>CUT_PARAMETER[4]) continue;
+                if (GetdeltaRWithPropagation(InBT,seg)>CUT_PARAMETER[2]) continue;
+                if (GetdeltaThetaSingleAngles(InBT,seg)>CUT_PARAMETER[4]) continue;
                 if (PIDDIFF>CUT_PARAMETER[6]) continue;
-
+                if (TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx)) > CUT_PARAMETER[0]) continue;
+                if (TMath::Abs(seg->Z()-vtx->Z())>CUT_PARAMETER[3]) continue;
+                // ---   Apply Cut Conditions that are relevant for GS Algo
+								
                 AddBTToArrayWithCeck(seg, GLOBAL_ShowerSegArray);
             }
 
@@ -8484,11 +8499,16 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
         EdbVertex* vtx=new EdbVertex();
         vtx->SetXYZ(vtxposx*1000,vtxposy*1000,(vtxposz+40.0)*1000);
         vtx->SetMC(MCEvt);
-        //vtx->Print();
+        // vtx->Print(); // Gives Crash!
         GLOBAL_VtxArray->Add(vtx);
         GLOBAL_VtxArrayX[MCEvt]=vtxposx*1000;
         GLOBAL_VtxArrayY[MCEvt]=vtxposy*1000;
         GLOBAL_VtxArrayZ[MCEvt]=(vtxposz+40.0)*1000;
+// 								vtx->Print();
+// 				cout << vtx->X() << endl;
+// 				cout << vtx->Y() << endl;
+// 				cout << vtx->Z() << endl;
+// gSystem->Exit(1);
     }
 
     cout << "BuildParametrizationsMCInfo_PGun.... done." << endl;
