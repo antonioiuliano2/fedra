@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
         cout << "---      \t\t :	 -ALTP		AlgorythmType  \n";
         cout << "---      \t\t\t :	 0:		ReconstructShowers_CT  ().. \n";
-				cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT USED ANYMORE, EXPERIMENTAL)\n";
+        cout << "---      \t\t\t :	 1:		ReconstructShowers_CL  (NOT USED ANYMORE, EXPERIMENTAL)\n";
         cout << "---      \t\t\t :	 2:		ReconstructShowers_CA  \n";
         cout << "---      \t\t\t :	 3:		ReconstructShowers_NN  \n";
         cout << "---      \t\t\t :	 4:		ReconstructShowers_OI  \n";
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     // Clean the input data Objects if necessary:
     Float_t BGTargetDensity=0;
     // cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
-		// cout << "---      \t\t :	 		InputData BG Cleaning: 10: Remove DoubleBT and Passing, No dens cut, 11: &&10BT/mm2  12: &&20BT/mm2  13: &&30BT/mm2 ... \n";
+    // cout << "---      \t\t :	 		InputData BG Cleaning: 10: Remove DoubleBT and Passing, No dens cut, 11: &&10BT/mm2  12: &&20BT/mm2  13: &&30BT/mm2 ... \n";
     if (cmd_CLEAN==1) BGTargetDensity=20;
     if (cmd_CLEAN==2) BGTargetDensity=40;
     if (cmd_CLEAN==3) BGTargetDensity=10;
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
     }
 
     // Density cleaning, with double and passing removal.
-		// Additional BG cleaning, depending on the last number of the number switch:
+    // Additional BG cleaning, depending on the last number of the number switch:
     if (cmd_CLEAN>=10&&cmd_CLEAN<=20) {
         cout << " THIS WILL BE THE PART WHERE REMOVE PASSING   IS IMPLEMENTED !!! " << endl;
         cout << " THIS WILL BE THE PART WHERE REMOVE DOUBLE BT IS IMPLEMENTED !!! " << endl;
@@ -312,6 +312,7 @@ int main(int argc, char *argv[])
     FillGlobalInBTArray();
     BuildParametrizationsMCInfo_PGun("BRICK.TreePGunInfo.txt");
     Fill2GlobalInBTArray();
+    cout << "Fill the Initiator BT array:GLOBAL_InBTArray->GetEntries()= " << GLOBAL_InBTArray->GetEntries() << endl;
     if (cmd_STOPLEVEL==3) return 1;
     //----------------------------------------------------------------------------------
 
@@ -5293,8 +5294,8 @@ void ReconstructShowers_GS()
 
     GLOBAL_InBTArrayEntries=GLOBAL_InBTArray->GetEntries();
     GLOBAL_INBTSHOWERNR=0;
-		
-		EdbVertex* vtx=new EdbVertex();
+
+    EdbVertex* vtx=new EdbVertex();
 
     //-----------------------------------------------------------------
     // Since GLOBAL_InBTArray is filled in ascending ordering by zpositon
@@ -5337,81 +5338,219 @@ void ReconstructShowers_GS()
         //-----------------------------------
 
 
+        //-----------------------------------
+        vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
+        vtx->SetMC(GLOBAL_InBT_MC);
+        if (gEDBDEBUGLEVEL>2) {
+            cout << "The vtx info for this MC event: X:Y:Z:MC:  " << GLOBAL_VtxArrayX[GLOBAL_InBT_MC] << " " << GLOBAL_VtxArrayY[GLOBAL_InBT_MC] << " " <<GLOBAL_VtxArrayZ[GLOBAL_InBT_MC] << " " << GLOBAL_InBT_MC << endl;
+            cout << "The vtx info for this MC event: IP(INBT,vtx):  " << CalcIP(InBT,vtx)<< endl;
+        }
+        //-----------------------------------
 
-
-				//-----------------------------------
-				cout << GLOBAL_VtxArrayX[GLOBAL_InBT_MC] << endl;
-				cout << GLOBAL_VtxArrayY[GLOBAL_InBT_MC] << endl;
-				cout << GLOBAL_VtxArrayZ[GLOBAL_InBT_MC] << endl;
-				vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
-				vtx->SetMC(GLOBAL_InBT_MC);
-				cout <<  CalcIP(InBT,vtx) << endl;
 
 
         //-----------------------------------
         // 1) Make local_gAli with cut parameters:
         //-----------------------------------
         local_gAli = TransformEdbPVRec(GLOBAL_gAli, InBT);
-        // Add InBT to GLOBAL_ShowerSegArray
-        GLOBAL_ShowerSegArray -> Add(InBT);
+
+        // IN THIS ALGORITHM WE DO NOT YET AUTOMATICALLY ADD THE FIRST BT
+        // SINCE WE NEED AN ADDIITONAL VERTEX CUT OF THIS FIRST BT TO CHECK!
+        // // Add InBT to GLOBAL_ShowerSegArray
+        // GLOBAL_ShowerSegArray -> Add(InBT);
         //-----------------------------------
 
 
         //-----------------------------------
         // 2) Loop over (whole) local_gAli, check InitiatorBT
         // 2) compatible with a segment forming a e+e- pair:
+        // 2) (Loop over all plates of local_gAli, since this is already
+        // 2) extracted with the right numbers of plates...)
         //-----------------------------------
         Int_t local_gAli_npat=local_gAli->Npatterns();
         Int_t btloop_cnt_N=0;
 
-        for (Int_t patterloop_cnt=local_gAli_npat-1; patterloop_cnt>=0; --patterloop_cnt) {
-            if (gEDBDEBUGLEVEL>3) cout << "--- --- Doing patterloop_cnt= " << patterloop_cnt << endl;
+        ///============================================================================================
+        ///========================  CODE FROM EdbShowAlg_GS  FROM libShowRec =========================
+        ///============================================================================================
 
-            btloop_cnt_N=local_gAli->GetPattern(patterloop_cnt)->GetN();
 
-            // ---   Apply Cut Conditions that are relevant for GS Algo
-            if (local_gAli->GetPattern(patterloop_cnt)->Z()-InBT->Z()>CUT_PARAMETER[6]*1350) continue;
-// 				 CUT_PARAMETER[0]=cut_gs_cut_dip;
-//         CUT_PARAMETER[1]=cut_gs_cut_dmin;
-//         CUT_PARAMETER[2]=cut_gs_cut_dr;
-//         CUT_PARAMETER[3]=cut_gs_cut_dz;
-//         CUT_PARAMETER[4]=cut_gs_cut_dtheta;
-//         CUT_PARAMETER[5]=cut_gs_cut_piddiff;
-//         CUT_PARAMETER[6]=cut_gs_cut_oppositeflag;
-//             if (TMath::Abs(local_gAli->GetPattern(patterloop_cnt)->Z()-InBT->Z())>3000) continue;
-//             if (local_gAli->GetPattern(patterloop_cnt)->Z()<InBT->Z()) continue;
 
-            // Loop over all Segments of a Pattern (Plate)
-            for (Int_t btloop_cnt=0; btloop_cnt<btloop_cnt_N; ++btloop_cnt) {
-                seg = (EdbSegP*)local_gAli->GetPattern(patterloop_cnt)->GetSegment(btloop_cnt);
-                if (gEDBDEBUGLEVEL>3) seg->PrintNice();
-								
-								//cout << "TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx) = " << TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx)) << endl;
+        Int_t npat=local_gAli->Npatterns();
+        Int_t pat_one_bt_cnt_max,pat_two_bt_cnt_max=0;
+        EdbPattern* pat_one=0;
+        EdbPattern* pat_two=0;
+        EdbSegP* Segment=0;
+        EdbSegP* Segment2=0;
+        Float_t distZ,IP_Pair_To_InBT,IP_Pair_To_InBT_SegSum;
 
-								// ---   Apply Cut Conditions that are relevant for GS Algo
-                if (IsSameSegment(seg,InBT)) continue;
-                Int_t PIDDIFF=TMath::Abs(seg->PID()-InBT->PID());
-                if (GetMinimumDist(InBT,seg)>CUT_PARAMETER[1]) continue;
-                if (GetdeltaRWithPropagation(InBT,seg)>CUT_PARAMETER[2]) continue;
-                if (GetdeltaThetaSingleAngles(InBT,seg)>CUT_PARAMETER[4]) continue;
-                if (PIDDIFF>CUT_PARAMETER[6]) continue;
-                if (TMath::Min(CalcIP(InBT,vtx),CalcIP(seg,vtx)) > CUT_PARAMETER[0]) continue;
-                if (TMath::Abs(seg->Z()-vtx->Z())>CUT_PARAMETER[3]) continue;
-                // ---   Apply Cut Conditions that are relevant for GS Algo
-								
-                AddBTToArrayWithCeck(seg, GLOBAL_ShowerSegArray);
+
+        Segment = InBT;
+        IP_Pair_To_InBT=CalcIP(Segment, vtx);
+        /// Change with respect to libShowRec: here we assume that Segment will always be
+        /// the Initiator BaseTrack and Segment2 is the other segment to check.
+
+
+
+
+        // Loop over pattern for the first BT of the pairs:
+        //
+        //cout << "// Loop over pattern for the first BT of the pairs: "<< endl;
+
+
+        // Start first with the pattern with the lowest Z position.
+        pat_one=local_gAli->GetPatternZLowestHighest(1);
+        Float_t pat_one_Z=pat_one->Z();
+        pat_one_bt_cnt_max=pat_one->GetN();
+
+        for (Int_t pat_one_cnt=0; pat_one_cnt<npat; ++pat_one_cnt) {
+
+
+            if (pat_one_cnt>0) {
+                pat_one=(EdbPattern*)local_gAli->NextPattern(pat_one_Z,1);
+                pat_one_Z=pat_one->Z();
+                pat_one_bt_cnt_max=pat_one->GetN();
             }
 
+            // Check if pattern Z() equals the InBZ->Z(), since we wanna have the
+            // pattern one the pattern to contain the InBT:
+            distZ=pat_one->Z()-InBT->Z();
+            if (TMath::Abs(distZ)>10) continue;
+            //cout << "distZ (pat_one->Z()-InBT->Z())= " << distZ << endl;
+
+            // Ceck if InBT fulfills criteria for IP to vertex:
+            if (IP_Pair_To_InBT>CUT_PARAMETER[0]) continue;
+            // Now here we can add InBT since it passed also the vertex cut.
+            if (GLOBAL_ShowerSegArray->GetEntries()==0) GLOBAL_ShowerSegArray->Add(InBT);
+
+            // Check if pattern dist Z to Vtx  is ok:
+            distZ=pat_one->Z()-vtx->Z();
+            // Z distance has to be greater zero, cause the InBT
+            // and other pair BTs shall come downstream the vertex:
+            if (distZ<0) continue;
+            //cout << "distZ (pat_one->Z()-vtx->Z();) = " << distZ << endl;
+
+            if (gEDBDEBUGLEVEL>2) cout << "Searching patterns: pat_one_cnt=" << pat_one_cnt << "  pat_one->Z() = " << pat_one->Z() << " pat_one_bt_cnt_max= "<< pat_one_bt_cnt_max <<endl;
+
+
+            // Loop over pattern for the second BT of the pairs:
+            //
+            //cout << "// Loop over pattern for the second BT of the pairs: "<< endl;
+
+            pat_two=local_gAli->GetPatternZLowestHighest(1);
+            Float_t pat_two_Z=pat_two->Z();
+            pat_two_bt_cnt_max=pat_two->GetN();
+
+            for (Int_t pat_two_cnt=0; pat_two_cnt<npat; ++pat_two_cnt) {
+
+                if (pat_two_cnt>0) {
+                    pat_two=(EdbPattern*)local_gAli->NextPattern(pat_two_Z,1);
+                    pat_two_Z=pat_two->Z();
+                    pat_two_bt_cnt_max=pat_two->GetN();
+                }
+
+                // PID diff of two plates may be maximum [0..PidDIFFN]
+                if (TMath::Abs(pat_one_cnt-pat_two_cnt)>CUT_PARAMETER[5]) continue;
+
+                // pattern two should come downstream pattern one:
+                if (pat_two->Z()<pat_one->Z()) continue;
+
+                if (gEDBDEBUGLEVEL>2) cout << "	Searching patterns: pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
+
+
+                for (Int_t pat_one_bt_cnt=0; pat_one_bt_cnt<pat_one_bt_cnt_max; ++pat_one_bt_cnt) {
+                    /// Segment =  (EdbSegP*)pat_one->GetSegment(pat_one_bt_cnt);
+                    /// Segment = InBT;
+                    /// Change with respect to libShowRec: here we assume that Segment will always be
+                    /// the Initiator BaseTrack.
+
+                    for (Int_t pat_two_bt_cnt=0; pat_two_bt_cnt<pat_two_bt_cnt_max; ++pat_two_bt_cnt) {
+                        Segment2 = (EdbSegP*)pat_two->GetSegment(pat_two_bt_cnt);
+
+                        // Ceck if segments are not (by chance) the same:
+                        if (Segment2==Segment) continue;
+                        if (Segment2->ID()==Segment->ID()&&Segment2->PID()==Segment->PID()) continue;
+                        if (IsSameSegment(Segment2,Segment)) continue;
+
+
+
+                        /// At first:  Check for already duplicated pairings:
+                        /// if (CheckPairDuplications(Segment->PID(),Segment->ID(),Segment2->PID(),Segment2->ID(), SegmentPIDArray,SegmentIDArray,Segment2PIDArray,Segment2IDArray, RecoShowerArrayN)) continue;
+
+                        // Now apply cut conditions: GS  GAMMA SEARCH Alg  --------------------
+
+                        // Check if IP of both to vtx (BT) is ok:
+                        Float_t IP_Pair_To_InBT_Seg2  =CalcIP(Segment2, vtx);
+                        if (IP_Pair_To_InBT_Seg2>CUT_PARAMETER[0]) continue;
+
+                        // if InBT is flagged as MC InBT, take care that only BG or same MC basetracks are taken:
+                        if (InBT->MCEvt()>0) if (Segment->MCEvt()>0&&Segment2->MCEvt()>0) if (Segment->MCEvt()!=Segment2->MCEvt()) continue;
+                        if (InBT->MCEvt()>0) if (Segment->MCEvt()>0&&Segment2->MCEvt()>0) if (Segment->MCEvt()!=InBT->MCEvt()) continue;
+                        if (InBT->MCEvt()>0) if (Segment->MCEvt()>0&&Segment2->MCEvt()>0) if (Segment2->MCEvt()!=InBT->MCEvt()) continue;
+
+                        // In case of two MC events, check for e+ e- pairs
+                        // Do this ONLY IF parameter eParaValue[6] is set to choose different Flag() pairs:
+                        if (InBT->MCEvt()>0 && CUT_PARAMETER[6]==1) {
+                            if (Segment->MCEvt()>0&&Segment2->MCEvt()>0) {
+                                if ((Segment2->Flag()+Segment->Flag())!=0) continue;
+                            }
+                        }
+
+                        // a) Check dR between tracks:
+                        if (GetdeltaRWithPropagation(Segment,Segment2)>CUT_PARAMETER[2]) continue;
+                        // b) Check dT between tracks:
+                        if (GetdeltaThetaSingleAngles(Segment,Segment2)>CUT_PARAMETER[4]) continue;
+                        // c) Check dMinDist between tracks:
+                        if (GetMinimumDist(Segment,Segment2)>CUT_PARAMETER[1]) continue;
+
+                        // f) Check if this is not a possible fake doublet which is
+                        //	  sometimes caused by view overlap in the scanning:
+                        //    in the EdbPVRQuality class this will be done at start for the whole
+                        //    PVR object so this will be later on obsolete.
+                        ///if (IsPossibleFakeDoublet(Segment,Segment2) ) continue;
+                        //
+                        // end of    cut conditions: GS  GAMMA SEARCH Alg  --------------------
+                        //
+
+
+                        if (gEDBDEBUGLEVEL>3) {
+                            cout << "EdbShowAlg_GS::FindPairs	Pair (PID:" << Segment->PID() << ",ID:" << Segment->ID()<< ";"<< Segment2->PID() << "," << Segment2->ID() << ") has passed all cuts w.r.t to InBT:" << endl;
+                            cout << "EdbShowAlg_GS::FindPairs	GetdeltaRWithPropagation(Segment,Segment2)  = " << GetdeltaRWithPropagation(Segment,Segment2) << endl;
+                            cout << "EdbShowAlg_GS::FindPairs	GetdeltaThetaSingleAngles(Segment,Segment2)  = " << GetdeltaThetaSingleAngles(Segment,Segment2) << endl;
+                            cout << "EdbShowAlg_GS::FindPairs	GetMinimumDist(Segment,Segment2)  = " << GetMinimumDist(Segment,Segment2) << endl;
+                            cout << "EdbShowAlg_GS::FindPairs	CalcIP(BetterSegment,InBT)  = " << IP_Pair_To_InBT << endl;
+                        }
+
+                        if (gEDBDEBUGLEVEL>3)  cout <<"------------"<< endl;
+
+                        // Add Add Segment2 to to shower array:
+                        //cout << "// Add Segment2 to to shower array (AddBTToArrayWithCeck):" << endl;
+                        AddBTToArrayWithCeck(Segment2, GLOBAL_ShowerSegArray);
+                        //PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+
+                    } //for (Int_t pat_two_bt_cnt=0; ...
+
+                } //for (Int_t pat_one_bt_cnt=0; ...
+
+            } // for (Int_t pat_two_cnt=0; ...
+
+
+            // Now here do the usual rest for BG density calculation:
+            //...
             // Calc BT density around shower:
-            EdbPattern* pat_interim=local_gAli->GetPattern(patterloop_cnt);
+            EdbPattern* pat_interim=local_gAli->GetPattern(pat_one_cnt);
             CalcTrackDensity(pat_interim,local_gAli_pat_interim_halfsize,npat_int,npat_total,npatN);
 
             // Calc TrackNumbers for plate for efficency numbers:
             CalcEfficencyNumbers(pat_interim, InBT->MCEvt(), NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
-        }
+
+        } //for (Int_t pat_one_cnt=0; ...
 
 
-        PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+        ///============================================================================================
+        ///============================================================================================
+        ///============================================================================================
+
 
         if (gEDBDEBUGLEVEL>2) PrintShowerObjectArray(GLOBAL_ShowerSegArray);
 
@@ -5479,6 +5618,9 @@ void ReconstructShowers_GS()
     if (gEDBDEBUGLEVEL>3) cout << "---GLOBAL_INBTSHOWERNR ... " << GLOBAL_INBTSHOWERNR<< endl;
 
 
+
+
+    return;
 }
 //-------------------------------------------------------------------------------------------
 
@@ -5544,7 +5686,7 @@ Bool_t AddBTToArrayWithCeck(EdbSegP* tryAttachedSegment, TObjArray* GLOBAL_Showe
     }
 
 
-    if (gEDBDEBUGLEVEL>3) cout << " DO WE ADD THIS BT ?? "<< !IsContained << endl;
+    if (gEDBDEBUGLEVEL>3) cout << "AddBTToArrayWithCeck DO WE ADD THIS BT ?? "<< !IsContained << endl;
 
     if (!IsContained) {
         GLOBAL_ShowerSegArray->Add(tryAttachedSegment);
@@ -8121,7 +8263,7 @@ void Create_NN_Alg_Histograms()
 }
 
 
-
+//______________________________________________________________________________
 
 /* Declared inline:
 Double_t GetdR(EdbSegP* seg1,EdbSegP* seg2){
@@ -8136,6 +8278,7 @@ Double_t GetIP(EdbSegP* seg1,EdbSegP* seg2){
 return 0;
 }*/
 
+//______________________________________________________________________________
 
 Double_t GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) {
     // calculate minimum distance of 2 lines.
@@ -8268,11 +8411,11 @@ EdbSegP* BuildShowerAxis(TObjArray* ShowerSegArray)
 
     //==C==	In few cases "nan" can happen, then we put val to -1;
     if (TMath::IsNaN(X0)) {
-        cout << "EdbShowerP::BuildShowerAxis   WARNING! FIT DID NOT CONVVERGE, RETURN FIRST SEGMENT! " << endl;
+        //cout << "EdbShowerP::BuildShowerAxis   WARNING! FIT DID NOT CONVVERGE, RETURN FIRST SEGMENT! " << endl;
         EdbSegP* seg0=(EdbSegP*)ShowerSegArray->At(0);
         EdbSegP* eShowerAxisCenterGravityBT = new EdbSegP(0,seg0->X(),seg0->Y(),seg0->TX(),seg0->TY(),0,0);
         eShowerAxisCenterGravityBT -> SetZ(((EdbSegP*)ShowerSegArray->At(0))->Z());
-        eShowerAxisCenterGravityBT->PrintNice();
+        //eShowerAxisCenterGravityBT->PrintNice();
         return eShowerAxisCenterGravityBT;
     }
 
@@ -8303,7 +8446,7 @@ EdbSegP* BuildShowerAxis(TObjArray* ShowerSegArray)
 
 
 
-
+//______________________________________________________________________________
 
 void CalcTrackDensity(EdbPattern* pat_interim,Float_t pat_interim_halfsize,Int_t& npat_int,Int_t& npat_total,Int_t& npatN)
 {
@@ -8325,7 +8468,7 @@ void CalcTrackDensity(EdbPattern* pat_interim,Float_t pat_interim_halfsize,Int_t
     return;
 }
 
-
+//______________________________________________________________________________
 
 void CalcEfficencyNumbers(EdbPattern* pat_interim, Int_t MCCheck, Int_t& NBT_Neff,Int_t& NBTMC_Neff,Int_t& NBTMCe_Neff)
 {
@@ -8348,11 +8491,14 @@ void CalcEfficencyNumbers(EdbPattern* pat_interim, Int_t MCCheck, Int_t& NBT_Nef
     return;
 }
 
+//______________________________________________________________________________
+
 void 	FillShowerAxis() {
     cout << "IMPLEMENTED IN ... TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree ... CHECK THERE..."<<endl;
     return;
 }
 
+//______________________________________________________________________________
 
 Bool_t IsShowerSortedZ(TObjArray* showerarray) {
     // Condition: z[0]<= z[1]<=....<=z[nseg]
@@ -8366,6 +8512,8 @@ Bool_t IsShowerSortedZ(TObjArray* showerarray) {
     }
     return kTRUE;
 }
+
+//______________________________________________________________________________
 
 void SortShowerZ(TObjArray* showerarray) {
 
@@ -8406,6 +8554,7 @@ void SortShowerZ(TObjArray* showerarray) {
     return;
 }
 
+//______________________________________________________________________________
 
 Bool_t IsSameSegment(EdbSegP* seg1,EdbSegP* seg2) {
     if (TMath::Abs(seg1->X()-seg2->X())<0.01) {
@@ -8420,9 +8569,8 @@ Bool_t IsSameSegment(EdbSegP* seg1,EdbSegP* seg2) {
     return kFALSE;
 }
 
-
-
 //______________________________________________________________________________
+
 Double_t CalcIP(EdbSegP* s, EdbVertex* v) {
     // calculate IP for the selected tracks wrt the given vertex.
     // if the vertex is not given, use the selected vertex.
@@ -8533,11 +8681,16 @@ void Fill2GlobalInBTArray() {
     Float_t cutIPMax=100;
     if (cmd_vtx==2) cutIPMax=250;
     if (cmd_vtx==3) cutIPMax=500;
+    if (cmd_vtx==4) cutIPMax=1000;
+    if (cmd_vtx==5) cutIPMax=5000;
 
     Float_t cutZVtxDist=999999;
 
     TObjArray* GLOBAL_InBTArray2 = new TObjArray();
+    cout << "Fill2GlobalInBTArray Calc IPs for the " << GLOBAL_InBTArray->GetEntries() << " entries" << endl;
+
     for (Int_t i=0; i<GLOBAL_InBTArray->GetEntries(); ++i) {
+        if (i%1000==0) cout << "." << flush;
         EdbSegP* s1=(EdbSegP*)GLOBAL_InBTArray->At(i);
         // Calculate IP:
         // in case InBT is of BGType, we check for the GBMC variable set.
@@ -8545,6 +8698,9 @@ void Fill2GlobalInBTArray() {
         if (MCEvt<0 && cmd_GBMC>0) MCEvt=cmd_GBMC;
 
         Double_t ip=CalcIP(s1,Double_t(GLOBAL_VtxArrayX[MCEvt]),Double_t(GLOBAL_VtxArrayY[MCEvt]),Double_t(GLOBAL_VtxArrayZ[MCEvt]));
+
+        if (ip>cutIPMax) continue;
+
         cutZVtxDist=s1->Z()-Double_t(GLOBAL_VtxArrayZ[MCEvt]);
         if (i==0||i==GLOBAL_InBTArray->GetEntries()-1) {
             cout << "INBT " << i << " :VTX:X:Y:Z:  " << GLOBAL_VtxArrayX[MCEvt] << " " << GLOBAL_VtxArrayY[MCEvt] << " " << GLOBAL_VtxArrayZ[MCEvt] << " ip= " << ip << " ZdistVtx=  " <<  cutZVtxDist << " MCEvt= " << MCEvt << endl;
