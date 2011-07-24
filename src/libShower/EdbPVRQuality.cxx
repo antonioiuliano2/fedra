@@ -1308,6 +1308,13 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
         cout << "WARNING!----EdbPVRQuality::Remove_Passing() NULL == eTracks." << endl;
         cout << "EdbPVRQuality::Remove_Passing() Read tracks from a linked_tracks.root file if there is any." << endl;
         Tracks=GetTracksFromLinkedTracksRootFile();
+
+        if (NULL == Tracks) {
+            cout << "WARNING!----EdbPVRQuality::GetTracksFromLinkedTracksRootFile() NULL == eTracks." << endl;
+            cout << "WARNING!----EdbPVRQuality::Remove_Passing() Reading tracks from a linked_tracks.root file failed." << endl;
+            cout << "WARNING!----EdbPVRQuality::Remove_Passing() Return the original object back." << endl;
+            return aliSource;
+        }
     }
 
     // Now the object array  Tracks  should be filled anyway, either from the source EdbPVR

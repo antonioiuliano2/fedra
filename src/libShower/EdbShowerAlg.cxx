@@ -118,7 +118,7 @@ void EdbShowerAlg::Transform_eAli(EdbSegP* InitiatorBT, Float_t ExtractSize=1500
     // ---	Use always eAliSub, search BT correspond in eAli, add BT from eAli....May take also long time...
     // ---
     // ---
-    // --- SEVERE warning:  IF gAli is in wrong order it can be that no showers 
+    // --- SEVERE warning:  IF gAli is in wrong order it can be that no showers
     // --- SEVERE warning:  are reconstructed since most implemented algorithms
     // --- SEVERE warning:  rely on the order that plate 2 comes directly behind
     // --- SEVERE warning:  the InBT.  THIS IS STILL ON BUGFIXING LIST!!!
@@ -527,13 +527,29 @@ Double_t EdbShowerAlg::GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) {
 EdbShowerAlg_GS::EdbShowerAlg_GS()
 {
     // Default Constructor
+    // This Shower Algorithms find all compatible basetrack pairings that could
+    // come from an ePlus-eMinus pair.
+    // It needs an EdbPVRec* object.
+    // Additionally -but not necessary- an array (or one) vertex, w.r.t. which the
+    // basetracks should be looked at.
+    //   If vertex array is not given, then the basetracks of the volume will be
+    //   used to create interim helper vertices.
+    // Usage:
+    //   Alg = new EdbShowerAlg_GS();
+    //   Alg->SetEdbPVRec(EdbPVRec* pvr);
+    //   Alg->SetInVtx(EdbVertex* vtx);
+    //   Alg->Execute();
+    //   Alg->GetRecoShowerArray();
+    //
+    // Returs the compatible Pair Segments (stored as EdbTrackP*).
+
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","EdbShowerAlg_GS:: Default Constructor");
 
 
     cout << "Howto do:  " << endl;
     cout << "	Alg = new EdbShowerAlg_GS();" << endl;
-    cout << "	Alg->SetEdbPVRec(EdbPVRec*);" << endl;
-    cout << "	Alg->SetInVtx(EdbVertex*)" << endl;
+    cout << "	Alg->SetEdbPVRec(EdbPVRec* pvr);" << endl;
+    cout << "	Alg->SetInVtx(EdbVertex* vtx)" << endl;
     cout << "	Alg->Execute();" << endl;
     cout << "	Alg->GetRecoShowerArray();   .... Returns you the compatible Pair Segments (stored as EdbTrackP*)" << endl;
     cout << "	" << endl;
@@ -570,29 +586,38 @@ EdbShowerAlg_GS::~EdbShowerAlg_GS()
 
 void EdbShowerAlg_GS::Init()
 {
-    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Init()");
-
     //  Init with values according to GS Alg:
     //  Took over from "FindGamma.C" script I develoved before:
-    // IP CUT; this cut is used for the -better- IP of both BTs to Vertex/BT
+    //  and with recorded values from a GammaSearch best algo parameterset.
+    //  See also table "tableshowerchosenparametersets"
+    //  and figure "" in FWM thesis.
+
+    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Init()");
+
+    //
+    // min IP cut; this cut is used for the -better- IP of both BTs to Vertex/BT
     eParaValue[0]=250;
     eParaString[0]="PARA_GS_CUT_dIP";
+    //
     // min minDist.e between pair BTs
-    eParaValue[1]=40;
+    eParaValue[1]=130;
     eParaString[1]="PARA_GS_CUT_dMin";
-    // min dR between pair BTs
-    eParaValue[2]=60;
+    //
+    // min dR (with propagation) between pair BTs
+    eParaValue[2]=30;
     eParaString[2]="PARA_GS_CUT_dR";
+    //
     // max Z distance between pair BTs and Vertex/BT
-    eParaValue[3]=19000;
+    eParaValue[3]=28000;
     eParaString[3]="PARA_GS_CUT_dZ";
+    //
     // max Angle between pair BTs
-    eParaValue[4]=0.060;
+    eParaValue[4]=0.15;
     eParaString[4]="PARA_GS_CUT_dtheta";
+    //
     // max plates difference between pair BTs
-    eParaValue[5]=0;
+    eParaValue[5]=2;
     eParaString[5]="PARA_GS_CUT_PIDDIFF";
-
 
     if (!eRecoShowerArray) eRecoShowerArray= new TObjArray(999);
     eRecoShowerArrayN=0;
@@ -709,8 +734,8 @@ void EdbShowerAlg_GS::Execute()
 
     EdbSegP* InBT=NULL;
 
-//   EdbShowerP* RecoShower;
-    EdbTrackP* RecoShower;
+//   EdbShowerP* RecoShower; //libShowRec
+    EdbTrackP* RecoShower;   //libShower
 
     Int_t     STEP=-1;
     if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
@@ -768,9 +793,10 @@ void EdbShowerAlg_GS::Execute()
     cout << " eRecoShowerArrayN=  " <<  eRecoShowerArrayN << endl;
 
     for (Int_t i=0; i <eRecoShowerArray->GetEntries();  i++) {
-//   EdbShowerP* sh = (EdbShowerP* )eRecoShowerArray->At(i);
-//   sh->PrintSegments();
-        EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(i);
+
+//   EdbShowerP* sh = (EdbShowerP* )eRecoShowerArray->At(i);  // libShowRec
+//   sh->PrintNice();
+        EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(i); // libShower
         sh->PrintNice();
     }
 
@@ -782,9 +808,14 @@ void EdbShowerAlg_GS::Execute()
 
 
 
-TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
+TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 {
-    if (gEDBDEBUGLEVEL>2) cout << "Starting FindPairs(InBT,eAli_Sub) now" << endl;
+    // Function to find pairs of an EdbPVRec object.
+    // ATTENTNION: CURRENTLY (23.07.2011) STILL IN MODIFYING PHASE!!!
+
+
+//     if (gEDBDEBUGLEVEL>2);
+    cout << "EdbShowerAlg_GS::FindPairs   Starting FindPairs(InBT,eAli_Sub) now" << endl;
 
     TObjArray* RecoShowerArray= new TObjArray(99);
     RecoShowerArray->Clear();
@@ -799,14 +830,25 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
     EdbSegP* Segment_Sum=new EdbSegP(0,0,0,0,0,0);
     Float_t	 IP_Pair_To_InBT=0;
 
-    if (NULL==InBT) {
-        EdbSegP* InBT= new EdbSegP();
-        InBT->SetX(0);
-        InBT->SetY(0);
-        InBT->SetZ(0);
+    EdbSegP* InBT=NULL;
+
+    if (NULL==InitiatorBT) {
+        InBT= new EdbSegP();
+        EdbPattern* pat = eAli_Sub->GetPatternZLowestHighest(1);
+        cout << "pat->X() " << pat->X() << endl;
+        cout << "pat->Y() " << pat->Y() << endl;
+        cout << "pat->Z() " << pat->Z() << endl;
+        InBT->SetX(pat->X());
+        InBT->SetY(pat->Y());
+        InBT->SetZ(pat->Z());
         InBT->SetTX(0);
         InBT->SetTY(0);
         InBT->SetMC(-999,-999);
+        cout << "WARNING   EdbShowerAlg_GS::FindPairs   InBT==NULL. Create a dummy InBT:" << endl;
+        InBT->PrintNice();
+    }
+    else {
+        InBT=InitiatorBT;
     }
 
     //-----------------------------------
@@ -823,7 +865,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
     // labelling, this will be built in later....
     //-----------------------------------
 
-    Int_t npat=eAli_Sub->Npatterns()-1;
+    Int_t npat=eAli_Sub->Npatterns();
     Int_t pat_one_bt_cnt_max,pat_two_bt_cnt_max=0;
     EdbPattern* pat_one=0;
     EdbPattern* pat_two=0;
@@ -834,8 +876,13 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
 
         // Check if dist Z to vtx (BT) is ok:
         distZ=pat_one->Z()-InBT->Z();
+        if (gEDBDEBUGLEVEL>4) {
+            cout << "EdbShowerAlg_GS::FindPairs  Check if dist Z to vtx (BT) is ok:  distZ=" << distZ << endl;
+        }
         if (distZ>eParaValue[3]) continue;
         if (distZ<1000) continue;
+
+
 
         if (gEDBDEBUGLEVEL>2) cout << "pat_one_cnt=" << pat_one_cnt << "  pat_one->Z() = " << pat_one->Z() << " pat_one_bt_cnt_max= "<< pat_one_bt_cnt_max <<endl;
 
@@ -854,6 +901,11 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
 
             for (Int_t pat_one_bt_cnt=0; pat_one_bt_cnt<pat_one_bt_cnt_max; ++pat_one_bt_cnt) {
                 Segment =  (EdbSegP*)pat_one->GetSegment(pat_one_bt_cnt);
+
+                Float_t IP_Pair_To_InBT_Seg	=CalcIP(Segment, InBT->X(),InBT->Y(),InBT->Z());
+                // Check if IP to vtx (BT) is ok:
+                if (IP_Pair_To_InBT>eParaValue[0]) continue;
+
 
                 for (Int_t pat_two_bt_cnt=0; pat_two_bt_cnt<pat_two_bt_cnt_max; ++pat_two_bt_cnt) {
 
@@ -898,18 +950,26 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub)
                     Segment_Sum->SetTY(ty_av);
                     Segment_Sum->SetZ(z_av);
 
-                    // d) Check if IP to vtx (BT) is ok:
-// 	  IP_Pair_To_InBT=CalcIP(Segment_Sum, InBT->X(),InBT->Y(),InBT->Z());
-// 	  if (IP_Pair_To_InBT>eParaValue[0]) continue;
-
-                    Float_t IP_Pair_To_InBT_Seg	=CalcIP(Segment, InBT->X(),InBT->Y(),InBT->Z());
+                    // Check if IP to vtx (BT) is ok:
                     Float_t IP_Pair_To_InBT_Seg2	=CalcIP(Segment2, InBT->X(),InBT->Y(),InBT->Z());
+                    if (IP_Pair_To_InBT_Seg2>eParaValue[0]) continue;
 
-                    // d) Check if IP to vtx (BT) is ok:
-                    if (TMath::Min(IP_Pair_To_InBT_Seg,IP_Pair_To_InBT_Seg2)>eParaValue[0]) continue;
 
-                    cout << "IP_Pair_To_InBT_Seg= " << IP_Pair_To_InBT_Seg << endl;
-                    cout << "IP_Pair_To_InBT_Seg2= " << IP_Pair_To_InBT_Seg2 << endl;
+
+                    Float_t IP_Pair_To_InBT_SegSum=CalcIP(Segment_Sum, InBT->X(),InBT->Y(),InBT->Z());
+                    Float_t IP_Pair_To_InBT_SegSmaller;
+
+                    cout << "IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
+                    cout << "IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
+                    cout << "IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
+
+                    // Save the segment which has smaller IP, this will be the first BT in the RecoShower
+                    if ( IP_Pair_To_InBT_Seg>IP_Pair_To_InBT_Seg2 ) {
+                        IP_Pair_To_InBT_SegSmaller=0; // take Segment first
+                    }
+                    else {
+                        IP_Pair_To_InBT_SegSmaller=1; // take Segment2 first
+                    }
 
                     // e) Check if this is not a possible fake doublet which is
                     //	sometimes caused by view overlap in the scanning:
@@ -1429,7 +1489,7 @@ void EdbShowerAlgESimple::DoRun()
 void EdbShowerAlgESimple::DoRun(TObjArray* trackarray)
 {
     // Runs over the object array of showers.
-    
+
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgESimple::DoRun(TObjArray* trackarray)" << endl;
 
     eRecoShowerArrayN=trackarray->GetEntries();
@@ -1455,8 +1515,14 @@ void EdbShowerAlgESimple::DoRun(TObjArray* trackarray)
 
 void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
 {
-    // What i write here? It will appear in html root documentation.
-    
+    // Basic run function for energy estimation.
+    // Assumes, that Neural Networks are properly created, weightfiles correctly loaded,
+    // and scanning efficiencies correctly evaluated.
+    //   * Takes a shower, gets its energy parametrisation (i.e. the shower profile)
+    //   * Takes the right ANN, run it with inputvariables from the shower.
+    //   * According to the energy output value, the systematic uncertainties are read from
+    //     a table and then those values are written in the shower storage, or in the
+    //     "treebranch tree" root file.
 
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlgESimple::DoRun(EdbTrackP* shower)" << endl;
 
@@ -1569,7 +1635,6 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
     val_sigma_tot=TMath::Sqrt(val_sigma_stat*val_sigma_stat+val_sigma_sys*val_sigma_sys);
     cout << "Float_t val_sigma_tot=...  "  << val_sigma_tot << endl;
 
-
     cout << "Doing only statistics and one source of systematicsat the moment! " << endl;
     cout << "Notice also that we dont have storage variable in EdbTrackP for the error of P() ... " << endl;
     // ---------------------------------
@@ -1580,7 +1645,7 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   ERROR! Sigma will be fully implemented when lookup tables for all"<<endl;
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   ERROR! systematic uncertainties are availible!"<<endl;
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgESimple::DoRun()   Estimated Energy = " << val << " +- " << val_sigma_tot  << "..." << endl;
-
+    // ---------------------------------
 
 
     // Finally, set values...
