@@ -255,7 +255,7 @@ void EdbShowPVRQuality::CheckEdbPVRec()
             // by the user!
             // Therefore (s)he needs to know how many Gauge Coupling Parameters
             // in the Standard Model exist (at least)...
-            Bool_t result=kFALSE;
+            Bool_t result=kTRUE;
             if (seg->MCEvt()>0) {
                 if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                     result = kTRUE;
@@ -368,7 +368,7 @@ void EdbShowPVRQuality::SetHistGeometry_OPERAandMC()
     // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(250,-125000,125000,250,-125000,125000);
-    cout << "SetHistGeometry_OPERAandMC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "SetHistGeometry_OPERAandMC::binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
 
@@ -520,7 +520,8 @@ void EdbShowPVRQuality::PrintCutType1()
 
 void EdbShowPVRQuality::Execute_ConstantBTDensity()
 {
-    // Execute the modified cut routines to achieve the basetrack density level, after application the specific cut on the segments of the specific plate (pattern).
+    // Execute the modified cut routines to achieve the basetrack density level,
+    // after application the specific cut on the segments of the specific plate (pattern).
     // The Constant BT Density is defined by the number of BT/mm2 in the histogram.
 
     for (int i=0; i<80; ++i) cout << "-";
@@ -575,7 +576,7 @@ void EdbShowPVRQuality::Execute_ConstantBTDensity()
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                Bool_t result=kFALSE;
+                Bool_t result=kTRUE;
                 if (seg->MCEvt()>0) {
                     if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                         result = kTRUE;
@@ -589,7 +590,7 @@ void EdbShowPVRQuality::Execute_ConstantBTDensity()
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
-                if ( result == kTRUE ) continue;
+                if ( kFALSE == result ) continue;
                 // Constant BT density cut:
                 if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
 
@@ -823,7 +824,7 @@ void EdbShowPVRQuality::Execute_ConstantQuality()
                 // by the user!
                 // Therefore (s)he needs to know how many Gauge Coupling Parameters
                 // in the Standard Model exist (at least)...
-                Bool_t result=kFALSE;
+                Bool_t result=kTRUE;
                 if (seg->MCEvt()>0) {
                     if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                         result = kTRUE;
@@ -837,7 +838,7 @@ void EdbShowPVRQuality::Execute_ConstantQuality()
                 if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
 
                 // Main decision for segment to be kept or not (seg is of MC or data type).
-                if ( result == kTRUE ) continue;
+                if ( kFALSE == result ) continue;
 
                 // Change here to the quality with values obtained from the tracks.
                 // Constant BT quality cut:
@@ -1185,49 +1186,58 @@ EdbPVRec* EdbShowPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
     // Separation threshold values are 2microns in postion and 10 mrad in angle.
     // (again obtained from Bern data).
 
-
     // Quick and Dirty implementation !
-    cout << "-----     void EdbShowPVRQuality::Remove_DoubleBT()" << endl;
-    cout << "-----     void EdbShowPVRQuality::Take source EdbPVRec from " << aliSource << endl;
-
-    EdbPVRec* eAli_source=aliSource;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT()" << endl;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT()  aliSource = " << aliSource << endl;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT()  eAli_orig = " << eAli_orig << endl;
 
     if (NULL==aliSource) {
-        cout << "-----     void EdbShowPVRQuality::Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
-        eAli_source=eAli_orig;
-    }
-
-    if (NULL==eAli_orig) {
-        cout << "-----     void EdbShowPVRQuality::Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
-        return NULL;
+        cout << "WARNING!----EdbShowPVRQuality::Remove_DoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
+        if (NULL==eAli_orig) {
+            cout << "WARNING!----EdbShowPVRQuality::Remove_DoubleBT() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+            return NULL;
+        }
+        else {
+            aliSource=eAli_orig;
+        }
     }
 
     // Make a new PVRec object anyway
-    EdbPVRec* eAli_target = new EdbPVRec();
-    eAli_target->Print();
+    EdbPVRec* aliTarget = new EdbPVRec();
+    aliTarget->Print();
 
     Bool_t seg_seg_close=kFALSE;
     EdbSegP* seg=0;
     EdbSegP* seg1=0;
     Int_t NdoubleFoundSeg=0;
 
-    for (int i = 0; i <eAli_source->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>2) cout << "Looping over eAli_source->Pat()=" << i << endl;
+    //gEDBDEBUGLEVEL=3;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT() Start looping now. Attention, this might take a while!" << endl;
 
-        EdbPattern* pat = eAli_source->GetPattern(i);
+    for (int i = 0; i <aliSource->Npatterns(); i++ ) {
+        if (gEDBDEBUGLEVEL==2) cout << "." << flush;
+        if (gEDBDEBUGLEVEL>1) cout << "Looping over Ali_source->Pat()=" << i <<  ". Until now double Candidates found: " << NdoubleFoundSeg << endl;
+
+        // Create Target Pattern:
+        EdbPattern* pat = aliSource->GetPattern(i);
         EdbPattern* pt= new EdbPattern();
         // SetPattern Values to the parent patterns:
         pt->SetID(pat->ID());
         pt->SetPID(pat->PID());
         pt->SetZ(pat->Z());
+        // Helper Variable for cout purpose
+        Int_t nPat=pat->N();
 
-        for (int j = 0; j <pat->N()-1; j++ ) {
+        for (int j = 0; j < nPat-1; j++ ) {
+            if (gEDBDEBUGLEVEL>2) if (j%(nPat/10)==0) cout << "10%more of loop done." << flush;
+
             seg = pat->GetSegment(j);
             seg_seg_close=kFALSE;
+
             for (int k = j+1; k <pat->N(); k++ ) {
                 if (seg_seg_close) continue;
 
-                if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment pair nr=" << j << "," << k << endl;
+                if (gEDBDEBUGLEVEL>3) cout << "Looping over pattern for segment pair nr=" << j << "," << k << endl;
                 seg1 = pat->GetSegment(k);
 
                 // Here decide f.e. which segments to check...
@@ -1236,6 +1246,14 @@ EdbPVRec* EdbShowPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
                 if (TMath::Abs(seg->TX()-seg1->TX())>0.01) continue;
                 if (TMath::Abs(seg->TY()-seg1->TY())>0.01) continue;
                 if (gEDBDEBUGLEVEL>3) cout << "EdbShowPVRQuality::Remove_DoubleBT()   Found compatible segment!! " << endl;
+
+                // if (gEDBDEBUGLEVEL>3) cout << "EdbShowPVRQuality::Remove_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
+                // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
+                // I have doubts if I shall take MC events also out, but I guess Yes, because if
+                // in data these small pairings appear, then they will fall also under the
+                // category "fake doublet" and then be removed, even if they are real double BT
+                // from a signal.
+
                 ++NdoubleFoundSeg;
                 seg_seg_close=kTRUE;
                 //                 if (seg_seg_close) break;
@@ -1246,64 +1264,80 @@ EdbPVRec* EdbShowPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
             if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
             pt->AddSegment(*seg);
         }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add AddPattern:" << endl;
-        eAli_target->AddPattern(pt);
+        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
+        aliTarget->AddPattern(pt);
     }
 
-    if (gEDBDEBUGLEVEL>1) eAli_source->Print();
-    if (gEDBDEBUGLEVEL>1) eAli_target->Print();
+    if (gEDBDEBUGLEVEL>1) aliSource->Print();
+    if (gEDBDEBUGLEVEL>1) aliTarget->Print();
 
-    cout << "-----     void EdbShowPVRQuality::Remove_DoubleBT()...Statistics: We found " << NdoubleFoundSeg  << " double segments too close to each other to be different BTracks." << endl;
-    cout << "-----     void EdbShowPVRQuality::Remove_DoubleBT()...done." << endl;
-    return eAli_target;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT() Statistics: " << endl;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT() We found " << NdoubleFoundSeg  << " double segments too close to each other to be different BTracks." << endl;
+    cout << "EdbShowPVRQuality::Remove_DoubleBT()...done." << endl;
+    return aliTarget;
 }
+
 //___________________________________________________________________________________
-
-
 
 EdbPVRec* EdbShowPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 {
     // Removes Passing Tracks from the EdbPVRec source object.
-    // Still todo: Take (as in Execute_ConstantQuality) tracks from linked_tracks
-    // file.
     // Unfortunately, there does Not Exist an easy function like
     // ->RemoveSegment from EdbPVRec object. That makes implementation complicated.
 
-    // Quick and Dirty implementation !
-    EdbPVRec* eAli_source=aliSource;
+    cout << "EdbShowPVRQuality::Remove_Passing()." << endl;
+    cout << "EdbShowPVRQuality::Remove_Passing()  aliSource = " << aliSource << endl;
+    cout << "EdbShowPVRQuality::Remove_Passing()  eAli_orig = " << eAli_orig << endl;
 
     if (NULL==aliSource) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_Passing()  Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
-        eAli_source=eAli_orig;
+        cout << "WARNING!----EdbShowPVRQuality::Remove_Passing()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
+        if (NULL==eAli_orig) {
+            cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+            return NULL;
+        }
+        else {
+            aliSource=eAli_orig;
+        }
     }
 
-    if (NULL==eAli_orig) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
-        return NULL;
+    // Get the tracks from the source object:
+    TObjArray* Tracks=aliSource->eTracks;
+
+    // If eAli_source has no tracks, we return here and stop.
+    if (NULL == Tracks) {
+        cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() NULL == eTracks." << endl;
+        cout << "EdbShowPVRQuality::Remove_Passing() Read tracks from a linked_tracks.root file if there is any." << endl;
+        Tracks=GetTracksFromLinkedTracksRootFile();
+
+        if (NULL == Tracks) {
+            cout << "WARNING!----EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile() NULL == eTracks." << endl;
+            cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() Reading tracks from a linked_tracks.root file failed." << endl;
+            cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() Return the original object back." << endl;
+            return aliSource;
+        }
     }
 
-    TObjArray* Tracks=eAli_source->eTracks;
-    Int_t TracksN=eAli_source->eTracks->GetEntries();
+    // Now the object array  Tracks  should be filled anyway, either from the source EdbPVR
+    // or from the linked_tracks.root file:
+    Int_t TracksN=Tracks->GetEntries();
     EdbTrackP* track;
     EdbSegP* trackseg;
 
-    // if eAli_source has no tracks, we return here and stop.
-    if (NULL == Tracks) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_Passing() NULL == eTracks. Do nothing and return eAli_orig pointer!" << endl;
-        return eAli_orig;
+    if (gEDBDEBUGLEVEL>1) {
+        cout << "EdbShowPVRQuality::Remove_Passing()  aliSource/linked_tracks.root has Tracks N=" << TracksN << endl;
     }
 
-
     // Make a new PVRec object anyway
-    EdbPVRec* eAli_target = new EdbPVRec();
-    eAli_target->Print();
-
+    EdbPVRec* aliTarget = new EdbPVRec();
     Bool_t seg_in_eTracks=kFALSE;
+    Int_t totallyRemovedSegments=0;
+    Int_t totallyAddedSegments=0;
+    Int_t aliSourceNPat=aliSource->Npatterns();
 
-    for (int i = 0; i <eAli_target->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>2) cout << "Looping over eAli_target->Pat()=" << i << endl;
+    for (int i = 0; i < aliSourceNPat; i++ ) {
+        if (gEDBDEBUGLEVEL>2) cout << "Looping over aliSource->Pat()=" << i << endl;
 
-        EdbPattern* pat = eAli_target->GetPattern(i);
+        EdbPattern* pat = aliSource->GetPattern(i);
         EdbPattern* pt= new EdbPattern();
         // SetPattern Values to the parent patterns:
         pt->SetID(pat->ID());
@@ -1312,13 +1346,18 @@ EdbPVRec* EdbShowPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 
         for (int j = 0; j <pat->N(); j++ ) {
             EdbSegP* seg = pat->GetSegment(j);
-            //seg->PrintNice();
+            seg_in_eTracks=kFALSE;
 
-            if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment nr= " << j << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "Checking segment j= " << j << " and loop over tracks to check correspondance." <<endl;
+
             for (int ll = 0; ll<TracksN; ll++ ) {
                 track=(EdbTrackP*)Tracks->At(ll);
-                //track->PrintNice();
                 Int_t TrackSegN=track->N();
+
+                // Compare if this track is regarded as "passing"
+                // when its less than5  plates than the original pvr object
+                if (track->Npl()<aliSourceNPat-5) continue;
+// 									cout << track->Npl() << " " << aliSourceNPat << endl;
 
                 // Here decide f.e. which tracks to check...
                 // On cosmics it would be nice that f.e. Npl()>=Npatterns-4 ...
@@ -1327,6 +1366,7 @@ EdbPVRec* EdbShowPVRQuality::Remove_Passing(EdbPVRec* aliSource)
                 // by absolute positions.
 
                 for (int kk = 0; kk<TrackSegN; kk++ ) {
+                    if (seg_in_eTracks) continue;
                     trackseg=track->GetSegment(kk);
                     if (TMath::Abs(seg->Z()-trackseg->Z())>10.1) continue;
                     if (TMath::Abs(seg->X()-trackseg->X())>5.1) continue;
@@ -1334,220 +1374,140 @@ EdbPVRec* EdbShowPVRQuality::Remove_Passing(EdbPVRec* aliSource)
                     if (TMath::Abs(seg->TX()-trackseg->TX())>0.05) continue;
                     if (TMath::Abs(seg->TY()-trackseg->TY())>0.05) continue;
                     //cout << "Found compatible segment!! " << endl;
+                    totallyRemovedSegments++;
                     seg_in_eTracks=kTRUE;
                 }
-                if (seg_in_eTracks) break;
+                if (seg_in_eTracks) continue;
             }
             if (seg_in_eTracks) continue;
-            seg_in_eTracks=kFALSE;
+            // Arrived here then the segmen has no equivalent in any segments
+            // of the tracks array.
 
             // Add segment:
-            if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowPVRQuality::Remove_Passing() Add segment:" << endl;
             pt->AddSegment(*seg);
+            totallyAddedSegments++;
         }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
-        eAli_target->AddPattern(pt);
+        if (gEDBDEBUGLEVEL>2) cout << "EdbShowPVRQuality::Remove_Passing()  TotallyAddedSegments (up to now) = " << totallyAddedSegments << " // Add Pattern:" << endl;
+        aliTarget->AddPattern(pt);
     }
 
-    if (gEDBDEBUGLEVEL>2) eAli_source->Print();
-    if (gEDBDEBUGLEVEL>2) eAli_target->Print();
+    if (gEDBDEBUGLEVEL>1) aliSource->Print();
+    if (gEDBDEBUGLEVEL>1) aliTarget->Print();
 
-    cout << "-----     void EdbShowPVRQuality::Remove_Passing()...done." << endl;
-    return eAli_target;
+
+
+    cout << "EdbShowPVRQuality::Remove_Passing() Totally removed segments= " << totallyRemovedSegments << endl;
+    cout << "EdbShowPVRQuality::Remove_Passing()...done." << endl;
+    return aliTarget;
 }
 
 //___________________________________________________________________________________
 
-void EdbShowPVRQuality::Remove_TrackArray(TObjArray* trackArray)
+
+
+
+EdbPVRec* EdbShowPVRQuality::Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource, Int_t Option)
 {
+    // Every "Remove_XXY()" function will call Remove_SegmentArray() since the removal of
+    // a segment array is easiest to implement. As said earlier, there is no easy function
+    // to remove tracks from a EdbPVRec object directly. So instead we have to create a
+    // new EdbPVRec object, fill with all basetracks from the old one, except where the
+    // segments of the SegmentArray coincide with those which are in the source EdbPVRec.
+
+    cout << "EdbShowPVRQuality::Remove_SegmentArray():" << endl;
+
+    if (NULL==aliSource) {
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   ERROR   aliSource=NULL pointer. I cannot" << endl;
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   ERROR   do something here and I will return a NULL pointer now. Stop." << endl;
+        return NULL;
+    }
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   INFO   " << endl;
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   segarray =    " << segarray << " with " << segarray->GetEntries() << " entries." << endl;
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   aliSource =    " << aliSource << " with " << aliSource->Npatterns() << " patterns." << endl;
+        cout << "EdbShowPVRQuality::Remove_SegmentArray()   Option =    " << Option << "." << endl;
+    }
+
+
+    cout << "EdbShowPVRQuality::Remove_SegmentArray()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+EdbPVRec* EdbShowPVRQuality::Remove_TrackArray(TObjArray* trackArray, EdbPVRec* aliSource, Int_t Option) {
     // Remove a whole track array (Array of EdbTrackP type).
-
-    cout << "-----     void EdbShowPVRQuality::Remove_TrackArray(TObjArray* trackArray)...." << endl;
-
-    // Quick and Dirty implementation!
-    EdbPVRec* eAli_source=NULL;
-    EdbPVRec* aliSource=NULL;
-
-    if (NULL==aliSource) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_TrackArray()  Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
-        eAli_source=eAli_orig;
-    }
-
-    if (NULL==eAli_orig) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_TrackArray() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
-        return;
-    }
-
-    TObjArray* Tracks=eAli_source->eTracks;
-    Int_t TracksN=eAli_source->eTracks->GetEntries();
-    EdbTrackP* track;
-    EdbSegP* trackseg;
-
-    // if eAli_source has no tracks, we return here and stop.
-    if (NULL == Tracks) {
-        cout << "WARNING!----EdbShowPVRQuality::Remove_TrackArray() NULL == eTracks. Do nothing and return eAli_orig pointer!" << endl;
-        return;
-    }
-
-
-    // Make a new PVRec object anyway
-    EdbPVRec* eAli_target = new EdbPVRec();
-    eAli_target->Print();
-
-    Bool_t seg_in_eTracks=kFALSE;
-
-    for (int i = 0; i <eAli_target->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>2) cout << "Looping over eAli_target->Pat()=" << i << endl;
-
-        EdbPattern* pat = eAli_target->GetPattern(i);
-        EdbPattern* pt= new EdbPattern();
-        // SetPattern Values to the parent patterns:
-        pt->SetID(pat->ID());
-        pt->SetPID(pat->PID());
-        pt->SetZ(pat->Z());
-
-        for (int j = 0; j <pat->N(); j++ ) {
-            EdbSegP* seg = pat->GetSegment(j);
-            seg->PrintNice();
-
-            if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment nr=" << j << endl;
-            for (int ll = 0; ll<TracksN; ll++ ) {
-                track=(EdbTrackP*)Tracks->At(ll);
-                //track->PrintNice();
-                Int_t TrackSegN=track->N();
-
-                // Here decide f.e. which tracks to check...
-                // Since addresses of objects can vary, its better to compare them
-                // by absolute positions.
-
-                for (int kk = 0; kk<TrackSegN; kk++ ) {
-                    trackseg=track->GetSegment(kk);
-                    if (TMath::Abs(seg->Z()-trackseg->Z())>10.1) continue;
-                    if (TMath::Abs(seg->X()-trackseg->X())>5.1) continue;
-                    if (TMath::Abs(seg->Y()-trackseg->Y())>5.1) continue;
-                    if (TMath::Abs(seg->TX()-trackseg->TX())>0.05) continue;
-                    if (TMath::Abs(seg->TY()-trackseg->TY())>0.05) continue;
-                    //cout << "Found compatible segment!! " << endl;
-                    seg_in_eTracks=kTRUE;
-                }
-                if (seg_in_eTracks) break;
-            }
-            if (seg_in_eTracks) continue;
-            seg_in_eTracks=kFALSE;
-
-            // Add segment:
-            if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
-            pt->AddSegment(*seg);
-        }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
-        eAli_modified->AddPattern(pt);
-    }
-
-    if (gEDBDEBUGLEVEL>2) eAli_source->Print();
-    if (gEDBDEBUGLEVEL>2) eAli_target->Print();
-
-    cout << "-----     void EdbShowPVRQuality::Remove_TrackArray(TObjArray* trackArray)...done." << endl;
-    return;
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbShowPVRQuality::Remove_TrackArray():" << endl;
+    TObjArray* segArray= new TObjArray();
+    segArray=  TrackArrayToSegmentArray(trackArray);
+    Remove_SegmentArray(segArray,aliSource,Option);
+    delete segArray;
+    cout << "EdbShowPVRQuality::Remove_TrackArray()...done." << endl;
+    return NULL;
 }
 
 //___________________________________________________________________________________
 
-
-//___________________________________________________________________________________
-
-void EdbShowPVRQuality::Remove_SegmentArray(TObjArray* segArray) {
-
-    // Remove a whole segment array (Array of EdbSegP type).
-
-    cout << "-----     void EdbShowPVRQuality::Remove_SegmentArray(TObjArray* segArray)...." << endl;
-
-    // Quick and Dirty implementation !
-    EdbPVRec* eAli_source=NULL;
-    EdbPVRec* aliSource=NULL;
-
-    if (NULL==aliSource) {
-        cout << "-----     void EdbShowPVRQuality::Source EdbPVRec is NULL. Change to object eAli_orig: " << eAli_orig << endl;
-        eAli_source=eAli_orig;
-    }
-
-    if (NULL==eAli_orig) {
-        cout << "-----     void EdbShowPVRQuality::Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
-        return;
-    }
-
-    TObjArray* Tracks=segArray;
-    Int_t TracksN=segArray->GetEntries();
-    EdbSegP* trackseg;
-
-    // Make a new PVRec object anyway
-    EdbPVRec* eAli_target = new EdbPVRec();
-    eAli_target->Print();
-
-    Bool_t seg_in_eTracks=kFALSE;
-
-    for (int i = 0; i <eAli_target->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>2) cout << "Looping over eAli_target->Pat()=" << i << endl;
-
-        EdbPattern* pat = eAli_target->GetPattern(i);
-        EdbPattern* pt= new EdbPattern();
-        // SetPattern Values to the parent patterns:
-        pt->SetID(pat->ID());
-        pt->SetPID(pat->PID());
-        pt->SetZ(pat->Z());
-
-        for (int j = 0; j <pat->N(); j++ ) {
-            EdbSegP* seg = pat->GetSegment(j);
-            seg->PrintNice();
-
-            if (gEDBDEBUGLEVEL>3) cout << "Looping over eTracks for segment nr=" << j << endl;
-            for (int ll = 0; ll<TracksN; ll++ ) {
-                trackseg=(EdbSegP*)Tracks->At(ll);
-                // Here decide f.e. which EdbSegP to check...
-                // Since addresses of objects can vary, its better to compare them
-                // by absolute positions.
-                if (TMath::Abs(seg->Z()-trackseg->Z())>10.1) continue;
-                if (TMath::Abs(seg->X()-trackseg->X())>5.1) continue;
-                if (TMath::Abs(seg->Y()-trackseg->Y())>5.1) continue;
-                if (TMath::Abs(seg->TX()-trackseg->TX())>0.05) continue;
-                if (TMath::Abs(seg->TY()-trackseg->TY())>0.05) continue;
-                //cout << "Found compatible segment!! " << endl;
-                seg_in_eTracks=kTRUE;
-            }
-            if (seg_in_eTracks) continue;
-            seg_in_eTracks=kFALSE;
-
-            // Add segment:
-            if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
-            pt->AddSegment(*seg);
-        }
-        if (gEDBDEBUGLEVEL>2) cout << "// Add AddPattern:" << endl;
-        eAli_modified->AddPattern(pt);
-    }
-
-    if (gEDBDEBUGLEVEL>2) eAli_source->Print();
-    if (gEDBDEBUGLEVEL>2) eAli_target->Print();
-
-    cout << "-----     void EdbShowPVRQuality::Remove_SegmentArray(TObjArray* segArray)...done." << endl;
-    return;
-}
-
-//___________________________________________________________________________________
-
-
-void EdbShowPVRQuality::Remove_Track(EdbTrackP* track) {
-    TObjArray* trackArray= new TObjArray();
-    trackArray->Add(track);
-    Remove_TrackArray(trackArray);
-    delete trackArray;
-}
-
-//___________________________________________________________________________________
-
-void EdbShowPVRQuality::Remove_Segment(EdbSegP* seg) {
+EdbPVRec* EdbShowPVRQuality::Remove_Segment(EdbSegP* seg, EdbPVRec* aliSource, Int_t Option) {
+    // Remove one segment (EdbSegP* seg type).
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbShowPVRQuality::Remove_Segment():" << endl;
     TObjArray* segArray= new TObjArray();
     segArray->Add(seg);
-    Remove_SegmentArray(segArray);
+    Remove_SegmentArray(segArray,aliSource,Option);
     delete segArray;
+    cout << "EdbShowPVRQuality::Remove_Segment()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+EdbPVRec* EdbShowPVRQuality::Remove_Track(EdbTrackP* track, EdbPVRec* aliSource, Int_t Option) {
+    // Remove one track (EdbTrackP* track type).
+    // Return a new EdbPVRec* with previous element removed.
+    cout << "EdbShowPVRQuality::Remove_Track():" << endl;
+    TObjArray* segArray= new TObjArray();
+    segArray=  TrackToSegmentArray(track);
+    Remove_SegmentArray(segArray,aliSource,Option);
+    delete segArray;
+    cout << "EdbShowPVRQuality::Remove_Track()...done." << endl;
+    return NULL;
+}
+
+//___________________________________________________________________________________
+
+TObjArray* EdbShowPVRQuality::TrackToSegmentArray(EdbTrackP* track) {
+    // Convert segments of a track into an TObjArray containing segments.
+    TObjArray* segArray= new TObjArray();
+    Int_t nSegTotal=0;
+    for (int i=0; i<track->N(); i++) {
+        EdbSegP* seg = track->GetSegment(i);
+        segArray->Add(seg);
+        ++nSegTotal;
+    }
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowPVRQuality::TrackToSegmentArray() Totally added: " << nSegTotal << " segments from the track."<<endl;
+    return segArray;
+}
+
+//___________________________________________________________________________________
+
+TObjArray* EdbShowPVRQuality::TrackArrayToSegmentArray(TObjArray* trackArray) {
+    // Convert segments of tracks of a track array into an TObjArray containing segments.
+    TObjArray* segArray= new TObjArray();
+    Int_t nSegTotal=0;
+    for (int j=0; j<trackArray->GetEntries(); j++) {
+        EdbTrackP* track = (EdbTrackP*)trackArray->At(j);
+        for (int i=0; i<track->N(); i++) {
+            EdbSegP* seg = track->GetSegment(i);
+            segArray->Add(seg);
+            ++nSegTotal;
+        }
+    }
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowPVRQuality::TrackArrayToSegmentArray() Totally added: " << nSegTotal << " segments from the track array."<<endl;
+    return segArray;
 }
 
 //___________________________________________________________________________________
@@ -1588,4 +1548,61 @@ Int_t EdbShowPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t a
         if (hist->GetBinContent(i)>threshold) return i;
     }
     return 0;
+}
+
+//___________________________________________________________________________________
+
+TObjArray* EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile()
+{
+    cout << "EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile()" << endl;
+// cout << "___TODO___    STEP  1 :  Check if linked_tracks.root exists   " << endl;
+// cout << "___TODO___    STEP  2 :  Open linked_tracks   " << endl;
+// cout << "___TODO___    STEP  3 :  Check if there are tracks inside   " << endl;
+// cout << "___TODO___    STEP  4 :  Get Tracks as this TObjArray  " << endl;
+
+    // Array containing EdbTrackP objects:
+    TObjArray* trackarray = new TObjArray();
+
+    TFile*  file = new TFile("linked_tracks.root");
+    TTree* tr= (TTree*)file->Get("tracks");
+    TClonesArray *seg= new TClonesArray("EdbSegP",60);
+    EdbSegP* segment=0;
+    EdbSegP*    s2=0;
+    EdbSegP*    t=0;
+
+    int nentr = int(tr->GetEntries());
+    //   check if tracks has entries: if so then ok, otherwise return directly:
+    if (nentr>0) {
+        cout << "EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile()   " << nentr << "  entries Total"<<endl;
+    }
+    else {
+        cout << "EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile()   linked_tracks.root file has  NO  entries...Return NULL." << endl;
+        return NULL;
+    }
+
+    int nseg,n0,npl;
+    tr->SetBranchAddress("t."  , &t  );
+    tr->SetBranchAddress("s"  , &seg  );
+    tr->SetBranchAddress("nseg"  , &nseg  );
+    tr->SetBranchAddress("n0"  , &n0  );
+    tr->SetBranchAddress("npl"  , &npl  );
+
+    for (int i=0; i<nentr; i++ ) {
+        tr->GetEntry(i);
+        EdbTrackP* realTrack = new EdbTrackP(t);
+        for (int j=0; j<nseg; j++ ) {
+            s2=(EdbSegP*) seg->At(j);
+            segment=(EdbSegP*)s2->Clone();
+            realTrack->AddSegment(segment);
+        }
+        //realTrack->PrintNice();
+        realTrack->SetNpl();    // Necessary otherwise these variables are not filled.
+        realTrack->SetN0();     // Necessary otherwise these variables are not filled.
+        trackarray->Add(realTrack);
+    }
+    delete tr;
+    file->Close();
+    delete file;
+    cout << "EdbShowPVRQuality::GetTracksFromLinkedTracksRootFile()...done." << endl;
+    return trackarray;
 }

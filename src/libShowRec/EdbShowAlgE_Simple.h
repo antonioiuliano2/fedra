@@ -201,6 +201,23 @@ public:
     inline TF1* GetEffFunc_UserEfficiency() {
         return EffFunc_UserEfficiency;
     }
+    
+		inline TMultiLayerPerceptron* GetNeuralNetwork(Int_t ANNType=0) {
+				if (ANNType>=15) ANNType=14;
+        return ANN_MLP_ARRAY[ANNType];
+    }
+    
+    inline void TrainNeuralNetwork(TString weight, Int_t ANNType=0) {
+				if (ANNType>=15) ANNType=14;
+        ANN_MLP_ARRAY[ANNType]->Train(100);
+				return;
+    }
+    
+    inline void DumpNeuralNetworkWeight(TString weight, Int_t ANNType=0) {
+				if (ANNType>=15) ANNType=14;
+        ANN_MLP_ARRAY[ANNType]->DumpWeights(weight);
+				return;
+    }
 
     inline void SetCalibrationOffset(Float_t CalibrationOffset) {
         eCalibrationOffset=CalibrationOffset;

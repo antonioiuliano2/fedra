@@ -219,7 +219,7 @@ void EdbShowAlgClean::SetTarget(TObjArray* Target)
 void EdbShowAlgClean::Execute()
 {
   
-  // In this fucntion all the interface methods to the different cleaning types
+  // In this function all the interface methods to the different cleaning types
   // are called, according to the flag value in eCleaningType.
   
   // Possible/Supported cleaning type methods will be:

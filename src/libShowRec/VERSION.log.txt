@@ -38,6 +38,11 @@
 // TODO:
 // TODO....//======================================================================
 
+
+# 23072011
+* Improved EdbPVRQuality further: removing DoubleBT, PassingTracks.
+* Updated/Improved EdbShowAlg_GS.
+
 # 18052011
 * EdbShowRec::FileExists() doesnt compile using the 
 * intStat = stat(strFilename.c_str(),&stFileInfo);
