@@ -35,52 +35,53 @@
     ///===========================================================================
     int cnt[7]={0,0,0,0,0,0,0};
     bool stop=kFALSE;
-    while (!stop) {
-        cut_gs_cut_dip=gRandom->Uniform(-50,50)+200.;
-        cut_gs_cut_dmin=gRandom->Uniform(-40,40)+80;
-        cut_gs_cut_dr=gRandom->Uniform(-100,100)+50;
-        cut_gs_cut_dz=gRandom->Uniform(-3000,3000)+20000;
-        cut_gs_cut_dtheta=gRandom->Uniform(-0.15,0.15)+0.15;
-        cut_gs_cut_piddiff=Int_t(gRandom->Uniform(0,5));
-        cut_gs_cut_oppositeflag=0;
-//  4893    237.43  80.8433  49.4419  20911.5  0.17852  2  0  
-
-				ParaSet->Fill();
-        outstream << "  " << ParaSetNr << "  " << "  " << cut_gs_cut_dip << "  " << cut_gs_cut_dmin << "  " << cut_gs_cut_dr << "  " << cut_gs_cut_dz << "  " << cut_gs_cut_dtheta << "  " << cut_gs_cut_piddiff << "  " << cut_gs_cut_oppositeflag << "  "  << endl;
-        ++ParaSetNr;
-
-// 		if (ParaSetNr>1000) stop=kTRUE;
-        if (ParaSetNr>8000) stop=kTRUE;
-    }
+		
+		Double_t array_gs_cut_dip[5000];
+		Double_t array_gs_cut_dmin[5000];
+		Double_t array_gs_cut_dr[5000];
+		Double_t array_gs_cut_dz[5000];
+		Double_t array_gs_cut_dtheta[5000];
+		
+		  for (Int_t i=0;i<5000;i++) {
+        array_gs_cut_dip[i]=gRandom->Uniform(0,400);
+        array_gs_cut_dmin[i]=gRandom->Uniform(0,200);
+        array_gs_cut_dr[i]=gRandom->Uniform(0,500);
+        array_gs_cut_dz[i]=gRandom->Uniform(0,30000);
+        array_gs_cut_dtheta[i]=gRandom->Uniform(0,0.5);
+			}
+		
     ///===========================================================================
     stop=kFALSE;
-    while (!stop) {
-        cut_gs_cut_dip=gRandom->Uniform(0,300);
-        cut_gs_cut_dmin=gRandom->Uniform(0,200);
-        cut_gs_cut_dr=gRandom->Uniform(0,500);
-        cut_gs_cut_dz=gRandom->Uniform(0,30000);
-        cut_gs_cut_dtheta=gRandom->Uniform(0,0.5);
-        cut_gs_cut_piddiff=Int_t(gRandom->Uniform(0,6));
-        cut_gs_cut_oppositeflag=0;
-//  4893    237.43  80.8433  49.4419  20911.5  0.17852  2  0  
+		for (Int_t j=0;j<2;j++) {
+    for (Int_t k=0;k<5;k++) {
+		for (Int_t i=0;i<5000;i++) {
+        cut_gs_cut_dip=array_gs_cut_dip[i];
+        cut_gs_cut_dmin=array_gs_cut_dmin[i];
+        cut_gs_cut_dr=array_gs_cut_dr[i];
+        cut_gs_cut_dz=array_gs_cut_dz[i];
+        cut_gs_cut_dtheta=array_gs_cut_dtheta[i];
 
-				ParaSet->Fill();
-        outstream << "  " << ParaSetNr << "  " << "  " << cut_gs_cut_dip << "  " << cut_gs_cut_dmin << "  " << cut_gs_cut_dr << "  " << cut_gs_cut_dz << "  " << cut_gs_cut_dtheta << "  " << cut_gs_cut_piddiff << "  " << cut_gs_cut_oppositeflag << "  "  << endl;
-        ++ParaSetNr;
-
-// 		if (ParaSetNr>1000) stop=kTRUE;
-        if (ParaSetNr>10000) stop=kTRUE;
-    }
-    ///===========================================================================
-    cut_gs_cut_dip=9999;
-    cut_gs_cut_dmin=9999;
-		cut_gs_cut_dr=9999;
-		cut_gs_cut_dz=99999;
-		cut_gs_cut_dtheta=9999;
-		cut_gs_cut_piddiff=9;
-    ParaSet->Fill();
-		outstream << "  " << ParaSetNr << "  " << "  " << cut_gs_cut_dip << "  " << cut_gs_cut_dmin << "  " << cut_gs_cut_dr << "  " << cut_gs_cut_dz << "  " << cut_gs_cut_dtheta << "  " << cut_gs_cut_piddiff << "  " << cut_gs_cut_oppositeflag << "  "  << endl;
-        ++ParaSetNr;
+						cut_gs_cut_piddiff=k;
+						cut_gs_cut_oppositeflag=j;
+						
+						
+						
+						ParaSet->Fill();
+						outstream << "  " << ParaSetNr << "  " << "  " << cut_gs_cut_dip << "  " << cut_gs_cut_dmin << "  " << cut_gs_cut_dr << "  " << cut_gs_cut_dz << "  " << cut_gs_cut_dtheta << "  " << cut_gs_cut_piddiff << "  " << cut_gs_cut_oppositeflag << "  "  << endl;
+						++ParaSetNr;
+					}
+				}
+			}
+		///===========================================================================
+//     cut_gs_cut_dip=999999;
+//     cut_gs_cut_dmin=132.8;
+// 		cut_gs_cut_dr=30.2;
+// 		cut_gs_cut_dz=999999;
+// 		cut_gs_cut_dtheta=0.15;
+// 		cut_gs_cut_piddiff=2;
+//     ParaSet->Fill();
+// 		outstream << "  " << ParaSetNr << "  " << "  " << cut_gs_cut_dip << "  " << cut_gs_cut_dmin << "  " << cut_gs_cut_dr << "  " << cut_gs_cut_dz << "  " << cut_gs_cut_dtheta << "  " << cut_gs_cut_piddiff << "  " << cut_gs_cut_oppositeflag << "  "  << endl;
+//         ++ParaSetNr;
     ///===========================================================================
     ParaSet->Print();
     PARAMETERSET_DEFINITIONFILE_SHORT->cd();
