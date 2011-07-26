@@ -767,12 +767,12 @@ void EdbEDAShowerTab::CheckBTDensity(EdbPVRec *pvr, TObjArray *tracks) {
             last_l=l+1;
             factor=0.15-(float)last_l*0.01;
             Chi2Cut=Form("s.eChi2<s.eW*%f-1.0",factor);
-            cout << " WARNING BT DENSITY GREATER THAN 20 !! Appearing after maximum Chi2Cut of : " <<  Chi2Cut <<  endl;
+            cout << " WARNING BT DENSITY GREATER THAN 20 !! Appearing after maximum Chi2Cut of : " <<  Chi2Cut.Data() <<  endl;
         }
     }
     factor=0.15-(float)last_l*0.01;
     Chi2Cut=Form("s.eChi2<s.eW*%f-1.0",factor);
-    if (warning) cout << "Maximum Chi2Cut = " << Chi2Cut << endl;
+    if (warning) cout << "Maximum Chi2Cut = " << Chi2Cut.Data() << endl;
 
     if (eCheckQualitycut==kTRUE) {
         cout << "----- Set Parameters for Chi2Cut --------"<<endl;
