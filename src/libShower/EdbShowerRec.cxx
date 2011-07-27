@@ -232,10 +232,10 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
 void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr)
 {
     // Another reconstruction function ...
-    double chi20[10000];
-    double P0[10000];
-    int W0[10000];
-    int Flag0[10000];
+    double chi20[1000];
+    double P0[1000];
+    int W0[1000];
+    int Flag0[1000];
     chi20[0]=-9999999;
     W0[0]=-9999999;
     P0[0]=-9999999;
@@ -415,7 +415,6 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
     }
 
     TList  *eS = new TList;
-
     for (int ii=0; ii<Ncand; ii++)
     {
         EdbShowerRec* shower = new EdbShowerRec();
@@ -804,7 +803,6 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 
     eShowersN=treesaveb->GetEntries();
     treesaveb->Show(0);
-
     SaveResults();
     NeuralNet();
 
@@ -816,7 +814,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 
 
     // Open File. Get Tree.
-    TFile *_file0 = TFile::Open("Shower2.root");
+    TFile *_file0 = new TFile("Shower2.root");
     TTree *tr = (TTree*)_file0->Get("treebranch");
     TransferTreebranchShowerTreeIntoShowerObjectArray(tr);
     TObjArray* RecoShowerArray = GetRecoShowerArray() ;
@@ -1314,7 +1312,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     // Attention: NeuralNet() ->Gives Shower2.root as output!
 
     // Open File. Get Tree.
-    TFile *_file0 = TFile::Open("Shower2.root");
+    TFile *_file0 = new TFile("Shower2.root");
     TTree *tr = (TTree*)_file0->Get("treebranch");
     TransferTreebranchShowerTreeIntoShowerObjectArray(tr);
     TObjArray* RecoShowerArray = GetRecoShowerArray() ;
@@ -4467,24 +4465,24 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
     Int_t shower_number_eventb, shower_sizeb, shower_isizeb,shower_showerID;
     Int_t shower_sizeb15, shower_sizeb20, shower_sizeb30;
     Float_t shower_energy_shot_particle;
-    Float_t shower_xb[5000];
-    Float_t shower_yb[5000];
-    Float_t shower_zb[5000];
-    Float_t shower_txb[5000];
-    Float_t shower_tyb[5000];
-    Float_t shower_deltarb[5000];
-    Float_t shower_deltathetab[5000];
-    Float_t shower_deltaxb[5000];
-    Float_t shower_deltayb[5000];
-    Int_t   shower_nfilmb[5000];
-    Float_t shower_chi2btkb[5000];
-    Int_t shower_ntrace1simub[5000]; // MCEvt
-    Int_t shower_ntrace2simub[5000]; // s->W()
-    Float_t shower_ntrace3simub[5000]; // s->P()
-    Int_t shower_ntrace4simub[5000]; // s->Flag()
-    Float_t shower_tagprimary[5000];
-    Int_t   shower_idb[5000];
-    Int_t   shower_plateb[5000];
+    Float_t shower_xb[1000];
+    Float_t shower_yb[1000];
+    Float_t shower_zb[1000];
+    Float_t shower_txb[1000];
+    Float_t shower_tyb[1000];
+    Float_t shower_deltarb[1000];
+    Float_t shower_deltathetab[1000];
+    Float_t shower_deltaxb[1000];
+    Float_t shower_deltayb[1000];
+    Int_t   shower_nfilmb[1000];
+    Float_t shower_chi2btkb[1000];
+    Int_t shower_ntrace1simub[1000]; // MCEvt
+    Int_t shower_ntrace2simub[1000]; // s->W()
+    Float_t shower_ntrace3simub[1000]; // s->P()
+    Int_t shower_ntrace4simub[1000]; // s->Flag()
+    Float_t shower_tagprimary[1000];
+    Int_t   shower_idb[1000];
+    Int_t   shower_plateb[1000];
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower

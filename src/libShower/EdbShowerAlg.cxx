@@ -1452,7 +1452,7 @@ void EdbShowerAlgESimple::CreateANN()
         //---------------------------
         if (gEDBDEBUGLEVEL>2) {
             ANN_MLP->Print();
-            cout << ANN_Layout << endl;
+            cout << ANN_Layout.Data() << endl;
         }
     }
     //---------------------------
@@ -1561,9 +1561,9 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   ANN_n_InputNeurons_ARRAY[check_Npl_index]="<< ANN_n_InputNeurons_ARRAY[check_Npl_index] << endl;
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   ANN_MLP_ARRAY[check_Npl_index]="<< ANN_MLP_ARRAY[check_Npl_index] << endl;
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   Using the following layout: " << endl;
-    if (gEDBDEBUGLEVEL >2) cout << ANN_MLP->GetStructure() << endl;
+    if (gEDBDEBUGLEVEL >2) cout << ANN_MLP->GetStructure().Data() << endl;
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   And the following weightfile: " << endl;
-    if (gEDBDEBUGLEVEL >2) cout << eWeightFileString << endl;
+    if (gEDBDEBUGLEVEL >2) cout << eWeightFileString.Data() << endl;
 
     //  Reset InputVariables:
     for (int k=0; k<70; k++) {
@@ -1848,12 +1848,12 @@ void EdbShowerAlgESimple::PrintSpecifications() {
     cout << "EdbShowerAlgESimple::   eSpecificationType[4]  (Npl weight: next before/after) = " <<GetSpecType(4) << endl;
     cout << "EdbShowerAlgESimple::   eSpecificationType[5]  (Npl weight: 10,12,...,45) = " << GetSpecType(5) << endl;
     cout << "EdbShowerAlgESimple::   " << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[0]  (take CP or linked_tracks)   = " << eSpecificationTypeString[0] << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[1]  (gamma/electron/pion weight) = " << eSpecificationTypeString[1] << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[2]  (ScanEff: Neuch/All/MiddleFix/LowEff) = " << eSpecificationTypeString[2] << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[3]  (E range: 0..20/0..40) = " << eSpecificationTypeString[3] << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[4]  (Npl weight: next before/after) = " << eSpecificationTypeString[4] << endl;
-    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[5]  (Npl weight: 10,12,...,45) = " << eSpecificationTypeString[5] << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[0]  (take CP or linked_tracks)   = " << eSpecificationTypeString[0].Data() << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[1]  (gamma/electron/pion weight) = " << eSpecificationTypeString[1].Data() << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[2]  (ScanEff: Neuch/All/MiddleFix/LowEff) = " << eSpecificationTypeString[2].Data() << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[3]  (E range: 0..20/0..40) = " << eSpecificationTypeString[3].Data() << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[4]  (Npl weight: next before/after) = " << eSpecificationTypeString[4].Data() << endl;
+    cout << "EdbShowerAlgESimple::   eSpecificationTypeString[5]  (Npl weight: 10,12,...,45) = " << eSpecificationTypeString[5].Data() << endl;
     cout << "EdbShowerAlgESimple::   " << endl;
     cout << "EdbShowerAlgESimple::   In case you want to change a specification then do for example:" << endl;
     cout << "EdbShowerAlgESimple::   EdbShowerAlgESimple->SetSpecification(2,3) " << endl;
@@ -1903,7 +1903,7 @@ void EdbShowerAlgESimple::SetSpecificationType(Int_t SpecificationType, Int_t Sp
     eSpecificationType[SpecificationType]=SpecificationTypeVal;
     eSpecificationTypeString[SpecificationType] = eSpecificationTypeStringArray[SpecificationType][SpecificationTypeVal];
 
-    if (gEDBDEBUGLEVEL >1) cout << eSpecificationTypeString[SpecificationType]  << endl;
+    if (gEDBDEBUGLEVEL >1) cout << eSpecificationTypeString[SpecificationType].Data()  << endl;
 
     eSpecificationIsChanged=kTRUE;
     eForceSpecificationReload=kTRUE;
@@ -1984,7 +1984,7 @@ void EdbShowerAlgESimple::Update() {
         eSpecificationTypeString[3]="normal";
     }
 
-    if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::Update  " << addstring << endl;
+    if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::Update  " << addstring.Data() << endl;
 
     if (NULL==ANN_MLP_ARRAY[0]) {
         CreateANN();
@@ -1996,12 +1996,12 @@ void EdbShowerAlgESimple::Update() {
     // generic file EnergyCorrections_Npl_%d.txt
     for (int ll=0; ll<15; ll++) {
         TString weigthstring=basicstring+addstring+TString(Form("weights_Npl_%d.txt",ANN_nPlates_ARRAY[ll]));
-        if (gEDBDEBUGLEVEL >2) cout << "weigthstring = " << weigthstring << endl;
+        if (gEDBDEBUGLEVEL >2) cout << "weigthstring = " << weigthstring.Data() << endl;
         ANN_MLP_ARRAY[ll]->LoadWeights(weigthstring);
         ANN_WeightFile_ARRAY[ll]=weigthstring;
 
         TString correctionsfactorstring=basicstring+addstring+TString(Form("EnergyCorrections_Npl_%d.txt",ANN_nPlates_ARRAY[ll]));
-        if (gEDBDEBUGLEVEL >2) cout << "correctionsfactorstring = " << correctionsfactorstring << endl;
+        if (gEDBDEBUGLEVEL >2) cout << "correctionsfactorstring = " << correctionsfactorstring.Data() << endl;
         Float_t p0,p1;
         p0=0.0;
         p1=1.0;
@@ -2418,31 +2418,31 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     //if (sourcefilename!="Shower.root") cout << "EdbShowerAlgESimple::WriteNewRootFile       Attention: sourcefilename is different: "<< sourcefilename << endl;
     //if (treename!="treebranch") cout << "EdbShowerAlgESimple::WriteNewRootFile       Attention: treename is different: "<< treename << endl;
 
-    cout << "EdbShowerAlgESimple::WriteNewRootFile       Open sourcefilename:: "<< sourcefilename << endl;
-    cout << "EdbShowerAlgESimple::WriteNewRootFile       Open treename:: "<< treename << endl;
+    cout << "EdbShowerAlgESimple::WriteNewRootFile       Open sourcefilename:: "<< sourcefilename.Data() << endl;
+    cout << "EdbShowerAlgESimple::WriteNewRootFile       Open treename:: "<< treename.Data() << endl;
 
     //-     VARIABLES: shower_  "treebranch"  reconstruction
     Int_t shower_number_eventb, shower_sizeb, shower_isizeb,shower_showerID;
     Int_t shower_sizeb15, shower_sizeb20, shower_sizeb30;
     Float_t shower_energy_shot_particle;
-    Float_t shower_xb[5000];
-    Float_t shower_yb[5000];
-    Float_t shower_zb[5000];
-    Float_t shower_txb[5000];
-    Float_t shower_tyb[5000];
-    Float_t shower_deltarb[5000];
-    Float_t shower_deltathetab[5000];
-    Float_t shower_deltaxb[5000];
-    Float_t shower_deltayb[5000];
-    Int_t   shower_nfilmb[5000];
-    Float_t shower_chi2btkb[5000];
-    Int_t shower_ntrace1simub[5000]; // MCEvt
-    Int_t shower_ntrace2simub[5000]; // s->W()
-    Float_t shower_ntrace3simub[5000]; // s->P()
-    Int_t shower_ntrace4simub[5000]; // s->Flag()
-    Float_t shower_tagprimary[5000];
-    Int_t   shower_idb[5000];
-    Int_t   shower_plateb[5000];
+    Float_t shower_xb[1000];
+    Float_t shower_yb[1000];
+    Float_t shower_zb[1000];
+    Float_t shower_txb[1000];
+    Float_t shower_tyb[1000];
+    Float_t shower_deltarb[1000];
+    Float_t shower_deltathetab[1000];
+    Float_t shower_deltaxb[1000];
+    Float_t shower_deltayb[1000];
+    Int_t   shower_nfilmb[1000];
+    Float_t shower_chi2btkb[1000];
+    Int_t shower_ntrace1simub[1000]; // MCEvt
+    Int_t shower_ntrace2simub[1000]; // s->W()
+    Float_t shower_ntrace3simub[1000]; // s->P()
+    Int_t shower_ntrace4simub[1000]; // s->Flag()
+    Float_t shower_tagprimary[1000];
+    Int_t   shower_idb[1000];
+    Int_t   shower_plateb[1000];
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower
@@ -2683,7 +2683,7 @@ void EdbShowerAlgESimple::ReadTables_Energy()
     //sprintf(name,"tables/libShower_Energy_Statistics_Electron.txt");
     tablestring=basicstring+addstring+TString("tables/libShower_Energy_Statistics_Electron.txt");
     fFile = fopen (tablestring.Data(),"r");
-    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring << endl;
+    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring.Data() << endl;
 
     for (int i=0; i<N_NPL; i++) {
         // Read energy values into array:
@@ -2710,7 +2710,7 @@ void EdbShowerAlgESimple::ReadTables_Energy()
     // B) Table: Statistics: Gamma: "libShower_Energy_Statistics_Gamma.txt"
     tablestring=basicstring+addstring+TString("tables/libShower_Energy_Statistics_Gamma.txt");
     fFile = fopen (tablestring.Data(),"r");
-    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring << endl;
+    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring.Data() << endl;
 
     for (int i=0; i<N_NPL; i++) {
         // Read energy values into array:
@@ -2738,7 +2738,7 @@ void EdbShowerAlgESimple::ReadTables_Energy()
     // C) Table: Systematics: Electrons: "libShower_Energy_Systematics_Electron.txt"
     tablestring=basicstring+addstring+TString("tables/libShower_Energy_Systematics_Electron.txt");
     fFile = fopen (tablestring.Data(),"r");
-    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring << endl;
+    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring.Data() << endl;
 
     for (int i=0; i<N_NPL; i++) {
         // Read energy values into array:
@@ -2765,7 +2765,7 @@ void EdbShowerAlgESimple::ReadTables_Energy()
     // D) Table: Systematics: Gamma: "libShower_Energy_Systematics_Gamma.txt"
     tablestring=basicstring+addstring+TString("tables/libShower_Energy_Systematics_Gamma.txt");
     fFile = fopen (tablestring.Data(),"r");
-    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring << endl;
+    cout << "EdbShowerAlgESimple::ReadTables_Energy() name = " << tablestring.Data() << endl;
 
     for (int i=0; i<N_NPL; i++) {
         // Read energy values into array:
