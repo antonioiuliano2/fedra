@@ -6,5 +6,6 @@
 
 #pragma link C++ class EdbScanClient;
 #pragma link C++ class EdbScanProc;
+#pragma link C++ class EdbProcPars;
 
 #endif

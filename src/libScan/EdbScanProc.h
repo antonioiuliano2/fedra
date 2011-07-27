@@ -152,6 +152,7 @@ public:
   int     ReadFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
   int     ReadManFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);
 
+  void    CheckRunQualityRaw( EdbID idss ) {}
   void    CheckSetQualityRaw( EdbID idss );
   
   void    AlignOverlaps(EdbID id, EdbPattern &p1,EdbPattern &p2, TEnv &cenv, const char *suff);

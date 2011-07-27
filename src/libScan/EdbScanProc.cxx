@@ -2798,14 +2798,7 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   *(r.GetLayer(2)) = l1;
   *(r.GetLayer(1)) = l2;
 
- //float min1[5] = {-500,-500,-0.9,-0.9, 9    };
-  //float max1[5] = { 500, 500, 0.9, 0.9, 100   };
-  //r.AddSegmentCut(1, 1, min1, max1);
-  //r.AddSegmentCut(2, 1, min1, max1);
-  //float min2[5] = {-500,-500,-0.05,-0.05, 0   };
-  //float max2[5] = { 500, 500, 0.05, 0.05, 100 };
-  //r.AddSegmentCut(1, 0, min2, max2);
-  //r.AddSegmentCut(2, 0, min2, max2);
+  r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
 
   EdbPattern p1, p2;
   r.GetPatternDataForPrediction( -1, 2, p1 );
@@ -2825,8 +2818,6 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   }
 
   link.Link( p2, p1, l2, l1, cenv );
-  //link.Link( p1, p2, l1, l2, cenv );
-
   link.CloseOutputFile();
   UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
   UpdatePlatePar( id, link.eL2 );
