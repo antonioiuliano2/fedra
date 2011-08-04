@@ -435,8 +435,6 @@ int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
   return nseg;
 }
 
-
-
 ///_________________________________________________________________________
 int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat )
 {
@@ -465,9 +463,7 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
     if( ViewSide(view) != side )   continue;
 
     for(int j=0;j<nsegV;j++) {
-      if(!AcceptRawSegment(view,j,segP,side)) {
-	continue;
-      }
+      if(!AcceptRawSegment(view,j,segP,side)) 	continue;
       nseg++;
       segP.SetVid(entry,j);
       segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
@@ -651,9 +647,42 @@ void EdbRunAccess::CheckRunLine()
     if(pat) {
       nempty = CheckEmptyViews(*pat);
       if(nempty>0) cerr<<"\tWARNING: "<<nempty<<" empty views in layer "<<ud<<endl;
+      float meanseg = CheckMeanSegsPerView(*pat);
+      printf("Mean Segments/view = %10.1f\n",meanseg);
+      int thres=1;
+      int n0v = Check0Views(*pat, thres);
+      if(n0v) printf("%d views with <%d segments!\n",n0v,thres);
     }
   }
 }
+
+///_________________________________________________________________________
+float EdbRunAccess::CheckMeanSegsPerView(EdbPattern &pat)
+{
+  Long_t nseg=0, nview=pat.N();
+  if(!nview)                       return 0;
+  for(int i=0; i<nview; i++)   nseg += pat.GetSegment(i)->Flag();
+  return 1.*nseg/nview;
+}
+///_________________________________________________________________________
+int EdbRunAccess::Check0Views(EdbPattern &pat, int thres)
+{
+  Long_t n0=0, nview=pat.N();
+  if(!nview)                       return 0;
+  for(int i=0; i<nview; i++)   if( pat.GetSegment(i)->Flag() < thres) n0++;
+  return n0;
+}
+
+/*  TODO
+///_________________________________________________________________________
+int EdbRunAccess::CheckViewsOccupancy(EdbPattern &pat)
+{
+  TH1F h("","", 200,0., 10000.);
+  for(int i=0; i<pat.N(); i++)   h.Fill( pat.GetSegment(i)->Flag() );
+  
+  return nempty;
+}
+*/
 
 ///_________________________________________________________________________
 int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
@@ -669,7 +698,7 @@ int EdbRunAccess::CheckEmptyViews(EdbPattern &pat)
   return nempty;
 }
 
-///_________________________________________________________________________
+//_________________________________________________________________________
 void EdbRunAccess::CheckViewStep()
 {
   CheckViewStep(1);
@@ -907,6 +936,18 @@ bool  EdbRunAccess::SetSegmentAtExternalSurface( EdbSegment *seg, int side )
 }
 
 ///______________________________________________________________________________
+void EdbRunAccess::AddSegmentCut(int xi, const char *cutline)
+{
+  float var[10];
+  int onoff=-1;
+  if(sscanf(cutline,"%d %f %f %f %f %f %f %f %f %f %f",&onoff, 
+      &var[0],&var[1], &var[2],&var[3], &var[4],&var[5], &var[6],&var[7], &var[8], &var[9] )==11) 
+      if(onoff>-1)  {
+        AddSegmentCut(1,xi,var);
+        AddSegmentCut(2,xi,var);
+      }
+}
+///______________________________________________________________________________
 void EdbRunAccess::AddSegmentCut(int layer, int xi, float var[10])
 {
   if(!eCuts[layer])  eCuts[layer] = new TObjArray();
@@ -916,12 +957,8 @@ void EdbRunAccess::AddSegmentCut(int layer, int xi, float var[10])
 ///______________________________________________________________________________
 void EdbRunAccess::AddSegmentCut(int layer, int xi, float min[5], float max[5])
 {
-  if(!eCuts[layer])  eCuts[layer] = new TObjArray();
-  EdbSegmentCut *cut=new EdbSegmentCut();
-  cut->SetXI(xi);
-  cut->SetMin(min);
-  cut->SetMax(max);
-  eCuts[layer]->Add( cut );
+  float var[10]={ min[0],max[0], min[1],max[1], min[2],max[2], min[3],max[3], min[4],max[4] };
+  AddSegmentCut(layer,xi,var);
 }
 
 ///______________________________________________________________________________

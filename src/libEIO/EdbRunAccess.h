@@ -63,12 +63,14 @@ class EdbRunAccess : public TObject {
   void Print();
   void PrintStat();
   
-  void CheckRunLine();
-  int  CheckEmptyViews(EdbPattern &pat);
-  void CheckViewStep();
-  void CheckViewStep(int ud);
-  TH2F *CheckUpDownOffsets();
-  void CheckViewSize();
+  void  CheckRunLine();
+  int   Check0Views(EdbPattern &pat, int thres=1);
+  int   CheckEmptyViews(EdbPattern &pat);
+  float CheckMeanSegsPerView(EdbPattern &pat);
+  void  CheckViewStep();
+  void  CheckViewStep(int ud);
+  TH2F  *CheckUpDownOffsets();
+  void  CheckViewSize();
 
   EdbRun *GetRun() const {return eRun;}
   EdbLayer *GetMakeLayer(int id);
@@ -119,6 +121,7 @@ class EdbRunAccess : public TObject {
   float GetRawSegmentPix( EdbSegment *seg );
   float CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, float sz );
 
+  void           AddSegmentCut(int xi, const char *cutline );
   void           AddSegmentCut(int ud, int xi, float var[10]);
   void           AddSegmentCut(int ud, int xi, float min[5], float max[5]);
   EdbSegmentCut *GetCut(int ud, int i)
