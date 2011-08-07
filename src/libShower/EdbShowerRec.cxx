@@ -112,22 +112,25 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
     // in the Shower.root file. But this file stores the showers just as
     // a tree with leafs and the object structure is lost.
 
+		cout << "----------------------------------------------------------" << endl;
     cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr) " << endl;
-    cout << "Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
-    cout << "a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
-    cout << "b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
-    cout << "c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
+    cout << "  Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
+    cout << "  a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
+    cout << "  b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
+    cout << "  c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
     cout <<"----------  (some of step c are still: )    T O D O -----------------------" << endl;
-
+		cout << endl;
     cout << "After these steps showers are stored as an TObjarray of EdbTrackP "<< endl;
     cout << "in this class and can be accessed. " << endl;
     cout << "Showers can also be written in the linked_tracks.root file, or  " << endl;
     cout << "in the Shower.root file. But this file stores the showers just as " << endl;
     cout << "a tree with leafs and the object structure is lost. " << endl;
-
+		cout << endl;
     cout << "WARNING:: EdbShowerRec::EdbShowerRec(EdbPVRec* pvr)   DO NOTHING YET !!!" << endl;
     cout << "PLEASE DO THESE STEPS MANUALLY UNTIL SHOWER LIBRARY IS FULLY FUNCTIONAL" << endl;
     cout << "By stopping here, we avoid misunderstandings when all in one is done but not yet fully tested." << endl;
+		cout << endl;
+		cout << "----------------------------------------------------------" << endl;
 
 
     Set0();
@@ -148,7 +151,7 @@ void EdbShowerRec::Set0()
 
     eUseAliSub=kFALSE;
     // This is new/changed (06.June 2011):
-    // If we used eUseAliSub true, then it results in large memory
+    // If we used eUseAliSub=true, then it results in large memory
     // consumption when having many InitiatorBTs. To avoid this the standard
     // behaviour is reconstruction on normal EdbPVRec object. Only in case
     // of either large MC/Data ratio or only few InitiatorBTs, we do it this
