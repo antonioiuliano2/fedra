@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -VTX 		For InBT: Cut to IP for MC vertex  (needs BRICK.TreePGunInfo.txt and -MC=1) \t (0,1:Ipcut:100,2:Ipcut250,3:500)\n";
         cout << "---      \t\t :	 -FZHP		use a) firstZ position, b) highest P (MC-Events) & first Z pos. (for InBT) c) highest P (for InBT)\t (0,1; only with -MC1)\n";
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
-        cout << "---      \t\t :	 -ALI		use gALI either from cp.root file (0) or from LinkedTrack.root(1) or from root file...(2:ScanVolume_Ali.root) (3:ScanVolumeLinkedTracks_Ali)\n";
+        cout << "---      \t\t :	 -ALI		use gALI either from cp.root files (0) or from linkedtracks.root (1) or from volume root file: ScanVolume_Ali.root (2) or from volume tracks root file: ScanVolumeLinkedTracks_Ali (3)\n";
         cout << "---      \t\t :	 -MIXMC		Extract Subpattern with all MCEvents mixed! --!WARNING!--  \n";
         cout << "---      \t\t :	 -PADI		ParentDirectory     (only for naming the output file)\n";
         cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  (only for naming the output file)\n";
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t\t :	 7:		ReconstructShowers_RC  \n";
         cout << "---      \t\t\t :	 8:		ReconstructShowers_BW  (EXPERIMENTAL, BEST PARAMETERS STILL TO BE SEARCHED)\n";
         cout << "---      \t\t\t :	 9:		ReconstructShowers_AG  (EXPERIMENTAL, BEST PARAMETERS STILL TO BE SEARCHED)\n";
-        cout << "---      \t\t\t :	 10:		ReconstructShowers_GS  (same Implementation as in libShowRec-----NOT FINISHED YET)\n";
+        cout << "---      \t\t\t :	 10:		ReconstructShowers_GS  (same Implementation as in libShowRec----- BEST PARAMETERS STILL TO BE SEARCHED)\n";
 
         cout << "---      \t\t :	 -PASTART	ParametersetStart  \n";
         cout << "---      \t\t :	 -PAEND		ParameterSetEnd  \n";
@@ -1232,13 +1232,13 @@ void FillGlobalInBTArray()
 
 
 
-    if (gEDBDEBUGLEVEL>2) {
+    if (gEDBDEBUGLEVEL>3) {
         int isMCThere[100000];
         int nr;
         for (Int_t nn=0; nn<99999; ++nn) {
             isMCThere[nn]=0;
         }
-        if (gEDBDEBUGLEVEL>2) cout << "INFO    Printing double counted MCEvt basetracks:" << endl;
+        if (gEDBDEBUGLEVEL>3) cout << "INFO    Printing double counted MCEvt basetracks:" << endl;
         int maxEvt=0;
         int tmp=0;
         for (Int_t nn=0; nn<GLOBAL_InBTArray->GetEntries(); ++nn) {
@@ -2269,12 +2269,15 @@ void ReconstructShowers_CL()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -2516,12 +2519,15 @@ void ReconstructShowers_CT()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -2704,12 +2710,15 @@ void ReconstructShowers_CA()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -2912,14 +2921,17 @@ void ReconstructShowers_OI()
             Int_t NBTMC=0;
             Int_t NBTallMC=0;
             Int_t NBTeMC=0;
-            Double_t  purall, pure;
+            Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -3096,12 +3108,15 @@ void ReconstructShowers_SA()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -3604,14 +3619,16 @@ void ReconstructShowers_NN()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
-            GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-        }
 
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
+            GLOBAL_trckdens=shower_trackdensb;
+        }
 
         //-----------------------------------
         // 5) Fill Tree:
@@ -4343,13 +4360,15 @@ void ReconstructShowers_TC()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            //cout << "shower_trackdensb=  " << shower_trackdensb << endl;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -4603,12 +4622,15 @@ void ReconstructShowers_RC()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -4997,12 +5019,15 @@ void ReconstructShowers_BW()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -5221,12 +5246,15 @@ void ReconstructShowers_AG()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
             GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
         }
 
 
@@ -5389,8 +5417,6 @@ void ReconstructShowers_GS()
         IP_Pair_To_InBT=CalcIP(Segment, vtx);
         /// Change with respect to libShowRec: here we assume that Segment will always be
         /// the Initiator BaseTrack and Segment2 is the other segment to check.
-
-
 
 
         // Loop over pattern for the first BT of the pairs:
@@ -5575,18 +5601,26 @@ void ReconstructShowers_GS()
             Int_t NBTeMC=0;
             Double_t  eff, purall, pure;
             CalcEffPurOfShower2(GLOBAL_ShowerSegArray, NBT, NBTMC, NBTallMC, NBTeMC, purall, pure, NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
-            GLOBAL_trckdens=shower_trackdensb;
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-            GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[i];
-            GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[i];
-            GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[i];
-            GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[i];
-        }
 
+
+            // Fill only for MC Event:
+            if (GLOBAL_InBT_MC>0) {
+                GLOBAL_EvtBT_Flag=GLOBAL_EvtBT_FlagArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_MC=GLOBAL_EvtBT_MCArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_E=GLOBAL_EvtBT_EArray[GLOBAL_InBT_MC];
+                GLOBAL_EvtBT_TanTheta=GLOBAL_EvtBT_TanThetaArray[GLOBAL_InBT_MC];
+            }
+            GLOBAL_trckdens=shower_trackdensb;
+        }
+//         cout << "// 4) Calculate pur/eff/NBT numbers...done." << endl;
+
+
+// 				XXXDEBUG
 
         //-----------------------------------
         // 5) Fill Tree:
         //-----------------------------------
+// 				cout << "// 5) Fill Tree:" << endl;
         TREE_ShowRecEff->Fill();
         if (gEDBDEBUGLEVEL>3) TREE_ShowRecEff->Show(TREE_ShowRecEff->GetEntries()-1);
 
@@ -5595,6 +5629,7 @@ void ReconstructShowers_GS()
         // 6a) Transfer ShowerArray to treebranchTreeEntry:
         //-----------------------------------
         if (cmd_OUTPUTLEVEL>0) {
+// 						cout << "// 6a) Transfer ShowerArray to treebranchTreeEntry:" << endl;
             TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TREE_ShowShower,GLOBAL_ShowerSegArray);
         }
 
@@ -5619,7 +5654,7 @@ void ReconstructShowers_GS()
 
 
 
-
+    Log(2, "ShowRec.cpp", "--- void ReconstructShowers_GS() done.");
     return;
 }
 //-------------------------------------------------------------------------------------------
@@ -6683,6 +6718,8 @@ void PrintShowerObjectArray(TObjArray* segarray)
         s=(EdbSegP*)segarray->At(i);
         if (gEDBDEBUGLEVEL>2) printf("%8d %14.3f  %14.3f  %14.3f  %7.4f  %7.4f  %7.4f  %7.4f  %8d %8d %6.2f %6d\n", i, s->X(), s->Y(), s->Z(), s->TX(), s->TY(),s->W(),s->Chi2(),s->MCEvt(), s->PID(), s->P(), s->Flag());
     }
+    if (gEDBDEBUGLEVEL>2) cout << "--- -----------------------------------------"<<endl;
+    Log(3, "ShowRec.cpp", "--- Bool_t PrintShowerObjectArray() done.");
     return;
 }
 //-------------------------------------------------------------------------------------------
@@ -7336,6 +7373,7 @@ void CalcEffPurOfShower2(TObjArray* arr, Int_t &NBT, Int_t &NBTMC, Int_t &NBTall
 {
     Log(3, "ShowRec.cpp", "--- void CalcEffPurOfShower2() ---");
     EdbSegP* seg;
+
     for (int i=0; i<arr->GetEntries(); ++i) {
         seg=(EdbSegP*)arr->At(i);
         ++NBT;
@@ -7375,6 +7413,7 @@ void CalcEffPurOfShower2(TObjArray* arr, Int_t &NBT, Int_t &NBTMC, Int_t &NBTall
     GLOBAL_effall=effall;
     GLOBAL_effe=effe;
 
+    Log(3, "ShowRec.cpp", "--- void CalcEffPurOfShower2() done.");
     return;
 }
 
@@ -8657,13 +8696,20 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
 // 				cout << vtx->Y() << endl;
 // 				cout << vtx->Z() << endl;
 // gSystem->Exit(1);
+
+
+        GLOBAL_EvtBT_EArray[MCEvt]=energy;
+        GLOBAL_EvtBT_TanThetaArray[MCEvt]=tantheta;
+        GLOBAL_EvtBT_FlagArray[MCEvt]=0;
+        GLOBAL_EvtBT_MCArray[MCEvt]=MCEvt;
+        GLOBAL_EvtBT_ZArray[MCEvt]=(vtxposz+40.0)*1000;
     }
 
     cout << "BuildParametrizationsMCInfo_PGun.... done." << endl;
     return;
 }
 
-
+//______________________________________________________________________________
 
 void Fill2GlobalInBTArray() {
 
