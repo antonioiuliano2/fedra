@@ -158,6 +158,8 @@ public:
     EdbShowerRec();
     EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA, int piece2, int piece2par,int DOWN,EdbPVRec  *pvr);
     EdbShowerRec(EdbPVRec  *pvr);
+		
+		EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType);
 
     virtual ~EdbShowerRec();
 

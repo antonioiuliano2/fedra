@@ -102,8 +102,12 @@ EdbPVRQuality::~EdbPVRQuality()
 void EdbPVRQuality::Set0()
 {
     // Reset Values
+		
+		Log(2,"EdbPVRQuality::Set0","EdbPVRQuality::Set0");
+		
     eAli_orig=NULL;
     eAli_modified=NULL;
+		eNeedModified=kFALSE;
     eIsSource=kFALSE;
     eIsTarget=kFALSE;
     eAli_maxNpatterns=0;
@@ -150,6 +154,8 @@ void EdbPVRQuality::Set0()
     eAgreementChi2CutRMSChi2=0.3;
     eAgreementChi2CutMeanW=23;
     eAgreementChi2CutRMSW=3;
+		
+		Log(2,"EdbPVRQuality::Set0","EdbPVRQuality::Set0...done.");
     return;
 }
 
@@ -159,6 +165,8 @@ void EdbPVRQuality::Init()
 {
     // Basic Init function that creates objects in the memory which have
     // to be created only ONE time per class instance.
+		
+		Log(2,"EdbPVRQuality::Init","EdbPVRQuality::Init");
 
     eProfileBTdens_vs_PID_source = new TProfile("eProfileBTdens_vs_PID_source","eProfileBTdens_vs_PID_source",114,-0.5,113.5,0,200);
     eProfileBTdens_vs_PID_target = new TProfile("eProfileBTdens_vs_PID_target","eProfileBTdens_vs_PID_target",114,-0.5,113.5,0,200);
@@ -172,6 +180,9 @@ void EdbPVRQuality::Init()
 //     if (eHistGeometry==0) SetHistGeometry_OPERA();
 //     cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
     SetHistGeometry_OPERAandMC();
+		
+		
+		Log(2,"EdbPVRQuality::Init","EdbPVRQuality::Init...done.");
     return;
 }
 
@@ -183,12 +194,17 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
     // 0: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b
     // 1: (testing): Do cut based on a chi2-variable that compares with passing tracks
     // (if available), i.e. cosmics.
+		
+		Log(2,"EdbPVRQuality::SetCutMethod","EdbPVRQuality::SetCutMethod");
+		
     eCutMethod=CutMethod;
     cout << "EdbPVRQuality::SetCutMethod  eCutMethod=  " << eCutMethod << endl;
     if (CutMethod>1) {
         eCutMethod=0;
         cout << "WARNING   EdbPVRQuality::SetCutMethod  eCutMethod invalid, Set back to default eCutMethod=  " << eCutMethod << endl;
     }
+    
+    Log(2,"EdbPVRQuality::SetCutMethod","EdbPVRQuality::SetCutMethod...done.");
     return;
 }
 
@@ -209,7 +225,7 @@ void EdbPVRQuality::CheckEdbPVRec()
     // It gives a good estimation of the density. Spikes in some plates, or in some zones are not
     // checked for, this is on the todo list, but maybe not so important.
 
-    cout << "EdbPVRQuality::CheckEdbPVRec  " << endl;
+    Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRec");
 
     if (!eIsSource) {
         cout << "EdbPVRQuality::CheckEdbPVRec  eIsSource=  " << eIsSource << ". This means no source set. Return!" << endl;
@@ -332,7 +348,7 @@ void EdbPVRQuality::CheckEdbPVRec()
     eHistYX->Reset();
     eHistChi2W->Reset();
 
-    cout << "EdbPVRQuality::CheckEdbPVRec...done." << endl;
+		Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRec...done");
     return;
 }
 
@@ -346,7 +362,7 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
     // BinArea is 1mmx1mm.
     eHistYX->Reset();
     eHistYX->SetBins(100,0,100000,120,0,120000);
-    cout << "SetHistGeometry_OPERA :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    //cout << "SetHistGeometry_OPERA :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
 //______________________________________________________________________________
@@ -357,7 +373,7 @@ void EdbPVRQuality::SetHistGeometry_MC()
     // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(100,-50000,50000,100,-50000,50000);
-    cout << "SetHistGeometry_MC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    //cout << "SetHistGeometry_MC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
     return;
 }
 //______________________________________________________________________________
@@ -366,9 +382,12 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     // Set the geometry of the basetrack density evaluation covering MC and DATA case,
     // size conventions: x=-125000..0..+125000;y=-125000..0..125000).
     // BinArea is 1mmx1mm
+		
+		Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","EdbPVRQuality::SetHistGeometry_OPERAandMC");
     eHistYX->Reset();
     eHistYX->SetBins(250,-125000,125000,250,-125000,125000);
     if (gEDBDEBUGLEVEL>2) cout << "SetHistGeometry_OPERAandMC::binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","EdbPVRQuality::SetHistGeometry_OPERAandMC...done");
     return;
 }
 
@@ -388,6 +407,7 @@ void EdbPVRQuality::PrintCutType()
 
 void EdbPVRQuality::Print()
 {
+	  Log(2,"EdbPVRQuality::Print","EdbPVRQuality::Print");
     for (int i=0; i<80; ++i) cout << "-";
     cout << endl;
     cout << "-";
@@ -397,19 +417,17 @@ void EdbPVRQuality::Print()
     cout << endl;
     for (int i=0; i<80; ++i) cout << "-";
     cout << endl;
+		cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- GENERAL SETTINGS: ---" << endl;
-    cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
-
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
-    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eHistGeometry = " << eHistGeometry << endl;
-
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eHistGeometry = " << eHistGeometry << 	endl;
+		cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- SETTINGS: Input data:" << endl;
-    cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_orig = " << eAli_orig << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsSource = " << eIsSource << endl;
@@ -417,9 +435,8 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_meanY = " << eProfileBTdens_vs_PID_source_meanY << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_rmsX = " << eProfileBTdens_vs_PID_source_rmsX << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_source_rmsY = " << eProfileBTdens_vs_PID_source_rmsY << endl;
-
+		cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- SETTINGS: Output data:" << endl;
-    cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_modified = " << eAli_modified << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eAli_maxNpatterns = " << eAli_maxNpatterns << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eIsTarget = " << eIsTarget << endl;
@@ -427,10 +444,13 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_meanY = " << eProfileBTdens_vs_PID_target_meanY << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_rmsX = " << eProfileBTdens_vs_PID_target_rmsX << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_rmsY = " << eProfileBTdens_vs_PID_target_rmsY << endl;
+		cout << "EdbPVRQuality::Print() --- " << setw(40) << "eNeedModified = " << eNeedModified << endl;
     cout << "-" << endl;
     cout << "EdbPVRQuality::Print()....done." << endl;
     for (int i=0; i<80; ++i) cout << "-";
     cout << endl;
+		
+		Log(2,"EdbPVRQuality::Print","EdbPVRQuality::Print...done.");
     return;
 }
 
@@ -628,6 +648,14 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     } // of Npattern loops..
 
     eCutMethodIsDone[0]=kTRUE;
+		
+		// Check if modified or original PVRec object should be returned:
+		if (eProfileBTdens_vs_PID_source_meanY>eBTDensityLevel) {
+			eNeedModified=kTRUE;
+			cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Check if modified or original PVRec object should be returned: " << endl;
+			cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() " << eNeedModified << endl;
+		}
+		
 
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
@@ -898,6 +926,13 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
     } // of Npattern loops..
     cout << "Execute_ConstantQuality   Loop over the patterns...done." << endl;
+		
+		// Check if modified or original PVRec object should be returned:
+		if (eProfileBTdens_vs_PID_source_meanY>eBTDensityLevel) {
+			eNeedModified=kTRUE;
+			cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Check if modified or original PVRec object should be returned: " << endl;
+			cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() " << eNeedModified << endl;
+		}
 
     eCutMethodIsDone[1]=kTRUE;
 

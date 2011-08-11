@@ -17,7 +17,7 @@
 // object in FEDRA), it does search and reconstruction of showers,      //
 // based on different algorithms, which the user can set indivially     //
 // (normaly not necessary). After that, we try to identify              //
-// characteristics of the shower, as it is: energy and particle ID.
+// characteristics of the shower, as it is: energy and particle ID.     //
 //                                                                      //
 //                                                                      //
 // Nota Bene:   all lines in the code trailing with   "///"             //
@@ -27,6 +27,7 @@
 
 #include "EdbShowerRec.h"
 #include "EdbShowerAlg.h"
+#include "EdbPVRQuality.h"
 
 ClassImp(EdbShowerRec)
 //----------------------------------------------------------------
@@ -136,6 +137,55 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
     Set0();
     SetEdbPVRec(pvr);
 
+}
+
+//----------------------------------------------------------------
+
+EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType)
+{
+	// Constructor giving a EdbPVRec object directly and an option number:
+	cout << "----------------------------------------------------------" << endl;
+  cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType) " << endl;
+	cout << "   Constructor giving a EdbPVRec object directly and an option number:" << endl;
+	cout << "   OptionType = " << OptionType << endl;
+	cout << "----------------------------------------------------------" << endl;
+	cout << "   0: Set Initial Values, do nothing more." << endl;
+	cout << "   1: Check EdbPVRec object (presence, bg dens), do nothing more." << endl;
+	cout << "   2: Check other Input objects (linked_tracks.root, feedback file), do nothing more." << endl;
+	cout << "   3: Do normal (electron) reconstruction using Cone Tube algorithm (OI implementation)" << endl;
+	cout << "   4: Do pair search (gamma) reconstruction using  GS algorithm." << endl;
+	cout << "   5: Do both Reco and ID+Energy estimations." << endl;
+	cout << "  -1: Do everything possible!" << endl;
+	cout << "----------------------------------------------------------" << endl;
+	
+	
+	Set0();
+	
+	if (OptionType==1) {
+			EdbPVRQuality* qual = new EdbPVRQuality(pvr);
+			EdbPVRec  *pvr_new=qual->GetEdbPVRec();
+			SetEdbPVRec(pvr_new);
+	}
+	if (OptionType==2) {
+		// check here if original pvr has tracks and/or vertices
+		// check here if linked_tracks.root exists, if feedback file exits
+		cout << "if (OptionType==2) .." << endl;
+	}
+	if (OptionType==3) {
+		// start reco for OI algo here...
+		cout << "if (OptionType==3) .." << endl;
+	}
+	if (OptionType==4) {
+		// start reco for OI algo here...
+		cout << "if (OptionType==4) .." << endl;
+	}
+	if (OptionType==5) {
+		// Invoke ID and Energy estimation here...
+		cout << "if (OptionType==5) .." << endl;
+	}
+	
+			
+	
 }
 
 //----------------------------------------------------------------
@@ -3374,6 +3424,7 @@ void EdbShowerRec::PrintRecoShowerArray()
         show->PrintNice();
     }
     cout << "Printed all " <<  GetRecoShowerArrayN()  << " showers of the eRecoShowerArray" << endl;
+		Log(2,"EdbShowerRec::PrintRecoShowerArray","EdbShowerRec::PrintRecoShowerArray...done.");
     return;
 }
 
