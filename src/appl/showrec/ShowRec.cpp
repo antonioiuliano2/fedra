@@ -779,14 +779,13 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_DTHETA",&cut_gs_cut_dtheta,"CUT_GS_CUT_DTHETA/D");
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_PIDDIFF",&cut_gs_cut_piddiff,"CUT_GS_CUT_PIDDIFF/D");
         TREE_ParaSetDefinitions -> Branch("CUT_GS_CUT_OPPOSITEFLAG",&cut_gs_cut_oppositeflag,"CUT_GS_CUT_OPPOSITEFLAG/I");
-// 				{ \it Standard}	& 	 192	&	23.5 	&	60.0	&	6583.	\\
-// 				{ \it ($\#$1101)}	& 	0.185	&	2	&	0	&	-
-        cut_gs_cut_dip=192;
-        cut_gs_cut_dmin=23.5;
-        cut_gs_cut_dr=60.;
-        cut_gs_cut_dz=6583;
-        cut_gs_cut_dtheta=0.185;
-        cut_gs_cut_piddiff=2;
+        // PARAMETERSET_DEFINITIONFILE_LONG_GS_ALG.txt:  19642    393.212  35.5454  85.268  25062.6  0.117141  3  0
+        cut_gs_cut_dip=393;
+        cut_gs_cut_dmin=35.5;
+        cut_gs_cut_dr=85.;
+        cut_gs_cut_dz=25000;
+        cut_gs_cut_dtheta=0.11;
+        cut_gs_cut_piddiff=1;
         cut_gs_cut_oppositeflag=0;
         TREE_ParaSetDefinitions -> Fill();
         TREE_ParaSetDefinitions -> Show(TREE_ParaSetDefinitions -> GetEntries()-1);
@@ -1694,6 +1693,13 @@ void ReconstructShowers(Int_t nr)
     }
     //-----------------------------------
 
+
+    //-----------------------------------
+    if (TREE_ShowShower->GetEntries()<1) {
+        cout << "Hey Guy, I am so sorry, but NO , I repeat NO shower has been reconstructed!"<< endl;
+    }
+    cout << "TREE_ShowShower->GetEntries() = " << TREE_ShowShower->GetEntries()<< endl;
+    //-----------------------------------
 
     //-----------------------------------
     // MakeShowerTree:
