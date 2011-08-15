@@ -5372,11 +5372,26 @@ void ReconstructShowers_GS()
         //-----------------------------------
 
 
+
         //-----------------------------------
-        vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
+        // 0) Set vtx according to MC event,
+        //    or to a smlightly backward propagated segment.
+        //    Do this only if the value -GBMC is NOT set,
+        //    (in the case -GBMC is set, we should know the vertex anyway).
+        //-----------------------------------
+        if (GLOBAL_InBT_MC<0 && cmd_GBMC==0) {
+            vtx->SetXYZ(InBT->X(),InBT->Y(),InBT->Z()-150);
+        }
+        else if (GLOBAL_InBT_MC<0 && cmd_GBMC>0) {
+            vtx->SetXYZ(GLOBAL_VtxArrayX[cmd_GBMC],GLOBAL_VtxArrayY[cmd_GBMC],GLOBAL_VtxArrayZ[cmd_GBMC]);
+        }
+        else {
+            vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
+        }
         vtx->SetMC(GLOBAL_InBT_MC);
+
         if (gEDBDEBUGLEVEL>2) {
-            cout << "The vtx info for this MC event: X:Y:Z:MC:  " << GLOBAL_VtxArrayX[GLOBAL_InBT_MC] << " " << GLOBAL_VtxArrayY[GLOBAL_InBT_MC] << " " <<GLOBAL_VtxArrayZ[GLOBAL_InBT_MC] << " " << GLOBAL_InBT_MC << endl;
+            cout << "The vtx info for this MC event: X:Y:Z:MC:  " << vtx->X()  << " " << vtx->Y() << " " << vtx->Z() << " " << GLOBAL_InBT_MC << endl;
             cout << "The vtx info for this MC event: IP(INBT,vtx):  " << CalcIP(InBT,vtx)<< endl;
         }
         //-----------------------------------
@@ -5426,10 +5441,6 @@ void ReconstructShowers_GS()
 
 
         // Loop over pattern for the first BT of the pairs:
-        //
-        //cout << "// Loop over pattern for the first BT of the pairs: "<< endl;
-
-
         // Start first with the pattern with the lowest Z position.
         pat_one=local_gAli->GetPatternZLowestHighest(1);
         Float_t pat_one_Z=pat_one->Z();
@@ -5450,8 +5461,11 @@ void ReconstructShowers_GS()
             if (TMath::Abs(distZ)>10) continue;
             //cout << "distZ (pat_one->Z()-InBT->Z())= " << distZ << endl;
 
-            // Ceck if InBT fulfills criteria for IP to vertex:
+            // Check if InBT fulfills criteria for IP to vertex:
             if (IP_Pair_To_InBT>CUT_PARAMETER[0]) continue;
+            // Check if InBT fulfills criteria for z-diff to vertex:
+            if ((InBT->Z()-vtx->Z())>CUT_PARAMETER[3]) continue;
+
             // Now here we can add InBT since it passed also the vertex cut.
             if (GLOBAL_ShowerSegArray->GetEntries()==0) GLOBAL_ShowerSegArray->Add(InBT);
 
@@ -5486,6 +5500,7 @@ void ReconstructShowers_GS()
 
                 // pattern two should come downstream pattern one:
                 if (pat_two->Z()<pat_one->Z()) continue;
+
 
                 if (gEDBDEBUGLEVEL>2) cout << "	Searching patterns: pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
 
