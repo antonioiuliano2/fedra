@@ -29,8 +29,8 @@ using namespace std;
 //______________________________________________________________________________
 
 class EdbShowAlgClean : public TObject {
-  
-  private:
+
+private:
 
     // TObjArray storing 	Source  (to be cleaned)
     TObjArray*         eSource;
@@ -41,68 +41,77 @@ class EdbShowAlgClean : public TObject {
     // TObjArray storing 	Target  (which is cleaned)
     TObjArray*         eTarget;
     Int_t		eTargetClassType;
-    
+
     //Numerator to tell which kind of cleaning should be done
-    TArrayI*		eCleaningType; 
-		
+    TArrayI*		eCleaningType;
+
     // Flag if source/dirt/target is already set.
     Bool_t		eIsSet[3];
-    
-    
-    
+
+
+
     // Init;
     void		Init();
     // Set0;
     void		Set0();
-    
-  public:
-        
+
+public:
+
     EdbShowAlgClean();
     EdbShowAlgClean(TObjArray* Source);
     EdbShowAlgClean(TObjArray* Source,TObjArray* Dirt);
     EdbShowAlgClean(TObjArray* Source,TObjArray* Dirt,TObjArray* Target);
-    
 
-    inline TObjArray*   GetSource( )  const       { return eSource; }
-    inline TObjArray*   GetDirt( )  const       { return eDirt; }
-    inline TObjArray*   GetTarget( )  const       { return eTarget; }
 
-		void SetSource(TObjArray* Source);
+    inline TObjArray*   GetSource( )  const       {
+        return eSource;
+    }
+    inline TObjArray*   GetDirt( )  const       {
+        return eDirt;
+    }
+    inline TObjArray*   GetTarget( )  const       {
+        return eTarget;
+    }
+
+    void SetSource(TObjArray* Source);
     void SetDirt(TObjArray* Dirt);
     void SetTarget(TObjArray* Target);
 
-		void SetSource(EdbShowerP* SourceShower);
+    void SetSource(EdbShowerP* SourceShower);
     void SetDirt(EdbTrackP* DirtTrack);
     void SetTarget(EdbShowerP* TargetShower);
 
-		inline void SetCleaningType(Int_t CleaningType, Int_t Value) { eCleaningType[CleaningType]=Value; return; }
-    
+    inline void SetCleaningType(Int_t CleaningType, Int_t Value) {
+        eCleaningType[CleaningType]=Value;
+        return;
+    }
+
     virtual ~EdbShowAlgClean();          // virtual constructor due to inherited class
-        
+
     void CheckClassType();
     void CheckClassTypeEntries();
-    
-    
+
+
     void RemovePassingDirtFromSource();  	// General source/dirt remove function. one cleaning step
     void RemoveStoppingDirtFromSource();  	// General source/dirt remove function. another cleaning step
-    
-    
-    // Specialized source/dirt remove functions. 
+
+
+    // Specialized source/dirt remove functions.
     // To have them quickly there...
     void  SimpleRemoveTrackSegmentsFromShower(); 				// source = shower; dirt = track;
     Int_t SimpleRemoveTrackSegmentsFromShower(EdbShowerP* shower, EdbTrackP* track);
     void  SimpleRemoveDoubleBTViewOverlap();			  		// source = shower; dirt = shower;
     Int_t SimpleRemoveDoubleBTViewOverlap(EdbShowerP* shower);
-		void  SimpleRemoveBGSegmentsFromShower();			  		// source = shower; dirt = shower;
+    void  SimpleRemoveBGSegmentsFromShower();			  		// source = shower; dirt = shower;
     Int_t SimpleRemoveBGSegmentsFromShower(EdbShowerP* shower);
-		
-    
+
+
     void Execute();			// does the actual cleaning steps
-    
+
     // Any Helper Functions:
     Bool_t CompareSegmentsByPosition(EdbSegP* s1,EdbSegP* s2, Int_t type);
-    
-    
+
+
     void Print();
     void Help();
     ClassDef(EdbShowAlgClean,1);         // Root Class Definition for my Objects

@@ -114,7 +114,7 @@ void EdbShowerP::Set0()
     //-----
     eAlgName="UNSPECIFIED";
     eAlgValue=-999;
-    for (int i=0; i<10;++i) {
+    for (int i=0; i<10; ++i) {
         eParaValue[i]=-99999.0;
         eParaString[i]="UNSPECIFIED";
     }
@@ -1113,7 +1113,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     Float_t test_shower_deltax;
     Float_t test_shower_deltay;
 
-    for (int ii=0;ii<N();ii++)  {
+    for (int ii=0; ii<N(); ii++)  {
         seg=(EdbSegP*)this->GetSegment(ii);
         shower_xb[ii]=seg->X();
         shower_yb[ii]=seg->Y();
@@ -1125,7 +1125,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     }
 
     //-------------------------------------
-    for (int ii=0;ii<N();ii++)  {
+    for (int ii=0; ii<N(); ii++)  {
         seg=(EdbSegP*)this->GetSegment(ii);
         if (gEDBDEBUGLEVEL>2) {
             cout << "====== --- DOING   "  << ii << endl;
@@ -1148,7 +1148,7 @@ void EdbShowerP::BuildParametrisation_FJ()
             min_shower_deltathetab=99999;   // Reset
             min_shower_deltar=99999;        // Reset
 
-            for (int jj=0;jj<N();jj++)  {
+            for (int jj=0; jj<N(); jj++)  {
                 if (ii==jj) continue;
 
                 // since we do not know if BTs are ordered by their Z positions:
@@ -1218,7 +1218,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     //-------------------------------------
     if (gEDBDEBUGLEVEL>2) {
         cout << "Shower:  nentries= " << N() << endl;
-        for (int ii=0;ii<N();ii++)  {
+        for (int ii=0; ii<N(); ii++)  {
             cout << "Shower:  nentry= " << ii << "  shower_zb[ii] =  " << shower_zb[ii] << "  shower_deltathetab[ii] =  " << shower_deltathetab[ii] << "  shower_deltarb[ii] =  " << shower_deltarb[ii] <<endl;
         }
     }
@@ -1521,7 +1521,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     ePara_FJ.BT_deltaR_rms  = histo_deltaR->GetRMS();
     ePara_FJ.BT_deltaT_mean = histo_deltaT->GetMean();
     ePara_FJ.BT_deltaT_rms  = histo_deltaT->GetRMS();
-    for (int ii=0;ii<57;ii++) ePara_FJ.longprofile[ii]=longprofile[ii];
+    for (int ii=0; ii<57; ii++) ePara_FJ.longprofile[ii]=longprofile[ii];
 
     // Now set parametrisation values (This routine calculates also the
     // values for ePara_LT since it is composed of FJ para plus
@@ -1533,8 +1533,8 @@ void EdbShowerP::BuildParametrisation_FJ()
     ePara_LT.BT_deltaT_mean = histo_deltaT->GetMean();
     ePara_LT.BT_deltaT_rms  = histo_deltaT->GetRMS();
     // 0 bin is overflow bin...
-    for (int ii=0;ii<8;ii++) ePara_LT.transprofile[ii]=histo_transprofile->GetBinContent(ii+1);
-    for (int ii=0;ii<57;ii++) ePara_LT.longprofile[ii]=longprofile[ii];
+    for (int ii=0; ii<8; ii++) ePara_LT.transprofile[ii]=histo_transprofile->GetBinContent(ii+1);
+    for (int ii=0; ii<57; ii++) ePara_LT.longprofile[ii]=longprofile[ii];
 
     // Now set parametrisation values (This routine calculates also the
     // values for ePara_JC since it is composed of FJ and JC)
@@ -1544,7 +1544,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     ePara_JC.BT_deltaR_rms  = histo_deltaR->GetRMS();
     ePara_JC.BT_deltaT_mean = histo_deltaT->GetMean();
     ePara_JC.BT_deltaT_rms  = histo_deltaT->GetRMS();
-    for (int ii=0;ii<57;ii++) ePara_JC.longprofile[ii]=longprofile[ii];
+    for (int ii=0; ii<57; ii++) ePara_JC.longprofile[ii]=longprofile[ii];
 
 
 
@@ -1601,7 +1601,7 @@ void EdbShowerP::BuildParametrisation_YC()
     Float_t txb[5000];
     Float_t tyb[5000];
 
-    for (int k=0;k<sizeb;k++) {
+    for (int k=0; k<sizeb; k++) {
         xb[k]   =GetSegment(k)->X();
         yb[k]   =GetSegment(k)->Y();
         zb[k]   =GetSegment(k)->Z();
@@ -1621,7 +1621,7 @@ void EdbShowerP::BuildParametrisation_YC()
     Log(4,"EdbShowerP::BuildParametrisation_YC()","Fill correctly nfilmb[k].");
 
     // So fill correctly:
-    for (int k=0;k<sizeb;k++) {
+    for (int k=0; k<sizeb; k++) {
         //GetSegment(k)->PrintNice();
         //     cout << "GetSegment(k)->PID()   GetSegment(0)->PID() " << GetSegment(k)->PID() << " " << GetSegment(0)->PID() << endl;
         nfilmb[k]=TMath::Abs(GetSegment(k)->PID()-GetSegment(0)->PID())+1;
@@ -1635,7 +1635,7 @@ void EdbShowerP::BuildParametrisation_YC()
     Float_t step = 40;
     Int_t itermax = Int_t(radiuslimit/step);
     Float_t rayonstep[100];
-    for (int i=0;i<=itermax;i++) rayonstep[i] = step*i;
+    for (int i=0; i<=itermax; i++) rayonstep[i] = step*i;
     //cout << "itermax = " << itermax << endl;
     //for (int i=0;i<=itermax;i++) cout << "rayonstep[i] = " << rayonstep[i] << endl;
     Float_t nbtkfilm[57];
@@ -1648,11 +1648,11 @@ void EdbShowerP::BuildParametrisation_YC()
     Float_t C1calc[1]={0};
     Float_t a1calc[1]={0};
     Int_t		nbshower=0;
-    for (int i=0;i<nbfilm;i++) {
+    for (int i=0; i<nbfilm; i++) {
         nbtkfilm[i]=0;
         nbtkfilmtmp[i]=0;
     }
-    for (int i=0;i<=itermax;i++) {
+    for (int i=0; i<=itermax; i++) {
         nbtkcylinder[i]=0;
         nbtkcylindertmp[i]=0;
     }
@@ -1689,7 +1689,7 @@ void EdbShowerP::BuildParametrisation_YC()
             tyaxis = eShowerAxisCenterGravityBT->TY();
         }
 
-        for (int j=0;j<sizeb;j++) {
+        for (int j=0; j<sizeb; j++) {
             Float_t xproj = xaxis + (zb[j]-zaxis)*txaxis;
             Float_t yproj = yaxis + (zb[j]-zaxis)*tyaxis;
             Float_t radius = TMath::Sqrt((xproj-xb[j])*(xproj-xb[j]) + (yproj-yb[j])*(yproj-yb[j]));
@@ -1712,7 +1712,7 @@ void EdbShowerP::BuildParametrisation_YC()
                     //for (Int_t k=0; k<nbfilm; k++) cout<<" nbtkfilmtmp[k]    "<<   nbtkfilmtmp[k];
                     //cout << endl;
                     Int_t ii=0;
-                    for (int toto=0;toto<itermax+1;toto++) {
+                    for (int toto=0; toto<itermax+1; toto++) {
                         if ((radius>=rayonstep[toto])&&(radius<=rayonstep[toto+1])) ii = toto;
                     }
                     nbtkcylindertmp[ii]++;
@@ -1729,7 +1729,7 @@ void EdbShowerP::BuildParametrisation_YC()
         Double_t a = 0;
         Double_t b = 0;
         TH1F* htmplg = new TH1F("htmplg","htmplg",29,0,29);
-        for (int l=0;l<nbfilm;l++) {
+        for (int l=0; l<nbfilm; l++) {
             //cout <<"  l= " << l << "   nbtkfilmtmp[l]  = " << nbtkfilmtmp[l] << endl;
             if (nbtkfilmtmp[l]>0) {
                 htmplg->Fill(l+1,nbtkfilmtmp[l]);
@@ -1752,7 +1752,7 @@ void EdbShowerP::BuildParametrisation_YC()
         Double_t numerateur = 0;
         Double_t denominateur = 0;
         if ((a!=0)&&(b!=0)) {
-            for (int m=0;m<nbfilm;m++) {
+            for (int m=0; m<nbfilm; m++) {
                 if (m>=nbfilm) cout<<" warning 3 "<<endl;
                 if (nbtkfilmtmp[m]>0) {
                     numerateur += TMath::Power(b*(m+1),a-1)*TMath::Exp(-b*(m+1));
@@ -1777,7 +1777,7 @@ void EdbShowerP::BuildParametrisation_YC()
         Log(4,"EdbShowerP::BuildParametrisation_YC()","//---transversal profile");
         //---transversal profile
         TH1F*htmptr = new TH1F("htmptr","htmptr",(itermax+1),0,(itermax+1)*step);
-        for (int n=0;n<itermax;n++) {
+        for (int n=0; n<itermax; n++) {
             if (nbtkcylindertmp[n]!=0) {
                 htmptr->Fill((n+1)*step,nbtkcylindertmp[n]);
             }
@@ -1795,8 +1795,8 @@ void EdbShowerP::BuildParametrisation_YC()
             a1calc[nbshower] = 0;
         }
 
-        for (int k1tmp=0;k1tmp<nbfilm;k1tmp++) nbtkfilmtmp[k1tmp] = 0;
-        for (int k2tmp=0;k2tmp<itermax;k2tmp++) nbtkcylindertmp[k2tmp] = 0;
+        for (int k1tmp=0; k1tmp<nbfilm; k1tmp++) nbtkfilmtmp[k1tmp] = 0;
+        for (int k2tmp=0; k2tmp<itermax; k2tmp++) nbtkcylindertmp[k2tmp] = 0;
         nbtktmp=0;
 
         delete htmplg;
@@ -2627,7 +2627,7 @@ Int_t EdbShowerP::GetLastFilledBin(TH1* hist)
 {
     // return last filled X bin of a histogram (leave out under/overflow bins):
     Int_t lastbin=1;
-    for (Int_t i=1;i<hist->GetNbinsX()-1;++i) {
+    for (Int_t i=1; i<hist->GetNbinsX()-1; ++i) {
         if (hist->GetBinContent(i)>0) lastbin=i;
     }
     return lastbin;

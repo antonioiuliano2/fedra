@@ -161,7 +161,7 @@ void EdbShowAlg_GS::Convert_InVtxArray_To_InBTArray()
     if (eInVtxArray==NULL) cout << "NO  eInVtxArray  " << endl;
     EdbVertex* vtx;
     cout << "EdbVertex* vtx;" << endl;
-    cout <<eInVtxArrayN << endl;
+    cout << eInVtxArrayN << endl;
     cout << "now eInVtxArray->Print();" << endl;
     eInVtxArray->Print();
     cout << eInVtxArray->GetEntries() << endl;
@@ -510,9 +510,9 @@ TObjArray* EdbShowAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     Float_t IP_Pair_To_InBT_SegSum=CalcIP(Segment_Sum, InBT->X(),InBT->Y(),InBT->Z());
                     Float_t IP_Pair_To_InBT_SegSmaller=0;
 
-                    cout << "IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
-                    cout << "IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
-                    cout << "IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
+//                     cout << "IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
+//                     cout << "IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
+//                     cout << "IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
 
                     // Save the segment which has smaller IP, this will be the first BT in the RecoShower
                     if ( IP_Pair_To_InBT_Seg>IP_Pair_To_InBT_Seg2 ) {
@@ -579,7 +579,7 @@ TObjArray* EdbShowAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     RecoShower->SetMC(InBT->MCEvt(),InBT->MCEvt());
                     RecoShower->SetID(RecoShowerArrayN);
                     RecoShower->SetPID(Segment->PID());
-                    RecoShower ->PrintNice();
+                    //RecoShower ->PrintNice();
 
                     if (gEDBDEBUGLEVEL>2)  cout <<"------------"<< endl;
 
@@ -595,9 +595,6 @@ TObjArray* EdbShowAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 
 
     cout << "EdbShowAlg_GS::FindPairs    For the InBT/Vtx at __" << InBT << "__, we have found "  <<  RecoShowerArray->GetEntries()  << " compatible pairs in the PVRec volume." << endl;
-    // cout << "RecoShowerArrayN= " << RecoShowerArrayN << endl;
-    // cout << "RecoShowerArray->GetEntries()= " << RecoShowerArray->GetEntries() << endl;
-    // cout << "eRecoShowerArray->GetEntries()= " << eRecoShowerArray->GetEntries() << endl;
 
     // Delete unnecessary objects:
     // important, else memory overflow!!

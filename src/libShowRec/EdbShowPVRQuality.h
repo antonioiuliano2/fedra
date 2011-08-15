@@ -29,8 +29,6 @@ using namespace std;
 //______________________________________________________________________________
 
 
-//______________________________________________________________________________
-
 class EdbShowPVRQuality : public TObject {
 
 private:
@@ -38,6 +36,7 @@ private:
     // The source and target EdbPVRec objects:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
+    Bool_t		eNeedModified;
     Bool_t    eIsSource;
     Bool_t    eIsTarget;
     Int_t     eHistGeometry;
@@ -114,11 +113,20 @@ public:
 
 
     inline EdbPVRec* GetEdbPVRec() {
-        return eAli_orig;
+        return GetEdbPVRec(eNeedModified);
     }
     inline EdbPVRec* GetEdbPVRec(Int_t EdbPVRecType) {
         cout << "Inline EdbPVRecType= " <<  EdbPVRecType << endl;
         if (EdbPVRecType==1) {
+            return eAli_modified;
+        }
+        else {
+            return eAli_orig;
+        }
+    }
+    inline EdbPVRec* GetEdbPVRec(Bool_t NeedModified) {
+        cout << "Inline EdbPVRecType= " <<  NeedModified << endl;
+        if (NeedModified==1) {
             return eAli_modified;
         }
         else {

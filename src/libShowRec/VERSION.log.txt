@@ -39,6 +39,10 @@
 // TODO....//======================================================================
 
 
+
+# 15082011
+* More minor improvements and code cleanings.
+
 # 23072011
 * Improved EdbPVRQuality further: removing DoubleBT, PassingTracks.
 * Updated/Improved EdbShowAlg_GS.
