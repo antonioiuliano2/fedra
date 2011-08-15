@@ -405,22 +405,22 @@ public:
     inline TF1* GetEffFunc_UserEfficiency() {
         return EffFunc_UserEfficiency;
     }
-    
-		inline TMultiLayerPerceptron* GetNeuralNetwork(Int_t ANNType=0) {
-				if (ANNType>=15) ANNType=14;
+
+    inline TMultiLayerPerceptron* GetNeuralNetwork(Int_t ANNType=0) {
+        if (ANNType>=15) ANNType=14;
         return ANN_MLP_ARRAY[ANNType];
     }
-    
+
     inline void TrainNeuralNetwork(TString weight, Int_t ANNType=0) {
-				if (ANNType>=15) ANNType=14;
+        if (ANNType>=15) ANNType=14;
         ANN_MLP_ARRAY[ANNType]->Train(100);
-				return;
+        return;
     }
-    
+
     inline void DumpNeuralNetworkWeight(TString weight, Int_t ANNType=0) {
-				if (ANNType>=15) ANNType=14;
+        if (ANNType>=15) ANNType=14;
         ANN_MLP_ARRAY[ANNType]->DumpWeights(weight);
-				return;
+        return;
     }
 
     inline void SetCalibrationOffset(Float_t CalibrationOffset) {
@@ -516,10 +516,10 @@ protected:
     // Variables for the output:
     Double_t   eIDEnergySigmaCorr;
     Double_t   eANNIDCutValue;
-		// Type for the ID cut: 0: BestMinDist to (1,1) in the ROI curve
-		// Type for the ID cut: 1: ca. 90% eff
-		// Type for the ID cut: 2: ca.  1% cont.
-		Double_t	eIDCutTypeValue[3];
+    // Type for the ID cut: 0: BestMinDist to (1,1) in the ROI curve
+    // Type for the ID cut: 1: ca. 90% eff
+    // Type for the ID cut: 2: ca.  1% cont.
+    Double_t	eIDCutTypeValue[3];
 
 public:
 
@@ -538,8 +538,8 @@ public:
         eANNIDCutValue=ANNIDCutValue;
     }
     void SetSpecificationType(Int_t SpecificationType, Int_t SpecificationTypeVal);
-		void PrintSpecifications();
-		
+    void PrintSpecifications();
+
     void CreateANN();
 
     void Update();
@@ -549,11 +549,11 @@ public:
     void ReadTables_ID(); // to be implemented...
 
     void DoRun(EdbTrackP*);
-		void DoRun(TObjArray* trackarray);
-		void DoRun();
+    void DoRun(TObjArray* trackarray);
+    void DoRun();
 
-		Int_t DetermineIDType(Double_t val, Int_t SpecificationType);
-		Int_t DetermineIDFlag(Int_t IDType);
+    Int_t DetermineIDType(Double_t val, Int_t SpecificationType);
+    Int_t DetermineIDFlag(Int_t IDType);
 
     void Print();
     void Help();

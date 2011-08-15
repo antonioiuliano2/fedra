@@ -541,7 +541,7 @@ EdbShowerAlg_GS::EdbShowerAlg_GS()
     //   Alg->Execute();
     //   Alg->GetRecoShowerArray();
     //
-    // Returs the compatible Pair Segments (stored as EdbTrackP*).
+    // Returns the compatible Pair Segments (stored as EdbTrackP*).
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","EdbShowerAlg_GS:: Default Constructor");
 
@@ -717,7 +717,6 @@ Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg
 void EdbShowerAlg_GS::Execute()
 {
     Log(2,"EdbShowerAlg_GS::Execute","Execute()");
-    cout << "EdbShowerAlg_GS::Execute()" << endl;
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
 
 
@@ -787,8 +786,6 @@ void EdbShowerAlg_GS::Execute()
 
     } // Loop over InBT
     cout << " Loop over InBT finished."<< endl;
-
-
     cout << " eRecoShowerArray=  " <<  eRecoShowerArray << endl;
     cout << " eRecoShowerArrayN=  " <<  eRecoShowerArrayN << endl;
 
@@ -811,10 +808,8 @@ void EdbShowerAlg_GS::Execute()
 TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 {
     // Function to find pairs of an EdbPVRec object.
-    // ATTENTNION: CURRENTLY (23.07.2011) STILL IN MODIFYING PHASE!!!
+    // ATTENTION: CURRENTLY (23.07.2011) STILL IN MODIFYING PHASE!!!
 
-
-//     if (gEDBDEBUGLEVEL>2);
     cout << "EdbShowerAlg_GS::FindPairs   Starting FindPairs(InBT,eAli_Sub) now" << endl;
 
     TObjArray* RecoShowerArray= new TObjArray(99);
@@ -835,16 +830,16 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
     if (NULL==InitiatorBT) {
         InBT= new EdbSegP();
         EdbPattern* pat = eAli_Sub->GetPatternZLowestHighest(1);
-        cout << "pat->X() " << pat->X() << endl;
-        cout << "pat->Y() " << pat->Y() << endl;
-        cout << "pat->Z() " << pat->Z() << endl;
+        //cout << "pat->X() " << pat->X() << endl;
+        //cout << "pat->Y() " << pat->Y() << endl;
+        //cout << "pat->Z() " << pat->Z() << endl;
         InBT->SetX(pat->X());
         InBT->SetY(pat->Y());
         InBT->SetZ(pat->Z());
         InBT->SetTX(0);
         InBT->SetTY(0);
         InBT->SetMC(-999,-999);
-        cout << "WARNING   EdbShowerAlg_GS::FindPairs   InBT==NULL. Create a dummy InBT:" << endl;
+        cout << "WARNING   EdbShowerAlg_GS::FindPairs   InBT==NULL. Created a dummy InBT:" << endl;
         InBT->PrintNice();
     }
     else {
@@ -884,7 +879,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 
 
 
-        if (gEDBDEBUGLEVEL>2) cout << "pat_one_cnt=" << pat_one_cnt << "  pat_one->Z() = " << pat_one->Z() << " pat_one_bt_cnt_max= "<< pat_one_bt_cnt_max <<endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs   pat_one_cnt=" << pat_one_cnt << "  pat_one->Z() = " << pat_one->Z() << " pat_one_bt_cnt_max= "<< pat_one_bt_cnt_max <<endl;
 
 
         for (Int_t pat_two_cnt=0; pat_two_cnt<npat; ++pat_two_cnt) {
@@ -897,7 +892,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 
 
 
-            if (gEDBDEBUGLEVEL>2) cout << "	pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
+            if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs  	pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
 
             for (Int_t pat_one_bt_cnt=0; pat_one_bt_cnt<pat_one_bt_cnt_max; ++pat_one_bt_cnt) {
                 Segment =  (EdbSegP*)pat_one->GetSegment(pat_one_bt_cnt);
@@ -959,9 +954,11 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     Float_t IP_Pair_To_InBT_SegSum=CalcIP(Segment_Sum, InBT->X(),InBT->Y(),InBT->Z());
                     Float_t IP_Pair_To_InBT_SegSmaller;
 
-                    cout << "IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
-                    cout << "IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
-                    cout << "IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
+                    if (gEDBDEBUGLEVEL>3) {
+                        cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
+                    }
 
                     // Save the segment which has smaller IP, this will be the first BT in the RecoShower
                     if ( IP_Pair_To_InBT_Seg>IP_Pair_To_InBT_Seg2 ) {
@@ -982,7 +979,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     // Chi2 Variable:
                     Float_t dminDist=GetMinimumDist(Segment,Segment2);
                     Float_t dtheta=DeltaThetaSingleAngles(Segment,Segment2);
-                    // preliminary meand and sigma values (taken from 1Gev, with highpur cutset), to be checked if they are the same for 0.5,1,2,4 GeV Photons
+                    // preliminary mean and sigma values (taken from 1Gev, with highpur cutset), to be checked if they are the same for 0.5,1,2,4 GeV Photons
                     Float_t GammaChi2 =  ((IP_Pair_To_InBT-80)*(IP_Pair_To_InBT-80)/60/60)+((dminDist-3.5)*(dminDist-3.5)/4.7/4.7)+((dtheta-0.021)*(dtheta-0.021)/0.012/0.012);
 
 
@@ -1015,9 +1012,8 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     RecoShower->SetMC(InBT->MCEvt(),InBT->MCEvt());
                     RecoShower->SetID(RecoShowerArrayN);
                     RecoShower->SetPID(Segment->PID());
-                    RecoShower ->PrintNice();
-
-                    cout <<"------------"<< endl;
+                    //RecoShower ->PrintNice();
+                    //cout <<"------------"<< endl;
 
 
                     // Add Shower to interim  Array:
@@ -1029,7 +1025,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
         }
     }  //for (Int_t pat_one_cnt=0; ...
 
-    cout << "EdbShowerAlg_GS::FindPairs For the InBT/Vtx at __" << InBT << "__, we have found "  <<  RecoShowerArray->GetEntries()  << " compatible pairs in the PVRec volume." << endl;
+    cout << "EdbShowerAlg_GS::FindPairs   For the InBT/Vtx at __" << InBT << "__, we have found "  <<  RecoShowerArray->GetEntries()  << " compatible pairs in the PVRec volume." << endl;
 
     // Delete unnecessary objects:
     // important, else memory overflow!!
@@ -1046,8 +1042,10 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 
 TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArray)
 {
+    // Check Clean Pairs Function.
+    // Todo: WHAT DOES THIS FUNCTION DO ???
 
-    cout << "CheckCleanPairs"  <<endl;
+    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::CheckCleanPairs"  <<endl;
     if (NULL==RecoShowerArray) return NULL;
 
     TObjArray* NewRecoShowerArray= new TObjArray(999999);
@@ -1061,12 +1059,12 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
     cout << ntrack << endl;
 
     for (Int_t pat_one_cnt=0; pat_one_cnt<ntrack; ++pat_one_cnt) {
-        cout << "Doing pat_one_cnt = " << pat_one_cnt << endl;
+        if (gEDBDEBUGLEVEL>2)  cout << "CheckCleanPairs   Doing pat_one_cnt = " << pat_one_cnt << endl;
         // (if -1) then the last one is not checked
         TrackPair1=(EdbTrackP*)RecoShowerArray->At(pat_one_cnt);
         bool taketrack1=true;
         for (Int_t pat_two_cnt=pat_one_cnt; pat_two_cnt<ntrack; ++pat_two_cnt) {
-            cout << "Doing pat_two_cnt = " << pat_two_cnt << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "CheckCleanPairs      Doing pat_two_cnt = " << pat_two_cnt << endl;
             //if only one track at all take it anyway:
             if (ntrack==1) continue;
             TrackPair2=(EdbTrackP*)RecoShowerArray->At(pat_two_cnt);
@@ -1085,7 +1083,7 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
             if (!taketrack1) break;
         }
 
-        cout << "taketrack1 =  " << taketrack1 << endl;
+        //cout << "taketrack1 =  " << taketrack1 << endl;
         if (!taketrack1) continue;
 
         // Add TrackPair1
@@ -1102,10 +1100,10 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
         s2->PrintNice();
 
 
-        cout <<  s1->MCEvt() << "  " <<  s2->MCEvt() << "  " << s1->Flag() << "  " << s2->Flag() << "  " << s1->P() << "  " << s2->P() << "  " <<  "  " << s1->Z() << "  " << s2->Z() << "  " <<endl;
-        cout<< "--------"<<endl;
+        //cout <<  s1->MCEvt() << "  " <<  s2->MCEvt() << "  " << s1->Flag() << "  " << s2->Flag() << "  " << s1->P() << "  " << s2->P() << "  " <<  "  " << s1->Z() << "  " << s2->Z() << "  " <<endl;
+        //cout<< "--------"<<endl;
     }
-    cout << " From " <<ntrack << "  originally, there are now after Zposition and overlap cuts: " << NewRecoShowerArrayN << " left." << endl;
+    cout << "CheckCleanPairs   From " <<ntrack << "  originally, there are now after Zposition and overlap cuts: " << NewRecoShowerArrayN << " left." << endl;
 
 
     return NewRecoShowerArray;

@@ -113,25 +113,25 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
     // in the Shower.root file. But this file stores the showers just as
     // a tree with leafs and the object structure is lost.
 
-		cout << "----------------------------------------------------------" << endl;
+    cout << "----------------------------------------------------------" << endl;
     cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr) " << endl;
     cout << "  Constructor giving a EdbPVRec object directly. We try to do the reconstruction in the following way: " << endl;
     cout << "  a) if EdbPVRec has tracking already done then take eTracks for Inititator Basetracks."<< endl;
     cout << "  b) if EdbPVRec has vertexing already done then take eVertex for additional cut of the Initiator Basetracks which are in an IP of less than 250 microns." << endl;
     cout << "  c) Start BGEstimation, Reconstruction, Energy, ID  directly from this EdbPVRec object" << endl;
     cout <<"----------  (some of step c are still: )    T O D O -----------------------" << endl;
-		cout << endl;
+    cout << endl;
     cout << "After these steps showers are stored as an TObjarray of EdbTrackP "<< endl;
     cout << "in this class and can be accessed. " << endl;
     cout << "Showers can also be written in the linked_tracks.root file, or  " << endl;
     cout << "in the Shower.root file. But this file stores the showers just as " << endl;
     cout << "a tree with leafs and the object structure is lost. " << endl;
-		cout << endl;
+    cout << endl;
     cout << "WARNING:: EdbShowerRec::EdbShowerRec(EdbPVRec* pvr)   DO NOTHING YET !!!" << endl;
     cout << "PLEASE DO THESE STEPS MANUALLY UNTIL SHOWER LIBRARY IS FULLY FUNCTIONAL" << endl;
     cout << "By stopping here, we avoid misunderstandings when all in one is done but not yet fully tested." << endl;
-		cout << endl;
-		cout << "----------------------------------------------------------" << endl;
+    cout << endl;
+    cout << "----------------------------------------------------------" << endl;
 
 
     Set0();
@@ -143,49 +143,49 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
 
 EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType)
 {
-	// Constructor giving a EdbPVRec object directly and an option number:
-	cout << "----------------------------------------------------------" << endl;
-  cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType) " << endl;
-	cout << "   Constructor giving a EdbPVRec object directly and an option number:" << endl;
-	cout << "   OptionType = " << OptionType << endl;
-	cout << "----------------------------------------------------------" << endl;
-	cout << "   0: Set Initial Values, do nothing more." << endl;
-	cout << "   1: Check EdbPVRec object (presence, bg dens), do nothing more." << endl;
-	cout << "   2: Check other Input objects (linked_tracks.root, feedback file), do nothing more." << endl;
-	cout << "   3: Do normal (electron) reconstruction using Cone Tube algorithm (OI implementation)" << endl;
-	cout << "   4: Do pair search (gamma) reconstruction using  GS algorithm." << endl;
-	cout << "   5: Do both Reco and ID+Energy estimations." << endl;
-	cout << "  -1: Do everything possible!" << endl;
-	cout << "----------------------------------------------------------" << endl;
-	
-	
-	Set0();
-	
-	if (OptionType==1) {
-			EdbPVRQuality* qual = new EdbPVRQuality(pvr);
-			EdbPVRec  *pvr_new=qual->GetEdbPVRec();
-			SetEdbPVRec(pvr_new);
-	}
-	if (OptionType==2) {
-		// check here if original pvr has tracks and/or vertices
-		// check here if linked_tracks.root exists, if feedback file exits
-		cout << "if (OptionType==2) .." << endl;
-	}
-	if (OptionType==3) {
-		// start reco for OI algo here...
-		cout << "if (OptionType==3) .." << endl;
-	}
-	if (OptionType==4) {
-		// start reco for OI algo here...
-		cout << "if (OptionType==4) .." << endl;
-	}
-	if (OptionType==5) {
-		// Invoke ID and Energy estimation here...
-		cout << "if (OptionType==5) .." << endl;
-	}
-	
-			
-	
+    // Constructor giving a EdbPVRec object directly and an option number:
+    cout << "----------------------------------------------------------" << endl;
+    cout << "EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType) " << endl;
+    cout << "   Constructor giving a EdbPVRec object directly and an option number:" << endl;
+    cout << "   OptionType = " << OptionType << endl;
+    cout << "----------------------------------------------------------" << endl;
+    cout << "   0: Set Initial Values, do nothing more." << endl;
+    cout << "   1: Check EdbPVRec object (presence, bg dens), do nothing more." << endl;
+    cout << "   2: Check other Input objects (linked_tracks.root, feedback file), do nothing more." << endl;
+    cout << "   3: Do normal (electron) reconstruction using Cone Tube algorithm (OI implementation)" << endl;
+    cout << "   4: Do pair search (gamma) reconstruction using  GS algorithm." << endl;
+    cout << "   5: Do both Reco and ID+Energy estimations." << endl;
+    cout << "  -1: Do everything possible!" << endl;
+    cout << "----------------------------------------------------------" << endl;
+
+
+    Set0();
+
+    if (OptionType==1) {
+        EdbPVRQuality* qual = new EdbPVRQuality(pvr);
+        EdbPVRec  *pvr_new=qual->GetEdbPVRec();
+        SetEdbPVRec(pvr_new);
+    }
+    if (OptionType==2) {
+        // check here if original pvr has tracks and/or vertices
+        // check here if linked_tracks.root exists, if feedback file exits
+        cout << "if (OptionType==2) .." << endl;
+    }
+    if (OptionType==3) {
+        // start reco for OI algo here...
+        cout << "if (OptionType==3) .." << endl;
+    }
+    if (OptionType==4) {
+        // start reco for OI algo here...
+        cout << "if (OptionType==4) .." << endl;
+    }
+    if (OptionType==5) {
+        // Invoke ID and Energy estimation here...
+        cout << "if (OptionType==5) .." << endl;
+    }
+
+
+
 }
 
 //----------------------------------------------------------------
@@ -3424,7 +3424,7 @@ void EdbShowerRec::PrintRecoShowerArray()
         show->PrintNice();
     }
     cout << "Printed all " <<  GetRecoShowerArrayN()  << " showers of the eRecoShowerArray" << endl;
-		Log(2,"EdbShowerRec::PrintRecoShowerArray","EdbShowerRec::PrintRecoShowerArray...done.");
+    Log(2,"EdbShowerRec::PrintRecoShowerArray","EdbShowerRec::PrintRecoShowerArray...done.");
     return;
 }
 
