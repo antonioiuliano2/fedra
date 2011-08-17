@@ -1276,11 +1276,39 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
                 seg1 = pat->GetSegment(k);
 
                 // Here decide f.e. which segments to check...
-                if (TMath::Abs(seg->X()-seg1->X())>2.1) continue;
-                if (TMath::Abs(seg->Y()-seg1->Y())>2.1) continue;
-                if (TMath::Abs(seg->TX()-seg1->TX())>0.01) continue;
-                if (TMath::Abs(seg->TY()-seg1->TY())>0.01) continue;
-                if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Found compatible segment!! " << endl;
+                Bool_t toContinue=kFALSE;
+
+                // Skip already large distances
+                if (TMath::Abs(seg->X()-seg1->X())>20.1) continue;
+                if (TMath::Abs(seg->Y()-seg1->Y())>20.1) continue;
+                if (TMath::Abs(seg->TX()-seg1->TX())>0.1) continue;
+                if (TMath::Abs(seg->TY()-seg1->TY())>0.1) continue;
+
+                //
+                // a) all BT parings within a square DeltaR and Delta Theta:
+                //
+                // b) all BT pairings within dT<->dR line:
+                //
+                Float_t dR_allowed=0;
+                Float_t deltaR=0;
+                Float_t deltaTheta=0;
+                Float_t dR_allowed_m_deltaR=0;
+
+                deltaTheta=TMath::Sqrt( TMath::Power(seg->TX()-seg1->TX(),2)+TMath::Power(seg->TY()-seg1->TY(),2) );
+                if (deltaTheta>0.1) continue;
+
+                deltaR=TMath::Sqrt( TMath::Power(seg->X()-seg1->X(),2)+TMath::Power(seg->Y()-seg1->Y(),2) );
+
+                // line defined by experimental values:
+                // dR_allowed = 11(micron)/0.1(rad) * dTheta
+                dR_allowed = 10.75/0.1*deltaTheta;
+                dR_allowed_m_deltaR=TMath::Abs(deltaR-dR_allowed);
+
+                if (deltaR>3.0||deltaTheta>0.005) toContinue=kTRUE;
+                if (dR_allowed_m_deltaR<1.0) toContinue=kFALSE;
+                if (toContinue) continue;
+
+                if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Found incompatible segment for dR_dT line condition: " << endl;
 
                 // if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
                 // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
@@ -1370,7 +1398,7 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
     Int_t aliSourceNPat=aliSource->Npatterns();
 
     for (int i = 0; i < aliSourceNPat; i++ ) {
-        if (gEDBDEBUGLEVEL>2) cout << "Looping over aliSource->Pat()=" << i << endl;
+        cout << "EdbPVRQuality::Remove_Passing()  Looping over aliSource->Pat()=" << i << endl;
 
         EdbPattern* pat = aliSource->GetPattern(i);
         EdbPattern* pt= new EdbPattern();
