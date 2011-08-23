@@ -5,7 +5,7 @@
 #
 
 LIBS="libEdb libEbase libDataConversion libEGA libEmath libEphys libEdr libEIO 
-libEMC libEdd libVt++ libAlignment libScan libShower libEmr libEDA libShowRec"
+libEMC libEdd libVt++ libAlignment libScan libShower libEmr libEDA libShowRec libAnalysis"
 
 if [ "${ORACLE_HOME}" != "" ]; then
 LIBS="${LIBS} libEOracle"
