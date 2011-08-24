@@ -21,6 +21,8 @@
 #include "EdbLog.h"
 #include "EdbPattern.h"
 #include "EdbSegP.h"
+
+#include "EdbEDAUtil.h"
 using namespace std;
 
 //______________________________________________________________________________
@@ -138,13 +140,14 @@ public:
     Double_t            DeltaThetaComponentwise(EdbSegP* s1,EdbSegP* s2);
     Double_t            DeltaThetaSingleAngles(EdbSegP* s1,EdbSegP* s2);
     Double_t            GetSpatialDist(EdbSegP* s1,EdbSegP* s2);
-    Double_t 		GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2);
+    Double_t 						GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2);
 
 
-    void         	SetParameters(Float_t* par);
+    void         				SetParameters(Float_t* par);
     //void                Transform_eAli(EdbSegP* InitiatorBT);
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
+    void 								Convert_EdbPVRec_To_InBTArray();
 
 
     void Print();
@@ -176,19 +179,25 @@ private:
     // TObjArray storing Initiator Vertices:
     TObjArray*         eInVtxArray;
     Int_t              eInVtxArrayN;
+
+    // Variable to clean the found parings once more.
+    Bool_t 						eSetCleanPairs;
+
 public:
 
     EdbShowerAlg_GS();
     virtual ~EdbShowerAlg_GS();          // virtual constructor due to inherited class
 
+    void    Set0();
     void    Init();
 
     inline void         SetInVtxArray( TObjArray* InVtxArray ) {
         eInVtxArray = InVtxArray;
         eInVtxArrayN = eInVtxArray->GetEntries();
-        cout << eInVtxArrayN << "  entries set"<<endl;
+        cout << "SetInVtxArray:: " << eInVtxArrayN << "  entries set"<<endl;
     }
     void         	    SetInVtx( EdbVertex* vtx );
+    void         	    AddInVtx( EdbVertex* vtx );
 
     inline Int_t        GetInVtxArrayN()     	const       {
         return eInVtxArrayN;
