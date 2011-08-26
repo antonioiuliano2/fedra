@@ -14,7 +14,9 @@ void print_help_message()
   cout<< "\t\t  DZ       - plate-to-plate step (default = -1300.)\n";
   cout<< "\t\t  DEBUG    - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\t\t  -noaff   - do not read aff-files - the default is yes \n";
-  cout<< "\t\t  -reset   -  recreate aff-files starting from default set.root";
+  cout<< "\t\t  -resetaff-  recreate aff-files using values from set.root";
+  cout<< "\t\t  -resetpar-  reset pxxx/x.x.x.x.par-files (shrinkage correction, etc) using values from set.root";
+  cout<< "\t\t  -reset   -  reset *.aff.par and *.par files";
   cout<< "\nExample: \n";
   cout<< "\t  makescanset -set=4554.0.1.1000 -o=/scratch/BRICKS \n";
   cout<< "\n If the data location directory if not explicitly define\n";
@@ -33,6 +35,8 @@ int main(int argc, char* argv[])
   bool        do_set      = false;
   bool        noaff       = false;
   bool        reset       = false;
+  bool        resetaff    = false;
+  bool        resetpar    = false;
   EdbID       id;
   int         from_plate  = 57;
   int         to_plate    =  1;
@@ -55,13 +59,21 @@ int main(int argc, char* argv[])
       {
 	if(strlen(key)>6)	suff=key+6;
       }
-    else if(!strncmp(key,"-noaff",7)) 
+    else if(!strncmp(key,"-noaff",6)) 
       {
 	noaff=true;
       }
-     else if(!strncmp(key,"-reset",7)) 
+    else if(!strncmp(key,"-reset",6)) 
       {
 	reset=true;
+      }
+    else if(!strncmp(key,"-resetaff",9)) 
+      {
+	resetaff=true;
+      }
+    else if(!strncmp(key,"-resetpar",9)) 
+      {
+	resetpar=true;
       }
     else if(!strncmp(key,"-v=",3))
       {
@@ -84,8 +96,13 @@ int main(int argc, char* argv[])
     sc.MakeNominalSet(id,from_plate, to_plate, z0, dz);
     sproc.MakeScannedIDList( id, sc, 60, 0, suff);
     sproc.WriteScanSet(id,sc);
-    if(reset) sproc.MakeAFFSet(sc);
-    else {if(!noaff)  sproc.UpdateSetWithAff(id,id);}
+    if     (resetaff) sproc.MakeAFFSet(sc);
+    else if(resetpar) sproc.MakeParSet(sc);
+    else if(reset)    sproc.PrepareSetStructure(sc);
+    else {if(!noaff)  {
+      sproc.UpdateSetWithPlatePar(id);
+      sproc.UpdateSetWithAff(id,id);
+    }}
     if(gEDBDEBUGLEVEL>1) sproc.ReadScanSet(id)->Print();
   }
 
