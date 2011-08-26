@@ -46,12 +46,18 @@ void EdbSegP::Set0()
 }
 
 //______________________________________________________________________________
+void EdbSegP::SetErrors0()
+{ 
+  // just init covariance matrix
+  if(!eCOV) eCOV = new TMatrixD(5,5);
+  else eCOV->Zero();
+}
+
+//______________________________________________________________________________
 void EdbSegP::SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2 )
 { 
   // setting the diagonal elements of covariance matrix
-
-  if(!eCOV) eCOV = new TMatrixD(5,5);
-  else eCOV->Zero();
+  SetErrors0();
   (*eCOV)(0,0) = (double)sx2; 
   (*eCOV)(1,1) = (double)sy2; 
   (*eCOV)(2,2) = (double)stx2;

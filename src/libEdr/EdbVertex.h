@@ -110,7 +110,7 @@ class EdbVertex: public TObject {
   Float_t    Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
 
   Float_t    MaxAperture();
-  Float_t    MaxImpact();
+  Float_t    MaxImpact() { EdbVTA *vta=GetMaxImpVTA(); return vta? vta->Imp(): 0; }
   EdbVertex *GetConnectedVertex(int nv);
   EdbVertex *GetConnectedVertexForTrack(int it);
   Bool_t     IsEqual(const TObject *o) const;
@@ -137,9 +137,10 @@ class EdbVertex: public TObject {
   EdbVTA    *GetVTn(int i)       {return (EdbVTA*)(eVTn.At(i));}
   EdbTrackP *GetTrack(int i)     {return GetVTa(i)->GetTrack();}
   EdbSegP   *GetTrackV(int i, bool usesegpar=false);
+  EdbVTA    *GetMaxImpVTA();
 
   EdbVTA    *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
-  Float_t    Impact(int i);
+  Float_t    Impact(int i) { return GetVTa(i)?  GetVTa(i)->Imp(): 1000000.; }
   Float_t    DistSeg(EdbSegP *seg, float X0 = 0.);
   Float_t    DistTrack(EdbTrackP *tr, int zpos, float X0 = 0.);
   Float_t    ImpTrack(int i) { return DistSeg( GetTrackV(i) ); }
@@ -191,7 +192,8 @@ class EdbVertexRec: public TObject {
  public:
   EdbVertexRec();
   virtual ~EdbVertexRec();
-
+  
+  void      Reset();
   const TVector3  *Vmin() const {return &eVmin;}
   const TVector3  *Vmax() const {return &eVmax;}
   int        RefitAll();
@@ -201,8 +203,12 @@ class EdbVertexRec: public TObject {
   void	     AcceptModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
   void       CancelModifiedVTX(EdbVertex *eVertex, EdbVertex *eWorking);
   void       FillTracksStartEnd(TIndexCell &starts, TIndexCell &ends);
+  
   Int_t      MakeV(EdbVertex &edbv, bool isRefit=false);
   Int_t      FindVertex();
+
+  EdbVertex *Make1Vertex(TObjArray &tracks, float zexpected);
+  EdbVertex *StripBadTracks( EdbVertex &v,  float impMax, int ntrMin );
 
   EdbVertex *ProbVertex2(EdbTrackP *tr1, EdbTrackP *tr2, int zpos1, int zpos2 );
   Int_t      ProbVertexN();
@@ -211,6 +217,7 @@ class EdbVertexRec: public TObject {
   void       CheckVTX();
   EdbVertex *TestVTAGroup(TObjArray &arrvta);
   int        EstimateVertexFlag(int zpos1, int zpos2);
+  
   Bool_t     CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z );
   Bool_t     IsInsideLimits(EdbSegP &s);
   Int_t      FindSimilarTracks(EdbTrackP &t, TObjArray &found, int nsegmin=2, float dMax=100., float dTheta=0.01, float dZmax=50000.);
@@ -254,6 +261,7 @@ class EdbVertexRec: public TObject {
 				    EdbVertex **v1n);
   EdbVertex *AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, int zpos);
   EdbVertex *RemoveTrackFromVertex(EdbVertex *eVertex, int itr);
+  EdbVertex *RemoveVTAFromVertex( EdbVertex &vtx, EdbVTA &vta );
 
   EdbTrackP *GetEdbTrack(const int index);
   EdbVTA    *AddTrack(EdbVertex &edbv, EdbTrackP *track, int zpos);

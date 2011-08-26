@@ -592,6 +592,23 @@ void EdbTrackP::AddTrack(const EdbTrackP &tr)
 }
 
 //______________________________________________________________________________
+EdbSegP *EdbTrackP::GetSegmentWithClosestZ( float z, float dzMax )
+{
+  float dzmin=dzMax;
+  EdbSegP *sbest=0;
+  int nseg=N();
+  for(int i=0; i<nseg; i++) {
+     EdbSegP *s = GetSegment(i);
+     float dz = Abs(s->eZ-z);
+     if( dz < dzmin ) {
+       dzmin=dz;
+       sbest=s;
+     }
+   }
+  return sbest;
+}
+
+//______________________________________________________________________________
 void EdbTrackP::FitTrack()
 {
   // track fit by averaging of segments parameters

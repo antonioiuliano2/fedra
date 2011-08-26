@@ -82,6 +82,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   void    Clear() { eCOV->Clear(); }
   void    Set(int id, float x, float y, float tx, float ty, float w, int flag)
              { eID=id; eX=x; eY=y; eTX=tx; eTY=ty; eW=w; eFlag=flag; }
+  void    SetErrors0();
   void    SetErrors() {SetErrors( 1.,1.,0.,.0001,.0001,1.);}
   void    SetErrors( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );
   void    SetErrorsCOV( float sx2, float sy2, float sz2, float stx2, float sty2, float sp2=1. );

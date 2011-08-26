@@ -271,11 +271,10 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   w2x = 1./(stx2*stx2);  w2y = 1./(sty2*sty2);
 
   //printf("w1x %f w2x %f w1y %f w2y %f\n",w1x,w2x,w1y,w2y);
-  float chi2t = TMath::Sqrt( ( (s1.TX()-T)*(s1.TX()-T)*w1x +
-			       s1.TY()*s1.TY()        *w1y +
-			       (s2.TX()-T)*(s2.TX()-T)*w2x +
-			       s2.TY()*s2.TY()        *w2y )/4.
-			     );
+  float chi2t =  ( (s1.TX()-T)*(s1.TX()-T)*w1x +
+		    s1.TY()*s1.TY()        *w1y +
+		   (s2.TX()-T)*(s2.TX()-T)*w2x +
+		    s2.TY()*s2.TY()        *w2y )/4.;
   //printf("angular component of chi2 = %f\n",chi2t);
 
   float sx1   = cond1.SigmaX(T), sy1   = cond1.SigmaY(0);
@@ -286,9 +285,9 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   float dx2 = s2.X()-(s.X()+(s2.Z()-s.Z())*s.TX());  
   float dy2 = s2.Y()-(s.Y()+(s2.Z()-s.Z())*s.TY());  
 
-  float chi2pos = Sqrt(dx1*dx1/sx1/sx1+dy1*dy1/sy1/sy1+dx2*dx2/sx2/sx2+dy2*dy2/sy2/sy2)/2.;
+  float chi2pos = dx1*dx1/sx1/sx1+dy1*dy1/sy1/sy1+dx2*dx2/sx2/sx2+dy2*dy2/sy2/sy2/4.;
   //printf("position component of chi2 = %f\n",chi2pos);
-  s.SetChi2( Sqrt(chi2t*chi2t+chi2pos*chi2pos));
+  s.SetChi2( Sqrt(chi2t+chi2pos) );
   aff.Invert();
   s.Transform(&aff);
   //s.Print();
@@ -422,6 +421,22 @@ int EdbTrackFitter::FitTrackLine(EdbTrackP &tr)
   FitTrackLine(tr,x,y,z,tx,ty,w);
   tr.Set(tr.ID(),x,y,tx,ty,w,tr.Flag());
   tr.SetZ(z);
+  
+  tr.ClearF();
+  int nseg=tr.N();
+  for(int i=0; i<nseg; i++) {
+     EdbSegP *s = tr.GetSegment(i);
+     float dz = s->Z()-z;
+     EdbSegP *segf = new EdbSegP(*s);
+
+    segf->Set( s->ID(), x + tx*dz, y+ty*dz, tx, ty, 1.,s->Flag());
+    segf->SetErrorP ( tr.SP() );
+    //segf.SetChi2(0.);
+    //segf.SetProb(1.);
+    segf->SetP( tr.P() );
+    tr.AddSegmentF(segf);
+  }
+  
   return tr.N();
 }
 

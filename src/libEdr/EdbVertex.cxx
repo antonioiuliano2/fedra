@@ -135,6 +135,25 @@ void EdbVertex::Clear()
 }
 
 //________________________________________________________________________
+EdbVTA   *EdbVertex::GetMaxImpVTA()
+{
+// return vta with a biggest impact par
+  int ntr = N();
+  EdbVTA *maxvta=0;
+  if(ntr<1)       maxvta=0;
+  else if(ntr==1) maxvta=GetVTa(0);
+  else {
+    float maximp=0;
+    for(int i=0; i<ntr; i++) {
+      EdbVTA *vta = GetVTa(i);
+      float   imp = vta->Imp();
+      if( imp > maximp )  { maximp=imp; maxvta=vta; }
+    }
+  }
+  return maxvta;
+}
+
+//________________________________________________________________________
 EdbSegP   *EdbVertex::GetTrackV(int i, bool usesegpar)
 {
 	EdbTrackP *t = GetTrack(i); if(!t) return 0;
@@ -205,14 +224,14 @@ Bool_t EdbVertex::TrackInVertex( EdbTrackP *t )
   return 0;
 }
 
-//______________________________________________________________________________
-float EdbVertex::MaxImpact()
-{
-  int   ntr = N();  if(ntr<2)                      return 0;
-  float imp=0.;
-  for (int i=0; i<ntr; i++)    if(Impact(i)>imp) imp=Impact(i);
-  return imp;
-}
+// //______________________________________________________________________________
+// float EdbVertex::MaxImpact()
+// {
+//   int   ntr = N();  if(ntr<2)                      return 0;
+//   float imp=0.;
+//   for (int i=0; i<ntr; i++)    if(Impact(i)>imp) imp=Impact(i);
+//   return imp;
+// }
 
 //______________________________________________________________________________
 float EdbVertex::MaxAperture()
@@ -353,13 +372,6 @@ EdbVertex *EdbVertex::GetConnectedVertex(int nv)
 	}
     }
     return 0;
-}
-
-//________________________________________________________________________
-float EdbVertex::Impact( int i)
-{
-  // return eImp from vta
-  return GetVTa(i)?  GetVTa(i)->Imp(): 1000000.;
 }
 
 //________________________________________________________________________
@@ -627,6 +639,12 @@ EdbVertexRec::~EdbVertexRec()
   {
     (gROOT->GetListOfSpecials())->Remove(this);
   }
+  Reset();
+}
+
+//________________________________________________________________________
+void EdbVertexRec::Reset()
+{
   SafeDelete(eVTX);
   eVTA.Clear("nodelete");
 }
@@ -680,7 +698,14 @@ Bool_t EdbVertexRec::EstimateVertexPosition( EdbVertex &v )
       count++;
     }
   }
-  for(int i=0; i<3; i++) vsum[i]/=count;
+  if(count)  for(int i=0; i<3; i++) vsum[i]/=count;
+  else {                    // take just mean tracks position
+    for(int i=0; i<nt; i++) {
+      EdbSegP *s  = v.GetTrackV(i,eUseSegPar);
+      vsum[0] += s->X(); vsum[1] += s->Y(); vsum[2] += s->Z();
+    }
+    for(int i=0; i<3; i++) vsum[i]/=nt;
+  }
   v.SetXYZ(vsum[0],vsum[1],vsum[2]);
   return true;
 }
@@ -692,7 +717,8 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
   // if isRefit - use input vertex position to improve the fit (default is false)
 
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Error: EdbVertexRec::MakeV: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
+  if(!ePVR) {Log(1,"EdbVertexRec::MakeV","ERROR: EdbPVRec not defined, use SetPVRec(...)"); return 0;}
+  
   int n = edbv.N();
   if (n<2)         return 0;
 
@@ -714,16 +740,57 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
       edbv.Edb2Vt(*seg, *t, X0, edbv.GetTrack(i)->M());
       v->add_track(*t);
     }
-  if (!v->findVertexVt())       return 0;
-  if (!(v->valid()))            return 0;
+  if (!v->findVertexVt())       { Log(3,"MakeV","can not find VtVertex" ); return 0; }
+  if (!(v->valid()))            { Log(3,"MakeV","VtVertex is not valid" ); return 0; }
   edbv.SetV(v);
   for(int i=0; i<n; i++)
     {
       edbv.GetVTa(i)->SetDist( edbv.VZ() -  edbv.GetTrackV(i,eUseSegPar)->Z() );
       edbv.GetVTa(i)->SetImp( distance(v->get_track(i),*v) );
+//      printf("dist = %f imp = %f\n", edbv.GetVTa(i)->Dist(), edbv.GetVTa(i)->Imp() );
+//      edbv.GetTrack(i)->PrintNice();
     }
   EstimateVertexQuality(edbv);
+  Log( 3,"EdbVertexRec::MakeV","impmax = %f",edbv.MaxImpact() );
   return 1;
+}
+
+//________________________________________________________________________
+EdbVertex *EdbVertexRec::StripBadTracks( EdbVertex &vtx, float impMax, int ntrMin )
+{
+  EdbVertex *v      = &vtx;
+  int        ntr    = v->N();
+  while( v && ntr>ntrMin && v->MaxImpact()>impMax ) 
+  {
+    Log(2,"EdbVertexRec::StripBadTracks"," ntr = %d     maximp = %f", ntr,v->MaxImpact() );
+    EdbVTA *vta = v->GetMaxImpVTA();
+    v = RemoveVTAFromVertex( *v, *vta );
+    ntr = v->N();
+  }  
+  
+  Log(2,"EdbVertexRec::StripBadTracks"," ntr = %d     maximp = %f", ntr,v->MaxImpact() );
+  return v;
+}
+
+//________________________________________________________________________
+EdbVertex *EdbVertexRec::Make1Vertex(TObjArray &tracks, float zexpected)
+{
+ // make a single vertex using tracks array
+  
+  EdbVertex *v = new EdbVertex();
+  v->SetXYZ( 0,0, zexpected );
+  int ntr = tracks.GetEntries();
+  for(int i=0; i<ntr; i++) {
+    EdbTrackP *t = (EdbTrackP*)tracks.At(i);
+    EdbVTA *vta = new EdbVTA(t,v);
+    vta->SetFlag(2);
+    v->AddVTA(vta);
+    (t->Z() >= v->VZ())? vta->SetZpos(1) : vta->SetZpos(0);
+    t->AddVTA(vta);
+  }
+  if( MakeV(*v) )  AddVertex(v);
+  else { SafeDelete(v); return 0; }                                // vertex is not valid
+  return v;
 }
 
 //________________________________________________________________________
@@ -2453,6 +2520,17 @@ EdbVertex *EdbVertexRec::AddTrackToVertex(EdbVertex *eVertex, EdbTrackP *eTr, in
 }
 
 //_____________________________________________________________________________
+EdbVertex *EdbVertexRec::RemoveVTAFromVertex(EdbVertex &v, EdbVTA &vta)
+{
+  int ntr = v.N();
+  TObjArray tracks;
+  for(int i=0; i<ntr; i++) {
+    if( v.GetVTa(i) != &vta ) tracks.Add( v.GetVTa(i)->GetTrack() );
+  }
+  return Make1Vertex( tracks, v.Z() );
+}
+
+//_____________________________________________________________________________
 EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
 {
     if (!eVertex)
@@ -2463,7 +2541,7 @@ EdbVertex *EdbVertexRec::RemoveTrackFromVertex(EdbVertex *eVertex, int itr)
 	    return 0;
     }
     EdbVTA *vta = 0;
-    EdbVertex *eWorking = 0;
+    EdbVertex *eWorking = 0;     // is a bug?? redeclaration of a member; noted VT:25/08/2011
     int n = 0;
     int ntr = 0;
     if (eWorking == 0)

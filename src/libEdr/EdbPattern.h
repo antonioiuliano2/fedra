@@ -149,6 +149,7 @@ class EdbTrackP : public EdbSegP {
   Float_t M()      const {return eM;}
   
 
+  //void    SetErrorsCOV(EdbScanCond &cond);
   void    SetCounters() { SetNpl(); SetN0(); }
 
   void    SetN0( int n0 )  { eN0 = n0; }
@@ -176,6 +177,8 @@ class EdbTrackP : public EdbSegP {
   int	   GetSegmentsAid( int &nseg ) const;
   int	   GetSegmentsMCTrack( int &nseg ) const;
 
+  EdbSegP *GetSegmentWithClosestZ( float z, float dz);
+  
   EdbSegP *GetSegmentFirst()  const {return (eS) ? (EdbSegP*)(eS->First()) : 0;}
   EdbSegP *GetSegmentLast()   const {return (eS) ? (EdbSegP*)(eS->Last()) : 0;}
 
@@ -212,6 +215,13 @@ class EdbTrackP : public EdbSegP {
     eS->Remove(s);
     s->SetTrack(-1);
     SetCounters();
+  }
+  void  SubstituteSegment( EdbSegP *sold, EdbSegP *snew )
+  { 
+    if(!eS) return;
+    eS->Remove(sold);
+    eS->Add(snew);
+    sold->SetTrack(-1);
   }
   void  AddSegmentF(EdbSegP *s)  
   { 
