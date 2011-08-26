@@ -33,12 +33,20 @@ class EdbLinking : public EdbAlignmentV
   
   EdbH2 eHdxyShr[2];             // service histograms used for the shrinkage correction
   
+  struct RemoveDoublets {
+    int   remove;
+    float dr;
+    float dt;
+    int   checkview;
+  } eRemoveDoublets;
+  
  public:
   EdbLinking();
   virtual ~EdbLinking(){}
 
   bool     VerifyShrinkageCorr( int side );
   void     GetPar(TEnv &env);
+  void     GetDoubletsPar(TEnv &env);
   void     GetPreselectionPar(EdbSEQ &seq, TEnv &env);
   void     SaveCouplesTree();
   void     FullLinking(TObjArray &p1, TObjArray &p2);

@@ -107,6 +107,26 @@ bool EdbScanProc:: AddAFFtoScanSet(EdbScanSet &sc, int id1[4], int id2[4])
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::ReadPiecePar(EdbID id, EdbPlateP &plate)
+{
+    EdbDataPiece piece;
+    TString str;
+    MakeFileName(str,id,"par");
+    piece.ReadPiecePar(str);
+    for(int i=0; i<3; i++) {
+      EdbLayer *l=piece.GetLayer(i);
+      if(l) {
+        EdbAffine2D *a = l->GetAffineXY();
+        plate.GetLayer(i)->SetAffXY( a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2() );
+        a = l->GetAffineTXTY();
+        plate.GetLayer(i)->SetAffTXTY( a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2() );
+        plate.GetLayer(i)->SetShrinkage( l->Shr() );
+      }
+    }
+    return true;
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::AssembleScanSet(EdbScanSet &sc)
 {
   if(sc.eIDS.GetSize() < 1)   return 0;
@@ -363,13 +383,8 @@ bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
 }
 
 //----------------------------------------------------------------
-bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
+bool  EdbScanProc::MakeParSet(EdbScanSet &sc)
 {
-  // input: sc with brick and all id's defined
-  // function -check or create the directory structure for this brick,
-  //          -create par-files for all plates
-  //          -create aff.par files for all couples in the defined order
-
   if(sc.eIDS.GetEntries()<1)   return false;
   EdbID *id=0;
   for(int i=0; i<sc.eIDS.GetEntries(); i++) {
@@ -379,10 +394,21 @@ bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
     MakeFileName(name,*id,"par");
     char card[128];
     sprintf(card,"SHRINK 1 %f",sc.GetPlate(id->ePlate)->GetLayer(1)->Shr());
-    AddParLine(name,card);
+    AddParLine(name,card,1);
     sprintf(card,"SHRINK 2 %f",sc.GetPlate(id->ePlate)->GetLayer(2)->Shr());
     AddParLine(name,card);
   }
+  return 1;
+}
+
+//----------------------------------------------------------------
+bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
+{
+  // input: sc with brick and all id's defined
+  // function -check or create the directory structure for this brick,
+  //          -create par-files for all plates
+  //          -create aff.par files for all couples in the defined order
+  MakeParSet(sc);
   MakeAFFSet(sc);
   return true;
 }
@@ -936,7 +962,7 @@ bool EdbScanProc::UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *
   if(!AddParLine(parout.Data(),card)) return false;
 
   EdbAffine2D &afftxy = *(l.GetAffineTXTY());
-  sprintf(card,"AFFTXY \t %d \t %f %f %f %f %f %f", l.ID(), 
+  sprintf(card,"AFFTXTY \t %d \t %f %f %f %f %f %f", l.ID(), 
 	  afftxy.A11(),afftxy.A12(),afftxy.A21(),afftxy.A22(),afftxy.B1(),afftxy.B2() );
   if(!AddParLine(parout.Data(),card)) return false;
 
@@ -956,8 +982,11 @@ bool EdbScanProc::UpdatePlatePar( EdbID id, EdbLayer &l)
   sprintf(card,"\n## %s", t.AsSQLString());             if(!AddParLine(parout.Data(),card)) return false;
   sprintf(card,"SHRINK \t %d \t %f",l.ID(), l.Shr() );  if(!AddParLine(parout.Data(),card)) return false;
 
-  EdbAffine2D &aff = *(l.GetAffineTXTY());
+  EdbAffine2D &aff = *(l.GetAffineXY());
   sprintf( card,"AFFXY \t %d %s", l.ID(), aff.AsString() );  if(!AddParLine(parout.Data(),card)) return false;
+
+  aff = *(l.GetAffineTXTY());
+  sprintf( card,"AFFTXTY \t %d %s", l.ID(), aff.AsString() );  if(!AddParLine(parout.Data(),card)) return false;
 
   return true;
 }
@@ -1707,10 +1736,12 @@ EdbRun *EdbScanProc::InitRun(int id[4])
   return new EdbRun(str.Data(),"RECREATE");
 }
 //-------------------------------------------------------------------
-bool EdbScanProc::AddParLine(const char *file, const char *line)
+bool EdbScanProc::AddParLine(const char *file, const char *line, bool recreate)
 {
   // add string to par file
-  FILE *f = fopen(file,"a+");
+  FILE *f=0;
+  if(recreate) f = fopen(file,"w");
+  else         f = fopen(file,"a+");
   if (!f) return false;
   fprintf(f,"%s\n",line);
   fclose(f);
@@ -2444,7 +2475,6 @@ int EdbScanProc::Align(int id1[4], int id2[4], const char *option)
   return npat;
  }
 
-
 //______________________________________________________________________________
 void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idset1, EdbID idset2)
 {
@@ -2486,6 +2516,28 @@ void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idsetu )
   }
   WriteScanSet( idset ,*ss );
   SafeDelete(ss);  SafeDelete(ssu);
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::UpdateSetWithPlatePar(EdbID idset)
+{
+ EdbScanSet  *ss  = ReadScanSet(idset);     if(!ss)  return;
+ UpdateSetWithPlatePar(*ss);
+ WriteScanSet( idset ,*ss );
+ SafeDelete(ss);
+}
+
+//----------------------------------------------------------------
+void EdbScanProc::UpdateSetWithPlatePar(EdbScanSet &ss)
+{
+   int n = ss.eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id  = ss.GetID(i);
+    EdbPlateP  *plate = ss.GetPlate(id->ePlate);
+    printf("before\n"); plate->Print();
+    if(id) ReadPiecePar( *id, *plate);
+    printf("after\n"); plate->Print();
+  }
 }
 
 //______________________________________________________________________________
@@ -2800,6 +2852,8 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
 
   r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
 
+  r.GetLayer(2)->Print();
+  r.GetLayer(1)->Print();
   EdbPattern p1, p2;
   r.GetPatternDataForPrediction( -1, 2, p1 );
   r.GetPatternDataForPrediction( -1, 1, p2 );
@@ -2819,8 +2873,10 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
 
   link.Link( p2, p1, l2, l1, cenv );
   link.CloseOutputFile();
-  UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
-  UpdatePlatePar( id, link.eL2 );
+  if(link.eDoCorrectShrinkage || link.eDoCorrectAngles) {
+     UpdatePlatePar( id, link.eL1 );  //TODO: check up/down id
+     UpdatePlatePar( id, link.eL2 );
+   }
 }
 
 //--------------------------------------------------------------------

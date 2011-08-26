@@ -50,6 +50,16 @@ void EdbLinking::GetPar(TEnv &env)
   eCHI2Pmax            = env.GetValue("fedra.link.full.CHI2Pmax"       , 3.   );
 
   eDoSaveCouples       = env.GetValue("fedra.link.DoSaveCouples"       , true );
+  GetDoubletsPar(env);
+}
+
+//---------------------------------------------------------------------
+void EdbLinking::GetDoubletsPar(TEnv &env)
+{
+  const char *str=env.GetValue("fedra.link.RemoveDoublets"      , "");
+  if(str) 
+    if(sscanf(str,"%d %f %f %d",&(eRemoveDoublets.remove),&eRemoveDoublets.dr,&eRemoveDoublets.dt,&eRemoveDoublets.checkview) == 4) return;
+  eRemoveDoublets.remove=0;
 }
 
 //---------------------------------------------------------------------
@@ -85,27 +95,34 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
 
   if(area1<=0) area1 = EstimatePatternArea(p1);
   if(area2<=0) area2 = EstimatePatternArea(p2);
-  EdbSEQ seq;
-  GetPreselectionPar(seq,env);
-  seq.eNsigma=eNsigmaEQshr;
+  EdbSEQ seq1;  seq1.eArea = area1;
+  EdbSEQ seq2;  seq2.eArea = area2;
+  GetPreselectionPar(seq1,env);
+  GetPreselectionPar(seq2,env);
+  seq1.eNsigma=eNsigmaEQshr;
+  seq2.eNsigma=eNsigmaEQshr;
   //seq.PrintLimits();
+  
+  TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
+  TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
 
-  TObjArray p1pre(p1.N()), p1shr;
-  seq.PreSelection(p1,p1pre);
-  seq.EqualizeMT(p1pre, p1shr, area1);
-  TH1F *hTshr1 = seq.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
-  TH1F *hTall1 = seq.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
-
-  TObjArray p2pre(p2.N()), p2shr;
-  seq.PreSelection(p2,p2pre);
-  seq.EqualizeMT(p2pre, p2shr, area2);
-  TH1F *hTshr2 = seq.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
-  TH1F *hTall2 = seq.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
-
-  DoubletsFilterOut(p1shr,p2shr);
-
-  FillCombinationsAtMeanZ(p1shr,p2shr);
-
+  TObjArray  p1pre(p1.N());
+  seq1.PreSelection(p1,p1pre);
+  TObjArray p2pre(p2.N());
+  seq2.PreSelection(p2,p2pre);
+  
+  
+  TObjArray  p1shr,p2shr;
+  
+  if(eDoCorrectShrinkage || eDoCorrectAngles) {
+    seq1.EqualizeMT(p1pre, p1shr, area1);
+    TH1F *hTshr1 = seq1.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
+    TObjArray  p2shr;
+    seq2.EqualizeMT(p2pre, p2shr, area2);
+    TH1F *hTshr2 = seq2.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
+    DoubletsFilterOut(p1shr,p2shr);
+    FillCombinationsAtMeanZ(p1shr,p2shr);
+  }
   if(eDoCorrectShrinkage) {
     eCorr[0].SetV(5,eShr0);
     eCorr[1].SetV(5,eShr0);
@@ -120,30 +137,35 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     CorrectShrinkage(  eDShr*0.5 );
     CorrectShrinkage(  eDShr*0.5 );
     WriteShrinkagePlots();
+    ePC[0].DrawH2("hxy_shr1","xy for the shrinkage corr sample side 1")->Write();
+    ePC[1].DrawH2("hxy_shr2","xy for the shrinkage corr sample side 2")->Write();
+    EdbH2 htxy1(50,-1,1,50,-1,1);
+    FillThetaHist(0,htxy1);
+    htxy1.DrawH2("htxy_shr1","txy plot for shr corr sample side 1");
+    EdbH2 htxy2(50,-1,1,50,-1,1);
+    FillThetaHist(0,htxy2);
+    htxy2.DrawH2("htxy_shr2","txy plot for shr corr sample side 2");
   }
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
   if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
 
   eCorr[0].Write("corr1");
   eCorr[1].Write("corr2");
-  ePC[0].DrawH2("hxy_shr1","xy for the shrinkage corr sample side 1")->Write();
-  ePC[1].DrawH2("hxy_shr2","xy for the shrinkage corr sample side 2")->Write();
-  EdbH2 htxy1(50,-1,1,50,-1,1);
-  FillThetaHist(0,htxy1);
-  htxy1.DrawH2("htxy_shr1","txy plot for shr corr sample side 1");
-  EdbH2 htxy2(50,-1,1,50,-1,1);
-  FillThetaHist(0,htxy2);
-  htxy2.DrawH2("htxy_shr2","txy plot for shr corr sample side 2");
 
-  seq.ResetExcludeThetaRange();
   if(eDoFullLinking)   {
-    seq.eNsigma = eNsigmaEQlnk;
+    seq1.eNsigma = eNsigmaEQlnk;
+    seq2.eNsigma = eNsigmaEQlnk;
+    
     TObjArray p1lnk(p1pre.GetEntriesFast());
-    seq.EqualizeMT(p1pre, p1lnk, area1);
-    TH1F *hTlnk1 = seq.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
     TObjArray p2lnk(p2pre.GetEntriesFast());
-    seq.EqualizeMT(p2pre, p2lnk, area2);
-    TH1F *hTlnk2 = seq.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
+    
+    seq1.EqualizeMT(p1pre, p1lnk, area1);
+    seq2.EqualizeMT(p2pre, p2lnk, area2);
+    DoubletsFilterOut(p1lnk,p2lnk);
+    
+    TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
+    TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
+    
     FullLinking(p1lnk,p2lnk);
   }
 
@@ -533,14 +555,14 @@ void EdbLinking::ProduceReport()
 void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2)
 {
   EdbAlignmentV adup;
-  adup.eDVsame[0]=adup.eDVsame[1]=5;
-  adup.eDVsame[2]=adup.eDVsame[3]=0.003;
+  adup.eDVsame[0]=adup.eDVsame[1]= eRemoveDoublets.dr;
+  adup.eDVsame[2]=adup.eDVsame[3]= eRemoveDoublets.dt;
   
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
-  adup.DoubletsFilterOut(0);   // assign flag -10 to the duplicated segments
+  adup.DoubletsFilterOut(eRemoveDoublets.checkview);   // assign flag -10 to the duplicated segments
 
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
-  adup.DoubletsFilterOut(0);   // assign flag -10 to the duplicated segments
+  adup.DoubletsFilterOut(eRemoveDoublets.checkview);   // assign flag -10 to the duplicated segments
 }

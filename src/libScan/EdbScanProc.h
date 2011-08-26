@@ -32,7 +32,7 @@ public:
   void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") 
     { int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return MakeAffName(s,id14,id24,suffix); }
   bool    GetMap(int brick, TString &map);
-  bool    AddParLine(const char *file, const char *line);
+  bool    AddParLine(const char *file, const char *line, bool recreate=false );
   bool    MakeInPar(int id[4], const char *option);
   bool    MakeInPar(EdbID id, const char *option)  {int id4[4]; id.Get(id4); return MakeInPar(id4,option);}
   void    MakeInParSet(EdbID id, const char *option);
@@ -45,6 +45,7 @@ public:
   int     CopyAFFPar(int id1c[4],int id2c[4], int id1p[4], int id2p[4], bool overwrite=true);
   int     RemoveFile(EdbID id, const char *suffix);
   void    CopyParSet(EdbID idset1, EdbID idset2);
+  bool    ReadPiecePar(EdbID id, EdbPlateP &plate);
 
   void    MakeScannedIDList( EdbID id0, EdbScanSet &sc, int pl_from, int pl_to, const char *suffix );
   void    CheckFiles( EdbScanSet &sc, const char *suffix );
@@ -83,6 +84,7 @@ public:
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
   bool    SetAFF0(int id1[4], int id2[4]);
   bool    MakeAFFSet(EdbScanSet &sc);
+  bool    MakeParSet(EdbScanSet &sc);
   bool    PrepareSetStructure(EdbScanSet &sc);
 
   int     ConvertAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
@@ -184,6 +186,8 @@ public:
   void    AlignRawSet(EdbID id1, EdbID id2, TEnv &cenv);
   void    UpdateSetWithAff( EdbID id, EdbID id1, EdbID id2 );
   void    UpdateSetWithAff( EdbID id,  EdbID idu );
+  void    UpdateSetWithPlatePar( EdbID id );
+  void    UpdateSetWithPlatePar( EdbScanSet &ss );
 
   void    MakeLinkSetSummary( EdbID id );
   
