@@ -37,10 +37,13 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.BinOK"               , 6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );
   cenv.SetValue("fedra.link.DoCorrectShrinkage"  , true );
+  cenv.SetValue("fedra.link.read.HeaderCut"      , "1"  );
+  cenv.SetValue("fedra.link.read.ICUT"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       0.  50.");
+  cenv.SetValue("fedra.link.RemoveDoublets"      , "1    5. .1   1");  //yes/no   dr  dt  checkview(0,1)
   cenv.SetValue("fedra.link.shr.NsigmaEQ"        , 7.5  );
   cenv.SetValue("fedra.link.shr.Shr0"            , .85  );
   cenv.SetValue("fedra.link.shr.DShr"            , .3   );
-  cenv.SetValue("fedra.link.shr.ThetaLimits","0.005  1.");
+  cenv.SetValue("fedra.link.shr.ThetaLimits"     ,"0.005  1.");
   cenv.SetValue("fedra.link.DoCorrectAngles"     , true );
   cenv.SetValue("fedra.link.ang.Chi2max"         , 1.5  );
   cenv.SetValue("fedra.link.DoFullLinking"       , true );
@@ -129,6 +132,7 @@ int main(int argc, char* argv[])
   cenv.SetValue("emlink.env"            , env);
   cenv.ReadFile( cenv.GetValue("emlink.env"   , "link.rootrc") ,kEnvLocal);
   cenv.SetValue("emlink.outdir"         , outdir);
+  cenv.WriteFile("link.save.rootrc");
 
 
   EdbScanProc sproc;
