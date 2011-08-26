@@ -58,6 +58,8 @@ class EdbH2 : public TObject {
   int Jcell(float v[2])       const {return Jcell(IX(v[0]),IY(v[1])); }
   float X(int ix)             const {return eMin[0]+eBin[0]*(ix+0.5);}
   float Y(int iy)             const {return eMin[1]+eBin[1]*(iy+0.5);}
+  float Xj(int j)             const {return X(IX(j));}
+  float Yj(int j)             const {return Y(IY(j));}
   float Xmin()                const {return eMin[0];}
   float Xmax()                const {return eMax[0];}
   float Ymin()                const {return eMin[1];}
@@ -74,8 +76,10 @@ class EdbH2 : public TObject {
   float Xbin()                const {return eBin[0];}
   float Ybin()                const {return eBin[1];}
 
+  int   Bin(float x, float y) const {return (Jcell(x,y)>-1)? eNC[Jcell(x,y)] : 0; }
   int   Bin(int ix, int iy) const {return (Jcell(ix,iy)>-1)? eNC[Jcell(ix,iy)] : 0; }
   int   Bin(int iv[2])      const {return Bin(iv[0],iv[1]);}
+  int   Bin(int j)          const {if(j>-1||j<eNcell) return eNC[j]; else return 0; }
 
   int   MaxBin();
 
@@ -83,6 +87,7 @@ class EdbH2 : public TObject {
   int   Fill(float x, float y) { return Fill(x,y,1); }
   int   Fill(float x, float y, int n);
   void  SetBin(int ix, int iy, int n) { if(Jcell(ix,iy)>-1) eNC[Jcell(ix,iy)] = n; }
+  void  SetBin(int j, int n) { if(j>-1||j<eNcell) eNC[j] = n; }
 
   Long_t  Integral();
   Long_t  Integral(int iv[2], int ir[2]);
@@ -168,6 +173,7 @@ class EdbCell2 : public EdbH2 {
     int iv[2] = { IX(v[0]), IY(v[1]) }; 
     return SelectObjectsC(iv, ir, arr);
   }
+  TObject *GetObject(float x, float y, int ientr) const { return GetObject( Jcell(x,y), ientr); }
   TObject *GetObject(int ix, int iy, int ientr) const { return GetObject( Jcell(ix,iy), ientr); }
   TObject *GetObject(int j, int ientr) const { 
     if(j>=0&&j<eNcell&&ientr>=0&&ientr<eCellLim) return epC[j][ientr];

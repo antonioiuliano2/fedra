@@ -183,27 +183,27 @@ public:
     { GetHeader()->SetCoordZ(z1,z2,z3,z4); }
 
 
-  Int_t    GetViewID()      const { return GetHeader()->GetViewID(); }
-  Int_t    GetAreaID()      const { return GetHeader()->GetAreaID(); }
+  Int_t    GetViewID()      const { if(eHeader) return GetHeader()->GetViewID(); else return 0;}
+  Int_t    GetAreaID()      const { if(eHeader) return GetHeader()->GetAreaID(); else return 0;}
 
-  Float_t  GetXview()       const { return GetHeader()->GetXview();  }
-  Float_t  GetYview()       const { return GetHeader()->GetYview();  }
+  Float_t  GetXview()       const { if(eHeader) return GetHeader()->GetXview();  else return 0; }
+  Float_t  GetYview()       const { if(eHeader) return GetHeader()->GetYview();  else return 0; }
 
-  Float_t  GetZ1()          const { return GetHeader()->GetZ1();  }
-  Float_t  GetZ2()          const { return GetHeader()->GetZ2();  }
-  Float_t  GetZ3()          const { return GetHeader()->GetZ3();  }
-  Float_t  GetZ4()          const { return GetHeader()->GetZ4();  }
+  Float_t  GetZ1()          const { if(eHeader) return GetHeader()->GetZ1();  else return 0; }
+  Float_t  GetZ2()          const { if(eHeader) return GetHeader()->GetZ2();  else return 0; }
+  Float_t  GetZ3()          const { if(eHeader) return GetHeader()->GetZ3();  else return 0; }
+  Float_t  GetZ4()          const { if(eHeader) return GetHeader()->GetZ4();  else return 0; }
 
-  Float_t  GetZ0top()       const { return GetHeader()->GetZ0top();  }
-  Float_t  GetZ0bot()       const { return GetHeader()->GetZ0bot();  }
-  Float_t  GetDZtop()       const { return GetHeader()->GetDZtop();  }
-  Float_t  GetDZbot()       const { return GetHeader()->GetDZbot();  }
+  Float_t  GetZ0top()       const { if(eHeader) return GetHeader()->GetZ0top();  else return 0; }
+  Float_t  GetZ0bot()       const { if(eHeader) return GetHeader()->GetZ0bot();  else return 0; }
+  Float_t  GetDZtop()       const { if(eHeader) return GetHeader()->GetDZtop();  else return 0; }
+  Float_t  GetDZbot()       const { if(eHeader) return GetHeader()->GetDZbot();  else return 0; }
 
   Int_t    GetNframes()     const { return GetNframesTop()+GetNframesBot(); }
-  Int_t    GetNframesTop()  const { return GetHeader()->GetNframesTop();    }
-  Int_t    GetNframesBot()  const { return GetHeader()->GetNframesBot();    }
+  Int_t    GetNframesTop()  const { if(eHeader) return GetHeader()->GetNframesTop();   else return 0;  }
+  Int_t    GetNframesBot()  const { if(eHeader) return GetHeader()->GetNframesBot();   else return 0;  }
 
-  Int_t    GetTime()        const { return GetHeader()->GetTime();    }
+  Int_t    GetTime()        const { if(eHeader) return GetHeader()->GetTime();  else return 0;  }
   Long_t   GetLastSystemTime()        const { return eLastSystemTime; }
   void     SetLastSystemTime(Long_t time)  { eLastSystemTime=time; }
 

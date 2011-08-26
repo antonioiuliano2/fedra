@@ -69,7 +69,7 @@ void check_a(float meanw=2200.)
 
   c->cd(1);
   cr_tree->SetMarkerStyle(1);
-  cr_tree->Draw("eYview:eXview","nclm*(eNframesTop>0)",cut);
+  cr_tree->Draw("eYview:eXview","nclm*(eNframesTop>0)");
   int   nraws = cr_tree->GetSelectedRows();
   Double_t *x = cr_tree->GetV1();
   Double_t *y = cr_tree->GetV2();
