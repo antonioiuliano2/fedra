@@ -22,7 +22,7 @@
 #include "EdbPattern.h"
 #include "EdbSegP.h"
 
-#include "EdbEDAUtil.h"
+// #include "EdbEDAUtil.h"
 using namespace std;
 
 //______________________________________________________________________________
@@ -148,6 +148,8 @@ public:
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
     void 								Convert_EdbPVRec_To_InBTArray();
+		
+		EdbVertex * 				CalcVertex(TObjArray *segments);
 
 
     void Print();
@@ -182,6 +184,22 @@ private:
 
     // Variable to clean the found parings once more.
     Bool_t 						eSetCleanPairs;
+		
+		// Neural Network to Improve Fake BG pair rejection rate 
+		// (part of gamma pair reco)
+		TMultiLayerPerceptron* 	eANNPair;
+		TTree* 									eANNPairTree;
+		Float_t									eANNPairCut;
+		// Neural Network input feed variables
+		Float_t eValueGSNN_var00;
+		Float_t eValueGSNN_var01;
+		Float_t eValueGSNN_var02;
+		Float_t eValueGSNN_var03;
+		Float_t eValueGSNN_var04;
+		Float_t eValueGSNN_var05;
+		Float_t eValueGSNN_var06;
+		Float_t eValueGSNN_varInput;
+		
 
 public:
 
@@ -217,6 +235,8 @@ public:
 
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
+		
+		void CreateANNPair();
 
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where

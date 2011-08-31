@@ -3,7 +3,7 @@
 
 using namespace std;
 using namespace TMath;
-using namespace EdbEDAUtil;
+// using namespace EdbEDAUtil;
 
 ClassImp(EdbShowerAlg)
 ClassImp(EdbShowerAlg_GS)
@@ -398,6 +398,9 @@ void EdbShowerAlg::PrintAll()
 
 Double_t EdbShowerAlg::DeltaR_NoPropagation(EdbSegP* s,EdbSegP* stest)
 {
+		// Calculate the distance between two basetracks by
+		// sqrt((deltaX)^2+(deltaY)^2)
+		// Do NOT propagate tracks onto same Z, in case they are different.
     // SAME function as DeltaR_WithoutPropagation !!!
     return DeltaR_WithoutPropagation(s,stest);
 }
@@ -406,6 +409,9 @@ Double_t EdbShowerAlg::DeltaR_NoPropagation(EdbSegP* s,EdbSegP* stest)
 
 Double_t EdbShowerAlg::DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest)
 {
+		// Calculate the distance between two basetracks by
+		// sqrt((deltaX)^2+(deltaY)^2)
+		// Do NOT propagate tracks onto same Z, in case they are different.
     return TMath::Sqrt((s->X()-stest->X())*(s->X()-stest->X())+(s->Y()-stest->Y())*(s->Y()-stest->Y()));
 }
 
@@ -413,6 +419,10 @@ Double_t EdbShowerAlg::DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest)
 
 Double_t EdbShowerAlg::DeltaR_WithPropagation(EdbSegP* s,EdbSegP* stest)
 {
+		// Calculate the distance between two basetracks by
+		// sqrt((deltaX)^2+(deltaY)^2)
+		// DO propagate tracks onto same Z, in case they are different.
+		// (propagation is done from stest onto Z-position of s)
     if (s->Z()==stest->Z()) return TMath::Sqrt((s->X()-stest->X())*(s->X()-stest->X())+(s->Y()-stest->Y())*(s->Y()-stest->Y()));
     Double_t zorig;
     Double_t dR;
@@ -465,7 +475,8 @@ Double_t EdbShowerAlg::DeltaThetaSingleAngles(EdbSegP* s1,EdbSegP* s2)
 
 Double_t EdbShowerAlg::GetSpatialDist(EdbSegP* s1,EdbSegP* s2)
 {
-    // Mainly Z values should dominate... since the are at the order of 10k microns and x,y of 1k microns
+    // Mainly Z values should dominate... 
+		// since the are at the order of 10k microns and x,y of 1k microns
     Double_t x1,x2,y1,y2,z1,z2;
     x1=s1->X();
     x2=s2->X();
@@ -480,12 +491,13 @@ Double_t EdbShowerAlg::GetSpatialDist(EdbSegP* s1,EdbSegP* s2)
 //______________________________________________________________________________
 
 
-Double_t EdbShowerAlg::GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) {
-    // calculate minimum distance of 2 lines.
-    // use the data of (the selected object)->X(), Y(), Z(), TX(), TY().
+Double_t EdbShowerAlg::GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) 
+{
+    // Calculate minimum distance of 2 lines.
+    // Use the data of (the selected object)->X(), Y(), Z(), TX(), TY().
     // means, if the selected object == segment, use the data of the segment. or it == track, the use the fitted data.
-    // original code from Tomoko Ariga
-    // double calc_dmin(EdbSegP *seg1, EdbSegP *seg2, double *dminz = NULL){
+    // Original code from Tomoko Ariga
+    // (double calc_dmin(EdbSegP *seg1, EdbSegP *seg2, double *dminz = NULL))
 
     double x1,y1,z1,ax1,ay1;
     double x2,y2,z2,ax2,ay2;
@@ -533,7 +545,8 @@ Double_t EdbShowerAlg::GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) {
 EdbShowerAlg_GS::EdbShowerAlg_GS()
 {
     // Default Constructor
-    // This Shower Algorithms find all compatible basetrack pairings that could
+		//
+    // This Shower Algorithm finds all compatible basetrack pairings that could
     // come from an ePlus-eMinus pair.
     // It needs an EdbPVRec* object.
     // Additionally -but not necessary- an array (or one) vertex, w.r.t. which the
@@ -543,7 +556,7 @@ EdbShowerAlg_GS::EdbShowerAlg_GS()
     // Usage:
     //   Alg = new EdbShowerAlg_GS();
     //   Alg->SetEdbPVRec(EdbPVRec* pvr);
-    //   Alg->SetInVtx(EdbVertex* vtx);
+    //   Alg->SetInVtx(EdbVertex* vtx);  // additionally...
     //   Alg->Execute();
     //   Alg->GetRecoShowerArray();
     //
@@ -567,7 +580,8 @@ EdbShowerAlg_GS::EdbShowerAlg_GS()
     // Reset all internal variables.
     Set0();
 
-
+		// Create Neural Network for better fake BT rejection
+		CreateANNPair();
 }
 
 //______________________________________________________________________________
@@ -593,6 +607,29 @@ void EdbShowerAlg_GS::Set0()
 
     eInBTArrayN=0;
     eInBTArray->Clear();
+		
+		eRecoShowerArrayN=0;
+		eRecoShowerArray->Clear();
+		
+		eAlgName="GS";
+    eAlgValue=999; 
+		eANNPairCut=0.5;
+		eSetCleanPairs=kTRUE;
+		
+		eParaValue[0]=393;
+    eParaString[0]="PARA_GS_CUT_dIP";
+    eParaValue[1]=35;
+    eParaString[1]="PARA_GS_CUT_dMin";
+    eParaValue[2]=85;
+    eParaString[2]="PARA_GS_CUT_dR";
+    eParaValue[3]=25000;
+    eParaString[3]="PARA_GS_CUT_dZ";
+    eParaValue[4]=0.11;
+    eParaString[4]="PARA_GS_CUT_dtheta";
+    eParaValue[5]=1;
+    eParaString[5]="PARA_GS_CUT_PIDDIFF";
+    eParaValue[6]=1;
+    eParaString[6]="PARA_GS_CUT_OPPOSITEFLAG";
 
     return;
 }
@@ -614,6 +651,8 @@ void EdbShowerAlg_GS::Init()
 
     eAlgName="GS";
     eAlgValue=999; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+    
+    eANNPairCut=0.5;
 
     //
     // min IP cut; this cut is used for the -better- IP of both BTs to Vertex/BT
@@ -666,6 +705,44 @@ void EdbShowerAlg_GS::Init()
 
 //______________________________________________________________________________
 
+void EdbShowerAlg_GS::CreateANNPair()
+{
+	// Create the neural network, which is used as last layer in the
+	// GS algo reconstruction.
+	// Load its weights from the $FEDRASYS path.
+	
+	Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()");
+	eANNPair =  new TMultiLayerPerceptron();
+	eANNPair -> Print();
+
+  TString layout="";
+	Int_t type=0;
+	layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var03,@eValueGSNN_var04:@eValueGSNN_var05:@eValueGSNN_var06:7:6:type";
+	
+	eANNPairTree= new TTree("eANNPairTree","eANNPairTree");
+	eANNPairTree->Branch("eValueGSNN_varInput",&eValueGSNN_varInput,"eValueGSNN_varInput/F");
+	eANNPairTree->Branch("eValueGSNN_var00",&eValueGSNN_var00,"eValueGSNN_var00/F");
+	eANNPairTree->Branch("eValueGSNN_var01",&eValueGSNN_var01,"eValueGSNN_var01/F");
+	eANNPairTree->Branch("eValueGSNN_var02",&eValueGSNN_var02,"eValueGSNN_var02/F");
+	eANNPairTree->Branch("eValueGSNN_var03",&eValueGSNN_var03,"eValueGSNN_var03/F");
+	eANNPairTree->Branch("eValueGSNN_var04",&eValueGSNN_var04,"eValueGSNN_var04/F");
+	eANNPairTree->Branch("eValueGSNN_var05",&eValueGSNN_var05,"eValueGSNN_var05/F");
+	eANNPairTree->Branch("eValueGSNN_var06",&eValueGSNN_var06,"eValueGSNN_var06/F");
+	cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  SetBranchAddress done." << endl;
+	
+	eANNPair = new TMultiLayerPerceptron(layout,eANNPairTree,"(Entry$)%2","(Entry$+1)%2");
+	
+	TString weights="";
+	weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt.txt");
+	weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
+	eANNPair->LoadWeights(weights);
+	
+	Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()...done.");
+  return;
+}
+
+
+//______________________________________________________________________________
 
 void EdbShowerAlg_GS::Initialize()
 {
@@ -708,6 +785,19 @@ void EdbShowerAlg_GS::AddInVtx( EdbVertex* vtx )
 
 void EdbShowerAlg_GS::Convert_InVtxArray_To_InBTArray()
 {
+		// This function takes vertices from the InVtxArray object,
+    // and fills the InBTArray with those: X/Y/Z position as
+		// from the Vertices, TX(),TY() equal to 0 
+		//   (this doesnt matter when having InVtxArray with vertices filled
+		//    for this algo, since it does rely only on the point 
+		//    position here).
+    // This function is useful, if one wants to start from 
+    // already calculated vertices.
+		//
+		// If vtx-array is not filled, on the other hand, it is recommended
+		// to use the full  EdbPVRec object as possible starting points,
+		// look in EdbShowerAlg::Convert_EdbPVRec_To_InBTArray().
+	
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Convert_InVtxArray_To_InBTArray()");
     if (eInBTArrayN!=0) {
         eInBTArray->Clear();
@@ -793,6 +883,73 @@ Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg
     return kFALSE;
 }
 
+//______________________________________________________________________________
+
+
+EdbVertex * EdbShowerAlg::CalcVertex(TObjArray *segments){
+	
+	// Exactly same implementation as in EdbEDAUtil.C
+	// but I do not want to link in hardcoded all eda libraries.
+	// calc vertex point with given segments. just topological calculation.
+	// VTA is currently not set.
+	// in case of Single-stop. make a vertex 650 micron upstream ob base.
+	
+	
+	double xx,yy,zz,Det,Ax,Ay,Az,Bx,By,Bz,Cx,Cy,Cz,Dx,Dy,Dz;
+	Ax=0.;Ay=0.;Az=0.;Bx=0.;By=0.;Bz=0.;Cx=0.;Cy=0.;Cz=0.;Dx=0.;Dy=0.;Dz=0.;
+
+	if(segments->GetEntries()==1){
+		// in case of Single-stop. make a vertex 650 micron upstream ob base.
+		EdbSegP *s = new EdbSegP(*((EdbSegP *) segments->At(0)));
+		s->PropagateTo(s->Z()-650);
+		xx=s->X();
+		yy=s->Y();
+		zz=s->Z();
+		delete s;
+	}
+	else {
+		for(int i=0;i<segments->GetEntries();i++){
+			EdbSegP *s = (EdbSegP *) segments->At(i);
+			double ax = s->TX();
+			double ay = s->TY();
+			double az = 1.0;
+			double x  = s->X();
+			double y  = s->Y();
+			double z  = s->Z();
+			double a = ax*ax+ay*ay+az*az;
+			double c = -ax*x-ay*y-az*z;
+			double b = (ax*ax+ay*ay);
+	//		double w = 1.0/a/a; // weight for small angle tracks.
+			double w = 1.0; // no weight
+			
+			Ax+=2.0*w/b*( a*(ay*ay+az*az) );
+			Bx+=2.0*w/b*( -a*ax*ay );
+			Cx+=2.0*w/b*( -a*ax*az );
+			Dx+=2.0*w/b*( -(a*x+c*ax)*(ax*ax-a)-(a*y+c*ay)*ax*ay-(a*z+c*az)*az*ax );
+
+			Ay+=2.0*w/b*( -a*ay*ax );
+			By+=2.0*w/b*( a*(az*az+ax*ax) );
+			Cy+=2.0*w/b*( -a*ay*az );
+			Dy+=2.0*w/b*( -(a*y+c*ay)*(ay*ay-a)-(a*z+c*az)*ay*az-(a*x+c*ax)*ax*ay );
+
+			Az+=2.0*w/b*( -a*az*ax );
+			Bz+=2.0*w/b*( -a*az*ay );
+			Cz+=2.0*w/b*( a*b );
+			Dz+=2.0*w/b*( -(a*z+c*az)*(az*az-a)-(a*x+c*ax)*az*ax-(a*y+c*ay)*ay*az );
+
+		}
+
+		Det=fabs( Ax*(By*Cz-Cy*Bz)-Bx*(Ay*Cz-Cy*Az)+Cx*(Ay*Bz-By*Az) );
+		xx=( (By*Cz-Cy*Bz)*Dx-(Bx*Cz-Cx*Bz)*Dy+(Bx*Cy-Cx*By)*Dz)/Det;
+		yy=(-(Ay*Cz-Cy*Az)*Dx+(Ax*Cz-Cx*Az)*Dy-(Ax*Cy-Cx*Ay)*Dz)/Det;
+		zz=( (Ay*Bz-By*Az)*Dx-(Ax*Bz-Bx*Az)*Dy+(Ax*By-Bx*Ay)*Dz)/Det;
+	}
+	
+	EdbVertex *v = new EdbVertex();
+	v->SetXYZ(xx,yy,zz);
+	
+	return v;
+}
 
 //______________________________________________________________________________
 
@@ -800,6 +957,8 @@ Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg
 
 void EdbShowerAlg_GS::Execute()
 {
+		// Main shower reco function.
+	
     Log(2,"EdbShowerAlg_GS::Execute","Execute()");
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   Check for eInBTArray:");
@@ -882,7 +1041,6 @@ void EdbShowerAlg_GS::Execute()
         }
 
         for (int j=0; j<CleanPairs->GetEntries(); ++j) {
-            //cout << "j= " << j << endl;
             EdbTrackP* pair=(EdbTrackP*)CleanPairs->At(j);
             eRecoShowerArray->Add(pair);
             ++eRecoShowerArrayN;
@@ -1050,7 +1208,8 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     TObjArray *segments = new TObjArray(2);
                     segments->Add(Segment);
                     segments->Add(Segment2);
-                    EdbVertex* vetex = EdbEDAUtil::CalcVertex(segments);
+//                     EdbVertex* vetex = EdbEDAUtil::CalcVertex(segments);
+										EdbVertex* vetex = CalcVertex(segments);
 // 										Segment->PrintNice();
 // 										Segment2->PrintNice();
 // 										cout << vetex ->X() << endl;
@@ -1096,7 +1255,35 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     //cout << " Check for IsPossibleFakeDoublet by view overlap" << endl;
                     if (IsPossibleFakeDoublet(Segment,Segment2) ) continue;
                     // end of    cut conditions: GS  GAMMA SEARCH Alg  --------------------
-                    //
+										//
+										//
+										// f) new: Last check if ePair is from e+e-Pair or from fake BG;
+										// do a NN calculation estimate:
+										eValueGSNN_varInput=-1;
+ 										eValueGSNN_var00=TMath::Min(IP_Pair_To_InBT_Seg,IP_Pair_To_InBT_Seg2);
+										eValueGSNN_var01=GetMinimumDist(Segment,Segment2);
+// 										eValueGSNN_var02=GetdeltaRWithPropagation(Segment,Segment2);
+// 										eValueGSNN_var03=InBT->Z()-vtx->Z();
+// 										eValueGSNN_var04=GetdeltaThetaSingleAngles(Segment,Segment2);
+// 										eValueGSNN_var05=TMath::Abs(pat_one_cnt-pat_two_cnt);
+// 										eValueGSNN_var06=Segment2->Flag()+Segment->Flag();
+										eANNPairTree->Fill();
+										
+										Double_t params[7];
+										params[0]=eValueGSNN_var00;
+										params[1]=eValueGSNN_var01;
+										params[2]=eValueGSNN_var02;
+										params[3]=eValueGSNN_var03;
+										params[4]=eValueGSNN_var04;
+										params[5]=eValueGSNN_var05;
+										params[6]=eValueGSNN_var06;
+										//---------
+										Double_t value=0;
+										cout << "--------  " << endl;
+										for (int hj=0; hj<7; hj++) cout << "  " << params[hj];
+										cout << endl;
+										value=eANNPair->Evaluate(0,params);
+										cout << "value=eANNPair->Evaluate(0,params) = " << value << endl;
 
 
                     // Chi2 Variable:

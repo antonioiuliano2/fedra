@@ -50,6 +50,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 
     CheckEdbPVRec();
     Execute_ConstantBTDensity();
+		//Execute_ConstantQuality();
     CreateEdbPVRec();
     Print();
 }
