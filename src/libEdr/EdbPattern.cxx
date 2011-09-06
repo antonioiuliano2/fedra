@@ -1801,3 +1801,27 @@ int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsi
 
   return nseg;
 }
+
+//______________________________________________________________________________
+Float_t EdbPatternsVolume::Xmean()
+{
+	if (Npatterns()==0) return 0;
+	EdbPattern* pat = GetPattern(0);
+	Double_t s=0;
+  int n=pat->N(); if(n<1) return 0;
+  for(int i=0; i<n; i++) s += pat->GetSegment(i)->eX;
+  s /= n;
+  return (float)s;
+}
+
+//______________________________________________________________________________
+Float_t EdbPatternsVolume::Ymean()
+{
+	if (Npatterns()==0) return 0;
+	EdbPattern* pat = GetPattern(0);
+	Double_t s=0;
+  int n=pat->N(); if(n<1) return 0;
+  for(int i=0; i<n; i++) s += pat->GetSegment(i)->eY;
+  s /= n;
+  return (float)s;
+}

@@ -237,6 +237,7 @@ public:
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
 		
 		void CreateANNPair();
+		void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);
 
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where

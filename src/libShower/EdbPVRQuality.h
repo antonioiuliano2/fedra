@@ -13,6 +13,9 @@
 #include "TMultiLayerPerceptron.h"
 #include "TMLPAnalyzer.h"
 #include "TCanvas.h"
+#include "TSpectrum.h"
+#include "TPolyMarker.h"
+
 #include "EdbVertex.h"
 #include "EdbPVRec.h"
 #include "EdbPhys.h"
@@ -207,6 +210,7 @@ public:
     void SetHistGeometry_OPERAandMC();
 
     void CheckEdbPVRec();
+		void CheckEdbPVRecThetaSpace();
     void Execute_ConstantBTDensity();
     void Execute_ConstantQuality();
 

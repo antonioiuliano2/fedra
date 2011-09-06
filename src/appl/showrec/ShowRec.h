@@ -78,7 +78,8 @@ Double_t		CUT_PARAMETER[10];
 Int_t       GLOBAL_PARASETNR;
 Int_t       GLOBAL_INBTSHOWERNR;
 //---------------------------------------------------------------------------------
-
+Bool_t 			GLOBAL_IsBrickTreePGunInfo=kFALSE;
+//---------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------
 //-			Internal Histograms
@@ -107,7 +108,7 @@ TH2F* Hist_purall_InBTE;
 //---------------------------------------------------------------------------------
 void CheckInputParameters();
 void SetDefaultValues_CommandLine();
-void TakeDefaultValues_CommandLine();
+void ReadDefaultValues_CommandLine();
 void CreateOutPutStructures();
 EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory();
 Int_t	Check_ParasetDefinitionFile();
@@ -404,4 +405,20 @@ Int_t shower_numberofholes=0;
 
 
 
-
+TH1F* h_GSNN_var00;
+TH1F* h_GSNN_var01;
+TH1F* h_GSNN_var02;
+TH1F* h_GSNN_var03;
+TH1F* h_GSNN_var04;
+TH1F* h_GSNN_var05;
+TH1F* h_GSNN_var06;
+Float_t value_GSNN_var00;
+Float_t value_GSNN_var01;
+Float_t value_GSNN_var02;
+Float_t value_GSNN_var03;
+Float_t value_GSNN_var04;
+Float_t value_GSNN_var05;
+Float_t value_GSNN_var06;
+Float_t value_GSNN_varInput;
+TTree* t_GSNN;
+TFile* f_GSNN;

@@ -354,8 +354,259 @@ void EdbPVRQuality::CheckEdbPVRec()
 }
 
 
+//______________________________________________________________________________
+
+void EdbPVRQuality::CheckEdbPVRecThetaSpace()
+{
+		// Alternative Implementation.
+		// Following a suggestion to Akitaka Ariga when doing reco of a specified shower:
+		// ------------------------------------------------------------------------------
+    // Main function to check if the EdbPVRec object of the scanned data is of low/high background.
+		// But w.r.t. the TanTheta Space of scanned tracks.
+		// ------------------------------------------------------------------------------
+		
+		
+    // Following steps are carried out:
+    //  Get plate, count number of basetracks in the unit area (1x1cm^2).
+    //  Fill (draw if desired (like in EDA display)) histogram with the entries of the unit area.
+    //  Get mean of the histogram, compare this value with the reference value.
+    // The histogram covers all the area of one emulsion. (for the record: the old ORFEO MC
+    // simulation gives not the same position as data does. The area of the histogramm was largely
+    // increased to cover both cases).
+    // It gives a good estimation of the density. Spikes in some plates, or in some zones are not
+    // checked for, this is on the todo list, but maybe not so important.
+
+    Log(2,"EdbPVRQuality::CheckEdbPVRecThetaSpace","EdbPVRQuality::CheckEdbPVRecThetaSpace");
+
+    if (!eIsSource) {
+        cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace  eIsSource=  " << eIsSource << ". This means no source set. Return!" << endl;
+        return;
+    }
+    // Check the patterns of the EdbPVRec:
+    eAli_maxNpatterns= eAli_orig->Npatterns();
+//     cout << "EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
+    if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
+    if (eAli_maxNpatterns>114) {
+        cout << "ERROR! EdbPVRQuality::CheckEdbPVRecThetaSpace  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
+        eAli_maxNpatterns=114;
+    }
+
+    int Npat = eAli_maxNpatterns;
+    TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
+		TH1F* histPatternBTDensityTanTheta = new TH1F("histPatternBTDensityTanTheta","histPatternBTDensityTanTheta",40,0,1);
+
+		TH2F* histPatternBTDensityTanThetaVsPID = new TH2F("histPatternBTDensityTanThetaVsPID","histPatternBTDensityTanThetaVsPID",57,0.5,57.5,40,0,1);
+		
+		
+		TH1F* QualityValue_Chi2 = new TH1F("QualityValue_Chi2","QualityValue_Chi2",100,0,10);
+		TH1F* QualityValue_W = new TH1F("QualityValue_W","QualityValue_W",100,0,100);
+		TH1F* QualityValue_Total = new TH1F("QualityValue_Total","QualityValue_Total",100,0,3);
+		
+		
+		TProfile* 	eProfileBTdens_vs_TanTheta = new TProfile("eProfileBTdens_vs_TanTheta","eProfileBTdens_vs_TanTheta",40,0,1,0,200);
+		
+//     Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
+//     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
+		
+		
+		
+    // Loop over the patterns of the EdbPVRec:
+    for (Int_t i=0; i<Npat; i++) {
+
+        if (i>56) {
+            cout << "WARNING     EdbPVRQuality::CheckEdbPVRecThetaSpace()    Your EdbPVRec object has more than 57 patterns! " << endl;
+            cout << "WARNING     EdbPVRQuality::CheckEdbPVRecThetaSpace()    Check it! " << endl;
+        }
+        if (gEDBDEBUGLEVEL>2) cout << "CheckEdbPVRec   Doing Pattern " << i << endl;
+
+
+        eHistYX->Reset(); // important to clean the histogram
+        eHistChi2W->Reset(); // important to clean the histogram
+				histPatternBTDensityTanTheta->Reset(); // important to clean the histogram
+				
+
+        EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
+        Int_t npat=pat->N();
+
+        EdbSegP* seg=0;
+        // Loop over the segments of the pattern
+        for (Int_t j=0; j<npat; j++) {
+            seg=(EdbSegP*)pat->At(j);
+            // Very important:
+            // For the data case, we assume the following:
+            // Data (MCEvt<0) will     be taken for BTdensity calculation
+            // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
+            // We take it ONLY and ONLY into account if it is especially wished
+            // by the user!
+            // Therefore (s)he needs to know how many Gauge Coupling Parameters
+            // in the Standard Model exist (at least)...
+            Bool_t result=kTRUE;
+            if (seg->MCEvt()>0) {
+                if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                    result = kTRUE;
+                    // cout << "result = kTRUE !! " << endl;
+                }
+                else {
+                    result = kFALSE;
+                }
+            }
+
+            if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+            // Main decision for segment to be kept or not  (seg is of MC or data type).
+            if ( kFALSE == result ) continue;
+            
+            
+            /// Decision if, cut out strong different TTheta values,
+						/// because for shower reco there is only the TTheta space around
+						/// the InBT of interest.
+						Float_t sx=0.3;
+ 						Float_t sy=0.3;
+//  						if (TMath::Abs(seg->TY()-sy)>0.13) continue;
+//  						if (TMath::Abs(seg->TX()-sx)>0.13) continue;
+
+            // For the check, fill the histograms in any case:
+            eHistYX->Fill(seg->Y(),seg->X());
+            eHistChi2W->Fill(seg->W(),seg->Chi2());
+						
+						// New: Fill also histPatternBTDensityTanTheta 
+						histPatternBTDensityTanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
+						
+						histPatternBTDensityTanThetaVsPID->Fill(i,TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
+						
+						eProfileBTdens_vs_TanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()),1);
+						
+						QualityValue_Chi2->Fill(seg->Chi2());
+						QualityValue_W->Fill(seg->W());
+						
+						Double_t xxx = TMath::Sqrt((seg->Chi2()-0.8)*(seg->Chi2()-0.8)/0.2/0.2+(seg->W()-17.)*(seg->W()-17.)/2./2.);
+						QualityValue_Total->Fill(xxx);
+						
+						
+        }
+        
+        if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+
+        // Important to reset histogram before it is filled.
+        histPatternBTDensity->Reset();
+
+        // Search for empty bins, because they can spoil the overall calulation
+        // of the mean value.
+        Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+        Int_t nemptybinsXY=0;
+        Int_t bincontentXY=0;
+        for (int k=1; k<nbins-1; k++) {
+            if (eHistYX->GetBinContent(k)==0) {
+                ++nemptybinsXY;
+                continue;
+            }
+            bincontentXY=eHistYX->GetBinContent(k);
+            histPatternBTDensity->Fill(bincontentXY);
+            eProfileBTdens_vs_PID_source->Fill(i,bincontentXY);
+        }
+        
+        
+        cout << "histPatternBTDensity->GetMean() = " << histPatternBTDensity->GetMean() << endl;
+
+        // failsafe warning in case that there are many bins with zero content.
+        // for now we print a error message:
+        CheckFilledXYSize();
+
+        // Save the density in the variable.
+        ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
+
+    }
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+		
+		
+		
+		
+    // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
+    // This will be done in one of the two Execute_ functions.
+
+
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(2,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(4);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    c1->cd();
+
+    eHistYX->Reset();
+    eHistChi2W->Reset();
+		
+		TCanvas* c3 = new TCanvas();
+		histPatternBTDensityTanTheta->Draw("");
+		
+		
+		
+		TCanvas* c5 = new TCanvas();
+		QualityValue_Chi2->Draw("");
+		TCanvas* c6 = new TCanvas();
+		QualityValue_Total->Draw("");
+		
+		TCanvas* c4 = new TCanvas();
+		histPatternBTDensityTanThetaVsPID->Draw("colz");
+		
+		
+		
+		histPatternBTDensityTanTheta->Smooth();
+		histPatternBTDensityTanTheta->Smooth();
+		histPatternBTDensityTanTheta->Smooth();
+		TSpectrum* spec2 = new TSpectrum();
+		spec2->Search(histPatternBTDensityTanTheta);
+		
+		TList *functions = histPatternBTDensityTanTheta->GetListOfFunctions();
+    TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+		pm->Print();
+		
+		cout << spec2->GetNPeaks() << endl;
+		cout << spec2->GetNPeaks() << endl;
+		Float_t*	xarr;
+		Float_t*	yarr;
+		xarr =  spec2-> GetPositionX();
+		yarr =  spec2-> GetPositionY();
+		cout << xarr[0] << endl;
+		cout << xarr[1] << endl;
+		cout << yarr[0] << endl;
+		cout << yarr[1] << endl;
+
+		
+		
+// /*		// Create Variables For ExtractSubpattern boundaries
+//     Float_t mini[5];
+//     Float_t maxi[5];
+//     mini[0]=ExtrapolateInitiatorBT->X()-halfpatternsize;
+//     mini[1]=ExtrapolateInitiatorBT->Y()-halfpatternsize;
+//     maxi[0]=ExtrapolateInitiatorBT->X()+halfpatternsize;
+//     maxi[1]=ExtrapolateInitiatorBT->Y()+halfpatternsize;
+//     mini[2]=-0.5;
+//     mini[3]=-0.5;
+//     mini[4]=0.0;
+//     maxi[2]=0.5;
+//     maxi[3]=0.5;
+//     maxi[4]=100.0;*/
+		
+
+    Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRecThetaSpace...done");
+    return;
+}
 
 //______________________________________________________________________________
+
 void EdbPVRQuality::SetHistGeometry_OPERA()
 {
     // Set the geometry of the basetrack density evaluation using OPERA case,

@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -MP		MiddlePlate  \t (FP..LP..)\n";
         cout << "---      \t\t :	 -NP		NumberofPlates  \t (1..56..)\n";
         cout << "---      \t\t :	 -LT		use LinkedTracks.root (for InBT)  \t (0,1(1st track), 2(last track),3(all tracks),4(track in [fp,mp])\n";
-        cout << "---      \t\t :	 -MC		use only MC -Events (for InBT)  \t (0,1)\n";
+        cout << "---      \t\t :	 -MC		use only MC -Events (for InBT)  \t (0: all(Sim+BG), 1: only SIM, 2: all from [MP..MP]\n";
         cout << "---      \t\t :	 -VTX 		For InBT: Cut to IP for MC vertex  (needs BRICK.TreePGunInfo.txt and -MC=1) \t (0,1:Ipcut:100,2:Ipcut250,3:500)\n";
         cout << "---      \t\t :	 -FZHP		use a) firstZ position, b) highest P (MC-Events) & first Z pos. (for InBT) c) highest P (for InBT)\t (0,1; only with -MC1)\n";
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
     //-C- wARNING !!!
     // TWO OPTIONS ARE NOT ALLOWED TO HAVE THE SAME CHARACTER CODE, otherwise complications
     // will appear:  -MC and -MCMIX  WILL NOT WORK!! use -MC and -MIXMC
+    //----------------------------------------------------------------------------------
+
     char *name = argv[argc];
     for (int i=1; i<argc; i++ ) {
         char *key  = argv[i];
@@ -209,32 +211,9 @@ int main(int argc, char *argv[])
     }
     gEDBDEBUGLEVEL=cmd_gEDBDEBUGLEVEL;
 
-    cout << "-----------------------------------------------"<<endl;
-    cout << "---      \t\t :	 -FP		FirstPlate " << cmd_FP << endl;
-    cout << "---      \t\t :	 -LP		LastPlate  " << cmd_LP << endl;
-    cout << "---      \t\t :	 -MP		MiddlePlate " << cmd_MP << endl;
-    cout << "---      \t\t :	 -NP		NumberofPlates  " << cmd_NP << endl;
-    cout << "---      \t\t :	 -LT		use LinkedTracks.root " << cmd_LT << endl;
-    cout << "---      \t\t :	 -MC		use only MC Events  " << cmd_MC << endl;
-    cout << "---      \t\t :	 -MCFL		use only MC Flag  " << cmd_MCFL << endl;
-    cout << "---      \t\t :	 -FZHP		use first Z-position of Event Occurence " << cmd_FZHP << endl;
-    cout << "---      \t\t :	 -ALI		use which Ali  " << cmd_ALI << endl;
-    cout << "---      \t\t :	 -MCMIX		use MCMIX :DANGEROUS !!! ... Be Careful! " << cmd_MCMIX << endl;
-    cout << "---      \t\t :	 -VTX		For InBT: Cut to IP for MC vertex    " << cmd_vtx << endl;
-    cout << "---      \t\t :	 -PADI		ParentDirectory  " << cmd_PADI << endl;
-    cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  " << cmd_BTPA << endl;
-    cout << "---      \t\t :	 -BGTP		BackgroundType " << cmd_BGTP << endl;
-    cout << "---      \t\t :	 -ALTP		AlgorythmType " << cmd_ALTP << endl;
-    cout << "---      \t\t :	 -PASTART	ParametersetStart " << cmd_PASTART << endl;
-    cout << "---      \t\t :	 -PAEND		ParameterSetEnd " << cmd_PAEND << endl;
-    cout << "---      \t\t :	 -CUTTP		Algo Cuttype " << cmd_CUTTP << endl;
-    cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning " << cmd_CLEAN << endl;
-    cout << "---      \t\t :	 -FILETP	FILE Type tag " << cmd_FILETP << endl;
-    cout << "---      \t\t :	 -GBMC		Global MC Evt type tag " << cmd_GBMC << endl;
-    cout << "---      \t\t :	 -DEBUG		DEBUGLEVEL " << cmd_gEDBDEBUGLEVEL << endl;
-    cout << "---      \t\t :	 -OUT		OUTPUTLEVEL " << cmd_OUTPUTLEVEL << endl;
-    cout << "---      \t\t :	 -STOP		STOPLEVEL " << cmd_STOPLEVEL << endl;
-    cout << "-----------------------------------------------"<<endl<<endl;
+    ReadDefaultValues_CommandLine(); // sorry, doesnt work, because argv and argc need
+    // to be called in the main function loop....
+    // Just used to print the values...
     //----------------------------------------------------------------------------------
 
 
@@ -317,6 +296,31 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
 
+
+
+//----------------------------------------------------------------------------------
+//-			ONLY RELEVANT FOR GS Algo
+    h_GSNN_var00=new TH1F("h_GSNN_var00","h_GSNN_var00",1000,0,1000);
+    h_GSNN_var01=new TH1F("h_GSNN_var01","h_GSNN_var01",1000,0,1000);
+    h_GSNN_var02=new TH1F("h_GSNN_var02","h_GSNN_var02",1000,0,1000);
+    h_GSNN_var03=new TH1F("h_GSNN_var03","h_GSNN_var03",100,0,70000);
+    h_GSNN_var04=new TH1F("h_GSNN_var04","h_GSNN_var04",1000,0,1);
+    h_GSNN_var05=new TH1F("h_GSNN_var05","h_GSNN_var05",10,0,10);
+    h_GSNN_var06=new TH1F("h_GSNN_var06","h_GSNN_var06",1100,-1000,100);
+    f_GSNN = new TFile("f_GSNN.root","RECREATE");
+    t_GSNN= new TTree("t_GSNN","t_GSNN");
+    t_GSNN->Branch("value_GSNN_varInput",&value_GSNN_varInput,"value_GSNN_varInput/F");
+    t_GSNN->Branch("value_GSNN_var00",&value_GSNN_var00,"value_GSNN_var00/F");
+    t_GSNN->Branch("value_GSNN_var01",&value_GSNN_var01,"value_GSNN_var01/F");
+    t_GSNN->Branch("value_GSNN_var02",&value_GSNN_var02,"value_GSNN_var02/F");
+    t_GSNN->Branch("value_GSNN_var03",&value_GSNN_var03,"value_GSNN_var03/F");
+    t_GSNN->Branch("value_GSNN_var04",&value_GSNN_var04,"value_GSNN_var04/F");
+    t_GSNN->Branch("value_GSNN_var05",&value_GSNN_var05,"value_GSNN_var05/F");
+    t_GSNN->Branch("value_GSNN_var06",&value_GSNN_var06,"value_GSNN_var06/F");
+    cout << "t_GSNN  SetBranchAddress done." << endl;
+//----------------------------------------------------------------------------------
+
+
     //----------------------------------------------------------------------------------
     // Loop over (possible) Parametersets and Reconstruct Showers!
     //----------------------------------------------------------------------------------
@@ -335,10 +339,26 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
 
+
+
+
     //----------------------------------------------------------------------------------
     // Done with all reconstruction, fill files now:
     FillOutPutStructures();
     //----------------------------------------------------------------------------------
+
+
+    f_GSNN->cd();
+    h_GSNN_var00->Write();
+    h_GSNN_var01->Write();
+    h_GSNN_var02->Write();
+    h_GSNN_var03->Write();
+    h_GSNN_var04->Write();
+    h_GSNN_var05->Write();
+    h_GSNN_var06->Write();
+    t_GSNN->Write();
+    f_GSNN->Close();
+
     return 0;
 }
 
@@ -380,6 +400,38 @@ void SetDefaultValues_CommandLine() {
     cmd_lnkdef_name = "lnk.def";
 }
 
+//-------------------------------------------------------------------------------------------
+
+void ReadDefaultValues_CommandLine() {
+
+    cout << "-----------------------------------------------"<<endl;
+    cout << "---      \t\t :	 -FP		FirstPlate " << cmd_FP << endl;
+    cout << "---      \t\t :	 -LP		LastPlate  " << cmd_LP << endl;
+    cout << "---      \t\t :	 -MP		MiddlePlate " << cmd_MP << endl;
+    cout << "---      \t\t :	 -NP		NumberofPlates  " << cmd_NP << endl;
+    cout << "---      \t\t :	 -LT		use LinkedTracks.root " << cmd_LT << endl;
+    cout << "---      \t\t :	 -MC		use only MC Events  " << cmd_MC << endl;
+    cout << "---      \t\t :	 -MCFL		use only MC Flag  " << cmd_MCFL << endl;
+    cout << "---      \t\t :	 -FZHP		use first Z-position of Event Occurence " << cmd_FZHP << endl;
+    cout << "---      \t\t :	 -ALI		use which Ali  " << cmd_ALI << endl;
+    cout << "---      \t\t :	 -MCMIX		use MCMIX :DANGEROUS !!! ... Be Careful! " << cmd_MCMIX << endl;
+    cout << "---      \t\t :	 -VTX		For InBT: Cut to IP for MC vertex    " << cmd_vtx << endl;
+    cout << "---      \t\t :	 -PADI		ParentDirectory  " << cmd_PADI << endl;
+    cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  " << cmd_BTPA << endl;
+    cout << "---      \t\t :	 -BGTP		BackgroundType " << cmd_BGTP << endl;
+    cout << "---      \t\t :	 -ALTP		AlgorythmType " << cmd_ALTP << endl;
+    cout << "---      \t\t :	 -PASTART	ParametersetStart " << cmd_PASTART << endl;
+    cout << "---      \t\t :	 -PAEND		ParameterSetEnd " << cmd_PAEND << endl;
+    cout << "---      \t\t :	 -CUTTP		Algo Cuttype " << cmd_CUTTP << endl;
+    cout << "---      \t\t :	 -CLEAN		InputData BG Cleaning " << cmd_CLEAN << endl;
+    cout << "---      \t\t :	 -FILETP	FILE Type tag " << cmd_FILETP << endl;
+    cout << "---      \t\t :	 -GBMC		Global MC Evt type tag " << cmd_GBMC << endl;
+    cout << "---      \t\t :	 -DEBUG		DEBUGLEVEL " << cmd_gEDBDEBUGLEVEL << endl;
+    cout << "---      \t\t :	 -OUT		OUTPUTLEVEL " << cmd_OUTPUTLEVEL << endl;
+    cout << "---      \t\t :	 -STOP		STOPLEVEL " << cmd_STOPLEVEL << endl;
+    cout << "-----------------------------------------------"<<endl<<endl;
+    return;
+}
 
 //-------------------------------------------------------------------------------------------
 
@@ -1696,7 +1748,9 @@ void ReconstructShowers(Int_t nr)
 
     //-----------------------------------
     if (TREE_ShowShower->GetEntries()<1) {
-        cout << "Hey Guy, I am so sorry, but NO , I repeat NO shower has been reconstructed!"<< endl;
+        cout << "//-----------------------------------------------------------------------------//"<<endl;
+        cout << "   Hey Guy, I am so sorry, but NO , I repeat NO shower has been reconstructed!"<< endl;
+        cout << "//-----------------------------------------------------------------------------//"<<endl;
     }
     cout << "TREE_ShowShower->GetEntries() = " << TREE_ShowShower->GetEntries()<< endl;
     //-----------------------------------
@@ -5310,6 +5364,8 @@ void ReconstructShowers_GS()
     // Main function for reconstruction of "Gamma Search" Algorithm
     //-----------------------------------------------------------------
 
+
+
     //-----------------------------------
     // For each InitiatorBT this is
     // divided in several small parts:
@@ -5328,6 +5384,9 @@ void ReconstructShowers_GS()
 
     GLOBAL_InBTArrayEntries=GLOBAL_InBTArray->GetEntries();
     GLOBAL_INBTSHOWERNR=0;
+
+
+    Int_t LastGlobalMCEventNr=1;
 
     EdbVertex* vtx=new EdbVertex();
 
@@ -5375,17 +5434,36 @@ void ReconstructShowers_GS()
 
         //-----------------------------------
         // 0) Set vtx according to MC event,
-        //    or to a smlightly backward propagated segment.
+        //    or to a half plate backward propagated segment.
         //    Do this only if the value -GBMC is NOT set,
         //    (in the case -GBMC is set, we should know the vertex anyway).
         //-----------------------------------
-        if (GLOBAL_InBT_MC<0 && cmd_GBMC==0) {
-            vtx->SetXYZ(InBT->X(),InBT->Y(),InBT->Z()-150);
+        //
+        if (GLOBAL_InBT_MC>LastGlobalMCEventNr) LastGlobalMCEventNr=GLOBAL_InBT_MC;
+        //
+        //
+        if (GLOBAL_InBT_MC<0&& cmd_GBMC<0) {
+            // This is an "equalization" effect. If we dont put this in, we will have BG base
+            // tracks always extrapolated to themselves, but SIM basetracks extrapolated to
+            // the vertex. This leads to a wrong deltaZ distribution which spoils the
+            // ANN Training.
+            vtx->SetXYZ(GLOBAL_VtxArrayX[LastGlobalMCEventNr],GLOBAL_VtxArrayY[LastGlobalMCEventNr],GLOBAL_VtxArrayZ[LastGlobalMCEventNr]);
+        }
+        //
+        else if (GLOBAL_InBT_MC<0 && cmd_GBMC==0) {
+            //cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC==0"<<endl;
+            vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
         }
         else if (GLOBAL_InBT_MC<0 && cmd_GBMC>0) {
+            //cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC>0"<<endl;
             vtx->SetXYZ(GLOBAL_VtxArrayX[cmd_GBMC],GLOBAL_VtxArrayY[cmd_GBMC],GLOBAL_VtxArrayZ[cmd_GBMC]);
         }
+        else if (GLOBAL_InBT_MC>0 && GLOBAL_IsBrickTreePGunInfo==kFALSE) {
+            //cout << "Option: GLOBAL_InBT_MC>0 && GLOBAL_IsBrickTreePGunInfo==kFALSE"<<endl;
+            vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
+        }
         else {
+            //cout << "Option: else"<<endl;
             vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
         }
         vtx->SetMC(GLOBAL_InBT_MC);
@@ -5432,12 +5510,18 @@ void ReconstructShowers_GS()
         EdbSegP* Segment=0;
         EdbSegP* Segment2=0;
         Float_t distZ,IP_Pair_To_InBT,IP_Pair_To_InBT_SegSum;
+        Float_t IP_Pair_To_InBT_Seg2;
 
 
         Segment = InBT;
         IP_Pair_To_InBT=CalcIP(Segment, vtx);
         /// Change with respect to libShowRec: here we assume that Segment will always be
         /// the Initiator BaseTrack and Segment2 is the other segment to check.
+
+
+
+
+
 
 
         // Loop over pattern for the first BT of the pairs:
@@ -5467,6 +5551,7 @@ void ReconstructShowers_GS()
             if ((InBT->Z()-vtx->Z())>CUT_PARAMETER[3]) continue;
 
             // Now here we can add InBT since it passed also the vertex cut.
+            // Therefore, the Reconstructed Shower has always InBT as first BT stored.
             if (GLOBAL_ShowerSegArray->GetEntries()==0) GLOBAL_ShowerSegArray->Add(InBT);
 
             // Check if pattern dist Z to Vtx  is ok:
@@ -5527,7 +5612,7 @@ void ReconstructShowers_GS()
                         // Now apply cut conditions: GS  GAMMA SEARCH Alg  --------------------
 
                         // Check if IP of both to vtx (BT) is ok:
-                        Float_t IP_Pair_To_InBT_Seg2  =CalcIP(Segment2, vtx);
+                        IP_Pair_To_InBT_Seg2  =CalcIP(Segment2, vtx);
                         if (IP_Pair_To_InBT_Seg2>CUT_PARAMETER[0]) continue;
 
                         // if InBT is flagged as MC InBT, take care that only BG or same MC basetracks are taken:
@@ -5570,10 +5655,12 @@ void ReconstructShowers_GS()
 
                         if (gEDBDEBUGLEVEL>3)  cout <<"------------"<< endl;
 
-                        // Add Add Segment2 to to shower array:
-                        //cout << "// Add Segment2 to to shower array (AddBTToArrayWithCeck):" << endl;
-                        AddBTToArrayWithCeck(Segment2, GLOBAL_ShowerSegArray);
+                        // And Add Segment2 to to shower array:
+//                         cout << "// Add Segment2 to to shower array (AddBTToArrayWithCeck):" << endl;
+                        Bool_t isContained = AddBTToArrayWithCeck(Segment2, GLOBAL_ShowerSegArray);
                         //PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+// 												cout << " isContained == " << isContained << endl;
+                        if (isContained==kTRUE) continue;
 
                     } //for (Int_t pat_two_bt_cnt=0; ...
 
@@ -5598,6 +5685,61 @@ void ReconstructShowers_GS()
         ///============================================================================================
         ///============================================================================================
 
+        //cout << " GLOBAL_ShowerSegArray->GetEntries() " << GLOBAL_ShowerSegArray->GetEntries() << endl;
+
+        ///----------------------
+        /// ONLY FOR THE ANN TRAINING FOR GS ALGO:
+        /// DO THIS ONLY IF YOU HAVE PAIRS !!!
+
+        if (GLOBAL_ShowerSegArray->GetEntries()>1) {
+
+            Segment=(EdbSegP*)GLOBAL_ShowerSegArray->At(0);
+            Segment2=(EdbSegP*)GLOBAL_ShowerSegArray->At(1);
+
+            // Implicitly, we assume that InBT= Seg->At(0), which I checked is
+            // correct. Also in the code it is done this way that InBT is added
+            // as first BT.
+            //Segment->PrintNice();
+            //Segment2->PrintNice();
+            //InBT->PrintNice();
+
+            IP_Pair_To_InBT_Seg2=CalcIP(Segment2,vtx);
+            IP_Pair_To_InBT=CalcIP(Segment,vtx);
+
+            h_GSNN_var00->Fill(TMath::Min(IP_Pair_To_InBT_Seg2,IP_Pair_To_InBT));
+            h_GSNN_var01->Fill(GetMinimumDist(Segment,Segment2));
+            h_GSNN_var02->Fill(GetdeltaRWithPropagation(Segment,Segment2));
+            h_GSNN_var03->Fill(InBT->Z()-vtx->Z());
+            h_GSNN_var04->Fill(GetdeltaThetaSingleAngles(Segment,Segment2));
+            h_GSNN_var05->Fill(TMath::Abs(Segment->PID()-Segment2->PID()));
+            h_GSNN_var06->Fill(Segment2->Flag()+Segment->Flag());
+
+            // Purity 1:    Input =  1.0;
+            // Purity 0.5:  Input =  0.5;
+            // Purity else: Input =  0.0;
+            if (Segment2->Flag()+Segment->Flag()==0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+                value_GSNN_varInput=1;
+            }
+            else if (Segment2->Flag()+Segment->Flag()!=0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+                value_GSNN_varInput=0.5;
+            }
+            else {
+                value_GSNN_varInput=0;
+            }
+            value_GSNN_var00=TMath::Min(IP_Pair_To_InBT_Seg2,IP_Pair_To_InBT);
+            value_GSNN_var01=GetMinimumDist(Segment,Segment2);
+            value_GSNN_var02=GetdeltaRWithPropagation(Segment,Segment2);
+            value_GSNN_var03=InBT->Z()-vtx->Z();
+            value_GSNN_var04=GetdeltaThetaSingleAngles(Segment,Segment2);
+            value_GSNN_var05=TMath::Abs(Segment->PID()-Segment2->PID());
+            value_GSNN_var06=Segment2->Flag()+Segment->Flag();
+
+            t_GSNN->Fill();
+
+
+
+        }
+        ///----------------------
 
         if (gEDBDEBUGLEVEL>2) PrintShowerObjectArray(GLOBAL_ShowerSegArray);
 
@@ -5650,7 +5792,7 @@ void ReconstructShowers_GS()
         // 6a) Transfer ShowerArray to treebranchTreeEntry:
         //-----------------------------------
         if (cmd_OUTPUTLEVEL>0) {
-// 						cout << "// 6a) Transfer ShowerArray to treebranchTreeEntry:" << endl;
+            //cout << "// 6a) Transfer ShowerArray to treebranchTreeEntry:" << endl;
             TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TREE_ShowShower,GLOBAL_ShowerSegArray);
         }
 
@@ -5721,6 +5863,8 @@ Bool_t AddBTToArrayWithCeck(EdbSegP* tryAttachedSegment, TObjArray* GLOBAL_Showe
 {
     // We add by comparison with X,Y,TX,TY values, since this seems to be more failsafe
     // than adding by adresses.
+    // This function returns   kTRUE   if  BT is already in the shower array
+    // This function returns   kFALSE  if  BT is not yet in the shower array
 
     int nent=GLOBAL_ShowerSegArray->GetEntries();
     EdbSegP* ComparingSegment;
@@ -8690,16 +8834,30 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
     PGunTree->SetBranchAddress("Y",&Y);
     if (gEDBDEBUGLEVEL>2) PGunTree->Print();
 
+
+
+
     if (cmd_GBMC>0) PGunTree->Show(cmd_GBMC);
     cout << "PGunTree->GetEntries();    " <<  PGunTree->GetEntries() <<  endl;
 
+    // If the PGunTree is not filled, this can be a hint that the
+    // MCInfoFilename might not be there. This is important for alorithms that
+    // rely on Vertex Informations, like the _GS() alg.
+    if (PGunTree->GetEntries()==0) {
+        cout << "ATTENTION!   PGunTree->GetEntries()==0" << endl;
+        cout << "Bool_t 			GLOBAL_IsBrickTreePGunInfo=kFALSE;" << endl;
+        GLOBAL_IsBrickTreePGunInfo=kFALSE;
+    }
+    else {
+        GLOBAL_IsBrickTreePGunInfo=kTRUE;
+    }
 
     if (!GLOBAL_VtxArray) GLOBAL_VtxArray=new TObjArray(69999);
     GLOBAL_VtxArrayX[0]=0;
     GLOBAL_VtxArrayZ[0]=0;
     GLOBAL_VtxArrayY[0]=0;
 
-
+    //------------------
     Int_t PGunTreeEntry_MCEvt_Correspondance[69999]; // PGunTreeEntry_MCEvt_Correspondance[0]=TreeEntry(0)->MC()
     for (Int_t i=0; i<PGunTree->GetEntries(); ++i) {
         PGunTree->GetEntry(i);
@@ -8717,14 +8875,13 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
 // 				cout << vtx->Y() << endl;
 // 				cout << vtx->Z() << endl;
 // gSystem->Exit(1);
-
-
         GLOBAL_EvtBT_EArray[MCEvt]=energy;
         GLOBAL_EvtBT_TanThetaArray[MCEvt]=tantheta;
         GLOBAL_EvtBT_FlagArray[MCEvt]=0;
         GLOBAL_EvtBT_MCArray[MCEvt]=MCEvt;
         GLOBAL_EvtBT_ZArray[MCEvt]=(vtxposz+40.0)*1000;
     }
+    //------------------
 
     cout << "BuildParametrizationsMCInfo_PGun.... done." << endl;
     return;

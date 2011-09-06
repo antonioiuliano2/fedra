@@ -358,6 +358,9 @@ class EdbPatternsVolume : public TObject {
   Int_t   Npatterns() const { if(ePatterns) 
                         return ePatterns->GetEntriesFast();
                         else return 0; }
+  Float_t      Xmean();
+  Float_t      Ymean();                       
+                        
 
   void PassProperties(EdbPatternsVolume &pvol);
 
