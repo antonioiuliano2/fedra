@@ -181,6 +181,7 @@ private:
     // TObjArray storing Initiator Vertices:
     TObjArray*         eInVtxArray;
     Int_t              eInVtxArrayN;
+		Bool_t						 eInVtxArraySet;
 
     // Variable to clean the found parings once more.
     Bool_t 						eSetCleanPairs;
@@ -223,6 +224,8 @@ public:
     inline TObjArray*   GetInVtxArray()     	const       {
         return eInVtxArray;
     }
+    
+    inline void        SetCleanPairs(Bool_t CleanPairs) { eSetCleanPairs = CleanPairs; }
 
 
     // Helper Functions for this class:
@@ -235,6 +238,7 @@ public:
 
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
+		
 		
 		void CreateANNPair();
 		void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);

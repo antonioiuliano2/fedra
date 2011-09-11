@@ -797,11 +797,10 @@ void EdbShowerAlg_GS::CreateANNPair()
     // Load its weights from the $FEDRASYS path.
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()");
-    TString layout="";
-    layout="@value_GSNN_var00,@value_GSNN_var01,@value_GSNN_var02,@value_GSNN_var03,@value_GSNN_var04,@value_GSNN_var05:7:6:eValueGSNN_varInput";
-    // :@eValueGSNN_var06 is not used, because Flag() is a MC information only.
 
+		
     eANNPairTree= new TTree("eANNPairTree","eANNPairTree");
+		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  Memory creation done." << endl;
     eANNPairTree->Branch("eValueGSNN_varInput",&eValueGSNN_varInput,"eValueGSNN_varInput/F");
     eANNPairTree->Branch("eValueGSNN_var00",&eValueGSNN_var00,"eValueGSNN_var00/F");
     eANNPairTree->Branch("eValueGSNN_var01",&eValueGSNN_var01,"eValueGSNN_var01/F");
@@ -812,14 +811,19 @@ void EdbShowerAlg_GS::CreateANNPair()
     eANNPairTree->Branch("eValueGSNN_var06",&eValueGSNN_var06,"eValueGSNN_var06/F");
     cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  SetBranchAddress done." << endl;
 
-    eANNPair = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
+		TString layout="";
+    layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var03,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
+    // :@eValueGSNN_var06 is not used, because Flag() is a MC information only.
+    eANNPair = new TMultiLayerPerceptron(layout,"eValueGSNN_var03",eANNPairTree,"","");
+		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  TMultiLayerPerceptron creation done." << endl;
 
     TString weights="";
     weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt.txt");
-    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
+//     weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
     eANNPair->LoadWeights(weights);
 
     cout << "eANNPair: weights = " << weights.Data() << endl;
+		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  weights loaded done." << endl;
     eANNPair->Print();
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()...done.");
@@ -831,7 +835,30 @@ void EdbShowerAlg_GS::CreateANNPair()
 
 void EdbShowerAlg_GS::ReloadANNWeights(Bool_t VtxArray_Or_InBTArray) 
 {
-	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ...  DO NOTHING YET" << endl;
+	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... " << endl;
+	
+	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... VtxArray_Or_InBTArray = " << VtxArray_Or_InBTArray  << endl;
+	
+	cout << "That means we take the weightfile for the case: ";
+	
+	if (VtxArray_Or_InBTArray==kTRUE) cout << " A, means the vertex position is given" << endl;
+	if (VtxArray_Or_InBTArray==kFALSE) cout << " B, means vertex not given." << endl;
+	
+	TString weights="";
+		
+	if (VtxArray_Or_InBTArray==kTRUE) {
+		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt.txt");
+		cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
+		cout << weights.Data() << endl;
+	}
+	if (VtxArray_Or_InBTArray==kFALSE) {
+		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
+		cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
+		cout << weights.Data() << endl;
+	}
+	eANNPair->LoadWeights(weights);
+	
+	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... RELOAD  NOT YET !!!" << endl;
 }
 
 
@@ -855,6 +882,7 @@ void EdbShowerAlg_GS::SetInVtx( EdbVertex* vtx )
     }
     eInVtxArray->Add(vtx);
     ++eInVtxArrayN;
+		eInVtxArraySet=kTRUE;
     cout << "EdbShowerAlg_GS::SetInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
     Log(2,"EdbShowerAlg_GS::SetInVtx","SetInVtx()...done");
     return;
@@ -868,6 +896,7 @@ void EdbShowerAlg_GS::AddInVtx( EdbVertex* vtx )
     Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()");
     eInVtxArray->Add(vtx);
     ++eInVtxArrayN;
+		eInVtxArraySet=kTRUE;
     cout << "EdbShowerAlg_GS::AddInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
     Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()...done");
     return;
@@ -897,7 +926,7 @@ void EdbShowerAlg_GS::Convert_InVtxArray_To_InBTArray()
         cout << " eInBTArray->Clear();" << endl;
     }
 
-    if (eInVtxArray==NULL || eInVtxArrayN==0) cout << "NO  eInVtxArray  " << endl;
+    if (eInVtxArray==NULL || eInVtxArrayN==0 || eInVtxArraySet==kFALSE) cout << "NO  eInVtxArray  " << endl;
     EdbVertex* vtx;
     cout << "eInVtxArrayN= " << eInVtxArrayN << endl;
 
@@ -988,7 +1017,7 @@ void EdbShowerAlg_GS::Execute()
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   Check for eInBTArray:");
 
-		Int_t VtxArray_Or_InBTArray=0;
+		Int_t VtxArray_Or_InBTArray=kFALSE;
 		
     if (eInBTArrayN==0) {
         Log(2,"EdbShowerAlg_GS::Execute","Execute()   No eInBTArray. Check for eInVtxArray:");
@@ -998,13 +1027,13 @@ void EdbShowerAlg_GS::Execute()
             Log(2,"EdbShowerAlg_GS::Execute","Execute()   No eInVtxArray.");
             Log(2,"EdbShowerAlg_GS::Execute","Execute()   Set ALL BTs from the volume as InBTs:");
             Log(2,"EdbShowerAlg_GS::Execute","Execute()   Convert_EdbPVRec_To_InBTArray():");
-            VtxArray_Or_InBTArray=1;
+            VtxArray_Or_InBTArray=kTRUE;
             Convert_EdbPVRec_To_InBTArray();
             Log(2,"EdbShowerAlg_GS::Execute","Execute()   Convert_EdbPVRec_To_InBTArray() done.");
             Log(2,"EdbShowerAlg_GS::Execute","Execute()   But take care, this is gonna take  ___VERY LONG___ time.");
             // return;
         }
-        if (VtxArray_Or_InBTArray==0) {
+        if (VtxArray_Or_InBTArray==kFALSE) {
             cout << "eInVtxArray there. Converting to InBTArray() now. "<< endl;
             Convert_InVtxArray_To_InBTArray();
         }
@@ -1246,9 +1275,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     segments->Add(Segment);
                     segments->Add(Segment2);
                     EdbVertex* vetex = CalcVertex(segments);
-// 										cout << vetex ->X() << endl;
-// 										cout << vetex ->Y() << endl;
-// 										cout << vetex ->Z() << endl;
+										//cout << "Attention: vetex made out of  CalcVertex(segments)  Print XYZ: " << vetex ->X()  << " " << vetex ->Y()  << " " << vetex ->Z() << "  Min of both segments Z = " << TMath::Min(Segment->Z(),Segment2->Z()) << endl;
                     if (vetex ->Z()> TMath::Min(Segment->Z(),Segment2->Z()) ) continue;
 
 
@@ -1301,26 +1328,32 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     eValueGSNN_var00=TMath::Min(IP_Pair_To_InBT_Seg,IP_Pair_To_InBT_Seg2);
                     eValueGSNN_var01=GetMinimumDist(Segment,Segment2);
                     eValueGSNN_var02=DeltaR_WithPropagation(Segment,Segment2);
-                    eValueGSNN_var03=InBT->Z()-vetex->Z();
+                    /// eValueGSNN_var03=InBT->Z()-vetex->Z();
+										/// i guess the sign in this calculation is wrong,
+										/// it should be rather round:
+										eValueGSNN_var03=vetex->Z()-InBT->Z();
+										/// is this independent, if we do pair search w.r.t. to a real
+										/// vertex, or w.r.t to vetex from BT pairs ???
+										
                     eValueGSNN_var04=DeltaThetaSingleAngles(Segment,Segment2);
                     eValueGSNN_var05=TMath::Abs(pat_one_cnt-pat_two_cnt);
                     eValueGSNN_var06=Segment2->Flag()+Segment->Flag();
                     eANNPairTree->Fill();
                     eANNPairTree->Show(eANNPairTree->GetEntries()-1);
 
-                    Double_t params[8];
-                    params[0]=eValueGSNN_var00;
-                    params[1]=eValueGSNN_var01;
-                    params[2]=eValueGSNN_var02;
-                    params[3]=eValueGSNN_var03;
-                    params[4]=eValueGSNN_var04;
-                    params[5]=eValueGSNN_var05;
-                    params[6]=eValueGSNN_var06;
+                    Double_t params[6];
+                    params[0]=eValueGSNN_var00; //dIP
+                    params[1]=eValueGSNN_var01; //dMinDist
+                    params[2]=eValueGSNN_var02; //dR
+                    params[3]=eValueGSNN_var03; //deltaZ
+                    params[4]=eValueGSNN_var04; //dT
+                    params[5]=eValueGSNN_var05; //dNPL
+//                    params[6]=eValueGSNN_var06; //d
                     //---------
                     Double_t value=0;
 										if (gEDBDEBUGLEVEL>1) {
                     cout << "EdbShowerAlg_GS::FindPairs  Params:  ";
-                    for (int hj=0; hj<7; hj++) cout << "  " << params[hj];
+                    for (int hj=0; hj<6; hj++) cout << "  " << params[hj];
                     cout << endl;
                     cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
                     value=eANNPair->Evaluate(0,params);
