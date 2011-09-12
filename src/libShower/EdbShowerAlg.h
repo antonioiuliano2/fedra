@@ -148,8 +148,8 @@ public:
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
     void 								Convert_EdbPVRec_To_InBTArray();
-		
-		EdbVertex * 				CalcVertex(TObjArray *segments);
+
+    EdbVertex * 				CalcVertex(TObjArray *segments);
 
 
     void Print();
@@ -181,26 +181,27 @@ private:
     // TObjArray storing Initiator Vertices:
     TObjArray*         eInVtxArray;
     Int_t              eInVtxArrayN;
-		Bool_t						 eInVtxArraySet;
+    Bool_t						 eInVtxArraySet;
 
     // Variable to clean the found parings once more.
     Bool_t 						eSetCleanPairs;
-		
-		// Neural Network to Improve Fake BG pair rejection rate 
-		// (part of gamma pair reco)
-		TMultiLayerPerceptron* 	eANNPair;
-		TTree* 									eANNPairTree;
-		Float_t									eANNPairCut;
-		// Neural Network input feed variables
-		Float_t eValueGSNN_var00;
-		Float_t eValueGSNN_var01;
-		Float_t eValueGSNN_var02;
-		Float_t eValueGSNN_var03;
-		Float_t eValueGSNN_var04;
-		Float_t eValueGSNN_var05;
-		Float_t eValueGSNN_var06;
-		Float_t eValueGSNN_varInput;
-		
+
+    // Neural Network to Improve Fake BG pair rejection rate
+    // (part of gamma pair reco)
+    TMultiLayerPerceptron* 	eANNPair;
+    TTree* 									eANNPairTree;
+    Float_t									eANNPairCut;
+    // Neural Network input feed variables
+    Float_t eValueGSNN_var00;
+    Float_t eValueGSNN_var01;
+    Float_t eValueGSNN_var02;
+    Float_t eValueGSNN_var03;
+    Float_t eValueGSNN_var04;
+    Float_t eValueGSNN_var05;
+    Float_t eValueGSNN_var06;
+    Float_t eValueGSNN_varInput;
+    Float_t eValueGSNN_varOutput;
+
 
 public:
 
@@ -224,11 +225,14 @@ public:
     inline TObjArray*   GetInVtxArray()     	const       {
         return eInVtxArray;
     }
-    
-    inline void        SetCleanPairs(Bool_t CleanPairs) { eSetCleanPairs = CleanPairs; }
+
+    inline void        SetCleanPairs(Bool_t CleanPairs) {
+        eSetCleanPairs = CleanPairs;
+    }
 
 
     // Helper Functions for this class:
+    Bool_t	CheckInput();
     void 		Convert_InVtxArray_To_InBTArray();
     Bool_t		CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* SegmentPIDArray,TArrayI* SegmentIDArray,TArrayI* Segment2PIDArray,TArrayI* Segment2IDArray);
     Double_t 	CalcIP(EdbSegP *s, double x, double y, double z);
@@ -238,10 +242,11 @@ public:
 
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
-		
-		
-		void CreateANNPair();
-		void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);
+
+
+    void CreateANNPair();
+    void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);
+    void CreateANNPlots();
 
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where

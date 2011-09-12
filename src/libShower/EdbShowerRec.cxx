@@ -4808,7 +4808,7 @@ Double_t EdbShowerRec::InvariantMass(EdbSegP* s1, EdbSegP* s2, Double_t Momentum
 //------------------------------------------------------------------------------------------------------
 
 
-void EdbShowerRec::Help() 
+void EdbShowerRec::Help()
 {
     // Help Function
     cout << "--------------------------------------------------------------------------" << endl;
@@ -4841,7 +4841,7 @@ void EdbShowerRec::Help()
 
 
 void EdbShowerRec::Print() {
-		// Print Function
+    // Print Function
     cout << "-- EdbShowerRec   Print                                                     --" << endl;
 }
 
@@ -4849,19 +4849,19 @@ void EdbShowerRec::Print() {
 //------------------------------------------------------------------------------------------------------
 
 void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Int_t mode ) {
-	
-        // SetInBTArray( EdbPVRec* Ali , Int_t mode )
-        // Set the Initiator BaseTrack Array From the EdbPVRec
-        // object. Using a mode of:                           
-        // -1) if it has tracks inside, we take first segment of the 
-        // -1) tracks              (TO BE IMPLEMENTED...mode=-1)     
-        //  0) otherwise (mode is 0) ALL Basetracks in the volume.   
-        //  0) ATTENTION...TAKES  VERY  LONG                         
-        // 	1) If  mode  is 1, then we take only the                 
-        // 	1) first Z plate            ... Mainly DEBUG purpose ....
-        // 	2) If  mode  is 2, then we take only 5 random            
-        // 	2) basetracksfirst Z plate  ... Mainly DEBUG purpose ....
-				
+
+    // SetInBTArray( EdbPVRec* Ali , Int_t mode )
+    // Set the Initiator BaseTrack Array From the EdbPVRec
+    // object. Using a mode of:
+    // -1) if it has tracks inside, we take first segment of the
+    // -1) tracks              (TO BE IMPLEMENTED...mode=-1)
+    //  0) otherwise (mode is 0) ALL Basetracks in the volume.
+    //  0) ATTENTION...TAKES  VERY  LONG
+    // 	1) If  mode  is 1, then we take only the
+    // 	1) first Z plate            ... Mainly DEBUG purpose ....
+    // 	2) If  mode  is 2, then we take only 5 random
+    // 	2) basetracksfirst Z plate  ... Mainly DEBUG purpose ....
+
     if (gEDBDEBUGLEVEL>1) {
         cout << "-----------------------------------------------------------------------------" << endl;
         cout << "-- EdbShowerRec   SetInBTArray( EdbPVRec* Ali , Int_t mode )               --" << endl;

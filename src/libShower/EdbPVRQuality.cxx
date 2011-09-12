@@ -50,7 +50,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 
     CheckEdbPVRec();
     Execute_ConstantBTDensity();
-		//Execute_ConstantQuality();
+    //Execute_ConstantQuality();
     CreateEdbPVRec();
     Print();
 }
@@ -358,14 +358,14 @@ void EdbPVRQuality::CheckEdbPVRec()
 
 void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 {
-		// Alternative Implementation.
-		// Following a suggestion to Akitaka Ariga when doing reco of a specified shower:
-		// ------------------------------------------------------------------------------
+    // Alternative Implementation.
+    // Following a suggestion to Akitaka Ariga when doing reco of a specified shower:
+    // ------------------------------------------------------------------------------
     // Main function to check if the EdbPVRec object of the scanned data is of low/high background.
-		// But w.r.t. the TanTheta Space of scanned tracks.
-		// ------------------------------------------------------------------------------
-		
-		
+    // But w.r.t. the TanTheta Space of scanned tracks.
+    // ------------------------------------------------------------------------------
+
+
     // Following steps are carried out:
     //  Get plate, count number of basetracks in the unit area (1x1cm^2).
     //  Fill (draw if desired (like in EDA display)) histogram with the entries of the unit area.
@@ -393,23 +393,23 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 
     int Npat = eAli_maxNpatterns;
     TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
-		TH1F* histPatternBTDensityTanTheta = new TH1F("histPatternBTDensityTanTheta","histPatternBTDensityTanTheta",40,0,1);
+    TH1F* histPatternBTDensityTanTheta = new TH1F("histPatternBTDensityTanTheta","histPatternBTDensityTanTheta",40,0,1);
 
-		TH2F* histPatternBTDensityTanThetaVsPID = new TH2F("histPatternBTDensityTanThetaVsPID","histPatternBTDensityTanThetaVsPID",57,0.5,57.5,40,0,1);
-		
-		
-		TH1F* QualityValue_Chi2 = new TH1F("QualityValue_Chi2","QualityValue_Chi2",100,0,10);
-		TH1F* QualityValue_W = new TH1F("QualityValue_W","QualityValue_W",100,0,100);
-		TH1F* QualityValue_Total = new TH1F("QualityValue_Total","QualityValue_Total",100,0,3);
-		
-		
-		TProfile* 	eProfileBTdens_vs_TanTheta = new TProfile("eProfileBTdens_vs_TanTheta","eProfileBTdens_vs_TanTheta",40,0,1,0,200);
-		
+    TH2F* histPatternBTDensityTanThetaVsPID = new TH2F("histPatternBTDensityTanThetaVsPID","histPatternBTDensityTanThetaVsPID",57,0.5,57.5,40,0,1);
+
+
+    TH1F* QualityValue_Chi2 = new TH1F("QualityValue_Chi2","QualityValue_Chi2",100,0,10);
+    TH1F* QualityValue_W = new TH1F("QualityValue_W","QualityValue_W",100,0,100);
+    TH1F* QualityValue_Total = new TH1F("QualityValue_Total","QualityValue_Total",100,0,3);
+
+
+    TProfile* 	eProfileBTdens_vs_TanTheta = new TProfile("eProfileBTdens_vs_TanTheta","eProfileBTdens_vs_TanTheta",40,0,1,0,200);
+
 //     Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
 //     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
-		
-		
-		
+
+
+
     // Loop over the patterns of the EdbPVRec:
     for (Int_t i=0; i<Npat; i++) {
 
@@ -422,8 +422,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 
         eHistYX->Reset(); // important to clean the histogram
         eHistChi2W->Reset(); // important to clean the histogram
-				histPatternBTDensityTanTheta->Reset(); // important to clean the histogram
-				
+        histPatternBTDensityTanTheta->Reset(); // important to clean the histogram
+
 
         EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
         Int_t npat=pat->N();
@@ -455,36 +455,36 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 
             // Main decision for segment to be kept or not  (seg is of MC or data type).
             if ( kFALSE == result ) continue;
-            
-            
+
+
             /// Decision if, cut out strong different TTheta values,
-						/// because for shower reco there is only the TTheta space around
-						/// the InBT of interest.
-						Float_t sx=0.3;
- 						Float_t sy=0.3;
+            /// because for shower reco there is only the TTheta space around
+            /// the InBT of interest.
+            Float_t sx=0.3;
+            Float_t sy=0.3;
 //  						if (TMath::Abs(seg->TY()-sy)>0.13) continue;
 //  						if (TMath::Abs(seg->TX()-sx)>0.13) continue;
 
             // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
             eHistChi2W->Fill(seg->W(),seg->Chi2());
-						
-						// New: Fill also histPatternBTDensityTanTheta 
-						histPatternBTDensityTanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
-						
-						histPatternBTDensityTanThetaVsPID->Fill(i,TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
-						
-						eProfileBTdens_vs_TanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()),1);
-						
-						QualityValue_Chi2->Fill(seg->Chi2());
-						QualityValue_W->Fill(seg->W());
-						
-						Double_t xxx = TMath::Sqrt((seg->Chi2()-0.8)*(seg->Chi2()-0.8)/0.2/0.2+(seg->W()-17.)*(seg->W()-17.)/2./2.);
-						QualityValue_Total->Fill(xxx);
-						
-						
+
+            // New: Fill also histPatternBTDensityTanTheta
+            histPatternBTDensityTanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
+
+            histPatternBTDensityTanThetaVsPID->Fill(i,TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
+
+            eProfileBTdens_vs_TanTheta->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()),1);
+
+            QualityValue_Chi2->Fill(seg->Chi2());
+            QualityValue_W->Fill(seg->W());
+
+            Double_t xxx = TMath::Sqrt((seg->Chi2()-0.8)*(seg->Chi2()-0.8)/0.2/0.2+(seg->W()-17.)*(seg->W()-17.)/2./2.);
+            QualityValue_Total->Fill(xxx);
+
+
         }
-        
+
         if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
 
         // Important to reset histogram before it is filled.
@@ -504,8 +504,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
             histPatternBTDensity->Fill(bincontentXY);
             eProfileBTdens_vs_PID_source->Fill(i,bincontentXY);
         }
-        
-        
+
+
         cout << "histPatternBTDensity->GetMean() = " << histPatternBTDensity->GetMean() << endl;
 
         // failsafe warning in case that there are many bins with zero content.
@@ -522,10 +522,10 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
     eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
     eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
 
-		
-		
-		
-		
+
+
+
+
     // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
     // This will be done in one of the two Execute_ functions.
 
@@ -547,45 +547,45 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 
     eHistYX->Reset();
     eHistChi2W->Reset();
-		
-		TCanvas* c3 = new TCanvas();
-		histPatternBTDensityTanTheta->Draw("");
-		
-		
-		
-		TCanvas* c5 = new TCanvas();
-		QualityValue_Chi2->Draw("");
-		TCanvas* c6 = new TCanvas();
-		QualityValue_Total->Draw("");
-		
-		TCanvas* c4 = new TCanvas();
-		histPatternBTDensityTanThetaVsPID->Draw("colz");
-		
-		
-		
-		histPatternBTDensityTanTheta->Smooth();
-		histPatternBTDensityTanTheta->Smooth();
-		histPatternBTDensityTanTheta->Smooth();
-		TSpectrum* spec2 = new TSpectrum();
-		spec2->Search(histPatternBTDensityTanTheta);
-		
-		TList *functions = histPatternBTDensityTanTheta->GetListOfFunctions();
-    TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
-		pm->Print();
-		
-		cout << spec2->GetNPeaks() << endl;
-		cout << spec2->GetNPeaks() << endl;
-		Float_t*	xarr;
-		Float_t*	yarr;
-		xarr =  spec2-> GetPositionX();
-		yarr =  spec2-> GetPositionY();
-		cout << xarr[0] << endl;
-		cout << xarr[1] << endl;
-		cout << yarr[0] << endl;
-		cout << yarr[1] << endl;
 
-		
-		
+    TCanvas* c3 = new TCanvas();
+    histPatternBTDensityTanTheta->Draw("");
+
+
+
+    TCanvas* c5 = new TCanvas();
+    QualityValue_Chi2->Draw("");
+    TCanvas* c6 = new TCanvas();
+    QualityValue_Total->Draw("");
+
+    TCanvas* c4 = new TCanvas();
+    histPatternBTDensityTanThetaVsPID->Draw("colz");
+
+
+
+    histPatternBTDensityTanTheta->Smooth();
+    histPatternBTDensityTanTheta->Smooth();
+    histPatternBTDensityTanTheta->Smooth();
+    TSpectrum* spec2 = new TSpectrum();
+    spec2->Search(histPatternBTDensityTanTheta);
+
+    TList *functions = histPatternBTDensityTanTheta->GetListOfFunctions();
+    TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+    pm->Print();
+
+    cout << spec2->GetNPeaks() << endl;
+    cout << spec2->GetNPeaks() << endl;
+    Float_t*	xarr;
+    Float_t*	yarr;
+    xarr =  spec2-> GetPositionX();
+    yarr =  spec2-> GetPositionY();
+    cout << xarr[0] << endl;
+    cout << xarr[1] << endl;
+    cout << yarr[0] << endl;
+    cout << yarr[1] << endl;
+
+
+
 // /*		// Create Variables For ExtractSubpattern boundaries
 //     Float_t mini[5];
 //     Float_t maxi[5];
@@ -599,7 +599,7 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace()
 //     maxi[2]=0.5;
 //     maxi[3]=0.5;
 //     maxi[4]=100.0;*/
-		
+
 
     Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRecThetaSpace...done");
     return;

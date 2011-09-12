@@ -41,7 +41,7 @@ private:
     // The source and target EdbPVRec objects:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
-		Bool_t		eNeedModified;
+    Bool_t		eNeedModified;
     Bool_t    eIsSource;
     Bool_t    eIsTarget;
     Int_t     eHistGeometry;
@@ -210,14 +210,14 @@ public:
     void SetHistGeometry_OPERAandMC();
 
     void CheckEdbPVRec();
-		void CheckEdbPVRecThetaSpace();
+    void CheckEdbPVRecThetaSpace();
     void Execute_ConstantBTDensity();
     void Execute_ConstantQuality();
 
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_Passing(EdbPVRec* aliSource);
-		
-		// All these functions will call Remove_SegmentArray(..,..,..);
+
+    // All these functions will call Remove_SegmentArray(..,..,..);
     EdbPVRec* Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource=NULL, Int_t Option=0);
     EdbPVRec* Remove_Segment(EdbSegP* seg, EdbPVRec* aliSource=NULL, Int_t Option=0);
     EdbPVRec* Remove_TrackArray(TObjArray* trackArray, EdbPVRec* aliSource=NULL, Int_t Option=0);

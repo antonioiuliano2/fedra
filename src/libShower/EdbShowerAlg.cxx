@@ -458,7 +458,7 @@ void EdbShowerAlg::PrintMore()
 {
     cout << "EdbShowerAlg::PrintMore()" << endl;
     cout << "eInBTArray->GetEntries()       =  " <<  eInBTArray->GetEntries() << "  ." << endl;
-		cout << "eRecoShowerArray->GetEntries() =  " <<  eRecoShowerArray->GetEntries() << "  ." << endl;
+    cout << "eRecoShowerArray->GetEntries() =  " <<  eRecoShowerArray->GetEntries() << "  ." << endl;
     cout << "EdbShowerAlg::PrintMore()...done." << endl;
     return;
 }
@@ -468,12 +468,12 @@ void EdbShowerAlg::PrintMore()
 
 void EdbShowerAlg::PrintAll()
 {
-	cout << "------------------------------------------------------------" << endl;
-	cout << "EdbShowerAlg::PrintAll()" << endl;
-	cout << "------------------------" << endl;
-	Print();
-	PrintMore();
-	cout << "------------------------------------------------------------" << endl;
+    cout << "------------------------------------------------------------" << endl;
+    cout << "EdbShowerAlg::PrintAll()" << endl;
+    cout << "------------------------" << endl;
+    Print();
+    PrintMore();
+    cout << "------------------------------------------------------------" << endl;
     return;
 }
 
@@ -795,13 +795,19 @@ void EdbShowerAlg_GS::CreateANNPair()
     // Create the neural network, which is used as last layer in the
     // GS algo reconstruction.
     // Load its weights from the $FEDRASYS path.
+    // Initial testings of the method have been done using the ROOT
+    // TMVA framework, espacially the multivariate method "Boosted Decision Trees"
+    // and the two given Neural Network Implementations and linear cuts.
+    // ROC curves can be found in the manual. The two NN implementation dont
+    // differ too much, and we can take -with good 	conscience- the standard
+    // ROOT TMultiLayerPerceptron one.
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()");
 
-		
     eANNPairTree= new TTree("eANNPairTree","eANNPairTree");
-		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  Memory creation done." << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  Memory creation done." << endl;
     eANNPairTree->Branch("eValueGSNN_varInput",&eValueGSNN_varInput,"eValueGSNN_varInput/F");
+    eANNPairTree->Branch("eValueGSNN_varOutput",&eValueGSNN_varOutput,"eValueGSNN_varOutput/F");
     eANNPairTree->Branch("eValueGSNN_var00",&eValueGSNN_var00,"eValueGSNN_var00/F");
     eANNPairTree->Branch("eValueGSNN_var01",&eValueGSNN_var01,"eValueGSNN_var01/F");
     eANNPairTree->Branch("eValueGSNN_var02",&eValueGSNN_var02,"eValueGSNN_var02/F");
@@ -811,20 +817,21 @@ void EdbShowerAlg_GS::CreateANNPair()
     eANNPairTree->Branch("eValueGSNN_var06",&eValueGSNN_var06,"eValueGSNN_var06/F");
     cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  SetBranchAddress done." << endl;
 
-		TString layout="";
+    TString layout="";
     layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var03,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
     // :@eValueGSNN_var06 is not used, because Flag() is a MC information only.
     eANNPair = new TMultiLayerPerceptron(layout,"eValueGSNN_var03",eANNPairTree,"","");
-		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  TMultiLayerPerceptron creation done." << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  TMultiLayerPerceptron creation done." << endl;
 
+    // By default we take the weights for the Case B (explained in the manual)
+    // since we dont know a priori, if vertices are given.
     TString weights="";
-    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt.txt");
-//     weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
+    //weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt");
+    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
     eANNPair->LoadWeights(weights);
-
-    cout << "eANNPair: weights = " << weights.Data() << endl;
-		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  weights loaded done." << endl;
-    eANNPair->Print();
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPair: weights = " << endl;
+    cout << weights.Data() << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  weights loaded done." << endl;
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()...done.");
     return;
@@ -833,32 +840,32 @@ void EdbShowerAlg_GS::CreateANNPair()
 
 //______________________________________________________________________________
 
-void EdbShowerAlg_GS::ReloadANNWeights(Bool_t VtxArray_Or_InBTArray) 
+void EdbShowerAlg_GS::ReloadANNWeights(Bool_t VtxArray_Or_InBTArray)
 {
-	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... " << endl;
-	
-	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... VtxArray_Or_InBTArray = " << VtxArray_Or_InBTArray  << endl;
-	
-	cout << "That means we take the weightfile for the case: ";
-	
-	if (VtxArray_Or_InBTArray==kTRUE) cout << " A, means the vertex position is given" << endl;
-	if (VtxArray_Or_InBTArray==kFALSE) cout << " B, means vertex not given." << endl;
-	
-	TString weights="";
-		
-	if (VtxArray_Or_InBTArray==kTRUE) {
-		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt.txt");
-		cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
-		cout << weights.Data() << endl;
-	}
-	if (VtxArray_Or_InBTArray==kFALSE) {
-		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
-		cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
-		cout << weights.Data() << endl;
-	}
-	eANNPair->LoadWeights(weights);
-	
-	cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... RELOAD  NOT YET !!!" << endl;
+    cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... " << endl;
+
+    cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... VtxArray_Or_InBTArray = " << VtxArray_Or_InBTArray  << endl;
+
+    cout << "That means we take the weightfile for the case: ";
+
+    if (VtxArray_Or_InBTArray==kTRUE) cout << " A, means the vertex position is given" << endl;
+    if (VtxArray_Or_InBTArray==kFALSE) cout << " B, means vertex not given." << endl;
+
+    TString weights="";
+
+    if (VtxArray_Or_InBTArray==kTRUE) {
+        weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt");
+        cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
+        cout << weights.Data() << endl;
+    }
+    if (VtxArray_Or_InBTArray==kFALSE) {
+        weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
+        cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Load weights:" << endl;
+        cout << weights.Data() << endl;
+    }
+    eANNPair->LoadWeights(weights);
+
+    cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... RELOAD  NOT YET !!!" << endl;
 }
 
 
@@ -882,8 +889,8 @@ void EdbShowerAlg_GS::SetInVtx( EdbVertex* vtx )
     }
     eInVtxArray->Add(vtx);
     ++eInVtxArrayN;
-		eInVtxArraySet=kTRUE;
-    cout << "EdbShowerAlg_GS::SetInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
+    eInVtxArraySet=kTRUE;
+    cout << "EdbShowerAlg_GS::SetInVtx Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
     Log(2,"EdbShowerAlg_GS::SetInVtx","SetInVtx()...done");
     return;
 }
@@ -896,7 +903,7 @@ void EdbShowerAlg_GS::AddInVtx( EdbVertex* vtx )
     Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()");
     eInVtxArray->Add(vtx);
     ++eInVtxArrayN;
-		eInVtxArraySet=kTRUE;
+    eInVtxArraySet=kTRUE;
     cout << "EdbShowerAlg_GS::AddInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
     Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()...done");
     return;
@@ -1007,7 +1014,56 @@ Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg
 
 //______________________________________________________________________________
 
+Bool_t	EdbShowerAlg_GS::CheckInput()
+{
+    // Before execution of the main reco routine, we perform a
+    // check, if either an Initiator Vertex (array) was set,
+    // or if an Initiator Basetrack (array) was set.
+    // In this case, return kTRUE, else return kFALSE.
 
+    Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()");
+
+    Bool_t IsInput=kFALSE;
+    Bool_t VtxArray_Or_InBTArray=kFALSE;
+    Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Check for eInBTArray:");
+
+
+    if (eInBTArrayN==0) {
+        Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   No eInBTArray. Check for eInVtxArray:");
+
+        // Check if there is an Convert_InVtxArray_To_InBTArray();
+        if (eInVtxArrayN==0) {
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   No eInVtxArray.");
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Set ALL BTs from the volume as InBTs:");
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Convert_EdbPVRec_To_InBTArray():");
+            VtxArray_Or_InBTArray=kFALSE;
+            Convert_EdbPVRec_To_InBTArray();
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Convert_EdbPVRec_To_InBTArray() done.");
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Do pair search now, but take care, this is gonna take  _______VERY LONG_______ time.");
+            // return;
+        }
+        else {
+            cout << "eInVtxArray there. Converting to InBTArray() now. "<< endl;
+            Convert_InVtxArray_To_InBTArray();
+            VtxArray_Or_InBTArray=kTRUE;
+            cout << "eInVtxArray there. Converting to InBTArray() now....done. "<< endl;
+        }
+    }
+
+    // Reload ANN weight file:
+    // If vertices are given we will take the trained neural net for basetrack pairs
+    // with the known vertex.
+    // If no vertices are given then we have to assume that we dont know
+    // what the vertex position yet is and then we look for basetrack pairings
+    // by themselves. Therefore we need the ANN weight file trained on no vertex info.
+
+    ReloadANNWeights(VtxArray_Or_InBTArray);
+
+    Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()...done.");
+    return IsInput;
+}
+
+//______________________________________________________________________________
 
 void EdbShowerAlg_GS::Execute()
 {
@@ -1017,38 +1073,9 @@ void EdbShowerAlg_GS::Execute()
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
     Log(2,"EdbShowerAlg_GS::Execute","Execute()   Check for eInBTArray:");
 
-		Int_t VtxArray_Or_InBTArray=kFALSE;
-		
-    if (eInBTArrayN==0) {
-        Log(2,"EdbShowerAlg_GS::Execute","Execute()   No eInBTArray. Check for eInVtxArray:");
-        
-        // Check if there is an Convert_InVtxArray_To_InBTArray();
-        if (eInVtxArrayN==0) {
-            Log(2,"EdbShowerAlg_GS::Execute","Execute()   No eInVtxArray.");
-            Log(2,"EdbShowerAlg_GS::Execute","Execute()   Set ALL BTs from the volume as InBTs:");
-            Log(2,"EdbShowerAlg_GS::Execute","Execute()   Convert_EdbPVRec_To_InBTArray():");
-            VtxArray_Or_InBTArray=kTRUE;
-            Convert_EdbPVRec_To_InBTArray();
-            Log(2,"EdbShowerAlg_GS::Execute","Execute()   Convert_EdbPVRec_To_InBTArray() done.");
-            Log(2,"EdbShowerAlg_GS::Execute","Execute()   But take care, this is gonna take  ___VERY LONG___ time.");
-            // return;
-        }
-        if (VtxArray_Or_InBTArray==kFALSE) {
-            cout << "eInVtxArray there. Converting to InBTArray() now. "<< endl;
-            Convert_InVtxArray_To_InBTArray();
-        }
-    }
-    
-    
-    // Reload ANN weight file:
-    // If vertices are given we will take the trained neural net for basetrack pairs
-		// with the known vertex.
-		// If no vertices are given then we have to assume that we dont know
-		// what the vertex position yet is and then we look for basetrack pairings
-		// by themselves. Therefore we need the ANN weight file trained on no vertex info.
-		
-		ReloadANNWeights(VtxArray_Or_InBTArray);
-		
+    Bool_t VtxArray_Or_InBTArray = kFALSE;
+    VtxArray_Or_InBTArray = CheckInput();
+
 
     //--- Needed interim objects:
     EdbSegP* InBT=NULL;
@@ -1244,7 +1271,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     if (Segment2->ID()==Segment->ID()&&Segment2->PID()==Segment->PID()) continue;
 
                     // At first:  Check for already duplicated pairings:
-                    //if (CheckPairDuplications(Segment->PID(),Segment->ID(),Segment2->PID(),Segment2->ID(), SegmentPIDArray,SegmentIDArray,Segment2PIDArray,Segment2IDArray)) continue;
+                    if (CheckPairDuplications(Segment->PID(),Segment->ID(),Segment2->PID(),Segment2->ID(), SegmentPIDArray,SegmentIDArray,Segment2PIDArray,Segment2IDArray)) continue;
 
                     // Now apply cut conditions: GS  GAMMA SEARCH Alg  --------------------
                     // if InBT is flagged as MC InBT, take care that only BG or same MC basetracks are taken:
@@ -1275,7 +1302,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     segments->Add(Segment);
                     segments->Add(Segment2);
                     EdbVertex* vetex = CalcVertex(segments);
-										//cout << "Attention: vetex made out of  CalcVertex(segments)  Print XYZ: " << vetex ->X()  << " " << vetex ->Y()  << " " << vetex ->Z() << "  Min of both segments Z = " << TMath::Min(Segment->Z(),Segment2->Z()) << endl;
+                    //cout << "Attention: vetex made out of  CalcVertex(segments)  Print XYZ: " << vetex ->X()  << " " << vetex ->Y()  << " " << vetex ->Z() << "  Min of both segments Z = " << TMath::Min(Segment->Z(),Segment2->Z()) << endl;
                     if (vetex ->Z()> TMath::Min(Segment->Z(),Segment2->Z()) ) continue;
 
 
@@ -1297,7 +1324,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     Float_t IP_Pair_To_InBT_SegSum=CalcIP(Segment_Sum, InBT->X(),InBT->Y(),InBT->Z());
                     Float_t IP_Pair_To_InBT_SegSmaller;
 
-                    if (gEDBDEBUGLEVEL>3) {
+                    if (gEDBDEBUGLEVEL>2) {
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
@@ -1314,32 +1341,48 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     // e) Check if this is not a possible fake doublet which is
                     //	sometimes caused by view overlap in the scanning:
                     //cout << " Check for IsPossibleFakeDoublet by view overlap" << endl;
-                    if (IsPossibleFakeDoublet(Segment,Segment2) ) continue;
+                    //if (IsPossibleFakeDoublet(Segment,Segment2) ) continue;
                     // end of    cut conditions: GS  GAMMA SEARCH Alg  --------------------
                     //
                     //
                     // f) new: Last check if ePair is from e+e-Pair or from fake BG;
                     // do a NN calculation estimate:
-                    cout << "DEBUGTEST: PRINTNICE SEGMENT AND SEGMENT2" << endl;
-                    Segment->PrintNice();
-                    Segment2->PrintNice();
+                    //cout << "DEBUGTEST: PRINTNICE SEGMENT AND SEGMENT2" << endl;
+                    //Segment->PrintNice();
+                    //Segment2->PrintNice();
 
                     eValueGSNN_varInput=-1;
                     eValueGSNN_var00=TMath::Min(IP_Pair_To_InBT_Seg,IP_Pair_To_InBT_Seg2);
                     eValueGSNN_var01=GetMinimumDist(Segment,Segment2);
                     eValueGSNN_var02=DeltaR_WithPropagation(Segment,Segment2);
                     /// eValueGSNN_var03=InBT->Z()-vetex->Z();
-										/// i guess the sign in this calculation is wrong,
-										/// it should be rather round:
-										eValueGSNN_var03=vetex->Z()-InBT->Z();
-										/// is this independent, if we do pair search w.r.t. to a real
-										/// vertex, or w.r.t to vetex from BT pairs ???
-										
+                    /// i guess the sign in this calculation is wrong,
+                    /// it should be rather round:
+                    eValueGSNN_var03=vetex->Z()-InBT->Z();
+                    /// is this independent, if we do pair search w.r.t. to a real
+                    /// vertex, or w.r.t to vetex from BT pairs ???
+
                     eValueGSNN_var04=DeltaThetaSingleAngles(Segment,Segment2);
                     eValueGSNN_var05=TMath::Abs(pat_one_cnt-pat_two_cnt);
                     eValueGSNN_var06=Segment2->Flag()+Segment->Flag();
-                    eANNPairTree->Fill();
-                    eANNPairTree->Show(eANNPairTree->GetEntries()-1);
+
+
+                    if (gEDBDEBUGLEVEL>3) {
+                        cout <<"-------------   Print eValueGSNN   ------------- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var00= " << eValueGSNN_var00 << "   ---- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var01= " << eValueGSNN_var01 << "   ---- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var02= " << eValueGSNN_var02 << "   ---- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var03= " << eValueGSNN_var03 << "   ---- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var04= " << eValueGSNN_var04 << "   ---- " << endl;
+                        cout <<"-------------   Print eValueGSNN_var05= " << eValueGSNN_var05 << "   ---- " << endl;
+                    }
+
+
+                    // Severe Warning! If in this part of the code:
+                    // eANNPairTree->Show(eANNPairTree->GetEntries()-1) is invoked,
+                    // then the Variables of the Treeentry are loaded into the memory
+                    // address and the current value is overwritten!!!!!!
+                    // DO NOT DO THIS!
 
                     Double_t params[6];
                     params[0]=eValueGSNN_var00; //dIP
@@ -1348,22 +1391,30 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     params[3]=eValueGSNN_var03; //deltaZ
                     params[4]=eValueGSNN_var04; //dT
                     params[5]=eValueGSNN_var05; //dNPL
-//                    params[6]=eValueGSNN_var06; //d
+//                    params[6]=eValueGSNN_var06; // cannot be used, uses MC info...
                     //---------
                     Double_t value=0;
-										if (gEDBDEBUGLEVEL>1) {
-                    cout << "EdbShowerAlg_GS::FindPairs  Params:  ";
-                    for (int hj=0; hj<6; hj++) cout << "  " << params[hj];
-                    cout << endl;
-                    cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
+                    if (gEDBDEBUGLEVEL>2) {
+                        cout << "EdbShowerAlg_GS::FindPairs  Params:  ";
+                        for (int hj=0; hj<6; hj++) cout << "  " << params[hj];
+                        cout << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
+                        value=eANNPair->Evaluate(0,params);
+                        eValueGSNN_varOutput=value;
+                        cout << value << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  --------  " << endl;
+                    }
+
+                    // Evaluate now the NN.
                     value=eANNPair->Evaluate(0,params);
-                    cout << value << endl;
-                    cout << "EdbShowerAlg_GS::FindPairs  --------  " << endl;
-										}
-										
-										value=eANNPair->Evaluate(0,params);
-										if (value<eANNPairCut) continue;
-										
+                    // Fill now the Tree with NN variables. Can be retrieved later.
+                    eValueGSNN_varOutput=value;
+                    eANNPairTree->Fill();
+
+                    // After Full Tree is Filled, check wheter last cut condition is satisfied.
+                    if (value<eANNPairCut) continue;
+
+
 
                     // Chi2 Variable:
                     Float_t dminDist=GetMinimumDist(Segment,Segment2);
@@ -1501,9 +1552,31 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
     return NewRecoShowerArray;
 }
 
+//______________________________________________________________________________
 
 
+void EdbShowerAlg_GS::CreateANNPlots()
+{
+    // Draw Histograms for the last cut on Gamma Search
+    TCanvas* canv_input = new TCanvas();
+    canv_input->Divide(3,2);
+    canv_input->cd(1);
+    eANNPairTree->Draw("eValueGSNN_var00");
+    canv_input->cd(2);
+    eANNPairTree->Draw("eValueGSNN_var01");
+    canv_input->cd(3);
+    eANNPairTree->Draw("eValueGSNN_var02");
+    canv_input->cd(4);
+    eANNPairTree->Draw("eValueGSNN_var03");
+    canv_input->cd(5);
+    eANNPairTree->Draw("eValueGSNN_var04");
+    canv_input->cd(6);
+    eANNPairTree->Draw("eValueGSNN_var05");
 
+    TCanvas* canv_output = new TCanvas();
+    eANNPairTree->Draw("eValueGSNN_varOutput");
+    return;
+}
 
 //______________________________________________________________________________
 
@@ -2982,7 +3055,7 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     fileOld->Close();
 
 
-		// This is realy not nice coding ....
+    // This is realy not nice coding ....
     gSystem->Exec("mv -vf Shower.root Shower.Orig.root");
     gSystem->Exec("mv -vf New.root Shower.root");
     cout << "EdbShowerAlgESimple::WriteNewRootFile...done."<<endl;

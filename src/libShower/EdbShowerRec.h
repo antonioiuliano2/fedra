@@ -158,8 +158,8 @@ public:
     EdbShowerRec();
     EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA, int piece2, int piece2par,int DOWN,EdbPVRec  *pvr);
     EdbShowerRec(EdbPVRec  *pvr);
-		
-		EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType);
+
+    EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType);
 
     virtual ~EdbShowerRec();
 
@@ -173,7 +173,7 @@ public:
     Float_t output30;		// old neural net variables for e/pi separation
     Float_t output50;		// old neural net variables for e/pi separation
     Float_t E_MC;		// energy of the first starting basetrack
-    
+
 
     Int_t sizeb;		// number of basetracks
     Int_t isizeb;		// ??? forgot what it was ???
@@ -598,8 +598,10 @@ public:
 
 
     // Inline Set Functions:
-    inline void   	SetUseAliSub(Bool_t UseAliSub) {eUseAliSub=UseAliSub;}
-    
+    inline void   	SetUseAliSub(Bool_t UseAliSub) {
+        eUseAliSub=UseAliSub;
+    }
+
     inline void         SetEdbPVRec( EdbPVRec* Ali )          {
         eAli = Ali;
         eAliNpat=eAli->Npatterns();
@@ -629,7 +631,7 @@ public:
             eInBTArrayIsFilled=kTRUE;
         }
     }
-        
+
     void SetInBTArray( EdbPVRec* Ali,  Int_t mode=0 );
 
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN)      {
@@ -649,7 +651,9 @@ public:
 
 
     // Inline Get Functions:
-    inline Bool_t   	GetUseAliSub() {return eUseAliSub;}
+    inline Bool_t   	GetUseAliSub() {
+        return eUseAliSub;
+    }
     inline EdbPVRec*    GetEdbPVRec( )      const       {
         return eAli;
     }
@@ -665,7 +669,7 @@ public:
     inline EdbPVRec*    GetEdbPVRecSub( )      const       {
         return eAli_Sub;
     }
-    
+
 
     inline TObjArray*   GetInBTArray( )     const       {
         return eInBTArray;
@@ -726,7 +730,7 @@ public:
     Double_t  DeltaR_WithoutPropagation(EdbSegP* s,EdbSegP* stest);
     Bool_t    FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbTrackP* shower);
     Bool_t    IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegment, Double_t CylinderRadius, Double_t ConeAngle);
-		Double_t  InvariantMass(EdbSegP* s1, EdbSegP* s2, Double_t Momentum1=-1, Double_t Momentum2=-1,  Double_t ID1=22, Double_t ID2=22);
+    Double_t  InvariantMass(EdbSegP* s1, EdbSegP* s2, Double_t Momentum1=-1, Double_t Momentum2=-1,  Double_t ID1=22, Double_t ID2=22);
 
     // Execute  -- the reconstruction function:
     void      Execute();
