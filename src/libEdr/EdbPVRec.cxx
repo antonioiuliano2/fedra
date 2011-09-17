@@ -2808,6 +2808,18 @@ EdbPattern  *EdbPVRec::GetPatternByPID(int pid)
 }
 
 ///______________________________________________________________________________
+Int_t  EdbPVRec::NSeg()
+{
+  EdbPattern *p=0;
+	Int_t nseg=0;
+  for(int i=0; i<Npatterns(); i++) {
+    p = GetPattern(i);
+    nseg+=p->N();
+  }
+  return nseg;
+}
+
+///______________________________________________________________________________
 EdbSegP *EdbPVRec::AddSegment(EdbSegP &s)
 {
   // add new segment to this 

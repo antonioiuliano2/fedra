@@ -155,6 +155,7 @@ public:
     void Print();
     void PrintParameters();
     void PrintParametersShort();
+    void PrintRecoShowerArray();
     void PrintMore();
     void PrintAll();
 
@@ -238,11 +239,11 @@ public:
     Double_t 	CalcIP(EdbSegP *s, double x, double y, double z);
     Double_t 	CalcIP(EdbSegP *s, EdbVertex *v);
     Bool_t 		IsPossibleFakeDoublet(EdbSegP* s1,EdbSegP* s2);
-
+    Bool_t FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub);
 
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
-
+    TObjArray* FindPairsPreselected(EdbPVRec* eAli_Sub);
 
     void CreateANNPair();
     void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);

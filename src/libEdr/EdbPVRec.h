@@ -250,6 +250,9 @@ class EdbPVRec : public EdbPatternsVolume {
   }
   Int_t      Nvtx()       const  {return eVTX ? eVTX->GetEntriesFast() : 0;}
   EdbVertex *GetVertex(Int_t &i) {return eVTX ? (EdbVertex*)eVTX->At(i) : 0;}
+  
+  Int_t      NSeg();
+	  
 
   int ExtractDataVolumeSeg( EdbTrackP &tr, TObjArray &arr, 
 			    float binx, float bint );
