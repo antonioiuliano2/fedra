@@ -3990,6 +3990,7 @@ void EdbShowerRec::Execute()
         //-----------------------------------
         ActualPID= InBT->PID() ;
         newActualPID= InBT->PID() ;
+				
 
         while (StillToLoop) {
             if (gEDBDEBUGLEVEL>3) cout << "EdbShowerRec::Execute--- --- Doing patterloop " << ActualPID << " for patterns Z position=" << eAli_Sub->GetPattern(ActualPID)->Z() << endl;
@@ -4071,6 +4072,7 @@ void EdbShowerRec::Execute()
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
             if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
+						cout << "EdbShowerRec::Execute--- ---ActualPID= " << ActualPID <<" Finished. Take newActualPID = " << newActualPID << " now. (this is end of  while (StillToLoop) ) " << endl;
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
 

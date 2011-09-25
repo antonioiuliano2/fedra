@@ -187,9 +187,17 @@ private:
     // Variable to clean the found parings once more.
     Bool_t 						eSetCleanPairs;
 
+    // Variable to distinuish the Case Modes as described in the
+    // manual: case A (==0) and case B (==1)
+    Int_t								eRecoMode;
+		// Variable to set the ANN Cut on or off. Default = ON
+		Bool_t							eCutModeFull;
+
     // Neural Network to Improve Fake BG pair rejection rate
     // (part of gamma pair reco)
     TMultiLayerPerceptron* 	eANNPair;
+		TMultiLayerPerceptron* 	eANNPairNoVtx;
+		TMultiLayerPerceptron* 	eANNPairYesVtx;
     TTree* 									eANNPairTree;
     Float_t									eANNPairCut;
     // Neural Network input feed variables
@@ -230,10 +238,16 @@ public:
     inline void        SetCleanPairs(Bool_t CleanPairs) {
         eSetCleanPairs = CleanPairs;
     }
+    
+    inline void        SetCutModeFull(Bool_t CutModeFull) {
+        eCutModeFull = CutModeFull;
+    }
 
 
     // Helper Functions for this class:
     Bool_t	CheckInput();
+		void    SetRecoMode(Int_t RecoMode);
+		
     void 		Convert_InVtxArray_To_InBTArray();
     Bool_t		CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* SegmentPIDArray,TArrayI* SegmentIDArray,TArrayI* Segment2PIDArray,TArrayI* Segment2IDArray);
     Double_t 	CalcIP(EdbSegP *s, double x, double y, double z);
@@ -243,7 +257,8 @@ public:
 
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
-    TObjArray* FindPairsPreselected(EdbPVRec* eAli_Sub);
+    TObjArray* 	FindPairsPreselected(EdbPVRec* eAli_Sub);
+		
 
     void CreateANNPair();
     void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);

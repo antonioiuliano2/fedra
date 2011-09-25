@@ -210,10 +210,11 @@ public:
     void SetHistGeometry_OPERAandMC();
 
     void CheckEdbPVRec();
-    void CheckEdbPVRecThetaSpace();
+    void CheckEdbPVRecThetaSpace(Int_t AliType);
     void Execute_ConstantBTDensity();
     void Execute_ConstantQuality();
 
+		TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_Passing(EdbPVRec* aliSource);
 

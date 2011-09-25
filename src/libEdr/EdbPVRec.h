@@ -238,6 +238,8 @@ class EdbPVRec : public EdbPatternsVolume {
 
   EdbTrackP* GetTrack(int i) const {return eTracks ? (EdbTrackP*)(eTracks->At(i)) : 0;}
   EdbTrackP* FindTrack(int id) const;
+	
+	EdbSegP* FindSegment(int PlateID, int SegmentID) const;
 
   void AddTrack(EdbTrackP *track) {
     if (!eTracks) eTracks = new TObjArray();

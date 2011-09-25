@@ -891,6 +891,21 @@ EdbTrackP* EdbPVRec::FindTrack(int id) const
 }
 
 ///______________________________________________________________________________
+EdbSegP* EdbPVRec::FindSegment(int PlateID, int SegmentID) const
+{
+
+  for(int i=0; i<Npatterns(); ++i) {
+		EdbPattern* pat = GetPattern(i);
+		if (pat->PID() != PlateID) continue;
+		for(int j=0; j<pat->N(); ++j) {
+			EdbSegP* seg = pat->GetSegment(j);
+			if (seg->ID() == SegmentID) return seg;
+		}
+	}
+  return 0;
+}
+
+///______________________________________________________________________________
 EdbPatCouple *EdbPVRec::AddCouple(int id1, int id2)
 {
   EdbPatCouple *c = new EdbPatCouple();
