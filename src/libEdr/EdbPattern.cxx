@@ -1073,16 +1073,16 @@ void EdbTrackP::PrintNice()
   nsegf = NF();
 
   printf("EdbTrackP with %d segments and %d fitted segments:\n", nseg, nsegf );
-  printf("  N  PID     ID          X             Y              Z        TX       TY     W      P       Track    Chi2    Prob     Mass\n");
-  printf("    %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d   %7.4f  %7.4f   %5.3f\n",
-	   PID(), ID(),X(),Y(),Z(),     TX(),   TY(),  W(),  P(),Track(), Chi2(), Prob(),   M());
+  printf("  N  PID     ID          X             Y              Z        TX       TY     W      P      Flag     Track    Chi2    Prob     Mass\n");
+  printf("    %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d   %7.4f  %7.4f   %5.3f\n",
+	   PID(), ID(),X(),Y(),Z(),     TX(),   TY(),  W(),  P(), Flag(), Track(), Chi2(), Prob(),   M());
 
   EdbSegP *s=0;
   if(nseg) 
     for(int i=0; i<nseg; i++) {
       s = GetSegment(i);
-      printf("%3d %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d   %7.4f  %7.4f\n",
-	     i, s->PID(), s->ID(),s->X(),s->Y(),s->Z(),  s->TX(),s->TY(),  s->W(),  s->P(),s->Track(),s->Chi2(),s->Prob());
+      printf("%3d %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d   %7.4f  %7.4f\n",
+	     i, s->PID(), s->ID(),s->X(),s->Y(),s->Z(),  s->TX(),s->TY(),  s->W(),  s->P(), s->Flag(), s->Track(),s->Chi2(),s->Prob());
     }
 }
 
