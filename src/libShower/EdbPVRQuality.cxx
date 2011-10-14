@@ -1,6 +1,10 @@
 #include "EdbPVRQuality.h"
 using namespace std;
 
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// EdbPVRQuality                                                        //
+//
 // Base class for checks of the scanned data, especially for shower reconstruction.
 // The observed basetrack density can vary from brick to brick with a large
 // fluctuation.
@@ -10,6 +14,9 @@ using namespace std;
 // The EdbPVRQuality class basically equals the number of basetracks per unit area
 // to a maximum upper value (if necessary) by adapting the quality cut for a single
 // basetrack.
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
 
 ClassImp(EdbPVRQuality)
 
@@ -49,13 +56,13 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     eIsSource=kTRUE;
 
     CheckEdbPVRec();
-		
+
 // 		Remove_Passing(eAli_orig);
 // 		Remove_DoubleBT(eAli_orig);
-		
-    Execute_ConstantBTDensity();
-//     Execute_ConstantQuality();
-    CreateEdbPVRec();
+
+//     Execute_ConstantBTDensity();
+//    Execute_ConstantQuality();
+//     CreateEdbPVRec();
     Print();
 }
 
@@ -86,9 +93,9 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  GetBTDensityLevel() " << GetBTDensityLevel() << endl;
 
     CheckEdbPVRec();
-		
-		Remove_Passing(eAli_orig);
-		Remove_DoubleBT(eAli_orig);
+
+    Remove_Passing(eAli_orig);
+    Remove_DoubleBT(eAli_orig);
     Execute_ConstantBTDensity();
     CreateEdbPVRec();
     Print();
@@ -370,8 +377,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     // ------------------------------------------------------------------------------
     // Main function to check if the EdbPVRec object of the scanned data is of low/high background.
     // But w.r.t. the TanTheta Space of scanned tracks.
-		//
-		// AliType
+    //
+    // AliType
     // ------------------------------------------------------------------------------
 
 
@@ -387,28 +394,28 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
     Log(2,"EdbPVRQuality::CheckEdbPVRecThetaSpace","EdbPVRQuality::CheckEdbPVRecThetaSpace");
 
-		EdbPVRec* AliSource=NULL;
-		cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   AliType = " << AliType << endl;
-		if (AliType==1) {
-			AliSource=eAli_orig;
-		}
-		else {
-			AliSource = eAli_modified;
-			if (NULL == eAli_modified) {
-				AliSource=eAli_orig;
-				cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace  NULL == eAli_modified. This means that source will be set to eAli_orig." << endl;
-			}
-		}
-		
+    EdbPVRec* AliSource=NULL;
+    cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   AliType = " << AliType << endl;
+    if (AliType==1) {
+        AliSource=eAli_orig;
+    }
+    else {
+        AliSource = eAli_modified;
+        if (NULL == eAli_modified) {
+            AliSource=eAli_orig;
+            cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace  NULL == eAli_modified. This means that source will be set to eAli_orig." << endl;
+        }
+    }
+
     if (!eIsSource) {
         cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace  eIsSource=  " << eIsSource << ". This means no source set. Return!" << endl;
         return;
     }
     // Check the patterns of the EdbPVRec:
     eAli_maxNpatterns= eAli_orig->Npatterns();
-		
+
     cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
-		
+
     if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
     if (eAli_maxNpatterns>114) {
         cout << "ERROR! EdbPVRQuality::CheckEdbPVRecThetaSpace  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
@@ -556,20 +563,20 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
-		// ...
-		TFile* file = new TFile(TString(Form("Histograms_CheckEdbPVRecThetaSpace_aliType_%d.root",AliType)),"RECREATE");
-				// Write the Histograms into root file:
-		eHistYX->Write();
-		eHistChi2W->Write();
-		eHistChi2W->Write();
-		histPatternBTDensity->Write();
-		eProfileBTdens_vs_PID_source->Write();
-		histPatternBTDensityTanTheta->Write();
-		QualityValue_Chi2->Write();
-		QualityValue_Total->Write();
-		histPatternBTDensityTanThetaVsPID->Write();
-		file->Close();
-		
+    // ...
+    TFile* file = new TFile(TString(Form("Histograms_CheckEdbPVRecThetaSpace_aliType_%d.root",AliType)),"RECREATE");
+    // Write the Histograms into root file:
+    eHistYX->Write();
+    eHistChi2W->Write();
+    eHistChi2W->Write();
+    histPatternBTDensity->Write();
+    eProfileBTdens_vs_PID_source->Write();
+    histPatternBTDensityTanTheta->Write();
+    QualityValue_Chi2->Write();
+    QualityValue_Total->Write();
+    histPatternBTDensityTanThetaVsPID->Write();
+    file->Close();
+
     TCanvas* c1 = new TCanvas();
     c1->Divide(2,2);
     c1->cd(1);
@@ -808,6 +815,48 @@ void EdbPVRQuality::PrintCutType1()
     return;
 }
 
+
+//______________________________________________________________________________
+
+
+void EdbPVRQuality::Execute()
+{
+    // Main Execution Routine.
+    // Does the following things:
+    //
+    // a) Check EdbPVRec object of data.
+    // b) Remove DoubleBasetracks
+    // c) Remove passing tracks (in any stored, either in .root file
+    //    or in pvr itself)
+    // d) Execute quality cuts if necessary: default is Constant BT density
+    // e) Store cleaned object. Can be retrieved via GetPVR().
+
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Execute " << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+
+    Log(2,"EdbPVRQuality::Execute","Main Execution Routine.");
+    Log(2,"EdbPVRQuality::Execute","Does the following things:");
+    Log(2,"EdbPVRQuality::Execute","  a) Check EdbPVRec object of data.");
+    Log(2,"EdbPVRQuality::Execute","  b) Remove DoubleBasetracks");
+    Log(2,"EdbPVRQuality::Execute","  c) Remove passing tracks (in any stored, either ");
+    Log(2,"EdbPVRQuality::Execute","     .root file or in pvr) itself)");
+    Log(2,"EdbPVRQuality::Execute","  d) Execute quality cuts if necessary: default is Constant BT density");
+    Log(2,"EdbPVRQuality::Execute","  e) Store cleaned object. Can be retrieved via GetPVR().");
+
+
+    Log(2,"EdbPVRQuality::Execute","Main Execution Routine...done.");
+    return;
+}
+
+
+
 //______________________________________________________________________________
 
 void EdbPVRQuality::Execute_ConstantBTDensity()
@@ -1043,8 +1092,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
         cout << "EdbPVRQuality::Execute_ConstantQuality()   Found tracks in the file! Good. Info:" << endl;
         cout << "EdbPVRQuality::Execute_ConstantQuality()   The long tracks in the file have an average percentage length of:" << travellenghtpercentage  <<  endl;
         cout << "EdbPVRQuality::Execute_ConstantQuality()   Mean(RMS) of Chi2 distribution of passing tracks: " << hChi2->GetMean() << "+-"  << hChi2->GetRMS() << endl;
-				
-				
+
+
 
         TCanvas* c1 = new TCanvas();
         c1->cd();
@@ -1146,7 +1195,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
                 // Constant BT quality cut:
                 agreementChi2=TMath::Sqrt(0.5 *( (seg->Chi2()-meanChi2)/rmsChi2)*((seg->Chi2()-meanChi2)/rmsChi2)  +   ((seg->W()-meanW)/rmsW)*((seg->W()-meanW)/rmsW) );
                 histagreementChi2->Fill(agreementChi2);
-								
+
 
                 // Constant BT quality cut:
                 if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
@@ -1243,8 +1292,8 @@ void EdbPVRQuality::Execute_ConstantQuality()
     eHistChi2W->Reset();
     delete histPatternBTDensity;
 
-		TCanvas* c2 = new TCanvas();
-		histagreementChi2->Draw();
+    TCanvas* c2 = new TCanvas();
+    histagreementChi2->Draw();
 
     cout << "----------void EdbPVRQuality::Execute_ConstantQuality() Cuts are done and saved to obtain desired BT density. " << endl;
     cout << "----------void EdbPVRQuality::Execute_ConstantQuality() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
@@ -1490,13 +1539,13 @@ void EdbPVRQuality::Help()
 
 TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
 {
-	 // Find double counted basetracks. 
-	 // More explanation in Remove_DoubleBT() function.
-	 // Cutvalues used are the same.
-	 
-	 cout << "EdbPVRQuality::Find_DoubleBT()" << endl;
-   cout << "EdbPVRQuality::Find_DoubleBT()  aliSource = " << aliSource << endl;
-   cout << "EdbPVRQuality::Find_DoubleBT()  eAli_orig = " << eAli_orig << endl;
+    // Find double counted basetracks.
+    // More explanation in Remove_DoubleBT() function.
+    // Cutvalues used are the same.
+
+    cout << "EdbPVRQuality::Find_DoubleBT()" << endl;
+    cout << "EdbPVRQuality::Find_DoubleBT()  aliSource = " << aliSource << endl;
+    cout << "EdbPVRQuality::Find_DoubleBT()  eAli_orig = " << eAli_orig << endl;
 
     if (NULL==aliSource) {
         cout << "WARNING!   Find_DoubleBT::Remove_DoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
@@ -1508,28 +1557,33 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
             aliSource=eAli_orig;
         }
     }
-	 
-		Bool_t seg_seg_close=kFALSE;
+
+    Bool_t seg_seg_close=kFALSE;
     EdbSegP* seg=0;
     EdbSegP* seg1=0;
     Int_t NdoubleFoundSeg=0;
-		TObjArray* DoubleBTArray = new TObjArray();
+    TObjArray* DoubleBTArray = new TObjArray();
 
     //gEDBDEBUGLEVEL=3;
     cout << "EdbPVRQuality::Find_DoubleBT()   Start looping now. Attention, this might take a while!" << endl;
-		
-		if (aliSource->Npatterns()==0) return NULL;
-		
-		for (int i = 0; i <aliSource->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Find_DoubleBT()   Looping over Ali_source->Pat()=" << i <<  ". Until now double Candidates found: " << NdoubleFoundSeg << endl;
 
-        // Create Target Pattern:
+    if (aliSource->Npatterns()==0) return NULL;
+
+    for (int i = 0; i <aliSource->Npatterns(); i++ ) {
+
+        // Get Target Pattern:
         EdbPattern* pat = aliSource->GetPattern(i);
         // Helper Variable for cout purpose
         Int_t nPat=pat->N();
 
+        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Find_DoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
+
+        if (nPat==0) continue;
+
         for (int j = 0; j < nPat-1; j++ ) {
-            if (gEDBDEBUGLEVEL>2) if (j%(nPat/10)==0) cout << "10%more of loop done." << flush;
+
+            // condition due avoid floating point exception (divide by zero)
+            if (gEDBDEBUGLEVEL>2) if (nPat>10) if (j%(nPat/10)==0) cout << "." << flush;
 
             seg = pat->GetSegment(j);
             seg_seg_close=kFALSE;
@@ -1557,8 +1611,8 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
                 Float_t deltaR=0;
                 Float_t deltaTheta=0;
                 Float_t dR_allowed_m_deltaR=0;
-								// Calculate cut values:
-								deltaTheta=TMath::Sqrt( TMath::Power(seg->TX()-seg1->TX(),2)+TMath::Power(seg->TY()-seg1->TY(),2) );
+                // Calculate cut values:
+                deltaTheta=TMath::Sqrt( TMath::Power(seg->TX()-seg1->TX(),2)+TMath::Power(seg->TY()-seg1->TY(),2) );
                 if (deltaTheta>0.1) continue;
 
                 deltaR=TMath::Sqrt( TMath::Power(seg->X()-seg1->X(),2)+TMath::Power(seg->Y()-seg1->Y(),2) );
@@ -1568,8 +1622,8 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
                 dR_allowed = 10.75/0.1*deltaTheta;
                 dR_allowed_m_deltaR=TMath::Abs(deltaR-dR_allowed);
 
-								// For this function now -in contrary to Remove_DoubleBT- we
-								// ONLY keep double basetrack pairings
+                // For this function now -in contrary to Remove_DoubleBT- we
+                // ONLY keep double basetrack pairings
                 if (deltaR<3.0&&deltaTheta<0.01) toKeep=kTRUE;
                 if (dR_allowed_m_deltaR<1.5) toKeep=kTRUE;
                 if (!toKeep) continue;
@@ -1583,26 +1637,26 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
                 // category "fake doublet" and then be removed, even if they are real double BT
                 // from a signal.
 
-								seg_seg_close=kTRUE;
+                seg_seg_close=kTRUE;
                 ++NdoubleFoundSeg;
             } // for (int k = j+1; k <pat->N(); k++ )
-            
+
             // Add segment:
             if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
             if (seg_seg_close) DoubleBTArray->Add(seg);
-						seg_seg_close=kFALSE;
-        } // of for (int j = 0; j < nPat-1; j++ ) 
+            seg_seg_close=kFALSE;
+        } // of for (int j = 0; j < nPat-1; j++ )
     } // for (int i = 0; i <aliSource->Npatterns(); i++ )
-		
-    cout << "EdbPVRQuality::Find_DoubleBT() Statistics: " << endl;
-		cout << "EdbPVRQuality::Find_DoubleBT() We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different BTracks." << endl;
 
-		cout << "EdbPVRQuality::Remove_DoubleBT()...done." << endl;
+    cout << "EdbPVRQuality::Find_DoubleBT() Statistics: " << endl;
+    cout << "EdbPVRQuality::Find_DoubleBT() We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different BTracks." << endl;
+
+    cout << "EdbPVRQuality::Find_DoubleBT()...done." << endl;
     return DoubleBTArray;
-		
+
 }
 
-	
+
 //___________________________________________________________________________________
 
 
@@ -1644,11 +1698,11 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
     //gEDBDEBUGLEVEL=3;
     cout << "EdbPVRQuality::Remove_DoubleBT()   Start looping now. Attention, this might take a while!" << endl;
-		
-		if (aliSource->Npatterns()==0) return aliSource;
+
+    if (aliSource->Npatterns()==0) return aliSource;
 
     for (int i = 0; i <aliSource->Npatterns(); i++ ) {
-        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Remove_DoubleBT()   Looping over Ali_source->Pat()=" << i <<  ". Until now double Candidates found: " << NdoubleFoundSeg << endl;
+
 
         // Create Target Pattern:
         EdbPattern* pat = aliSource->GetPattern(i);
@@ -1660,8 +1714,14 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
         // Helper Variable for cout purpose
         Int_t nPat=pat->N();
 
+        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Remove_DoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
+
+        if (nPat==0) continue;
+
         for (int j = 0; j < nPat-1; j++ ) {
-            if (gEDBDEBUGLEVEL>2) if (j%(nPat/10)==0) cout << "10%more of loop done." << flush;
+
+            // condition due avoid floating point exception (divide by zero)
+            if (gEDBDEBUGLEVEL>2) if (nPat>10) if (j%(nPat/10)==0) cout << "." << flush;
 
             seg = pat->GetSegment(j);
             seg_seg_close=kFALSE;
@@ -1716,15 +1776,15 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
                 ++NdoubleFoundSeg;
                 seg_seg_close=kTRUE;
-            } // for (int k = j+1; k <pat->N(); k++ ) 
-            
+            } // for (int k = j+1; k <pat->N(); k++ )
+
             if (seg_seg_close) continue;
 
             // Add segment:
             if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
             pt->AddSegment(*seg);
-        }// for (int k = j+1; k <pat->N(); k++ ) 
-        
+        }// for (int k = j+1; k <pat->N(); k++ )
+
         if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
         aliTarget->AddPattern(pt);
     } // for (int i = 0; i <aliSource->Npatterns(); i++ )

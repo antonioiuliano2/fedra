@@ -76,6 +76,9 @@ protected:
     // Reset All Default Variables:
     void 								Set0();
 
+    // General Debug Variable for slow debugging...
+    Bool_t eDebug;
+
 
 public:
 
@@ -105,10 +108,12 @@ public:
     }
     inline void         SetRecoShowerArray(TObjArray* RecoShowerArray) {
         eRecoShowerArray=RecoShowerArray;
+        eRecoShowerArrayN=eRecoShowerArray->GetEntries();
     }
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN) {
         eRecoShowerArrayN=RecoShowerArrayN;
     }
+    void         AddRecoShowerArray(TObjArray* RecoShowerArray);
 
 
     inline void 				SetActualAlgParameterset(Int_t ActualAlgParametersetNr) {
@@ -143,6 +148,7 @@ public:
     Double_t 						GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2);
 
 
+    void 								SetParameter(Int_t parNr, Float_t parvalue);
     void         				SetParameters(Float_t* par);
     //void                Transform_eAli(EdbSegP* InitiatorBT);
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
@@ -158,6 +164,12 @@ public:
     void PrintRecoShowerArray();
     void PrintMore();
     void PrintAll();
+
+
+    // General DEBUG FUNCTION
+    inline void SetDebug() {
+        eDebug=kTRUE;
+    }
 
 
     // Main functions for using this ShowerAlgorithm Object.
@@ -184,22 +196,29 @@ private:
     Int_t              eInVtxArrayN;
     Bool_t						 eInVtxArraySet;
 
+
+    // Variable for doing a preselction of InBTs (speedup)
+    Bool_t						eFindPairsPreselected;
+    // Variable to distinuish the Case Modes as described in the
+    // manual: case A (==0) and case B (==1) and case C (==2)
+    Int_t								eRecoMode;
+    // Variable to set the ANN Cut on or off. Default = ON
+    Bool_t							eCutModeFull;
+
+
     // Variable to clean the found parings once more.
     Bool_t 						eSetCleanPairs;
 
-    // Variable to distinuish the Case Modes as described in the
-    // manual: case A (==0) and case B (==1)
-    Int_t								eRecoMode;
-		// Variable to set the ANN Cut on or off. Default = ON
-		Bool_t							eCutModeFull;
+
 
     // Neural Network to Improve Fake BG pair rejection rate
     // (part of gamma pair reco)
     TMultiLayerPerceptron* 	eANNPair;
-		TMultiLayerPerceptron* 	eANNPairNoVtx;
-		TMultiLayerPerceptron* 	eANNPairYesVtx;
+    TMultiLayerPerceptron* 	eANNPairCaseA;
+    TMultiLayerPerceptron* 	eANNPairCaseB;
+    TMultiLayerPerceptron* 	eANNPairCaseC;
     TTree* 									eANNPairTree;
-    Float_t									eANNPairCut;
+    Float_t									eANNPairCut[3];
     // Neural Network input feed variables
     Float_t eValueGSNN_var00;
     Float_t eValueGSNN_var01;
@@ -210,6 +229,12 @@ private:
     Float_t eValueGSNN_var06;
     Float_t eValueGSNN_varInput;
     Float_t eValueGSNN_varOutput;
+
+    // Arrays for double segment comparisons
+    TArrayI* eSegmentPIDArray;
+    TArrayI* eSegmentIDArray;
+    TArrayI* eSegment2PIDArray;
+    TArrayI* eSegment2IDArray;
 
 
 public:
@@ -235,34 +260,42 @@ public:
         return eInVtxArray;
     }
 
+    inline void        SetFindPairsPreselected(Bool_t FindPairsPreselected) {
+        eFindPairsPreselected = FindPairsPreselected;
+    }
+
     inline void        SetCleanPairs(Bool_t CleanPairs) {
         eSetCleanPairs = CleanPairs;
     }
-    
+
     inline void        SetCutModeFull(Bool_t CutModeFull) {
         eCutModeFull = CutModeFull;
     }
 
 
-    // Helper Functions for this class:
-    Bool_t	CheckInput();
-		void    SetRecoMode(Int_t RecoMode);
-		
-    void 		Convert_InVtxArray_To_InBTArray();
-    Bool_t		CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* SegmentPIDArray,TArrayI* SegmentIDArray,TArrayI* Segment2PIDArray,TArrayI* Segment2IDArray);
-    Double_t 	CalcIP(EdbSegP *s, double x, double y, double z);
-    Double_t 	CalcIP(EdbSegP *s, EdbVertex *v);
-    Bool_t 		IsPossibleFakeDoublet(EdbSegP* s1,EdbSegP* s2);
-    Bool_t FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub);
 
+
+    // Helper Functions (only) for this class:
+    TObjArray*	SelectHighestPInMCArray(TObjArray* BTArray);
+
+    Bool_t			CheckInput();
+    void    		SetRecoMode(Int_t RecoMode);
+
+    void 				Convert_InVtxArray_To_InBTArray();
+    Bool_t			CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* SegmentPIDArray,TArrayI* SegmentIDArray,TArrayI* Segment2PIDArray,TArrayI* Segment2IDArray,  Int_t RecoShowerArrayN);
+    Double_t 		CalcIP(EdbSegP *s, double x, double y, double z);
+    Double_t 		CalcIP(EdbSegP *s, EdbVertex *v);
+    Bool_t 			IsPossibleFakeDoublet(EdbSegP* s1,EdbSegP* s2);
+
+    Bool_t 			FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub);
     TObjArray* 	FindPairs(EdbSegP* InBT, EdbPVRec* eAli_Sub);
     TObjArray* 	CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShowerArrayFromFindPairs);
     TObjArray* 	FindPairsPreselected(EdbPVRec* eAli_Sub);
-		
 
-    void CreateANNPair();
-    void ReloadANNWeights(Bool_t VtxArray_Or_InBTArray);
-    void CreateANNPlots();
+    void 				FillANNTree( TObjArray* RecoShowerArray, EdbSegP* Inbt);
+    void 				CreateANNPair();
+    void 				ReloadANNs(Int_t RecoMode);
+    void 				CreateANNPlots();
 
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where

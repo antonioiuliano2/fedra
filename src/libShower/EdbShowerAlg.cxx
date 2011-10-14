@@ -3,7 +3,6 @@
 
 using namespace std;
 using namespace TMath;
-// using namespace EdbEDAUtil;
 
 ClassImp(EdbShowerAlg)
 ClassImp(EdbShowerAlg_GS)
@@ -80,11 +79,25 @@ void EdbShowerAlg::Set0()
 
 //______________________________________________________________________________
 
+void EdbShowerAlg::SetParameter(Int_t parNr, Float_t parvalue)
+{
+    if (parNr>9) {
+        cout << "EdbShowerAlg::SetParameter()   WARNING  parNr>9 .  Do nothing."<<endl;
+        return;
+    }
+    eParaValue[parNr]=parvalue;
+    cout << "EdbShowerAlg::SetParameter()...done."<<endl;
+}
+
+//______________________________________________________________________________
+
 void EdbShowerAlg::SetParameters(Float_t* par)
 {
+    cout << "EdbShowerAlg::SetParameters()..."<<endl;
     // SetParameters
     for (int i=0; i<10; ++i) {
         eParaValue[i]=par[i];
+        cout << "EdbShowerAlg::SetParameters()...Parameter " << i << " set to: " << eParaValue[i]  <<endl;
     }
     cout << "EdbShowerAlg::SetParameters()...done."<<endl;
 }
@@ -92,7 +105,29 @@ void EdbShowerAlg::SetParameters(Float_t* par)
 //______________________________________________________________________________
 
 
+void EdbShowerAlg::AddRecoShowerArray(TObjArray* RecoShowerArray)
+{
+    // Add an array to the existing RecoShower array.
+    // For retrieving objects and handling them: be carefull that
+    // you add objects of the same class.
 
+    Log(3,"EdbShowerAlg::AddRecoShowerArray","AddRecoShowerArray...");
+
+    if (RecoShowerArray==NULL || RecoShowerArray->GetEntries()==0) return;
+
+    // TObject* obj = RecoShowerArray->At(0);
+    // if (obj->ClassName()!="EdbTrackP") { cout << "WARNING AddRecoShowerArray ClassNames dont match!"<< endl; cout << obj->ClassName() << endl; return; } // libShower
+    // if (obj->ClassName()!="EdbShowerP") { cout << "WARNING AddRecoShowerArray ClassNames dont match!"<< endl; return; } // libShowRec
+
+    for (int i=0; i<RecoShowerArray->GetEntries(); ++i) {
+        EdbTrackP* obj = (EdbTrackP*)RecoShowerArray->At(i); // libShower
+        //EdbShowerP* obj = (EdbShowerP*)RecoShowerArray->At(0); // libShowRec
+        eRecoShowerArray->Add(obj);
+        ++eRecoShowerArrayN;
+    }
+
+    return;
+}
 
 
 
@@ -467,8 +502,8 @@ void EdbShowerAlg::PrintMore()
 
 void EdbShowerAlg::PrintRecoShowerArray()
 {
-    cout << "EdbShowerAlg::PrintRecoShowerArray()" << endl;
-    cout << "eRecoShowerArray->GetEntries() =  " <<  eRecoShowerArray->GetEntries() << "  ." << endl;
+    cout << "EdbShowerAlg::PrintRecoShowerArray()..." << endl;
+    cout << "EdbShowerAlg::PrintRecoShowerArray()   eRecoShowerArray->GetEntries() =  " <<  eRecoShowerArray->GetEntries() << "  ." << endl;
 
     if (eRecoShowerArrayN<1) return;
     printf("i     X   Y   Z    NBT    \n");
@@ -723,7 +758,7 @@ void EdbShowerAlg_GS::Set0()
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Set0()");
 
     eRecoMode=0;
-		eCutModeFull=kTRUE;
+    eCutModeFull=kTRUE;
 
     eInVtxArrayN=0;
     eInVtxArray->Clear();
@@ -736,8 +771,9 @@ void EdbShowerAlg_GS::Set0()
 
     eAlgName="GS";
     eAlgValue=999;
-    eANNPairCut=0.5;
+    eANNPairCut[0]=eANNPairCut[1]=eANNPairCut[2]=0.45;
     eSetCleanPairs=kTRUE;
+    eFindPairsPreselected=kTRUE;
 
     eParaValue[0]=393;
     eParaString[0]="PARA_GS_CUT_dIP";
@@ -754,7 +790,13 @@ void EdbShowerAlg_GS::Set0()
     eParaValue[6]=1;
     eParaString[6]="PARA_GS_CUT_OPPOSITEFLAG";
 
-		Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Set0()...done.");
+
+    eSegmentPIDArray->Reset();
+    eSegmentIDArray->Reset();
+    eSegment2PIDArray->Reset();
+    eSegment2IDArray->Reset();
+
+    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Set0()...done.");
     return;
 }
 
@@ -766,24 +808,30 @@ void EdbShowerAlg_GS::Init()
 {
     //  Init with values according to GS Alg.
     //  Create essential objects.
-		//  Init function is supposed to be executed exact once for 
-		//  each class instance.
-		//
+    //  Init function is supposed to be executed exact once for
+    //  each class instance.
+    //
     //  Took over from "FindGamma.C" script I develoved before:
     //  and with recorded values from a GammaSearch best algo parameterset.
     //  See also table "tableshowerchosenparametersets"
     //  and figure "" in FWM thesis.
-		//
+    //
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Init()");
 
+    eDebug=kFALSE;
+
     eRecoMode=0;
-		eCutModeFull=kTRUE;
+    eCutModeFull=kTRUE;
 
     eAlgName="GS";
     eAlgValue=999; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
 
-    eANNPairCut=0.5;
+    eFindPairsPreselected=kTRUE;
+
+    eANNPairCut[0]=0.8;
+    eANNPairCut[1]=0.48;
+    eANNPairCut[2]=0.45;
 
     //
     // min IP cut; this cut is used for the -better- IP of both BTs to Vertex/BT
@@ -829,14 +877,19 @@ void EdbShowerAlg_GS::Init()
 
     eInBTArray = new TObjArray();
     eInBTArrayN=0;
-		
-		if (gEDBDEBUGLEVEL>2) {
-			cout << "EdbShowerAlg_GS eRecoShowerArray = " << eRecoShowerArray << endl;
-			cout << "EdbShowerAlg_GS eInVtxArray = " << eInVtxArray << endl;
-			cout << "EdbShowerAlg_GS eInBTArray = " << eInBTArray << endl;
-		}
 
-		Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Init()...done.");
+    eSegmentPIDArray = new TArrayI(9999);
+    eSegmentIDArray = new TArrayI(9999);
+    eSegment2PIDArray = new TArrayI(9999);
+    eSegment2IDArray = new TArrayI(9999);
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowerAlg_GS eRecoShowerArray = " << eRecoShowerArray << endl;
+        cout << "EdbShowerAlg_GS eInVtxArray = " << eInVtxArray << endl;
+        cout << "EdbShowerAlg_GS eInBTArray = " << eInBTArray << endl;
+    }
+
+    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Init()...done.");
     return;
 }
 
@@ -871,38 +924,60 @@ void EdbShowerAlg_GS::CreateANNPair()
     eANNPairTree->Branch("eValueGSNN_var04",&eValueGSNN_var04,"eValueGSNN_var04/F");
     eANNPairTree->Branch("eValueGSNN_var05",&eValueGSNN_var05,"eValueGSNN_var05/F");
     eANNPairTree->Branch("eValueGSNN_var06",&eValueGSNN_var06,"eValueGSNN_var06/F");
-    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  SetBranchAddress done." << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  SetBranchAddress done." << endl << endl;
 
     // :@eValueGSNN_var06 is not used, because Flag() is a MC information only.
     TString layout="";
-		TString weights="";
-		
-		// No Vertex Info:
-    layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
-    // Create the Multilayerperceptron
-    eANNPairNoVtx  = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
-		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  TMultiLayerPerceptron creation done." << endl;
-    cout << "EdbShowerAlg_GS::CreateANNPair()   Layout = " << endl;
-    cout << layout.Data() << endl;
-		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights___no_Vertex.txt");
-		eANNPairNoVtx->LoadWeights(weights);
-    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPair: weights = " << endl;
-    cout << weights.Data() << endl;
-		
-		// With Vertex Info:
+    TString weights="";
+
+    // Attention: the three cases have a different number of input neurons:
+    // Case A and Case C have 6 input neurons
+    // Case B has only 5 input neurons (because dZ is a constant and we cannot use ANN
+    //                                  with constant input neurons).
+    //
+    // CASE A : Vertex Info out of "RealVertex"
+    // CASE B : No Vertex Info, but "FakeVertex"    made out of one BT,  dZ==650
+    // CASE C : No Vertex Info, but "InterimVertex" made out of two BTs, dZ variable
+
+    // CASE A :
     layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var03,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
     // Create the Multilayerperceptron
-    eANNPairYesVtx  = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
-		cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairTree  TMultiLayerPerceptron creation 	done." << endl;
+    eANNPairCaseA  = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairCaseA  TMultiLayerPerceptron creation done." << endl;
     cout << "EdbShowerAlg_GS::CreateANNPair()   Layout = " << endl;
     cout << layout.Data() << endl;
-		weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_with_Vertex.txt");
-		eANNPairYesVtx->LoadWeights(weights);
+    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_CASE_A.txt");
+    eANNPairCaseA->LoadWeights(weights);
     cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPair: weights = " << endl;
-    cout << weights.Data() << endl;
+    cout << weights.Data() << endl << endl;
 
-		// By default we take the weights for the Case B (explained in the manual)
+    // CASE B :
+    layout="@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
+    // Create the Multilayerperceptron
+    eANNPairCaseB  = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairCaseB  TMultiLayerPerceptron creation done." << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   Layout = " << endl;
+    cout << layout.Data() << endl;
+    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_CASE_B.txt");
+    eANNPairCaseB->LoadWeights(weights);
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPair: weights = " << endl;
+    cout << weights.Data() << endl << endl;
+
+    // CASE C :
+    layout="@eValueGSNN_var00,@eValueGSNN_var01,@eValueGSNN_var02,@eValueGSNN_var03,@eValueGSNN_var04,@eValueGSNN_var05:7:6:eValueGSNN_varInput";
+    // Create the Multilayerperceptron
+    eANNPairCaseC  = new TMultiLayerPerceptron(layout,eANNPairTree,"","");
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPairCaseC  TMultiLayerPerceptron creation done." << endl;
+    cout << "EdbShowerAlg_GS::CreateANNPair()   Layout = " << endl;
+    cout << layout.Data() << endl;
+    weights= TString(gSystem->ExpandPathName("$FEDRA_ROOT"))+TString("/src/libShower/weights/Reco/ShowerAlg_GS/weights_CASE_C.txt");
+    eANNPairCaseC->LoadWeights(weights);
+    cout << "EdbShowerAlg_GS::CreateANNPair()   eANNPair: weights = " << endl;
+    cout << weights.Data() << endl << endl;
+
+    // By default we take the weights for the Case C (explained in the manual)
     // since we dont know a priori, if vertices are given.
+    eANNPair=eANNPairCaseC;
 
     Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","CreateANNPair()...done.");
     return;
@@ -911,32 +986,32 @@ void EdbShowerAlg_GS::CreateANNPair()
 
 //______________________________________________________________________________
 
-void EdbShowerAlg_GS::ReloadANNWeights(Bool_t VtxArray_Or_InBTArray)
+void EdbShowerAlg_GS::ReloadANNs(Int_t RecoMode)
 {
-	Log(2,"EdbShowerAlg_GS::ReloadANNWeights","ReloadANNWeights()");
-    cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... " << endl;
+    Log(2,"EdbShowerAlg_GS::ReloadANNs","ReloadANNs(Int_t RecoMode)");
 
-    cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... VtxArray_Or_InBTArray = " << VtxArray_Or_InBTArray  << endl;
-
-    cout << "That means we take the weightfile for the case: ";
-
-    if (VtxArray_Or_InBTArray==kTRUE) cout << " A, means the vertex position is given" << endl;
-    if (VtxArray_Or_InBTArray==kFALSE) cout << " B, means vertex not given." << endl;
-
-    TString weights="";
-
-    if (VtxArray_Or_InBTArray==kTRUE) {
-			eANNPair=eANNPairYesVtx;
-        cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Set eANNPair to eANNPairYesVtx" << endl;
+    if (RecoMode==0) {
+        eANNPair=eANNPairCaseA;
+        Log(2,"EdbShowerAlg_GS::ReloadANNs","Set eANNPair to eANNPairCaseA");
+        cout << "EdbShowerAlg_GS::ReloadANNs: eANNPairCaseA at " << eANNPairCaseA << endl;
+    }
+    else if (RecoMode==1) {
+        eANNPair=eANNPairCaseB;
+        Log(2,"EdbShowerAlg_GS::ReloadANNs","Set eANNPair to eANNPairCaseB");
+        cout << "EdbShowerAlg_GS::ReloadANNs: eANNPairCaseB at " << eANNPairCaseB << endl;
+    }
+    else if (RecoMode==2) {
+        eANNPair=eANNPairCaseC;
+        Log(2,"EdbShowerAlg_GS::ReloadANNs","Set eANNPair to eANNPairCaseC");
+        cout << "EdbShowerAlg_GS::ReloadANNs: eANNPairCaseC at " << eANNPairCaseC << endl;
     }
     else {
-      eANNPair=eANNPairYesVtx;
-        cout << "void EdbShowerAlg_GS::ReloadANNWeights() ... Set eANNPair to eANNPairYesVtx" << endl;
+        cout << "ELSE  RETURN" << endl;
     }
-    eANNPair->LoadWeights(weights);
-	Log(2,"EdbShowerAlg_GS::ReloadANNWeights","ReloadANNWeights()...done.");
-    return;
+    Log(2,"EdbShowerAlg_GS::ReloadANNs","ReloadANNs()...done.");
 }
+
+
 
 
 //______________________________________________________________________________
@@ -951,7 +1026,7 @@ void EdbShowerAlg_GS::Initialize()
 
 void EdbShowerAlg_GS::SetInVtx( EdbVertex* vtx )
 {
-    Log(2,"EdbShowerAlg_GS::SetInVtx","SetInVtx()");
+    Log(3,"EdbShowerAlg_GS::SetInVtx","SetInVtx()");
     if (eInVtxArrayN!=0) {
         Log(2,"EdbShowerAlg_GS::SetInVtx","SetInVtx()   WARNING! Array not empty. Clear/Reset it!");
         eInVtxArray -> Clear();
@@ -961,7 +1036,7 @@ void EdbShowerAlg_GS::SetInVtx( EdbVertex* vtx )
     ++eInVtxArrayN;
     eInVtxArraySet=kTRUE;
     cout << "EdbShowerAlg_GS::SetInVtx Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
-    Log(2,"EdbShowerAlg_GS::SetInVtx","SetInVtx()...done");
+    Log(3,"EdbShowerAlg_GS::SetInVtx","SetInVtx()...done");
     return;
 }
 
@@ -970,12 +1045,15 @@ void EdbShowerAlg_GS::SetInVtx( EdbVertex* vtx )
 
 void EdbShowerAlg_GS::AddInVtx( EdbVertex* vtx )
 {
-    Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()");
+    Log(3,"EdbShowerAlg_GS::AddInVtx","AddInVtx()");
     eInVtxArray->Add(vtx);
     ++eInVtxArrayN;
     eInVtxArraySet=kTRUE;
-    cout << "EdbShowerAlg_GS::AddInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
-    Log(2,"EdbShowerAlg_GS::AddInVtx","AddInVtx()...done");
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowerAlg_GS::AddInVtx(): Added vtx (XYZ,MC): " << 	vtx->X() << " " <<vtx->Y() << " " << vtx->Z() << " " << vtx->MCEvt() << " " << endl;
+        cout << "EdbShowerAlg_GS::AddInVtx(): Added One Vertex. Now there are " << eInVtxArrayN << " InVtx stored." << endl;
+    }
+    Log(3,"EdbShowerAlg_GS::AddInVtx","AddInVtx()...done");
     return;
 }
 
@@ -1005,9 +1083,8 @@ void EdbShowerAlg_GS::Convert_InVtxArray_To_InBTArray()
 
     if (eInVtxArray==NULL || eInVtxArrayN==0 || eInVtxArraySet==kFALSE) cout << "NO  eInVtxArray  " << endl;
     EdbVertex* vtx;
-    cout << "eInVtxArrayN= " << eInVtxArrayN << endl;
 
-    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Convert_InVtxArray_To_InBTArray()...start loop");
+    Log(2,"EdbShowerAlg_GS::EdbShowerAlg_GS","Convert_InVtxArray_To_InBTArray()...start loop (N=%d):",eInVtxArrayN);
     for (Int_t i=0; i<eInVtxArrayN; i++) {
         vtx= (EdbVertex*)eInVtxArray->At(i);
         EdbSegP* seg = new EdbSegP(i,vtx->X(),vtx->Y(),0,0);
@@ -1018,6 +1095,9 @@ void EdbShowerAlg_GS::Convert_InVtxArray_To_InBTArray()
         seg->SetMC(vtx->MCEvt(),vtx->MCEvt());
         seg->SetFlag(0);
         eInBTArray->Add(seg);
+
+        //cout <<"DEBUG   vtx->MCEvt() " << vtx->MCEvt() << endl;
+        // seg->PrintNice();
     }
 
     eInBTArrayN=eInBTArray->GetEntries();
@@ -1071,18 +1151,89 @@ void EdbShowerAlg::Convert_EdbPVRec_To_InBTArray()
 //______________________________________________________________________________
 
 
-Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* SegmentPIDArray,TArrayI* SegmentIDArray,TArrayI* Segment2PIDArray,TArrayI* Segment2IDArray)
+Bool_t EdbShowerAlg_GS::CheckPairDuplications(Int_t SegPID,Int_t SegID,Int_t Seg2PID,Int_t Seg2ID,TArrayI* eSegmentPIDArray,TArrayI* eSegmentIDArray,TArrayI* eSegment2PIDArray,TArrayI* eSegment2IDArray, Int_t RecoShowerArrayN)
 {
-
-    for (Int_t i=0; i<eRecoShowerArrayN; i++) {
+    Log(3,"EdbShowerAlg_GS::CheckPairDuplications","CheckPairDuplications()");
+    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::CheckPairDuplications for " << SegPID << "," <<  SegID <<","<< Seg2PID <<"," << Seg2ID << " compare with " << RecoShowerArrayN << " pairs:" <<  endl;
+    for (Int_t i=0; i<RecoShowerArrayN; i++) {
         // PID and ID of Seg and Seg2 to be exchanged for duplications
-        if ( SegPID==Segment2PIDArray->At(i) && Seg2PID==SegmentPIDArray->At(i) && SegID==Segment2IDArray->At(i) && Seg2ID==SegmentIDArray->At(i)) {
-            //cout << "Found duplication for... return true"<<endl;
+        if ( SegPID==eSegment2PIDArray->At(i) && Seg2PID==eSegmentPIDArray->At(i) && SegID==eSegment2IDArray->At(i) && Seg2ID==eSegmentIDArray->At(i)) {
+            if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::CheckPairDuplications Found duplication for ... return true"<<endl;
             return kTRUE;
         }
     }
     return kFALSE;
 }
+
+//______________________________________________________________________________
+
+TObjArray*	EdbShowerAlg_GS::SelectHighestPInMCArray(TObjArray* BTArray)
+{
+    // Helper function for MC purposes:
+    // This  function inputs a EdbSegP (Initiator basetrack array) and
+    // for all MC Events it looks for the highest P of the BT.
+    // Mainly used for looking the first BT of a photon/electron shower.
+    // Only internal usage, should not needed by the everyday user.
+
+    Log(2,"EdbShowerAlg_GS::SelectHighestPInMCArray","SelectHighestPInMCArray()");
+
+    if (BTArray->GetEntries()==0) return NULL;
+
+    TObjArray* HighestPBTArray = new TObjArray();
+
+    Float_t maxP[999999];
+    Int_t index[999999];
+    for (int i=0; i<100000; ++i) {
+        maxP[i]=0;
+        index[i]=-1;
+    }
+
+    for (int i=0; i<BTArray->GetEntries(); ++i) {
+        EdbSegP* s = (EdbSegP*)BTArray->At(i);
+        if (s->MCEvt()<0) continue;
+        if (s->P() > maxP[s->MCEvt()]) {
+            maxP[s->MCEvt()] = s->P();
+            index[s->MCEvt()]=i;
+        }
+    }
+
+    for (int i=0; i<BTArray->GetEntries(); ++i) {
+        EdbSegP* s = (EdbSegP*)BTArray->At(i);
+        if (s->MCEvt()<0) HighestPBTArray->Add(s);
+        if (s->MCEvt()>0) {
+            if (s->P()< maxP[s->MCEvt()] ) {
+                // do nothing, since it is not maximum for this event.
+            }
+            else {
+                HighestPBTArray->Add(s);
+            }
+        }
+    }
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowerAlg_GS::SelectHighestPInMCArray   BTArray->GetEntries() " << BTArray->GetEntries() << endl;
+        cout << "EdbShowerAlg_GS::SelectHighestPInMCArray   HighestPBTArray->GetEntries() " << HighestPBTArray->GetEntries() << endl;
+
+        cout << "EdbShowerAlg_GS::SelectHighestPInMCArray   Print BTArray: " << BTArray->GetEntries() << endl;
+
+        for (int i=0; i<BTArray->GetEntries(); ++i) {
+            EdbSegP* s = (EdbSegP*)BTArray->At(i);
+            s->PrintNice();
+        }
+        cout << "EdbShowerAlg_GS::SelectHighestPInMCArray   Print HighestPBTArray: " << HighestPBTArray->GetEntries() << endl;
+        for (int i=0; i<HighestPBTArray->GetEntries(); ++i) {
+            EdbSegP* s = (EdbSegP*)HighestPBTArray->At(i);
+            s->PrintNice();
+        }
+    }
+
+    Log(2,"EdbShowerAlg_GS::SelectHighestPInMCArray","SelectHighestPInMCArray()...done.");
+
+    return HighestPBTArray;
+}
+
+
+//______________________________________________________________________________
 
 //______________________________________________________________________________
 
@@ -1108,21 +1259,28 @@ Bool_t	EdbShowerAlg_GS::CheckInput()
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   No eInVtxArray.");
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Set ALL BTs from the volume as InBTs:");
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Set BTs from the volume as InBTs:");
-            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Take Preselected Pairs found from");
-            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   the function FindPairsPreselected():");
+            if (eFindPairsPreselected==kTRUE) {
+                Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Take Preselected Pairs found from");
+                Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   the function FindPairsPreselected():");
+            }
             VtxArray_Or_InBTArray=kFALSE;
             // Convert_EdbPVRec_To_InBTArray();
             // Taking all BTs takes very long time, we rather skip it.
             //______________________________________________________________________________
             // New we try finding already preselcted InBTs.... might speed up the style...
-            eInBTArray = this->FindPairsPreselected(eAli);
+            if (eFindPairsPreselected==kTRUE) {
+                SetInBTArray(this->FindPairsPreselected(eAli));
+            }
+            else {
+                Convert_EdbPVRec_To_InBTArray();
+            }
             eInBTArrayN=eInBTArray->GetEntries();
-						Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   eInBTArray->GetEntries() = %d .",eInBTArray->GetEntries());
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   eInBTArray->GetEntries() = %d .",eInBTArray->GetEntries());
             //______________________________________________________________________________
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   FindPairsPreselected() done.");
-            eRecoMode=1;
-            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   eRecoMode=1");
-
+            //eRecoMode=1;
+            //eRecoMode=2;
+            Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Use default eRecoMode=%d",eRecoMode);
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Do pair search now, but take care, this is gonna take  _______VERY LONG_______ time.");
         }
         else {
@@ -1142,7 +1300,14 @@ Bool_t	EdbShowerAlg_GS::CheckInput()
     // what the vertex position yet is and then we look for basetrack pairings
     // by themselves. Therefore we need the ANN weight file trained on no vertex info.
 
-    ReloadANNWeights(VtxArray_Or_InBTArray);
+    ReloadANNs(eRecoMode);
+
+
+    // For the MC Training, we use only highest P basetracks, if they come from signal
+    TObjArray* arr = SelectHighestPInMCArray(eInBTArray);
+// 		SetInBTArray(arr);
+    // For the MC Training, we use only highest P basetracks, if they come from signal
+
 
     Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()...done.");
     return IsInput;
@@ -1152,24 +1317,48 @@ Bool_t	EdbShowerAlg_GS::CheckInput()
 
 void EdbShowerAlg_GS::SetRecoMode(Int_t RecoMode)
 {
-	// Manually Set Reco Mode A or B
-	// Check if InVtxArray is Filled.
-	// if not do nothing, cause it does make no sense when
-	// we wanna do Reco Mode and have no vertices filled.
-	
-	Log(2,"EdbShowerAlg_GS::SetRecoMode","SetRecoMode()...");
-	
-	CheckInput();
-	
-	if (RecoMode==0) {
-		ReloadANNWeights(kTRUE);
-	}
-	else {
-		ReloadANNWeights(kFALSE);
-	}
-	
-	Log(2,"EdbShowerAlg_GS::SetRecoMode","SetRecoMode()...done.");
-	return;
+    // Manually Set Reco Mode A or B or C
+    // Check if InVtxArray is Filled.
+    // If not, do nothing, cause it does make no sense when
+    // we wanna do Reco Mode and have no vertices filled.
+
+    Log(2,"EdbShowerAlg_GS::SetRecoMode","SetRecoMode()...");
+
+    if (eRecoMode>2) {
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","WARNING eRecoMode>2!!!");
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode C (eRecoMode=2).");
+        eRecoMode=2;
+    }
+
+    if (eInVtxArrayN==0) {
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","No InVtxArray there. Will not set Reco Mode A.");
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode C (eRecoMode=2).");
+        eRecoMode=2;
+
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","No InVtxArray there. Will not set Reco Mode A.");
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode B (eRecoMode=1).");
+        eRecoMode=1;
+    }
+    else {
+        eRecoMode=RecoMode;
+        ReloadANNs(RecoMode);
+    }
+
+    cout << "DEBUG  eRecoMode  " << eRecoMode << endl;
+
+    // Set the dZ cutvalue to just one plate after, since we start
+    // in these cases from real Initiator Basetracks (and not vertices)
+    // so we just look for pairs directly related to this InBT.
+    if (eRecoMode==1 || eRecoMode == 2) {
+        SetParameter(3,1800);
+    }
+    else {
+        SetParameter(3,25000);
+    }
+
+    Log(2,"EdbShowerAlg_GS::SetRecoMode","SetRecoMode() eRecoMode = %d ",eRecoMode);
+    Log(2,"EdbShowerAlg_GS::SetRecoMode","SetRecoMode()...done.");
+    return;
 }
 
 //______________________________________________________________________________
@@ -1189,7 +1378,6 @@ void EdbShowerAlg_GS::Execute()
     Bool_t VtxArray_Or_InBTArray = kFALSE;
     VtxArray_Or_InBTArray = CheckInput();
 
-    Int_t IsPairsPreSelectedN=0;
 
     //--- Needed interim objects:
     EdbSegP* InBT=NULL;
@@ -1197,14 +1385,7 @@ void EdbShowerAlg_GS::Execute()
     EdbTrackP* RecoShower;   //libShower
 
     Int_t PermilleCount=eInBTArrayN/1000;
-    cout << "PermilleCount = " << PermilleCount << endl;
-		if (PermilleCount==0) PermilleCount=1; // floating point exception failsafe.
-
-    /// ----------------------   DEBUG -----------------------------------------------
-		cout << "/// ----------------------   DEBUG  eInBTArrayN = " << eInBTArrayN << endl;
-    eInBTArrayN*=0.1;
-		cout << "/// ----------------------   DEBUG  eInBTArrayN = " << eInBTArrayN << endl;
-    /// ----------------------   DEBUG -----------------------------------------------
+    if (PermilleCount==0) PermilleCount=1; // floating point exception failsafe.
 
     Int_t     STEP=-1;
     if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
@@ -1216,13 +1397,23 @@ void EdbShowerAlg_GS::Execute()
         cout << "EdbShowerAlg_GS::Execute    Loop over InBTs: " << endl;
         cout << "EdbShowerAlg_GS::Execute    (N=" << eInBTArrayN << "):" << endl;
         cout << "EdbShowerAlg_GS::Execute    (each dot means a progress of 1 permille of N):" << endl;
+        cout << "EdbShowerAlg_GS::Execute    (each   K means a progress of 1 K InBTs):" << endl;
     }
 
-		//-----------------------------------
+    //-----------------------------------
     // Since eInBTArray is filled in ascending ordering by zpositon
     // We use the descending loop to begin with BT with lowest z first.
     // InBT doest have to be necessary a real BaseTrack, it can also be a vertex (with its positions and angle zero) !!!
     for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+
+        if (eDebug) if (i<eInBTArrayN-1) continue;
+
+        //-----------------------------------
+        // 0) Set counters...
+        //-----------------------------------
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","// 0) Set counters...:");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
 
         // CounterOutPut
 //         if (gEDBDEBUGLEVEL==2) if ((i%100)==0) cout << eInBTArrayN <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
@@ -1231,14 +1422,17 @@ void EdbShowerAlg_GS::Execute()
 
         // Get InitiatorBT from eInBTArray  InBT
         InBT=(EdbSegP*)eInBTArray->At(i);
-        if (gEDBDEBUGLEVEL>2) InBT->PrintNice();
+        if (gEDBDEBUGLEVEL>2) {
+            Log(3,"EdbShowerAlg_GS::Execute","//---- Print Initiator BT(Vtx)   ------------------");
+            InBT->PrintNice();
+        }
 
         //-----------------------------------
         // 1) Make local_gAli with cut parameters:
         //-----------------------------------
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
-				Log(3,"EdbShowerAlg_GS::Execute","// 1) Make local_gAli with cut parameters:");
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","// 1) Make local_gAli with cut parameters:");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
         // Transform (make size smaller, extract only events having same MC) the  eAli  object:
         Transform_eAli(InBT,999999);
         if (gEDBDEBUGLEVEL>2)  eAli_Sub->Print();
@@ -1247,62 +1441,69 @@ void EdbShowerAlg_GS::Execute()
         //-----------------------------------
         // 2) FindPairs
         //-----------------------------------
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
-				Log(3,"EdbShowerAlg_GS::Execute","// 2) FindPairs");
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","// 2) FindPairs");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
         TObjArray* Pairs = FindPairs(InBT,eAli_Sub);
         if (gEDBDEBUGLEVEL>2) cout << "TObjArray* Pairs = FindPairs(InBT,eAli_Sub); done. Entries= " << Pairs->GetEntries() << endl;
+
 
 
         //-----------------------------------
         // 3) Clear Found Pairs
         //-----------------------------------
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
-				Log(3,"EdbShowerAlg_GS::Execute","// 3) Clear Found Pairs");
-				Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
+        Log(3,"EdbShowerAlg_GS::Execute","// 3) Clear Found Pairs");
+        Log(3,"EdbShowerAlg_GS::Execute","//-----------------------------------");
         TObjArray* CleanPairs;
         if (eSetCleanPairs==kTRUE) {
             CleanPairs = CheckCleanPairs( InBT, Pairs );
+            // After we found pairs (after clear) we add the internal RecoShowerArray:
+            AddRecoShowerArray(CleanPairs);
+            FillANNTree(CleanPairs,InBT);
         }
         else {
-            CleanPairs = Pairs;
+            // After we found pairs (without clear) we add the internal RecoShowerArray:
+            AddRecoShowerArray(Pairs);
+            FillANNTree(Pairs,InBT);
         }
 
-        for (int j=0; j<CleanPairs->GetEntries(); ++j) {
-            EdbTrackP* pair=(EdbTrackP*)CleanPairs->At(j);
-            eRecoShowerArray->Add(pair);
-            ++eRecoShowerArrayN;
-        }
+        //-----------------------------------
+        // 4) Finally Apply GS_ANN cut on Pairs
+        // ---> can already by done in the findpairs routine!!
+        //-----------------------------------
 
 
     } // Loop over InBT
     //-----------------------------------
-    
+
     cout << "EdbShowerAlg_GS::Execute  Loop over InBT finished."<< endl;
-		cout << "EdbShowerAlg_GS::Execute  IsPairsPreSelectedN=  " <<  IsPairsPreSelectedN << endl;
     cout << "EdbShowerAlg_GS::Execute  eRecoShowerArray=  " <<  eRecoShowerArray << endl;
     cout << "EdbShowerAlg_GS::Execute  eRecoShowerArrayN=  " <<  eRecoShowerArrayN << endl;
-    
 
-		if (gEDBDEBUGLEVEL>2) {
-    for (Int_t i=0; i <eRecoShowerArray->GetEntries();  i++) {
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowerAlg_GS::Execute  Print all BT pairs now:" << endl;
+        for (Int_t i=0; i <eRecoShowerArray->GetEntries();  i++) {
 //   EdbShowerP* sh = (EdbShowerP* )eRecoShowerArray->At(i);  // libShowRec
-        EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(i); // libShower
+            EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(i); // libShower
+            sh->PrintNice();
+        }
+    }
+
+    /// Debug Purpose:
+    if (eRecoShowerArrayN>0) {
+        EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(0); // libShower
+        cout << "EdbShowerAlg_GS::Execute  Shower    0: PrintNice: " << endl;
+        sh->PrintNice();
+        sh = (EdbTrackP* )eRecoShowerArray->At(eRecoShowerArray->GetEntries()-1); // libShower
+        cout << "EdbShowerAlg_GS::Execute  Shower last("<< eRecoShowerArrayN <<"): PrintNice: " << endl;
         sh->PrintNice();
     }
-		}
-		
-		/// Debug Purpose:
-		EdbTrackP* sh = (EdbTrackP* )eRecoShowerArray->At(0); // libShower
-		cout << "EdbShowerAlg_GS::Execute  Shower    0: PrintNice: " << endl;
-    sh->PrintNice();
-    sh = (EdbTrackP* )eRecoShowerArray->At(eRecoShowerArray->GetEntries()-1); // libShower
-		cout << "EdbShowerAlg_GS::Execute  Shower last: PrintNice: " << endl;
-    sh->PrintNice();
-		
+
     eANNPair->Write();
-		eANNPairTree->Write();
-		
+    eANNPairTree->Write();
+
     Log(2,"EdbShowerAlg_GS::Execute","Execute()...done.");
     return;
 }
@@ -1376,12 +1577,13 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
         }
         // for (int j=0; j<pat->N(); j++)
     } // for (int l=0; l<eAli_Sub->Npatterns(); l++)
-    cout <<  "EdbShowerAlg_GS::FindPairsPreselected   "<< NewPreselectedArray->GetEntries() << endl;
+    cout <<  "EdbShowerAlg_GS::FindPairsPreselected   Preselected: "<< NewPreselectedArray->GetEntries() << endl;
 
     // Here it might be that there are still duplicated basetracks (per plate) in the array,
     // these we have to take out:
     cout <<  "EdbShowerAlg_GS::FindPairsPreselected   Check for duplicated basetracks:" << endl;
-		cout <<  "EdbShowerAlg_GS::FindPairsPreselected   Might take a while..:" << endl;
+    cout <<  "EdbShowerAlg_GS::FindPairsPreselected   This might take a while...:" << endl;
+    cout <<  "EdbShowerAlg_GS::FindPairsPreselected   (status bar):" << endl;
     Int_t count=0;
     Int_t Zseparator[114];
     for (Int_t l=0; l< 114; l++) {
@@ -1391,9 +1593,10 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
     Zseparator[0]=0;
     Float_t ZStart=sl->Z();
     Int_t incrementor=1;
+    Int_t NewPreselectedArrayN=NewPreselectedArray->GetEntries();
 
     /// Small Trick.... The BTs are sorted w.r.t. z position!
-    for (Int_t l=0; l< NewPreselectedArray->GetEntries(); l++) {
+    for (Int_t l=0; l< NewPreselectedArrayN; l++) {
         EdbSegP *sl = (EdbSegP*) NewPreselectedArray->At(l);
         if (sl->Z()!=ZStart) {
             Zseparator[incrementor]=l;
@@ -1411,6 +1614,8 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
 
 
     for (Int_t o=0; o < incrementor-1; o++) {
+
+        cout << "." ;
 
         if (gEDBDEBUGLEVEL>1) cout << "EdbShowerAlg_GS::FindPairsPreselected   Doing ZSeparator o= "  << o << " loop from BT #" << Zseparator[o] << " to BT # " << Zseparator[o+1]-1 << endl;
 
@@ -1447,7 +1652,7 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
     cout << "EdbShowerAlg_GS::FindPairsPreselected   NPreselectedArray = " << PreselectedArray->GetEntries() << endl;
 
     Log(2,"EdbShowerAlg_GS::FindPairsPreselected","FindPairsPreselected()...done.");
-    return NewPreselectedArray;
+    return PreselectedArray;
     ///--------------------------------------------------------------------
 }
 
@@ -1456,7 +1661,7 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
 
 Bool_t EdbShowerAlg_GS::FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 {
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairsPreselected   Starting FindPairsPreselected(InBT,eAli_Sub) now" << endl;
+    Log(3,"EdbShowerAlg_GS::FindPairsPreselected","Starting FindPairsPreselected(InBT,eAli_Sub) now....");
 
     EdbSegP* InBT=NULL;
     InBT=InitiatorBT;
@@ -1480,7 +1685,7 @@ Bool_t EdbShowerAlg_GS::FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAl
             cout << "EdbShowerAlg_GS::FindPairsPreselected  Check if dist Z to vtx (BT) is ok:  distZ=" << distZ << endl;
         }
         if (distZ>eParaValue[3]) continue;
-        if (distZ<1000) continue;
+        if (distZ<-1000) continue;
 
         if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairsPreselected   pat_one_cnt=" << pat_one_cnt << "  pat_one->Z() = " << pat_one->Z() << " pat_one_bt_cnt_max= "<< pat_one_bt_cnt_max <<endl;
 
@@ -1496,7 +1701,7 @@ Bool_t EdbShowerAlg_GS::FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAl
 
             distZ=pat_two->Z()-InBT->Z();
             if (distZ>eParaValue[3]) continue;
-            if (distZ<1000) continue;
+            if (distZ<-1000) continue;
 
             if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairsPreselected  	pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
 
@@ -1525,6 +1730,7 @@ Bool_t EdbShowerAlg_GS::FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAl
         }
     }  //for (Int_t pat_one_cnt=0; ...
 
+    Log(3,"EdbShowerAlg_GS::FindPairsPreselected","Starting FindPairsPreselected(InBT,eAli_Sub) now....done.");
     return kFALSE;
 }
 
@@ -1533,42 +1739,48 @@ Bool_t EdbShowerAlg_GS::FindPairsPreselected(EdbSegP* InitiatorBT, EdbPVRec* eAl
 TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 {
     // Function to find pairs of an EdbPVRec object.
+    // with respect to a Initiator Basetrack (either a real vertex
+    // or a helper vertex from the BT itself).
+    //
     // ATTENTION: CURRENTLY (23.07.2011) STILL IN MODIFYING PHASE!!!
-		// ATTENTION: CURRENTLY (19.09.2011) STILL IN MODIFYING PHASE!!!
+    // ATTENTION: CURRENTLY (19.09.2011) STILL IN MODIFYING PHASE!!!
+    // ATTENTION: CURRENTLY (01.10.2011) STILL IN MODIFYING PHASE!!!
+    // ATTENTION: CURRENTLY (05.10.2011) STILL IN MODIFYING PHASE!!!
+    // ATTENTION: CURRENTLY (11.10.2011) STILL IN MODIFYING PHASE!!!
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs   Starting FindPairs(InBT,eAli_Sub) now" << endl;
+    Log(3,"EdbShowerAlg_GS::FindPairs","Starting FindPairs(InBT,eAli_Sub) now....");
 
-    TObjArray* RecoShowerArray= new TObjArray(199);
+    TObjArray* RecoShowerArray= new TObjArray();
     RecoShowerArray->Clear();
     Int_t RecoShowerArrayN=0;
-    TArrayI* SegmentPIDArray = new TArrayI(9999);
-    TArrayI* SegmentIDArray = new TArrayI(9999);
-    TArrayI* Segment2PIDArray = new TArrayI(9999);
-    TArrayI* Segment2IDArray = new TArrayI(9999);
+
+    eSegmentPIDArray->Reset();
+    eSegmentIDArray->Reset();
+    eSegment2PIDArray->Reset();
+    eSegment2IDArray->Reset();
+
     EdbSegP* Segment=NULL;
     EdbSegP* Segment2=NULL;
     Float_t x_av,y_av,z_av,tx_av,ty_av,distZ;
     EdbSegP* Segment_Sum=new EdbSegP(0,0,0,0,0,0);
     Float_t	 IP_Pair_To_InBT=0;
-		Float_t IP_Pair_To_InBT_Seg=0;
-		Float_t IP_Pair_To_InBT_Seg2=0;
-		Float_t IP_Pair_To_InBT_SegSum=0;
-		Float_t IP_Pair_To_InBT_SegSmaller=0;
+    Float_t IP_Pair_To_InBT_Seg=0;
+    Float_t IP_Pair_To_InBT_Seg2=0;
+    Float_t IP_Pair_To_InBT_SegSum=0;
+    Float_t IP_Pair_To_InBT_SegSmaller=0;
     Float_t  IP_InBT_To_Vtx=0;
     Float_t  IP_Seg1_To_Vtx=0;
     Float_t  IP_Seg2_To_Vtx=0;
 
     Int_t NPairTriesTotal=0;
-		Double_t params[6];
+    Double_t paramsAC[6]; // for Case A and C
+    Double_t paramsB[4]; // for Case B
 
 
     EdbSegP* InBT=NULL;
     if (NULL==InitiatorBT) {
         InBT= new EdbSegP();
         EdbPattern* pat = eAli_Sub->GetPatternZLowestHighest(1);
-        //cout << "pat->X() " << pat->X() << endl;
-        //cout << "pat->Y() " << pat->Y() << endl;
-        //cout << "pat->Z() " << pat->Z() << endl;
         InBT->SetX(pat->X());
         InBT->SetY(pat->Y());
         InBT->SetZ(pat->Z());
@@ -1582,24 +1794,27 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
         InBT=InitiatorBT;
     }
 
-
-
+    // Create Helper Vertex:
     EdbVertex* vtx=new EdbVertex();
+    vtx->SetMC(InBT->MCEvt());
+
     // Now here distinguish the Case A and Case B for the gamma reco:
     // Case A(0): vertex is the InBT.
-    // Case B(1=: vertex is made out of the InBT, propagated back half a plate.
-    if (eRecoMode==1) {
+    // Case B(1): vertex is made out of the InBT, propagated back half a plate.
+    // Case C(2): like case B, but for the IP cutvariable, the IP to new vertex, made
+    //            out of BT 1 & 2 is used.
+    if (eRecoMode==1 || eRecoMode==2 ) {
         if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs   eRecoMode==1: Propagate InBT half a plate back for the vertex." << endl;
         vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
     }
     else {
         if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs   eRecoMode==0: Take InBT position for the vertex." << endl;
+        //cout << "DEBUG     EdbShowerAlg_GS::FindPairs   eRecoMode==0: Take InBT position for the vertex." << endl;
         vtx->SetXYZ(InBT->X(),InBT->Y(),InBT->Z());
     }
 
     IP_InBT_To_Vtx= CalcIP(InBT,vtx);
     //cout << " CalcIP(InBT,vtx) " <<  CalcIP(InBT,vtx)  << endl;
-
 
     //-----------------------------------
     // 2) Loop over (whole) eAli, check BT for Cuts
@@ -1632,8 +1847,8 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
             cout << "EdbShowerAlg_GS::FindPairs  Check if dist Z to vtx (BT) is ok:  distZ=" << distZ << endl;
         }
         if (distZ>eParaValue[3]) continue;
-        if (distZ<1000) continue;
-        
+        if (distZ<-1000) continue;
+
         /// if (eRecoMode==1 && distZ>10) continue;
         /// in this reco mode we loop only over segment2 , since InBT and vtx are correlated!!!
 
@@ -1651,7 +1866,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
 
             distZ=pat_two->Z()-InBT->Z();
             if (distZ>eParaValue[3]) continue;
-            if (distZ<1000) continue;
+            if (distZ<-1000) continue;
 
             if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairs  	pat_two_cnt=" << pat_two_cnt << "  pat_two->Z() = " << pat_two->Z() << " pat_two_bt_cnt_max= "<< pat_two_bt_cnt_max <<endl;
 
@@ -1659,32 +1874,6 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
             // ---   Loop over basetracks of first pattern
             for (Int_t pat_one_bt_cnt=0; pat_one_bt_cnt<pat_one_bt_cnt_max; ++pat_one_bt_cnt) {
                 Segment =  (EdbSegP*)pat_one->GetSegment(pat_one_bt_cnt);
-							
-								///--------------------------------------------------------
-// 								if (eRecoMode==1 && Segment->ID()!=InBT->ID()) continue;
-// 								Segment->PrintNice();
-// 								InBT->PrintNice();
-								
-								/// in this reco mode we loop only over segment2 ,
-								/// since InBT and vtx are correlated!!!
-								
-								/*
-								if (eRecoMode==1) if (InBT!=Segment) {
-									cout << "if (eRecoMode==1) if (InBT!=Segment) condition ... this means in this case" << endl;
-									cout << " we would go to newxt basetrack...." << endl;
-									continue;
-								}
-								else {
-									cout << "in the else looP: InBT is at position " << pat_one_bt_cnt << endl;
-								}
-								??????????????????????????????????????????????????????????????????????????
-								*/
-								/// in ShowRec.cpp we also took this condition out.
-								/// Since in the RecoMode B Segment is the fixed InBT which is out of BT 
-								/// taken from the volume.
-
-
-
 
                 IP_Pair_To_InBT_Seg	=CalcIP(Segment,vtx);
                 IP_Pair_To_InBT=IP_Pair_To_InBT_Seg;
@@ -1697,18 +1886,12 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                 // ---   Loop over basetracks of second pattern
                 for (Int_t pat_two_bt_cnt=0; pat_two_bt_cnt<pat_two_bt_cnt_max; ++pat_two_bt_cnt) {
                     Segment2 = (EdbSegP*)pat_two->GetSegment(pat_two_bt_cnt);
-										
-				
 
                     // For statistics: increase the number of total searched combinations:
                     ++NPairTriesTotal;
 
-
                     if (Segment2==Segment) continue;
                     if (Segment2->ID()==Segment->ID()&&Segment2->PID()==Segment->PID()) continue;
-
-                    // At first:  Check for already duplicated pairings:
-                    // if (CheckPairDuplications(Segment->PID(),Segment->ID(),Segment2->PID(),Segment2->ID(), SegmentPIDArray,SegmentIDArray,Segment2PIDArray,Segment2IDArray)) continue;
 
                     // Now apply cut conditions: GS  GAMMA SEARCH Alg  --------------------
                     // if InBT is flagged as MC InBT, take care that only BG or same MC basetracks are taken:
@@ -1733,19 +1916,18 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     distZ=Segment->Z()-InBT->Z();
                     if (distZ>eParaValue[3]) continue;
 
+                    // At first:  Check for already duplicated pairings:
+                    if (CheckPairDuplications(Segment->PID(),Segment->ID(),Segment2->PID(),Segment2->ID(), eSegmentPIDArray,eSegmentIDArray,eSegment2PIDArray,eSegment2IDArray,RecoShowerArrayN)) continue;
+
                     // Check if both basetracks have a vertex which is upstream
                     // of both tracks (only then the two BT are really pointing).
                     TObjArray *segments = new TObjArray(2);
                     segments->Add(Segment);
                     segments->Add(Segment2);
                     EdbVertex* vetex = CalcVertex(segments);
-//                     cout << "Attention: vetex made out of  CalcVertex(segments)  Print XYZ: " << vetex ->X()  << " " << vetex ->Y()  << " " << vetex ->Z() << "  Min of both segments Z = " << TMath::Min(Segment->Z(),Segment2->Z()) << endl;
-//                     cout << "Attention: comparison to vtx:                       Print XYZ: " << vtx ->X()  << " " << vtx ->Y()  << " " << vtx ->Z() << "  Min of both segments Z = " << TMath::Min(Segment->Z(),Segment2->Z()) << endl;
-//                     cout <<"-------------" << endl;
                     if (vetex ->Z()> TMath::Min(Segment->Z(),Segment2->Z()) ) continue;
 
-
-
+                    // Set Sum values of the to BTs:
                     x_av=Segment2->X()+(Segment->X()-Segment2->X())/2.0;
                     y_av=Segment2->Y()+(Segment->Y()-Segment2->Y())/2.0;
                     z_av=Segment2->Z()+(Segment->Z()-Segment2->Z())/2.0;
@@ -1764,10 +1946,17 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     IP_Seg2_To_Vtx = CalcIP(Segment2,vtx);
                     IP_Pair_To_InBT_SegSum=CalcIP(Segment_Sum, vtx);
 
+                    Float_t IP_Seg1ToVtxSeg1Seg2=0;
+                    Float_t IP_Seg2ToVtxSeg1Seg2=0;
+                    IP_Seg1ToVtxSeg1Seg2 = CalcIP(Segment ,vetex);
+                    IP_Seg2ToVtxSeg1Seg2 = CalcIP(Segment2,vetex);
+
                     if (gEDBDEBUGLEVEL>2) {
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg   = " << IP_Pair_To_InBT_Seg << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_Seg2  = " << IP_Pair_To_InBT_Seg2 << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT_SegSum= " << IP_Pair_To_InBT_SegSum << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  IP_Seg1ToVtxSeg1Seg2= " << IP_Seg1ToVtxSeg1Seg2 << endl;
+                        cout << "EdbShowerAlg_GS::FindPairs  IP_Seg2ToVtxSeg1Seg2= " << IP_Seg2ToVtxSeg1Seg2 << endl;
                     }
 
                     // Save the segment which has smaller IP, this will be the first BT in the RecoShower
@@ -1784,9 +1973,10 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     //
                     // f) new: Last check if ePair is from e+e-Pair or from fake BG;
                     //    do a NN calculation estimate:
-                    //cout << "DEBUGTEST: PRINTNICE SEGMENT AND SEGMENT2" << endl;
+                    //cout << "DEBUGTEST: PRINTNICE SEGMENT AND SEGMENT2 AND VTX" << endl;
                     //Segment->PrintNice();
                     //Segment2->PrintNice();
+                    //cout << "Vtx:  Print MC XYZ: " << vtx ->MCEvt()  << " " << vtx ->X()  << " " << vtx ->Y()  << " " << vtx ->Z() <<endl;
 
                     eValueGSNN_varInput=-1;
                     // Purity 1:    Input =  1.0;
@@ -1803,23 +1993,29 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     }
 
                     eValueGSNN_var00=TMath::Min(IP_Seg1_To_Vtx,IP_Seg2_To_Vtx);
-										if (eRecoMode==1) eValueGSNN_var00=IP_InBT_To_Vtx;
-										
+                    if (eRecoMode==1) eValueGSNN_var00=IP_InBT_To_Vtx;
+                    if (eRecoMode==2) {
+                        eValueGSNN_var00=TMath::Min(IP_Seg1ToVtxSeg1Seg2,IP_Seg2ToVtxSeg1Seg2);
+                    }
+
+                    // Set Tree Input Variable Values:
                     eValueGSNN_var01=GetMinimumDist(Segment,Segment2);
                     eValueGSNN_var02=DeltaR_WithPropagation(Segment,Segment2);
-                    /// eValueGSNN_var03=InBT->Z()-vetex->Z();
-                    /// i guess the sign in this calculation is wrong,
-                    /// it should be rather round:
-//                     eValueGSNN_var03=vetex->Z()-InBT->Z();
-                    eValueGSNN_var03=vtx->Z()-InBT->Z();
-                    /// is this independent, if we do pair search w.r.t. to a real
-                    /// vertex, or w.r.t to vetex from BT pairs ???
+                    eValueGSNN_var03=InBT->Z()-vtx->Z();
+                    if (eRecoMode==2) {
+                        eValueGSNN_var03=TMath::Min(Segment->Z(),Segment2->Z())-vetex->Z();
+                    }
+                    if (eRecoMode==0) {
+                        eValueGSNN_var03=TMath::Min(Segment->Z(),Segment2->Z())-vtx->Z();
+                    }
                     eValueGSNN_var04=DeltaThetaSingleAngles(Segment,Segment2);
                     eValueGSNN_var05=TMath::Abs(pat_one_cnt-pat_two_cnt);
                     eValueGSNN_var06=Segment2->Flag()+Segment->Flag();
 
-                    if (gEDBDEBUGLEVEL>3) {
+                    if (gEDBDEBUGLEVEL>2) {
                         cout <<"-------------   Print eValueGSNN   ------------- " << endl;
+                        Segment->PrintNice();
+                        Segment2->PrintNice();
                         cout <<"-------------   Print eValueGSNN_var00= " << eValueGSNN_var00 << "   ---- " << endl;
                         cout <<"-------------   Print eValueGSNN_var01= " << eValueGSNN_var01 << "   ---- " << endl;
                         cout <<"-------------   Print eValueGSNN_var02= " << eValueGSNN_var02 << "   ---- " << endl;
@@ -1833,47 +2029,73 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     // then the Variables of the Treeentry are loaded into the memory
                     // address and the current value is overwritten!!!!!!
                     // DO NOT DO THIS!
-                    
-                    /*
-                    params[0]=eValueGSNN_var00; //dIP
-                    params[1]=eValueGSNN_var01; //dMinDist
-                    params[2]=eValueGSNN_var02; //dR
-                    params[3]=eValueGSNN_var03; //deltaZ
-                    params[4]=eValueGSNN_var04; //dT
-                    params[5]=eValueGSNN_var05; //dNPL
-                    */
-                    
-                                        
-                    params[0]=eValueGSNN_var00; //dIP
-                    params[1]=eValueGSNN_var01; //dMinDist
-                    params[2]=eValueGSNN_var02; //dR
-//                     params[3]=eValueGSNN_var03; //deltaZ
-                    params[3]=eValueGSNN_var04; //dT
-                    params[4]=eValueGSNN_var05; //dNPL
-//                    params[6]=eValueGSNN_var06; // cannot be used, uses MC info...
+
+                    // Now we have to fill params values.
+                    // Distinguish CASE A,C and CASE B, because of one less input neuron.
+                    if (eRecoMode==0||eRecoMode==2) {
+                        paramsAC[0]=eValueGSNN_var00; //dIP
+                        paramsAC[1]=eValueGSNN_var01; //dMinDist
+                        paramsAC[2]=eValueGSNN_var02; //dR
+                        paramsAC[3]=eValueGSNN_var03; //deltaZ
+                        paramsAC[4]=eValueGSNN_var04; //dT
+                        paramsAC[5]=eValueGSNN_var05; //dNPL
+                        //paramsAC[6]=eValueGSNN_var06; // cannot be used, uses MC info...
+                    }
+                    else {
+                        paramsB[0]=eValueGSNN_var00; //dIP
+                        paramsB[0]=eValueGSNN_var01; //dMinDist
+                        paramsB[1]=eValueGSNN_var02; //dR
+                        //paramsB[3]=eValueGSNN_var03;
+                        //deltaZ // constant, so take out (otherwise ANN doesnt work!)
+                        paramsB[2]=eValueGSNN_var04; //dT
+                        paramsB[3]=eValueGSNN_var05; //dNPL
+                    }
 
                     //---------
                     Double_t value=0;
                     if (gEDBDEBUGLEVEL>2) {
-                        cout << "EdbShowerAlg_GS::FindPairs  Params:  ";
-                        for (int hj=0; hj<6; hj++) cout << "  " << params[hj];
-                        cout << "  - Input: " << eValueGSNN_varInput << endl;
-                        cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
-                        value=eANNPair->Evaluate(0,params);
-                        eValueGSNN_varOutput=value;
-                        cout << value << endl;
-                        cout << "EdbShowerAlg_GS::FindPairs  --------  " << endl;
+                        int nparams=6;
+                        if (eRecoMode==1) {
+                            nparams=4;
+                            cout << "EdbShowerAlg_GS::FindPairs  ParamsB:  ";
+                            for (int hj=0; hj<nparams; hj++) cout << "  " << paramsB[hj];
+                            cout << "  - Input: " << eValueGSNN_varInput << endl;
+                            cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
+                            value=eANNPair->Evaluate(0,paramsB);
+                            eValueGSNN_varOutput=value;
+                            cout << value << endl;
+                            cout << "EdbShowerAlg_GS::FindPairs  --------  " << endl;
+                        }
+                        else {
+                            nparams=6;
+                            cout << "EdbShowerAlg_GS::FindPairs  ParamsAC:  ";
+                            for (int hj=0; hj<nparams; hj++) cout << "  " << paramsAC[hj];
+                            cout << "  - Input: " << eValueGSNN_varInput << endl;
+                            cout << "EdbShowerAlg_GS::FindPairs  value=eANNPair->Evaluate(0,params) = ";
+                            value=eANNPair->Evaluate(0,paramsAC);
+                            eValueGSNN_varOutput=value;
+                            cout << value << endl;
+                            cout << "EdbShowerAlg_GS::FindPairs  --------  " << endl;
+                        }
                     }
 
 
                     // Evaluate now the NN.
-                    value=eANNPair->Evaluate(0,params);
-                    // Fill now the Tree with NN variables. Can be retrieved later.
+                    if (eRecoMode==1) {
+                        value=eANNPair->Evaluate(0,paramsB);
+                    }
+                    else {
+                        value=eANNPair->Evaluate(0,paramsAC);
+                    }
+
+
                     eValueGSNN_varOutput=value;
-                    eANNPairTree->Fill();
+                    // Fill the Tree with NN variables later. Then it can be done
+                    // also for the cleaned pairs.
+                    // eANNPairTree->Fill();
 
                     // After Full Tree is Filled, check wheter last cut condition is satisfied.
-										if ( eCutModeFull ) ; /// if (value<eANNPairCut) continue;
+                    /// if ( eCutModeFull ) ; /// if (value<eANNPairCut[eRecoMode]) continue;
 
 
                     if (gEDBDEBUGLEVEL>2) {
@@ -1888,13 +2110,13 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Seg1_To_Vtx = " << IP_Seg1_To_Vtx << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Seg2_To_Vtx = " << IP_Seg2_To_Vtx << endl;
                         cout << "InBT: Print InBT: " << InBT ->X()  << " " << InBT ->Y()  << " " << InBT ->Z() <<endl;
-                        cout << "Vtx:  Print XYZ: " << vtx ->X()  << " " << vtx ->Y()  << " " << vtx ->Z() <<endl;
+                        cout << "Vtx:  Print MC XYZ: " << vtx ->MCEvt()  << " " << vtx ->X()  << " " << vtx ->Y()  << " " << vtx ->Z() <<endl;
                     }
 
-                    SegmentPIDArray->AddAt(Segment->PID(), RecoShowerArrayN);
-                    SegmentIDArray->AddAt(Segment->ID(), RecoShowerArrayN);
-                    Segment2PIDArray->AddAt(Segment2->PID(), RecoShowerArrayN);
-                    Segment2IDArray->AddAt(Segment2->ID(), RecoShowerArrayN);
+                    eSegmentPIDArray->AddAt(Segment->PID(), RecoShowerArrayN);
+                    eSegmentIDArray->AddAt(Segment->ID(), RecoShowerArrayN);
+                    eSegment2PIDArray->AddAt(Segment2->PID(), RecoShowerArrayN);
+                    eSegment2IDArray->AddAt(Segment2->ID(), RecoShowerArrayN);
 
 
                     // Create new EdbTrackP Object for storage;
@@ -1908,7 +2130,7 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     RecoShower->SetTX(Segment_Sum->TX());
                     RecoShower->SetTY(Segment_Sum->TY());
                     RecoShower->SetMC(InBT->MCEvt(),InBT->MCEvt());
-                    RecoShower->SetID(RecoShowerArrayN);
+                    RecoShower->SetID(eRecoShowerArrayN);
                     RecoShower->SetPID(Segment->PID());
 
                     // Add Shower to interim  Array:
@@ -1919,23 +2141,26 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                         cout << "Added shower at " << RecoShower << " to reco shower array. Until now: ";
                         cout << RecoShowerArrayN << " entries in it: Print Shower:" << endl;
                         RecoShower->PrintNice();
-
                     }
+
+                    delete segments;
                 }
             }
         }
     }  //for (Int_t pat_one_cnt=0; ...
 
+    // ------------------------------------
     if (gEDBDEBUGLEVEL>2) {
-			cout << "EdbShowerAlg_GS::FindPairs   For the InBT/Vtx at __" << InBT << "__, we have searched "  <<  NPairTriesTotal  << " pair combinations in the PVRec volume." << endl;
-			cout << "EdbShowerAlg_GS::FindPairs   For the InBT/Vtx at __" << InBT << "__, we have found "  <<  RecoShowerArray->GetEntries()  << " compatible pairs in the PVRec volume." << endl;
-		}
+        cout << "EdbShowerAlg_GS::FindPairs   For the InBT/Vtx at __" << InBT << "__, we have searched "  <<  NPairTriesTotal  << " pair combinations in the PVRec volume." << endl;
+        cout << "EdbShowerAlg_GS::FindPairs   For the InBT/Vtx at __" << InBT << "__, we have found "  <<  RecoShowerArray->GetEntries()  << " compatible pairs in the PVRec volume." << endl;
+    }
+    // ------------------------------------
 
-    // Delete unnecessary objects:
-    // important, else memory overflow!!
-    delete SegmentPIDArray;    delete Segment2PIDArray;    
-		delete SegmentIDArray;    delete Segment2IDArray;
+    // Delete unnecessary objects: important, else memory overflow!
+    delete vtx;
+    delete Segment_Sum;
 
+    Log(3,"EdbShowerAlg_GS::FindPairs","Starting FindPairs(InBT,eAli_Sub) now....done.");
     return RecoShowerArray;
 }
 
@@ -1946,20 +2171,22 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
 {
     // Check Clean Pairs Function.
     // It looks for basetrack pairs that come in a row directly behind each other.
-    // Todo: WHAT DOES THIS FUNCTION DO ???
+    // Then it will take the one most upstream in this line.
+    // More precise to explain:: WHAT DOES THIS FUNCTION DO ???
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::CheckCleanPairs"  <<endl;
+    Log(3,"EdbShowerAlg_GS::CheckCleanPairs","Starting CheckCleanPairs() now...");
+
     if (NULL==RecoShowerArray) return NULL;
 
-    TObjArray* NewRecoShowerArray= new TObjArray(999999);
+    TObjArray* NewRecoShowerArray= new TObjArray();
     NewRecoShowerArray->Clear();
     int NewRecoShowerArrayN=0;
 
     EdbTrackP* TrackPair1=NULL;
     EdbTrackP* TrackPair2=NULL;
 
-    int ntrack=RecoShowerArray->GetEntriesFast();
-    cout << ntrack << endl;
+    int ntrack=RecoShowerArray->GetEntries();
+    // cout << "EdbShowerAlg_GS::CheckCleanPairs   ntrack = "  << ntrack << endl;
 
     for (Int_t pat_one_cnt=0; pat_one_cnt<ntrack; ++pat_one_cnt) {
         if (gEDBDEBUGLEVEL>2)  cout << "CheckCleanPairs   Doing pat_one_cnt = " << pat_one_cnt << endl;
@@ -1971,48 +2198,140 @@ TObjArray* EdbShowerAlg_GS::CheckCleanPairs(EdbSegP* InBT, TObjArray* RecoShower
             //if only one track at all take it anyway:
             if (ntrack==1) continue;
             TrackPair2=(EdbTrackP*)RecoShowerArray->At(pat_two_cnt);
-            //      cout << pat_one_cnt << "  " << pat_two_cnt << endl;
-            //      cout << pat_one_cnt << "  " << pat_two_cnt << endl;
 
             // Check  if track1 has a track before (smaller Z value)
             // and if so, if dtheta is smaller than 0.1:
             // If both is so, then track 1 is NOT taken for final array:
             //       cout << TrackPair1->Z() << "  " <<  TrackPair2->Z()  << endl;
             EdbSegP* s1=(EdbSegP* )TrackPair1->GetSegment(0);
-//        s1->PrintNice();
             EdbSegP* s2=(EdbSegP* )TrackPair2->GetSegment(0);
-//        s2->PrintNice();
             if (TrackPair1->Z()>TrackPair2->Z() && DeltaThetaSingleAngles((EdbSegP*)s1,(EdbSegP*)s2)<0.1) taketrack1=false;
             if (!taketrack1) break;
         }
 
-        //cout << "taketrack1 =  " << taketrack1 << endl;
         if (!taketrack1) continue;
 
         // Add TrackPair1
         NewRecoShowerArray->Add(TrackPair1);
         ++NewRecoShowerArrayN;
 
-
         // Print
         if (TrackPair1->N()<2) cout << "CheckCleanPairs   This Track has only ONE entry" << endl;
 
-        //EdbSegP* s1=(EdbSegP* )TrackPair1->GetSegment(0);
-        //EdbSegP* s2=(EdbSegP* )TrackPair1->GetSegment(1);
-        //cout <<  s1->MCEvt() << "  " <<  s2->MCEvt() << "  " << s1->Flag() << "  " << s2->Flag() << "  " << s1->P() << "  " << s2->P() << "  " <<  "  " << s1->Z() << "  " << s2->Z() << "  " <<endl;
-        //cout<< "--------"<<endl;
     }
-    cout << "CheckCleanPairs   From " <<ntrack << "  originally, there are now after Zposition and overlap cuts: " << NewRecoShowerArrayN << " left." << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "CheckCleanPairs   From " << ntrack << "  originally, there are now after Zposition and overlap cuts: " << NewRecoShowerArrayN << " left." << endl;
 
-
+    Log(3,"EdbShowerAlg_GS::CheckCleanPairs","Starting CheckCleanPairs() now...done.");
     return NewRecoShowerArray;
 }
 
 //______________________________________________________________________________
 
 
+void EdbShowerAlg_GS::FillANNTree( TObjArray* RecoShowerArray, EdbSegP* InBT)
+{
+    // This Function will be used to fill the ANN tree,
+    // when the routine is called _after_  FindPairs.
+    // Value calulation is the same as in the FindPairs function.
+
+    Log(3,"EdbShowerAlg_GS::FillANNTree","FillANNTree...");
+    Log(3,"EdbShowerAlg_GS::FillANNTree","RecoShowerArray->GetEntries() = %d", RecoShowerArray->GetEntries());
+
+    if (RecoShowerArray->GetEntries()==0) return;
+
+    for (Int_t i=0; i< RecoShowerArray->GetEntries(); ++i) {
+
+        EdbTrackP*  shower = (EdbTrackP*)RecoShowerArray->At(i);
+        EdbSegP*  Segment = (EdbSegP*)shower->GetSegment(0);
+        EdbSegP*  Segment2 = (EdbSegP*)shower->GetSegment(1);
+
+        EdbVertex* vtx=new EdbVertex();
+        if (eRecoMode==1 || eRecoMode==2 ) {
+            vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
+        }
+        else {
+            vtx->SetXYZ(InBT->X(),InBT->Y(),InBT->Z());
+        }
+
+        TObjArray *segments = new TObjArray(2);
+        segments->Add(Segment);
+        segments->Add(Segment2);
+        EdbVertex* vetex = CalcVertex(segments);
+        delete segments;
+        Float_t IP_Seg1_To_Vtx = CalcIP(Segment, vtx);
+        Float_t IP_Seg2_To_Vtx = CalcIP(Segment2,vtx);
+        Float_t IP_InBT_To_Vtx = CalcIP(InBT,vtx);
+        Float_t IP_Seg1ToVtxSeg1Seg2=CalcIP(Segment ,vetex);
+        Float_t IP_Seg2ToVtxSeg1Seg2=CalcIP(Segment2,vetex);
+
+        eValueGSNN_varInput=-1;
+        // Purity 1:    Input =  1.0;
+        // Purity 0.5:  Input =  0.5;
+        // Purity else: Input =  0.0;
+        if (Segment2->Flag()+Segment->Flag()==0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+            eValueGSNN_varInput=1;
+        }
+        else if (Segment2->Flag()+Segment->Flag()!=0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+            eValueGSNN_varInput=0.5;
+        }
+        else {
+            eValueGSNN_varInput=0;
+        }
+
+        // Set Tree Input Variable Values:
+        // Calculation of these values is EXACTLY the same as in the
+        // FindPairs() function.
+        eValueGSNN_var00=TMath::Min(IP_Seg1_To_Vtx,IP_Seg2_To_Vtx);
+        if (eRecoMode==1) eValueGSNN_var00=IP_InBT_To_Vtx;
+        if (eRecoMode==2) {
+            eValueGSNN_var00=TMath::Min(IP_Seg1ToVtxSeg1Seg2,IP_Seg2ToVtxSeg1Seg2);
+        }
+        eValueGSNN_var01=GetMinimumDist(Segment,Segment2);
+        eValueGSNN_var02=DeltaR_WithPropagation(Segment,Segment2);
+        /// only here we distinguish, since the function DeltaR_WithPropagation is
+        /// sensitive to the Z-ordering which basetrack comes first.
+        if (Segment2->Z()>Segment->Z()) eValueGSNN_var02=DeltaR_WithPropagation(Segment2,Segment);
+        eValueGSNN_var03=InBT->Z()-vtx->Z();
+        if (eRecoMode==2) {
+            eValueGSNN_var03=TMath::Min(Segment->Z(),Segment2->Z())-vetex->Z();
+        }
+        if (eRecoMode==0) {
+            eValueGSNN_var03=TMath::Min(Segment->Z(),Segment2->Z())-vtx->Z();
+        }
+        eValueGSNN_var04=DeltaThetaSingleAngles(Segment,Segment2);
+        eValueGSNN_var05=TMath::Abs(Segment->PID()-Segment2->PID());
+        eValueGSNN_var06=Segment2->Flag()+Segment->Flag();
+
+        if (gEDBDEBUGLEVEL>2) {
+            cout <<"-------------   FillANNTree Print eValueGSNN   first, pring seg1 and seg2------------- " << endl;
+            Segment->PrintNice();
+            Segment2->PrintNice();
+            cout <<"-------------   FillANNTree Print eValueGSNN_var00= " << eValueGSNN_var00 << "   ---- " << endl;
+            cout <<"-------------   FillANNTree Print eValueGSNN_var01= " << eValueGSNN_var01 << "   ---- " << endl;
+            cout <<"-------------   FillANNTree Print eValueGSNN_var02= " << eValueGSNN_var02 << "   ---- " << endl;
+            cout <<"-------------   FillANNTree Print eValueGSNN_var03= " << eValueGSNN_var03 << "   ---- " << endl;
+            cout <<"-------------   FillANNTree Print eValueGSNN_var04= " << eValueGSNN_var04 << "   ---- " << endl;
+            cout <<"-------------   FillANNTree Print eValueGSNN_var05= " << eValueGSNN_var05 << "   ---- " << endl;
+        }
+
+        eANNPairTree->Fill();
+
+    } // for (Int_t i=0; i< RecoShowerArray->GetEntries(); ++i) {
+
+    Log(3,"EdbShowerAlg_GS::FillANNTree","FillANNTree...done.");
+    return;
+}
+
+
+//______________________________________________________________________________
+
 void EdbShowerAlg_GS::CreateANNPlots()
 {
+    // Just  a plot creating function for the GS_ANN Input variables.
+
+    Log(3,"EdbShowerAlg_GS::CreateANNPlots","CreateANNPlots...");
+
+    gROOT->SetStyle("Bold");
     // Draw Histograms for the last cut on Gamma Search
     TCanvas* canv_input = new TCanvas();
     canv_input->Divide(3,2);
@@ -2030,11 +2349,15 @@ void EdbShowerAlg_GS::CreateANNPlots()
     eANNPairTree->Draw("eValueGSNN_var05");
 
     TCanvas* canv_InOutput = new TCanvas();
-    canv_InOutput->Divide(2,1);
+    canv_InOutput->Divide(3,1);
     canv_InOutput->cd(1);
     eANNPairTree->Draw("eValueGSNN_varInput");
     canv_InOutput->cd(2);
     eANNPairTree->Draw("eValueGSNN_varOutput");
+    canv_InOutput->cd(3);
+    eANNPairTree->Draw("eValueGSNN_varInput:eValueGSNN_varOutput","","colz");
+
+    Log(3,"EdbShowerAlg_GS::CreateANNPlots","CreateANNPlots...done.");
     return;
 }
 
@@ -2081,7 +2404,8 @@ double EdbShowerAlg_GS::CalcIP(EdbSegP *s, EdbVertex *v) {
 
 //______________________________________________________________________________
 
-Bool_t EdbShowerAlg_GS::IsPossibleFakeDoublet(EdbSegP* s1,EdbSegP* s2) {
+Bool_t EdbShowerAlg_GS::IsPossibleFakeDoublet(EdbSegP* s1,EdbSegP* s2)
+{
     if (TMath::Abs(s1->X()-s2->X())<1) return kTRUE;  // minimum distance of 1micron
     if (TMath::Abs(s1->Y()-s2->Y())<1) return kTRUE;// minimum distance of 1micron
     if (TMath::Abs(s1->TX()-s2->TX())<0.005) return kTRUE;// minimum angle of 5mrad

@@ -205,6 +205,8 @@ public:
         return eAgreementChi2WDistCut[patNR];
     }
 
+    void Execute();
+
     void SetHistGeometry_OPERA();
     void SetHistGeometry_MC();
     void SetHistGeometry_OPERAandMC();
@@ -214,7 +216,7 @@ public:
     void Execute_ConstantBTDensity();
     void Execute_ConstantQuality();
 
-		TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
+    TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_Passing(EdbPVRec* aliSource);
 
