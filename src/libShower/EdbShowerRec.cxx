@@ -3908,6 +3908,8 @@ void EdbShowerRec::Execute()
     }
 
 
+    // "First Plate" means always the one most   upstream, i.e. the lowest  Z position
+    // "Last  Plate" means always the one most downstream, i.e. the highest Z position
     if  (eAli->GetPattern(0)->Z() > eAli->GetPattern(eAliNpatM1)->Z()) {
         eLastPlate_eAliPID=eAli->GetPattern(0)->PID();
         eFirstPlate_eAliPID=eAli->GetPattern(eAliNpatM1)->PID();
@@ -3921,21 +3923,25 @@ void EdbShowerRec::Execute()
         eFirstPlate_eAliPIDZ=eAli->GetPattern(0)->Z();
     }
 
-    if (gEDBDEBUGLEVEL>2) {
-        cout << "eAli->GetPattern(0)->Z() > eAli->GetPattern(eAliNpatM1)->Z() " << eAli->GetPattern(0)->Z()<< " " << eAli->GetPattern(eAliNpatM1)->Z() << endl;
-        cout << "  eLastPlate_eAliPID  = " << eLastPlate_eAliPID << endl;
-        cout << "  eFirstPlate_eAliPID  = " << eFirstPlate_eAliPID << endl;
-        cout << "  eLastPlate_eAliPIDZ  = " << eLastPlate_eAliPIDZ << endl;
-        cout << "  eFirstPlate_eAliPIDZ  = " << eFirstPlate_eAliPIDZ << endl;
+    if (gEDBDEBUGLEVEL>1) {
+        cout << "EdbShowerRec::Execute()  eAli->GetPattern(0)->Z() > eAli->GetPattern(eAliNpatM1)->Z() " << eAli->GetPattern(0)->Z()<< " " << eAli->GetPattern(eAliNpatM1)->Z() << endl;
+        cout << "EdbShowerRec::Execute()  eLastPlate_eAliPID  = " << eLastPlate_eAliPID << endl;
+        cout << "EdbShowerRec::Execute()  eFirstPlate_eAliPID  = " << eFirstPlate_eAliPID << endl;
+        cout << "EdbShowerRec::Execute()  eLastPlate_eAliPIDZ  = " << eLastPlate_eAliPIDZ << endl;
+        cout << "EdbShowerRec::Execute()  eFirstPlate_eAliPIDZ  = " << eFirstPlate_eAliPIDZ << endl;
         cout << endl;
     }
+// DEBUG!!!!
 
-
-    if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- STEP for patternloop direction =  " << STEP << endl;
+    if (eFirstPlate_eAliPID<eLastPlate_eAliPID) STEP=-1;
+    if (eFirstPlate_eAliPID>eLastPlate_eAliPID) STEP=1;
+    if (gEDBDEBUGLEVEL>1) cout << "EdbShowerRec::Execute   STEP for patternloop direction =  " << STEP << endl;
 
     //--- Loop over InBTs:
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute    Loop over InBTs:" << endl;
+    if (gEDBDEBUGLEVEL>1) {
+        cout << "EdbShowerRec::Execute   Loop over InBTs:" << endl;
+        cout << "EdbShowerRec::Execute   ("<< eInBTArrayN << "):" << endl;
+    }
 
 
 
@@ -3987,30 +3993,42 @@ void EdbShowerRec::Execute()
         //-----------------------------------
         // 2) Loop over (whole) eAli, check BT for Cuts
         // eAli_Sub
+        // 				We have to sort the Initiator PID and pattern PID,
+        // 				since the sample of Bari has shown that these two PIDs maybe
+        // 				not necessaryly be the same!!!
         //-----------------------------------
-        ActualPID= InBT->PID() ;
-        newActualPID= InBT->PID() ;
 
+
+        EdbPattern* patternActualPID = eAli_Sub->GetPatternByZ(InBT->Z());
+        ActualPID     = patternActualPID->PID();
+        newActualPID   = ActualPID ;
+        //InBT->PrintNice();
+        //cout << endl;
 
         while (StillToLoop) {
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowerRec::Execute--- --- Doing patterloop " << ActualPID << " for patterns Z position=" << eAli_Sub->GetPattern(ActualPID)->Z() << endl;
+            if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- --- Doing patterloop for PID: " << ActualPID << ", for patterns Z position: " << eAli_Sub->GetPatternByPID(ActualPID)->Z() << endl;
 
-            if (eAli_Sub->GetPattern(ActualPID)->Z() < InBT->Z() ) continue;
+            patternActualPID = eAli_Sub->GetPatternByPID(ActualPID);
 
-            //cout << "If  eAli_Sub->GetPattern(ActualPID)->Z()  is less than InBT->Z() we directly go on..";
-            //cout << "Doing plate Z = "  << eAli_Sub->GetPattern(ActualPID)->Z() << " w.r.t.   InBT->Z() " <<  InBT->Z() << endl;
+            // This reco Alg we take only BTs that come downstream the InBT:
+            // (should now never hapen anymore).
+            if (patternActualPID->Z() < InBT->Z() ) {
+                cout << "WARNING : patternActualPID->Z() < InBT->Z() " << endl;
+                continue;
+            }
 
-            for (Int_t btloop_cnt=0; btloop_cnt<eAli_Sub->GetPattern(ActualPID)->GetN(); ++btloop_cnt) {
+            for (Int_t btloop_cnt=0; btloop_cnt<patternActualPID->GetN(); ++btloop_cnt) {
 
-                //cout << "Checking Segment " << btloop_cnt << endl;
+                Segment = (EdbSegP*)patternActualPID->GetSegment(btloop_cnt);
 
-                Segment = (EdbSegP*)eAli_Sub->GetPattern(ActualPID)->GetSegment(btloop_cnt);
-                if (gEDBDEBUGLEVEL>4) Segment->PrintNice();
+                if (gEDBDEBUGLEVEL>4) {
+                    cout << "Checking Segment " << btloop_cnt << endl;
+                    Segment->PrintNice();
+                }
 
 
                 // Now apply cut conditions: Cut for Quality: --------------------
                 if ( (eUseQualityPar==kTRUE) && (Segment->Chi2()>Segment->W()*eQualityPar[0]-eQualityPar[1]) ) {
-                    //cout << "Checking Segment " << btloop_cnt << "   Segment->Chi2(): " << Segment->Chi2() << "Segment->W(): " << Segment->W() << "   Wcut:  " <<   Segment->W()*eQualityPar[0]-eQualityPar[1] << endl;
                     continue;
                 }
 
@@ -4038,43 +4056,49 @@ void EdbShowerRec::Execute()
 
             } // of btloop_cnt
 
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowerRec::Execute--- --- ActualPID= " << newActualPID << "  done. Reconstructed shower has up to now: " << RecoShower->N()  << " Segments." << endl;
+
+            if (gEDBDEBUGLEVEL>2) {
+                cout << "EdbShowerRec::Execute--- --- ActualPID= " << ActualPID << "  done. Reconstructed shower has up to now: " << RecoShower->N()  << " Segments." << endl;
+                cout << "EdbShowerRec::Execute--- --- NLoopedPattern = " << NLoopedPattern << "  until now. " <<  endl;
+            }
+
 
             // Calc BT density around shower:
-            EdbPattern* pat_interim=eAli_Sub->GetPattern(ActualPID);
+            EdbPattern* pat_interim = patternActualPID;
             CalcTrackDensity(pat_interim,eAli_Sub_halfsize,npat_int,npat_total,npatN);
 
             //------------
-            newActualPID=ActualPID+STEP;
-            ++NLoopedPattern;
+            /// CALCULATE NEWACTUALPID NUMBER BY GETPATTERNSUCCEDING:
+            EdbPattern* pat_ActualSucceeding;
+            pat_ActualSucceeding = eAli_Sub->GetPatternSucceding( patternActualPID ) ;
+
+
+            if (pat_ActualSucceeding!=NULL) {
+
+                // Set New Values:
+                newActualPID = pat_ActualSucceeding->PID();
+                ++NLoopedPattern;
+
+                //cout <<"patternActualPID          : at,PID,Z " << patternActualPID << " " << patternActualPID->PID() << "  " << patternActualPID->Z() << endl;
+                //cout <<"pat_ActualSucceeding: at,PID,Z " << pat_ActualSucceeding << " " << pat_ActualSucceeding->PID() << "  " << pat_ActualSucceeding->Z() << endl;
+            }
+
 
             // DAU user solution for stopping the loop:
-            if (InBT->Z()>=greatestZValueofeAliSub) {
+            if (pat_ActualSucceeding==NULL) {
                 StillToLoop=kFALSE;
-                if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: InBT->Z()>=greatestZValueofeAliSub"<<endl;
+                if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: pat_ActualSucceeding==NULL"<<endl;
             }
 
-
-
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowerRec::Execute--- --- StillToLoop= " << StillToLoop << endl;
-
-            // This if holds in the case of STEP== +1
-            if (STEP==1) {
-                if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID>eLastPlate_eAliPID && gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+            if (gEDBDEBUGLEVEL>3) {
+                cout << "EdbShowerRec::Execute--- --- StillToLoop= " << StillToLoop << endl;
+                cout << "EdbShowerRec::Execute--- ---ActualPID= " << ActualPID <<" Finished. Take newActualPID = " << newActualPID << " now. (this is end of  while (StillToLoop) ) " << endl;
             }
-            // This if holds in the case of STEP== -1
-            if (STEP==-1) {
-                if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
-            }
-            // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
-            if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
-            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
-            cout << "EdbShowerRec::Execute--- ---ActualPID= " << ActualPID <<" Finished. Take newActualPID = " << newActualPID << " now. (this is end of  while (StillToLoop) ) " << endl;
             ActualPID=newActualPID;
+            //cout << endl << endl;
         } // of // while (StillToLoop)
+
 
         if (gEDBDEBUGLEVEL>2) cout << "Finshed  __while (StillToLoop)__  . Now Adding reconstructed shower to the array (only in case it has two or more Basetracks) of reconstructed showers ..." << endl;
         if (gEDBDEBUGLEVEL>2) cout << "Shower Has  ..." << RecoShower->N() << "  basetracks in it." << endl;
@@ -4086,6 +4110,7 @@ void EdbShowerRec::Execute()
         // Set back loop values:
         StillToLoop=kTRUE;
         NLoopedPattern=0;
+
     } // of  //   for (Int_t i=eInBTArrayN-1; i>=0; --i) {
 
 
@@ -4094,6 +4119,9 @@ void EdbShowerRec::Execute()
 
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowerRec::Execute()...done." << endl;
+
+    if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
+
 
     ///========================   WRITE TO FILE..... ======================================================
     ///========================   TEMPORARY SOLUTION TO ACCES FUNCTION NEURALNET AND ENERGY .....==========
@@ -4820,7 +4848,7 @@ void EdbShowerRec::Help()
     cout << "-- Base Class for the shower reconstruction in OPERA brick.             --" << endl;
     cout << "-- This class has been initially developed by F. Juget, G. Lutter       --" << endl;
     cout << "-- and is ongoingly modified and developed by Frank Meisel, which is    --" << endl;
-    cout << "-- currently the corresponding author: frank.meisel@lhep.unibe.ch       --" << endl;
+    cout << "-- currently the corresponding author: frank.meisel@gmx.de              --" << endl;
     cout << "--                                                                      --" << endl;
     cout << "-- The main goal of this library is to make the shower search in the    --" << endl;
     cout << "-- scanned emulsion data as easy as possible, and as most automatically.--" << endl;
@@ -4875,13 +4903,13 @@ void EdbShowerRec::SetInBTArray( EdbPVRec* Ali, Int_t mode ) {
         cout << "-- EdbShowerRec   B) ATTENTION...TAKES  VERY  LONG                         --" << endl;
         cout << "-- EdbShowerRec   C) If  mode  is 1, then we take only the                 --" << endl;
         cout << "-- EdbShowerRec   C) first Z plate            ... Mainly DEBUG purpose ....--" << endl;
-        cout << "-- EdbShowerRec   D) If  mode  is 2, then we take only 5 random            --" << endl;
+        cout << "-- EdbShowerRec   D) If  mode  is 2, then we take only (1,5) random            --" << endl;
         cout << "-- EdbShowerRec   D) basetracksfirst Z plate  ... Mainly DEBUG purpose ....--" << endl;
     }
 
     TObjArray* InBTArray = new TObjArray();
 
-    Int_t nBT=5;
+    Int_t nBT=1;
     if (mode>10)  {
         // help construction, i hope noone ever needs to look at this ugly part of code :)
         nBT=mode;

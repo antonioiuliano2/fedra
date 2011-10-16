@@ -438,7 +438,9 @@ void EdbShowerAlg::Initialize()
 
 void EdbShowerAlg::Execute()
 {
-    cout << "EdbShowerAlg::Execute()-----------------------------------------------------------------------" << endl;
+    cout << "EdbShowerAlg::Execute()    -----------------------------------------------------------" << endl;
+
+    cout << "EdbShowerAlg::Execute()   This function should be implemented in the inheriting classes!!" << endl;
     return;
 }
 

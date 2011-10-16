@@ -1548,9 +1548,9 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
     cout << "EdbPVRQuality::Find_DoubleBT()  eAli_orig = " << eAli_orig << endl;
 
     if (NULL==aliSource) {
-        cout << "WARNING!   Find_DoubleBT::Remove_DoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
+        cout << "WARNING!   EdbPVRQuality::Find_DoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
         if (NULL==eAli_orig) {
-            cout << "WARNING!   Find_DoubleBT::Remove_DoubleBT() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+            cout << "WARNING!   EdbPVRQuality::Find_DoubleBT() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
             return NULL;
         }
         else {
@@ -1578,9 +1578,7 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
 
         if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Find_DoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
 
-        if (nPat==0) continue;
-
-        for (int j = 0; j < nPat-1; j++ ) {
+        for (int j = 0; j < nPat; j++ ) {
 
             // condition due avoid floating point exception (divide by zero)
             if (gEDBDEBUGLEVEL>2) if (nPat>10) if (j%(nPat/10)==0) cout << "." << flush;
@@ -1588,7 +1586,10 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
             seg = pat->GetSegment(j);
             seg_seg_close=kFALSE;
 
-            for (int k = j+1; k <pat->N(); k++ ) {
+            for (int k = j; k < nPat; k++ ) {
+                if (k==j) continue;
+
+
                 if (seg_seg_close) continue;
 
                 if (gEDBDEBUGLEVEL>3) cout << "Looping over pattern for segment pair nr=" << j << "," << k << endl;
@@ -1628,10 +1629,11 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
                 if (dR_allowed_m_deltaR<1.5) toKeep=kTRUE;
                 if (!toKeep) continue;
 
-                if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Find_DoubleBT()   Found segment compatible close to another one: seg (" <<seg->PID() << ","<<  seg->ID() << ") is close to seg  (" << seg1->PID()<< ","<< seg1->ID()  << ")." << endl;
+                if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::Find_DoubleBT()   Found segment compatible close to another one: seg (" <<seg->PID() << ","<<  seg->ID() << ") is close to seg  (" << seg1->PID()<< ","<< seg1->ID()  << ")." << endl;
 
                 // if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Find_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
                 // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
+                if ((seg->MCEvt()!=seg1->MCEvt())&&(seg->MCEvt()>0&&seg1->MCEvt()>0)) continue;
                 // I have doubts if I shall take MC events also out, but I guess Yes, because if
                 // in data these small pairings appear, then they will fall also under the
                 // category "fake doublet" and then be removed, even if they are real double BT
@@ -1716,9 +1718,8 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
         if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Remove_DoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
 
-        if (nPat==0) continue;
 
-        for (int j = 0; j < nPat-1; j++ ) {
+        for (int j = 0; j < nPat; j++ ) {
 
             // condition due avoid floating point exception (divide by zero)
             if (gEDBDEBUGLEVEL>2) if (nPat>10) if (j%(nPat/10)==0) cout << "." << flush;
@@ -1726,10 +1727,13 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
             seg = pat->GetSegment(j);
             seg_seg_close=kFALSE;
 
-            for (int k = j+1; k <pat->N(); k++ ) {
+            for (int k = j; k < nPat; k++ ) {
+                if (k==j) continue;
+
+
                 if (seg_seg_close) continue;
 
-                if (gEDBDEBUGLEVEL>3) cout << "Looping over pattern for segment pair nr=" << j << "," << k << endl;
+                if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Doing segment pair nr=" << j << "," << k << endl;
                 seg1 = pat->GetSegment(k);
 
                 // Here decide f.e. which segments to check...
@@ -1768,11 +1772,12 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
                 if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Found incompatible segment for dR_dT line condition: " << endl;
 
                 // if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
-                // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
+                if ((seg->MCEvt()!=seg1->MCEvt())&&(seg->MCEvt()>0&&seg1->MCEvt()>0)) continue;
                 // I have doubts if I shall take MC events also out, but I guess Yes, because if
                 // in data these small pairings appear, then they will fall also under the
                 // category "fake doublet" and then be removed, even if they are real double BT
                 // from a signal.
+
 
                 ++NdoubleFoundSeg;
                 seg_seg_close=kTRUE;
@@ -1781,13 +1786,14 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
             if (seg_seg_close) continue;
 
             // Add segment:
-            if (gEDBDEBUGLEVEL>3) cout << "// Add segment:" << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "// Add segment at " << seg  << endl;
             pt->AddSegment(*seg);
-        }// for (int k = j+1; k <pat->N(); k++ )
 
-        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern:" << endl;
+        }// for (int k)
+
+        if (gEDBDEBUGLEVEL>2) cout << "// Add Pattern at " << pt << endl;
         aliTarget->AddPattern(pt);
-    } // for (int i = 0; i <aliSource->Npatterns(); i++ )
+    } // for (int j)
 
     if (gEDBDEBUGLEVEL>1) aliSource->Print();
     if (gEDBDEBUGLEVEL>1) aliTarget->Print();

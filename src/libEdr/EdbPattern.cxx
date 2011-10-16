@@ -1736,11 +1736,25 @@ EdbPattern* EdbPatternsVolume::GetPatternZLowestHighest(Bool_t lowestZ) const
 
 
 //______________________________________________________________________________
-EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
+EdbPattern* EdbPatternsVolume::GetPatternSucceding(EdbPattern* pat) const
 {
-  // Return next pattern in either downstream (dir=+1)
-  //                  or in either   upstream (dir=-1)
+	return GetPatternNext(pat->Z(),1);
+}
+
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::GetPatternPreceding(EdbPattern* pat) const
+{
+	return GetPatternNext(pat->Z(),-1);
+}
+
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::GetPatternNext(float z, int dir) const
+{
+  // Return next pattern in either downstream (dir=+1) (i.e. Z gets bigger)
+  //                  or in either   upstream (dir=-1) (i.e. Z gets smaller)
   // direction.
+  // If the last/first pattern is already given and one ask therefor 
+  // for a pattern that does not exists, then return a NULL pattern.
   
   EdbPattern *pat=0;
   float dz=dir*99999999.;
@@ -1750,8 +1764,51 @@ EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
     if(dir>0) if(zpat>z) if(zpat-z<dz) {dz=zpat-z; pat=GetPattern(i);}
     if(dir<0) if(zpat<z) if(zpat-z>dz) {dz=zpat-z; pat=GetPattern(i);}
   }
+  if (gEDBDEBUGLEVEL>2) 
+		if (pat == 0) cout <<  "EdbPattern* EdbPatternsVolume::GetPatternNext()   WARNING: pattern is NULL ! Check your input!" << endl;
   return pat;
 }
+
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::GetPatternByPID(int pid) const
+{
+  // Return pattern having PID()  == pid.
+  // If there is no such pattern, return a NULL pattern.
+  //
+  // This is important because some codings (libShower for example).
+  // rely on getting Patterns by the PIDs.
+  
+  EdbPattern *pat=0;
+	for(int i=0; i<Npatterns(); i++) {
+		pat = GetPattern(i);
+    if (GetPattern(i)->PID() == pid ) return pat;
+	}
+	
+  if (gEDBDEBUGLEVEL>2) 
+		if (pat == 0) cout <<  "EdbPattern* EdbPatternsVolume::GetPatternNext()   WARNING: pattern is NULL ! Check your input!" << endl;
+  return NULL;
+}
+
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::GetPatternByZ(float z) const
+{
+  // Return pattern having Z()  == z +- 5(microns) due to roundings.
+  // If there is no such pattern, return a NULL pattern.
+  //
+  // This is important because some codings (libShower for example).
+  // rely on getting Patterns by the Z.
+  
+  EdbPattern *pat=0;
+	for(int i=0; i<Npatterns(); i++) {
+		pat = GetPattern(i);
+    if ( TMath::Abs(GetPattern(i)->Z() - z)<5 ) return pat;
+	}
+	
+  if (gEDBDEBUGLEVEL>2) 
+		if (pat == 0) cout <<  "EdbPattern* EdbPatternsVolume::GetPatternNext()   WARNING: pattern is NULL ! Check your input!" << endl;
+  return NULL;
+}
+
 
 //______________________________________________________________________________
 int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsig, float nsigt, int Dpat)
