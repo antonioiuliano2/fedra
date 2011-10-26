@@ -1809,6 +1809,23 @@ EdbPattern* EdbPatternsVolume::GetPatternByZ(float z) const
   return NULL;
 }
 
+//______________________________________________________________________________
+EdbPattern* EdbPatternsVolume::NextPattern(float z, int dir) const
+{
+  // Return next pattern in either downstream (dir=+1)
+  //                  or in either   upstream (dir=-1)
+  // direction.
+  
+  EdbPattern *pat=0;
+  float dz=dir*99999999.;
+  float zpat;
+  for(int i=0; i<Npatterns(); i++) {
+    zpat=GetPattern(i)->Z();
+    if(dir>0) if(zpat>z) if(zpat-z<dz) {dz=zpat-z; pat=GetPattern(i);}
+    if(dir<0) if(zpat<z) if(zpat-z>dz) {dz=zpat-z; pat=GetPattern(i);}
+  }
+  return pat;
+}
 
 //______________________________________________________________________________
 int EdbPatternsVolume::FindComplimentsVol(EdbSegP &ss, TObjArray &arr, float nsig, float nsigt, int Dpat)

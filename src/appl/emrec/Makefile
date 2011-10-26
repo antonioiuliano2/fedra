@@ -10,7 +10,6 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emshow$(ExeSuf)      \
 		$(BIN_DIR)/emrec$(ExeSuf)      \
 		$(BIN_DIR)/emvtx$(ExeSuf)      \
-		$(BIN_DIR)/testcomb$(ExeSuf)      \
 		$(BIN_DIR)/emcheck$(ExeSuf)      
 
 

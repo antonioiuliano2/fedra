@@ -370,6 +370,7 @@ class EdbPatternsVolume : public TObject {
   EdbPattern  *GetPatternZLowestHighest(Bool_t lowestZ=kTRUE) const;
 	EdbPattern* GetPatternPreceding(EdbPattern* pat) const;
 	EdbPattern* GetPatternSucceding(EdbPattern* pat) const;
+	EdbPattern* NextPattern(float z, int dir) const;
   EdbPattern* GetPatternNext(float z, int dir) const;
 	EdbPattern* GetPatternByPID(int pid) const;
 	EdbPattern* GetPatternByZ(float z) const;
