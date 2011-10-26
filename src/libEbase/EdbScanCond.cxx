@@ -63,6 +63,14 @@ void EdbScanCond::Print() const
 }
 
 //______________________________________________________________________________
+void EdbScanCond::SetSigma0(const char *str)
+{
+  float x,y,tx,ty;
+  if( sscanf(str,"%f %f %f %f",&x,&y,&tx,&ty) == 4 )
+     {eSigmaX0=x;  eSigmaY0=y;  eSigmaTX0=tx;  eSigmaTY0=ty;}
+}
+
+//______________________________________________________________________________
 float EdbScanCond::StepX(float dz) const
 {
   float sigma = Sqrt( eSigmaX0*eSigmaX0 + eSigmaTX0*dz*eSigmaTX0*dz );

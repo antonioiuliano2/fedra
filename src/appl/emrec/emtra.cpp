@@ -5,6 +5,7 @@
 #include <TEnv.h>
 #include "EdbLog.h"
 #include "EdbScanProc.h"
+#include "EdbScanTracking.h"
 
 using namespace std;
 
@@ -14,8 +15,10 @@ void print_help_message()
   cout<< "\t\t  ID    - id of the dataset formed as BRICK.PLATE.MAJOR.MINOR \n";
   cout<< "\t\t  DEBUG - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\t\t  -m    - make the affine files starting from EdbScanSet\n";
+  cout<< "\t\t  -new  - apply new tracking algorithm\n";
+  cout<< "\t\t  -o    - the data directory\n";
   cout<< "\nExample: \n";
-  cout<< "\t  emtra -id=4554.10.1.0 -o/scratch/BRICKS \n";
+  cout<< "\t  emtra -id=4554.10.1.0 -o=/scratch/BRICKS \n";
   cout<< "\n If the data location directory if not explicitly defined\n";
   cout<< " the current directory will be assumed to be the brick directory \n";
   cout<<endl;
@@ -30,9 +33,15 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.refPlate"  , 999 );
   cenv.SetValue("fedra.track.nsegmin"   , 2 );
   cenv.SetValue("fedra.track.ngapmax"   , 4 );
+  cenv.SetValue("fedra.track.DRmax"     , 45. );
+  cenv.SetValue("fedra.track.DTmax"     , 0.07 );
+  cenv.SetValue("fedra.track.Sigma0" , "3 3 0.005 0.005");
   cenv.SetValue("fedra.track.probmin"   , 0.01 );
   cenv.SetValue("fedra.track.momentum"  , 2 );
   cenv.SetValue("fedra.track.mass"      , 0.14 );
+  cenv.SetValue("fedra.track.erase"     , false );
+  cenv.SetValue("fedra.track.do_misalign",false );
+  cenv.SetValue("fedra.track.misalign_offset", 500.);
   cenv.SetValue("emtra.outdir"          , "..");
   cenv.SetValue("emtra.env"             , "track.rootrc");
   cenv.SetValue("emtra.EdbDebugLevel"   , 1);
@@ -49,6 +58,7 @@ int main(int argc, char* argv[])
   const char *outdir    = cenv.GetValue("emtra.outdir"         , "..");
 
   bool      do_set      = false;
+  bool      do_new      = false;
   bool      do_pred     = false;
   bool      do_VSB      = false;
   Int_t     pred_plate  = 0, to_plate=0;
@@ -65,6 +75,10 @@ int main(int argc, char* argv[])
     else if(!strncmp(key,"-o=",3)) 
       {
 	if(strlen(key)>3)	outdir=key+3;
+      }
+    else if(!strncmp(key,"-new",4)) 
+      {
+	do_new=true;;
       }
     else if(!strncmp(key,"-pred=",6))
       {
@@ -94,15 +108,22 @@ int main(int argc, char* argv[])
   cenv.WriteFile("track.save.rootrc");
 
   if(do_set) {
-    EdbScanProc sproc;
-    sproc.eProcDirClient=outdir;
-    printf("\n----------------------------------------------------------------------------\n");
-    printf("tracking set %d.%d.%d.%d\n", brick,plate, major,minor);
-    printf("----------------------------------------------------------------------------\n\n");
+      EdbScanProc sproc;
+      sproc.eProcDirClient=outdir;
+      printf("\n----------------------------------------------------------------------------\n");
+      printf("tracking set %d.%d.%d.%d\n", brick,plate, major,minor);
+      printf("----------------------------------------------------------------------------\n\n");
 
-    EdbID id(brick,plate,major,minor);
-    EdbScanSet *ss = sproc.ReadScanSet(id);
-    ss->Brick().SetID(brick);
+      EdbID id(brick,plate,major,minor);
+      EdbScanSet *ss = sproc.ReadScanSet(id);
+      ss->Brick().SetID(brick);
+      if(do_new) 
+      {
+          EdbScanTracking est;
+          est.eSproc=&sproc;
+          est.TrackSetBT(id,cenv);
+      }
+      else {
     //ss->MakePIDList();
     //sproc.AssembleScanSet(*ss);
 
@@ -111,8 +132,8 @@ int main(int argc, char* argv[])
 //    cond.Print();
 //    sproc.TrackSetBT(*ss,cond,c);
     
-    sproc.TrackSetBT(*ss,cenv);
-
+          sproc.TrackSetBT(*ss,cenv);
+      }
   }
   /*
   if(do_pred) {

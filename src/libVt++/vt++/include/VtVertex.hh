@@ -184,7 +184,9 @@ namespace VERTEX {
     const bool VtEstimateVertex();
     /// estimate Vertex without changing Vertex object
     const bool VtEstimateVertexMath(double& x, double& y, double& z);
-    /// Kalman filter with mass constraints
+    /// estimate Vertex without changing Vertex object
+    const bool VtEstimateVertexMathTA(double& x, double& y, double& z);
+     /// Kalman filter with mass constraints
     const bool VtMass();
 
     /**@name --- Adding tracks --- */

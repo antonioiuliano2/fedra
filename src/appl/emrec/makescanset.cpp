@@ -13,10 +13,10 @@ void print_help_message()
   cout<< "\t\t  suffix   - file suffix to be searched - (default: raw.root \n)";
   cout<< "\t\t  DZ       - plate-to-plate step (default = -1300.)\n";
   cout<< "\t\t  DEBUG    - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
-  cout<< "\t\t  -noaff   - do not read aff-files - the default is yes \n";
-  cout<< "\t\t  -resetaff-  recreate aff-files using values from set.root";
-  cout<< "\t\t  -resetpar-  reset pxxx/x.x.x.x.par-files (shrinkage correction, etc) using values from set.root";
-  cout<< "\t\t  -reset   -  reset *.aff.par and *.par files";
+  cout<< "\t\t -noaff    - do not read aff-files - the default is yes \n";
+  cout<< "\t\t -resetaff - recreate aff-files using values from set.root\n";
+  cout<< "\t\t -resetpar - reset pxxx/x.x.x.x.par-files (shrinkage correction, etc) using values from set.root\n";
+  cout<< "\t\t -reset    - reset *.aff.par and *.par files\n";
   cout<< "\nExample: \n";
   cout<< "\t  makescanset -set=4554.0.1.1000 -o=/scratch/BRICKS \n";
   cout<< "\n If the data location directory if not explicitly define\n";

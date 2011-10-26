@@ -76,7 +76,7 @@ public:
   int     ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
   int     ReadPatCP(EdbPattern &pat, int id[4], TCut c="1");
   int     ReadPatCP(EdbPattern &pat, EdbID id, TCut c="1") {int id4[4]; id.Get(id4); return ReadPatCP(pat,id4,c);}
-  int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1", bool do_erase=true, bool read_mt=false);
+  int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1", bool do_erase=false, bool read_mt=false);
   int     ReadPatCPnopar(EdbPattern &pat, const char *file, TCut cut="1", EdbMask *erase_mask=0, bool read_mt=false);
   EdbMask* ReadEraseMask(EdbID id);
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);

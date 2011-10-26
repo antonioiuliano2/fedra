@@ -10,12 +10,13 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emshow$(ExeSuf)      \
 		$(BIN_DIR)/emrec$(ExeSuf)      \
 		$(BIN_DIR)/emvtx$(ExeSuf)      \
+		$(BIN_DIR)/testcomb$(ExeSuf)      \
 		$(BIN_DIR)/emcheck$(ExeSuf)      
 
 
 ROOTLIBS      += -lMLP
 ##PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lShower -lTreePlayer
-PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lTreePlayer
+PROJECT_LIBS += $(GLIBS) -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lEdd -lTreePlayer
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

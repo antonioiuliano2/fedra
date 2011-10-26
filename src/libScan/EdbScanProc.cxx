@@ -531,6 +531,7 @@ int EdbScanProc::TrackSetBT(EdbScanSet &sc, TEnv &cenv)
   float probmin  = cenv.GetValue("fedra.track.probmin"  , 0.01 );
   float momentum = cenv.GetValue("fedra.track.momentum" , 2 );
   float mass     = cenv.GetValue("fedra.track.mass"     , 0.14 );
+  bool  do_erase = cenv.GetValue("fedra.track.erase"    , false );
 
   if(sc.eIDS.GetEntries()<2) return 0;
   int n=0;
@@ -543,7 +544,7 @@ int EdbScanProc::TrackSetBT(EdbScanSet &sc, TEnv &cenv)
   EdbDataProc dproc;
   EdbPVRec *ali = dproc.PVR();
   ali->SetScanCond( &cond );
-  ReadScanSetCP(sc,  *ali, c, false);
+  ReadScanSetCP(sc,  *ali, c, do_erase);
   ali->Print();
 
   n = dproc.LinkTracksWithFlag( ali, momentum, probmin, nsegmin, ngapmax, 0 );
@@ -619,6 +620,7 @@ EdbMask *EdbScanProc::ReadEraseMask(EdbID id)
 {
   TString str;
   MakeFileName(str,id,"er.root");
+  Log(3,"EdbScanProc::ReadEraseMask"," %s",str.Data());
   if( gSystem->AccessPathName(str, kReadPermission) ) return 0;  //can not access file!
   TFile f(str.Data());
   if(!f.IsOpen()) return 0;

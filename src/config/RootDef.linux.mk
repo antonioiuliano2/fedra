@@ -22,4 +22,4 @@ SOFLAGS       = -shared
 
 CXXFLAGS     += $(ROOTCFLAGS)
 LIBS          = $(ROOTLIBS)
-GLIBS         = $(ROOTGLIBS)
+GLIBS         = $(ROOTGLIBS) -lGeom

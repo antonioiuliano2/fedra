@@ -21,7 +21,7 @@
 
 using namespace std;
 
-ClassImp(EdbMask)
+//ClassImp(EdbMask)
 ClassImp(EdbDataPiece)
 ClassImp(EdbDataSet)
 ClassImp(EdbDataProc)

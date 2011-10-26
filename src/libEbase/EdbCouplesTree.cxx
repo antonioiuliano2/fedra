@@ -215,7 +215,10 @@ int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, 
 //       if( (trseg->Find(ePlate*1000+ePiece,entr) >= 0) )  continue;
 //     }
 
-    if(eEraseMask) if(eEraseMask->At(entr)) continue;
+    if(eEraseMask) if(eEraseMask->At(entr)) {
+       printf("EdbCouplesTree::GetCPData erase %d\n",entr); 
+       continue;
+       }
 
     GetEntry(entr);
 

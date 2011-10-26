@@ -9,6 +9,8 @@
 //////////////////////////////////////////////////////////////////////////
 #include "Riostream.h"
 #include "TSystem.h"
+#include "TArrayL.h"
+#include "TArrayI.h"
 #include "EdbMath.h"
 #include "EdbSegment.h"
 #include "EdbCluster.h"
@@ -1000,12 +1002,22 @@ TH2F *EdbRunAccess::CheckUpDownOffsets()
   TH2F *h = new TH2F("UpDownOffsets","dXdY offsets between Up and correspondent Down views",100,-10,10,100,-10,10 );
   EdbPattern *p1 = GetVP(1); if(!p1) { Log(1,"EdbRunAccess::CheckUpDownOffsets","Error: GetVP(1) empty"); return h;}
   EdbPattern *p2 = GetVP(2); if(!p1) { Log(1,"EdbRunAccess::CheckUpDownOffsets","Error: GetVP(2) empty"); return h;}
-  if(p1->N() != p2->N()) Log(1,"EdbRunAccess::CheckUpDownOffsets","Warning: different number of views: %d -up,  %d - down", p1->N(), p2->N() );
-  int n = TMath::Min( p1->N(), p2->N() );
+  int  N1 = p1->N(), N2 = p2->N();
+  if(N1 != N2) Log(1,"EdbRunAccess::CheckUpDownOffsets","Warning: different number of views: %d -up,  %d - down", p1->N(), p2->N() );
+  int n = TMath::Min( N1, N2 );
+
+//segP.SetAid( view->GetAreaID()    , view->GetViewID() );
+
+  TArrayL   viewid1(N1), viewid2(N2);       //view/area id to sincronize the views
+  TArrayI      ind1(N1), ind2(N2);
+  for(int i=0; i<N1; i++)     viewid1[i] = p1->GetSegment(i)->Aid(0) * 1000000 + p1->GetSegment(i)->Aid(1);
+  for(int i=0; i<N2; i++)     viewid2[i] = p2->GetSegment(i)->Aid(0) * 1000000 + p2->GetSegment(i)->Aid(1);
+  TMath::Sort(N1,viewid1.GetArray(),ind1.GetArray(),0);
+  TMath::Sort(N2,viewid2.GetArray(),ind2.GetArray(),0);
 
   for(int i=0; i<n; i++) {
-    EdbSegP *s1=p1->GetSegment(i);
-    EdbSegP *s2=p2->GetSegment(i);
+    EdbSegP *s1=p1->GetSegment(ind1[i]);
+    EdbSegP *s2=p2->GetSegment(ind2[i]);
     h->Fill( s2->X()-s1->X(), s2->Y()-s1->Y() );
   }
   float sx = h->GetRMS(1);

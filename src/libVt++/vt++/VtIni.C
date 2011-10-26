@@ -45,10 +45,10 @@ namespace VERTEX {
   // Constructor for private class initializer
   //==============================================================================
   VtIni::initializer::initializer() {
-    cout << xcvsMODULE_vt 
+/*    cout << xcvsMODULE_vt 
 	 << " version " << xcvsVERSION_vt 
 	 << " loaded (" << xcvsDAYTIME_vt << ")." 
-	 << endl;
+	 << endl;*/
   }
   
   

@@ -32,9 +32,9 @@ EdbScanProc   *sproc=0;
 void print_help_message()
 {
   cout<< "\nExample: \n";
-  cout<< "\t  comptonmap -listA=tlg1.lst -listB=tlg2.lst -outmap=map.out -par=comptonpar0.par -v2 \n";
+  cout<< "\t  comptonmap -listA=tlg1.lst -listB=tlg2.lst -outmap=map.out -par=comptonmap.rootrc -v2 \n";
   cout<< "\t  comptonmap -Arun1.root -Brun2.root \n";
-  cout<< "\nThe data location directory if not explicitly defined will be taken from .rootrc as: \n";
+  cout<< "\nThe data location directory if not explicitly defined will be taken from comptonmap.rootrc as: \n";
   cout<< "\t  comptonmap.outdir:      /scratch/BRICKS \n";
   cout<< "\t  comptonmap.EdbDebugLevel:      1\n";
   cout<< "\nAdditional options: \n";
@@ -45,11 +45,36 @@ void print_help_message()
 }
 
 //--------------------------------------------------------------------------------------------------
+void set_default(TEnv &cenv)
+{
+  // default parameters for the comptom map search
+  //tlglist case
+  cenv.SetValue("comptonmap.MinGrainsTop" , 8.);
+  cenv.SetValue("comptonmap.MinGrainsBot" , 8.);
+  cenv.SetValue("comptonmap.MinGrainsBase",16);
+  cenv.SetValue("comptonmap.ThetaMax",      1.);
+  cenv.SetValue("comptonmap.Xmin",   -1000000.);
+  cenv.SetValue("comptonmap.Xmax",    1000000.);
+  cenv.SetValue("comptonmap.Ymin",   -1000000.);
+  cenv.SetValue("comptonmap.Ymax",    1000000.);
+  cenv.SetValue("comptonmap.DensityMax",    2.);
+  
+  //run case
+  cenv.SetValue("comptonmap.x0"      ,  40000.);
+  cenv.SetValue("comptonmap.y0"      ,  40000.);
+  cenv.SetValue("comptonmap.size"    , 500000.);
+  cenv.SetValue("comptonmap.pulsmin" ,      8 );
+  cenv.SetValue("comptonmap.side1"   ,      1 );    // usually top    of the plate
+  cenv.SetValue("comptonmap.side2"   ,      2 );    // usually bottom of the plate
+}
+
+//--------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
   if (argc < 2)   { print_help_message();  return 0; }
 
   TEnv *cenv = new TEnv("comptonenv");
+  set_default(*cenv);
   cenv->ReadFile("comptonmap.rootrc",kEnvLocal);
 
   bool      do_ida      = false;
@@ -219,7 +244,9 @@ int main(int argc, char* argv[])
 
     }
   else	{ print_help_message(); return 0; }
-
+  
+  cenv->WriteFile("comptonmap.save.rootrc");
+  
   return 1;
 }
 

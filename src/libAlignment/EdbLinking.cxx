@@ -18,6 +18,7 @@
 #include "EdbLayer.h"
 #include "EdbScanCond.h"
 #include "EdbSEQ.h"
+#include "EdbTraceBack.h"
 
 ClassImp(EdbLinking)
 
@@ -323,6 +324,10 @@ void EdbLinking::SaveCouplesTree()
       hdtx2.Fill(sc->eS2->TX()-sc->eS->TX());
       hdty2.Fill(sc->eS2->TY()-sc->eS->TY());
     }
+    //s->SetID(i);             // basetrack id will be the tree entry number
+    int entr  = ect.eTree->GetEntries();
+    sc->eS->SetID(entr);             // basetrack id will be the tree entry number
+    EdbTraceBack::SetBaseTrackVid( *(sc->eS), 0, 0, entr );   //TODO: plate, piece if available
     ect.Fill( sc->eS1, sc->eS2, sc->eS, sc );
   }
   ect.eTree->Write();
@@ -489,18 +494,22 @@ void EdbLinking::ProduceReport()
     TPaveText *ctit = new TPaveText(0.01,0.943,0.99,0.998);
     ctit->AddText( Form("Linking of  %s",eOutputFile->GetName()) );
  
-    float dx,dy;
-    EdbPeak2 pk_shr1(eHdxyShr[0]);
-    pk_shr1.ProbPeak( dx, dy );
-    EdbPeak2 pk_shr2(eHdxyShr[1]);
-    pk_shr2.ProbPeak( dx, dy );
-    const char *str = Form( "Shrinkage side1 is  %5.3f with peak of  %5.0f/%6.1f      side2 is  %5.3f with peak of %5.0f/%6.1f ",
+    if(eDoCorrectShrinkage) {
+      float dx,dy;
+      EdbPeak2 pk_shr1(eHdxyShr[0]);
+      pk_shr1.ProbPeak( dx, dy );
+      EdbPeak2 pk_shr2(eHdxyShr[1]);
+      pk_shr2.ProbPeak( dx, dy );
+      const char *str = Form( "Shrinkage side1 is  %5.3f with peak of  %5.0f/%6.1f      side2 is  %5.3f with peak of %5.0f/%6.1f ",
                               eCorr[0].V(5),pk_shr1.Peak(0), pk_shr1.Mean(0),
                               eCorr[1].V(5),pk_shr2.Peak(0), pk_shr2.Mean(0));
-    Log(1,"Shrinkage corr:","%s", str);
-    ctit->AddText(str);
-    ctit->AddText( Form("angular offsets: side1  %6.3f %6.3f   side2 %6.3f %6.3f",
+      Log(1,"Shrinkage corr:","%s", str);
+      ctit->AddText(str);
+    }
+    if(eDoCorrectAngles) {
+     ctit->AddText( Form("angular offsets: side1  %6.3f %6.3f   side2 %6.3f %6.3f",
                          eCorr[0].V(3),eCorr[0].V(4), eCorr[1].V(3), eCorr[1].V(4) ));
+    }
     ctit->Draw();
 
     TPad *c = new TPad("c","plots",0.01,0.03,0.99,0.94);

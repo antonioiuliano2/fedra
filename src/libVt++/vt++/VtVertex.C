@@ -1049,7 +1049,7 @@ namespace VERTEX {
     for(int i=0; i<3; i++) {
       for(int j=0; j<3; j++) v[i] += tt[3*i+j]*c[j];
     }
-
+    printf("findVertex3D v: %f %f %f\n",v[0],v[1],v[2]);
 
     // fill vertex parameters
     kal_xvs[0]  = v[0];      // x-vertex
@@ -1178,6 +1178,9 @@ namespace VERTEX {
     // 1st step: find approximate Vertex from average of all given tracks.
     // Initialize Kalman-filter
     VtEstimateVertex();
+    // kal_xvs[0] = vest[0];
+    // kal_xvs[1] = vest[1];
+    // kal_xvs[2] = vest[2];
     
     // 2nd step: initialize kalman filter
     v_CS   = VtSymMatrix(3,1.e5);
@@ -1186,12 +1189,12 @@ namespace VERTEX {
     for(RelationList::iterator tit = begin(); tit != last; ++tit) {
       tit->kalman.init();
     }
-
+    
 #ifdef VtDEBUG
     cout << "-------------------------------" << endl;
     cout << "Estimated Vertex: (" << vx() << "," << vy() << "," << vz() << ")" << endl;
     cout << "Number of Tracks: " << size();
-    copy(begin(), end(), ostream_iterator<Relation>(cout," "));
+    //copy(begin(), end(), ostream_iterator<Relation>(cout," "));
     cout << endl;
 #endif
 
@@ -1236,7 +1239,64 @@ namespace VERTEX {
   // VtEstimateVertex (former VTAVER function)
   //=============================================================================
   const bool Vertex::VtEstimateVertex() {
-    return VtEstimateVertexMath(kal_xvs[0], kal_xvs[1], kal_xvs[2]);
+    //return VtEstimateVertexMath(kal_xvs[0], kal_xvs[1], kal_xvs[2]);
+    return VtEstimateVertexMathTA(kal_xvs[0], kal_xvs[1], kal_xvs[2]);
+  }
+
+  //=============================================================================
+  // VtEstimateVertex (former VTAVER function)
+  //=============================================================================
+  const bool Vertex::VtEstimateVertexMathTA(double& xx, double& yy, double& zz) {
+  // Tomoko Ariga version inserted by VT 1/09/2011
+  // calc vertex point with given segments. just topological calculation
+
+    double Det,Ax,Ay,Az,Bx,By,Bz,Cx,Cy,Cz,Dx,Dy,Dz;
+    Ax=0.;Ay=0.;Az=0.;Bx=0.;By=0.;Bz=0.;Cx=0.;Cy=0.;Cz=0.;Dx=0.;Dy=0.;Dz=0.;
+
+    const RelationList::iterator last = end();
+    for(RelationList::iterator tit = begin(); tit != last; ++tit) {
+        const Track& track = tit->track;
+
+        double x        = track.x();
+        double y        = track.y();
+        double ax       = track.tx();
+        double ay       = track.ty();
+        double az = 1.0;
+	double z  = track.z();
+	double a = ax*ax+ay*ay+az*az;
+	double c = -ax*x-ay*y-az*z;
+	double b = (ax*ax+ay*ay);
+//		double w = 1.0/a/a; // weight for small angle tracks.
+	double w = 1.0; // no weight
+
+	Ax+=2.0*w/b*( a*(ay*ay+az*az) );
+	Bx+=2.0*w/b*( -a*ax*ay );
+	Cx+=2.0*w/b*( -a*ax*az );
+	Dx+=2.0*w/b*( -(a*x+c*ax)*(ax*ax-a)-(a*y+c*ay)*ax*ay-(a*z+c*az)*az*ax );
+
+	Ay+=2.0*w/b*( -a*ay*ax );
+	By+=2.0*w/b*( a*(az*az+ax*ax) );
+	Cy+=2.0*w/b*( -a*ay*az );
+	Dy+=2.0*w/b*( -(a*y+c*ay)*(ay*ay-a)-(a*z+c*az)*ay*az-(a*x+c*ax)*ax*ay );
+
+	Az+=2.0*w/b*( -a*az*ax );
+	Bz+=2.0*w/b*( -a*az*ay );
+	Cz+=2.0*w/b*( a*b );
+	Dz+=2.0*w/b*( -(a*z+c*az)*(az*az-a)-(a*x+c*ax)*az*ax-(a*y+c*ay)*ay*az );
+
+     }
+
+    Det=fabs( Ax*(By*Cz-Cy*Bz)-Bx*(Ay*Cz-Cy*Az)+Cx*(Ay*Bz-By*Az) );
+    if( Det < 0.00000001 ) {
+      cout << "VtVertex::VtEstimateVertexMathTA error: determinant is too small! " << Det << endl;
+      return false;
+    }
+    xx=( (By*Cz-Cy*Bz)*Dx-(Bx*Cz-Cx*Bz)*Dy+(Bx*Cy-Cx*By)*Dz)/Det;
+    yy=(-(Ay*Cz-Cy*Az)*Dx+(Ax*Cz-Cx*Az)*Dy-(Ax*Cy-Cx*Ay)*Dz)/Det;
+    zz=( (Ay*Bz-By*Az)*Dx-(Ax*Bz-Bx*Az)*Dy+(Ax*By-Bx*Ay)*Dz)/Det;
+	
+    v_valid = true;
+    return true;
   }
 
   //=============================================================================
@@ -1285,18 +1345,18 @@ namespace VERTEX {
 
     double det = -tx2_sum - ty2_sum + tx_sum*tx_sum/xw_sum + ty_sum*ty_sum/yw_sum;
 
-#ifdef VtDEBUG    
+//#ifdef VtDEBUG    
     cout << " txsum: " << tx_sum << " xsum: " << x_sum << " xwsum: " << xw_sum
 	 << " xtxsum: " << xtx_sum << " tx2sum: " << tx2_sum << endl;
     cout << " tysum: " << ty_sum << " ysum: " << y_sum << " ywsum: " << yw_sum
 	 << " ytysum: " << yty_sum << " ty2sum: " << ty2_sum << endl;
     cout << " det: " << det << endl;
-#endif
+//#endif
 
     if(det == 0.) {
-#ifdef VtDEBUG
+//#ifdef VtDEBUG
       cout << "VtVertex::VtEstimateVertex error: determinant == 0.!" << endl;
-#endif
+//#endif
       return false;
     }
 

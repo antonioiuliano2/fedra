@@ -56,6 +56,7 @@ class EdbScanCond : public TNamed {
     { eSigmaXgr=sx;  eSigmaYgr=sy;  eSigmaZgr=sz; }
   void SetSigma0(  float x, float y, float tx, float ty ) 
     { eSigmaX0=x;  eSigmaY0=y;  eSigmaTX0=tx;  eSigmaTY0=ty;  }
+  void SetSigma0( const char *str ) ;
   void SetBins(float bx, float by, float btx, float bty) 
     { eBinX=bx; eBinY=by; eBinTX=btx; eBinTY=bty; }
 
@@ -88,6 +89,8 @@ class EdbScanCond : public TNamed {
   float SigmaXgr()  const { return eSigmaXgr; }
   float SigmaYgr()  const { return eSigmaYgr; }
   float SigmaZgr()  const { return eSigmaZgr; }
+  
+  float Degrad()  const { return eDegrad; }
 
   float SigmaX(float ax)  const { return eSigmaX0*(1. + TMath::Abs(ax)*eDegrad); }
   float SigmaY(float ay)  const { return eSigmaY0*(1. + TMath::Abs(ay)*eDegrad); }

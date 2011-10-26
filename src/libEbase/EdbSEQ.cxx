@@ -143,17 +143,21 @@ void EdbSEQ::Draw()
 //------------------------------------------------------------------------
 void EdbSEQ::CalculateDensityMT( EdbH1 &hEq)
 {
+  Log(3,"EdbSEQ::CalculateDensityMT","hEq.N(): %d", hEq.N());
   TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,hEq.Xmin(),hEq.Xmax(),0,"EdbSEQ","FDNmt");
   fnmt->SetTitle("dNmt/dTheta in 1 view density function");
   fnmt->SetNpx(eNP);
   double *x=new double[eNP];
   double *w=new double[eNP];
   fnmt->CalcGaussLegendreSamplingPoints(eNP,x,w,1e-15);
-  for(int i=0; i<hEq.N(); i++) {
+  int n = hEq.N();
+  for(int i=0; i<n; i++) {
     float tmi=i*hEq.Xbin();
     float tma=(i+1)*hEq.Xbin();
-    hEq.SetBin(i, int(fnmt->IntegralFast(eNP,x,w,tmi,tma))+1 );
-    Log(3,"EdbSEQ::CalculateDensityMT","Integral(%f,%f) = %f", tmi, tma, float(fnmt->IntegralFast(eNP,x,w,tmi,tma)) );
+    double sbin = fnmt->IntegralFast(eNP,x,w,tmi,tma);
+    Log(3,"EdbSEQ::CalculateDensityMT","i,eNP,x,w,tmi,tma: %d %d %f %f %f %f   %lf", i,eNP,x,w,tmi,tma, sbin );
+    if(sbin>0 && sbin<kMaxInt-2) hEq.SetBin(i, int(sbin)+1 );
+    //Log(3,"EdbSEQ::CalculateDensityMT","Integral(%f,%f) = %f", tmi, tma, float(sbin) );
   }
   Log(3,"EdbSEQ::CalculateDensityMT","Integral(0,0.6) = %f", float(fnmt->IntegralFast(eNP,x,w,0,0.6)) );
 }
