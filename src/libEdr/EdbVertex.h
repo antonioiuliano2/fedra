@@ -136,9 +136,12 @@ class EdbVertex: public TObject {
   EdbVTA    *GetVTa(int i)       {return (EdbVTA*)(eVTa.At(i));}
   EdbVTA    *GetVTn(int i)       {return (EdbVTA*)(eVTn.At(i));}
   EdbTrackP *GetTrack(int i)     {return GetVTa(i)->GetTrack();}
+  EdbTrackP *GetTrackN(int i)     {return GetVTn(i)->GetTrack();}
   EdbSegP   *GetTrackV(int i, bool usesegpar=false);
   EdbVTA    *GetMaxImpVTA();
 
+  float      CheckImpGeom(const EdbTrackP *tr);
+  float      CheckImp(const EdbTrackP *tr);
   EdbVTA    *CheckImp(const EdbTrackP *tr, float ImpMax, int zpos, float dist);
   Float_t    Impact(int i) { return GetVTa(i)?  GetVTa(i)->Imp(): 1000000.; }
   Float_t    DistSeg(EdbSegP *seg, float X0 = 0.);
@@ -157,6 +160,7 @@ class EdbVertex: public TObject {
   Bool_t     TrackInVertex( EdbTrackP *t );
   Int_t      CheckDiscardedTracks();
   Int_t      EstimateVertexFlag();
+  EdbTrackP *MeanTrack();
 
   ClassDef(EdbVertex,3)  // vertex class for OPERA emulsion data
 };

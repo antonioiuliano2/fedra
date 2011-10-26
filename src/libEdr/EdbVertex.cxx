@@ -279,24 +279,61 @@ bool EdbVertex::IsEqual(const TObject *o) const
     if   ( eQuality != ((EdbVertex *)o)->eQuality ) return false;
     else      	             			    return true;
 }
+
+//________________________________________________________________________
+EdbTrackP *EdbVertex::MeanTrack()
+{
+  // calculate mean track trajectory waited with momentum
+  int ntr = N();
+  EdbTrackP *mean = new EdbTrackP();
+  float psum=0;
+  for(int i=0; i<ntr; i++) {
+    EdbTrackP *t = GetTrack(i);
+    mean->Set( 0 , mean->X()  + t->X()*t->P()
+                 , mean->Y()  + t->Y()*t->P()
+                 , mean->TX() + t->TX()*t->P()
+                 , mean->TY() + t->TY()*t->P()
+                 , mean->W()  + t->W()*t->P()
+                 , 0 );
+    mean->SetZ( mean->Z()  + t->Z()*t->P() );
+    psum += t->P();
+  }
+  mean->Set( 0 , mean->X()  / psum
+               , mean->Y()  / psum
+               , mean->TX() / psum
+               , mean->TY() / psum
+               , mean->W()  / psum
+               , 0 );
+  mean->SetZ( mean->Z() / psum );
+  mean->SetP(psum);
+  return mean;
+}
+
 //________________________________________________________________________
 void EdbVertex::Print()
 {
 	int ntr = N();
-//	printf("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
-	printf( "********************** Vertex %d  with flag %d   and %d tracks **************************\n", ID(), Flag(), ntr );
+	printf( "\n********************** Vertex %d  with flag %d   and %d tracks **************************\n", ID(), Flag(), ntr );
 	printf( "Fit quality     : probability = %f    Chi2 = %f\n", V()->prob(), V()->chi2() );
 	printf( "Vertex Position : %12.3f %12.3f %12.3f \n", VX(), VY(), VZ() );
 	printf( "Position Errors : %12.3f %12.3f %12.3f\n", V()->vxerr(), V()->vyerr(), V()->vzerr() );
 	//printf("---------------------------------------------------------\n");
-	printf( "Track   ID   Nseg   Mass       P       Chi2/ndf    Prob     Chi2Contrib   Impact       Ztr\n");
+	printf( "Track   ID   Nseg   Mass       P       Chi2/ndf    Prob     Chi2Contrib   Impact         Ztr\n");
 	for(int i=0; i<ntr; i++) {
 		EdbTrackP *tr = GetTrack(i);
 		float ztr =  tr->TrackExtremity( Zpos(i) )->Z();
-		printf("%4d  %4d  %4d   %7.4f  %7.2f    %5.2f     %7.4f       %6.3f    %7.2f   %10.2f\n",
+		printf("%4d  %4d  %4d   %7.4f  %7.2f    %5.2f     %7.4f      %7.3f   %8.2f   %10.2f\n",
 		       i, tr->ID(), tr->N(), tr->M(), tr->P(),
 		       tr->Chi2()/tr->N(), tr->Prob(), V()->track_chi2(i), Impact(i), ztr );
 	}
+	/*
+	printf("------- mean \"jet\" direction: ---------\n");
+	EdbTrackP *mean = MeanTrack();
+	printf("         X            Y            Z       TX       TY         P\n");
+	printf("%12.1f %12.1f %12.1f %8.4f %8.4f %10.2f\n", 
+	        mean->X(), mean->Y(), mean->Z(), mean->TX(), mean->TY(), mean->P() );
+	SafeDelete(mean);
+	*/
 	printf("****************************************************************************************\n");
 }
 //________________________________________________________________________
@@ -372,6 +409,26 @@ EdbVertex *EdbVertex::GetConnectedVertex(int nv)
 	}
     }
     return 0;
+}
+
+//________________________________________________________________________
+float EdbVertex::CheckImpGeom( const EdbTrackP *tr )
+{
+    float pv[3] = {VX(), VY(), VZ()};
+    float p1[3] = { tr->X(), tr->Y(), tr->Z() };
+    float p2[3] = { tr->X() + tr->TX()*1000., tr->Y() + tr->TY()*1000., tr->Z()+1000. };
+    bool inside=0;
+    float imp = EdbMath::DistancePointLine3(pv, p1,p2, &inside);
+    return imp;
+}
+
+//________________________________________________________________________
+float EdbVertex::CheckImp( const EdbTrackP *tr )
+{
+    Track *t = new Track();
+    Vertex *v = this->V();
+    Edb2Vt(*tr, *t);
+    return distance(*t,*v);
 }
 
 //________________________________________________________________________
@@ -724,6 +781,7 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
 
   if(isRefit) edbv.SetXYZ(edbv.VX(),edbv.VY(),edbv.VZ());
   else        EstimateVertexPosition(edbv);
+  Log(3,"EdbVertexRec::MakeV","EstimateVertexPosition: %f %f %f",edbv.X(),edbv.Y(),edbv.Z() );
   edbv.ClearV();
   Vertex *v = new Vertex();
   v->use_kalman(eUseKalman);
@@ -759,16 +817,18 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
 EdbVertex *EdbVertexRec::StripBadTracks( EdbVertex &vtx, float impMax, int ntrMin )
 {
   EdbVertex *v      = &vtx;
+  int        ntr0    = v->N();
   int        ntr    = v->N();
   while( v && ntr>ntrMin && v->MaxImpact()>impMax ) 
   {
     Log(2,"EdbVertexRec::StripBadTracks"," ntr = %d     maximp = %f", ntr,v->MaxImpact() );
     EdbVTA *vta = v->GetMaxImpVTA();
     v = RemoveVTAFromVertex( *v, *vta );
+    vta->SetFlag(0);  v->AddVTA(vta);    // add it as VTn
     ntr = v->N();
   }  
   
-  Log(2,"EdbVertexRec::StripBadTracks"," ntr = %d     maximp = %f", ntr,v->MaxImpact() );
+  Log(2,"EdbVertexRec::StripBadTracks","  %d -> %d + %d     maximp = %f", ntr0, v->N(), v->Nn() ,v->MaxImpact() );
   return v;
 }
 
@@ -882,7 +942,8 @@ Int_t EdbVertexRec::FindSimilarTracks(EdbTrackP &track, TObjArray &found, int ns
       t2 = (EdbSegP*)t;
       dtheta = Sqrt( (t2->TX()-t1->TX())*(t2->TX()-t1->TX()) + (t2->TY()-t1->TY())*(t2->TY()-t1->TY()) );
       imp = CheckImpact( t1,t2,1,1, pv);
-      printf("id =%6d  imp = %7.3f  dtheta = %7.3f  nseg =%3d\n", t->ID(), imp, dtheta,t->N());
+      Log(3,"EdbVertexRec::FindSimilarTracks",
+          "id =%6d  imp = %7.3f  dtheta = %7.3f  nseg =%3d\n", t->ID(), imp, dtheta,t->N());
    }
   }
 
@@ -987,7 +1048,7 @@ int EdbVertexRec::FindVertex()
 
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
-  if(!ePVR) {printf("Error: EdbVertexRec::FindVertex: EdbPVRec not defined, use SetPVRec(...)\n"); return 0;}
+  if(!ePVR) {Log(1,"EdbVertexRec::FindVertex","Error! EdbPVRec not defined, use SetPVRec(...)"); return 0;}
 
   EdbVertex *edbv = 0;
   TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
@@ -2527,7 +2588,13 @@ EdbVertex *EdbVertexRec::RemoveVTAFromVertex(EdbVertex &v, EdbVTA &vta)
   for(int i=0; i<ntr; i++) {
     if( v.GetVTa(i) != &vta ) tracks.Add( v.GetVTa(i)->GetTrack() );
   }
-  return Make1Vertex( tracks, v.Z() );
+  EdbVertex *vnew = Make1Vertex( tracks, v.Z() );
+  
+  int nn = v.Nn();
+  for(int i=0; i<nn; i++) {
+    vnew->AddVTA( v.GetVTn(i) );
+  }
+  return vnew;
 }
 
 //_____________________________________________________________________________
