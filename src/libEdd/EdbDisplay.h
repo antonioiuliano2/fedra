@@ -40,10 +40,10 @@ class EdbDisplay: public EdbDisplayBase {
   EdbVertexRec *eVerRec;
   TObjArray *eArrSegP;     // array of segments to be drawn
   TObjArray *eArrTr;       // array of tracks to be drawn
-  TObjArray *eArrV;        // array of vertexes to be drawn
+  TObjArray *eArrV;        // array of vertices to be drawn
   TObjArray *eArrSegPSave;     // saved array of segments to be drawn
   TObjArray *eArrTrSave;   // saved array of tracks to be drawn
-  TObjArray *eArrVSave;    // saved array of vertexes to be drawn
+  TObjArray *eArrVSave;    // saved array of vertices to be drawn
   EdbVertex *eWorking;     // working vertex
   EdbVertex *eVertex;      // current selected vertex
   EdbVertex *ePrevious;    // saved previous vertex modifications
@@ -124,6 +124,7 @@ class EdbDisplay: public EdbDisplayBase {
   void CloseDialogModifiedTrackParams();
   void CancelDialogModifiedTrackParams();
   void ClearSegmentEnv();
+  void DrawSegmentExtrapolationLine(const EdbSegP &s, float zmin, float zmax);
  
   ClassDef(EdbDisplay,1) //FEDRA Event Display
 };

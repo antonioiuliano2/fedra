@@ -113,7 +113,6 @@ char *EdbTrackG::GetObjectInfo(int px, int py) const
     float tx = 0., ty = 0., z = 0.;
     int zpos = 1;
     if (GetMarkerColor() == kRed) zpos = 0;
-    //printf("nf = %d min = 0x%08x max = 0x%08x\n", eTr->NF(), (int)(eTr->TrackZmin()), (int)(eTr->TrackZmax()));
     if( zpos == 0 )
       {
              tx = (eTr->TrackZmax())->TX();
@@ -268,6 +267,7 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
     EdbSegP *s=0;
     for(int i=0; i<eArrSegP->GetEntries(); i++) {
       s = (EdbSegP *)(eArrSegP->At(i));
+      if(!s) continue;
       if(xmax-xmin<margR) {
 	xmax=s->X()+margR;
 	xmin=s->X()-margR;
@@ -288,6 +288,9 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
   if (eArrV) {
     for(int i=0; i<eArrV->GetEntries(); i++) {
       EdbVertex *v = (EdbVertex *)(eArrV->At(i));
+      if(!v) continue;
+      if(!v->V()) continue;
+      if(!v->V()->valid()) continue;
       if(xmax-xmin<margR) {
 	xmax=v->VX()+margR;
 	xmin=v->VX()-margR;
@@ -310,8 +313,10 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
     EdbSegP   *s;
     for(int i=0; i<eArrTr->GetEntries(); i++) {
       t = (EdbTrackP *)eArrTr->At(i);
+      if(!t) continue;
       for(int j=0; j<t->N(); j++) {
 	s = t->GetSegment(j);
+	if(!s) continue;
 	if(xmax-xmin<margR) {
 	  xmax=s->X()+margR;
 	  xmin=s->X()-margR;
@@ -682,25 +687,35 @@ void EdbDisplay::VertexDraw(EdbVertex *vv)
       line->SetPoint(1, seg->X(), seg->Y(), seg->Z());
       if (fStyle/2 == 1) line->SetLineColor(kBlack);
       else               line->SetLineColor(kYellow);
-      line->SetLineWidth(1);
+      line->SetLineWidth(2);
       line->SetBit(kCannotPick);
-      //printf("**** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
       line->Draw();
-
-      TPolyLine3D *trline = new TPolyLine3D(2);
-      EdbSegP ss(*seg);  ss.PropagateTo(zv);
-      trline->SetPoint(0, ss.X(),ss.Y(),ss.Z() );
-      trline->SetPoint(1, seg->X(), seg->Y(), seg->Z());
-      if (fStyle/2 == 1) trline->SetLineColor(kBlack);
-      else               trline->SetLineColor(kWhite);
-      trline->SetLineWidth(1);
-      trline->SetBit(kCannotPick);
-      //printf("*** draw line: (%f %f %f) -> (%f %f %f)\n", xv,yv,zv,seg->X(), seg->Y(), seg->Z());
-      trline->Draw();
-
+      if(eDrawTracks>10)  DrawSegmentExtrapolationLine( *seg, seg->Z(), zv );
+    }
+    for(int i=0; i<vv->Nn(); i++ ) {    //draw auxillary tracks if any
+      EdbTrackP *t = vv->GetTrackN(i);
+      TrackDraw(t);
+      if(eDrawTracks>10)  DrawSegmentExtrapolationLine( *((EdbSegP *)t), t->Z(), zv );
     }
   }
+}
 
+//________________________________________________________________________
+void EdbDisplay::DrawSegmentExtrapolationLine(const EdbSegP &s, float zmin, float zmax)
+{
+   EdbSegP start(s);
+   EdbSegP end(s);
+   start.PropagateTo(zmin);
+   start.PropagateTo(zmax);
+   TPolyLine3D *trline = new TPolyLine3D(2);
+   trline->SetPoint(0, start.X(),start.Y(),start.Z() );
+   trline->SetPoint( 1,   end.X(),  end.Y(),  end.Z() );
+   if (fStyle/2 == 1) trline->SetLineColor(kBlack);
+   else               trline->SetLineColor(kWhite);
+   trline->SetLineWidth(1);
+   trline->SetBit(kCannotPick);
+   trline->Draw();
+   Log(3,"EdbDisplay::DrawSegmentExtrapolationLine", "(%f %f %f) -> (%f %f %f)", start.X(),start.Y(),start.Z(), end.X(),  end.Y(),  end.Z());
 }
 
 //________________________________________________________________________
@@ -714,13 +729,14 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
   //              6 - draw measured segments only
   //              7 - draw measured segments only
   //              8 - draw only solid white track line
+  //             14 - as "4" plus track extrapolation line
 
   if (!tr) return;
   TPolyLine3D *line=0;
   const EdbSegP *seg=0;
   float dz = 0.;
 
-  if(eDrawTracks>0 && eDrawTracks<6) {   // only dotted track line
+  if(eDrawTracks%10>0 && eDrawTracks%10<6) {   // only dotted track line
     line = new TPolyLine3D(tr->N());
     if (tr->NF())    {
       for(int is=0; is<tr->NF(); is++) {
@@ -771,14 +787,14 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     line->Draw();
   }
 
-  if(eDrawTracks>3 && eDrawTracks<8 && tr->N()>0 ) {
+  if(eDrawTracks%10>3 && eDrawTracks%10<8 && tr->N()>0 ) {
     for(int is=0; is<tr->N(); is++) {
       seg = tr->GetSegment(is);
       if (seg) SegLine(seg)->Draw();
     }
   }
 
-  if(eDrawTracks>7) {
+  if(eDrawTracks%10>7) {
     line = new TPolyLine3D(tr->N());
     if (tr->NF()){
       for(int is=0; is<tr->NF(); is++) {
@@ -798,7 +814,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     line->Draw();
   }
 
-  if(eDrawTracks>1 && eDrawTracks<5) {
+  if(eDrawTracks%10>1 && eDrawTracks%10<5) {
     EdbTrackG *pms = new EdbTrackG(1, this);
     pms->SetTrack( tr );
     pms->SetMarkerStyle(kOpenCircle);
@@ -815,7 +831,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     }
   }
 
-  if(eDrawTracks>2 && eDrawTracks<5) {
+  if(eDrawTracks%10>2 && eDrawTracks%10<5) {
     EdbTrackG *pme = new EdbTrackG(1, this);
     pme->SetTrack( tr );
     pme->SetMarkerStyle(kOpenCircle);
@@ -831,7 +847,6 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       pme->SetMarkerColor(kRed);
       pme->SetMarkerSize(1.2);
       pme->Draw();
-      //printf("Red track edge, Id %d, Nseg %d, dz %f.\n", tr->ID(), tr->N(), dz);
     }
   }
 
