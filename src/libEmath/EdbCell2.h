@@ -173,6 +173,10 @@ class EdbCell2 : public EdbH2 {
     int iv[2] = { IX(v[0]), IY(v[1]) }; 
     return SelectObjectsC(iv, ir, arr);
   }
+  int SelectObjectsC(float v[2], float r, TObjArray &arr) {
+      int ir[2] = { (int)(r/Xbin()) + 1, (int)(r/Ybin()) + 1 };
+      return SelectObjectsC(v, ir, arr);
+     };
   TObject *GetObject(float x, float y, int ientr) const { return GetObject( Jcell(x,y), ientr); }
   TObject *GetObject(int ix, int iy, int ientr) const { return GetObject( Jcell(ix,iy), ientr); }
   TObject *GetObject(int j, int ientr) const { 

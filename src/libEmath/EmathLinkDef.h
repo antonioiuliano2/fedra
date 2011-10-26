@@ -21,4 +21,6 @@
 
 #pragma link C++ class EdbMask;
 
+#pragma link C++ class EdbCombGen;
+
 #endif
