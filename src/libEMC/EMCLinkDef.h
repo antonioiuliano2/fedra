@@ -14,4 +14,7 @@
 #pragma link C++ class EdbViewCell;
 #pragma link C++ class EdbViewRec;
 
+#pragma link C++ class EdbViewMatch;
+#pragma link C++ class EdbClMatch;
+
 #endif

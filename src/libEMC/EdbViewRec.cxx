@@ -562,7 +562,7 @@ int EdbViewRec::FindGrains(int option)
 
   if(eVC->eNcl<1) return 0;
   if(eVC->eNfr<2) return 0;
-  //printf("FindGrains with %d clusters, %d frames:\n\n",eVC.eNcl,eVC.eNfr);
+  printf("FindGrains with %d clusters, %d frames:\n\n",eVC->eNcl,eVC->eNfr);
   if(eNgr) {eG->Delete(); eNgr=0;}
 
   EdbCluster  **arr0=0, **arr1=0;
@@ -753,7 +753,6 @@ int EdbViewRec::FitSegment(EdbSegment &s, int wkey)
     float x0,y0,z0,tx,ty,ex,ey;
     EdbMath::LFIT3( X, Y, Z, W, ncl,
 		    x0, y0, z0, tx, ty, ex, ey );
-    
     s.Set( x0,y0,z0, tx,ty, zmax-zmin, s.GetSide(), ncl, s.GetID());
     s.SetSigma(ex,ey);
     delete[] X;
