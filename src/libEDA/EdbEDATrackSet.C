@@ -251,6 +251,7 @@ int EdbEDATrackSet::GetTrackColor(EdbSegP *s){
 
 	if(eColorMode==kCOLOR_BY_PLATE)    { int ipl=s->Plate(); if(ipl==0) ipl=s->PID();return ((ipl+5)%13)*4+52; }
 	if(eColorMode==kCOLOR_BY_PH)       { int ph = (int)s->W(); if(ph>32) ph=32; return ((ph-8)%25)*2+50;}
+//	if(eColorMode==kCOLOR_BY_PH)       { int ph = (int)s->W(); if(ph>16) ph=16; return (ph-4)*4+51;}
 	if(eColorMode==kBLACKWHITE)  { return kBlack; };
 	if(eColorMode==kCOLOR_BY_PARTICLE) { return s->Flag();}
 	if(eColorMode==kCOLOR_BY_ID)       {
@@ -1421,7 +1422,7 @@ int EdbEDATrackSet::MicroTrackSearch(EdbTrackP *t, EdbSegP *app, int ipl){
 	if (status==-1) {
 		printf(" *** MICROTRACK SEARCH ***\n");
 		printf(" ***** NOTHING FOUND *****\n");
-		gEve->SetStatusLine(Form("Nothing found on pl%02d. prediction from pl%02d", 
+		if(gEve) gEve->SetStatusLine(Form("Nothing found on pl%02d. prediction from pl%02d", 
 									ipl, app->Plate()));
 	}
 	else {
@@ -1460,7 +1461,7 @@ int EdbEDATrackSet::MicroTrackSearch(EdbTrackP *t, EdbSegP *app, int ipl){
 		printf(" MT Bot : X = %8.1f, Y = %8.1f, TX = %7.4f, TY = %7.4f, W = %2.0f, Chi2 = %5.2f,\n",
 					fnds2.X(),fnds2.Y(),fnds2.TX(),fnds2.TY(),fnds2.W(),fnds2.Chi2());
 		
-		gEve->SetStatusLine(Form("Basetrack found on pl %d. (W,Chi2)= Top(%d,%.2f) Bot(%d,%.2f)", 
+		if(gEve) gEve->SetStatusLine(Form("Basetrack found on pl %d. (W,Chi2)= Top(%d,%.2f) Bot(%d,%.2f)", 
 									ipl, (int)fnds1.W(), fnds1.Chi2(), (int)fnds2.W(), fnds2.Chi2()));
 	}
 	
@@ -1478,7 +1479,7 @@ int EdbEDATrackSet::MicroTrackSearch(EdbTrackP *t, EdbSegP *app, int ipl){
 
 		printf("## MICROTRACK Top found ##\n");
 		printf(" MT Top : X = %8.1f, Y = %8.1f, TX = %7.4f, TY = %7.4f, W = %2.0f, Chi2 = %5.2f,\n",fnds1.X(),fnds1.Y(),fnds1.TX(),fnds1.TY(),fnds1.W(),fnds1.Chi2());
-		gEve->SetStatusLine(Form("Microtrack Top found on pl %d. (W,Chi2)=(%d,%.2f)", 
+		if(gEve) gEve->SetStatusLine(Form("Microtrack Top found on pl %d. (W,Chi2)=(%d,%.2f)", 
 									ipl,(int)fnds1.W(), fnds1.Chi2()));
 	}
 
@@ -1496,7 +1497,7 @@ int EdbEDATrackSet::MicroTrackSearch(EdbTrackP *t, EdbSegP *app, int ipl){
 		t->FitTrackKFS();
 		printf("## MICROTRACK Bottom found ## \n");
 		printf(" MT Bot : X = %8.1f, Y = %8.1f, TX = %7.4f, TY = %7.4f, W = %2.0f, Chi2 = %5.2f\n",fnds2.X(),fnds2.Y(),fnds2.TX(),fnds2.TY(),fnds2.W(),fnds2.Chi2());
-		gEve->SetStatusLine(Form("Microtrack Bottom found on pl %d. (W,Chi2)=(%d,%.2f)", ipl, (int)fnds2.W(), fnds2.Chi2()));
+		if(gEve) gEve->SetStatusLine(Form("Microtrack Bottom found on pl %d. (W,Chi2)=(%d,%.2f)", ipl, (int)fnds2.W(), fnds2.Chi2()));
 	}
 	
 	printf("\nMicrotrack search end.\n\n");
