@@ -773,7 +773,9 @@ void EdbShowerAlg_GS::Set0()
 
     eAlgName="GS";
     eAlgValue=999;
-    eANNPairCut[0]=eANNPairCut[1]=eANNPairCut[2]=0.45;
+    eANNPairCut[0]=0.5;
+    eANNPairCut[1]=0.48;
+    eANNPairCut[2]=0.45;
     eSetCleanPairs=kTRUE;
     eFindPairsPreselected=kTRUE;
 
@@ -831,7 +833,7 @@ void EdbShowerAlg_GS::Init()
 
     eFindPairsPreselected=kTRUE;
 
-    eANNPairCut[0]=0.8;
+    eANNPairCut[0]=0.5;
     eANNPairCut[1]=0.48;
     eANNPairCut[2]=0.45;
 
@@ -1175,6 +1177,7 @@ TObjArray*	EdbShowerAlg_GS::SelectHighestPInMCArray(TObjArray* BTArray)
     // This  function inputs a EdbSegP (Initiator basetrack array) and
     // for all MC Events it looks for the highest P of the BT.
     // Mainly used for looking the first BT of a photon/electron shower.
+    // Affects only MC Events, on data it should have no effect.
     // Only internal usage, should not needed by the everyday user.
 
     Log(2,"EdbShowerAlg_GS::SelectHighestPInMCArray","SelectHighestPInMCArray()");
@@ -1281,7 +1284,7 @@ Bool_t	EdbShowerAlg_GS::CheckInput()
             //______________________________________________________________________________
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   FindPairsPreselected() done.");
             //eRecoMode=1;
-            //eRecoMode=2;
+//             eRecoMode=2;
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Use default eRecoMode=%d",eRecoMode);
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   Do pair search now, but take care, this is gonna take  _______VERY LONG_______ time.");
         }
@@ -1294,6 +1297,8 @@ Bool_t	EdbShowerAlg_GS::CheckInput()
             Log(2,"EdbShowerAlg_GS::CheckInput","CheckInput()   eInVtxArray there. Converting to InBTArray() now....done.");
         }
     }
+
+    cout << "EdbShowerAlg_GS::CheckInput: Finally take eRecoMode = " << eRecoMode << endl;
 
     // Reload ANN weight file:
     // If vertices are given we will take the trained neural net for basetrack pairs
@@ -1333,13 +1338,18 @@ void EdbShowerAlg_GS::SetRecoMode(Int_t RecoMode)
     }
 
     if (eInVtxArrayN==0) {
-        Log(2,"EdbShowerAlg_GS::SetRecoMode","No InVtxArray there. Will not set Reco Mode A.");
-        Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode C (eRecoMode=2).");
-        eRecoMode=2;
+
+        // So, welches nehmen wir nun denn jetzt by default??
+        // Die ROC Curve sagt eigentlich, dass CASE C besser sei...
 
         Log(2,"EdbShowerAlg_GS::SetRecoMode","No InVtxArray there. Will not set Reco Mode A.");
         Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode B (eRecoMode=1).");
         eRecoMode=1;
+
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","No InVtxArray there. Will not set Reco Mode A.");
+        Log(2,"EdbShowerAlg_GS::SetRecoMode","Set automatically Reco Mode C (eRecoMode=2).");
+        eRecoMode=2;
+
     }
     else {
         eRecoMode=RecoMode;
@@ -1460,7 +1470,7 @@ void EdbShowerAlg_GS::Execute()
         TObjArray* CleanPairs;
         if (eSetCleanPairs==kTRUE) {
             CleanPairs = CheckCleanPairs( InBT, Pairs );
-            // After we found pairs (after clear) we add the internal RecoShowerArray:
+            // After we found pairs (after   clear) we add the internal RecoShowerArray:
             AddRecoShowerArray(CleanPairs);
             FillANNTree(CleanPairs,InBT);
         }
@@ -1472,7 +1482,7 @@ void EdbShowerAlg_GS::Execute()
 
         //-----------------------------------
         // 4) Finally Apply GS_ANN cut on Pairs
-        // ---> can already by done in the findpairs routine!!
+        // ---> Is already done in the FindPairs() routine!!
         //-----------------------------------
 
 
@@ -1619,7 +1629,7 @@ TObjArray* EdbShowerAlg_GS::FindPairsPreselected(EdbPVRec* eAli_Sub)
 
         cout << "." ;
 
-        if (gEDBDEBUGLEVEL>1) cout << "EdbShowerAlg_GS::FindPairsPreselected   Doing ZSeparator o= "  << o << " loop from BT #" << Zseparator[o] << " to BT # " << Zseparator[o+1]-1 << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbShowerAlg_GS::FindPairsPreselected   Doing ZSeparator o= "  << o << " loop from BT #" << Zseparator[o] << " to BT # " << Zseparator[o+1]-1 << endl;
 
 
         for (Int_t l=Zseparator[o]; l< Zseparator[o+1]-1; l++) {
@@ -2097,10 +2107,12 @@ TObjArray* EdbShowerAlg_GS::FindPairs(EdbSegP* InitiatorBT, EdbPVRec* eAli_Sub)
                     // eANNPairTree->Fill();
 
                     // After Full Tree is Filled, check wheter last cut condition is satisfied.
-                    /// if ( eCutModeFull ) ; /// if (value<eANNPairCut[eRecoMode]) continue;
+                    if ( eCutModeFull ) if (value<eANNPairCut[eRecoMode]) continue;
+                    if (value<eANNPairCut[eRecoMode]) continue;
 
 
-                    if (gEDBDEBUGLEVEL>2) {
+//                     if (gEDBDEBUGLEVEL>2) {
+                    if (value<eANNPairCut[eRecoMode]) {
                         cout << "EdbShowerAlg_GS::FindPairs  This Pair has passed all cuts w.r.t to InBT:" << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  IP_Pair_To_InBT  = " << IP_Pair_To_InBT << endl;
                         cout << "EdbShowerAlg_GS::FindPairs  GetMinimumDist(Segment,Segment2)  = " << GetMinimumDist(Segment,Segment2) << endl;
