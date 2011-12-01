@@ -1,0 +1,21 @@
+#------------------------------------------------------------------------------
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+CLEANLIST =    Catalog.obj Fragment.obj ProcessRawData.obj \
+               Side.obj    Track.obj    View.obj           \
+               fitter.obj 
+
+TARGET    =    $(BIN_DIR)/rwcToEdb$(ExeSuf)
+    
+PROJECT_LIBS  = -lEdb -lEdr -lEIO
+
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#--------------------------------------------------------------------------
+
+$(BIN_DIR)/rwcToEdb$(ExeSuf): Catalog.obj Fragment.obj ProcessRawData.obj \
+                              Side.obj    Track.obj    View.obj           \
+                              fitter.obj   
+
