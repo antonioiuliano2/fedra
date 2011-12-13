@@ -13,7 +13,7 @@ void toLower(std::string &inputString)
 
 
 // Value-Defintions of the different String values
-static enum StringValue { evStringInputFile = 1,
+enum StringValue { evStringInputFile = 1,
                           evStringOutputFile = 2,
 						  evStringClustersOption = 3,
 						  evStringUsage = 4,
