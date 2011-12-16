@@ -268,6 +268,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	}
 	void AddTracksBase(TObjArray *tracksbase) {
 		// Add tracks to eTracksBase. tracksbase should be an array of EdbTrackP
+		if(tracksbase==NULL) return;
 		for(int i=0;i<tracksbase->GetEntries();i++) eTracksBase->Add(tracksbase->At(i));
 	}
 	
