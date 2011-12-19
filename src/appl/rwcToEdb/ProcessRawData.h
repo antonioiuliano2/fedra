@@ -20,7 +20,12 @@
 #include "TTree.h"
 #endif
 
-
+#define SIZE_OF_CHAR 1
+#define SIZE_OF_INT 4
+#define SIZE_OF_UNSIGNED_SHORT_INT 2
+#define SIZE_OF_UNSIGNED_INT  4
+#define SIZE_OF_DOUBLE  8
+#define SIZE_OF_FLOAT  4
 
 class ProcessRawData
 {

@@ -49,15 +49,15 @@ bool ProcessRawData::readCatalog()
 	initCatalog();
 	
 	char byteInfo;
-	infile.read((char*)&byteInfo,sizeof(char));
+	infile.read((char*)&byteInfo,SIZE_OF_CHAR);
 	unsigned short headerFormat;
-	infile.read((char*)&headerFormat,sizeof(unsigned short int));
+	infile.read((char*)&headerFormat,SIZE_OF_UNSIGNED_SHORT_INT);
 	//if (something) format not supported!
 	HeaderInfo id;
-	infile.read((char*)&(id.part0),sizeof(int));
-	infile.read((char*)&(id.part1),sizeof(int));
-	infile.read((char*)&(id.part2),sizeof(int));
-	infile.read((char*)&(id.part3),sizeof(int));
+	infile.read((char*)&(id.part0),SIZE_OF_INT);
+	infile.read((char*)&(id.part1),SIZE_OF_INT);
+	infile.read((char*)&(id.part2),SIZE_OF_INT);
+	infile.read((char*)&(id.part3),SIZE_OF_INT);
 
 	std::cout << "infoType: " << byteInfo << "\nheaderFormat: " << headerFormat << std::endl;
 	std::cout << "Part0: " << id.part0 << 
@@ -71,36 +71,37 @@ bool ProcessRawData::readCatalog()
 	if (headerFormat == 1795) // NormalDouble = 0x705
 	{
 		
-		infile.read((char*)&(minx),sizeof(double));
+		infile.read((char*)&(minx),SIZE_OF_DOUBLE);
 		_catalog->setXmin(minx);
-		infile.read((char*)&(maxx),sizeof(double));
+		infile.read((char*)&(maxx),SIZE_OF_DOUBLE);
 		_catalog->setXmax(maxx);
-		infile.read((char*)&(miny),sizeof(double));
+		infile.read((char*)&(miny),SIZE_OF_DOUBLE);
 		_catalog->setYmin(miny);
-		infile.read((char*)&(maxy),sizeof(double));
+		infile.read((char*)&(maxy),SIZE_OF_DOUBLE);
 		_catalog->setYmax(maxy);
-		infile.read((char*)&(stepx),sizeof(double));
+		infile.read((char*)&(stepx),SIZE_OF_DOUBLE);
 		_catalog->setXstep(stepx);
-		infile.read((char*)&(stepy),sizeof(double));
+		infile.read((char*)&(stepy),SIZE_OF_DOUBLE);
 		_catalog->setYstep(stepy);
-		infile.read((char*)&(xviews),sizeof(unsigned int));
+		infile.read((char*)&(xviews),SIZE_OF_UNSIGNED_INT);
 		_catalog->setXviews(xviews);
-		infile.read((char*)&(yviews),sizeof(unsigned int));
+		infile.read((char*)&(yviews),SIZE_OF_UNSIGNED_INT);
 		_catalog->setYviews(yviews);
-		infile.read((char*)&(nFragments),sizeof(unsigned int));
+		infile.read((char*)&(nFragments),SIZE_OF_UNSIGNED_INT);
 		_catalog->setNfragments(nFragments);
 		_catalog->initFragmentIndexes(yviews,xviews);
 		SetupStringRepresentation *set = _catalog->getSetup();
 		set->name = "Setup Info";
-		unsigned char readUInt;
-		infile.read((char*)&(readUInt),sizeof(unsigned int));
+		//unsigned char readUInt;
+		unsigned int readUInt;
+		infile.read((char*)&(readUInt),SIZE_OF_UNSIGNED_INT);
 		set->length = readUInt;
 		for (unsigned int i = 0; i < set->length; i++)
 		{
 			ConfigStringRepresentation cfg;
 			std::string className; infile.read((char*)(&className),64);
 			std::string name; infile.read((char*)(&name),64);
-			infile.read((char*)&(readUInt),sizeof(unsigned int));
+			infile.read((char*)&(readUInt),SIZE_OF_UNSIGNED_INT);
 			cfg.className = className;
 			cfg.name = name;
 			cfg.length = readUInt; 
@@ -120,7 +121,7 @@ bool ProcessRawData::readCatalog()
 		{
 			for (unsigned int j = 0; i < _catalog->getYviews(); j++)
 			{
-				unsigned int value; infile.read((char*)(&value),sizeof(unsigned int));
+				unsigned int value; infile.read((char*)(&value),SIZE_OF_UNSIGNED_INT);
 				_catalog->setFragmentIndexes(j,i,value);
 			}
 		}
@@ -129,29 +130,29 @@ bool ProcessRawData::readCatalog()
 	}
 	else   // --- USED IN SCANGRID MODE ----
 	{
-		infile.read((char*)&(minx),sizeof(int));
+		infile.read((char*)&(minx),SIZE_OF_INT);
 		_catalog->setXmin(minx);
-		infile.read((char*)&(maxx),sizeof(int));
+		infile.read((char*)&(maxx),SIZE_OF_INT);
 		_catalog->setXmax(maxx);
-		infile.read((char*)&(miny),sizeof(int));
+		infile.read((char*)&(miny),SIZE_OF_INT);
 		_catalog->setYmin(miny);
-		infile.read((char*)&(maxy),sizeof(int));
+		infile.read((char*)&(maxy),SIZE_OF_INT);
 		_catalog->setYmax(maxy);
-		infile.read((char*)&(stepx),sizeof(int));
+		infile.read((char*)&(stepx),SIZE_OF_INT);
 		_catalog->setXstep(stepx);
-		infile.read((char*)&(stepy),sizeof(int));
+		infile.read((char*)&(stepy),SIZE_OF_INT);
 		_catalog->setYstep(stepy);
-		infile.read((char*)&(xviews),sizeof(unsigned int));
+		infile.read((char*)&(xviews),SIZE_OF_UNSIGNED_INT);
 		_catalog->setXviews(xviews);
-		infile.read((char*)&(yviews),sizeof(unsigned int));
+		infile.read((char*)&(yviews),SIZE_OF_UNSIGNED_INT);
 		_catalog->setYviews(yviews);
-		infile.read((char*)&(nFragments),sizeof(unsigned int));
+		infile.read((char*)&(nFragments),SIZE_OF_UNSIGNED_INT);
 		_catalog->setNfragments(nFragments);
 		_catalog->initFragmentIndexes(yviews,xviews);
 		SetupStringRepresentation *set = _catalog->getSetup();
 		set->name = "Setup Info";
-		unsigned char readUInt;
-		infile.read((char*)&(readUInt),sizeof(unsigned int));
+		unsigned int readUInt;
+		infile.read((char*)&(readUInt),SIZE_OF_UNSIGNED_INT);
 		set->length = readUInt;
 		std::cout << "nFragments: " << nFragments << std::endl;
 		for (unsigned int i = 0; i < set->length; i++)
@@ -162,10 +163,12 @@ bool ProcessRawData::readCatalog()
 			infile.read((char*)(&name),64);
 			cfg.className = className;
 			cfg.name = name;
-			long a;
+			//long a;
+			unsigned int a;
 			
 			infile.read((char*)&(a),4);
 			cfg.length = a;
+			//std::cout << "a: " << a << std::endl;
 			
 			for (int j = 0; j < cfg.length; j++)
 			{
@@ -184,14 +187,15 @@ bool ProcessRawData::readCatalog()
 		{
 			for (unsigned int j = 0; j < _catalog->getXviews(); j++)
 			{
-				infile.read((char*)&readUInt,sizeof (unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				_catalog->setFragmentIndexes(i,j,readUInt);			
-
+				
 			}
 
 		}
 		infile.seekg(256,std::ios::cur);
 	}
+	infile.close();
 	return true;
 }
 
@@ -217,20 +221,20 @@ bool ProcessRawData::readFragment()
 	int codingMode;
 	unsigned int index, startView, nViews, fitCorrectionDataSize;
 	
-	infile.read((char*)&infoType,sizeof(char));
-	infile.read((char*)&headerFormat,sizeof(unsigned short));
+	infile.read((char*)&infoType,SIZE_OF_CHAR);
+	infile.read((char*)&headerFormat,SIZE_OF_UNSIGNED_SHORT_INT);
 	
 // if header && infotype da implementare
 	HeaderInfo id; 
-	infile.read((char*)&id.part0,sizeof(int));
-	infile.read((char*)&id.part1,sizeof(int));
-	infile.read((char*)&id.part2,sizeof(int));
-	infile.read((char*)&id.part3,sizeof(int));
-	infile.read((char*)&index,sizeof(unsigned int));
-	infile.read((char*)&startView,sizeof(unsigned int));
-	infile.read((char*)&nViews,sizeof(unsigned int));
-	infile.read((char*)&fitCorrectionDataSize,sizeof(unsigned int));
-	infile.read((char*)&codingMode,sizeof(int));
+	infile.read((char*)&id.part0,SIZE_OF_INT);
+	infile.read((char*)&id.part1,SIZE_OF_INT);
+	infile.read((char*)&id.part2,SIZE_OF_INT);
+	infile.read((char*)&id.part3,SIZE_OF_INT);
+	infile.read((char*)&index,SIZE_OF_UNSIGNED_INT);
+	infile.read((char*)&startView,SIZE_OF_UNSIGNED_INT);
+	infile.read((char*)&nViews,SIZE_OF_UNSIGNED_INT);
+	infile.read((char*)&fitCorrectionDataSize,SIZE_OF_UNSIGNED_INT);
+	infile.read((char*)&codingMode,SIZE_OF_INT);
 	
 	_fragment->setId(id);
 	_fragment->setIndex(index);
@@ -255,59 +259,59 @@ bool ProcessRawData::readFragment()
 		{
 			view.setId(i);
 			Side topSide, bottomSide;
-			infile.read((char*)&readInt,sizeof(int));
+			infile.read((char*)&readInt,SIZE_OF_INT);
 			view.setTileX(readInt);		
-			infile.read((char*)&readInt,sizeof(int));
+			infile.read((char*)&readInt,SIZE_OF_INT);
 			view.setTileY(readInt);		
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			topSide.setStageFovPosX(readDouble); 
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setStageFovPosX(readDouble); 
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			topSide.setStageFovPosY(readDouble); 
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setStageFovPosY(readDouble); 
-			infile.read((char*)&readDouble,sizeof(double)); 
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE); 
 			topSide.setMappedFovPosX(readDouble);   
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setMappedFovPosX(readDouble);
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			topSide.setMappedFovPosY(readDouble);
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setMappedFovPosY(readDouble);
 			
 			double mxx,mxy,myx,myy;
-			infile.read((char*)&mxx,sizeof(double));
-			infile.read((char*)&mxy,sizeof(double));
-			infile.read((char*)&myx,sizeof(double));
-			infile.read((char*)&myy,sizeof(double));
+			infile.read((char*)&mxx,SIZE_OF_DOUBLE);
+			infile.read((char*)&mxy,SIZE_OF_DOUBLE);
+			infile.read((char*)&myx,SIZE_OF_DOUBLE);
+			infile.read((char*)&myy,SIZE_OF_DOUBLE);
 			topSide.setM(mxx,mxy,myx,myy);
-			infile.read((char*)&mxx,sizeof(double));
-			infile.read((char*)&mxy,sizeof(double));
-			infile.read((char*)&myx,sizeof(double));
-			infile.read((char*)&myy,sizeof(double));
+			infile.read((char*)&mxx,SIZE_OF_DOUBLE);
+			infile.read((char*)&mxy,SIZE_OF_DOUBLE);
+			infile.read((char*)&myx,SIZE_OF_DOUBLE);
+			infile.read((char*)&myy,SIZE_OF_DOUBLE);
 			bottomSide.setM(mxx,mxy,myx,myy);
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			topSide.setLayers(readInt); 
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			bottomSide.setLayers(readInt); 
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			topSide.setTopZ(readDouble);
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			topSide.setBottomZ(readDouble);
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setTopZ(readDouble);
-			infile.read((char*)&readDouble,sizeof(double));
+			infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 			bottomSide.setBottomZ(readDouble);
 			
-			infile.read((char*)&readChar,sizeof(char));
+			infile.read((char*)&readChar,SIZE_OF_CHAR);
 			topSide.setFlag(readChar);
-			infile.read((char*)&readChar,sizeof(char));
+			infile.read((char*)&readChar,SIZE_OF_CHAR);
 			bottomSide.setFlag(readChar);
 			
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			topSide.setTracks(readInt);
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			bottomSide.setTracks(readInt);
 						
 			view.setTopSide(topSide); 
@@ -323,11 +327,11 @@ bool ProcessRawData::readFragment()
 				double z;
 				if(headerFormat == 1794 || headerFormat == 1795)
 				{
-					infile.read((char*)&grains,sizeof(unsigned int));
+					infile.read((char*)&grains,SIZE_OF_UNSIGNED_INT);
 				}
 				else 
 					grains = 0;
-				infile.read((char*)&z,sizeof(double));
+				infile.read((char*)&z,SIZE_OF_DOUBLE);
 				viewArr.at(i).getTopSide()->addLayer(grains,z);
 				
 			}
@@ -339,11 +343,11 @@ bool ProcessRawData::readFragment()
 				double z;
 				if(headerFormat == 1794 || headerFormat == 1795)
 				{
-					infile.read((char*)&grains,sizeof(unsigned int));
+					infile.read((char*)&grains,SIZE_OF_UNSIGNED_INT);
 				}
 				else 
 					grains = 0;
-				infile.read((char*)&z,sizeof(double));
+				infile.read((char*)&z,SIZE_OF_DOUBLE);
 				viewArr.at(i).getBottomSide()->addLayer(grains,z);
 			
 			}
@@ -356,54 +360,54 @@ bool ProcessRawData::readFragment()
 			for (int j = 0; j < viewArr.at(i).getTopSide()->getTracks(); j++)
 			{
 				
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setAreaSum(readUInt);  
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setCount(static_cast<short>(readUInt)); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setX(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setY(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setZ(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSX(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSY(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSZ(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSigma(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setTopZ(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setBottomZ(readDouble); 
 				viewArr.at(i).getTopSide()->addTrack(tr);
 						
 			}
 			for (int j = 0; j < viewArr.at(i).getBottomSide()->getTracks(); j++)
 			{
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setAreaSum(readUInt);
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setCount(static_cast<short>(readUInt));
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setX(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setY(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setZ(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSX(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSY(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSZ(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setSigma(readDouble); 
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setTopZ(readDouble);
-				infile.read((char*)&readDouble,sizeof(double));
+				infile.read((char*)&readDouble,SIZE_OF_DOUBLE);
 				tr.setBottomZ(readDouble);
 				viewArr.at(i).getBottomSide()->addTrack(tr);
 			}
@@ -479,9 +483,9 @@ bool ProcessRawData::readFragment()
 		{
 			view.setId(i);
 			Side topSide, bottomSide;
-			infile.read((char*)&readInt,sizeof(int));
+			infile.read((char*)&readInt,SIZE_OF_INT);
 			view.setTileX(readInt);		
-			infile.read((char*)&readInt,sizeof(int));
+			infile.read((char*)&readInt,SIZE_OF_INT);
 			view.setTileY(readInt);	
 			
 			
@@ -515,9 +519,9 @@ bool ProcessRawData::readFragment()
 			infile.read((char*)&myy4bytes,4);
 			bottomSide.setM(mxx4bytes,mxy4bytes,myx4bytes,myy4bytes);
 
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			topSide.setLayers(readInt); 
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			bottomSide.setLayers(readInt); 
 
 			
@@ -531,14 +535,14 @@ bool ProcessRawData::readFragment()
 			bottomSide.setBottomZ(readFloat);
 			
 			unsigned int readUInt;
-			infile.read((char*)&readUInt,sizeof(char));
+			infile.read((char*)&readUInt,SIZE_OF_CHAR);
 			topSide.setFlag(readUInt);
-			infile.read((char*)&readUInt,sizeof(char));
+			infile.read((char*)&readUInt,SIZE_OF_CHAR);
 			bottomSide.setFlag(readUInt);
 			
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			topSide.setTracks(readInt);
-			infile.read((char*)&readInt,sizeof(int)); 
+			infile.read((char*)&readInt,SIZE_OF_INT); 
 			bottomSide.setTracks(readInt);
 						
 			view.setTopSide(topSide); 
@@ -554,7 +558,7 @@ bool ProcessRawData::readFragment()
 				double z;
 				if(headerFormat == 1794 || headerFormat == 1795)
 				{
-					infile.read((char*)&grains,sizeof(unsigned int));
+					infile.read((char*)&grains,SIZE_OF_UNSIGNED_INT);
 				}
 				else 
 					grains = 0;
@@ -571,7 +575,7 @@ bool ProcessRawData::readFragment()
 				double z;
 				if(headerFormat == 1794 || headerFormat == 1795)
 				{
-					infile.read((char*)&grains,sizeof(unsigned int));
+					infile.read((char*)&grains,SIZE_OF_UNSIGNED_INT);
 				}
 				else 
 					grains = 0;
@@ -589,9 +593,9 @@ bool ProcessRawData::readFragment()
 			for (int j = 0; j < viewArr.at(i).getTopSide()->getTracks(); j++)
 			{
 				
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setAreaSum(readUInt);  
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setCount(static_cast<short>(readUInt)); 
 				
 				infile.read((char*)&readFloat,4);
@@ -617,7 +621,7 @@ bool ProcessRawData::readFragment()
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
-					infile.read((char*)&readFloat,sizeof(fitCorrectionDataSize));
+					infile.read((char*)&readFloat,SIZE_OF_UNSIGNED_INT);
 					
 				}
 				viewArr.at(i).getTopSide()->addTrack(tr);
@@ -627,9 +631,9 @@ bool ProcessRawData::readFragment()
 			for (int j = 0; j < viewArr.at(i).getBottomSide()->getTracks(); j++)
 			{
 				
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setAreaSum(readUInt);  
-				infile.read((char*)&readUInt,sizeof(unsigned int));
+				infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 				tr.setCount(static_cast<short>(readUInt)); 
 				
 				infile.read((char*)&readFloat,4);
@@ -655,7 +659,7 @@ bool ProcessRawData::readFragment()
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
 					infile.read((char*)&readFloat,4);infile.read((char*)&readFloat,4);
-					infile.read((char*)&readFloat,sizeof(fitCorrectionDataSize));
+					infile.read((char*)&readFloat,SIZE_OF_UNSIGNED_INT);
 					
 				}
 				viewArr.at(i).getBottomSide()->addTrack(tr);
@@ -675,7 +679,7 @@ bool ProcessRawData::readFragment()
 							if (headerFormat == 1794)
 							{
 								unsigned int readUInt;
-								infile.read((char*)&readUInt,sizeof(unsigned int));
+								infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 								gr.area = readUInt;
 							}
 							else
@@ -701,7 +705,7 @@ bool ProcessRawData::readFragment()
 							if (headerFormat == 1794)
 							{
 								unsigned int readUInt;
-								infile.read((char*)&readUInt,sizeof(unsigned int));
+								infile.read((char*)&readUInt,SIZE_OF_UNSIGNED_INT);
 								gr.area = readUInt;
 							}
 							else
@@ -735,7 +739,7 @@ bool ProcessRawData::dumpCatalogInEdbStructure()
 	EdbRun *run = new EdbRun(_outputRootFileName.c_str(), "RECREATE" );
 	
     
-    run->GetTree()->SetMaxTreeSize(static_cast<Long64_t>(10e9)); 
+    run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9)); 
 	EdbRunHeader *Header = run->GetHeader();
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,1);
@@ -803,7 +807,7 @@ bool ProcessRawData::dumpFragmentInEdbStructure()
     else
 
 		run = new EdbRun( _outputRootFileName.c_str(), "UPDATE" );
-    run->GetTree()->SetMaxTreeSize(static_cast<Long64_t>(10e9));   
+    run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9));   
    
 	EdbView*    edbView = run->GetView();
    EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
