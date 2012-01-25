@@ -266,6 +266,7 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
 	s3.SetTX( (s2->X() - s1->X()) / (s2->Z() - s1->Z()) );
 	s3.SetTY( (s2->Y() - s1->Y()) / (s2->Z() - s1->Z()) );
 	s3.SetW(s1->W()+s2->W());
+	s3.SetVid(s1->ID(),s2->ID());//ale, antonia
 
 	s3.SetFlag(is2*10000+is1);
 
@@ -415,6 +416,7 @@ int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &f
     eNext.SetZ(spred.Z());
     eNext.SetFlag(UpdateFlag(spred.Flag(),1));          // if mt found : bth++, mth=0, tb=1
     eNext.SetW(fnd.W());
+    eNext.SetID(fnd.ID());//ale,antonia
     eStatus = 1;    goto RESUME;
   case 2:         // best microtrack is on the 2-d side
     eS2.Copy(fnd);
@@ -424,6 +426,7 @@ int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &f
     eNext.SetZ(spred.Z());
     eNext.SetFlag(UpdateFlag(spred.Flag(),2));         // if mt found : bth++, mth=0, tb=2
     eNext.SetW(fnd.W());
+    eNext.SetID(fnd.ID());//ale,antonia
     eStatus = 2;    goto RESUME;
   }
 
