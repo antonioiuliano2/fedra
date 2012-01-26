@@ -75,8 +75,8 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   TF1    *MCSErrorFunction_base(const char *name, float x0, float dtx);
 
   float   P_MS(EdbTrackP &tr);
-  void    DrawPlots();
-  void    DrawPlots(TCanvas *c1);
+//  void    DrawPlots();
+  void    DrawPlots(TCanvas *c1=NULL);
 
   void    Print();
 
