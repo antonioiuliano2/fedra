@@ -51,6 +51,10 @@ class EdbEDAPlotTab {
 	void CheckSingleTrack(EdbTrackP *t);
 	void CheckKinkTracks();
 	TObjArray * CheckKink(EdbTrackP *);
+	
+	void SetMomAlg();
+	void SetMomAlgCoord(){ eTF.eAlg=3;}
+	void SetMomAlgAngle(){ eTF.eAlg=0;}
 	void MomPlot();
 };
 

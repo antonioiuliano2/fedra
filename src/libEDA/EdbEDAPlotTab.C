@@ -887,8 +887,16 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	
 	TObjArray *kinks = new TObjArray;
 	
-	EdbTrackP *t = CleanTrack(trk); // Remove fake segment. 
-
+	EdbTrackP *t = CleanTrack(trk); // Remove fake segment. this may be deleted later.
+	
+	if(t->Npl()<t->N()){
+		// in this case P estimation doesn't work.
+		// this can happen if a track is formed from 2 different data set.
+		// (PID definitions are defferent amond 2 data set.)
+		// put absolute plate number as PID. (temporary solution)
+		for(int i=0;i<t->N();i++) t->GetSegment(i)->SetPID(t->GetSegment(i)->Plate());
+	}
+	
 	// minimum value of rms (angular resolution).
 	double angle = sqrt(t->TX()*t->TX()+t->TY()*t->TY());
 	double resT  = 0.0015*sqrt(2.0);
@@ -1115,6 +1123,16 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	return kinks;
 }
 
+void EdbEDAPlotTab::SetMomAlg(){
+	int alg = EdbEDAUtil::InputNumberInteger(
+		"Set Momentum methos.\n"
+		"0 = Angular method (default)\n"
+		"3 = Coordinate method\n"
+		, eTF.eAlg);
+	
+	eTF.eAlg = alg;
+}
+
 void EdbEDAPlotTab::MomPlot(){
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
 	if(selected_tracks->GetEntries()==0) return;
@@ -1128,6 +1146,18 @@ void EdbEDAPlotTab::MomPlot(){
 		EdbTrackP *t0 = (EdbTrackP *) selected_tracks->At(i);
 		if(t0==NULL) continue;
 		EdbTrackP *t=CleanTrack(t0);
+		
+		if(t->Npl()<t->N()){
+			// in this case P estimation doesn't work.
+			// this can happen if a track is formed from 2 different data set.
+			// (PID definitions are defferent amond 2 data set.)
+			// put absolute plate number as PID. (temporary solution)
+			for(int i=0;i<t->N();i++) t->GetSegment(i)->SetPID(t->GetSegment(i)->Plate());
+		}
+		
+		for(int i=0;i<t->N();i++) t->GetSegment(i)->SetPID(t->GetSegment(i)->Plate());
+		t->SetCounters();
+		
 		if(t->N()<=2) continue;
 		eTF.eMinEntr=3; 
 		
@@ -1226,14 +1256,21 @@ void EdbEDAPlotTab::MakeGUI(){
 		posx=10;
 
 		fb = new TGTextButton(fGroup,"Mom Plot");
-		fb->MoveResize(posx,posy,dx=80,20);
+		fb->MoveResize(posx,posy,dx=70,20);
 		fb->Connect("Clicked()","EdbEDAPlotTab",this,"MomPlot()");
 		fb->SetToolTipText("Make Momentum plots. \nAngular resolution indicated in the right number entry will be used. default=0.0021");
+		
+		posx+=dx+5;
+		fb = new TGTextButton(fGroup,"Alg");
+		fb->MoveResize(posx,posy,dx=30,20);
+		fb->Connect("Clicked()","EdbEDAPlotTab",this,"SetMomAlg()");
+		fb->SetToolTipText("Select angular method or coordinate method\nfor momentum computation.");
 
-		posx+=dx+10;
+		posx+=dx+5;
 		eMomAngleRes = new TGNumberEntry(fGroup, eTF.eDT0, 11,-1,TGNumberFormat::kNESRealFour);
-		eMomAngleRes->MoveResize(posx,posy,dx,20);
-		//eMomAngleRes->SetToolTipText("Angular resolution. default=0.0021");
+		eMomAngleRes->MoveResize(posx,posy,dx=60,20);
+		eMomAngleRes->GetNumberEntry()->SetToolTipText("Angular resolution. default=0.0021\n"
+			"This will be applied only for angular method.");
 	
 	fMainFrame->AddFrame(fGroup, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
 	fGroup->Resize(240,75);
