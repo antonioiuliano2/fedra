@@ -496,22 +496,22 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
 
   eF1X = MCSCoordErrorFunction("eF1X",tmean);    
   //eF1X->SetRange(0,Min(57,maxX));
-  eF1X->SetParLimits(0,0.01,100);
-  eF1X->SetParLimits(1,0.01,100);
+  eF1X->SetParLimits(0,0.0001,100);
+  eF1X->SetParLimits(1,0.0001,100);
   eF1X->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1X->SetParameter(1,10);                              // starting value for coordinate error
   
   eF1Y = MCSCoordErrorFunction("eF1Y",tmean); 
   //eF1Y->SetRange(0,Min(57,maxY));
-  eF1Y->SetParLimits(0,0.01,100);
-  eF1Y->SetParLimits(1,0.01,100);
+  eF1Y->SetParLimits(0,0.0001,100);
+  eF1Y->SetParLimits(1,0.0001,100);
   eF1Y->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1Y->SetParameter(1,10);                              // starting value for coordinate error
   
   eF1 = MCSCoordErrorFunction("eF1",tmean);
   //eF1->SetRange(0,Min(57,max3D));
-  eF1->SetParLimits(0,0.01,100);
-  eF1->SetParLimits(1,0.01,100);
+  eF1->SetParLimits(0,0.0001,100);
+  eF1->SetParLimits(1,0.0001,100);
   eF1->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1->SetParameter(1,10);                              // starting value for coordinate error  
 
