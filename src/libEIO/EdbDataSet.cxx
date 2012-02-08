@@ -2617,6 +2617,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 	Log(1,"EdbDataProc::ReadTracksTree","WARNING: no pattern with pid %d: creating new one!",s1->PID()); 
 	pat = new EdbPattern( 0., 0., s1->Z() );
 	pat->SetID(s1->PID());
+	pat->SetScanID(s1->ScanID());
 	ali.AddPatternAt(pat,s1->PID());
       }
 

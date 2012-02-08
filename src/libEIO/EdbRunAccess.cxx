@@ -347,6 +347,17 @@ int EdbRunAccess::GetVolumeArea(EdbPatternsVolume &vol, int area)
 }
 
 ///_________________________________________________________________________
+int EdbRunAccess::ViewSide(EdbView *view) const
+{
+  int side=0;
+  if(     view->GetNframesTop()==0) side=2;         // 2- bottom
+  else if(view->GetNframesBot()==0) side=1;         // 1- top
+  else return 0;
+  if(eInvertSides) side = 3-side;
+  return side;
+}
+
+///_________________________________________________________________________
 int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol, 
 				int nviews, 
 				TArrayI &srt, 
@@ -465,10 +476,12 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
     if( ViewSide(view) != side )   continue;
 
     for(int j=0;j<nsegV;j++) {
-      if(!AcceptRawSegment(view,j,segP,side)) 	continue;
+      if(!AcceptRawSegment(view,j,segP,side))   continue;
       nseg++;
       segP.SetVid(entry,j);
       segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
+      segP.SetScanID(pat.ScanID());
+      segP.SetSide(pat.Side());
       pat.AddSegment( segP);
     }
   }
@@ -899,6 +912,43 @@ float  EdbRunAccess::CalculateSegmentChi2( EdbSegment *seg, float sx, float sy, 
   }
 
   return TMath::Sqrt(chi2/ncl);
+}
+
+///______________________________________________________________________________
+EdbSegment  *EdbRunAccess::GetRawSegment( EdbView &view, int sid, int rs )
+{
+  // rs - reference system: 0 - view, 1-plate, 2-brick
+  EdbSegment *s = view.GetSegment(sid);
+  if(rs==0)  return  s;
+  else if(rs>0)
+  {
+      if(eAFID) s->Transform( view.GetHeader()->GetAffine() );
+      else {    s->SetX0( s->GetX0()+view.GetXview());
+                s->SetY0( s->GetY0()+view.GetYview()); }
+      
+      EdbLayer  *layer=GetLayer( ViewSide(&view) );
+      s->SetTx( s->GetTx()/layer->Shr() );
+      s->SetTy( s->GetTy()/layer->Shr() );
+      s->SetX0( s->GetX0() + layer->Zcorr()*s->GetTx());
+      s->SetY0( s->GetY0() + layer->Zcorr()*s->GetTy());
+      s->SetZ0( layer->Z() + layer->Zcorr() );
+      EdbAffine2D *aff = layer->GetAffineTXTY();
+      float txx = aff->A11()*s->GetTx()+aff->A12()*s->GetTy()+aff->B1();
+      float tyy = aff->A21()*s->GetTx()+aff->A22()*s->GetTy()+aff->B2();
+      s->SetTx( txx );
+      s->SetTy( tyy );
+      return s;
+  }
+  
+  if(rs==2) { return s; }
+  return 0;
+}
+
+///______________________________________________________________________________
+EdbSegment  *EdbRunAccess::GetRawSegment( int vid, int sid, int rs )
+{
+  EdbView *view = eRun->GetEntry(vid);
+  return GetRawSegment( *view, sid, rs );
 }
 
 ///______________________________________________________________________________

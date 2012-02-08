@@ -16,6 +16,7 @@
 #include "EdbRun.h"
 #include "EdbPVRec.h"
 #include "EdbLayer.h"
+#include "EdbSegmentCut.h"
 #include "TMatrix.h"
 #include "TArrayC.h"
 

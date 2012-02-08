@@ -582,20 +582,25 @@ int EdbRunTracking::FindTrack(EdbTrackP &pred, EdbTrackP &found, EdbPlateP &plat
 
   EdbAffine2D p2b(*(plate.GetAffineXY()));   // from plate to brick
   EdbAffine2D b2p(p2b); b2p.Invert();        // from brick to plate
-
   EdbSegP ps;
+  
   float dz = pred.MakePredictionTo(plate.Z(), ps);
-
+  printf("EdbRunTracking::FindTrack: dz: %f - %f = %f\n", plate.Z(), pred.Z(), dz );
+  
   if(Abs(dz)>DZmax)               return status;
   if(GetBTHoles(pred.Flag())>5)   return status;
   if(GetMTHoles(pred.Flag())>3)   return status;
 
   ps.SetFlag(pred.Flag());
+  ps.PrintNice();
   ps.Transform(&b2p);                     // plate.Transoform(seg) ???
+  ps.PrintNice();
  
   EdbSegP fndbt, fnds1, fnds2, snewpred;
   status = FindPrediction( ps, fndbt, fnds1, fnds2, snewpred ); // -1: not found; 0-bt, 1-bot, 2-top
   found.SetFlag(snewpred.Flag());
+  fnds1.PrintNice(); 
+  fnds2.PrintNice();
 
   TransformFromPlateRS(plate);      // transform all components into brick RS
 

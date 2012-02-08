@@ -13,6 +13,7 @@
 #include "EdbCell2.h"
 #include "EdbPattern.h"
 #include "EdbLayer.h"
+#include "EdbSegmentCut.h"
 #include "EdbScanCond.h"
 
 //______________________________________________________________________________
@@ -25,6 +26,7 @@ class EdbRunAccess : public TObject {
 
   Bool_t    eDoViewAnalysis;     // fill or not the histograms for optional view analysis
   EdbH2     eHViewXY[3];         // XY segments distribution in a view local coords
+  Bool_t    eInvertSides;         // 0 -do nothing, 1-invert sides
   
  private:
   TString  eRunFileName;
@@ -55,6 +57,9 @@ class EdbRunAccess : public TObject {
   EdbRunAccess(const char *fname);
   virtual ~EdbRunAccess();
 
+  EdbSegment  *GetRawSegment( int vid, int sid, int rs=0 );
+  EdbSegment  *GetRawSegment( EdbView &v, int sid, int rs=0 );
+  
   void Set0();
   void ClearCuts();
   bool InitRun(const char *runfile=0, bool do_update=false);
@@ -104,10 +109,10 @@ class EdbRunAccess : public TObject {
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side);
 
-  int ViewSide(EdbView *view) const 
-    {    if(view->GetNframesTop()==0) return 2;         // 2- bottom
-    else if(view->GetNframesBot()==0) return 1;         // 1- top
-    else return 0; }
+  int ViewSide(EdbView *view) const;
+//    {    if(view->GetNframesTop()==0) return 2;         // 2- bottom
+ //   else if(view->GetNframesBot()==0) return 1;         // 1- top
+  //  else return 0; }
 
   ///////
 
