@@ -253,22 +253,36 @@ void  EdbScanSet::UpdateBrickWithP2P(EdbLayer &la, int plate1, int plate2)
   // Note eReferencePlate should be correctly defined
 
   int pfrom = TMath::Abs(plate1-eReferencePlate)<TMath::Abs(plate2-eReferencePlate)? plate2 : plate1;
-  int step  = (pfrom-eReferencePlate>0)? 1: -1;
+  int step  = ((pfrom-eReferencePlate)>0)? 1: -1;  //the corrections to be propagated in the opposite direction from ref
+  
+  Log(3,"UpdateBrickWithP2P","from,step: %d %d   ref: %d  Z(%d)=%f",pfrom,step,eReferencePlate,pfrom,GetPlate(pfrom)->Z());
 
   float dz           = (GetDZP2P(plate1,plate2) - la.Zcorr());
 
-  EdbAffine2D *affxy = la.GetAffineXY();
+  EdbAffine2D *affxy   = la.GetAffineXY();
   if(pfrom==plate2) { 
     dz *= -1.;
     affxy->Invert();
   }
-  Log(3,"UpdateBrickWithP2P","%d->%d  dz= %f",plate1,plate2, dz);
+  //Log(1,"UpdateBrickWithP2P","%d->%d  dz= %f",plate1,plate2, dz);
+  int ipl=pfrom;
   for(int i=0; i<eB.Npl(); i++) {
-    EdbPlateP *p = GetPlate(pfrom);    if(!p) continue;
+    EdbPlateP *p = GetPlate(ipl);    if(!p) continue;
     p->SetZlayer( p->Z() + dz, p->Zmin(), p->Zmax() );
     p->GetAffineXY()->Transform(affxy);
-    pfrom+=step;
+    ipl+=step;
   }
+  
+  EdbPlateP *plate = GetPlate(plate1);
+  plate->SetShrinkage( GetPlate(plate1)->Shr() * la.Shr() );
+  //plate->GetAffineTXTY()->Print();
+  plate->GetAffineTXTY()->Transform( la.GetAffineTXTY() );
+  //plate->GetAffineTXTY()->Print();
+  
+  plate->ApplyCorrectionsLocal(la.Map());
+  
+  //Log( 1, "UpdateBrickWithP2P","after: Z(%d)=%f", pfrom, GetPlate(pfrom)->Z() );
+
 }
 
 //----------------------------------------------------------------

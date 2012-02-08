@@ -2,7 +2,37 @@
 #define ROOT_EdbLayer
 
 #include "EdbAffine.h"
+#include "EdbCell2.h"
 #include "EdbSegP.h"
+#include "EdbSegCorr.h"
+
+class EdbLayer;
+
+//-------------------------------------------------------------------------------------------------
+class EdbCorrectionMap : public EdbCell2
+{
+ private:
+  
+ public:
+  EdbCorrectionMap(){}
+  EdbCorrectionMap(const EdbCorrectionMap &map) : EdbCell2(map){}
+  virtual ~EdbCorrectionMap();
+
+  void      Init( EdbCell2 &c );
+  void      Init( int nx, float minx, float maxx, int ny, float miny, float maxy );
+  
+  EdbLayer *GetLayer(float x, float y) { return (EdbLayer *)(GetObject(x, y, 0)); }
+  EdbLayer *GetLayer(int i) { return (EdbLayer *)(GetObject(i, 0)); }
+  void      CorrectSeg( EdbSegP &s );
+  void      ApplyCorrections(EdbCorrectionMap &map);
+  void      PrintDZ();
+  
+  //EdbSegP    *CorrLoc(int j);
+  EdbSegCorr CorrLoc(int j);
+  EdbSegCorr CorrLoc(float x, float y);
+
+  ClassDef(EdbCorrectionMap,1)  // to keep and apply correction map
+};
 
 //______________________________________________________________________________
 class EdbLayer : public TObject {
@@ -26,11 +56,19 @@ class EdbLayer : public TObject {
   EdbAffine2D eAffTXTY;       // tangents affine transformation
   Float_t eZcorr;             // z-correction 
 
+  Int_t   eNcp;               // number of coincidences used for corrections calculation
+  
+  EdbCorrectionMap  eMap;       // local corrections (if any)
+
  public:
   EdbLayer();
   virtual ~EdbLayer(){}
 
+  void Copy(EdbLayer &l);
+  void CopyCorr(EdbLayer &l);
+  EdbCorrectionMap    &Map() { return eMap; }
   int   ID()   const {return eID;}
+  int   Ncp()  const {return eNcp;}
   float X()    const {return eX;}
   float Y()    const {return eY;}
   float Z()    const {return eZ;}
@@ -51,6 +89,7 @@ class EdbLayer : public TObject {
   bool  IsInside(float x, float y);
 
   void SetID(int id )               {eID=id;}
+  void SetNcp(int n )               {eNcp=n;}
   void SetXY(float x, float y )     {eX=x; eY=y;}
   void SetDXDY(float dx, float dy)  {eDX=dx; eDY=dy;}
   void SetTXTY(float tx, float ty ) {eTX=tx; eTY=ty;}
@@ -63,9 +102,11 @@ class EdbLayer : public TObject {
     {eAffTXTY.Set(a11,a12,a21,a22,b1,b2);}
   void SetZcorr(float zcorr) {eZcorr = zcorr;}
   void ShiftZ(float dz);
+  
+  void SubstructCorrections(EdbLayer &la);
+  void ApplyCorrections(EdbLayer &la);
+  void ApplyCorrectionsLocal(EdbCorrectionMap &map) { eMap.ApplyCorrections(map); }
   void ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbAffine2D &afftxty);
-  void Copy(EdbLayer &l);
-  void CopyCorr(EdbLayer &l);
   void ResetCorr();
 
   EdbAffine2D *GetAffineXY()   {return &eAffXY;}
@@ -80,38 +121,14 @@ class EdbLayer : public TObject {
   float Yp(EdbSegP &s)  { return eAffXY.A21()*s.eX + eAffXY.A22()*s.eY + eAffXY.B2(); }
   float X(EdbSegP &s)   { return Xp(s) + TX(s)*eZcorr; } // apply propagation
   float Y(EdbSegP &s)   { return Yp(s) + TY(s)*eZcorr; }
+  
+  
+  void CorrectSeg( EdbSegP &s );
+  void CorrectSegLocal( EdbSegP &s );
 
   void Print();
 
-  ClassDef(EdbLayer,2)  // shrinked layer
-};
-
-//______________________________________________________________________________
-class EdbSegmentCut : public TObject {
-
- private:
-  Int_t    eXI;         // 0-exclusive; 1-inclusive cut
-  Float_t  eMin[5];     // min  x:y:tx:ty:puls
-  Float_t  eMax[5];     // max  x:y:tx:ty:puls
-
- public:
-  EdbSegmentCut() {}
-  EdbSegmentCut( int xi, float var[10] );
-  virtual ~EdbSegmentCut() {}
-
-  void SetXI(int xi)           {eXI=xi;}
-  void SetMin(  float min[5] ) { for(int i=0;i<5;i++) eMin[i]=min[i]; }
-  void SetMax(  float max[5] ) { for(int i=0;i<5;i++) eMax[i]=max[i]; }
-  int   XI() const {return eXI;}
-  float Min(int i) const {return eMin[i];}
-  float Max(int i) const {return eMax[i];}
-  int  PassCut( float var[5] );
-  int  PassCutX( float var[5] );
-  int  PassCutI( float var[5] );
-  void Print();
-  const char *CutLine(char *str, int i=0, int j=0) const;
-
-  ClassDef(EdbSegmentCut,1)  // segment cut
+  ClassDef(EdbLayer,5)  // shrinked layer
 };
 
 #endif /* ROOT_EdbLayer */

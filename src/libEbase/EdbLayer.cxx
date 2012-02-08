@@ -1,10 +1,11 @@
+#include "EdbLog.h"
 #include "EdbLayer.h"
 #include "EdbPhys.h"
 
 ClassImp(EdbLayer)
-ClassImp(EdbSegmentCut)
+ClassImp(EdbCorrectionMap)
 
-  using namespace TMath;
+using namespace TMath;
 
 ///==============================================================================
 EdbLayer::EdbLayer()
@@ -21,10 +22,71 @@ EdbLayer::EdbLayer()
 void EdbLayer::Copy(EdbLayer &l)
 {
   eID = l.ID();
-  eZ = l.Z(); eZmin=l.Zmin(); eZmax=l.Zmax();
-  eX=l.X(); eY=l.Y(); eTX=l.TX(); eTY=l.TY();
-  eDX=l.DX(); eDY=l.DY();
+  eZ = l.Z(); 
+  eZmin=l.Zmin(); 
+  eZmax=l.Zmax();
+  eX=l.X(); 
+  eY=l.Y(); 
+  eTX=l.TX(); 
+  eTY=l.TY();
+  eDX=l.DX(); 
+  eDY=l.DY();
   CopyCorr(l);
+  eNcp = l.eNcp;
+  eMap.Copy(l.eMap);
+}
+
+///______________________________________________________________________________
+void EdbLayer::CopyCorr(EdbLayer &l)
+{
+  ResetCorr();
+  ApplyCorrections( l.Shr(), l.Zcorr(), *(l.GetAffineXY()), *(l.GetAffineTXTY()) );
+}
+
+///______________________________________________________________________________
+void EdbLayer::CorrectSeg( EdbSegP &s)
+{
+  //float dz = eZcorr;
+  //float x = s.X() + dz*s.TX();
+  //float y = s.Y() + dz*s.TY();
+  //s.Set( s.ID(), x, y, TX(s), TY(s), s.W(), s.Flag() );
+  
+  s.Set( s.ID(), X(s), Y(s), TX(s), TY(s), s.W(), s.Flag() );
+  //s.SetZ(z);
+}
+
+///______________________________________________________________________________
+void EdbLayer::CorrectSegLocal( EdbSegP &s)
+{
+  eMap.CorrectSeg(s);
+  //EdbLayer *loc = (EdbLayer *)(eMap.GetObject(s.X(), s.Y(), 0));
+  //if(loc) loc->CorrectSeg(s);
+}
+
+///______________________________________________________________________________
+void EdbLayer::ApplyCorrections(EdbLayer &la)
+{
+  ApplyCorrections( la.Shr(), la.Zcorr(), *(la.GetAffineXY()), *(la.GetAffineTXTY()) );
+  SetNcp(la.Ncp());
+}
+
+///______________________________________________________________________________
+void EdbLayer::ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbAffine2D &afftxty)
+{
+  eShr *= shr;
+  eZcorr += zcorr;
+  eAffXY.Transform(affxy);
+  eAffTXTY.Transform(afftxty);
+}
+
+///______________________________________________________________________________
+void EdbLayer::SubstructCorrections(EdbLayer &l)
+{
+  // apply inverse corrections of layer l
+  EdbAffine2D aff( *(l.GetAffineXY()) ), afftxty( *(l.GetAffineTXTY()) );
+  aff.Invert();
+  afftxty.Invert();
+  ApplyCorrections( 1./l.Shr(), -l.Zcorr() , aff, afftxty );
 }
 
 ///______________________________________________________________________________
@@ -40,22 +102,6 @@ void EdbLayer::ResetCorr()
 void EdbLayer::ShiftZ(float dz)
 {
   eZ += dz;  eZmin +=dz;  eZmax +=dz;
-}
-
-///______________________________________________________________________________
-void EdbLayer::CopyCorr(EdbLayer &l)
-{
-  ResetCorr();
-  ApplyCorrections( l.Shr(), l.Zcorr(), *(l.GetAffineXY()), *(l.GetAffineTXTY()) );
-}
-
-///______________________________________________________________________________
-void EdbLayer::ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbAffine2D &afftxty)
-{
-  eShr *= shr;
-  eZcorr += zcorr;
-  eAffXY.Transform(affxy);
-  eAffTXTY.Transform(afftxty);
 }
 
 ///______________________________________________________________________________
@@ -91,71 +137,95 @@ void EdbLayer::Print()
   printf("Zcorr\t%f\n",eZcorr);
   printf("AFFXY\t");        eAffXY.Print();
   printf("AFFTXTY\t");      eAffTXTY.Print();
+  printf("Local Corrections Table: %d x %d \n", eMap.NX(), eMap.NY() );
 }
 
-///==============================================================================
-EdbSegmentCut::EdbSegmentCut(int xi, float var[10])
+//=====================================================================================================
+EdbCorrectionMap::~EdbCorrectionMap()
 {
-  eXI=xi; 
-  for(int i=0;i<5;i++) {
-    eMin[i]=var[i*2]; 
-    eMax[i]=var[i*2+1];
+}
+
+//----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::Init( EdbCell2 &c )
+{
+  Init(c.NX(),c.Xmin(),c.Xmax(),c.NY(),c.Ymin(),c.Ymax());
+}
+
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::Init(  int nx, float minx, float maxx, int ny, float miny, float maxy )
+{
+  EdbCell2::InitCell( nx, minx, maxx, ny, miny, maxy, 1);
+  for(int i=0; i<Ncell(); i++) AddObject(i, new EdbLayer() );
+}
+
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::CorrectSeg( EdbSegP &s)
+{
+  EdbLayer *loc = GetLayer(s.X(), s.Y());
+  if(loc) loc->CorrectSeg(s);
+}
+
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::PrintDZ()
+{
+  int n=Ncell();
+  for(int i=0; i<n; i++) printf("%d  dz=%7.2f\n",i,GetLayer(i)->Zcorr());
+}
+
+//-----------------------------------------------------------------------------------------------------
+void EdbCorrectionMap::ApplyCorrections(EdbCorrectionMap &map)
+{
+  if( !map.Ncell() ) return;
+  if( NX() != map.NX() || 
+      NY() != map.NY() ) {
+      Log(1,"EdbCorrectionMap::ApplyCorrections","Warning: incompatible maps: %dx%d  vs  %dx%d   Reset map to new one!", NX(),NY(), map.NX(), map.NY() );
+      Init( map );
+  }
+  for(int i=0; i<Ncell(); i++) {
+    EdbLayer *loc  = GetLayer(i);
+    EdbLayer *locD = map.GetLayer(i);
+    loc->ApplyCorrections( *locD );
   }
 }
+/*
+///______________________________________________________________________________
+EdbSegP *EdbCorrectionMap::CorrLoc(int j)
+{
+  EdbSegP *s = new EdbSegP();
+  s->Set(j,Xj(j), Yj(j), 0, 0, 0, 0);
+  GetLayer(j)->CorrectSeg(*s);
+  s->SetX( s->X() - Xj(j) );
+  s->SetY( s->Y() - Yj(j) );
+  s->SetZ(GetLayer(j)->Zcorr());
+  return s;
+}
+*/
 
 ///______________________________________________________________________________
-int EdbSegmentCut::PassCut(float var[5])
+EdbSegCorr EdbCorrectionMap::CorrLoc(int j)
 {
-  if     (eXI==0)  return PassCutX(var);
-  else if(eXI==1)  return PassCutI(var);
-  return 0;
+  EdbSegP s;
+  float x0=Xj(j), y0=Yj(j);
+  s.Set(j, x0,y0, 0, 0, 0, 0);
+  EdbLayer *la = GetLayer(j);
+  la->CorrectSeg(s);
+  s.SetX( s.X() - x0 );
+  s.SetY( s.Y() - y0 );
+  s.SetZ(la->Zcorr());
+  EdbSegCorr corr;
+  corr.SetV( 0, s.X());
+  corr.SetV( 1, s.Y());
+  corr.SetV( 2, s.Z());
+  corr.SetV( 3, s.TX());
+  corr.SetV( 4, s.TY());
+  corr.SetV( 5, la->Shr());
+  return corr;
 }
 
 ///______________________________________________________________________________
-int EdbSegmentCut::PassCutX(float var[5])
+EdbSegCorr EdbCorrectionMap::CorrLoc(float x, float y)
 {
-  // exclusive cut: if var is inside cut volume - return 0
-
-  for(int i=0; i<5; i++) {
-    if(var[i]<eMin[i])  return 1;
-    if(var[i]>eMax[i])  return 1;
-  }
-  return 0;
-}
-
-///______________________________________________________________________________
-const char *EdbSegmentCut::CutLine(char *str, int i, int j) const
-{
-  if(eXI==0) {
-
-    sprintf(str,
-	  "  TCut x%1d%2.2d = \"!(eX0>%f&&eX0<%f && eY0>%f&&eY0<%f && eTx>%f&&eTx<%f && eTy>%f&&eTy<%f && ePuls>%f&&ePuls<%f)\";\n"
-	  ,i,j,eMin[0],eMax[0], eMin[1],eMax[1], eMin[2],eMax[2], eMin[3],eMax[3], eMin[4],eMax[4]);
-
-  } else if(eXI==1) {
-
-    sprintf(str,
-	  "  TCut i%1d%2.2d = \"(eX0>%f&&eX0<%f && eY0>%f&&eY0<%f && eTx>%f&&eTx<%f && eTy>%f&&eTy<%f && ePuls>%f&&ePuls<%f)\";\n"
-	  ,i,j,eMin[0],eMax[0],eMin[1],eMax[1],eMin[2],eMax[2],eMin[3],eMax[3],eMin[4],eMax[4]);
-  }
-  return str;
-}
-
-///______________________________________________________________________________
-int EdbSegmentCut::PassCutI(float var[5])
-{
-  // inclusive cut: if var is inside cut volume - return 1
-
-  for(int i=0; i<5; i++) {
-    if(var[i]<eMin[i])  return 0;
-    if(var[i]>eMax[i])  return 0;
-  }
-  return 1;
-}
-
-///______________________________________________________________________________
-void EdbSegmentCut::Print()
-{
-  printf("min: %f %f %f %f %f\n",eMin[0], eMin[1], eMin[2], eMin[3], eMin[4] );
-  printf("max: %f %f %f %f %f\n",eMax[0], eMax[1], eMax[2], eMax[3], eMax[4] );
+  EdbSegCorr corr;
+//TODO
+  return corr;
 }

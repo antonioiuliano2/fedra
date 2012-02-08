@@ -49,7 +49,11 @@ class EdbScanSet : public TNamed
   const EdbBrickP& Brick()   const {return eB;}
   EdbBrickP&       Brick()         {return eB;}
 
-  EdbPlateP *GetPlate(Int_t p) {
+  bool      ValidSide(int side) const { if(side>-1&&side<3) return 1; return 0;}
+  EdbLayer *GetLayer(Int_t p, Int_t side)  { if(GetPlate(p)) if(ValidSide(side)) return GetPlate(p)->GetLayer(side); return 0; }
+  float     Zlayer(int plate, int side)  { if(GetLayer(plate,side)) return GetLayer(plate,side)->Z() + GetPlate(plate)->Z(); else return 0; }
+  
+  EdbPlateP *GetPlate(Int_t p)  {
     if (ePID.Find(p)) 
       return eB.GetPlate(ePID.Find(p)->At(0)->Value()); 
     else return 0; 

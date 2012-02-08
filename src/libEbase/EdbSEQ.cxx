@@ -56,32 +56,23 @@ void EdbSEQ::PrintLimits()
 //-------------------------------------------------------------------------
 TH1F *EdbSEQ::ThetaPlot(EdbPattern &arr, const char *name, const char *title )
 {
-  int n = arr.N();
-  if(!n) return 0;
-  TH1F *h = new TH1F( name, Form("%s normalised to area of %8.1f mm²",title,eArea/1000./1000.), 80, 0., 0.8 );
-  for(int i=0; i<n; i++) {
-    EdbSegP *s = arr.GetSegment(i);
-    //h->Fill(s->Theta()*s->Theta());
-    h->Fill(s->Theta());
-  }
-  h->GetXaxis()->SetTitle("theta");
-  //h->GetXaxis()->SetTitle("theta²");
-  if(eArea>0) h->Scale(1000000./eArea);
-  return h;
+  int n = arr.N();  if(!n) return 0;
+  TObjArray a(n);
+  for(int i=0; i<n; i++) a.Add(arr.GetSegment(i));
+  return ThetaPlot(a, name, title);
 }
 
 //-------------------------------------------------------------------------
 TH1F *EdbSEQ::ThetaPlot(TObjArray &arr, const char *name, const char *title )
 {
-  int n = arr.GetEntries();
-  if(!n) return 0;
-  TH1F *h = new TH1F( name, Form("%s normalised to area of %8.1f mm²",title,eArea/1000./1000.), 80, 0., 0.8 );
+  int n = arr.GetEntries();  if(!n) return 0;
+  float tbin=0.01;
+  int nbin= (int)(eThetaLimits->Y()/tbin) + 1;
+  TH1F *h = new TH1F( name, Form("%s normalised to area of %8.1f mm²",title,eArea/1000./1000.),  nbin, 0., (nbin-1)*tbin );
   for(int i=0; i<n; i++) {
     EdbSegP *s = (EdbSegP*)(arr.At(i));
-    //h->Fill(s->Theta()*s->Theta());
     h->Fill(s->Theta());
   }
-  //h->GetXaxis()->SetTitle("theta²");
   h->GetXaxis()->SetTitle("theta");
   if(eArea>0) h->Scale(1000000./eArea);
   return h;
@@ -105,7 +96,7 @@ double EdbSEQ::DNbt(double t)
 {
   // return dN/dTheta : the critical number of microtracks for the given
   //     theta range for a view area
-
+  //printf("t=%f\n",t);
   double dal0 = SqSum(DALbt(0),eSaPlate);
   double dal  = SqSum(DALbt(t),eSaPlate);
   double dat  = SqSum(DATbt(t),eSaPlate);
@@ -141,22 +132,22 @@ void EdbSEQ::Draw()
 }
 
 //------------------------------------------------------------------------
-void EdbSEQ::CalculateDensityMT( EdbH1 &hEq)
+void EdbSEQ::CalculateDensityMT( EdbH1 &eHEq)
 {
-  Log(3,"EdbSEQ::CalculateDensityMT","hEq.N(): %d", hEq.N());
-  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,hEq.Xmin(),hEq.Xmax(),0,"EdbSEQ","FDNmt");
+  Log(3,"EdbSEQ::CalculateDensityMT","eHEq.N(): %d", eHEq.N());
+  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,eHEq.Xmin(),eHEq.Xmax(),0,"EdbSEQ","FDNmt");
   fnmt->SetTitle("dNmt/dTheta in 1 view density function");
   fnmt->SetNpx(eNP);
   double *x=new double[eNP];
   double *w=new double[eNP];
   fnmt->CalcGaussLegendreSamplingPoints(eNP,x,w,1e-15);
-  int n = hEq.N();
+  int n = eHEq.N();
   for(int i=0; i<n; i++) {
-    float tmi=i*hEq.Xbin();
-    float tma=(i+1)*hEq.Xbin();
+    float tmi=i*eHEq.Xbin();
+    float tma=(i+1)*eHEq.Xbin();
     double sbin = fnmt->IntegralFast(eNP,x,w,tmi,tma);
     Log(3,"EdbSEQ::CalculateDensityMT","i,eNP,x,w,tmi,tma: %d %d %f %f %f %f   %lf", i,eNP,x,w,tmi,tma, sbin );
-    if(sbin>0 && sbin<kMaxInt-2) hEq.SetBin(i, int(sbin)+1 );
+    if(sbin>0 && sbin<kMaxInt-2) eHEq.SetBin(i, int(sbin)+1 );
     //Log(3,"EdbSEQ::CalculateDensityMT","Integral(%f,%f) = %f", tmi, tma, float(sbin) );
   }
   Log(3,"EdbSEQ::CalculateDensityMT","Integral(0,0.6) = %f", float(fnmt->IntegralFast(eNP,x,w,0,0.6)) );
@@ -230,14 +221,15 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, Double_t area)
   // Output: mto  - selected microtracks array
 
   eArea=area;
-  EdbH1 hEq;  hEq.InitH1( 40, 0, 0.8 );
-  CalculateDensityMT(hEq);         // define critical theta density
-  if(gEDBDEBUGLEVEL>2) hEq.Print();
-  //hEq.DrawH1()->Draw();
+  float tbin=0.02;
+  int nbin= (int)(eThetaLimits->Y()/tbin) + 1;
+  eHEq.InitH1( nbin, 0, (nbin-1)*tbin );
+  CalculateDensityMT(eHEq);         // define critical theta density
+  if(gEDBDEBUGLEVEL>2) eHEq.Print();
 
-  TClonesArray  hw("EdbH1",hEq.N());    // create W-hist per each theta bin
-  TArrayF thres(hEq.N());               // W-thresholds to be defined
-  for(int i=0; i<hEq.N(); i++) {
+  TClonesArray  hw("EdbH1",eHEq.N());    // create W-hist per each theta bin
+  TArrayF thres(eHEq.N());               // W-thresholds to be defined
+  for(int i=0; i<eHEq.N(); i++) {
 	new(hw[i]) EdbH1();
 	((EdbH1*)hw[i])->InitH1( 500, 5.*50, 17.*50. );
   }
@@ -245,14 +237,14 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, Double_t area)
   int nseg = mti.GetEntriesFast();
   for(int i=0; i<nseg; i++) {
     EdbSegP *s = (EdbSegP*)(mti.UncheckedAt(i));
-    int jtheta = hEq.IX(s->Theta());
-    if(jtheta>hEq.N()-1)  continue;
+    int jtheta = eHEq.IX(s->Theta());
+    if(jtheta>eHEq.N()-1)  continue;
     float w = Wmt(*s);
     ((EdbH1*)hw[jtheta])->Fill(w);
   }
 
-  for(int i=0; i<hEq.N(); i++) {
-    int eccess = ((EdbH1*)hw[i])->Integral() - hEq.Bin(i);
+  for(int i=0; i<eHEq.N(); i++) {
+    int eccess = ((EdbH1*)hw[i])->Integral() - eHEq.Bin(i);
     if( eccess <= 0 ) continue;  // the threshold remains 0
 
     int nsum=0;
@@ -264,8 +256,8 @@ void EdbSEQ::EqualizeMT(TObjArray &mti, TObjArray &mto, Double_t area)
 
   for(int i=0; i<nseg; i++) {
     EdbSegP *s = (EdbSegP*)(mti.UncheckedAt(i));
-    int jtheta = hEq.IX(s->Theta());
-    if(jtheta>hEq.N()-1)  continue;
+    int jtheta = eHEq.IX(s->Theta());
+    if(jtheta>eHEq.N()-1)  continue;
     float w = Wmt(*s);
     if( w > thres[jtheta] ) 
       if(!IsInsideThetaRange(s)) 

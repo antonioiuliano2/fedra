@@ -4,9 +4,10 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class EdbLayer;
+#pragma link C++ class EdbLayer+;
 #pragma link C++ class EdbPlateP;
 #pragma link C++ class EdbBrickP;
+#pragma link C++ class EdbCorrectionMap;
 
 #pragma link C++ class EdbScanCond;
 #pragma link C++ class EdbSegmentCut;
@@ -21,5 +22,7 @@
 
 #pragma link C++ class EdbCouplesTree;
 #pragma link C++ class EdbSegCouple;
+
+#pragma link C++ class EdbSegCorr;
 
 #endif

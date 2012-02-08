@@ -19,6 +19,8 @@ class EdbSEQ : public EdbSigma
   int eNP;        // number of points for the functions calculation
   
   TObjArray   eExcludeThetaRange;   // can be added EdbSegP with tx,ty, sigmaTX,sigmaTY to be excluded
+  EdbH1       eHEq;
+  
   private:
   TVector2    *eXLimits;            // [min,max] area limits for the preselection procedure
   TVector2    *eYLimits;            // [min,max]
