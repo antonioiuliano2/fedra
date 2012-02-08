@@ -69,6 +69,7 @@ public:
       int j;
       if(!eIFZ) j = Jcell(c->eX,c->eY,c->eFrame);
       else      j = Jcell(c->eX,c->eY,c->eZ);
+      printf("j=%d eNC[j]=%d\n", j, eNC[j]);
       if( j<0 || j>eNcellsLim )                    return 0;
       if( eNC[j] >= eCellLim )                     return 0;
       epCell[j][eNC[j]] = c;

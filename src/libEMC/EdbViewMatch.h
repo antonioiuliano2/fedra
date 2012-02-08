@@ -63,6 +63,7 @@ public:
   void DrawCorrMap();
   void GenerateCorrectionMatrix(const char *addfile);
   void SetPar(TEnv &env);
+  void SetPixelSize(float xpix, float ypix) { eXpix=xpix; eYpix=ypix; }
   
   void Print();
   

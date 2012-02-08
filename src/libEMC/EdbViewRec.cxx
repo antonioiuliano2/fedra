@@ -129,7 +129,10 @@ int EdbViewCell::FillCell( TClonesArray &v )
   printf("Fill %d (%d) Cells with %d clusters... ",eNcell,eNcellsLim,eNcl);
   EdbCluster *c=0;
   for(int i=0; i<eNcl; i++) {
+    //printf("\n 1 ");
     c = (EdbCluster*)v.UncheckedAt(i);
+     //printf("\n 2 ");
+   //c->Print();
     if( c->eX<eXmin || c->eX>eXmax || c->eY<eYmin || c->eY>eYmax) continue;
     AddCluster(c);
     cnt++;
@@ -415,13 +418,17 @@ bool  EdbViewRec::SetView(EdbView *v)
   if(!eCL) return false;
 
   if     ( eView->GetNframesTop()==0 && eView->GetNframesBot()>0 ) {  //bottom side
-    eZmin = eView->GetZ1();
-    eZmax = eView->GetZ2();
+    //eZmin = eView->GetZ1();
+    //eZmax = eView->GetZ2();
+    eZmin = eView->ZFrameMin();
+    eZmax = eView->ZFrameMax();
     eZxy     = eZmax;        // base point
   }
   else if( eView->GetNframesBot()==0 && eView->GetNframesTop()>0 ) {  //top side
-    eZmin = eView->GetZ3();
-    eZmax = eView->GetZ4();
+    //eZmin = eView->GetZ3();
+    //eZmax = eView->GetZ4();
+    eZmin = eView->ZFrameMin();
+    eZmax = eView->ZFrameMax();
     eZxy     = eZmin;        // base point
   } else return false;
   eZcenter = 0.5*(eZmin+eZmax);
@@ -433,10 +440,12 @@ bool  EdbViewRec::SetView(EdbView *v)
 //   }
   
 
-  eVCC.SetNfr( eView->GetNframes(), eZmin, eZmax );
+  //eVCC.SetNfr( eView->GetNframes(), eZmin, eZmax );
+  eVCC.SetNfr( eView->GetNframes(), eZmin, eZmax,1 );
   eVCG.SetNfr( 16, eZmin, eZmax, 1 );
 
   eVC = &eVCC;
+  eVC->Print();
   eVC->FillCell( *(eCL) );
 
   return true;
