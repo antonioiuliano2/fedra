@@ -79,6 +79,7 @@ public:
   int     ReadPatCPnopar(EdbPattern &pat, EdbID id, TCut cut="1", bool do_erase=false, bool read_mt=false);
   int     ReadPatCPnopar(EdbPattern &pat, const char *file, TCut cut="1", EdbMask *erase_mask=0, bool read_mt=false);
   EdbMask* ReadEraseMask(EdbID id);
+  void    MakeEraseFile(EdbID id, EdbPattern &pat);
   bool    ApplyAffZ(EdbPattern &pat,int id1[4],int id2[4]);
   bool    GetAffZ(EdbAffine2D &aff, float &z,int id1[4],int id2[4]);
   bool    SetAFFDZ(int id1[4], int id2[4], float dz);
@@ -94,6 +95,7 @@ public:
   int     LinkRunAll(EdbID id, int npre=3, int nfull=1, int correct_ang=1)  {int id4[4]; id.Get(id4); return LinkRunAll(id4,npre,nfull,correct_ang);}
   int     LinkSet(EdbScanSet &sc, int npre=3, int nfull=1, int correct_ang=1);
 
+  void     GetPatternSide( EdbID id, int side, EdbLayer &la, const char *segcut, int afid, EdbPattern &p);
   void     LinkRunTest(EdbID id, EdbPlateP &plate, TEnv &cenv);
   void     LinkRunNew(EdbID id, EdbPlateP &plate, TEnv &cenv);
   void     LinkSetNew(EdbScanSet &sc, TEnv &cenv);
@@ -118,6 +120,7 @@ public:
   
   int     TrackSetBT( EdbScanSet &sc, TEnv &cenv);
   int     ReadTracksTree(EdbID id, EdbPVRec &ali, TCut cut="1");
+  int     ReadTracksTree(const char *name, EdbPVRec &ali, TCut cut="1");
 
   bool    CorrectPredWithFound(int id1[4], int id2[4], const char *opt="-z", int patmin=6);
   bool    CorrectAffWithPred(int id1[4], int id2[4], const char *opt="-z", int patmin=6, const char *parfile="fullalignment");
@@ -127,6 +130,9 @@ public:
   int     FindPredictions(EdbPattern &pred, int id[4], EdbPattern &found, int maxholes=3);
   int     FindPredictions(int id[4], int flag=-1, int maxholes=3);
 
+  bool    InitRunAccessNew(EdbRunAccess &ra, EdbID id, EdbPlateP &plate, bool do_update=false);
+  bool    InitRunAccessNew(EdbRunAccess &ra, EdbID idset, int idplate, bool do_update=false);
+    
   bool    InitRunAccess(EdbRunAccess &ra, int id[4], bool do_update=false);
   bool    InitRunAccess(EdbRunAccess &ra, EdbID id, bool do_update=false) {int id4[4]; id.Get(id4); return InitRunAccess(ra, id4, do_update); }
 
@@ -172,7 +178,7 @@ public:
   void    PrepareVolumesPred(int id[4], EdbPattern &points, int before=5, int after=5, 
 			     int pmin=1, int pmax=57, EdbScanSet *sc=0);
 
-  void    MakeTracksPred(TObjArray &tracks, EdbID id, EdbLayer &layer);
+  int     MakeTracksPred(TObjArray &tracks, EdbID id, EdbLayer &layer);
 
   int     TestAl(int id1[4], int id2[4]);
   int     TestAl(EdbID id1, EdbID id2)   {int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return TestAl(id14,id24); }
