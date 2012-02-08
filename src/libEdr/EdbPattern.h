@@ -316,6 +316,7 @@ class EdbPattern : public EdbSegmentsBox {
   float      Xmean();
   float      Ymean();
 
+  EdbID      ScanID() const {return eScanID;}
   Int_t      Plate() const {return eScanID.ePlate;}
   Int_t      Side()  const {return eSide;}
 
@@ -359,8 +360,7 @@ class EdbPatternsVolume : public TObject {
                         return ePatterns->GetEntriesFast();
                         else return 0; }
   Float_t      Xmean();
-  Float_t      Ymean();                       
-                        
+  Float_t      Ymean();
 
   void PassProperties(EdbPatternsVolume &pvol);
 

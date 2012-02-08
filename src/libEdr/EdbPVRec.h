@@ -284,6 +284,11 @@ class EdbPVRec : public EdbPatternsVolume {
   void         SetScanIDPatSeg(EdbID id);
   void         SetScanIDTrackSeg(EdbID id);
   
+  float        Xmin();
+  float        Xmax();
+  float        Ymin();
+  float        Ymax();
+  
   void 		PrintSummary();
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor

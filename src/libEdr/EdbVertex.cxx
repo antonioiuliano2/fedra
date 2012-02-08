@@ -28,9 +28,11 @@
 #include "EdbLog.h"
 
 ClassImp(EdbVTA);
+ClassImp(EdbVertexPar);
 ClassImp(EdbVertex);
 ClassImp(EdbVertexRec);
 
+using namespace TMath;
 using namespace MATRIX;
 using namespace VERTEX;
 
@@ -232,6 +234,19 @@ Bool_t EdbVertex::TrackInVertex( EdbTrackP *t )
 //   for (int i=0; i<ntr; i++)    if(Impact(i)>imp) imp=Impact(i);
 //   return imp;
 // }
+
+//______________________________________________________________________________
+Float_t EdbVertex::MinDist()
+{
+  float mind=999999999999.;
+  int   ntr = N();
+  if(ntr<2)                      return mind;
+  for (int i=0; i<ntr; i++) {
+    float d = GetVTa(i)->Dist();
+    if(Abs(d)<mind) mind = Abs(d);
+  }
+  return mind;
+}
 
 //______________________________________________________________________________
 float EdbVertex::MaxAperture()
@@ -558,7 +573,7 @@ void EdbVertex::Edb2Vt(const EdbTrackP& tr, Track& t, float X0, float m)
 //________________________________________________________________________
 void EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t, float X0, float m)
 {
-  // Input: EdbSegP tr - track parameters near to vertex
+  // Input: EdbSegP tr - track parameters near vertex
   //        X0         - rad length for ms estimation
   //        m          - mass of the particle
   //          if X0 or m are negative - ignore multiple scattering
@@ -578,12 +593,13 @@ void EdbVertex::Edb2Vt(const EdbSegP& tr, Track& t, float X0, float m)
   if ( X0 > 0. && m > 0.)
     {
       double dPb = dz*TMath::Sqrt(1.+tx*tx+ty*ty); // thickness of the Pb+emulsion cell in microns
-      double teta0sq = EdbPhysics::ThetaMS2( p, m, dPb, X0 );
-      dms(0,0) = teta0sq*dz*dz/3.;
+      double theta0sq = EdbPhysics::ThetaMS2( p, m, dPb, X0 );
+      //printf("( p, m, dPb, X0 dz) = %f %f %f %f %f theta0 = %g\n", p, m, dPb, X0, dz, TMath::Sqrt(theta0sq));
+      dms(0,0) = theta0sq*dz*dz/3.;
       dms(1,1) = dms(0,0);
-      dms(2,2) = teta0sq;
+      dms(2,2) = theta0sq;
       dms(3,3) = dms(2,2);
-      dms(2,0) = teta0sq*dz/2.;
+      dms(2,0) = theta0sq*dz/2.;
       dms(3,1) = dms(2,0);
       dms(0,2) = dms(2,0);
       dms(1,3) = dms(2,0);
@@ -667,14 +683,8 @@ float EdbVertex::DistSeg(EdbSegP *seg, float X0)
 }
 
 //========================================================================
-EdbVertexRec::EdbVertexRec()
+EdbVertexPar::EdbVertexPar()
 {
-  eEdbTracks = 0;
-  eVTX       = 0;
-  ePVR       = 0;
-  eVertex    = 0;
-  eWorking   = 0;
-
   eZbin       = 100.;      // microns
   eAbin       = 0.01;      // rad
   eDZmax      = 3000.;     // microns
@@ -685,8 +695,17 @@ EdbVertexRec::EdbVertexRec()
   eUseSegPar  = false;     // use fitted track parameters
   eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
   eUseLimits  = false;     // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
+}
 
-  (gROOT->GetListOfSpecials())->Add(this);
+//========================================================================
+void EdbVertexRec::Set0()
+{
+  eEdbTracks = 0;
+  eVTX       = 0;
+  ePVR       = 0;
+  eVertex    = 0;
+  eWorking   = 0;
+  (gROOT->GetListOfSpecials())->Add(this);    // To check if this can cause memory leak!
 }
 
 //________________________________________________________________________
@@ -764,6 +783,7 @@ Bool_t EdbVertexRec::EstimateVertexPosition( EdbVertex &v )
     for(int i=0; i<3; i++) vsum[i]/=nt;
   }
   v.SetXYZ(vsum[0],vsum[1],vsum[2]);
+  Log(3,"EdbVertexRec::EstimateVertexPosition","%f %f %f",vsum[0],vsum[1],vsum[2]);
   return true;
 }
 
@@ -781,7 +801,6 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
 
   if(isRefit) edbv.SetXYZ(edbv.VX(),edbv.VY(),edbv.VZ());
   else        EstimateVertexPosition(edbv);
-  Log(3,"EdbVertexRec::MakeV","EstimateVertexPosition: %f %f %f",edbv.X(),edbv.Y(),edbv.Z() );
   edbv.ClearV();
   Vertex *v = new Vertex();
   v->use_kalman(eUseKalman);
@@ -795,6 +814,8 @@ int EdbVertexRec::MakeV( EdbVertex &edbv, bool isRefit )
     {
       seg = edbv.GetTrackV(i,eUseSegPar);
       Track *t = new Track();
+      //seg->PrintNice();
+      //printf("%f\n",edbv.Z());
       edbv.Edb2Vt(*seg, *t, X0, edbv.GetTrack(i)->M());
       v->add_track(*t);
     }

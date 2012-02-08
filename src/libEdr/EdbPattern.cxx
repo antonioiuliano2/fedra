@@ -974,8 +974,9 @@ float   EdbTrackP::MakePredictionTo( Float_t z, EdbSegP &ss )
       EdbSegP *s = GetSegment(i);
       if( Abs(s->Z()-z) < dz ) { dz = Abs(s->Z()-z); tr=s; }     // select nearest segment (TODO: correct interpolation)
     }
-  }  
-  if(!tr) return dz;
+  }
+  if(!tr) // no segments in this track: use track body
+    tr = this;
   dz = Abs(tr->Z()-z);
   ss.Copy(*tr);
   ss.PropagateTo(z);
@@ -1074,14 +1075,14 @@ void EdbTrackP::PrintNice()
 
   printf("EdbTrackP with %d segments and %d fitted segments:\n", nseg, nsegf );
   printf("  N  PID     ID          X             Y              Z        TX       TY     W      P      Flag     MC     Track    Chi2    Prob     Mass\n");
-  printf("    %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d  %7d %7.4f  %7.4f   %5.3f\n",
+  printf("    %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d %7d  %7.4f  %7.4f  %5.3f\n",
 	   PID(), ID(),X(),Y(),Z(),     TX(),   TY(),  W(),  P(), Flag(), MCEvt(),   Track(), Chi2(), Prob(),   M());
 
   EdbSegP *s=0;
   if(nseg) 
     for(int i=0; i<nseg; i++) {
       s = GetSegment(i);
-      printf("%3d %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d %7d   %7.4f  %7.4f\n",
+      printf("%3d %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d %7d  %7.4f  %7.4f\n",
 	     i, s->PID(), s->ID(),s->X(),s->Y(),s->Z(),  s->TX(),s->TY(),  s->W(),  s->P(), s->Flag(), s->MCEvt(), s->Track(),s->Chi2(),s->Prob());
     }
 }
@@ -1592,9 +1593,10 @@ void EdbPatternsVolume::Print() const
   EdbPattern *pat=0;
   for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
-    printf(" id=%3d pid=%3d   x:y:z =  %12.3f %12.3f %12.3f  n= %8d \n", 
-	   pat->ID(), pat->PID(), pat->X(),pat->Y(),pat->Z(),pat->N());
+    printf(" id=%3d pid=%3d   x:y:z =  %12.3f %12.3f %12.3f  n= %8d   ScanID = %s \tside=%d\n", 
+	   pat->ID(), pat->PID(), pat->X(),pat->Y(),pat->Z(),pat->N(), pat->ScanID().AsString(), pat->Side() );
   }
+  printf("\n");
 } 
 
 //______________________________________________________________________________

@@ -109,6 +109,8 @@ class EdbVertex: public TObject {
   void       Edb2Vt(const EdbSegP& s, VERTEX::Track& t,float X0 = 0., float m = 0.139 );
   Float_t    Chi2Track(EdbTrackP *tr, int zpos, float X0 = 0.);
 
+  Float_t    MinDist();
+  Float_t    Volume() { if(V()) return V()->vxerr()*V()->vyerr()*V()->vzerr(); else return 0; }
   Float_t    MaxAperture();
   Float_t    MaxImpact() { EdbVTA *vta=GetMaxImpVTA(); return vta? vta->Imp(): 0; }
   EdbVertex *GetConnectedVertex(int nv);
@@ -166,7 +168,29 @@ class EdbVertex: public TObject {
 };
 
 //_________________________________________________________________________
-class EdbVertexRec: public TObject {
+class EdbVertexPar: public TObject {
+ 
+ public:
+  Float_t    eZbin;         // z- granularity (default is 100 microns)
+  Float_t    eAbin;         // safety margin for angular aperture of vertex products
+  Float_t    eDZmax;        // maximum z-gap in the track-vertex group
+  Float_t    eProbMin;      // minimum acceptable probability for chi2-distance between tracks
+  Float_t    eImpMax;       // maximal acceptable impact parameter (preliminary check)
+  Float_t    eImpMaxV;      // if the impact is <= eImpMaxV the 2-vertex is accepted disregard to it's probability
+  Bool_t     eUseMom;       // use or not track momentum for vertex calculations
+  Bool_t     eUseSegPar;    // use only the nearest measured segments for vertex fit (as Neuchatel)
+  Int_t      eQualityMode;  // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
+  Bool_t     eUseKalman;    // use or not Kalman for the vertex fit. Default is true
+  Bool_t     eUseLimits;    // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
+  TVector3   eVmin,eVmax;   // limits for the vertex search
+  
+  EdbVertexPar();
+  virtual ~EdbVertexPar(){}
+  ClassDef(EdbVertexPar,1)  // vertex reconstruction parameters
+};
+
+//_________________________________________________________________________
+class EdbVertexRec: public EdbVertexPar {
 
  private:
 
@@ -180,23 +204,12 @@ class EdbVertexRec: public TObject {
   TObjArray *eVTX;          // array of vertex
   EdbPVRec  *ePVR;          // patterns volume (optional)
 
-  Float_t    eZbin;         // z- granularity (default is 100 microns)
-  Float_t    eAbin;         // safety margin for angular aperture of vertex products
-  Float_t    eDZmax;        // maximum z-gap in the track-vertex group
-  Float_t    eProbMin;      // minimum acceptable probability for chi2-distance between tracks
-  Float_t    eImpMax;       // maximal acceptable impact parameter (preliminary check)
-  Float_t    eImpMaxV;      // if the impact is <= eImpMaxV the 2-vertex is accepted disregard to it's probability
-  Bool_t     eUseMom;       // use or not track momentum for vertex calculations
-  Bool_t     eUseSegPar;    // use only the nearest measured segments for vertex fit (as Neuchatel)
-  Int_t      eQualityMode;  // vertex quality estimation method (0:=Prob/(sigVX^2+sigVY^2); 1:= inverse average track-vertex distance)
-  Bool_t     eUseKalman;    // use or not Kalman for the vertex fit. Default is true
-  Bool_t     eUseLimits;    // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
-  TVector3   eVmin,eVmax;   // limits for the vertex search
-
  public:
-  EdbVertexRec();
+  EdbVertexRec() { Set0(); }
+  EdbVertexRec( EdbVertexPar &vpar ) : EdbVertexPar(vpar) { Set0(); }
   virtual ~EdbVertexRec();
   
+  void      Set0();
   void      Reset();
   const TVector3  *Vmin() const {return &eVmin;}
   const TVector3  *Vmax() const {return &eVmax;}
@@ -283,7 +296,7 @@ class EdbVertexRec: public TObject {
   int CheckTrack(EdbTrackP &track, int zpos);
 
 
-  ClassDef(EdbVertexRec,2) //reconstruct vertexes in OPERA emulsion data
+  ClassDef(EdbVertexRec,3) //reconstruct vertexes in OPERA emulsion data
 };
 
 #endif /* ROOT_EdbVertex */

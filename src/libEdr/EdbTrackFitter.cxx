@@ -224,7 +224,7 @@ float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond 
   if(Abs(dz) > 0.1 ) {
     tbx = (s2.X() - s1.X())/(s2.Z() - s1.Z());
     tby = (s2.Y() - s1.Y())/(s2.Z() - s1.Z());
-    wbx = Sqrt( cond1.SigmaX(tbx)*cond1.SigmaX(tbx) + cond2.SigmaX(tbx)*cond2.SigmaX(tbx) ) / dz;                  
+    wbx = Sqrt( cond1.SigmaX(tbx)*cond1.SigmaX(tbx) + cond2.SigmaX(tbx)*cond2.SigmaX(tbx) ) / dz;
     wby = Sqrt( cond1.SigmaY(tby)*cond1.SigmaY(tby) + cond2.SigmaY(tby)*cond2.SigmaY(tby) ) / dz;
   }
   float w1x = 1./cond1.SigmaTX(s1.TX());  w1x*=w1x;

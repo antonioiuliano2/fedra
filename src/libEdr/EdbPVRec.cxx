@@ -1031,6 +1031,54 @@ void EdbPVRec::SetCouplesExclude(TArrayI &exclude)
 }
 
 //______________________________________________________________________________
+float EdbPVRec::Xmin()
+{
+  int npat=Npatterns();    if(npat<1) return 0;
+  float xmin=GetPattern(0)->Xmin();
+  for(int i=1; i<npat; i++ ) {
+    float min = GetPattern(i)->Xmin();
+    if(min<xmin) xmin=min;
+  }
+  return xmin;
+}
+
+//______________________________________________________________________________
+float EdbPVRec::Xmax()
+{
+  int npat=Npatterns();    if(npat<1) return 0;
+  float xmax=GetPattern(0)->Xmax();
+  for(int i=1; i<npat; i++ ) {
+    float max = GetPattern(i)->Xmax();
+    if(max>xmax) xmax=max;
+  }
+  return xmax;
+}
+
+//______________________________________________________________________________
+float EdbPVRec::Ymin()
+{
+  int npat=Npatterns();    if(npat<1) return 0;
+  float ymin=GetPattern(0)->Ymin();
+  for(int i=1; i<npat; i++ ) {
+    float min = GetPattern(i)->Ymin();
+    if(min<ymin) ymin=min;
+  }
+  return ymin;
+}
+
+//______________________________________________________________________________
+float EdbPVRec::Ymax()
+{
+  int npat=Npatterns();    if(npat<1) return 0;
+  float ymax=GetPattern(0)->Ymax();
+  for(int i=1; i<npat; i++ ) {
+    float max = GetPattern(i)->Ymax();
+    if(max>ymax) ymax=max;
+  }
+  return ymax;
+}
+
+//______________________________________________________________________________
 void EdbPVRec::FillCell(float stepx, float stepy, float steptx, float stepty)
 {
   int npat=Npatterns();

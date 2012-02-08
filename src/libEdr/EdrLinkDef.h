@@ -15,8 +15,10 @@
 #pragma link C++ class EdbPVRec;
 
 #pragma link C++ class EdbVertex;
+#pragma link C++ class EdbVertexPar;
 #pragma link C++ class EdbVertexRec;
 #pragma link C++ class EdbVTA;
+#pragma link C++ class EdbVertexComb;
 #pragma link C++ class EdbVertexSpace;
 
 #pragma link C++ class EdbPlateTracking;
