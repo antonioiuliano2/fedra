@@ -59,7 +59,11 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
   eH_xy_coarse.Delete();
   eH_xy_final.Delete();
 
-  Log(2,"EdbPlateAlignment::Align","patterns with %d and %d segments",p1.N(),p2.N());
+  Log(2,"EdbPlateAlignment::Align","pattern 1 with %d in limits x:(%12.2f %12.2f) y:(%12.2f %12.2f)",
+        p1.N(), p1.Xmin(),p1.Xmax(),p1.Ymin(),p1.Ymax() );
+  Log(2,"EdbPlateAlignment::Align","pattern 2 with %d in limits x:(%12.2f %12.2f) y:(%12.2f %12.2f)",
+        p2.N(), p2.Xmin(),p2.Xmax(),p2.Ymin(),p2.Ymax() );
+  
   if(p1.N()<1||p2.N()<1) return;
   DoubletsFilterOut(p1,p2);
 
@@ -77,11 +81,13 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
     if(!eCoarseOK)    goto END;
   }
 
-  if(eDoFine) {
+ if(eDoFine) {
     SetParFineAl();
     for(int i=0; i<5; i++)   FineAl(p1,p2);
+
     eUseAffCorr=true;
     Corr2Aff( eCorrL[0] );
+
     for(int i=0; i<5; i++)   FineAlAff(p1,p2,eCorrL[0] );
     eH_xy_final.Init(eHxy);
     if(!eFineOK)    goto END;
@@ -326,7 +332,6 @@ void EdbPlateAlignment::FineAlAff(EdbPattern &p1, EdbPattern &p2, EdbLayer &la1)
   // assuming that the patterns are already aligned with the accuracy of a few 
   // microns or the corrections are setted.
   // find affine transfornations
-
   Log(3, "FineAlAff","with patterns %d %d", p1.N(), p2.N() );
   FillGuessCell(p1,p2,1.,eOffsetMax);
   float dxlim = eH[0][0].Xmax()-eH[0][0].Xmin();

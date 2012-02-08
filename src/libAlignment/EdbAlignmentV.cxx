@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #include "TMath.h"
+#include "TH2F.h"
 #include "TFile.h"
 #include "TVector2.h"
 #include "EdbLog.h"
@@ -52,7 +53,17 @@ void EdbAlignmentV::CloseOutputFile()
 }
 
 //---------------------------------------------------------------------
-int EdbAlignmentV::DoubletsFilterOut(bool checkview)
+Bool_t EdbAlignmentV::IsInsideDVsame(EdbSegP &s1, EdbSegP &s2)
+{
+  if( Abs(s1.X()-s2.X())   > eDVsame[0] )  return 0;
+  if( Abs(s1.Y()-s2.Y())   > eDVsame[1] )  return 0;
+  if( Abs(s1.TX()-s2.TX()) > eDVsame[2] )  return 0;
+  if( Abs(s1.TY()-s2.TY()) > eDVsame[3] )  return 0;
+  return 1;
+}
+
+//---------------------------------------------------------------------
+int EdbAlignmentV::DoubletsFilterOut(bool checkview, TH2F *hxy, TH2F *htxty )
 {
   // assumed the same pattern's segments in eS[0] and eS[1]
   int nout=0;
@@ -62,6 +73,11 @@ int EdbAlignmentV::DoubletsFilterOut(bool checkview)
     s1 = (EdbSegP*)eS[0].UncheckedAt(i);
     s2 = (EdbSegP*)eS[1].UncheckedAt(i);
     if(checkview) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
+    if( !IsInsideDVsame(*s1,*s2) )                                                                    continue;
+    if(s1->Flag()>-10 && s2->Flag()>-10) {
+      if(hxy)   hxy->Fill( s1->X()-s2->X() , s1->Y()-s2->Y());
+      if(htxty) htxty->Fill(s1->TX()-s2->TX(),s1->TY()-s2->TY());
+      }
     if( s2->W()>s1->W() ) s1->SetFlag(-10);
     else                  s2->SetFlag(-10);
     nout++;
@@ -444,6 +460,90 @@ Float_t EdbAlignmentV::FineCorrPhi(TObjArray &arr1, TObjArray &arr2)
 }
 
 //---------------------------------------------------------------------
+Float_t EdbAlignmentV::CalcMeanShr(float tmin, float tmax)
+{
+  //  Calculate mean shrinkage (to be applied to side 0 to get side 1)
+  int n = CheckEqualArr(eS[0],eS[1]);
+  int ic=0;
+  Double_t shr=0;
+  for(int i=0; i<n; i++) {
+    float t1  = eCorr[0].T(*((EdbSegP*)eS[0].UncheckedAt(i)));
+    //float t1  = ((EdbSegP*)eS[0].UncheckedAt(i))->Theta();
+    if(t1<tmin)   continue;
+    if(t1>tmax)   continue;
+    float t2  = eCorr[1].T(*((EdbSegP*)eS[1].UncheckedAt(i)));
+    //float t2  = ((EdbSegP*)eS[1].UncheckedAt(i))->Theta();
+    shr   += (t1/t2);                // the angle is divided by shr - that's why it is inverse
+    ic++;
+  }
+  shr /= ic;
+  return shr;
+}
+
+//---------------------------------------------------------------------
+Float_t EdbAlignmentV::CalcMeanDZ(float tmin, float tmax)
+{
+  //  Calculate mean shrinkage (to be applied to side 0 to get side 1)
+  int n = CheckEqualArr(eS[0],eS[1]);
+  int ic=0;
+  float dz = eCorr[0].V(2);    eCorr[0].SetV(2,0.);
+  Double_t dzn=0;
+  for(int i=0; i<n; i++) {
+    EdbSegP *s1=(EdbSegP*)eS[0].UncheckedAt(i);
+    float t1  = eCorr[0].T(*s1);
+    if(t1<tmin)   continue;
+    if(t1>tmax)   continue;
+    EdbSegP *s2=(EdbSegP*)eS[1].UncheckedAt(i);
+    float tx = ( X(1,*s2) - X(0,*s1) ) / dz;
+    float ty = ( Y(1,*s2) - Y(0,*s1) ) / dz;
+    float t = TMath::Sqrt(tx*tx+ty*ty);
+    dzn += dz*t/t1;
+    ic++;
+  }
+  dzn /= ic;
+  eCorr[0].SetV(2,dz);
+  Log(3,"CalcMeanDZ","dz = %f dzn = %f n=%d",dz,dzn,ic);
+  return dzn;
+}
+
+//---------------------------------------------------------------------
+Float_t EdbAlignmentV::CalcMeanDiff(int ivar)
+{
+  //  Calculate mean difference for the given variable taking into account corrections
+  int n = CheckEqualArr(eS[0],eS[1]);
+  int ic=0;
+  Double_t sd=0;
+  for(int i=0; i<n; i++) {
+    sd   += ( Var( 1, i, ivar ) - Var( 0, i, ivar) );
+    ic++;
+  }
+  sd /= ic;
+  return sd;
+}
+
+//---------------------------------------------------------------------
+Int_t EdbAlignmentV::CalcApplyMeanDiff()
+{
+  // by default apply it to side 0
+  int side=0;
+  int n = CheckEqualArr(eS[0],eS[1]);
+
+//  if(n<nlim) return 0;           //TODO
+  
+  eCorr[side].SetV( 2, CalcMeanDZ()  );                      // at first calc and apply DZ
+  
+  eCorr[side].SetV( 5, eCorr[side].V(5) * CalcMeanShr() );   // second calc and apply shrinkage
+  
+  eCorr[side].AddV( 3, CalcMeanDiff(2) );                    // then apply angles
+  eCorr[side].AddV( 4, CalcMeanDiff(3) );
+  
+  eCorr[side].AddV( 0, CalcMeanDiff(0) );                    // then apply coord
+  eCorr[side].AddV( 1, CalcMeanDiff(1) );
+  
+  return n;
+}
+
+//---------------------------------------------------------------------
 Int_t EdbAlignmentV::FindCorrDiff( float dvsame[4], int side, int nlim )
 {
   //find diffs with the default settings and correct requested side
@@ -665,6 +765,8 @@ void  EdbAlignmentV::FillGuessCell( EdbPattern &p1, EdbPattern &p2, float binOK,
 
   float xmin1=Xmin(0,p1), ymin1=Ymin(0,p1), xmax1=Xmax(0,p1), ymax1=Ymax(0,p1);
   float xmin2=Xmin(1,p2), ymin2=Ymin(1,p2), xmax2=Xmax(1,p2), ymax2=Ymax(1,p2);
+  Log(3, "FillGuessCell", "x1:(%f %f) y1:(%f %f)",xmin1,xmax1, ymin1, ymax1);
+  Log(3, "FillGuessCell", "x2:(%f %f) y2:(%f %f)",xmin2,xmax2, ymin2, ymax2);
   ApplyLimitsOffset( xmin1, xmax1, xmin2, xmax2, offsetMax);
   ApplyLimitsOffset( ymin1, ymax1, ymin2, ymax2, offsetMax);
   int np1 = p1.N(), np2 = p2.N();
@@ -776,13 +878,17 @@ void EdbAlignmentV::Corr2Aff(EdbSegCorr &corr, EdbLayer &layer)
 //---------------------------------------------------------------------
 void EdbAlignmentV::Corr2Aff(EdbLayer &layer)
 {
-  EdbAffine2D &a0 = *(layer.GetAffineXY());
+/*  EdbAffine2D &a0 = *(layer.GetAffineXY());
   a0.Reset();
   a0.ShiftX(  eCorr[0].V(0) );  a0.ShiftY( eCorr[0].V(1) );
   a0.Rotate(  eCorr[0].V(6) );
   a0.ShiftX( -eCorr[1].V(0) );  a0.ShiftY( -eCorr[1].V(1) );
   layer.SetShrinkage( eCorr[0].V(5) );
-  layer.SetZcorr(     eCorr[0].V(2) );
+  layer.SetZcorr(     eCorr[0].V(2) );*/
+  
+  Corr2Aff(eCorr[0],layer);
+  layer.GetAffineXY()->ShiftX( -eCorr[1].V(0) );
+  layer.GetAffineXY()->ShiftY( -eCorr[1].V(1) );
 }
 
 //---------------------------------------------------------------------

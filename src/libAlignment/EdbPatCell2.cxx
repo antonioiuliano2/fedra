@@ -4,24 +4,9 @@
 #include "EdbLog.h"
 #include "EdbPatCell2.h"
 
-ClassImp(EdbSegCorr)
 ClassImp(EdbPatCell2)
 
 using namespace TMath;
-
-//---------------------------------------------------------------------
-void EdbSegCorr::Print()
-{
-  printf("EdbSegCorr (dx:dy:dz:dtx:dty:shr:phy): %f %f %f %f %f %f %f\n"
-	 ,eV[0],eV[1],eV[2],eV[3],eV[4],eV[5],eV[6]);
-}
-
-///---------------------------------------------------------------------
-void EdbSegCorr::ApplyCorrections(EdbSegP &s)
-{
-  float x=X(s), y=Y(s), tx=TX(s), ty=TY(s);
-  s.SetX(x); s.SetY(y); s.SetTX(tx); s.SetTY(ty);
-}
 
 //---------------------------------------------------------------------
 EdbPatCell2::EdbPatCell2()

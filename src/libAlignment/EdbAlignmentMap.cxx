@@ -158,13 +158,13 @@ void EdbAlignmentMap::AlignMap()
 		      Max( eGlobal.ePC1.Ymin(), center[1]-testzone/2) };
   float    max[2] = { Min( eGlobal.ePC1.Xmax(), center[0]+testzone/2),
 		      Min( eGlobal.ePC1.Ymax(), center[1]+testzone/2) };
-  Log(1,"Global alignment","in limits: X(%f %f), Y(%f %f) with max dens: %f ",min[0],max[0],min[1],max[1],eDensityMax);
+  Log(1,"Global alignment","select area in limits: X(%f %f), Y(%f %f) with max dens: %f ",min[0],max[0],min[1],max[1],eDensityMax);
 
   TObjArray arr1(50000), arr2(50000);
   eGlobal.SelectZone(min,max,arr1,arr2, eDensityMax);
   float areaGlobal = (max[0]-min[0])*(max[1]-min[1]);
 
-  printf("******* Global alignment: n1 = %d n2 = %d *******\n",arr1.GetEntriesFast(), arr2.GetEntriesFast());
+  printf("******* Global alignment: n1 = %d n2 = %d *******\n",arr1.GetEntriesFast(), arr2.GetEntriesFast() );
   local.FillArrays(arr1, arr2, min, max);
   local.FillCombinations();
   local.eSmoothKernel = "k5a";
@@ -289,6 +289,7 @@ int EdbAlignmentMap::FillMapTree( EdbPositionAlignment &pol, int izone )
 //---------------------------------------------------------------------
 void EdbAlignmentMap::SaveMap( const char *file )
 {
+  Log(2,"EdbAlignmentMap::SaveMap","to file %s",file);
   if(!eMapTree)   return;
   FILE *f = fopen(file,"w");
   if(!f)          return;

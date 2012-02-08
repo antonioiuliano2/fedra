@@ -62,7 +62,7 @@ class EdbLinking : public EdbAlignmentV
   Double_t EstimatePatternArea(EdbPattern &p);
   void     RankCouples( TObjArray &arr1,TObjArray &arr2 );
   
-  void     DoubletsFilterOut(TObjArray &p1, TObjArray &p2);
+  void     DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist=0);
 
   void ProduceReport();
 

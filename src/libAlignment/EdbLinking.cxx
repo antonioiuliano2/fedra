@@ -102,7 +102,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   GetPreselectionPar(seq2,env);
   seq1.eNsigma=eNsigmaEQshr;
   seq2.eNsigma=eNsigmaEQshr;
-  //seq.PrintLimits();
+  seq1.PrintLimits();
   
   TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
   TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
@@ -111,18 +111,23 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   seq1.PreSelection(p1,p1pre);
   TObjArray p2pre(p2.N());
   seq2.PreSelection(p2,p2pre);
-  
+  Log(2,"EdbLinking::Link","after preselection: n1pre = %d  n2pre = %d", p1pre.GetEntries(),p2pre.GetEntries() );
+
   
   TObjArray  p1shr,p2shr;
   
   if(eDoCorrectShrinkage || eDoCorrectAngles) {
     seq1.EqualizeMT(p1pre, p1shr, area1);
     TH1F *hTshr1 = seq1.ThetaPlot(p1shr, "hTshr1","Theta plot shr, side 1 "); hTshr1->Write();
-    TObjArray  p2shr;
+    seq1.eHEq.DrawH1("eHEq1","eHEq1")->Write();
+
     seq2.EqualizeMT(p2pre, p2shr, area2);
     TH1F *hTshr2 = seq2.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
+    seq2.eHEq.DrawH1("eHEq2","eHEq2")->Write();
+    
     DoubletsFilterOut(p1shr,p2shr);
     FillCombinationsAtMeanZ(p1shr,p2shr);
+    Log(2,"EdbLinking::Link","A n1shr = %d  n2shr = %d", p1shr.GetEntries(),p2shr.GetEntries() );
   }
   if(eDoCorrectShrinkage) {
     eCorr[0].SetV(5,eShr0);
@@ -162,7 +167,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     
     seq1.EqualizeMT(p1pre, p1lnk, area1);
     seq2.EqualizeMT(p2pre, p2lnk, area2);
-    DoubletsFilterOut(p1lnk,p2lnk);
+    DoubletsFilterOut(p1lnk,p2lnk, 1);
     
     TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
     TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
@@ -444,6 +449,8 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     
     s1->SetFlag(0);
     s2->SetFlag(0);
+    seg.SetFlag(0);
+    seg.SetSide(0);
     
     EdbSegCouple *sc=new EdbSegCouple();
     sc->eS1=s1;
@@ -561,17 +568,28 @@ void EdbLinking::ProduceReport()
 }
 
 //---------------------------------------------------------------------
-void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2)
+void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
 {
+  TH2F *hxy1=0, *htxty1=0, *hxy2=0, *htxty2=0;
+  if(fillhist)  {
+    hxy1   = new TH2F("dblXY1","Doublets DX DY",50,-eRemoveDoublets.dr,eRemoveDoublets.dr,50,-eRemoveDoublets.dr,eRemoveDoublets.dr);
+    htxty1 = new TH2F("dblTXTY1","Doublets DTX DTY",50,-eRemoveDoublets.dt,eRemoveDoublets.dt,50,-eRemoveDoublets.dt,eRemoveDoublets.dt);
+    hxy2   = new TH2F("dblXY2","Doublets DX DY",50,-eRemoveDoublets.dr,eRemoveDoublets.dr,50,-eRemoveDoublets.dr,eRemoveDoublets.dr);
+    htxty2 = new TH2F("dblTXTY2","Doublets DTX DTY",50,-eRemoveDoublets.dt,eRemoveDoublets.dt,50,-eRemoveDoublets.dt,eRemoveDoublets.dt);
+  }
   EdbAlignmentV adup;
   adup.eDVsame[0]=adup.eDVsame[1]= eRemoveDoublets.dr;
   adup.eDVsame[2]=adup.eDVsame[3]= eRemoveDoublets.dt;
   
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
-  adup.DoubletsFilterOut(eRemoveDoublets.checkview);   // assign flag -10 to the duplicated segments
+  adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
 
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
-  adup.DoubletsFilterOut(eRemoveDoublets.checkview);   // assign flag -10 to the duplicated segments
+  adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments
+  if(hxy1)   hxy1->Write();
+  if(hxy2)   hxy2->Write();
+  if(htxty1) htxty1->Write();
+  if(htxty2) htxty2->Write();
 }

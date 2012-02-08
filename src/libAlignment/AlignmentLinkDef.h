@@ -4,7 +4,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class EdbSegCorr;
 #pragma link C++ class EdbPatCell2;
 #pragma link C++ class EdbPositionAlignment;
 #pragma link C++ class EdbAlignmentMap;
@@ -15,5 +14,8 @@
 #pragma link C++ class EdbPlateAlignment;
 
 #pragma link C++ class EdbLinking;
+
+#pragma link C++ class EdbCorrectionMapper;
+#pragma link C++ class EdbCorrectionBin;
 
 #endif
