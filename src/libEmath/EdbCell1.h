@@ -35,6 +35,7 @@ class EdbH1 : public TObject {
   void Set0();
   void Copy( const EdbH1 &h );
 
+  int   InitH1( const EdbH1 &h ) {return InitH1( h.N(), h.Xmin(), h.Xmax() ); }
   int   InitH1( int n, float min, float max );
   void  CleanCells();
   void  PrintStat();

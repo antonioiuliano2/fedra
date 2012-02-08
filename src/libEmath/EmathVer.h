@@ -6,6 +6,6 @@ class  EmathVer{
  public:
   EmathVer() {Log(2,"libEmath", "\tloaded...");}
 };
-EmathVer gInstance_EmathVer;
+//EmathVer gInstance_EmathVer;
 
 #endif /* EmathVer */

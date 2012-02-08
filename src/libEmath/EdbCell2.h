@@ -26,7 +26,7 @@ class EdbH2 : public TObject {
   Float_t eBin[2];    // bin size
 
   Int_t   eNcell;     // eNx*eNy
-  Int_t     *eNC;     //! [eNcell] number of objects/cell
+  Int_t     *eNC;     //[eNcell] number of objects/cell
 
  public:
   EdbH2();
@@ -97,7 +97,7 @@ class EdbH2 : public TObject {
   TH1I   *DrawSpectrum( const char *name="plot1d", const char *title="EdbH2 DrawSpectrun");
   TH2F   *DrawH2(       const char *name="plot2d", const char *title="EdbH2plot2D");
 
-  ClassDef(EdbH2,1)  // fast 2-dim histogram class (used as a basis for EdbCell2)
+  ClassDef(EdbH2,2)  // fast 2-dim histogram class (used as a basis for EdbCell2)
 };
 
 //__________________________________________________________________________
@@ -149,13 +149,21 @@ class EdbCell2 : public EdbH2 {
  private:
 
   Int_t   eCellLim;   // max number of entries into one cell (for memory allocation)
-  TObject   **epO;    //! pointers to objects [eNcell*eCellLim]
-  TObject  ***epC;    //! pointers to cells   [eNcell]
+  Int_t   eCapacity;  //  eNcell*eCellLim
+  TObject   **epO;    //[eCapasity] array of the pointers to objects
+  TObject  ***epC;    //! [eNcell] pointers to cells
 
  public:
   EdbCell2();
+  EdbCell2( const EdbCell2 &cell ) {Copy(cell);}
   ~EdbCell2();
 
+  //virtual void  Streamer(TBuffer &R__b);
+  void  Copy( const EdbCell2 &cell);
+  void  InitEPC();
+  int   CellLim() { return eCellLim; }
+  int   InitCell( EdbCell2 &c ) { return InitCell(c.NX(),c.Xmin(),c.Xmax(),c.NY(),c.Ymin(),c.Ymax(), c.CellLim() ); }
+  int   InitCell(int nx, float minx, float maxx, int ny, float miny, float maxy, int maxpercell );
   int   InitCell(int maxpercell, int n[2], float min[2], float max[2] );
   void  Delete();
   void  Reset() {CleanCells(); Delete();}
@@ -168,6 +176,11 @@ class EdbCell2 : public EdbH2 {
   int SelectObjects(TObjArray &arr);
   int SelectObjects(int   min[2], int max[2], TObjArray &arr);
   int SelectObjects(float min[2], float max[2], TObjArray &arr);
+  int SelectObjectsCJ(int j, int ir, TObjArray &arr) {
+    int iv[2] = { IX(j), IY(j) };
+    int irr[2] = { ir, ir };
+    return SelectObjectsC(iv, irr, arr);
+  }
   int SelectObjectsC(int iv[2], int ir[2], TObjArray &arr);
   int SelectObjectsC(float v[2], int ir[2], TObjArray &arr) {
     int iv[2] = { IX(v[0]), IY(v[1]) }; 
@@ -185,7 +198,7 @@ class EdbCell2 : public EdbH2 {
   }
   void  PrintStat();
 
-  ClassDef(EdbCell2,1)  // class to group 2-dim objects
+  ClassDef(EdbCell2,2)  // class to group 2-dim objects
 };
 
 

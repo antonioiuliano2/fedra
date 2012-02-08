@@ -7,6 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TBuffer.h"
 #include "TDirectory.h"
 #include "TMath.h"
 #include "EdbCell2.h"
@@ -27,7 +28,7 @@ EdbH2::EdbH2()
 //____________________________________________________________________________
 void EdbH2::Set0()
 {
-  for(int i=0; i<2; i++) eN[i]=0;
+  for(int i=0; i<2; i++) { eN[i]=0; eMin[i]=0; eMax[i]=0; eBin[i]=0; }
   eNcell=0;
   eNC=0;
 }
@@ -186,7 +187,7 @@ TH2F *EdbH2::DrawH2(const char *name, const char *title)
   TH2F *h = new TH2F(name, title, eN[0],eMin[0],eMax[0],eN[1],eMin[1],eMax[1]);
   for(int i=0; i<eN[0]; i++)
     for(int j=0; j<eN[1]; j++)
-      if(Bin(i,j)>0) h->Fill( X(i), Y(j), Bin(i,j) );
+      h->Fill( X(i), Y(j), Bin(i,j) );
   return h;
 }
 
@@ -562,6 +563,7 @@ float EdbPeak2::Smooth(Option_t *option)
 EdbCell2::EdbCell2()
 {
   eCellLim=0;
+  eCapacity=0;
   epO=0;
   epC=0;
 }
@@ -573,19 +575,20 @@ EdbCell2::~EdbCell2()
 }
 
 //____________________________________________________________________________________
-void  EdbCell2::PrintStat() 
-{
-  printf("EdbCell2 limit = %4d\n",eCellLim);
-  ((EdbH2*)this)->PrintStat();
-}
-
-//____________________________________________________________________________________
 void EdbCell2::Delete()
 {
   if(epC)    { delete [] epC;    epC = 0;  }
   if(epO)    { delete [] epO;    epO = 0;  }
 }
 
+//____________________________________________________________________________
+int EdbCell2::InitCell(int nx, float minx, float maxx, int ny, float miny, float maxy, int maxpercell )
+{
+  int n[2] = {nx,ny};
+  float min[2] = {minx,miny};
+  float max[2] = {maxx,maxy};
+  return InitCell(maxpercell, n, min, max);
+}
 
 //____________________________________________________________________________
 int EdbCell2::InitCell(int maxpercell, int n[2], float min[2], float max[2])
@@ -596,12 +599,72 @@ int EdbCell2::InitCell(int maxpercell, int n[2], float min[2], float max[2])
   Log(3,"EdbCell2::InitCell","reserve space for maxpercell(%d) * eNcell(%d) = %d objects", 
       maxpercell, eNcell, maxpercell*eNcell);
   eCellLim = maxpercell;
-  epO     = new TObject*[eNcell*eCellLim];    //- pointers to objects
+  eCapacity = eNcell*eCellLim;
+  epO     = new TObject*[eCapacity];          //- pointers to objects
   epC     = new TObject**[eNcell];            //- pointers to cells
+  InitEPC();
+  return eNcell;
+}
+
+//____________________________________________________________________________
+void EdbCell2::InitEPC()
+{
   TObject **po = epO;
   epC[0]=po;
   for(int i=1; i<eNcell; i++) {po+=eCellLim; epC[i]=po;}
-  return eNcell;
+}
+
+//____________________________________________________________________________
+void EdbCell2::Copy( const EdbCell2 &cell )
+{
+  EdbH2::Copy(cell);
+  eCellLim  = cell.eCellLim;
+  eCapacity = cell.eCapacity;
+  for(int i=0; i<eNcell; i++) 
+    for(int j=0; i<eCellLim; i++)  AddObject(i, GetObject(i,j));
+}
+
+//______________________________________________________________________________
+void EdbCell2::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class EdbCell2.
+
+   UInt_t R__s, R__c;
+   if (R__b.IsReading()) {
+      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
+      EdbH2::Streamer(R__b);
+      R__b >> eCellLim;
+      R__b >> eCapacity;
+      //Log(1,"EdbCell2::Streamer","Read:  eCellLim =%d eCapacity=%d eNcell=%d ", eCellLim, eCapacity, eNcell);
+      
+      //R__b.ReadArray(epO);
+      epO     = new TObject*[eCapacity]; 
+      TObject *obj;
+      for (Int_t i = 0; i < eCapacity; i++) {
+         obj = (TObject*)R__b.ReadObjectAny(TObject::Class());
+         if (obj)  epO[i] = obj;
+         else epO[i]=0;
+      }
+      epC     = new TObject**[eNcell];            //- pointers to cells
+      InitEPC();                       //R__b.ReadArray(epC);
+      R__b.CheckByteCount(R__s, R__c, EdbCell2::IsA());
+   } else {
+      R__c = R__b.WriteVersion(EdbCell2::IsA(), kTRUE);
+      EdbH2::Streamer(R__b);
+      R__b << eCellLim;
+      R__b << eCapacity;
+      for (Int_t i = 0; i < eCapacity; i++) {
+         R__b << epO[i];
+      }
+      R__b.SetByteCount(R__c, kTRUE);
+   }
+}
+
+//____________________________________________________________________________________
+void  EdbCell2::PrintStat() 
+{
+  printf("EdbCell2 limit = %4d\n",eCellLim);
+  ((EdbH2*)this)->PrintStat();
 }
 
 //____________________________________________________________________________

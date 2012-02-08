@@ -74,6 +74,7 @@ int EdbH1::InitH1(int n, float min, float max)
   eMax = max;
   eBin = (eMax-eMin)/eN;
   eNcell = eN;
+  if(eNC) delete [] eNC;
   eNC = new Int_t[eNcell];
   CleanCells();
   return eNcell;

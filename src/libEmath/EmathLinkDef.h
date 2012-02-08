@@ -16,7 +16,7 @@
 //#pragma link C++ class EdbPeak1;
 
 #pragma link C++ class EdbH2;
-#pragma link C++ class EdbCell2;
+#pragma link C++ class EdbCell2-;
 #pragma link C++ class EdbPeak2;
 
 #pragma link C++ class EdbMask;
