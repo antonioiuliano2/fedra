@@ -218,6 +218,30 @@ void EdbView::DeleteClustersFog()
 }
 
 //______________________________________________________________________________
+float EdbView::ZFrameMin() const
+{
+  float zmin=GetFrame(0)->GetZ();
+  for(int i=1; i<GetNframes(); i++) 
+    {
+      float z = GetFrame(i)->GetZ();
+      if(z<zmin) zmin=z;
+    }
+  return zmin;
+}
+
+//______________________________________________________________________________
+float EdbView::ZFrameMax() const
+{
+  float zmax=GetFrame(0)->GetZ();
+  for(int i=1; i<GetNframes(); i++) 
+    {
+      float z = GetFrame(i)->GetZ();
+      if(z>zmax) zmax=z;
+    }
+  return zmax;
+}
+
+//______________________________________________________________________________
 EdbSegment* EdbView::AddSegment( EdbSegment &s )
 {
   // return directly pointer to the segment

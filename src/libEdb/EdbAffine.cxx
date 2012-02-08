@@ -60,6 +60,15 @@ const char *EdbAffine2D::AsString() const
 }
  
 //______________________________________________________________________________
+void EdbAffine2D::Set(const char *str)
+{
+  float a11=1, a12=0, a21=0, a22=1, b1=0,b2=0;
+  if(!str) Reset();
+  else if(  sscanf(str, "%f %f %f %f %f %f", &a11, &a12, &a21, &a22, &b1, &b2 ) == 6 ) Set(a11,a12,a21,a22,b1,b2);
+  else Log(1,"EdbAffine2D::Set", "wrond aff string: %s", str);
+}
+ 
+//______________________________________________________________________________
 void EdbAffine2D::Reset()
 {
   // set to self-transformation:

@@ -215,6 +215,8 @@ public:
   EdbSegment  *GetSegment(int i) const { return (EdbSegment*)eSegments->At(i); }
   EdbTrack    *GetTrack(int i)   const { return (EdbTrack*)eTracks->At(i); }
   EdbFrame    *GetFrame(int i)   const { return (EdbFrame*)eFrames->At(i); }
+  float        ZFrameMin()       const;
+  float        ZFrameMax()       const;
 
   EdbCluster  *AddCluster( EdbCluster *c ) 
     {return (EdbCluster*)(new((*eClusters)[eClusters->GetLast()+1])  EdbCluster( *c )); }

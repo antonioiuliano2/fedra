@@ -26,12 +26,15 @@ class EdbAffine2D : public TObject{
 
  public:
   EdbAffine2D() { Reset(); }
+  EdbAffine2D( const char *str) { Set(str); }
   EdbAffine2D( float a11, float a12, 
 	       float a21, float a22, 
 	       float b1,  float b2   ): 
     eA11(a11), eA12(a12), eA21(a21), eA22(a22), eB1(b1), eB2(b2) {}
   virtual ~EdbAffine2D() {}
 
+  void Set( EdbAffine2D &a ) {Set(a.A11(),a.A12(),a.A21(),a.A22(),a.B1(),a.B2());}
+  void Set( const char *str=0 );
   void Set( float a11, float a12, 
 	    float a21, float a22, 
 	    float b1,  float b2   )
