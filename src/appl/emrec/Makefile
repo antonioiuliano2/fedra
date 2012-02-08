@@ -10,7 +10,10 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emshow$(ExeSuf)      \
 		$(BIN_DIR)/emrec$(ExeSuf)      \
 		$(BIN_DIR)/emvtx$(ExeSuf)      \
-		$(BIN_DIR)/emcheck$(ExeSuf)      
+		$(BIN_DIR)/emcheck$(ExeSuf)    \
+		$(BIN_DIR)/empred$(ExeSuf)    \
+		$(BIN_DIR)/emtrackan$(ExeSuf)
+
 
 
 ROOTLIBS      += -lMLP

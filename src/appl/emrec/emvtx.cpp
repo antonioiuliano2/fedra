@@ -9,9 +9,14 @@
 #include "EdbVertex.h"
 #include "EdbDisplay.h"
 #include "EdbCombGen.h"
+#include "EdbVertexComb.h"
 
 using namespace std;
 using namespace TMath;
+
+void vtxComb(TObjArray &tracks, TObjArray &aux_tr, TEnv &env);
+void test_EdbVertexComb(TObjArray &tracks);
+
 
 //-----------------------------------------------------------------------------
 TEnv        cenv("emvtx");
@@ -137,6 +142,7 @@ int readCSdata( const char *fname, TObjArray &tracks, TArrayL64 &idArr, int minR
   if ( sscanf(buffer,"%ld %ld", &BRICK,&EVENT) !=2 )             return -1;
   printf("brick: %ld   event: %ld\n",BRICK,EVENT);
 
+  float momentum=1.0;
   // read CS tracks
   int ntr=0;
   int nbt, idtr;
@@ -146,7 +152,7 @@ int readCSdata( const char *fname, TObjArray &tracks, TArrayL64 &idArr, int minR
     if ( sscanf(buffer,"%f %f %f %f %f %d %f %d %lld", &x, &y, &z, &tx, &ty, &nbt, &rank, &idtr, &idtrG) !=9 ) break;
     if(rank<minRank) continue;
     idArr[ntr] = idtrG;
-    tracks.Add( make_seg_track( idtr,   x, y, 0,  tx, ty, 1.5,0) );
+    tracks.Add( make_seg_track( idtr,   x, y, 0,  tx, ty, momentum,0) );
     ntr++;
   }
   fclose(f);
@@ -241,17 +247,14 @@ Long64_t FindID(EdbTrackP *t, TObjArray &tracks, TArrayL64 &idArr)
 }
 
 //-----------------------------------------------------------------------------
-EdbVertex *vtxCS(const char *file, TEnv &env)
+EdbVertex *vtxStrip(TObjArray &tracks, TArrayL64 &idArr, TEnv &env)
 {
+  int ntrCS = tracks.GetEntries();
   EdbVertex *v=0;
-  TObjArray tracks;
-  TArrayL64 idArr(100);
-  int   minRank = env.GetValue("emvtx.CS.minRank",   0  );
   float maxImp  = env.GetValue("emvtx.CS.maxImp", 1000. );
-  int ntrCS = readCSdata( file, tracks, idArr, minRank );
-  EdbScanCond cond;
-  MakeScanCondCS(cond);
-  SetTracksErrors(tracks,cond);
+  //EdbScanCond cond;
+  MakeScanCondCS(gCond);
+  SetTracksErrors(tracks,gCond);
   EdbPVRec *pvr = new EdbPVRec();
 
   if(ntrCS < 0)  { printf("bad file - skip\n"); goto OUTPUT; }
@@ -262,10 +265,10 @@ EdbVertex *vtxCS(const char *file, TEnv &env)
   gEVRCS->eProbMin   = 0;      // minimum acceptable probability for chi2-distance between tracks
   gEVRCS->eImpMax    = 15000;   // maximal acceptable impact parameter (preliminary check)
   gEVRCS->eUseSegPar = 0;      // use only the nearest measured segments for vertex fit
-  gEVRCS->eUseMom    = 1;      // use or not track momentum for vertex calculations
+  gEVRCS->eUseMom    = 1;      // to use or not tracks momenta for vertex calculations
   
   
-  pvr->SetScanCond( new EdbScanCond(cond) );
+  pvr->SetScanCond( new EdbScanCond(gCond) );
   gEVRCS->SetPVRec(pvr);
 
   v = gEVRCS->Make1Vertex( tracks, 0. );
@@ -273,8 +276,21 @@ EdbVertex *vtxCS(const char *file, TEnv &env)
   
 OUTPUT:
   
-  FILE *f = fopen( Form("%s.vtx",file), "w" );
   
+  return v;
+}
+
+//-----------------------------------------------------------------------------
+EdbVertex *vtxCS(const char *file, TEnv &env)
+{
+  TObjArray tracks;
+  TArrayL64 idArr(100);
+  int minRank = env.GetValue("emvtx.CS.minRank",   0  );
+  int ntrCS = readCSdata( file, tracks, idArr, minRank );
+  
+  EdbVertex *v = vtxStrip(tracks,idArr, env);
+  
+  FILE *f = fopen( Form("%s.vtx",file), "w" );
   int ntrv = v? v->N() : 0;
   fprintf(f,"%5d\n",ntrCS);
   if(ntrv) {
@@ -288,7 +304,9 @@ OUTPUT:
     }
   }
   fclose(f);
-  
+  v->Print();
+
+  test_EdbVertexComb(tracks);
   return v;
 }
 
@@ -297,8 +315,8 @@ EdbVertex *vtxBT1(TObjArray &tracks, TEnv &env)
 {
   int ntr = tracks.GetEntries();   if(ntr<2) return 0;
   
-  EdbScanCond cond;
-  MakeScanCondBT(cond);
+  EdbScanCond cond(gCond);
+  //MakeScanCondBT(cond);
   SetTracksErrors(tracks,cond);
   
   SafeDelete(gEVRCS);
@@ -318,14 +336,9 @@ EdbVertex *vtxBT1(TObjArray &tracks, TEnv &env)
 }
 
 //-----------------------------------------------------------------------------
-void vtxBTcomb(const char *file, TEnv &env)
+void vtxComb(TObjArray &tracks, TObjArray &aux_tr, TEnv &env)
 {
-  TObjArray tracks;
-  TObjArray aux_tr;
-  int ntr = readBTdata( file, tracks, aux_tr );
-  if(ntr < 0)  { printf("bad file - skip\n"); return; }
-  if(ntr<2) return;
- 
+  int ntr = tracks.GetEntries();
   TObjArray vertices1, vertices2;
 
   int ic=0;
@@ -366,7 +379,8 @@ void vtxBTcomb(const char *file, TEnv &env)
   //printf("\n    #   prob1         Z1    prob2         Z2           set1                                  set2\n");
   printf("\n    #   prob1          X1        Y1       Z1    prob2           X2        Y2       Z2           set1                                  set2\n");
   printf("-----------------------------------------------------------------------------------------------------------------------------------------------\n");
-  float prob_pred=1, prob_lim=0.001;
+  float prob_pred=1; 
+  float prob_lim = env.GetValue("emvtx.fbt.ProbLim",   0.001 );
   for(int i=0; i<ic; i++) 
   {
     if(ind[i]<0)   continue;
@@ -397,7 +411,7 @@ void vtxBTcomb(const char *file, TEnv &env)
   for(int i=0; i<ic; i++)  
   {
     if(ind[i]<0)   continue;
-    if(probarr[ind[i]] < 0.01) continue;
+    if(probarr[ind[i]] < prob_lim) continue;
     
     printf("\n----------- the probability product is %f :----------\n", probarr[ind[i]]);
 
@@ -421,6 +435,35 @@ void vtxBTcomb(const char *file, TEnv &env)
   printf("The errors extrapolated to the vertex point taking into account CMS with Rad length of the media  X0 = %10.2f [microns]\n",cond->RadX0());
 }
 
+//-----------------------------------------------------------------------------
+void vtxBTcomb(const char *file, TEnv &env)
+{
+  TObjArray tracks;
+  TObjArray aux_tr;
+  int ntr = readBTdata( file, tracks, aux_tr );
+  if(ntr < 0)  { printf("bad file - skip\n"); return; }
+  if(ntr < 2) return;
+  MakeScanCondBT(gCond);
+  vtxComb(tracks,aux_tr,env);
+  test_EdbVertexComb(tracks);
+}
+
+///-----------------------------------------------------------------------------
+void test_EdbVertexComb(TObjArray &tracks)
+{
+  EdbVertexComb vcomb( tracks );
+  vcomb.eVPar.eImpMax     = 5000.;       // used in EstimateVertexPosition!
+  vcomb.eVPar.eUseMom     = true;
+  vcomb.eVPar.eUseSegPar  = false;     // use fitted track parameters
+  vcomb.eVPar.eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
+  vcomb.eVPar.eUseLimits  = false;     // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
+  vcomb.SetTracksErrors(gCond);
+  vcomb.eZ0 = -10000;                  // the firs approximation for the vertex z
+  int   nprongMin=2;
+  float probMin = 1e-10;
+  vcomb.SelectSortVertices( nprongMin, probMin );
+  vcomb.PrintSelectedVTX();
+}
 
 //-----------------------------------------------------------------------------
 EdbVertex *vtxBT(const char *file, TEnv &env)
@@ -428,9 +471,8 @@ EdbVertex *vtxBT(const char *file, TEnv &env)
   TObjArray tracks, aux_tr;
   int ntrBT = readBTdata( file, tracks, aux_tr );
   if(ntrBT < 0)  { printf("bad file - skip\n"); return 0; }
-  EdbScanCond cond;
-  MakeScanCondBT(cond);
-  SetTracksErrors(tracks,cond);
+  MakeScanCondBT(gCond);
+  SetTracksErrors(tracks,gCond);
 
   return vtxBT1(tracks, env);
 }
@@ -469,11 +511,11 @@ int main(int argc, char* argv[])
   
   set_default(cenv);
   cenv.ReadFile("emvtx.rootrc" ,kEnvLocal);
+  cenv.Print();
   
   if(do_fcs) 
   {
     EdbVertex *v = vtxCS( filecs, cenv );
-    v->Print();
   }
    
   if(do_fbt) 
