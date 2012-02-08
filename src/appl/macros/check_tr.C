@@ -36,7 +36,7 @@ void check_resolution()
 }
 
 //-----------------------------------------------------------------
-void check_eff(const char *nplmin="7")
+void check_eff(const char *nplmin="(1*6)")
 {
   tracks->SetAlias("npl0",nplmin);
 

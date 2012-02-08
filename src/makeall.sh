@@ -21,7 +21,7 @@ for lib in ${LIBS} ; do
     cd ..
 done
 
-APPLS="appl/recset appl/rwc2edb appl/macros appl/o2root appl/comptonmap appl/m2track appl/eda appl/emrec"
+APPLS="appl/recset appl/rwc2edb appl/macros appl/o2root appl/comptonmap appl/m2track appl/eda appl/emrec appl/rwcToEdb appl/viewcorr"
 
 for appl in ${APPLS} ; do
     if [ "$1" != "check" ]; then 

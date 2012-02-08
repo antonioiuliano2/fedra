@@ -1,12 +1,13 @@
 void rootlogon()
 {
   // fedra lib path should be setted in LD_LIBRARY_PATH
-  
+  //gEDBDEBUGLEVEL=1;
+  printf("\nLoad FEDRA libs: \n");
   if( strncmp(gSystem->GetName(),"Unix",4)==0 )
-    loadlib( "libvt"   , "CMatrix" );
-  loadlib( "libEmath", "EdbMath" );
+     loadlib( "libvt"   , "CMatrix" );
   loadlib( "libEphys", "EdbPhysics" );
   loadlib( "libEdb"  , "EdbView" );
+  loadlib( "libEmath", "EdbMath" );
   loadlib( "libEbase", "EdbLayer" );
   loadlib( "libEdr"  , "EdbPattern" );
   loadlib( "libEIO"  , "EdbRunAccess" );
@@ -26,6 +27,7 @@ void rootlogon()
 
   loadlib( "libEve", "TEveVector" );              // optional required for EDA
   loadlib( "libEDA",  "EdbEDA");                  // optional
+  printf("\n\n");
 
   gStyle->SetPalette(1);
 }
@@ -34,7 +36,8 @@ void rootlogon()
 void loadlib(const char *lib, const char *key)
 {
   if (!TClassTable::GetDict(key)) { 
-    if(gSystem->Load(lib)) printf("%s do NOT loaded!\n",lib);
+    if(gSystem->Load(lib)) printf("\n%s do NOT loaded!",lib);
+    else printf(" %s",lib);
   }
 }
 
@@ -47,12 +50,12 @@ void loadlibEOracle()
     if( (gSystem->Load("libclntsh")==0) && 
 	(gSystem->Load("libocci")==0) &&
         (gSystem->Load("libEOracle")==0) )
-      printf("libEOracle   \tloaded (Unux)\n"); return;
+      printf(" libEOracle(Unux)"); return;
   } else {
     if( (gSystem->Load("oraocci10")==0) && 
 	(gSystem->Load("libEOracle")==0) )
-      printf("libEOracle   \tloaded (Win32)\n"); return;
+      printf(" libEOracle(Win32)"); return;
   }
-  printf("libEOracle do NOT loaded!\n");
+  printf("\nlibEOracle do NOT loaded!\n");
 }
 

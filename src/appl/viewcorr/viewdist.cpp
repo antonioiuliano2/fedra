@@ -26,6 +26,13 @@ void set_default(TEnv &cenv)
   // default parameters for the new alignment
   cenv.SetValue("viewdist.env"             , "viewdist.rootrc");
   cenv.SetValue("viewdist.EdbDebugLevel"   ,  1    );
+  cenv.SetValue("viewdist.NClMin" , 20);
+  cenv.SetValue("viewdist.R2CenterMax" , 15.);
+  cenv.SetValue("viewdist.Rmax" ,  1.);
+  cenv.SetValue("viewdist.Xpix" , 0.30625);
+  cenv.SetValue("viewdist.Ypix" , 0.30714);
+  cenv.SetValue("viewdist.NXpix", 1280);
+  cenv.SetValue("viewdist.NYpix", 1024);
 }
 
 int main(int argc, char* argv[])
