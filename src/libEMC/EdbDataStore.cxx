@@ -22,19 +22,19 @@ void EdbDataStore::TransferGeometry(EdbDataStore* ds){
 void EdbDataStore::TransferTo(EdbDataStore* ds, char level,EdbSegmentCut* cut){
   assert(level>=0 && level<16);
   
-  if(level&0b0001){
+  if(level&0x1){
     printf("transfer MTK segments\n");
     TransferSegs(&eRawPV,&(ds->eRawPV),cut);
     printf("done\n");
   }
   
-  if(level&0b0010){
+  if(level&0x2){
     printf("transfer BTK segments\n");
     TransferSegs(&eSegPV,&(ds->eSegPV),cut);
     printf("done\n");
   }
   
-  if(level&0b0100){
+  if(level&0x4){
     printf("transfer Tracks\n");
     for(int nt=0;nt<eTracks.GetEntries();++nt){
       if(GetTrack(nt)->N())ds->AddTrack(GetTrack(nt));
@@ -42,7 +42,7 @@ void EdbDataStore::TransferTo(EdbDataStore* ds, char level,EdbSegmentCut* cut){
     ds->SetOwnTracks(0);
     printf("done\n");
   }
-  if(level&0b1000){
+  if(level&0x8){
     printf("transfer Vertices\n");
     for(int nv=0;nv<eVTX.GetEntries();++nv)ds->AddVertex(GetVertex(nv));
     ds->SetOwnVertices(0);
