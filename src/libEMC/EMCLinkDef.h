@@ -16,5 +16,7 @@
 
 #pragma link C++ class EdbViewMatch;
 #pragma link C++ class EdbClMatch;
+#pragma link C++ class EdbDataStore;
+#pragma link C++ class EdbDSRec;
 
 #endif
