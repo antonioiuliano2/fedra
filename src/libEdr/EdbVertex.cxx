@@ -1075,17 +1075,17 @@ int EdbVertexRec::FindVertex()
   TIndexCell starts,ends;              // "ist:entry"   "iend:entry"
   FillTracksStartEnd( starts, ends );
 
-  printf("-----Search 2-track vertexes----------------------------\n");
+  if(gEDBDEBUGLEVEL>1) printf("-----Search 2-track vertexes----------------------------\n");
 
   int nvtx   = 0;
 
-  printf(" End-Begin tracks combinations:\n");
+  if(gEDBDEBUGLEVEL>1) printf(" End-Begin tracks combinations:\n");
   nvtx += LoopVertex(ends  , starts,  0, 1 );
 
-  printf(" Begin-Begin tracks combinations:\n");
+  if(gEDBDEBUGLEVEL>1) printf(" Begin-Begin tracks combinations:\n");
   nvtx += LoopVertex(starts, starts,  1, 1 );
 
-  printf(" End-End tracks combinations:\n");
+  if(gEDBDEBUGLEVEL>1) printf(" End-End tracks combinations:\n");
   nvtx += LoopVertex(ends  , ends,    0, 0 );
 
   int nvtxt = 0;
@@ -1104,7 +1104,7 @@ int EdbVertexRec::FindVertex()
     edbv->ResetTracks();
   }
 
-  printf("--------------------------------------------------------\n");
+  if(gEDBDEBUGLEVEL>1) printf("--------------------------------------------------------\n");
 
   return nvtx;
 }
@@ -1147,7 +1147,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
   // zpos2  - the direction flag for the second track
   // in cycles is assumed that members of list1 has z <= members of list2
 
-  printf("  Selection: dZmax=%.0f Abin=%.3f ProbMin=%f zBin=%.0f usemom=%d\n",
+  Log(3,"EdbVertexRec::LoopVertex","  Selection: dZmax=%.0f Abin=%.3f ProbMin=%f zBin=%.0f usemom=%d",
          eDZmax, eAbin, eProbMin, eZbin, eUseMom);
 
   int nvtx     = 0; 
@@ -1212,7 +1212,7 @@ int EdbVertexRec::LoopVertex( TIndexCell &list1, TIndexCell &list2,
 
   //printf("\b\b\b\b%3d%%\n",100);
 
-  printf("  %6d pairs -> %d vertices accepted\n", ncombin, nvtx);
+  Log(3,"EdbVertexRec::LoopVertex","  %6d pairs -> %d vertices accepted\n", ncombin, nvtx);
 
   return nvtx;
 }
@@ -1360,13 +1360,12 @@ EdbVertex *EdbVertexRec::ProbVertex2( EdbTrackP *tr1, EdbTrackP *tr2,
     //if(imp<eImpMaxV)     // accept the vertex even if prob is small (parallel tracks)
     //  return vtx;
     //else                 // do additional checks
-       if( vtx->V()->prob() >= eProbMin ) {
-        Log(3,"EdbVertexRec::ProbVertex2", "prob = %f",  vtx->V()->prob());
-	vtx->Print();
-	if( CheckDZ2( s1->Z(), s2->Z(), zpos1,zpos2, vtx->VZ() ) )
-	    return vtx;
+    if( vtx->V()->prob() >= eProbMin ) {
+       if( Log(3,"EdbVertexRec::ProbVertex2", "prob = %f",  vtx->V()->prob()) )	      vtx->Print();
+       if( CheckDZ2( s1->Z(), s2->Z(), zpos1,zpos2, vtx->VZ() ) )
+	     return vtx;
     }
-  } 
+  }
   SafeDelete(vta1);
   SafeDelete(vta2);
   SafeDelete(vtx); 
@@ -1426,14 +1425,14 @@ Bool_t EdbVertexRec::CheckDZ2(float z1, float z2, int zpos1, int zpos2, float z 
 //______________________________________________________________________________
 int EdbVertexRec::ProbVertexN()
 {
-  printf("*** on entry to ProbVertexN: nv = %d\n", eVTX->GetEntries());
+  if(gEDBDEBUGLEVEL>1) printf("*** on entry to ProbVertexN: nv = %d\n", eVTX->GetEntries());
   ProbVertexNpos(0);  // find n-track vtx attached to left edges
-  printf("*** npoz     0  ProbVertexN: nv = %d\n", eVTX->GetEntries());
+  if(gEDBDEBUGLEVEL>1) printf("*** npoz     0  ProbVertexN: nv = %d\n", eVTX->GetEntries());
   ProbVertexNpos(1);  // to right edges
-  printf("*** npoz     1  ProbVertexN: nv = %d\n", eVTX->GetEntries());
+  if(gEDBDEBUGLEVEL>1) printf("*** npoz     1  ProbVertexN: nv = %d\n", eVTX->GetEntries());
 
   CheckVTX();         // rank the vertices and reassign tracks according to the major rank
-  StatVertexN();      // print vertex statistics
+  if(gEDBDEBUGLEVEL>0) StatVertexN();      // print vertex statistics
   return 0;
 }
 
@@ -1476,18 +1475,16 @@ int EdbVertexRec::ProbVertexNpos(int zpos)
     t  = (EdbTrackP*)a->Key();
     arr = (TObjArray*)a->Value();
     int nv = arr->GetEntries();
-    printf( "nv = %d\n", nv );
+    //printf( "nv = %d\n", nv );
     if(nv<2)    continue;
     TObjArray arrvta;        // group of vta of tracks attached to t
     for(int iv=0; iv<nv; iv++) {
       vtx = (EdbVertex*)arr->At(iv);
-      for(int it=0; it<vtx->N(); it++) {
-	arrvta.Add(vtx->GetVTa(it));
-      }
+      for(int it=0; it<vtx->N(); it++) {	arrvta.Add(vtx->GetVTa(it));  }
     }
     EdbVertex *newvtx=TestVTAGroup(arrvta);
     if(newvtx) {
-      printf("add new vtx with %d tracks and flag = %d\n",newvtx->N(),newvtx->Flag() );
+      Log(3,"EdbVertexRec::ProbVertexNpos","add new vtx with %d tracks and flag = %d\n",newvtx->N(),newvtx->Flag() );
       eVTX->Add(newvtx);
     }
   }
@@ -1547,7 +1544,7 @@ EdbVertex *EdbVertexRec::TestVTAGroup(TObjArray &arrvta)
   // return the new vertex if successful
 
   int nvta=arrvta.GetEntries();
-  printf("nvta = %d\n",nvta);
+  Log(3,"EdbVertexRec::TestVTAGroup","nvta = %d\n",nvta);
 
   EdbVTA *vta=0, *newvta=0;
   EdbVertex *newvtx = new EdbVertex();
@@ -1563,14 +1560,14 @@ EdbVertex *EdbVertexRec::TestVTAGroup(TObjArray &arrvta)
   if(MakeV(*newvtx))
     if( newvtx->V() )
       if( newvtx->V()->valid() ) {
-	printf("prob = %f\n", newvtx->V()->prob() );
+	//printf("prob = %f\n", newvtx->V()->prob() );
 	if( newvtx->V()->prob() >= eProbMin )   // accept new N-tracks vertex
 	  {
 	    for(int i=0; i<nvta; i++)	{
 	      if( ((EdbVTA*)arrvta.At(i))->GetVertex() != newvtx )
 					  ((EdbVTA*)arrvta.At(i))->GetVertex()->SetFlag(-10);
 	    }
-	    printf("accepted!\n");
+	    //printf("accepted!\n");
 	    return newvtx;
 	  }
       }

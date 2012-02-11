@@ -135,6 +135,7 @@ class EdbTrackP : public EdbSegP {
   void       Set0();
   void       SetOwner() { if(eS) eS->SetOwner(true); }
   void       AddVTA(EdbVTA *vta);
+  void       ClearVTA();
   void       ClearVTA(EdbVTA *vta);
   EdbVTA    *VTAS() const {return eVTAS;}
   EdbVTA    *VTAE() const {return eVTAE;}

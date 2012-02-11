@@ -1,3 +1,4 @@
+#include "EdbLog.h"
 #include "EdbDataStore.h"
 
 #include <TSystem.h>
@@ -14,7 +15,7 @@ EdbDataStore::EdbDataStore(){
 EdbDataStore::~EdbDataStore(){ Clear();};
 ///------------------------------------------------
 void EdbDataStore::TransferGeometry(EdbDataStore* ds){
-  printf("transfer geometry:\n");
+  Log(2,"transfer geometry","");
   ds->eBrick.Clear();
   ds->eBrick.Copy(eBrick);
 }
@@ -373,9 +374,9 @@ int EdbDSRec::DoTracking(bool use_btk){
 int EdbDSRec::DoVertexing(){
   SetOwnVertices(1);
   // performing vertexing
-  printf("%d tracks vor vertexing\n",  eVRec.eEdbTracks->GetEntries() );
+  if(gEDBDEBUGLEVEL>1) printf("%d tracks vor vertexing\n",  eVRec.eEdbTracks->GetEntries() );
   int nvtx = eVRec.FindVertex();
-  printf("%d 2-track vertexes was found\n",nvtx);
+  if(gEDBDEBUGLEVEL>1) printf("%d 2-track vertexes was found\n",nvtx);
   if(nvtx == 0) return 0;
   eVRec.ProbVertexN();
   for(int nv=0;nv<eVRec.Nvtx();nv++){

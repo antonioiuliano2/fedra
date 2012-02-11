@@ -388,6 +388,14 @@ void EdbTrackP::AddVTA(EdbVTA *vta)
     else if(vta->Zpos()==1) eVTAS=vta;
   }
 }
+
+//______________________________________________________________________________
+void EdbTrackP::ClearVTA()
+{
+  eVTAE=0;
+  eVTAS=0;
+}
+
 //______________________________________________________________________________
 void EdbTrackP::ClearVTA(EdbVTA *vta)
 {
