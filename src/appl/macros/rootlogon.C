@@ -18,15 +18,17 @@ void rootlogon()
   loadlib( "libEdd"  , "EdbDisplay" );            // optional
   loadlib( "libEMC"  , "EdbPVGen" );              // optional
   if(gSystem->Load("libDataConversion"))          // optional
-    printf("libDataConversion do NOT loaded!\n"); 
+    printf("libDataConversion is NOT loaded!\n"); 
   loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
-  loadlibEOracle();                               // optional
+//   loadlibEOracle();                               // optional
   loadlib( "libEmr", "EdbEmrFileAccess" );        // optional
 
   loadlib( "libEve", "TEveVector" );              // optional required for EDA
   loadlib( "libEDA",  "EdbEDA");                  // optional
+  
+  loadlib( "libShowRec", "EdbShowRec" );         // optional, ALPHA-version (replacement for libshower soon)
   printf("\n\n");
 
   gStyle->SetPalette(1);
@@ -36,7 +38,7 @@ void rootlogon()
 void loadlib(const char *lib, const char *key)
 {
   if (!TClassTable::GetDict(key)) { 
-    if(gSystem->Load(lib)) printf("\n%s do NOT loaded!",lib);
+    if(gSystem->Load(lib)) printf("\n ERROR: \n%s is NOT loaded!",lib);
     else printf(" %s",lib);
   }
 }
@@ -56,6 +58,6 @@ void loadlibEOracle()
 	(gSystem->Load("libEOracle")==0) )
       printf(" libEOracle(Win32)"); return;
   }
-  printf("\nlibEOracle do NOT loaded!\n");
+  printf("\nERROR: \n libEOracle is NOT loaded!\n");
 }
 
