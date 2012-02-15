@@ -79,14 +79,18 @@ private:
     Int_t         eMC;              // MC number, defined by MCEvt() of the Initiator BaseTrack
     Float_t       eSphericity;      // Value to express spherical distribution around the ShowerAxisCenterGravity
 
+    // Internal histograms to store binentries of longitudinal and transversal shower profiles
+    // for exact definition how bins are defined see in the .cxx code implementation
     TH1F*          eProfileLongitudinal;
     TH1F*          eProfileTransversal;
 
 
 
-
+    // shower Axis angle (tan theta)
+    // see in the .cxx code how it is exactly calculated
+    Float_t       eShowerAxisAngle;
+    //  a basetrack with information of the shower axis and its direction
     EdbSegP*      eShowerAxisCenterGravityBT;
-    Float_t       eShowerAxisAngle; // shower Axis angle (tan theta)
 
 
     //-C- shower data (extracted from shower characteristics) here:
@@ -262,6 +266,7 @@ public:
         // Use this when the simulation was done with G4 Dario generator
         // And the corresponding outputfile is in FWM like format.
     };
+
 
     // General Implementation of the Reco_ID structure:
     // Instances are use for e-pi separation, or e-gamma separation and so on.

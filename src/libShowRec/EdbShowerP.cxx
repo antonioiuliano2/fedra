@@ -828,7 +828,7 @@ void EdbShowerP::Update()
     Log(3,"EdbShowerP::Update()","Update()...done.");
 
     // Maybe we should put the BuildParametrisations right now also in here?
-    // -> Put  in UpdateX if needed to BuildParametrisations
+    // -> Put  in UpdateX() if needed to BuildParametrisations
     return;
 }
 
@@ -836,7 +836,7 @@ void EdbShowerP::Update()
 
 void EdbShowerP::UpdateX()
 {
-    Log(3,"EdbShowerP::UpdateX()","UpdateX()");
+    Log(3,"EdbShowerP::UpdateX()","UpdateX() Update() and Build Shower Parametrisations from scratch");
     if (eNBT==0) {
         cout << "Empty shower. Dont Update. return;" << endl;
         return;
@@ -1089,8 +1089,8 @@ void EdbShowerP::BuildParametrisation_FJ()
 
     //=======================================================================================
     //==C==  DUMMY routine to get the values   deltarb  and   deltathetab  filled:
-    //==C==  necessary since its an old relict from old times where this was saved only
-    //==C==  as root TTree.
+    //==C==  necessary since its an OLD relict from OLD times where this was saved only
+    //==C==  as ROOT TTree ("treebranch").
     //=======================================================================================
 
     EdbSegP* seg;
@@ -1356,7 +1356,7 @@ void EdbShowerP::BuildParametrisation_FJ()
         if (dist>Dr[nfilmb[ibtke]-1]) {
             if (gEDBDEBUGLEVEL>2) {
                 cout << " WARNING , In old times this cut (dist>Dr[nfilmb[ibtke]-1]) (had also to be fulfilled!"<<endl;
-                cout << "            For this specific shower it seems not the case....." << endl;
+                cout << "           For this specific shower it seems not the case....." << endl;
                 cout << "           You might want to check this shower again manualy to make sure everything is correct....." << endl;
             }
         }
@@ -1677,7 +1677,7 @@ void EdbShowerP::BuildParametrisation_YC()
         txaxis = txb[0];
         tyaxis = tyb[0];
 
-        if (gEDBDEBUGLEVEL>3) cout << "ShowerAxis Defined by First BT: " << xaxis << "  " << yaxis << "  "  << zaxis << "  "  << txaxis << "  "  << tyaxis << "  "  << endl;
+        if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::BuildParametrisation_YC()   ShowerAxis Defined by First BT: " << xaxis << "  " << yaxis << "  "  << zaxis << "  "  << txaxis << "  "  << tyaxis << "  "  << endl;
 
         Bool_t UseShowerAxisCenterGravityBT=kTRUE;
         // 		UseShowerAxisCenterGravityBT=kFALSE;
@@ -2248,7 +2248,7 @@ void EdbShowerP::PrintParametrisation_LT()
         cout << "EdbShowerP::PrintParametrisation()     PARA NOT YET BUILD ! "<< endl;
         return;
     }
-    cout << "EdbShowerP::PrintParametrisation_FJ()    ePara_LT.ShowerAxisAngle= " << ePara_LT.ShowerAxisAngle << endl;
+    cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.ShowerAxisAngle= " << ePara_LT.ShowerAxisAngle << endl;
     cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.nseg= " << ePara_LT.nseg << endl;
     cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.BT_deltaR_mean= " << ePara_LT.BT_deltaR_mean << endl;
     cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.BT_deltaR_rms= " << ePara_LT.BT_deltaR_rms << endl;
