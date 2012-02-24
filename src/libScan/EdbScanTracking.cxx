@@ -218,6 +218,15 @@ void EdbTrackAssembler::FillTrZMap()
 }
 
 //--------------------------------------------------------------------------------------
+void EdbTrackAssembler::InitTrZMap( const char *str )
+{
+  int   nx=0, ny=0, ncell=0;
+  float xmi,xma, ymi, yma;
+  sscanf(str,"%d %f %f %d %f %f %d",&nx,&xmi,&xma,&ny,&ymi,&yma,&ncell);
+  InitTrZMap( nx,xmi,xma,ny,ymi,yma,ncell );
+}
+
+//--------------------------------------------------------------------------------------
 void EdbTrackAssembler::InitTrZMap( int nx, float xmi, float xma, 
                                     int ny, float ymi, float yma,  int ncell)
 {
@@ -269,7 +278,8 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
   float       misalign_offset = env.GetValue("fedra.track.misalign_offset",  500. );
   bool        do_local_corr   = env.GetValue("fedra.track.do_local_corr"  ,    1 );
 
-  etra.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
+//  etra.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
+  etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
 
   EdbPattern p;
   
@@ -350,5 +360,8 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
   }
   
   EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
+  TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
+  env.Write();
+  f.Close();
 
 }

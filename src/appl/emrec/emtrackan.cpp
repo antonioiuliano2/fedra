@@ -21,9 +21,15 @@ bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv);
 //----------------------------------------------------------------------------------------
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  trackan -set=ID [-corraff -divide=NXxNY -o=DATA_DIRECTORY -v=DEBUG] \n";
-  cout<< "\t  trackan -file=File [-o=DATA_DIRECTORY -v=DEBUG] \n\n";
-  cout<< "\t\t -corraff -  apply corrections to the aff-files\n";
+  cout<< "\nUsage: \n\t  emtrackan -set=ID [-corraff -divide=NXxNY -o=DATA_DIRECTORY -v=DEBUG] \n";
+  cout<< "\t  emtrackan -file=File [-o=DATA_DIRECTORY -v=DEBUG] \n\n";
+  cout<< "\t  Analyse the tracks tree and produce the report file: ID.trk.an.root\n";
+  cout<< "\t\t -corraff    -  save corrections to set.root file\n";
+  cout<< "\t\t -divide=NxM -  divide set into into NxM zones and calculate local correction in each zone\n";
+  cout<< "\t\t                the following tracking may use this correction if the parameter fedra.track.do_local_corr in track.rootrc is set to 1\n";
+  cout<< "\t\t                normally is required several iterations (>3) like emtra.../emtrackan... to converge the local corrections. \n";
+  cout<< "\t\t                Map granularity NxM must be the same for all iterations\n";
+  cout<< "\n\t Example: emtrackan -set=700000.0.1.0 -divide=10x10 -corraff -v=2 \n";
   cout<<endl;
 }
 
@@ -77,11 +83,11 @@ int main(int argc, char* argv[])
      }
     if(!strncmp(key,"-corraff",8))
      {
-	do_corraff=true;
+        do_corraff=true;
      }
     else if(!strncmp(key,"-v=",3))
       {
-	if(strlen(key)>3)	gEDBDEBUGLEVEL = atoi(key+3);
+         if(strlen(key)>3)	gEDBDEBUGLEVEL = atoi(key+3);
       }
   }
   
@@ -244,6 +250,8 @@ bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv)
   }
   f.Close();
 
+  printf("********************write set\n");
+  
   if(do_corraff) if(ss) sproc.WriteScanSet(idset,*ss);
 
   return 1;

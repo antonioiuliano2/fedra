@@ -42,6 +42,7 @@ class EdbTrackAssembler: public TObject {
 
   bool        SameSegment( EdbSegP &s1, EdbSegP &s2 );
   void        DoubletsFilterOut(EdbPattern &p);
+  void        InitTrZMap( const char *str );
   void        InitTrZMap( int nx, float xmi, float xma, 
                           int ny, float ymi, float yma,  int ncell);
   void        InitTrZMap();

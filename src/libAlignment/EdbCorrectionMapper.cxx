@@ -218,6 +218,28 @@ TCanvas   *EdbCorrectionMapper::DrawMap(EdbCorrectionMap &map, const char *suffi
        //delete s;
     }
 
+    // Draw scale
+    float x= map.Xj(0)+xbin/6;
+    float y= map.Yj(0)+ybin/6;
+    TArrow *arrowxy = new TArrow(x,y,x+scalexy*10,y,0.005);
+    arrowxy->SetLineWidth(3);
+    arrowxy->SetLineColor(1);
+    arrowxy->Draw();
+    TText *text = new TText(x,y+ybin/10,"10 microns");
+    text->SetTextSize(0.02);
+    text->Draw();
+    
+    //x= map.Xj(0)+xbin/6 + scalexy*10 + xbin/6;
+    x= map.Xj(0)+xbin/6;
+    y= map.Yj(0)+ybin/6 + ybin;
+    TArrow *arrowtxty = new TArrow(x,y,x+scaletxty*0.01,y,0.005);
+    arrowtxty->SetLineWidth(3);
+    arrowtxty->SetLineColor(0);
+    arrowtxty->Draw();
+    TText *textt = new TText(x,y+ybin/10,"10 mrad");
+    textt->SetTextSize(0.02);
+    textt->Draw();
+
     return corrmap;
 }
 
