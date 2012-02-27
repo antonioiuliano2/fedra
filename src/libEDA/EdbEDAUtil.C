@@ -371,6 +371,15 @@ EdbMomentumEstimator *EdbEDAUtil::CalcP(EdbTrackP *t0, double& p, double& pmin, 
   if(t0==0) return NULL;
   EdbTrackP *t=CleanTrack(t0);  // remove microtrack and strange segment.
   t->SetCounters();
+  
+  	if(t->Npl()<t->N()){
+		// in this case P estimation doesn't work.
+		// this can happen if a track is formed from 2 different data set.
+		// (PID definitions are defferent amond 2 data set. Npl is computed wrongly.)
+		// put absolute plate number as PID. (temporary solution)
+		for(int i=0;i<t->N();i++) t->GetSegment(i)->SetPID(t->GetSegment(i)->Plate());
+	}
+	
   if(t->N()<=2) return NULL;
 
   if(print) printf("CalcP : itrk %i ( %1.4f, %1.4f ) nBT= %i\n",t->ID(),t->TX(),t->TY(),t->N());
@@ -488,7 +497,7 @@ bool EdbEDAUtil::AskYesNo(char *message){
 }
 
 EdbTrackP * EdbEDAUtil::CleanTrack(EdbTrackP *t0){
-	// remove fake-segment/Microtrack/pl57. if no segment is rejected, return t0;
+	// remove fake-segment/Microtrack/pl57. return a pointer to newly created track.;
 	// if Nseg<=4, no fake-segment will be removed.
 	// if fake-segments exist, create a new track without the fake segments and return the pointer.
 	// 1st segment will not be rejected as fake.
@@ -559,18 +568,15 @@ EdbTrackP * EdbEDAUtil::CleanTrack(EdbTrackP *t0){
 			t->RemoveSegment( (EdbSegP *) fakeseg->At(i));
 		}
 		delete t1;
-		t->SetCounters();
-		return t;
+		t1=t;
 	}
 	
 	delete fakeseg;
 
-	// if microtrack are rejected.
-	if(t1->N()!=t0->N()) return t1;
-
-	delete t1;
-	// if no fake-segment nor microtracks, return the track itself.
-	return t0;
+	t1->SetCounters();
+	
+	// return the track microtrack are rejected.
+	return t1;
 }
 
 
