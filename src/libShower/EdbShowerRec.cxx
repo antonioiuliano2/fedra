@@ -3960,7 +3960,7 @@ void EdbShowerRec::Execute()
 
         // Create new Shower Object for storage;
         // For the moment this is treated as an "EdbTrackP" object...
-        RecoShower = new EdbTrackP();
+        RecoShower = new EdbTrackP(*(EdbSegP*)eInBTArray->At(i));
 
         // Get InitiatorBT from eInBTArray
         InBT=(EdbSegP*)eInBTArray->At(i);
@@ -4105,7 +4105,8 @@ void EdbShowerRec::Execute()
 
         // Add Shower Object to Shower Reco Array.
         // Not, if its empty or containing only one BT:
-        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+        //if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+	eRecoShowerArray->Add(RecoShower);
 
         // Set back loop values:
         StillToLoop=kTRUE;
@@ -4183,7 +4184,7 @@ Bool_t EdbShowerRec::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli,
 
         dZ=TMath::Abs(s_TestBT->Z()-s->Z());
         if (dZ<30) continue;                  // Exclude the case of same Zpositions...
-        if (dZ>(eAlgoParameterNPropagation*1300.0)+30.0) continue;     // Exclude the case of more than eAlgoParameterNPropagation plates before...
+        if (dZ>(eAlgoParameterNPropagation*1300.0)+650.0) continue;     // Exclude the case of more than eAlgoParameterNPropagation plates before...
 
         if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowerRec::FindPrecedingBTs(): Checking dT,dR and dZ for i:  " << i << "  " << DeltaThetaComponentwise(s, s_TestBT)  << "  " << DeltaR_WithPropagation(s, s_TestBT) << "  "<<dZ << endl;
 
@@ -4624,7 +4625,7 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
 
 
         // Since we do not take showers with below 1segment
-        if (shower_sizeb<=1) continue;
+        //if (shower_sizeb<=1) continue;
 
 //      show = new EdbShowerP(shower_sizeb); // libShowRec
         show = new EdbTrackP(shower_sizeb); // libShower
@@ -4702,7 +4703,7 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
         // Add Shower Object to Shower Reco Array.
         // Not, if its empty:
         // Not, if its containing only one BT:
-        if (show->N()>1) {
+        if (show->N()>=1) {
             showarray->Add(show);
             ++eRecoShowerArrayN;
             if (gEDBDEBUGLEVEL>3) cout << "EdbShowRec::Treebranch_To_RecoShowerArray   showarray->Add(show) ...   done." << endl;
