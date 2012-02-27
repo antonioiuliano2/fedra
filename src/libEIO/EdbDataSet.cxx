@@ -284,9 +284,9 @@ int EdbDataPiece::ReadPiecePar(const char *file)
   // return: 0 if ok
   //        -1 if file access failed
 
-  char buf[256];
+  char buf[512];
   char key[256];
-  char name[256];
+  char name[512];
 
   FILE *fp = fopen(file,"r");
   if (!fp) {
