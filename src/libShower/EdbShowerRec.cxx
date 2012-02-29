@@ -3483,7 +3483,8 @@ Bool_t EdbShowerRec::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegm
     if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowerAlg::IsInConeTube("<<TestingSegment<< ","<< StartingSegment <<","<< CylinderRadius << "," << ConeAngle << endl;
     if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowerAlg::IsInConeTube() Test Segment " << TestingSegment << " vs. Starting Segment " << StartingSegment << endl;
 
-    if (TestingSegment->Z()-StartingSegment->Z()<2.0) return kFALSE;
+    // if (TestingSegment->Z()-StartingSegment->Z()<2.0) return kFALSE; //wrong...
+    if (StartingSegment->Z()>TestingSegment->Z() ) return kFALSE;
 
     TVector3 x1(StartingSegment->X(),StartingSegment->Y(),StartingSegment->Z());
     TVector3 x2(TestingSegment->X(),TestingSegment->Y(),TestingSegment->Z());
@@ -3502,7 +3503,8 @@ Bool_t EdbShowerRec::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegm
     // For the case where the two basetracks have same z position
     // the angle is about 90 degree so it makes no sense to calculate it...
     // therefore we set it artificially to zero:
-    if (TMath::Abs(StartingSegment->Z()-TestingSegment->Z())<2.0) {
+    // if (TMath::Abs(StartingSegment->Z()-TestingSegment->Z())<2.0) {
+    if (StartingSegment->Z()==TestingSegment->Z() ) {
         if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowerAlg::IsInConeTube()   Same Z position of TestingSegment and StartingSegment, Set angle artificially to zero" << endl;
         angle=0.0;
 
