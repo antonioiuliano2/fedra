@@ -259,7 +259,7 @@ float EdbMomentumEstimator::PMSang(EdbTrackP &tr)
 	  dax[ist]    = Sqrt( dax[i]/(nentrx[i]*Zcorr) );
 	  errdax[ist] = dax[ist]/Sqrt(2*nentrx[i]);//CellWeight(npl,i+1);    //   Sqrt(npl/vind[i]);
 	  ist++;
-	  maxX=ist;
+	  maxX=i+1;
 	}
       if( nentry[i] >= minentr && Abs(day[i])<0.1) 
 	{
@@ -268,7 +268,7 @@ float EdbMomentumEstimator::PMSang(EdbTrackP &tr)
 	  day[ist1]    = Sqrt( day[i]/(nentry[i]*Zcorr) );
 	  errday[ist1] = day[ist1]/Sqrt(2*nentry[i]);//CellWeight(npl,i+1);
 	  ist1++;
-	  maxY=ist1;
+	  maxY=i+1;
 	}      
       if( nentr[i] >= minentr/2 && Abs(da[i])<0.1 ) 
 	{
@@ -277,7 +277,7 @@ float EdbMomentumEstimator::PMSang(EdbTrackP &tr)
 	  da[ist2]    = Sqrt( da[i]/(2*nentr[i]*Zcorr) );
 	  errda[ist2] = da[ist2]/Sqrt(4*nentr[i]);//CellWeight(npl,i+1));	
 	  ist2++;
-	  max3D=ist2;
+	  max3D=i+1;
 	}
     }
 
@@ -602,9 +602,10 @@ double EdbMomentumEstimator::Mat(float P, int npl, float ang)
   // These parametrisations at low and large angles are parametrised with MC
   // See Magali's thesis for more informations
   double DP=0.;
-  if(Abs(ang)<0.1)  DP=(0.4990+0.0152*P)+(-0.0853+0.0051*P)*Sqrt(npl)+npl*(0.0047-0.0007*P);
-  if(Abs(ang)>=0.1)  DP=(0.8770+0.0520*P)+(-0.1856-0.0031*P)*Sqrt(npl)+npl*(0.0122-0.0001*P);
-  if (DP>0.60) DP=0.60;
+// new parameterisition as published
+	if(Abs(ang)<0.2)   DP = ((0.397+0.019*P)/sqrt(npl) + (0.176+0.042*P) + (-0.014-0.003*P)*sqrt(npl));
+	if(Abs(ang)>=0.2)  DP = ((1.400-0.022*P)/sqrt(npl) + (-0.040+0.051*P) + (0.003-0.004*P)*sqrt(npl));
+  if (DP>0.80) DP=0.80;
   return DP;
 }
 
