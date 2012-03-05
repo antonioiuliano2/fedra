@@ -40,7 +40,7 @@ void set_default(TEnv &cenv)
   
   cenv.SetValue("trackan.outdir"          , "..");
   cenv.SetValue("trackan.NCPmin"          , "50");
-  cenv.SetValue("trackan.EdbDebugLevel"   , 1);
+  cenv.SetValue("trackan.EdbDebugLevel"   ,   1 );
 }
 
 bool      do_set      = false;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
   
   TEnv cenv("trackanenv");
   set_default(cenv);
-  gEDBDEBUGLEVEL        = cenv.GetValue("trackan.EdbDebugLevel" , 1);
+  gEDBDEBUGLEVEL        = cenv.GetValue("trackan.EdbDebugLevel" ,  1  );
   const char *outdir    = cenv.GetValue("trackan.outdir"        , "..");
 
   const char *name=0;

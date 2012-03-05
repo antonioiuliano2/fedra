@@ -603,8 +603,8 @@ double EdbMomentumEstimator::Mat(float P, int npl, float ang)
   // See Magali's thesis for more informations
   double DP=0.;
 // new parameterisition as published
-	if(Abs(ang)<0.2)   DP = ((0.397+0.019*P)/sqrt(npl) + (0.176+0.042*P) + (-0.014-0.003*P)*sqrt(npl));
-	if(Abs(ang)>=0.2)  DP = ((1.400-0.022*P)/sqrt(npl) + (-0.040+0.051*P) + (0.003-0.004*P)*sqrt(npl));
+	if(Abs(ang)<0.2)   DP = ((0.397+0.019*P)/Sqrt(npl) + (0.176+0.042*P) + (-0.014-0.003*P)*Sqrt(npl));
+	if(Abs(ang)>=0.2)  DP = ((1.400-0.022*P)/Sqrt(npl) + (-0.040+0.051*P) + (0.003-0.004*P)*Sqrt(npl));
   if (DP>0.80) DP=0.80;
   return DP;
 }
