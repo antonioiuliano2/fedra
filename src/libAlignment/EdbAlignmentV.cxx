@@ -71,15 +71,15 @@ int EdbAlignmentV::DoubletsFilterOut(bool checkview, TH2F *hxy, TH2F *htxty )
   EdbSegP *s1,*s2;
   for(int i=0; i<n; i++) {
     s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-	if(s1->Flag()==-10) continue;
+    if(s1->Flag()==-10) continue;
     s2 = (EdbSegP*)eS[1].UncheckedAt(i);
-	if(s2->Flag()==-10) continue;
+    if(s2->Flag()==-10) continue;
     if(checkview) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
     if( !IsInsideDVsame(*s1,*s2) )                                                                    continue;
     if(s1->Flag()>-10 && s2->Flag()>-10) {
       if(hxy)   hxy->Fill( s1->X()-s2->X() , s1->Y()-s2->Y());
       if(htxty) htxty->Fill(s1->TX()-s2->TX(),s1->TY()-s2->TY());
-      }
+    }
     if( s2->W()>s1->W() ) s1->SetFlag(-10);
     else                  s2->SetFlag(-10);
     nout++;

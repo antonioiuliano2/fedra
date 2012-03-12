@@ -76,6 +76,8 @@ void EdbRunAccess::Set0()
   eDoViewAnalysis=true;
   eHViewXY[1].InitH2(500,-250,250, 500, -250, 250);
   eHViewXY[2].InitH2(500,-250,250, 500, -250, 250);
+  eDoPixelCorr=0;
+  ePixelCorrX = ePixelCorrY= 1.;
 }
 
 ///_________________________________________________________________________
@@ -809,6 +811,14 @@ int EdbRunAccess::FillVP()
 }
 
 ///______________________________________________________________________________
+void EdbRunAccess::SetPixelCorrection(const char *str)
+{
+  if( 3 != sscanf(str,"%d %f %f", &eDoPixelCorr, &ePixelCorrX, &ePixelCorrY) )
+  { eDoPixelCorr=0; ePixelCorrX=1.; ePixelCorrY=1.; }
+  Log(2,"EdbRunAccess::SetPixelCorrection","%s",str);
+}
+
+///______________________________________________________________________________
 bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 {
   EdbSegment *seg = view->GetSegment(id);
@@ -836,27 +846,42 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   }
 
   EdbLayer  *layer=GetLayer(side);
-  if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );
+  //if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );   // TO CHECK!!
+  const EdbAffine2D *affview = view->GetHeader()->GetAffine();
 
   float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
   ty   = seg->GetTy()/layer->Shr();
-  //x    = seg->GetX0() + layer->Zmin()*tx;                 //TODO: check that old algorithms works properly after this correction
-  //y    = seg->GetY0() + layer->Zmin()*ty;
-  //z    = layer->Z() + layer->Zmin();
-  x    = seg->GetX0() + layer->Zcorr()*tx;
-  y    = seg->GetY0() + layer->Zcorr()*ty;
-  z    = layer->Z() + layer->Zcorr();
-  if(eAFID==0) {
-    x+=view->GetXview();
-    y+=view->GetYview();
+  x    = seg->GetX0();
+  y    = seg->GetY0();
+
+  if(eDoPixelCorr)   {
+    x *= ePixelCorrX;
+    y *= ePixelCorrY;
+    //printf("%f %f \n",ePixelCorrX,ePixelCorrY);
   }
+  
+  x  += layer->Zcorr()*tx;
+  y  += layer->Zcorr()*ty;
+  z    = layer->Z() + layer->Zcorr();
+  
+  float xx, yy;
+  if(eAFID==0) {
+    xx = x+view->GetXview();
+    yy = y+view->GetYview();
+  } else {
+    seg->Transform( view->GetHeader()->GetAffine() );
+    xx = affview->A11()*x+affview->A12()*y+affview->B1();
+    yy = affview->A21()*x+affview->A22()*y+affview->B2();
+  }
+  
   puls = seg->GetPuls();
 
   EdbAffine2D *aff = layer->GetAffineTXTY();
   float txx = aff->A11()*tx+aff->A12()*ty+aff->B1();
   float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
-  segP.Set( seg->GetID(),x,y,txx,tyy,puls,0);
+  
+  segP.Set( seg->GetID(),xx,yy,txx,tyy,puls,0);
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );

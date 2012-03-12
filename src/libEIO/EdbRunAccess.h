@@ -26,7 +26,11 @@ class EdbRunAccess : public TObject {
 
   Bool_t    eDoViewAnalysis;     // fill or not the histograms for optional view analysis
   EdbH2     eHViewXY[3];         // XY segments distribution in a view local coords
-  Bool_t    eInvertSides;         // 0 -do nothing, 1-invert sides
+  Bool_t    eInvertSides;        // 0 -do nothing, 1-invert sides
+  
+  Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
+  Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data
+  Float_t     ePixelCorrY;
   
  private:
   TString  eRunFileName;
@@ -61,6 +65,7 @@ class EdbRunAccess : public TObject {
   EdbSegment  *GetRawSegment( EdbView &v, int sid, int rs=0 );
   
   void Set0();
+  void SetPixelCorrection(const char *str);
   void ClearCuts();
   bool InitRun(const char *runfile=0, bool do_update=false);
   bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");
