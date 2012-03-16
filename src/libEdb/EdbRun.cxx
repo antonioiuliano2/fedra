@@ -220,7 +220,7 @@ void EdbRun::Create( const char *fname )
 
   eTree = new TTree("Views","Scanning Viewes data");
   eTree->SetAutoSave(100000000);                     // autosave each 100Mb
-  eTree->SetMaxTreeSize(15000000000LL);              //set 15 Gb file size limit
+  eTree->SetMaxTreeSize(32000000000LL);              //set 32 Gb file size limit
   Log(3,"EdbRun::Create","set maxtreesize as: %lld",eTree->GetMaxTreeSize());
  
   TClonesArray     *eClusters = eView->GetClusters();
