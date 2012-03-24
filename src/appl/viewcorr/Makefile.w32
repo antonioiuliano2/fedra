@@ -1,0 +1,13 @@
+#------------------------------------------------------------------------------
+include ../../config/ProjectDef.mk
+include ../../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+TARGET	=	$(BIN_DIR)/viewdist$(ExeSuf)
+
+ROOTLIBS      = $(ROOTLIBS) -lMLP
+PROJECT_LIBS = $(PROJECT_LIBS) -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lShower -lTreePlayer
+
+#------------------------------------------------------------------------------
+include ../../config/TargetsDef.mk
+#--------------------------------------------------------------------------
