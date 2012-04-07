@@ -215,6 +215,7 @@ public:
     void CheckEdbPVRecThetaSpace(Int_t AliType);
     void Execute_ConstantBTDensity();
     void Execute_ConstantQuality();
+    void Execute_ConstantBTDensityInAngularBins();
 
     TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
@@ -238,6 +239,7 @@ public:
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
+    /// Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 

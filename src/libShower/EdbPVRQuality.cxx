@@ -1302,6 +1302,271 @@ void EdbPVRQuality::Execute_ConstantQuality()
     return;
 }
 
+//___________________________________________________________________________________
+
+void EdbPVRQuality::Execute_ConstantBTDensityInAngularBins()
+{
+  /// TO BE RE-WRITTEN FROM Akitaka Ariga Code:
+  
+  
+  /* 
+make_par_constant_BT(float BGDensity=23., float anglemax = 0.55){
+	
+	float qcmax = 0.15;
+	float qcmin = 0.07;
+	float dqc = 0.01;
+	
+	EdbDataProc *dproc = new EdbDataProc("lnk.def");
+	
+	EdbDataSet *dset = dproc->GetDataSet();
+	
+	
+	EdbPatCouple pc;
+	
+	TCanvas *c1 = new TCanvas("c1");
+	c1->Print("constantBT.ps[");
+
+	// process each cp files.
+	for(int pid=0; pid<dset->N();pid++){
+		c1->Clear();
+		int ic=1;
+		c1->Divide(2,2);
+		c1->cd(ic++);
+		// open cp file
+		EdbDataPiece *piece = dset->GetPiece(pid);
+		TString filename = piece->GetNameCP();
+		TFile *f = new TFile(filename.Data());
+		TTree *couples = (TTree *)gDirectory->Get("couples");
+		
+		int ipl=piece->Plate();
+		printf("PL %d\n", ipl);
+		// calculate area
+		float xmax = couples->GetMaximum("s.eX");
+		float xmin = couples->GetMinimum("s.eX");
+		float ymax = couples->GetMaximum("s.eY");
+		float ymin = couples->GetMinimum("s.eY");
+		float area = (xmax-xmin)*(ymax-ymin)/10000./10000.;
+		printf("area = %.3f cm2\n", area);
+		
+		// Compute BT density for each angle for different qucality cut parameter.
+		int ih=0;
+		TObjArray array;
+		TLegend *leg = new TLegend(0.65, 0.4, 0.98, 0.8);
+		int k=0;
+		float qcvalues[100];
+		for(float qc=qcmax; qc>qcmin;qc-=dqc,k++){
+			qcvalues[k]=qc;
+			TCut cut = Form("eN1==1&&eN2==1&&eCHI2P<s.eW*%.2f-1", qc);
+			printf("%s\n", cut.GetTitle());
+			TString hname = Form("h%d",ih++);
+			TH1F *h1 = new TH1F(hname.Data(),Form("BT density, IPL=%d, area=%.2fcm2", ipl, area), 28,0,0.7);
+			
+			couples->Draw("sqrt(s.eTY*s.eTY+s.eTX*s.eTX) >>"+hname, cut, ih==1?"":"same");
+			
+			// normalization to number of tracks /steradian/mm2.
+			// steradian is an approximate meaning. actually it's tangent.
+			
+			for(int j=1; j<=h1->GetNbinsX(); j++){
+				float left  = h1->GetBinLowEdge(j);
+				float right = h1->GetBinLowEdge(j+1);
+				float angulararea = 3.14159*(right*right-left*left);
+				h1->SetBinContent(j, h1->GetBinContent(j)/angulararea/area/100.);
+			}
+			
+			if(ih==5||ih==10) ih++; // just to avoid some invisible colors.
+			h1->SetLineColor(ih);
+			
+			leg->AddEntry(h1, Form("eCHI2P<s.eW*%.2f-1", qc), "l");
+			
+			array.Add(h1); // store histgrams in an array.
+		}
+		// Drawing the results.
+		gPad->Clear();
+		gPad->SetLogy();
+		for(int j=0; j<array.GetEntries(); j++){
+			TH1F *h = (TH1F *) array.At(j);
+			h->SetXTitle("tan(#theta)");
+			h->SetYTitle("BT density/steradian/mm2\n");
+			h->Draw( j==0? "" : "same");
+		}
+		leg->Draw();
+		printf("CHECK after histgraming %d\n", __LINE__);
+		
+		
+//		gPad->SetLogx();
+		
+		c1->cd(ic++);
+		TH1F *h = (TH1F *) array.At(0); // just to get X axis.
+		
+		double qcuts[100]; // quality cuts for each angle.
+		double angles[100]; // angles
+		
+		for(int j=1; j<=h->GetNbinsX(); j++){
+			gPad->Clear();
+			float angle = h->GetBinCenter(j);
+			
+			int nqc = array.GetEntries();
+			
+			double qcvalue[100], Density[100];
+			
+			for(int k=0; k<nqc; k++){
+				TH1F *h = (TH1F *) array.At(k);
+				Density[nqc-1-k] = h->GetBinContent(j); 
+				qcvalue[nqc-1-k] = qcvalues[k];
+				// strange [npc-1-k] is to avoid a bug in ROOT 5.22 in TGraph::Eval(). 5.30 work without problem with [k]
+			}
+			
+			
+			TGraph *gr = new TGraph(nqc, Density, qcvalue);
+			float qcut = gr->Eval(BGDensity);
+//			TSpline3 *sp = new TSpline3("", Density, qcvalue, nqc);
+//			float qcut = sp->Eval(BGDensity);
+			
+			if(qcut>qcmax) qcut=qcmax; // 0.15
+			printf("angle = %.3f qc = %.3f\n", angle, qcut);
+			gr->SetTitle(Form("angle = %.3f qc = %.3f", angle, qcut));
+			gr->SetMarkerStyle(20);
+			
+			qcuts[j-1] = qcut;
+			angles[j-1] = angle;
+			
+			gr->Draw("apl");
+			
+		}
+		
+		printf("CHECK %d making graphs done\n", __LINE__);
+		gPad->Clear();
+		
+		// plot angle-quality cut parameter and fit.
+		TGraph *gr = new TGraph(h->GetNbinsX(), angles, qcuts);
+		gr->SetTitle(Form("Quality cut for constant BT density = %.1f /mm2/sr", BGDensity));
+		gr->GetXaxis()->SetTitle("Slope");
+		gr->GetYaxis()->SetTitle("Quality cut");
+		gr->SetMarkerStyle(20);
+		gr->Fit("pol5","","",0, anglemax);
+		TF1 *f5 = gr->GetFunction("pol5");
+		gr->Draw("AP");
+		
+		printf("CHECK %d qc fitting done\n", __LINE__);
+		
+		// test the cut.
+		c1->cd(ic++);
+		TCut cut1 = "eN1==1&&eN2==1";
+		TCut cut2 = "eCHI2P<s.eW*0.12-1";
+		couples->Draw("s.eTY:s.eTX", cut1&&cut2,"colz");
+		
+		c1->cd(ic++);
+//		couples->SetAlias("slope","sqrt(s.eTX**2+s.eTY**2)");
+		TCut cut3 = Form("eCHI2P<s.eW*(%.3e+%.3e*sqrt(s.eTX**2+s.eTY**2)+%.3e*sqrt(s.eTX**2+s.eTY**2)**2+%.3e*sqrt(s.eTX**2+s.eTY**2)**3+%.3e*sqrt(s.eTX**2+s.eTY**2)**4+%.3e*sqrt(s.eTX**2+s.eTY**2)**5)-1&&eCHI2P<s.eW*0.15-1&&sqrt(s.eTX**2+s.eTY**2)<%f",
+			f5->GetParameter(0),
+			f5->GetParameter(1),
+			f5->GetParameter(2),
+			f5->GetParameter(3),
+			f5->GetParameter(4),
+			f5->GetParameter(5), anglemax);
+		printf("RCUT 0 %s\n", cut3.GetTitle());
+		couples->Draw("s.eTY:s.eTX", cut1&&cut3,"colz");
+		
+		c1->Print("constantBT.ps");
+		
+		for(int i=0; i<array.GetEntries(); i++){
+			delete array.At(i);
+		}
+		
+		f->Close();
+		
+		// update par file
+		WritePar(piece, cut3);
+		
+	}
+	c1->Print("constantBT.ps]");
+	
+
+}
+
+void WritePar(EdbDataPiece *piece, TCut cut){
+	
+	printf("par name = %s\n", piece->eFileNamePar.Data());
+	
+	TString filename1 = piece->eFileNamePar;
+	TString filename2 = filename1+".org";
+	
+	
+	// copy original .par file -> .par.org
+	// it overwrite if there is already .org file.
+	int ret = gSystem->CopyFile( filename1.Data(), filename2.Data(), kTRUE);
+	printf("copy %s -> %s\n", filename1.Data(), filename2.Data());
+	if( ret == -1) printf("faile to open %s\n", filename2.Data());
+	if( ret == -2) printf("already %s exists. and failed to overwrite.\n", filename2.Data());
+	
+	FILE *fp1 = fopen(filename1.Data(), "wt"); // to be written
+	
+	if(fp1==NULL) {
+		printf("Fail to open %s in write mode\n", filename1.Data());
+		return;
+	}
+	FILE *fp2 = fopen(filename2.Data(), "rt"); // orginal
+	
+	char buf[1000];
+	for(;;){
+		fgets(buf, sizeof(buf), fp2);
+		if(feof(fp2)||ferror(fp2)) break;
+		TString line = buf;
+		if( line.Contains("RCUT") ) {
+			fprintf(fp1, "#%s", buf);
+		}
+		else fprintf(fp1, "%s", buf);
+	}
+	
+	fprintf(fp1, "RCUT 0 %s\n", cut.GetTitle());
+	fclose(fp1);
+	fclose(fp2);
+	
+	printf("%s written\n", filename1.Data());
+	
+}
+
+*/
+
+
+/*
+	
+	EdbDataProc *dproc = new EdbDataProc("lnk.def");
+	dproc->InitVolume(0);
+	
+	EdbPVRec *pvr = dproc->PVR();
+	
+	pvr->Print();
+	
+	EdbPatCouple pc;
+	
+	TCanvas *c1 = new TCanvas("c1");
+	c1->Print("constantBT.ps[");
+	for(int i=0; i<pvr->Npatterns();i++){
+		c1->Clear();
+		EdbPattern *pat = pvr->GetPattern(i);
+		int ih=0;
+		for(float qc=0.05; qc<0.15;qc+=0.01){
+			TH1F *h1 = new TH1F(Form("h%d",ih++),"hoge", 14,0,0.7);
+			for(int j=0; j<pat->N(); j++){
+				EdbSegP *s = pat->GetSegment(j);
+				
+				
+				
+				h1->Fill(sqrt(s->TX()*s->TX()+s->TY()*s->TY()));
+			}
+			
+			h1->Draw( i==0?"":"same");
+		}
+		
+		
+		
+		#RCUT 0 0.125<=sqrt(s.eTX**2+s.eTY**2)&&eCHI2P<s.eW*0.12-1||0.100<=sqrt(s.eTX**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.125&&s.eChi2<s.eW*0.11-1||0.075<=sqrt(s.eT
+X**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.100&&s.eChi2<s.eW*0.10-1||0.050<=sqrt(s.eTX**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.075&&s.eChi2<s.eW*0.09-1||sqrt(s.e
+TX**2+s.eTY**2)<0.050&&s.eChi2<s.eW*0.08-1
+*/	
+  
+}
 
 //___________________________________________________________________________________
 
@@ -2133,3 +2398,8 @@ TObjArray* EdbPVRQuality::GetTracksFromLinkedTracksRootFile()
     cout << "EdbPVRQuality::GetTracksFromLinkedTracksRootFile()...done." << endl;
     return trackarray;
 }
+
+
+
+
+
