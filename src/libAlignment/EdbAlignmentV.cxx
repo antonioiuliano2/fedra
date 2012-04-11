@@ -63,9 +63,13 @@ Bool_t EdbAlignmentV::IsInsideDVsame(EdbSegP &s1, EdbSegP &s2)
 }
 
 //---------------------------------------------------------------------
-int EdbAlignmentV::DoubletsFilterOut(bool checkview, TH2F *hxy, TH2F *htxty )
+int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
 {
   // assumed the same pattern's segments in eS[0] and eS[1]
+  // checkview = 0 do not check if close tracks belongs to different views
+  // checkview = 1 check views, select best and cancel the worst candidate
+  // checkview = 2 check views but do not cancell worst candidate (debug option)
+  
   int nout=0;
   int n = CheckEqualArr(eS[0], eS[1]);
   EdbSegP *s1,*s2;
@@ -74,15 +78,16 @@ int EdbAlignmentV::DoubletsFilterOut(bool checkview, TH2F *hxy, TH2F *htxty )
     if(s1->Flag()==-10) continue;
     s2 = (EdbSegP*)eS[1].UncheckedAt(i);
     if(s2->Flag()==-10) continue;
-    if(checkview) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
-    if( !IsInsideDVsame(*s1,*s2) )                                                                    continue;
+    if(checkview>0) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
+    if( !IsInsideDVsame(*s1,*s2) )                                                                      continue;
     if(s1->Flag()>-10 && s2->Flag()>-10) {
       if(hxy)   hxy->Fill( s1->X()-s2->X() , s1->Y()-s2->Y());
       if(htxty) htxty->Fill(s1->TX()-s2->TX(),s1->TY()-s2->TY());
     }
-    if( s2->W()>s1->W() ) s1->SetFlag(-10);
-    else                  s2->SetFlag(-10);
-    nout++;
+    if(checkview==1) {
+      if( s2->W()>s1->W() ) s1->SetFlag(-10);   else     s2->SetFlag(-10);
+      nout++;
+    }
   }
   Log(2,"DubletsFilterOut","%d segments discarded with DX,DY,DTX,DTY: (%5.1f %5.1f %5.3f %5.3f) checkview =%d", 
       nout,eDVsame[0],eDVsame[1],eDVsame[2],eDVsame[3], checkview );

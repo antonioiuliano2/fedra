@@ -815,7 +815,7 @@ void EdbRunAccess::SetPixelCorrection(const char *str)
 {
   if( 3 != sscanf(str,"%d %f %f", &eDoPixelCorr, &ePixelCorrX, &ePixelCorrY) )
   { eDoPixelCorr=0; ePixelCorrX=1.; ePixelCorrY=1.; }
-  Log(2,"EdbRunAccess::SetPixelCorrection","%s",str);
+  if(eDoPixelCorr)  Log(2,"EdbRunAccess::SetPixelCorrection","%s",str);
 }
 
 ///______________________________________________________________________________
@@ -885,6 +885,9 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   segP.SetZ( z );
   segP.SetDZ( seg->GetDz()*layer->Shr() );
   segP.SetW( puls );
+  segP.SetVolume( seg->GetVolume() );
+  segP.SetChi2( seg->GetSigmaX() );
+  
   return true;
 }
 

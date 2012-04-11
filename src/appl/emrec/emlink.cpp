@@ -34,14 +34,17 @@ void print_help_message()
 void set_default(TEnv &cenv)
 {
   // default parameters for the new linking
+  cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
+  cenv.SetValue("fedra.link.PixelCorr"           , "0 1. 1.");
+  cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
   cenv.SetValue("fedra.link.BinOK"               , 6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );
   cenv.SetValue("fedra.link.DoCorrectShrinkage"  , true );
   cenv.SetValue("fedra.link.read.HeaderCut"      , "1"  );
   cenv.SetValue("fedra.link.read.ICUT"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       0.  50.");
-  cenv.SetValue("fedra.link.RemoveDoublets"      , "1    5. .1   1");  //yes/no   dr  dt  checkview(0,1)
+  cenv.SetValue("fedra.link.RemoveDoublets"      , "1    5. .1   1");  //yes/no   dr  dt  checkview(0,1,2)
   cenv.SetValue("fedra.link.shr.NsigmaEQ"        , 7.5  );
-  cenv.SetValue("fedra.link.shr.Shr0"            , .85  );
+  cenv.SetValue("fedra.link.shr.Shr0"            , .9  );
   cenv.SetValue("fedra.link.shr.DShr"            , .3   );
   cenv.SetValue("fedra.link.shr.ThetaLimits"     ,"0.005  1.");
   cenv.SetValue("fedra.link.DoCorrectAngles"     , true );
@@ -52,8 +55,6 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.full.DT"             , 0.1  );
   cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
   cenv.SetValue("fedra.link.DoSaveCouples"       , true );
-  cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
-  cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
 
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");

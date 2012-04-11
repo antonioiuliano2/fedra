@@ -67,7 +67,7 @@ class EdbAlignmentV : public TObject
   Bool_t  IsInsideDVsame(EdbSegP &s1, EdbSegP &s2);
   int     FillCombinations();
   int     FillCombinations(float dv[4], float dxMax, float dyMax, bool doFill);
-  int     DoubletsFilterOut(bool checkview, TH2F *hxy=0, TH2F *htxty=0 );
+  int     DoubletsFilterOut(int checkview, TH2F *hxy=0, TH2F *htxty=0 );
   int     SelectIsolated();
   int     SelectBestCouple();
   float   CoupleQuality( EdbSegP &s1, EdbSegP &s2 );
