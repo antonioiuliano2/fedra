@@ -1,5 +1,6 @@
 //-- Author :  Valeri Tioukov   6/06/2008
 
+#include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <TEnv.h>
