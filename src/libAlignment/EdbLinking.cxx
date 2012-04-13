@@ -143,6 +143,10 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     CorrectShrinkage(  eDShr*0.5 );
     CorrectShrinkage(  eDShr*0.5 );
     WriteShrinkagePlots();
+  }
+  if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
+  if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
+  if(eDoCorrectShrinkage || eDoCorrectAngles) {
     ePC[0].DrawH2("hxy_shr1","xy for the shrinkage corr sample side 1")->Write();
     ePC[1].DrawH2("hxy_shr2","xy for the shrinkage corr sample side 2")->Write();
     EdbH2 htxy1(50,-1,1,50,-1,1);
@@ -152,9 +156,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     FillThetaHist(0,htxy2);
     htxy2.DrawH2("htxy_shr2","txy plot for shr corr sample side 2");
   }
-  if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
-  if(eDoCorrectAngles)    CorrectAngles( p1shr,p2shr );
-
+  
   eCorr[0].Write("corr1");
   eCorr[1].Write("corr2");
 
@@ -173,6 +175,8 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
     
     FullLinking(p1lnk,p2lnk);
+    ePC[0].DrawH2("hxy_full1","xy full 1")->Write();
+    ePC[1].DrawH2("hxy_full2","xy full 2")->Write();
   }
 
   ProduceReport();
@@ -451,6 +455,7 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     s2->SetFlag(0);
     seg.SetFlag(0);
     seg.SetSide(0);
+    seg.SetVolume(seg1.Volume()+seg2.Volume());
     
     EdbSegCouple *sc=new EdbSegCouple();
     sc->eS1=s1;
@@ -492,9 +497,9 @@ void EdbLinking::ProduceReport()
     gStyle->SetOptStat(1);
     bool batch = gROOT->IsBatch();
     gROOT->SetBatch();
-    
+
     TH1F *h1=0;    TH2F *h2=0;
-    
+
     gStyle->SetOptDate(1);
     TCanvas *crep1 = new TCanvas("crep1","Linking report2",900,1000);
 
@@ -523,10 +528,15 @@ void EdbLinking::ProduceReport()
     c->Divide(4,4);    c->Draw();
 
     float densAll=0,densShr=0, densLnk=0;
-    
-    h2 = (TH2F*)eOutputFile->Get("hxy_shr1");    if(h2) {c->cd(1); h2->SetStats(0); h2->Draw("colz"); h2=0;}
-    h2 = (TH2F*)eOutputFile->Get("hxy_shr2");    if(h2) {c->cd(2); h2->SetStats(0); h2->Draw("colz"); h2=0;}
-    
+
+    h2 = (TH2F*)eOutputFile->Get("hxy_shr1");
+    if(!h2) h2 = (TH2F*)eOutputFile->Get("hxy_full1");  
+    if(h2) {c->cd(1); h2->SetStats(0); h2->Draw("colz"); h2=0;}
+
+    h2 = (TH2F*)eOutputFile->Get("hxy_shr2");
+    if(!h2) h2 = (TH2F*)eOutputFile->Get("hxy_full2");
+    if(h2) {c->cd(2); h2->SetStats(0); h2->Draw("colz"); h2=0;}
+
     h1 = (TH1F*)eOutputFile->Get("hTall1");      if(h1) {c->cd(3);  h1->Draw(); densAll=h1->Integral();h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hTshr1");      if(h1) {c->cd(3);  h1->Draw("same"); densShr=h1->Integral(); h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hTlnk1");      if(h1) {c->cd(3);  h1->Draw("same"); densLnk=h1->Integral(); h1=0;}
@@ -545,25 +555,25 @@ void EdbLinking::ProduceReport()
     lable2->AddText(Form("shr: %7.0f",densShr));
     lable2->AddText(Form("lnk: %7.0f",densLnk));
     lable2->Draw();
-    
-    h2 = (TH2F*)eOutputFile->Get("hdxy_shr");  if(h2) {c->cd(5); h2->SetStats(0); h2->Draw("colz"); h2=0;}
-    h2 = (TH2F*)eOutputFile->Get("htxy_shr");  if(h2) {c->cd(6); h2->SetStats(0); h2->Draw("colz"); h2=0;}
+
+    h2 = (TH2F*)eOutputFile->Get("hdxy_shr");  if(h2) {c->cd(5);  h2->SetStats(0); h2->Draw("colz"); h2=0;}
+    h2 = (TH2F*)eOutputFile->Get("htxy_shr");  if(h2) {c->cd(6);  h2->SetStats(0); h2->Draw("colz"); h2=0;}
     h1 = (TH1F*)eOutputFile->Get("shr1");      if(h1) {c->cd(7);  h1->Draw(); h1=0;}
     h1 = (TH1F*)eOutputFile->Get("shr2");      if(h1) {c->cd(8);  h1->Draw(); h1=0;}
-    
+
     h1 = (TH1F*)eOutputFile->Get("hdtx1");     if(h1) {c->cd(9);  h1->Draw(); h1=0;}
-    h1 = (TH1F*)eOutputFile->Get("hdty1");     if(h1) {c->cd(10);  h1->Draw(); h1=0;}
-    h1 = (TH1F*)eOutputFile->Get("hdtx2");     if(h1) {c->cd(11);  h1->Draw(); h1=0;}
-    h1 = (TH1F*)eOutputFile->Get("hdty2");     if(h1) {c->cd(12);  h1->Draw(); h1=0;}
-    
-    h2 = (TH2F*)eOutputFile->Get("hxy_cp");    if(h2) {c->cd(13);  h2->SetStats(0); h2->Draw("colz"); h2=0;}
+    h1 = (TH1F*)eOutputFile->Get("hdty1");     if(h1) {c->cd(10); h1->Draw(); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("hdtx2");     if(h1) {c->cd(11); h1->Draw(); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("hdty2");     if(h1) {c->cd(12); h1->Draw(); h1=0;}
+
+    h2 = (TH2F*)eOutputFile->Get("hxy_cp");    if(h2) {c->cd(13); h2->SetStats(0); h2->Draw("colz"); h2=0;}
     h2 = (TH2F*)eOutputFile->Get("htxy_cp");   if(h2) {c->cd(14); h2->SetStats(0); h2->Draw("colz"); h2=0;}
     h1 = (TH1F*)eOutputFile->Get("hchi");      if(h1) {c->cd(15); h1->Draw(); h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hchi20");    if(h1) {c->cd(16); h1->Draw(); h1=0;}
 
     crep1->Write("report");
     SafeDelete(crep1);
-    gROOT->SetBatch(batch); 
+    gROOT->SetBatch(batch);
   }
 }
 
