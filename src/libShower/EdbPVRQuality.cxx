@@ -109,6 +109,9 @@ EdbPVRQuality::~EdbPVRQuality()
     cout << "EdbPVRQuality::~EdbPVRQuality()"<<endl;
     delete 		eHistChi2W;
     delete 		eHistYX;
+    delete 		eHistTYTX;
+    delete 		eHistTT;
+    
     delete 		eProfileBTdens_vs_PID_source;
 }
 
@@ -126,7 +129,7 @@ void EdbPVRQuality::Set0()
     eIsSource=kFALSE;
     eIsTarget=kFALSE;
     eAli_maxNpatterns=0;
-    for (int i=0; i<2; i++) eCutMethodIsDone[i]=kFALSE;
+    for (int i=0; i<3; i++) eCutMethodIsDone[i]=kFALSE;
 
     // Default BT density level for which the standard cutroutine
     // will be put:
@@ -151,6 +154,12 @@ void EdbPVRQuality::Set0()
         eCutp1[i]=0.15;
         eCutp0[i]=1.0; // Maximum Cut Value for const, BT dens
         eAgreementChi2WDistCut[i]=5.0;  // Maximum Cut Value for const, BT dens
+	
+	for (int j=0; j<20; j++) {
+	   // Maximum Cut Value for const, BT dens, also in tanges theta space
+	  eCutTTp0[i][j]=1.00; 
+	  eCutTTp1[i][j]=0.15;
+	}
     }
 
 
@@ -188,6 +197,8 @@ void EdbPVRQuality::Init()
 
     eHistChi2W = new TH2F("eHistChi2W","eHistChi2W",40,0,40,90,0,3);
     eHistYX = new TH2F("eHistYX","eHistYX",100,0,1,100,0,1);
+    eHistTYTX = new TH2F("eHistTYTX","eHistTYTX",100,-0.7,0.7,100,-0.7,0.7);
+    eHistTT = new TH1F("eHistTT","eHistTT",50,0,1);
 
     /// TEMPORARY, later the Standard Geometry should default be OPERA.
     /// For now we use a very large histogram that can contain both case
@@ -209,12 +220,21 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
     // 0: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b
     // 1: (testing): Do cut based on a chi2-variable that compares with passing tracks
     // (if available), i.e. cosmics.
+    // 2: (testing): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b
+    // split into tangens theta space
+
 
     Log(2,"EdbPVRQuality::SetCutMethod","EdbPVRQuality::SetCutMethod");
 
     eCutMethod=CutMethod;
     cout << "EdbPVRQuality::SetCutMethod  eCutMethod=  " << eCutMethod << endl;
-    if (CutMethod>1) {
+    if (CutMethod==0) cout << "// 0: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b" << endl;
+    if (CutMethod==1) cout << "// 1: (testing): Do cut based on a chi2-variable that compares with passing tracks" << endl;
+    if (CutMethod==1) cout << "// (if available), i.e. cosmics." << endl;
+    if (CutMethod==2) cout << "// 2: (testing): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b" << endl;
+    if (CutMethod==2) cout << "// split into tangens theta space" << endl;
+      
+    if (CutMethod>2) {
         eCutMethod=0;
         cout << "WARNING   EdbPVRQuality::SetCutMethod  eCutMethod invalid, Set back to default eCutMethod=  " << eCutMethod << endl;
     }
@@ -277,7 +297,7 @@ void EdbPVRQuality::CheckEdbPVRec()
         EdbSegP* seg=0;
         // Loop over the segments of the pattern
         for (Int_t j=0; j<npat; j++) {
-            seg=(EdbSegP*)pat->At(j);
+            seg=pat->GetSegment(j);
             // Very important:
             // For the data case, we assume the following:
             // Data (MCEvt<0) will     be taken for BTdensity calculation
@@ -304,8 +324,11 @@ void EdbPVRQuality::CheckEdbPVRec()
 
             // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
+	    eHistTYTX->Fill(seg->TY(),seg->TX());
+	    eHistTT->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
             eHistChi2W->Fill(seg->W(),seg->Chi2());
-        }
+	    
+        } // for (Int_t j=0; j<npat; j++) 
 
         if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
 
@@ -344,23 +367,30 @@ void EdbPVRQuality::CheckEdbPVRec()
     // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
     // This will be done in one of the two Execute_ functions.
 
+eHistTT->DrawCopy("");
 
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
     TCanvas* c1 = new TCanvas();
-    c1->Divide(2,2);
+    c1->Divide(3,2);
     c1->cd(1);
     eHistYX->DrawCopy("colz");
     c1->cd(2);
     eHistChi2W->DrawCopy("colz");
     c1->cd(3);
-    histPatternBTDensity->DrawCopy("");
+    eHistTYTX->DrawCopy("colz");
     c1->cd(4);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(5);
     eProfileBTdens_vs_PID_source->Draw("profileZ");
     eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    c1->cd(6);
+    eHistTT->DrawCopy("");
     c1->cd();
 
     eHistYX->Reset();
+    eHistTYTX->Reset();
+    eHistTT->Reset();
     eHistChi2W->Reset();
 
     Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRec...done");
@@ -462,7 +492,7 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
         EdbSegP* seg=0;
         // Loop over the segments of the pattern
         for (Int_t j=0; j<npat; j++) {
-            seg=(EdbSegP*)pat->At(j);
+            seg=pat->GetSegment(j);
             // Very important:
             // For the data case, we assume the following:
             // Data (MCEvt<0) will     be taken for BTdensity calculation
@@ -493,8 +523,6 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
             /// the InBT of interest.
             Float_t sx=0.3;
             Float_t sy=0.3;
-//  						if (TMath::Abs(seg->TY()-sy)>0.13) continue;
-//  						if (TMath::Abs(seg->TX()-sx)>0.13) continue;
 
             // For the check, fill the histograms in any case:
             eHistYX->Fill(seg->Y(),seg->X());
@@ -677,8 +705,10 @@ void EdbPVRQuality::PrintCutType()
     cout << "EdbPVRQuality::Print()   " << endl;
     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[0] " << eCutMethodIsDone[0] << endl;
     cout << "EdbPVRQuality::Print()   eCutMethodIsDone[1] " << eCutMethodIsDone[1] << endl;
+    cout << "EdbPVRQuality::Print()   eCutMethodIsDone[2] " << eCutMethodIsDone[2] << endl;
     if (eCutMethodIsDone[0]) PrintCutType0();
     if (eCutMethodIsDone[1]) PrintCutType1();
+    if (eCutMethodIsDone[2]) PrintCutType2();
     return;
 }
 
@@ -701,6 +731,7 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[2] = " << eCutMethodIsDone[2] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
@@ -819,6 +850,14 @@ void EdbPVRQuality::PrintCutType1()
 //______________________________________________________________________________
 
 
+void EdbPVRQuality::PrintCutType2()
+{
+ cout << " NOT  YET IMPLEMENTED" << endl;
+ return;
+}
+
+//______________________________________________________________________________
+
 void EdbPVRQuality::Execute()
 {
     // Main Execution Routine.
@@ -908,7 +947,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             EdbSegP* seg=0;
             // Loop over the segments.
             for (int j=0; j<npat; j++) {
-                seg=(EdbSegP*)pat->At(j);
+                seg=pat->GetSegment(j);
                 // Very important:
                 // For the data case, we assume the following:
                 // Data (MCEvt<0) will     be taken for BTdensity calculation
@@ -1164,7 +1203,7 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
             if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantQuality   Loop over segments of pattern " << i << ",Number of segments= " << npat <<  endl;
             for (int j=0; j<npat; j++) {
-                seg=(EdbSegP*)pat->At(j);
+                seg=pat->GetSegment(j);
 
                 if (gEDBDEBUGLEVEL>4) cout << "Execute_ConstantQuality   Doing segment= " << j << endl;
                 // Very important:
@@ -1304,268 +1343,238 @@ void EdbPVRQuality::Execute_ConstantQuality()
 
 //___________________________________________________________________________________
 
+/// TO BE RE-WRITTEN FROM Akitaka Ariga Code:
+
 void EdbPVRQuality::Execute_ConstantBTDensityInAngularBins()
 {
-  /// TO BE RE-WRITTEN FROM Akitaka Ariga Code:
+    // Execute the modified cut routines to achieve the basetrack density level,
+    // after application the specific cut on the segments of the specific plate (pattern).
+    // The Constant BT Density is defined by the number of BT/mm2 in the histogram.
+    // Inbetween loop over tan theta bins additionally!
+
+    cout << "EdbPVRQuality::Execute_ConstantBTDensityInAngularBins " << endl;
+
+    if (!eIsSource) return;
+    if (NULL==eAli_orig) return;
+
+    TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
+
+    Double_t angularspacebinningwidth=0.05;
+    Double_t angularspacebinningstart=0.00;
+    Double_t angularspacebinningend=0.00;
+    Double_t angularspacebinningScaleFactor=1;
+    Double_t tt=0;
+    Double_t ni[20];
+    
+    
+    // Loop over the patterns:
+//     for (int i=0; i<eAli_maxNpatterns; i++) {
+    for (int i=0; i<1; i++) {
+      
+	EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
+        Int_t npat=pat->N();
+	cout << " For this (" << i << ") pattern, I have " << npat << " Edb segments to check..." << endl;
+      
+        
+        // Now the angular space binning loop:
+ 	for (Int_t angspacecounter=0; angspacecounter<20; angspacecounter++) {
+	
+	  // Calculate right end of angular space bin
+	  angularspacebinningstart=(Double_t)angspacecounter*angularspacebinningwidth;
+          angularspacebinningend=angularspacebinningstart+angularspacebinningwidth;
+	  
+	  
+	    
+	    
+        // Now the condition loop:
+        // Loop over 20 steps a 0.15,0.145,0.14 ...  down to 0.07
+        for (int l=0; l<40; l++) {
+	   cout << "Doing // Now the condition loop:  l = " << l << endl << endl;
+            eHistYX->Reset(); // important to clean the histogram
+            eHistChi2W->Reset(); // important to clean the histogram
+            histPatternBTDensity->Reset(); // important to clean the histogram
+	    
+	    // Reset Number of Segments Counter
+	    ni[angspacecounter]=0;
+	    
+	    // Shorter Handings:
+	    Double_t Cutp0 = eCutTTp0[i][angspacecounter];
+	    Double_t Cutp1 = eCutTTp1[i][angspacecounter];
+
+            EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
+            Int_t npat=pat->N();
+            EdbSegP* seg=0;
+            // Loop over the segments.
+            for (int j=0; j<npat; j++) {
+                seg=pat->GetSegment(j);
+                Bool_t result=kTRUE;
+                if (seg->MCEvt()>0) {
+                    if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                        result = kTRUE;
+                        // cout << "result = kTRUE !! " << endl;
+                    }
+                    else {
+                        result = kFALSE;
+                    }
+                }
+
+                if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+                // Main decision for segment to be kept or not (seg is of MC or data type).
+                if ( kFALSE == result ) continue;
+                
+                // Calculate Angle
+		tt=TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX());
+
+		// Check if angle is in the desired angular space bin
+		if (tt<angularspacebinningstart || tt>=angularspacebinningend) continue;
+		
+                // Constant BT density cut for angular space:
+                if (seg->Chi2() >= seg->W()* Cutp1 - Cutp0) continue;
+		
+		// Increase counter for number of taken segments in tan theta bin:
+		ni[angspacecounter] += 1;
+
+		// Fill other histograms anyway
+                eHistYX->Fill(seg->Y(),seg->X());
+		eHistTYTX->Fill(seg->TY(),seg->TX());
+		eHistTT->Fill(tt);
+                eHistChi2W->Fill(seg->W(),seg->Chi2());
+		
+		
+            } // Loop over the segments.
+            
+            // Calulate the Scale Factor for Calculation
+            angularspacebinningScaleFactor=ni[angspacecounter]/ npat;
+	    
+	    // Calculate the max BT level for the zeroth cut only, otherwise its gonna change!
+	    if (l==0) eBTDensityLevelAngularSpace[angspacecounter]=angularspacebinningScaleFactor*eBTDensityLevel;
+
+	    
+	    
+//             if (gEDBDEBUGLEVEL>2) 
+	      cout << "I have filled the eHistYX Histogram. Entries for specified theta range (" << angularspacebinningstart << "..." << angularspacebinningend <<"): = " << eHistYX->GetEntries() << "  ni[angspacecounter]= " << ni[angspacecounter] << endl;
+	      
+// 	      cout << "The ScaleFactor is therefore defined by: angularspacebinningScaleFactor= nEntries(per bin) / nEntries (alle bins) = " << ni[angspacecounter]/ npat <<  endl;
+// 	      cout << "The ScaleTargetDensity is therefore defined by: angularspacebinningScaleFactor* BTTarget density(no qual-cut) = " << angularspacebinningScaleFactor*eBTDensityLevel<<  endl;
+	      
+	      
+	      
+
+            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            for (int k=1; k<nbins-1; k++) {
+                if (eHistYX->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+            }
+
+            ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
+//             if (gEDBDEBUGLEVEL>2) 
+	      cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eCutp1[i] : " << eCutp1[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+
+            // Now the condition check for angular space cut 
+            if (ePatternBTDensity_modified[i]<=eBTDensityLevelAngularSpace[angspacecounter]) {
+                if (gEDBDEBUGLEVEL>2)  
+		  cout << "Execute_ConstantBTDensity      We reached the loop end due to good BT density level ... and break loop." << endl;
+                break;
+            }
+            else {
+                // Next step, tighten cut:
+		// l=20:
+//                 eCutp1[i] += -0.005;
+// 		eCutTTp1[i][angspacecounter] =  eCutTTp1[i][angspacecounter] -0.005;
+		
+		// l=40:
+		eCutp1[i] += -0.0025;
+		eCutTTp1[i][angspacecounter] =  eCutTTp1[i][angspacecounter] -0.0025;
+            }
+
+        } // of condition loop...
+        
+        
+        
+
+        // Fill target profile histogram:
+        Float_t bincontentXY=histPatternBTDensity->GetMean();
+        eProfileBTdens_vs_PID_target->Fill(i,bincontentXY);
+	
+	
+	
+	angularspacebinningstart+=angularspacebinningwidth;
+	} // for (int angspacecounter=0; angspacecounter<20; angspacecounter++) 
+
+    } // of Npattern loops..
+
+    eCutMethodIsDone[2]=kTRUE;
+
+    // Check if modified or original PVRec object should be returned:
+    if (eProfileBTdens_vs_PID_source_meanY>eBTDensityLevel) {
+        eNeedModified=kTRUE;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Check if modified or original PVRec object should be returned: " << endl;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() " << eNeedModified << endl;
+    }
+
+
+
+
+    ///-----------------------------------------------------------------------------------------
+    cout <<"--------------------------------------------------------------------" << endl;
+    for (int i=0;i<1;i++) {
+      // npatterns of eali...
+      for (int angspacecounter=0;angspacecounter<15;angspacecounter++) {
+	printf(" %01f ", eCutTTp1[i][angspacecounter]);
+      }
+      cout << endl;
+    }
+    cout <<"--------------------------------------------------------------------" << endl;
+    ///-----------------------------------------------------------------------------------------
+
+    delete histPatternBTDensity;
+
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Cuts are done and saved to obtain desired BT density. " << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()....done." << endl;
+    return;
   
   
-  /* 
-make_par_constant_BT(float BGDensity=23., float anglemax = 0.55){
-	
-	float qcmax = 0.15;
-	float qcmin = 0.07;
-	float dqc = 0.01;
-	
-	EdbDataProc *dproc = new EdbDataProc("lnk.def");
-	
-	EdbDataSet *dset = dproc->GetDataSet();
-	
-	
-	EdbPatCouple pc;
-	
-	TCanvas *c1 = new TCanvas("c1");
-	c1->Print("constantBT.ps[");
-
-	// process each cp files.
-	for(int pid=0; pid<dset->N();pid++){
-		c1->Clear();
-		int ic=1;
-		c1->Divide(2,2);
-		c1->cd(ic++);
-		// open cp file
-		EdbDataPiece *piece = dset->GetPiece(pid);
-		TString filename = piece->GetNameCP();
-		TFile *f = new TFile(filename.Data());
-		TTree *couples = (TTree *)gDirectory->Get("couples");
-		
-		int ipl=piece->Plate();
-		printf("PL %d\n", ipl);
-		// calculate area
-		float xmax = couples->GetMaximum("s.eX");
-		float xmin = couples->GetMinimum("s.eX");
-		float ymax = couples->GetMaximum("s.eY");
-		float ymin = couples->GetMinimum("s.eY");
-		float area = (xmax-xmin)*(ymax-ymin)/10000./10000.;
-		printf("area = %.3f cm2\n", area);
-		
-		// Compute BT density for each angle for different qucality cut parameter.
-		int ih=0;
-		TObjArray array;
-		TLegend *leg = new TLegend(0.65, 0.4, 0.98, 0.8);
-		int k=0;
-		float qcvalues[100];
-		for(float qc=qcmax; qc>qcmin;qc-=dqc,k++){
-			qcvalues[k]=qc;
-			TCut cut = Form("eN1==1&&eN2==1&&eCHI2P<s.eW*%.2f-1", qc);
-			printf("%s\n", cut.GetTitle());
-			TString hname = Form("h%d",ih++);
-			TH1F *h1 = new TH1F(hname.Data(),Form("BT density, IPL=%d, area=%.2fcm2", ipl, area), 28,0,0.7);
-			
-			couples->Draw("sqrt(s.eTY*s.eTY+s.eTX*s.eTX) >>"+hname, cut, ih==1?"":"same");
-			
-			// normalization to number of tracks /steradian/mm2.
-			// steradian is an approximate meaning. actually it's tangent.
-			
-			for(int j=1; j<=h1->GetNbinsX(); j++){
-				float left  = h1->GetBinLowEdge(j);
-				float right = h1->GetBinLowEdge(j+1);
-				float angulararea = 3.14159*(right*right-left*left);
-				h1->SetBinContent(j, h1->GetBinContent(j)/angulararea/area/100.);
-			}
-			
-			if(ih==5||ih==10) ih++; // just to avoid some invisible colors.
-			h1->SetLineColor(ih);
-			
-			leg->AddEntry(h1, Form("eCHI2P<s.eW*%.2f-1", qc), "l");
-			
-			array.Add(h1); // store histgrams in an array.
-		}
-		// Drawing the results.
-		gPad->Clear();
-		gPad->SetLogy();
-		for(int j=0; j<array.GetEntries(); j++){
-			TH1F *h = (TH1F *) array.At(j);
-			h->SetXTitle("tan(#theta)");
-			h->SetYTitle("BT density/steradian/mm2\n");
-			h->Draw( j==0? "" : "same");
-		}
-		leg->Draw();
-		printf("CHECK after histgraming %d\n", __LINE__);
-		
-		
-//		gPad->SetLogx();
-		
-		c1->cd(ic++);
-		TH1F *h = (TH1F *) array.At(0); // just to get X axis.
-		
-		double qcuts[100]; // quality cuts for each angle.
-		double angles[100]; // angles
-		
-		for(int j=1; j<=h->GetNbinsX(); j++){
-			gPad->Clear();
-			float angle = h->GetBinCenter(j);
-			
-			int nqc = array.GetEntries();
-			
-			double qcvalue[100], Density[100];
-			
-			for(int k=0; k<nqc; k++){
-				TH1F *h = (TH1F *) array.At(k);
-				Density[nqc-1-k] = h->GetBinContent(j); 
-				qcvalue[nqc-1-k] = qcvalues[k];
-				// strange [npc-1-k] is to avoid a bug in ROOT 5.22 in TGraph::Eval(). 5.30 work without problem with [k]
-			}
-			
-			
-			TGraph *gr = new TGraph(nqc, Density, qcvalue);
-			float qcut = gr->Eval(BGDensity);
-//			TSpline3 *sp = new TSpline3("", Density, qcvalue, nqc);
-//			float qcut = sp->Eval(BGDensity);
-			
-			if(qcut>qcmax) qcut=qcmax; // 0.15
-			printf("angle = %.3f qc = %.3f\n", angle, qcut);
-			gr->SetTitle(Form("angle = %.3f qc = %.3f", angle, qcut));
-			gr->SetMarkerStyle(20);
-			
-			qcuts[j-1] = qcut;
-			angles[j-1] = angle;
-			
-			gr->Draw("apl");
-			
-		}
-		
-		printf("CHECK %d making graphs done\n", __LINE__);
-		gPad->Clear();
-		
-		// plot angle-quality cut parameter and fit.
-		TGraph *gr = new TGraph(h->GetNbinsX(), angles, qcuts);
-		gr->SetTitle(Form("Quality cut for constant BT density = %.1f /mm2/sr", BGDensity));
-		gr->GetXaxis()->SetTitle("Slope");
-		gr->GetYaxis()->SetTitle("Quality cut");
-		gr->SetMarkerStyle(20);
-		gr->Fit("pol5","","",0, anglemax);
-		TF1 *f5 = gr->GetFunction("pol5");
-		gr->Draw("AP");
-		
-		printf("CHECK %d qc fitting done\n", __LINE__);
-		
-		// test the cut.
-		c1->cd(ic++);
-		TCut cut1 = "eN1==1&&eN2==1";
-		TCut cut2 = "eCHI2P<s.eW*0.12-1";
-		couples->Draw("s.eTY:s.eTX", cut1&&cut2,"colz");
-		
-		c1->cd(ic++);
-//		couples->SetAlias("slope","sqrt(s.eTX**2+s.eTY**2)");
-		TCut cut3 = Form("eCHI2P<s.eW*(%.3e+%.3e*sqrt(s.eTX**2+s.eTY**2)+%.3e*sqrt(s.eTX**2+s.eTY**2)**2+%.3e*sqrt(s.eTX**2+s.eTY**2)**3+%.3e*sqrt(s.eTX**2+s.eTY**2)**4+%.3e*sqrt(s.eTX**2+s.eTY**2)**5)-1&&eCHI2P<s.eW*0.15-1&&sqrt(s.eTX**2+s.eTY**2)<%f",
-			f5->GetParameter(0),
-			f5->GetParameter(1),
-			f5->GetParameter(2),
-			f5->GetParameter(3),
-			f5->GetParameter(4),
-			f5->GetParameter(5), anglemax);
-		printf("RCUT 0 %s\n", cut3.GetTitle());
-		couples->Draw("s.eTY:s.eTX", cut1&&cut3,"colz");
-		
-		c1->Print("constantBT.ps");
-		
-		for(int i=0; i<array.GetEntries(); i++){
-			delete array.At(i);
-		}
-		
-		f->Close();
-		
-		// update par file
-		WritePar(piece, cut3);
-		
-	}
-	c1->Print("constantBT.ps]");
-	
-
 }
 
-void WritePar(EdbDataPiece *piece, TCut cut){
+//___________________________________________________________________________________
+
+Int_t EdbPVRQuality::GetAngularSpaceBin(EdbSegP* seg) 
+{
+ 
+  // Returns the number of bin for which the Basetrack corresponds to in tangens theta space.
+ // Goes from 0 to 20.
+ 
+ // ATTENTION and TODO :
+ // Make the values in GetAngularSpaceBin() and Execute_ConstantBTDensityInAngularBins() equal !
+ 
+ Double_t angularspacebinningwidth=0.05;
+ Double_t angularspacebinningstart=0.00;
+ Double_t angularspacebinningend=0.00;
+ 
+ // Calculate Angle
+ Double_t tt=TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX());
+//  cout << "Int_t EdbPVRQuality::GetAngularSpaceBin(EdbSegP* seg)   tt= "  << tt << endl;
+         
+        // Now the angular space binning loop:
+ 	for (Int_t angspacecounter=0; angspacecounter<20; angspacecounter++) {
 	
-	printf("par name = %s\n", piece->eFileNamePar.Data());
+	  // Calculate right end of angular space bin
+	  angularspacebinningstart=(Double_t)angspacecounter*angularspacebinningwidth;
+          angularspacebinningend=angularspacebinningstart+angularspacebinningwidth;
+	    
+	     // Check if angle is in the desired angular space bin
+	if (tt<angularspacebinningstart || tt>=angularspacebinningend) continue;
 	
-	TString filename1 = piece->eFileNamePar;
-	TString filename2 = filename1+".org";
 	
 	
-	// copy original .par file -> .par.org
-	// it overwrite if there is already .org file.
-	int ret = gSystem->CopyFile( filename1.Data(), filename2.Data(), kTRUE);
-	printf("copy %s -> %s\n", filename1.Data(), filename2.Data());
-	if( ret == -1) printf("faile to open %s\n", filename2.Data());
-	if( ret == -2) printf("already %s exists. and failed to overwrite.\n", filename2.Data());
-	
-	FILE *fp1 = fopen(filename1.Data(), "wt"); // to be written
-	
-	if(fp1==NULL) {
-		printf("Fail to open %s in write mode\n", filename1.Data());
-		return;
+// 	cout << "Int_t EdbPVRQuality::GetAngularSpaceBin(EdbSegP* seg)   return angspacecounter = " << angspacecounter  << " now." << endl;
+	return angspacecounter;
 	}
-	FILE *fp2 = fopen(filename2.Data(), "rt"); // orginal
 	
-	char buf[1000];
-	for(;;){
-		fgets(buf, sizeof(buf), fp2);
-		if(feof(fp2)||ferror(fp2)) break;
-		TString line = buf;
-		if( line.Contains("RCUT") ) {
-			fprintf(fp1, "#%s", buf);
-		}
-		else fprintf(fp1, "%s", buf);
-	}
-	
-	fprintf(fp1, "RCUT 0 %s\n", cut.GetTitle());
-	fclose(fp1);
-	fclose(fp2);
-	
-	printf("%s written\n", filename1.Data());
-	
-}
-
-*/
-
-
-/*
-	
-	EdbDataProc *dproc = new EdbDataProc("lnk.def");
-	dproc->InitVolume(0);
-	
-	EdbPVRec *pvr = dproc->PVR();
-	
-	pvr->Print();
-	
-	EdbPatCouple pc;
-	
-	TCanvas *c1 = new TCanvas("c1");
-	c1->Print("constantBT.ps[");
-	for(int i=0; i<pvr->Npatterns();i++){
-		c1->Clear();
-		EdbPattern *pat = pvr->GetPattern(i);
-		int ih=0;
-		for(float qc=0.05; qc<0.15;qc+=0.01){
-			TH1F *h1 = new TH1F(Form("h%d",ih++),"hoge", 14,0,0.7);
-			for(int j=0; j<pat->N(); j++){
-				EdbSegP *s = pat->GetSegment(j);
-				
-				
-				
-				h1->Fill(sqrt(s->TX()*s->TX()+s->TY()*s->TY()));
-			}
-			
-			h1->Draw( i==0?"":"same");
-		}
-		
-		
-		
-		#RCUT 0 0.125<=sqrt(s.eTX**2+s.eTY**2)&&eCHI2P<s.eW*0.12-1||0.100<=sqrt(s.eTX**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.125&&s.eChi2<s.eW*0.11-1||0.075<=sqrt(s.eT
-X**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.100&&s.eChi2<s.eW*0.10-1||0.050<=sqrt(s.eTX**2+s.eTY**2)&&sqrt(s.eTX**2+s.eTY**2)<0.075&&s.eChi2<s.eW*0.09-1||sqrt(s.e
-TX**2+s.eTY**2)<0.050&&s.eChi2<s.eW*0.08-1
-*/	
-  
+  // failsaife value, should never be given back:
+  return 0;
 }
 
 //___________________________________________________________________________________
@@ -1635,6 +1644,7 @@ void EdbPVRQuality::CreateEdbPVRec()
         cout << "-----     " << endl;
         cout << "CreateEdbPVRec()  Mode 0:" << eCutMethodIsDone[0] << endl;
         cout << "CreateEdbPVRec()  Mode 1:" << eCutMethodIsDone[1] << endl;
+	cout << "CreateEdbPVRec()  Mode 2:" << eCutMethodIsDone[2] << endl;
         cout << "-----     " << endl;
         cout << "-----     ----------------------------------------------" << endl;
     }
@@ -1645,8 +1655,8 @@ void EdbPVRQuality::CreateEdbPVRec()
         return;
     }
     // Checks
-    if (eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE) {
-        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE   return."<<endl;
+    if (eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE && eCutMethodIsDone[2]==kFALSE ) {
+        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE && eCutMethodIsDone[2]==kFALSE  return."<<endl;
         return;
     }
 
@@ -1658,6 +1668,7 @@ void EdbPVRQuality::CreateEdbPVRec()
     // 	eAli_modified->SetScanCond(*scancond);
 
     Float_t agreementChi2;
+    Int_t angularspacebin=0;
 
     // This makes pointer copies of patterns with segments list.
     // wARNING: the couples structure and the tracking structure
@@ -1690,8 +1701,17 @@ void EdbPVRQuality::CreateEdbPVRec()
                 agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)*((seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)  +   ((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW)*((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW) );
                 if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
             }
+            else if (eCutMethodIsDone[2]==kTRUE) {
+	      // Constant BT density cut also in angular space:
+	      angularspacebin = GetAngularSpaceBin(seg);
+// 	      seg->PrintNice();
+// 	      cout << angularspacebin << endl;
+	      if (seg->Chi2() >= seg->W()* eCutTTp1[i][angularspacebin] - eCutTTp0[i][angularspacebin]) continue;
+	      /// ...............
+	    }
             else {
                 // do nothing;
+		cout << "WARNING! YOU CHOSE AN INVALID OPTION. DO NO CUT AT ALL! TAKE ALL SEGMENTS!" << endl;
             }
 
             // Add segment:
@@ -1704,6 +1724,7 @@ void EdbPVRQuality::CreateEdbPVRec()
 
     //---------------------
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...Created new EdbPVR object at address " << eAli_modified << endl;
+    cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...You can retrieve this object via   ->GetEdbPVRec(1);" << endl;
     //---------------------
     cout << "-----     void EdbPVRQuality::CreateEdbPVRec()...done." << endl;
     return;

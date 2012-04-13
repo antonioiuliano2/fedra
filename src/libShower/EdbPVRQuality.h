@@ -50,16 +50,21 @@ private:
     // Variables related for calculation Issues
     Int_t		eCutMethod;
     Float_t		eBTDensityLevel;
-    Bool_t		eCutMethodIsDone[2];
+    Float_t		eBTDensityLevelAngularSpace[20];
+    
+    Bool_t		eCutMethodIsDone[3];
     Bool_t		eBTDensityLevelCalcMethodMC;
     Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
 
     Float_t		ePatternBTDensity_orig[114];
     Float_t		ePatternBTDensity_modified[114];
 
-    // Histograms for calculations
+    // Histograms for calculations and crosscheck drawings
     TH2F*			eHistChi2W;
     TH2F*			eHistYX;
+    TH2F*			eHistTYTX;
+    TH1F*			eHistTT;
+    TH2F*			eHistTanTheta;
     Int_t			NbinsX,NbinsY;
 
     Float_t		minX,maxX;
@@ -75,16 +80,19 @@ private:
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
+    Float_t	eCutp0[114]; 
+    Float_t	eCutp1[114];
     // eCutMethod == 1: Constant Chi2W quality
-    Float_t		eCutp0[114];
-    Float_t		eCutp1[114];
-    Float_t		eCutDistChi2[114];
-    Float_t		eCutDistW[114];
+    Float_t	eCutDistChi2[114];
+    Float_t	eCutDistW[114];
     Float_t 	eAgreementChi2WDistCut[114];
     Float_t 	eAgreementChi2CutMeanChi2;
-    Float_t		eAgreementChi2CutRMSChi2;
+    Float_t	eAgreementChi2CutRMSChi2;
     Float_t 	eAgreementChi2CutMeanW;
     Float_t 	eAgreementChi2CutRMSW;
+    // eCutMethod == 2: Constant BT density also in tangens theta space
+    Float_t	eCutTTp0[114][20]; 
+    Float_t	eCutTTp1[114][20];
 
 protected:
 
@@ -165,7 +173,7 @@ public:
         return eCutMethod;
     }
     inline Bool_t    GetCutMethodIsDone(Int_t type) {
-        if (type>1) return 0;
+        if (type>2) return 0;
         return eCutMethodIsDone[type];
     }
     inline Float_t   GetBTDensityLevel() {
@@ -233,13 +241,14 @@ public:
 
     void CreateEdbPVRec();
     void CheckFilledXYSize();
+    Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     TObjArray* GetTracksFromLinkedTracksRootFile();
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
-    /// Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
+//     Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 
@@ -247,6 +256,7 @@ public:
     void PrintCutType();
     void PrintCutType0();
     void PrintCutType1();
+    void PrintCutType2();
     void Help();
     ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };
