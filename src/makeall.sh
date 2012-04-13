@@ -13,12 +13,16 @@ fi
 
 for lib in ${LIBS} ; do
     if [ "$1" != "check" ]; then 
-       echo 
-       echo "make $1 in ${lib} ............."
+	echo 
+	echo "make $1 in ${lib} ............."
+	cd ${lib}
+	make -j1 $1
+	cd ..
+    else
+	cd ${lib}
+	make -j5 $1
+	cd ..
     fi
-    cd ${lib}
-    make -j5 $1
-    cd ..
 done
 
 APPLS="appl/recset appl/rwc2edb appl/macros appl/o2root appl/comptonmap appl/m2track appl/eda appl/emrec appl/rwcToEdb appl/viewcorr"
@@ -29,7 +33,7 @@ for appl in ${APPLS} ; do
        echo "make $1 in ${appl} ............"
     fi
     cd ${appl}
-    make -j5 $1
+    make $1
     cd ../..
 done
 
