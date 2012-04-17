@@ -51,7 +51,7 @@ private:
     Int_t		eCutMethod;
     Float_t		eBTDensityLevel;
     Float_t		eBTDensityLevelAngularSpace[20];
-    
+
     Bool_t		eCutMethodIsDone[3];
     Bool_t		eBTDensityLevelCalcMethodMC;
     Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
@@ -80,7 +80,7 @@ private:
 
     // Variables related for cut Issues
     // eCutMethod == 0: Constant BT density
-    Float_t	eCutp0[114]; 
+    Float_t	eCutp0[114];
     Float_t	eCutp1[114];
     // eCutMethod == 1: Constant Chi2W quality
     Float_t	eCutDistChi2[114];
@@ -91,7 +91,7 @@ private:
     Float_t 	eAgreementChi2CutMeanW;
     Float_t 	eAgreementChi2CutRMSW;
     // eCutMethod == 2: Constant BT density also in tangens theta space
-    Float_t	eCutTTp0[114][20]; 
+    Float_t	eCutTTp0[114][20];
     Float_t	eCutTTp1[114][20];
 
 protected:
