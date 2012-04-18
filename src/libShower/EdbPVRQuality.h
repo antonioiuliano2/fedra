@@ -218,6 +218,7 @@ public:
     void SetHistGeometry_OPERA();
     void SetHistGeometry_MC();
     void SetHistGeometry_OPERAandMC();
+    void SetHistGeometry_OPERAandMCBinArea625();
 
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
@@ -240,7 +241,7 @@ public:
 
 
     void CreateEdbPVRec();
-    void CheckFilledXYSize();
+    Int_t CheckFilledXYSize();
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
