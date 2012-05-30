@@ -19,6 +19,7 @@
 #pragma link C++ class EdbVertexRec;
 #pragma link C++ class EdbVTA;
 #pragma link C++ class EdbVertexComb;
+#pragma link C++ class EdbTopology;
 #pragma link C++ class EdbVertexSpace;
 
 #pragma link C++ class EdbPlateTracking;

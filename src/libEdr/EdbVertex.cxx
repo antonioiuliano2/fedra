@@ -1091,7 +1091,7 @@ int EdbVertexRec::FindVertex()
   int nvtxt = 0;
   if (eVTX) nvtxt = eVTX->GetEntries();
 
-  if(nvtx!=nvtxt) printf("ERROR: EdbVertexRec::FindVertex():  nxtx =%d nvtxt =%d\n",nvtx,nvtxt);
+  if(nvtx!=nvtxt) printf("ERROR: EdbVertexRec::FindVertex():  nvtx =%d nvtxt =%d\n",nvtx,nvtxt);
 
   //for (Int_t i = 0; i < nvtxt; i++) GetVertex(i)->SetID(i);
 
@@ -1104,7 +1104,7 @@ int EdbVertexRec::FindVertex()
     edbv->ResetTracks();
   }
 
-  if(gEDBDEBUGLEVEL>1) printf("--------------------------------------------------------\n");
+  if(gEDBDEBUGLEVEL>1) printf("----------------- %d vtx ---------------------------------------\n", nvtx);
 
   return nvtx;
 }
