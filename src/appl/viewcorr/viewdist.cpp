@@ -81,7 +81,10 @@ int main(int argc, char* argv[])
   printf("process file %s with %d views\n",fname,n);
   
   EdbView *v = run.GetView();
-
+  run.GetEntry(0,1);
+  float X0 = v->GetXview();
+  float Y0 = v->GetYview();
+  
   for(int i=0; i<n; i++) {
     run.GetEntry(i,1,1);
     int ncl = v->Nclusters();
@@ -89,7 +92,7 @@ int main(int argc, char* argv[])
 
     for(int ic=0; ic<ncl; ic++) {
       EdbCluster *c = v->GetCluster(ic);
-      vm.AddCluster( c->eX, c->eY, c->eZ, v->GetXview(), v->GetYview(), v->GetViewID(), c->GetFrame() );
+      vm.AddCluster( c->eX, c->eY, c->eZ, v->GetXview()-X0, v->GetYview()-Y0, v->GetViewID(), c->GetFrame() );
     }
   }
   printf("\n");

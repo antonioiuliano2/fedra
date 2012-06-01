@@ -115,9 +115,6 @@ void EdbViewMatch::AddCluster( float x,float y,float z, float xv,float yv, int v
   else  {
     int inds = eGr.GetEntriesFast();
     EdbSegment *s = new(eGr[inds]) EdbSegment(v[0],v[1],z,0,0);
-    
-    //EdbSegment *s = new EdbSegment(v[0],v[1],z,0,0);
-    //eGr.Add(s);
     s->AddElement(c);
     eGMap.AddObject(v, s);
   }
