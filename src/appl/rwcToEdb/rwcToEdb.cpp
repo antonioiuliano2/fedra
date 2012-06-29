@@ -162,8 +162,7 @@ int main(int argc, char **argv)
 			  if (process.readFragment())
 			  {
 				  process.dumpFragmentInEdbStructure();
-				  if (process.getFilterTracksOption())
-					process.makeTracksPlot("outputPlots.root");
+				  if (process.getFilterTracksOption())     process.makeTracksPlot("outputPlots.root");
 			  }
 
 

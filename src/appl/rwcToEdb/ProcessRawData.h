@@ -30,8 +30,8 @@
 class ProcessRawData
 {
 private:
-
-	Catalog *_catalog; 
+  EdbRun   *_run;
+	Catalog  *_catalog; 
 	Fragment *_fragment;
 	std::string _catFileName;
 	std::string _fragFileName;

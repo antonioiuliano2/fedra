@@ -3,6 +3,7 @@
 
 ProcessRawData::ProcessRawData()
 {
+  _run = 0;
 	_fragment = 0;
 	_catalog = 0;
 	_clusters = false;
@@ -11,12 +12,9 @@ ProcessRawData::ProcessRawData()
 
 ProcessRawData::~ProcessRawData()
 {
-	if (_fragment)
-		delete _fragment;
-	if (_catalog)
-		delete _catalog;
-	_fragment = 0;
-	_catalog = 0;
+  if (_run)      { _run->Close(); delete _run; _run=0; }
+  if (_fragment) { delete _fragment; _fragment=0; } 
+  if (_catalog)  { delete _catalog;  _catalog = 0; }
 }
 
 void ProcessRawData::initCatalog()
@@ -211,8 +209,15 @@ bool ProcessRawData::readFragment()
 
 
 	std::ifstream infile(_fragFileName.c_str(),std::ios::binary);
-	if (infile.fail())
-	{
+  for(int i=0; i<5; i++) {
+    if (infile.fail()) {
+      infile.clear();
+      infile.open(_fragFileName.c_str(),std::ios::binary);
+    } else 
+      break;
+  }
+  if (infile.fail())
+  {
 		std::cout << "Failed to open file: " << _fragFileName.c_str() << std::endl;
 		return false;
 	}
@@ -736,11 +741,10 @@ bool ProcessRawData::readFragment()
 
 bool ProcessRawData::dumpCatalogInEdbStructure()
 {
-	EdbRun *run = new EdbRun(_outputRootFileName.c_str(), "RECREATE" );
-	
+  if(!_run) _run = new EdbRun(_outputRootFileName.c_str(), "RECREATE" );
     
-    run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9)); 
-	EdbRunHeader *Header = run->GetHeader();
+//  _run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9)); 
+	EdbRunHeader *Header = _run->GetHeader();
 	Header->SetFlag(0,2);  
 	Header->SetFlag(1,1);
 	Header->SetFlag(2,1);
@@ -794,23 +798,26 @@ bool ProcessRawData::dumpCatalogInEdbStructure()
     }
   fclose( stream );
   objstr.Write("catalog"); 
-  run->Save() ;
-  run->Close();
+  _run->Save() ;
+  //_run->Close();
   return true;
 }
 
+
 bool ProcessRawData::dumpFragmentInEdbStructure()
 {
-	EdbRun* run = 0;
+  if(!_run) {
     if ( gSystem->AccessPathName( _outputRootFileName.c_str() ) )
-      run = new EdbRun( _outputRootFileName.c_str(), "RECREATE" );
+      _run = new EdbRun( _outputRootFileName.c_str(), "RECREATE" );
     else
-
-		run = new EdbRun( _outputRootFileName.c_str(), "UPDATE" );
-    run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9));   
+      _run = new EdbRun( _outputRootFileName.c_str(), "UPDATE" );
+  }
+  //run->GetTree()->SetMaxTreeSize(static_cast<long long>(10e9));   
    
-	EdbView*    edbView = run->GetView();
-   EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
+  EdbView*    edbView = _run->GetView();
+   //EdbSegment* edbSegment = new EdbSegment(0,0,0,0,0,0,0,0);
+   std::auto_ptr<EdbSegment> edbSegment( new EdbSegment(0,0,0,0,0,0,0,0) );
+    
    int v, t, p;   // v=view, s=side, t=track, p=point
    int tracks;		   // number of tracks in the fragment
    int fclusters;	   // number of clusters in the fragment 
@@ -822,7 +829,7 @@ bool ProcessRawData::dumpFragmentInEdbStructure()
    int frameId = 0;
    tracks = 0;
    fclusters = 0;
-   run->GetHeader()->SetNareas(run->GetHeader()->GetNareas()+1);
+   _run->GetHeader()->SetNareas(_run->GetHeader()->GetNareas()+1);
    for (v = 0; v < _fragment->getViews(); v++) //TOP
    {
 	   View *rwdView = _fragment->getView(v);
@@ -888,10 +895,10 @@ bool ProcessRawData::dumpFragmentInEdbStructure()
 			   }
 		   }
 	   	   edbViewHeader->SetNclusters(vclusters);
-           edbView->AddSegment(edbSegment) ;
+         edbView->AddSegment(edbSegment.get()) ;
            vclusters += tr_clusters;
 	   } // end of tracks (t)
-	   run->AddView(edbView);
+	   _run->AddView(edbView);
        fclusters += vclusters;
    } //end of views (v)
    
@@ -960,17 +967,18 @@ bool ProcessRawData::dumpFragmentInEdbStructure()
 			   }
 		   }
 	   	   edbViewHeader->SetNclusters(vclusters);
-           edbView->AddSegment(edbSegment) ;
+         edbView->AddSegment(edbSegment.get()) ;
            vclusters += tr_clusters;
 	   } // end of tracks (t)
-	   run->AddView(edbView);
+	   _run->AddView(edbView);
        fclusters += vclusters;
    } //end of views (v)
 
-   run->Close();
+//   _run->Close();
    std::cout<< "Fragment: " << _fragment->getIndex() << "\tmicrotracks: " << tracks << "\tclusters: " << fclusters << std::endl;
    return true;
 }
+
 
 int ProcessRawData::makeTracksPlot(const char *plotFileName)
 {
