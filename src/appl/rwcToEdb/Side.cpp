@@ -5,7 +5,7 @@ Vector Side::mapPoint(Vector p)
 {
 	Vector v; 
 	v.x = _mappedFovPosX + _mXX*p.x + _mXY * p.y;
-	v.x = _mappedFovPosY + _mYX*p.x + _mYY * p.y;
+	v.y = _mappedFovPosY + _mYX*p.x + _mYY * p.y;
 	v.z = p.z;
 	return v;
 }
@@ -15,7 +15,7 @@ Vector2 Side::mapPoint(Vector2 p)
 {
 	Vector2 v; 
 	v.x = _mappedFovPosX + _mXX*p.x + _mXY * p.y;
-	v.x = _mappedFovPosY + _mYX*p.x + _mYY * p.y;
+	v.y = _mappedFovPosY + _mYX*p.x + _mYY * p.y;
 	return v;
 }
 
@@ -24,9 +24,9 @@ Vector Side::iMapPoint(Vector p)
 {
 	Vector v; 
 	p.x -= _mappedFovPosX;
-	p.x -= _mappedFovPosY;
+	p.y -= _mappedFovPosY;
 	v.x = _mXX*p.x + _mXY * p.y;
-	v.x = _mYX*p.x + _mYY * p.y;
+	v.y = _mYX*p.x + _mYY * p.y;
 	v.z = p.z;
 	return v;
 }
@@ -36,9 +36,9 @@ Vector2 Side::iMapPoint(Vector2 p)
 {
 	Vector2 v; 
 	p.x -= _mappedFovPosX;
-	p.x -= _mappedFovPosY;
+	p.y -= _mappedFovPosY;
 	v.x = _mXX*p.x + _mXY * p.y;
-	v.x = _mYX*p.x + _mYY * p.y;
+	v.y = _mYX*p.x + _mYY * p.y;
 	return v;
 }
 

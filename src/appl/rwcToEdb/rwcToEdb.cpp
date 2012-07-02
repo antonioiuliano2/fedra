@@ -5,7 +5,7 @@
 
 void toLower(std::string &inputString)
 {
-	for (int i = 0; i < inputString.length(); i++)
+	for (unsigned int i = 0; i < inputString.length(); i++)
 	{
 		inputString[i] = tolower(inputString[i]); 
 	}
@@ -213,4 +213,5 @@ int main(int argc, char **argv)
 		
 	}
 }
+
 

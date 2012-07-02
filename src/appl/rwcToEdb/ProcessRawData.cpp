@@ -168,7 +168,7 @@ bool ProcessRawData::readCatalog()
 			cfg.length = a;
 			//std::cout << "a: " << a << std::endl;
 			
-			for (int j = 0; j < cfg.length; j++)
+			for (unsigned int j = 0; j < cfg.length; j++)
 			{
 				
 				KeyStringRepresentation key;
@@ -752,7 +752,7 @@ bool ProcessRawData::dumpCatalogInEdbStructure()
 		static_cast<float>(_catalog->getXmax()),
 		static_cast<float>(_catalog->getYmin()),
 		static_cast<float>(_catalog->getYmax()));
-	int index = _catalog->findConfig("Vertigo");
+	//int index = _catalog->findConfig("Vertigo");
 	std::string retValue = _catalog->getConfigValue(_catalog->findConfig("Vertigo"),"VLayers");
 			
 
@@ -1176,4 +1176,5 @@ int ProcessRawData::makeTracksPlot(const char *plotFileName)
 	return counter;
 
 }
+
 

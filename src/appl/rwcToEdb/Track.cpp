@@ -38,8 +38,8 @@ bool Track::evaluateEstimators()
 		return false;
 	
 	unsigned short nGrains = _count;
-	double s = 0, sx = 0, sy = 0, sz = 0, sxx = 0, syy = 0, szz = 0, szx = 0, szy = 0;
-	double d = _errz/_errx;
+	//double s = 0, sx = 0, sy = 0, sz = 0, sxx = 0, syy = 0, szz = 0, szx = 0, szy = 0;
+	//double d = _errz/_errx;
 
 	Fitter fitXZ; fitXZ.setErrXY(3.,0.33);  //error on z coordinate is ~3 um, in x or y is 0.33 (pixel dimension)
 	Fitter fitYZ; fitYZ.setErrXY(3.,0.33);

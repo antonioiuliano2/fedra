@@ -30,6 +30,4 @@ public:
 	void setErrXY(double errx, double erry);
 };
 
-
-
 #endif
