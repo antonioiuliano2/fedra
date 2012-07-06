@@ -11,6 +11,7 @@
 #include "EdbPlateTracking.h"
 #include "EdbLog.h"
 #include "EdbTrackFitter.h"
+#include "EdbEDAUtil.h"
 
 using namespace TMath;
 
@@ -295,7 +296,6 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
   return 1; //TODO!
 }
 
-
 //----------------------------------------------------------------------------------------
 int EdbPlateTracking::FindCandidateMT( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd )
 {
@@ -333,6 +333,8 @@ int EdbPlateTracking::FindBestCandidate(EdbPattern &cand, EdbSegP &fnd, EdbPatte
   }
   return n;
 }
+
+
 
 //----------------------------------------------------------------------------------------
 int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred )
@@ -443,6 +445,183 @@ int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &f
   fnds2.Copy(eS2);
   return eStatus;
 }
+
+//----------------------------------------------------------------------------------------
+int EdbPlateTracking::FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd,EdbSegP &spred )
+{
+  EdbSegP s1,s2;
+  int n1=FindBestCandidateOpEmuRec( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);
+  int n2=FindBestCandidateOpEmuRec( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);
+  Log(2,"FindCandidateMTOpEmuRec","Found %d+%d microtrack candidates after cuts",n1,n2);
+
+  if( n1==0&&n2==0 )  return 0;
+
+  if( s1.Chi2() <= s2.Chi2() ) {
+    fnd.Copy(s1);
+    return 1;
+  }
+  else {
+    fnd.Copy(s2);
+    return 2;
+  }
+  return 0;
+}
+
+//----------------------------------------------------------------------------------------
+int EdbPlateTracking::FindBestCandidateOpEmuRec(EdbPattern &cand, EdbSegP &fnd, EdbPattern &passed, float wmin, float wmindegrad, float chi2max,EdbSegP &spred, float maxdmin = 1.)
+{
+  int n=0;
+
+  float eX1=spred.X(),eY1=spred.Y(),eZ1=spred.Z(),eTX1=spred.TX(),eTY1=spred.TY(),dminz;
+  float s1,s2,s1bunsi,s1bunbo,s2bunsi,s2bunbo;
+  float p1x,p1y,p1z,p2x,p2y,p2z,p1p2;
+
+  fnd.Set0();
+  fnd.SetChi2(10000.+chi2max);
+
+  for (int i=0; i<cand.N(); i++) {
+    EdbSegP *s = cand.GetSegment(i);
+    float eX2=s->X(),eY2=s->Y(),eZ2=s->Z(),eTX2=s->TX(),eTY2=s->TY(); 
+
+    s1bunsi=(eTX2*eTX2+eTY2*eTY2+1)*(eTX1*(eX2-eX1)+eTY1*(eY2-eY1)+eZ2-eZ1) - (eTX1*eTX2+eTY1*eTY2+1)*(eTX2*(eX2-eX1)+eTY2*(eY2-eY1)+eZ2-eZ1);
+    s1bunbo=(eTX1*eTX1+eTY1*eTY1+1)*(eTX2*eTX2+eTY2*eTY2+1) - (eTX1*eTX2+eTY1*eTY2+1)*(eTX1*eTX2+eTY1*eTY2+1);
+    s2bunsi=(eTX1*eTX2+eTY1*eTY2+1)*(eTX1*(eX2-eX1)+eTY1*(eY2-eY1)+eZ2-eZ1) - (eTX1*eTX1+eTY1*eTY1+1)*(eTX2*(eX2-eX1)+eTY2*(eY2-eY1)+eZ2-eZ1);
+    s2bunbo=(eTX1*eTX1+eTY1*eTY1+1)*(eTX2*eTX2+eTY2*eTY2+1) - (eTX1*eTX2+eTY1*eTY2+1)*(eTX1*eTX2+eTY1*eTY2+1);
+    s1=s1bunsi/s1bunbo;
+    s2=s2bunsi/s2bunbo;
+    p1x=eX1+s1*eTX1;
+    p1y=eY1+s1*eTY1;
+    p1z=eZ1+s1*1;
+    p2x=eX2+s2*eTX2;
+    p2y=eY2+s2*eTY2;
+    p2z=eZ2+s2*1;
+    p1p2=sqrt( (p1x-p2x)*(p1x-p2x)+(p1y-p2y)*(p1y-p2y)+(p1z-p2z)*(p1z-p2z) );
+    dminz = eZ1-p1z;
+
+    if (p1p2>maxdmin)  continue;
+
+    if ( s->W()<wmin+s->Chi2()*wmindegrad )  continue;
+    if ( s->Chi2()>chi2max )                 continue;
+    n++;
+    passed.AddSegment(*s);
+    if (s->Chi2()<fnd.Chi2())      fnd.Copy(*s);
+  }
+
+  return n;
+}
+
+//----------------------------------------------------------------------------------------
+int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred )
+{
+  // Select the best (micro or base) track matching with the prediction
+  // and prepare for a new search.
+  //
+  // Selection criteria:
+  //  1) Call FindCandidates having the list of basetrack and microtrack candidates
+  //  2) Call FindCandidateBT which looks for the best basetrack, if any
+  //  3) If no basetrack is found, call FindCandidateMT which looks fot the best microtrack, if any.
+  //     Microtracks accepted shold satisfy the following cut: (puls >= ePulsMinMT) (10) and (chi2 < eChi2MaxMT)
+  //
+  // Input:
+  //   spred - track prediction
+  // Output:
+  //   - if a basetrack is found (status 0):
+  //       fndbt - basetrack found
+  //       fnds1 - microtrack top contained in the found basetrack
+  //       fnds2 - microtrack bottom contained in the found basetrack
+  //       snewpred - fndbt with flag equal to 0
+  //
+  //   - if a microtrack top is found (status 1):
+  //       fndbt - dummy
+  //       fnds1 - microtrack top found
+  //       fnds2 - dummy
+  //       snewpred - a track with slopes from the prediction spred and positions 
+  //                  from an extrapolation of fnds1. The flag is updated by UpdateFlag
+  //
+  //   - if a microtrack bottom is found (status 2):
+  //       fndbt - dummy
+  //       fnds1 - dummy
+  //       fnds2 - microtrack bottom found
+  //       snewpred - a track with slopes from the prediction spred and positions 
+  //                  from an extrapolation of fnds2. The flag is updated by UpdateFlag
+  //
+  //   - if nothing is found (status -1):
+  //       fndbt - dummy
+  //       fnds1 - dummy
+  //       fnds2 - dummy
+  //       snewpred - the prediction spred. The flag is updated by UpdateFlag
+  //
+  // Return:
+  //   -1: no track found
+  //    0: basetrack found
+  //    1: microtrack top found
+  //    2: microtrack bottom found
+
+  //EdbPattern vfndbt,vfnds1,vfnds2;
+
+  eStatus = -1;
+  SetPred(spred);
+  FindCandidates( spred, eSpre, eS1pre, eS2pre ); //eSpre , eS1pre , eS2pre riempiti
+
+
+  EdbSegP fnd;
+  int nbt = FindBestCandidateOpEmuRec(eSpre,fnd, eScnd, ePulsMinBT, ePulsMinDegradBT, eChi2MaxBT,spred);
+  if ( nbt > 0 ) {
+    eS.Copy(fnd);
+    eS1.Copy(*(eS1pre.GetSegment(fnd.Flag()%10000)));
+    eS2.Copy(*(eS2pre.GetSegment(fnd.Flag()/10000)));
+    eS.SetFlag(0);
+    eNext.Copy(fnd);
+    eNext.SetFlag(UpdateFlag(spred.Flag(),0));          // if bt found : bth=0, mth=0, tb=0
+    eStatus = 0;
+   }
+
+  //  int if_mt = FindCandidateMT(eS1pre,eS2pre,fnd);
+  int if_mt = FindCandidateMTOpEmuRec(eS1pre,eS2pre,fnd,spred);
+  if(eStatus!=-1) goto RESUME;
+
+  switch(if_mt) {
+  case 0:                       // find nothing
+    eNext.Copy(spred);
+    eNext.SetFlag(UpdateFlag(spred.Flag(),-1));      // hole: if not found: bth++, mth++, tb= keep last value
+    eNext.SetW(0);
+    eStatus = -1;    goto RESUME;
+  case 1:         // best microtrack is on the 1-st side
+    eS1.Copy(fnd);
+    eNext.Copy(spred);
+    eNext.SetX( fnd.X() + spred.TX()*(spred.Z()-fnd.Z()) );
+    eNext.SetY( fnd.Y() + spred.TY()*(spred.Z()-fnd.Z()) );
+    eNext.SetZ(spred.Z());
+    eNext.SetFlag(UpdateFlag(spred.Flag(),1));          // if mt found : bth++, mth=0, tb=1
+    eNext.SetW(fnd.W());
+    eNext.SetID(fnd.ID());//ale,antonia
+    eStatus = 1;    goto RESUME;
+  case 2:         // best microtrack is on the 2-d side
+    eS2.Copy(fnd);
+    eNext.Copy(spred);
+    eNext.SetX( fnd.X() + spred.TX()*(spred.Z()-fnd.Z()) );
+    eNext.SetY( fnd.Y() + spred.TY()*(spred.Z()-fnd.Z()) );
+    eNext.SetZ(spred.Z());
+    eNext.SetFlag(UpdateFlag(spred.Flag(),2));         // if mt found : bth++, mth=0, tb=2
+    eNext.SetW(fnd.W());
+    eNext.SetID(fnd.ID());//ale,antonia
+    eStatus = 2;    goto RESUME;
+  }
+
+ RESUME:
+  
+  Log(2,"FindPredictionOpEmuRec","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
+      eStatus, 
+      eScnd.N(),eS1cnd.N(),eS2cnd.N(),
+      eSpre.N(),eS1pre.N(),eS2pre.N()
+      );
+  snewpred.Copy(eNext);
+  fndbt.Copy(eS);
+  fnds1.Copy(eS1);
+  fnds2.Copy(eS2);
+  return eStatus;
+}
+
 
 
 //----------------------------------------------------------------------------------------
