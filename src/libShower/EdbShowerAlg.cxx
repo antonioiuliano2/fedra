@@ -3010,6 +3010,9 @@ void EdbShowerAlgESimple::GetNplIndexNr(Int_t check_Npl,Int_t &check_Npl_index, 
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowerAlgESimple::GetNplIndexNr("<<check_Npl<<","<<check_Npl_index<<","<<ePlateNumberType<<")"<<endl;
 
     // The Neural Network Training was done in a way that we had always Npl(Train)>=shower->Npl()
+     
+//F. Brunet fix : use the max plate number NN for shower extending within more than 45 plates
+    if(check_Npl >=45)check_Npl = 44;
 
     // First we find closest (bigger) ePlateBinning index:
     int closestIndex=-1;

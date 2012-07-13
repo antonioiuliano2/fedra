@@ -82,7 +82,7 @@ EdbShowerRec::EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA
         TRid[Ncand] = s->MCEvt(); //this has to be a positive number
         Esim[Ncand] = s->P();
         id[Ncand]  = s->ID();
-        Pid[Ncand] =    Zoff/1290+1;
+        Pid[Ncand] =    Zoff/1273+1;
         if (gEDBDEBUGLEVEL>2) cout << s->X() << " " << s->Y() << " " << s->Z() << " " << s->TX() << " "  << s->TY() << " " << Pid[Ncand] << " " <<  Esim[Ncand] << "  "  << TRid[Ncand]  << endl;
         cout << chi20[Ncand] << " " <<  W0[Ncand] << "  "  << P0[Ncand] << "  "  << Flag0[Ncand]  << endl;
         Ncand++;
@@ -340,7 +340,7 @@ void EdbShowerRec::rec(TObjArray *sarr, EdbPVRec  *pvr)
         TRid[Ncand] = s->MCEvt(); //this has to be a positive number
         Esim[Ncand] = s->P();
         id[Ncand]  = s->ID();
-        Pid[Ncand] =    Zoff/1290+1;
+        Pid[Ncand] =    Zoff/1273+1;
         //cout << s->X() << " " << s->Y() << " " << s->Z() << " " << s->TX() << " "  << s->TY() << " " << Pid[Ncand] << " " <<  Esim[Ncand] << "  "  << TRid[Ncand]  << endl;
         //cout << chi20[Ncand] << " " <<  W0[Ncand] << "  "  << P0[Ncand] << "  "  << Flag0[Ncand]  << endl;
         Ncand++;
@@ -714,7 +714,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                             {
                                 ind = l2 + ii*eNTM;
 
-                                if (fabs(a->GetZb(l2)-(Z0-(el+1)*1300))<500)
+                                if (fabs(a->GetZb(l2)-(Z0-(el+1)*1273))<500)
                                 {
 //                   ss->PrintNice();
 
@@ -742,7 +742,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                                             a->SetDeltarb(rayon2,add[ii]);
                                             a->SetDelthetab(delta,add[ii]);
                                             //a->SetNFilmb( index+1,add[ii]);
-                                            rr =  (Z0-a->GetZ0())/1300;
+                                            rr =  (Z0-a->GetZ0())/1273;
                                             a->SetNFilmb(int(round(rr)+1),add[ii]);
                                             if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
                                             if (ss->MCEvt()<0) sigbb[ind] = 0;
@@ -812,7 +812,8 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
         for (int j=0; j<add[i]; j++)
         {
             idb[j] = a->GetIDb(j);
-            plateb[j] = a->GetPlateb(j);
+            //plateb[j] = a->GetPlateb(j);
+            plateb[j] = floor(a->GetZb(j)/1273)+31;// F. Brunet : ePlate setters and getters obsolet with new plate thickness
             xb[j] = a->GetXb(j);
             yb[j] = a->GetYb(j);
             zb[j] = a->GetZb(j);
@@ -1224,7 +1225,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                             for (int l2=0; l2<nntr; l2++)
                             {
                                 ind = l2 + ii*eNTM;
-                                if (fabs(zbb[ind]-(Z0-(el+1)*1300))<500)
+                                if (fabs(zbb[ind]-(Z0-(el+1)*1273))<500)
                                 {
                                     rayon2 = sqrt((Xe[el]-xbb[ind])*(Xe[el]-xbb[ind])+((Ye[el]-ybb[ind])*(Ye[el]-ybb[ind])));
                                     delta = sqrt((SX0-txbb[ind])*(SX0-txbb[ind])+((SY0-tybb[ind])*(SY0-tybb[ind])));
@@ -1250,7 +1251,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                                             a->SetDeltarb(rayon2,add[ii]);
                                             a->SetDelthetab(delta,add[ii]);
                                             //a->SetNFilmb( index+1,add[ii]);
-                                            rr =  (Z0-a->GetZ0())/1300;
+                                            rr =  (Z0-a->GetZ0())/1273;
                                             a->SetNFilmb(int(round(rr)+1),add[ii]);
 
                                             if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
@@ -1705,7 +1706,7 @@ void EdbShowerRec::vert(const char *name2,const char *def, int MAXPLATE, int pie
                 for (int el=0; el<max; el++)
                 {
 
-                    rr =  a->GetZb(ibtke)/1300;
+                    rr =  a->GetZb(ibtke)/1273;
                     d = int(round(rr));
 
                     Xe[el] =  a->GetXb(ibtke) -(a->GetZb(ibtke)-ZZ0[d-el])*a->GetTXb(ibtke);
@@ -1714,7 +1715,7 @@ void EdbShowerRec::vert(const char *name2,const char *def, int MAXPLATE, int pie
 
                     for (int l2=0; l2<nntr; l2++) {
 
-                        if (fabs(a->GetZb(l2)-(a->GetZb(ibtke)-(el+1)*1300))<500)
+                        if (fabs(a->GetZb(l2)-(a->GetZb(ibtke)-(el+1)*1273))<500)
                         {
 
                             rayon2 = sqrt((Xe[el]-a->GetXb(l2))*(Xe[el]-a->GetXb(l2))+((Ye[el]-a->GetYb(l2))*(Ye[el]-a->GetYb(l2))));
@@ -2637,7 +2638,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     //=C= Again Define some Variables used for calculating:
     nentries_e = (Int_t) treesaveb -> GetEntries();
     for (Int_t j = 0; j<57; ++j) {
-        Dr[j] = 0.03*j*1300. +20.0;
+        Dr[j] = 0.03*j*1273. +20.0;
     }
     Float_t zmax=0;
     Float_t zmin=0;
@@ -2684,7 +2685,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
         if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::Energy_ExtractShowerParametrisationProfile() === zmin= "<< zmin << endl;
 
         // Calculate the plates.
-        Int_t pl=int(zmax-zmin)/1300+1;
+        Int_t pl=int(zmax-zmin)/1273+1;
         NumberOfPlates=pl;
         if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::Energy_ExtractShowerParametrisationProfile() === pl= "<< pl << endl;
 
@@ -2699,8 +2700,8 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
         histo_deltaT           ->Reset();
         for (int id=0; id<57; id++) {
             theta[id]= 0;
-            X0[id] = id*1300.*txb[0] +  xb[0];
-            Y0[id] = id*1300.*tyb[0] +  yb[0];
+            X0[id] = id*1273.*txb[0] +  xb[0];
+            Y0[id] = id*1273.*tyb[0] +  yb[0];
             longprofile[id]=-1;
         }
         if (tagprimary[0]==1) {
@@ -3132,8 +3133,8 @@ int EdbShowerRec::SaveLNK()
             tx=txb[j];
             ty=tyb[j];
             z=zb[j];
-            // plate[j] = abs(57+(int)(z/1300.));  // compiler instability with gcc4.3
-            plate[j] = TMath::Abs(57+(int)(z/1300.));  // compiler instability with gcc4.3
+            // plate[j] = abs(57+(int)(z/1273.));  // compiler instability with gcc4.3
+            plate[j] = TMath::Abs(57+(int)(z/1273.));  // compiler instability with gcc4.3
             // cout << plate[j] << endl;
             w2=ntrace2simub[j];
             segS = new EdbSegP();
@@ -3228,8 +3229,8 @@ TObjArray* EdbShowerRec::ShowerToEdbSegPArray()
             ty=tyb[j];
             z=zb[j];
             // This is to have the absolute plate reference frame where Plate 57 is at Z==0
-            // plate[j] = abs(57+(int)(z/1300.)); // compiler instability with gcc4.3
-            plate[j] = TMath::Abs(57+(int)(z/1300.)); // fix.
+            // plate[j] = abs(57+(int)(z/1273.)); // compiler instability with gcc4.3
+            plate[j] = TMath::Abs(57+(int)(z/1273.)); // fix.
             cout << "DOING j= " << j << "    Z==  " << z << "    Platee[j]=   " << plate[j] << endl;
             w2=ntrace2simub[j];
             EdbSegP* segS = new EdbSegP();
@@ -3488,7 +3489,7 @@ Bool_t EdbShowerRec::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegm
 
     TVector3 x1(StartingSegment->X(),StartingSegment->Y(),StartingSegment->Z());
     TVector3 x2(TestingSegment->X(),TestingSegment->Y(),TestingSegment->Z());
-    TVector3 direction_x1(StartingSegment->TX()*1300,StartingSegment->TY()*1300,1300);
+    TVector3 direction_x1(StartingSegment->TX()*1273,StartingSegment->TY()*1273,1273);
 
     // u1 is the difference vector of the position!
     TVector3 u1=x2-x1;
@@ -4186,7 +4187,7 @@ Bool_t EdbShowerRec::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli,
 
         dZ=TMath::Abs(s_TestBT->Z()-s->Z());
         if (dZ<30) continue;                  // Exclude the case of same Zpositions...
-        if (dZ>(eAlgoParameterNPropagation*1300.0)+650.0) continue;     // Exclude the case of more than eAlgoParameterNPropagation plates before...
+        if (dZ>(eAlgoParameterNPropagation*1273.0)+650.0) continue;     // Exclude the case of more than eAlgoParameterNPropagation plates before...
 
         if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowerRec::FindPrecedingBTs(): Checking dT,dR and dZ for i:  " << i << "  " << DeltaThetaComponentwise(s, s_TestBT)  << "  " << DeltaR_WithPropagation(s, s_TestBT) << "  "<<dZ << endl;
 
@@ -4407,8 +4408,8 @@ void EdbShowerRec::TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TObj
             // (does this work for up/downsream listing??)
             // (yes, since InBT->PID is also changed.)
             // but works only if the gAli Object has no missing plates
-            // otherwise f.e. PID(1) and PID(2) are not necessaryly abay by dZ=1300
-            // (could be Z(1)=1300 and Z(2)=3900...)
+            // otherwise f.e. PID(1) and PID(2) are not necessaryly abay by dZ=1273
+            // (could be Z(1)=1273 and Z(2)=3900...)
 
             // Calc pur:
             shower_sizebNHELP++;
@@ -4455,7 +4456,7 @@ void EdbShowerRec::TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TObj
 
 
                     extrapo_diffz=shower_zb[ii]-shower_zb[jj];
-                    if (TMath::Abs(extrapo_diffz)>4*1300+1.0) continue;
+                    if (TMath::Abs(extrapo_diffz)>4*1273+1.0) continue;
                     if (TMath::Abs(extrapo_diffz)<1.0) continue; // remove same positions.
 
                     extrapol_x=shower_xb[ii]-shower_txb[ii]*extrapo_diffz; // minus, because its ii after jj.
