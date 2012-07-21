@@ -98,7 +98,11 @@ private:
 
     // eCutMethod == 4: Constant X2Hat BT density
     Float_t	eX2Hat;
-    Float_t	eX2HatCut;
+    Float_t	eX2HatCut[114];
+    Float_t	     eXi2Hat_m_chi2[114];
+    Float_t     eXi2Hat_s_chi2[114];
+    Float_t     eXi2Hat_m_WTilde[114];
+    Float_t     eXi2Hat_s_WTilde[114];
     // eCutMethod == 5: Constant X2Hat BT density also in tangens theta space
     /// TO BE IMPLEMENTED HERE ...
 

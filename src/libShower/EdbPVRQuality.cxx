@@ -57,14 +57,17 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 
     CheckEdbPVRec();
 
+
+    /// TO BE COMMENTET OUT WHEN ALL BG-Reduction-Algorithms are fully implemented:
 // 		Remove_Passing(eAli_orig);
 // 		Remove_DoubleBT(eAli_orig);
 
     /// TO BE CHECKED WHICH METHOD SHOULD BE THE DEFAULT ONE...
-    Execute_ConstantBTDensity();
+//     Execute_ConstantBTDensity();
+    Execute_ConstantBTX2Hat();
 //    Execute_ConstantBTQuality();
-    //    Execute_ConstantBTQuality();
-//     CreateEdbPVRec();
+//    Execute_ConstantBTDensityInAngularBins();
+    CreateEdbPVRec();
     Print();
 }
 
@@ -96,9 +99,11 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
 
     CheckEdbPVRec();
 
+
+    /// TO BE COMMENTET OUT WHEN ALL BG-Reduction-Algorithms are fully implemented:
+//     Remove_Passing(eAli_orig);
+//     Remove_DoubleBT(eAli_orig);
     /// TO BE CHECKED WHICH METHOD SHOULD BE THE DEFAULT ONE...
-    Remove_Passing(eAli_orig);
-    Remove_DoubleBT(eAli_orig);
     Execute_ConstantBTDensity();
     CreateEdbPVRec();
     Print();
@@ -146,10 +151,11 @@ void EdbPVRQuality::Set0()
     // Reset Default Geometry: 0 OperaGeometry, 1: MC Geometry
     eHistGeometry=0;
 
-
-
+    // Reset Default Histograms
     eHistYX->Reset();
+    eHistTYTX->Reset();
     eHistChi2W->Reset();
+    eHistTT->Reset();
 
     for (int i=0; i<114; i++) {
         ePatternBTDensity_orig[i]=0;
@@ -163,6 +169,11 @@ void EdbPVRQuality::Set0()
             eCutTTp0[i][j]=1.00;
             eCutTTp1[i][j]=0.15;
         }
+
+        eXi2Hat_m_chi2[i]=0;
+        eXi2Hat_s_chi2[i]=0;
+        eXi2Hat_m_WTilde[i]=0;
+        eXi2Hat_s_WTilde[i]=0;
     }
 
 
@@ -212,9 +223,7 @@ void EdbPVRQuality::Init()
     /// For now we use a very large histogram that can contain both case
     /// x-y ranges. This takes slightly more memory but it shouldnt matter.
 //     if (eHistGeometry==0) SetHistGeometry_OPERA();
-//     cout << "EdbPVRQuality::Init()   /// TEMPORARY  SetHistGeometry_OPERAandMC " <<  endl;
     SetHistGeometry_OPERAandMC();
-
 
     Log(2,"EdbPVRQuality::Init","EdbPVRQuality::Init...done.");
     return;
@@ -910,7 +919,40 @@ void EdbPVRQuality::PrintCutType3()
 
 void EdbPVRQuality::PrintCutType4()
 {
-    cout << "void EdbPVRQuality::PrintCutType4() NOT  YET IMPLEMENTED" << endl;
+    //     Prints quality cut values for each plate of the original EdbPVRec object that were
+    //     applied to achieve the basetrack density level, after application the specific cut
+    //     on the segments of the specific plate (=pattern).
+
+    if (!eIsSource) return;
+    if (!eCutMethodIsDone[4]) {
+        cout << "---   EdbPVRQuality::PrintCutType4()----------" << endl;
+        cout << "---      This CutType has not been done. Run  Execute_ConstantBTQuality() ---" << endl;
+        cout << "---      to see the results (return now). ---" << endl;
+        return;
+    }
+
+    cout << "----------void EdbPVRQuality::PrintCutType4()----------" << endl;
+
+    cout << "Pattern || Z() || Nseg || BTDensity_orig || eXi2Hat_m_chi2 || eXi2Hat_s_chi2 || eXi2Hat_m_WTilde || eXi2Hat_s_WTilde || eXi2HatCut[i] || BTDensity_modified ||"<< endl;
+
+    if (NULL==eAli_modified) {
+        eAli_modified=eAli_orig;
+        cout << "WARNING eAli_modified==NULL  ==>>  Take eAli_orig instead. To build eAli_modified please run CreateEdbPVRec(eAli_orig)" << endl;
+    }
+
+    int Npat_orig = eAli_orig->Npatterns();
+    for (int i=0; i<Npat_orig; i++) {
+        EdbPattern* pat_orig = (EdbPattern*)eAli_orig->GetPattern(i);
+        Int_t npatO=pat_orig->N();
+        EdbPattern* pat_modified = (EdbPattern*)eAli_modified->GetPattern(i);
+        Int_t npatM=pat_modified->N();
+        cout << i;
+        cout << "	";
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f",pat_orig->Z(),npatO, eXi2Hat_m_chi2[i] , eXi2Hat_s_chi2[i],  eXi2Hat_m_WTilde[i] , eXi2Hat_s_WTilde[i], eX2HatCut[i], ePatternBTDensity_orig[i]);
+        cout << "	...	";
+        printf("%.1f  %d  %.2f  %.2f  %.2f  %.2f  %.2f  %.2f",pat_orig->Z(),npatM, eXi2Hat_m_chi2[i] , eXi2Hat_s_chi2[i],  eXi2Hat_m_WTilde[i] , eXi2Hat_s_WTilde[i], eX2HatCut[i], ePatternBTDensity_modified[i]);
+        cout << endl;
+    }
     return;
 }
 
@@ -1743,7 +1785,282 @@ void EdbPVRQuality::Execute_ConstantBTDensityInAngularBins()
 
 void EdbPVRQuality::Execute_ConstantBTX2Hat()
 {
-    cout << "void EdbPVRQuality::Execute_ConstantBTX2Hat() TO BE DONE ! ATTENTION WARNING " << endl;
+    // Execute the modified cut routines to achieve the basetrack density level,
+    // after application the specific cut on the segments of the specific plate (pattern).
+    // The ConstantBTX2Hat is defined by the number of BT/mm2 in the histogram.
+    // cuttet on the variable Xi2Hat!
+
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Execute_ConstantBTX2Hat " << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+
+    if (!eIsSource) return;
+    if (NULL==eAli_orig) return;
+
+    // Check the patterns of the EdbPVRec:
+    eAli_maxNpatterns= eAli_orig->Npatterns();
+    if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
+    if (eAli_maxNpatterns>114) {
+        cout << "ERROR!  EdbPVRQuality::Execute_ConstantBTX2Hat  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
+        eAli_maxNpatterns=114;
+    }
+
+
+    // Create the temporary needed histograms:
+    TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
+    TH1F* h_chi2 = new TH1F("h_chi2","h_chi2",100,0,2);
+    TH1F* h_chi2Normalized = new TH1F("h_chi2Normalized","h_chi2Normalized",100,0,5);
+    TH1F* h_WTilde = new TH1F("h_WTilde","h_WTilde",40,0,0.1);
+    TH1F* h_WTildeNormalized = new TH1F("h_WTildeNormalized","h_WTildeNormalized",100,0,5);
+    TH1F* h_X2 = new TH1F("h_X2","h_X2",100,0,5);
+
+    // Loop over the patterns:
+    for (int i=0; i<eAli_maxNpatterns; i++) {
+        if (i>56) {
+            cout << "WARNING     EdbPVRQuality::Execute_ConstantBTX2Hat()    Your EdbPVRec object has more than 57 patterns! " << endl;
+            cout << "WARNING     EdbPVRQuality::Execute_ConstantBTX2Hat()    Check it! " << endl;
+        }
+        if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantBTX2Hat   Doing Pattern " << i << endl;
+
+
+        Float_t chi2Normalized=0;
+        Float_t WTilde=0;
+        Float_t WTildeNormalized=0;
+        Float_t X2Hat=0;
+        Float_t     m_chi2=0;
+        Float_t s_chi2=0;
+        Float_t m_WTilde=0;
+        Float_t s_WTilde=0;
+
+
+        // Reset of the original eX2HatCut value:
+        eX2HatCut[i]=5;
+
+        // Now the condition loop:
+        // Loop over 10 steps for the eX2HatCut value:
+        for (int l=0; l<20; l++) {
+            eHistYX->Reset(); // important to clean the histogram
+            eHistChi2W->Reset(); // important to clean the histogram
+            histPatternBTDensity->Reset(); // important to clean the histogram
+            eHistTYTX->Reset(); // important to clean the histogram
+            eHistTT->Reset();          // important to clean the histogram
+
+
+
+
+
+            EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
+            Int_t npat=pat->N();
+            EdbSegP* seg=0;
+            // Loop over the segments.
+            // Here do it two times, one time to get Mean and RMS of Chi2 and WTilde distribution.
+            // Do this only for the loopcase l==0:
+            if (l==0) {
+                h_chi2->Reset();
+                h_chi2Normalized->Reset();
+                h_WTilde->Reset();
+                h_WTildeNormalized->Reset();
+                h_X2->Reset();
+
+
+                for (int j=0; j<npat; j++) {
+                    seg=pat->GetSegment(j);
+                    // Very important:
+                    // For the data case, we assume the following:
+                    // Data (MCEvt<0) will     be taken for BTdensity calculation
+                    // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
+                    // We take it ONLY and ONLY into account if it is especially wished
+                    // by the user!
+                    // Therefore (s)he needs to know how many Gauge Coupling Parameters
+                    // in the Standard Model exist (at least)...
+                    Bool_t result=kTRUE;
+                    if (seg->MCEvt()>0) {
+                        if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                            result = kTRUE;
+                            // cout << "result = kTRUE !! " << endl;
+                        }
+                        else {
+                            result = kFALSE;
+                        }
+                    }
+
+                    if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+                    // Main decision for segment to be kept or not (seg is of MC or data type).
+                    if ( kFALSE == result ) continue;
+
+                    // Pre-Fill the Chi2() and W() histograms to get Mean and RMS values right:
+                    h_chi2->Fill(seg->Chi2());
+                    WTilde=1./(seg->W());
+                    h_WTilde->Fill(WTilde);
+
+                } // for (int j=0; j<npat; j++)
+
+                // Calulation of the histograms to get Mean and RMS values right:
+                m_chi2=h_chi2->GetMean();
+                s_chi2=h_chi2->GetRMS();
+                m_WTilde=h_WTilde->GetMean();
+                s_WTilde=h_WTilde->GetRMS();
+
+
+                eXi2Hat_m_chi2[i]=m_chi2;
+                eXi2Hat_s_chi2[i]=s_chi2;
+                eXi2Hat_m_WTilde[i]=m_WTilde;
+                eXi2Hat_s_WTilde[i]=s_WTilde;
+
+            } // if (l==0)
+
+
+
+
+
+            // Loop over the segments.
+            for (int j=0; j<npat; j++) {
+                seg=pat->GetSegment(j);
+                // Very important:
+                // For the data case, we assume the following:
+                // Data (MCEvt<0) will     be taken for BTdensity calculation
+                // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
+                // We take it ONLY and ONLY into account if it is especially wished
+                // by the user!
+                // Therefore (s)he needs to know how many Gauge Coupling Parameters
+                // in the Standard Model exist (at least)...
+                Bool_t result=kTRUE;
+                if (seg->MCEvt()>0) {
+                    if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                        result = kTRUE;
+                        // cout << "result = kTRUE !! " << endl;
+                    }
+                    else {
+                        result = kFALSE;
+                    }
+                }
+
+                if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+                // Main decision for segment to be kept or not (seg is of MC or data type).
+                if ( kFALSE == result ) continue;
+
+                // Calculate that Xi2Hat value, since we have now mean and rms of the distribution histograms:
+                chi2Normalized=TMath::Power((seg->Chi2()-m_chi2)/s_chi2,2);
+                h_chi2Normalized->Fill(chi2Normalized);
+                WTilde=1./(seg->W());
+                WTildeNormalized=TMath::Power((WTilde-m_WTilde)/s_WTilde,2);
+                h_WTildeNormalized->Fill(WTildeNormalized);
+                X2Hat=chi2Normalized + WTildeNormalized;
+                h_X2->Fill(X2Hat);
+
+                // Constant BT density cut:
+                if (X2Hat>eX2HatCut[i]) continue;
+
+                eHistYX->Fill(seg->Y(),seg->X());
+                eHistChi2W->Fill(seg->W(),seg->Chi2());
+                eHistTYTX->Fill(seg->TY(),seg->TX());
+                eHistTT->Fill(seg->Theta());
+            }
+
+
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+
+            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            for (int k=1; k<nbins-1; k++) {
+                if (eHistYX->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+            }
+
+            ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
+            if (gEDBDEBUGLEVEL>2) cout <<"Execute_ConstantBTX2Hat      Loop l= " << l << ":  for the eX2HatCut : " << eX2HatCut <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+
+            // Now the condition check:
+            if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
+                if (gEDBDEBUGLEVEL>2)  cout << "Execute_ConstantBTX2Hat      We reached the loop end due to good BT density level ... and break loop." << endl;
+                break;
+            }
+            else {
+                // Next step, tighten cut:
+                // eCutp1[i] += -0.005;
+                eX2HatCut[i] += -0.2;
+            }
+
+        } // of condition loop...
+
+        // Fill target profile histogram:
+        Float_t bincontentXY=histPatternBTDensity->GetMean();
+        eProfileBTdens_vs_PID_target->Fill(i,bincontentXY);
+
+    } // of Npattern loops..
+
+    eCutMethodIsDone[4]=kTRUE;
+
+    // Check if modified or original PVRec object should be returned:
+    if (eProfileBTdens_vs_PID_source_meanY>eBTDensityLevel) {
+        eNeedModified=kTRUE;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTX2Hat() Check if modified or original PVRec object should be returned: " << endl;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTX2Hat() " << eNeedModified << endl;
+    }
+
+
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(3,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    eHistTYTX->DrawCopy("colz");
+    c1->cd(4);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(5);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_target->SetLineStyle(2);
+    eProfileBTdens_vs_PID_target->Draw("profileZsame");
+    c1->cd(6);
+    eHistTT->DrawCopy("");
+    c1->cd();
+
+
+    histPatternBTDensity->Reset();
+    eHistYX->Reset();
+    eHistChi2W->Reset();
+
+    TCanvas* c2 = new TCanvas();
+    c2->Divide(3,1);
+    c2->cd(1);
+    h_chi2->Draw();
+    c2->cd(2);
+    h_WTilde->Draw();
+    c2->cd(3);
+    h_X2->Draw();
+    c2->cd();
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+    eProfileBTdens_vs_PID_target_meanX=eProfileBTdens_vs_PID_target->GetMean(1);
+    eProfileBTdens_vs_PID_target_meanY=eProfileBTdens_vs_PID_target->GetMean(2);
+    eProfileBTdens_vs_PID_target_rmsX=eProfileBTdens_vs_PID_target->GetRMS(1);
+    eProfileBTdens_vs_PID_target_rmsY=eProfileBTdens_vs_PID_target->GetRMS(2);
+
+    delete histPatternBTDensity;
+
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTX2Hat() Cuts are done and saved to obtain desired BT density. " << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTX2Hat() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTX2Hat()....done." << endl;
+
+
+    PrintCutType4();
+    return;
 }
 
 
@@ -1873,6 +2190,9 @@ void EdbPVRQuality::CreateEdbPVRec()
         cout << "CreateEdbPVRec()  Mode 0:" << eCutMethodIsDone[0] << endl;
         cout << "CreateEdbPVRec()  Mode 1:" << eCutMethodIsDone[1] << endl;
         cout << "CreateEdbPVRec()  Mode 2:" << eCutMethodIsDone[2] << endl;
+        cout << "CreateEdbPVRec()  Mode 3:" << eCutMethodIsDone[3] << endl;
+        cout << "CreateEdbPVRec()  Mode 4:" << eCutMethodIsDone[4] << endl;
+        cout << "CreateEdbPVRec()  Mode 5:" << eCutMethodIsDone[5] << endl;
         cout << "-----     " << endl;
         cout << "-----     ----------------------------------------------" << endl;
     }
@@ -1883,8 +2203,11 @@ void EdbPVRQuality::CreateEdbPVRec()
         return;
     }
     // Checks
-    if (eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE && eCutMethodIsDone[2]==kFALSE ) {
-        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    eCutMethodIsDone[0]==kFALSE && eCutMethodIsDone[1]==kFALSE && eCutMethodIsDone[2]==kFALSE  return."<<endl;
+    // should be revised, such that the condition reads: "at least one cutmethod had to be done."
+    Bool_t doStop=kFALSE;
+    for (int i=0; i<5; i++) if (eCutMethodIsDone[i]==kTRUE) doStop=kTRUE;
+    if (doStop!=kTRUE) {
+        cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    No eCutMethodIsDone[..] was done. STOP and DONT create a new EdbPVR."<<endl;
         return;
     }
 
@@ -1897,6 +2220,10 @@ void EdbPVRQuality::CreateEdbPVRec()
 
     Float_t agreementChi2;
     Int_t angularspacebin=0;
+
+    // Type 4:
+    Float_t m_chi2,s_chi2,m_WTilde, s_WTilde;
+    Float_t X2Hat,WTildeNormalized,WTilde,chi2Normalized,chi2;
 
     // This makes pointer copies of patterns with segments list.
     // wARNING: the couples structure and the tracking structure
@@ -1924,12 +2251,12 @@ void EdbPVRQuality::CreateEdbPVRec()
                 // Constant BT density cut:
                 if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
             }
-            else if (eCutMethodIsDone[1]==kTRUE) {
+            else if (eCutMethodIsDone[2]==kTRUE) {
                 // Constant Quality cut:
                 agreementChi2=TMath::Sqrt( ( (seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)*((seg->Chi2()-eAgreementChi2CutMeanChi2)/eAgreementChi2CutRMSChi2)  +   ((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW)*((seg->W()-eAgreementChi2CutMeanW)/eAgreementChi2CutRMSW) );
                 if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
             }
-            else if (eCutMethodIsDone[2]==kTRUE) {
+            else if (eCutMethodIsDone[3]==kTRUE) {
                 // Constant BT density cut also in angular space:
                 angularspacebin = GetAngularSpaceBin(seg);
                 /*
@@ -1940,6 +2267,21 @@ void EdbPVRQuality::CreateEdbPVRec()
                 */
                 if (seg->Chi2() >= seg->W()* eCutTTp1[i][angularspacebin] - eCutTTp0[i][angularspacebin]) continue;
                 /// ...............
+            }
+
+            else if (eCutMethodIsDone[4]==kTRUE) {
+                // Constant X2Hat cut:
+                m_chi2=eXi2Hat_m_chi2[i];
+                s_chi2=eXi2Hat_s_chi2[i];
+                m_WTilde=eXi2Hat_m_WTilde[i];
+                s_WTilde=eXi2Hat_s_WTilde[i];
+                // Calculate that Xi2Hat value, since we have now mean and rms of the distribution histograms:
+                chi2Normalized=TMath::Power((seg->Chi2()-m_chi2)/s_chi2,2);
+                WTilde=1./(seg->W());
+                WTildeNormalized=TMath::Power((WTilde-m_WTilde)/s_WTilde,2);
+                X2Hat=chi2Normalized + WTildeNormalized;
+
+                if (X2Hat>eX2HatCut[i]) continue;
             }
             else {
                 // do nothing;
@@ -2037,7 +2379,7 @@ Int_t EdbPVRQuality::CheckFilledXYSize()
 
 void EdbPVRQuality::Help()
 {
-    // Basic Help Function.
+    // Basic Help Function. Of course to be extended from time to time.
 
     cout << "----------------------------------------------" << endl;
     cout << "-----     void EdbPVRQuality::Help()     -----" << endl;
@@ -2053,6 +2395,19 @@ void EdbPVRQuality::Help()
     cout << "-----     On TODO list: to be interfaced with the libShower reconstruction mode." << endl;
     cout << "-----" << endl;
     cout << "-----" << endl;
+    cout << "-----     Constant" << endl;
+    cout << "-----     BT Density Method: ..." << endl;
+    cout << "-----" << endl;
+    cout << "-----     Constant" << endl;
+    cout << "-----     BT Quality Method: ..." << endl;
+    cout << "-----" << endl;
+    cout << "-----     Constant" << endl;
+    cout << "-----     Xi2Hat Method: Fill a Chi2() and a Wtilde=1/W() histogram. Get Mean and Sigma" << endl;
+    cout << "-----                  : of the two Histograms. Then construct a chi-square like" << endl;
+    cout << "-----                  : variable: Xi2Hat=((Chi2-meanChi2)/sigmaChi2)^2         " << endl;
+    cout << "-----                  : variable:       +((Wtilde-meanWtilde)/sigmaWtilde)^2   " << endl;
+    cout << "-----                  : Cut is then done by reducing the Xi2Hat limit by 0.1" << endl;
+    cout << "-----                  : starting from an initial value of 5.0" << endl;
     cout << "-----" << endl;
     cout << "-----  " << endl;
 
