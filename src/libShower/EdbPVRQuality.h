@@ -52,7 +52,7 @@ private:
     Float_t		eBTDensityLevel;
     Float_t		eBTDensityLevelAngularSpace[20];
 
-    Bool_t		eCutMethodIsDone[3];
+    Bool_t		eCutMethodIsDone[4];
     Bool_t		eBTDensityLevelCalcMethodMC;
     Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
 
@@ -82,7 +82,10 @@ private:
     // eCutMethod == 0: Constant BT density
     Float_t	eCutp0[114];
     Float_t	eCutp1[114];
-    // eCutMethod == 1: Constant Chi2W quality
+    // eCutMethod == 1: Constant BT density also in tangens theta space
+    Float_t	eCutTTp0[114][20];
+    Float_t	eCutTTp1[114][20];
+    // eCutMethod == 2: Constant Chi2W quality
     Float_t	eCutDistChi2[114];
     Float_t	eCutDistW[114];
     Float_t 	eAgreementChi2WDistCut[114];
@@ -90,9 +93,15 @@ private:
     Float_t	eAgreementChi2CutRMSChi2;
     Float_t 	eAgreementChi2CutMeanW;
     Float_t 	eAgreementChi2CutRMSW;
-    // eCutMethod == 2: Constant BT density also in tangens theta space
-    Float_t	eCutTTp0[114][20];
-    Float_t	eCutTTp1[114][20];
+    // eCutMethod == 3: Constant Chi2W quality also in tangens theta space
+    /// TO BE IMPLEMENTED HERE ...
+
+    // eCutMethod == 4: Constant X2Hat BT density
+    Float_t	eX2Hat;
+    Float_t	eX2HatCut;
+    // eCutMethod == 5: Constant X2Hat BT density also in tangens theta space
+    /// TO BE IMPLEMENTED HERE ...
+
 
 protected:
 
@@ -223,8 +232,11 @@ public:
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
     void Execute_ConstantBTDensity();
-    void Execute_ConstantQuality();
+    void Execute_ConstantBTQuality();
+    void Execute_ConstantBTX2Hat();
     void Execute_ConstantBTDensityInAngularBins();
+    void Execute_ConstantBTQualityInAngularBins();
+    void Execute_ConstantBTX2HatInAngularBins();
 
     TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
@@ -250,14 +262,19 @@ public:
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
 //     Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
+    /// HERE ANOTERH FUNCTION ???
+
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 
     void Print();
     void PrintCutType();
-    void PrintCutType0();
-    void PrintCutType1();
-    void PrintCutType2();
+    void PrintCutType0(); // Constant BT density
+    void PrintCutType1(); // Constant BT density
+    void PrintCutType2(); // Constant BT quality
+    void PrintCutType3(); // Constant BT quality
+    void PrintCutType4(); // Constant BT X2Hat
+    void PrintCutType5(); // Constant BT X2Hat
     void Help();
     ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };
