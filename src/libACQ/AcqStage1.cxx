@@ -918,3 +918,13 @@ int AcqLight::ReadTemperature()
 	flex_read_adc_rtn(BoardId, 0x54, &ADC);
 	return ADC;
 }
+
+//_____________________________________________________________________________ 
+int AcqLight::ReadLightLevel()
+{
+	// Reads ADC channel 4 normally connected to termometer
+	i16 ADC;
+	flex_read_dac_rtn(BoardId, 0x34, &ADC);
+	LightLevel=ADC;
+	return ADC;
+}

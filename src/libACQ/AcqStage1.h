@@ -42,7 +42,6 @@
 #endif
 
 #include "TObject.h"
-#include "TCanvas.h"
 #include "EdbAffine.h"
 #include "EdbFiducial.h"
 
@@ -125,6 +124,7 @@ class AcqLight : public TObject {
   void ON();
   void OFF();
   int ReadTemperature();
+  int ReadLightLevel();
 
   ClassDef(AcqLight,1)  
 };
