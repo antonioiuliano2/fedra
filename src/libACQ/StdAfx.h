@@ -3,6 +3,13 @@
 //      are changed infrequently
 //
 
+// below 3 lines are added by Aki in order to avoid compilation errors.
+// 0x0500 is actually for Windwos 2000, however, only this can solve the problem...
+// this is tested with VS2005 and VS2008.
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+
 #if !defined(AFX_STDAFX_H__71B46BDE_4B55_413C_8746_A37F551200F7__INCLUDED_)
 #define AFX_STDAFX_H__71B46BDE_4B55_413C_8746_A37F551200F7__INCLUDED_
 
