@@ -26,6 +26,7 @@
 #include "TROOT.h"
 #include "TSystem.h"
 
+AcqStage1 *gStage=0;
 
 //GLOBALS AND LOCAL FUNCTIONS//////
 //ErrorHandler - to print the error description to screen		
@@ -160,6 +161,8 @@ AcqStage1::AcqStage1()
 	Y->NominalReference=33793;
 	eAffine=NULL;
 	AbsCoords=false;
+	
+	gStage=this;
 }
 //_____________________________________________________________________________ 
 bool  AcqStage1::Initialize()

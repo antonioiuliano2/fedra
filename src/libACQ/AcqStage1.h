@@ -163,6 +163,6 @@ class AcqStage1 : public TObject {
   ClassDef(AcqStage1,1)  
 };
 
-
+R__EXTERN AcqStage1 *gStage;
 
 #endif /* ROOT_AcqStage1 */
