@@ -47,13 +47,15 @@ class EdbTrackAssembler: public TObject {
                           int ny, float ymi, float yma,  int ncell);
   void        InitTrZMap();
   void        FillTrZMap();
-  void        ExtrapolateTracksToZ(float z);
+  void        ExtrapolateTracksToZ(float z, int nsegmin=0);
   void        AddPattern(EdbPattern &p);
   EdbTrackP   *AddSegment(EdbSegP &s);                  //owner of the segments!!!
   EdbTrackP   *AddSegmentAsTrack(EdbSegP &s);
   float       ProbSeg(EdbSegP &s1, EdbSegP &s2 );
   void        RecalculateSegmentsProb(EdbTrackP &t);
   bool        AcceptDZGap(EdbTrackP &t, float z);
+  
+  void CheckPatternAlignment(EdbPattern &p, int nsegmin);
   
   TObjArray   &Tracks() {return eTracks;}
   
@@ -65,6 +67,7 @@ class EdbScanTracking: public TObject {
 
  public:
   EdbScanProc *eSproc;
+  bool         eDoRealign;
   
  public:
   EdbScanTracking(){}

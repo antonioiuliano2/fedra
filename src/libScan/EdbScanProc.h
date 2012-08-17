@@ -190,6 +190,7 @@ public:
 
   int     AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff=0);
   void    AlignRawSet(EdbID id1, EdbID id2, TEnv &cenv);
+  void    UpdateSetWithAff(EdbID idset, EdbAffine2D aff);
   void    UpdateSetWithAff( EdbID id, EdbID id1, EdbID id2 );
   void    UpdateSetWithAff( EdbID id,  EdbID idu );
   void    UpdateSetWithPlatePar( EdbID id );

@@ -292,6 +292,11 @@ int EdbScanProc::ReadManFoundTracks(EdbScanSet &sc,  EdbPVRec &ali, int flag)
       count++;
     }
   }
+  
+  n = ali.Ntracks();
+  for(int i=0; i<n; i++) {
+    ali.GetTrack(i)->SetCounters();
+  }
 
   LogPrint(sc.eB.ID(),2,"ReadManFoundTracks","%d  segments read\n",count );
 
@@ -377,7 +382,7 @@ bool EdbScanProc::MakeAFFSet(EdbScanSet &sc)
   // create AFF dir if do not exist 
   // put all affine transformations inside for each plates couple
 
-  if(!CheckAFFDir(sc.eB.ID())) return false;
+  if(!CheckAFFDir(sc.eID.eBrick)) return false;
   if(sc.eIDS.GetEntries()<2) return 0;
   EdbID *id1,*id2;
   for(int i=0; i<sc.eIDS.GetEntries()-1; i++) {
@@ -981,12 +986,13 @@ bool EdbScanProc::UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *
   EdbAffine2D &aff = *(l.GetAffineXY());
   if(aff0) aff.Transform(aff0);
 
-  sprintf(card,"AFFXY \t %d \t %f %f %f %f %f %f", l.ID(), 
-	  aff.A11(),aff.A12(),aff.A21(),aff.A22(),aff.B1(),aff.B2() );
+  //sprintf(card,"AFFXY \t %d \t %f %f %f %f %f %f", l.ID(), 
+   sprintf(card,"AFFXY \t %d \t %g %g %g %g %g %g", l.ID(), 
+                  aff.A11(),aff.A12(),aff.A21(),aff.A22(),aff.B1(),aff.B2() );
   if(!AddParLine(parout.Data(),card)) return false;
 
   EdbAffine2D &afftxy = *(l.GetAffineTXTY());
-  sprintf(card,"AFFTXTY \t %d \t %f %f %f %f %f %f", l.ID(), 
+  sprintf(card,"AFFTXTY \t %d \t %g %g %g %g %g %g", l.ID(), 
 	  afftxy.A11(),afftxy.A12(),afftxy.A21(),afftxy.A22(),afftxy.B1(),afftxy.B2() );
   if(!AddParLine(parout.Data(),card)) return false;
   
@@ -2530,6 +2536,23 @@ void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idset1, EdbID idset2)
 }
 
 //______________________________________________________________________________
+void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbAffine2D aff)
+{
+  // in this function the geometry of the brick of idset is updated with the given affine transformations
+  EdbScanSet *ss  = ReadScanSet(idset);    if(!ss)  return;
+  int n = ss->eIDS.GetEntries();
+  for(int i=0; i<n; i++) {
+    EdbID *id   = ss->GetID(i);
+    EdbPlateP *p = ss->GetPlate(id->ePlate);
+    if(p) {
+      p->GetAffineXY()->Transform(&aff);
+    }
+  }
+  WriteScanSet( idset ,*ss );
+  SafeDelete(ss);
+}
+
+//______________________________________________________________________________
 void EdbScanProc::UpdateSetWithAff(EdbID idset, EdbID idsetu )
 {
   // in this function the geometry of the brick of idset is updated with the affine transformations
@@ -2922,10 +2945,13 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
 {
   EdbRunAccess r;
   r.eInvertSides=cenv.GetValue("fedra.link.read.InvertSides"      , 0);
+  r.eHeaderCut = cenv.GetValue("fedra.link.read.HeaderCut"      , "1");
+  r.eHeaderCut.Print();
   InitRunAccessNew(r,id,plate);
   r.eAFID        =  cenv.GetValue("fedra.link.AFID"      , 1);
   r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
   r.SetPixelCorrection( cenv.GetValue("fedra.link.PixelCorr"      , "0 1. 1.") );
+  r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);
 
   EdbPattern p1, p2;
   p1.SetScanID(id); p1.SetSide(2);
