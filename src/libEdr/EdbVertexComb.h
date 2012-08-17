@@ -20,7 +20,7 @@ class EdbTopology: public TObject {
     Float_t     DZ();
     EdbVertex  *AddVertex( EdbVertex *v ) { eVertices.Add(v); return v; }
     EdbVertex  *GetVertex( int i ) const { return (EdbVertex *)eVertices.At(i); }
-    EdbTrackP  *GetTrack( int i ) const { return (EdbTrackP *)eTracks.At(i); }
+    EdbTrackP  *GetTrack( int i )  const { return (EdbTrackP *)eTracks.At(i); }
     void        AddSingleTracks( TObjArray &tracks ) { eTracks.AddAll(&tracks); }
     void        Print();
     void        PrintTracks();
@@ -28,7 +28,8 @@ class EdbTopology: public TObject {
     char       *VertexStr(EdbVertex &v);
     void        OrderVtxByZ();
     bool        IsEqual(EdbTopology &t);
-       
+    Int_t       MaxV();
+
     ClassDef(EdbTopology,1) //class to keep the reconstructed topology
 };
 
@@ -68,7 +69,10 @@ class EdbVertexComb: public TObject {
 //    void        SelectSortVertices();
 
     void       FormVertices();
-    void       FindTopologies();
+    int        FindTopologies();
+    void       PrintTopologies();
+    
+    EdbTopology *GetTopology(int i) const {return ((EdbTopology*)(eTopologies.At(i)));}
     
     int         Ntr() const {return eTracks.GetEntries();}
     int         Nvtx() const {return eVertices.GetEntries();}

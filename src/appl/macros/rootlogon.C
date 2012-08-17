@@ -22,7 +22,7 @@ void rootlogon()
   loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlib( "libScan"  , "EdbScanProc" );          // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
-//   loadlibEOracle();                               // optional
+  loadlibEOracle();                               // optional
   loadlib( "libEmr", "EdbEmrFileAccess" );        // optional
 
   loadlib( "libEve", "TEveVector" );              // optional required for EDA

@@ -33,12 +33,13 @@ void set_default(TEnv &cenv)
   // default parameters for tracking
   cenv.SetValue("fedra.readCPcut"       , "eCHI2P<2.5&&s.eW>13&&eN1==1&&eN2==1&&s1.eFlag>=0&&s2.eFlag>=0");
   cenv.SetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" );
-  cenv.SetValue("fedra.track.npass"     ,    2 );
+  cenv.SetValue("fedra.track.npass"     ,    1 );
   cenv.SetValue("fedra.track.minPlate"  ,-999 );
   cenv.SetValue("fedra.track.maxPlate"  , 999 );
   cenv.SetValue("fedra.track.refPlate"  , 999 );
   cenv.SetValue("fedra.track.nsegmin"   , 2 );
   cenv.SetValue("fedra.track.ngapmax"   , 4 );
+  cenv.SetValue("fedra.track.DZgapmax"  , 5000. );
   cenv.SetValue("fedra.track.DRmax"     , 45. );
   cenv.SetValue("fedra.track.DTmax"     , 0.07 );
   cenv.SetValue("fedra.track.Sigma0" , "3 3 0.005 0.005");

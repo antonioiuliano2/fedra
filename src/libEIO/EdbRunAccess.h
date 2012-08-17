@@ -9,6 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TH2F.h"
+#include "TCut.h"
 #include "EdbRun.h"
 #include "EdbCell2.h"
 #include "EdbPattern.h"
@@ -31,6 +32,9 @@ class EdbRunAccess : public TObject {
   Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
   Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data
   Float_t     ePixelCorrY;
+
+  TCut         eHeaderCut;  // header cut to be applied in run initialization
+  Int_t        eTracking;   // to test tracking alorithm: -1-ignored(def),0/1 - trackings to accept
   
  private:
   TString  eRunFileName;

@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
 
 
-//°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    int nlayers = 0;
    int ntracks = 0;
    int ngrains = 0;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
    GrainSize *= ngrains ;
 
    int TotalSize = 0;
-   printf("\t\tstart \t end  \t  bytes\n",   TotalSize,TotalSize-1+HdrSize,   HdrSize)  ; TotalSize += HdrSize;
+   printf("\t\tstart \t end  \t  bytes\n");
    printf("Header Size: %7X %7X %9d\n",       TotalSize,TotalSize-1+HdrSize,   HdrSize)  ; TotalSize += HdrSize;
    printf("Frag Size:   %7X %7X %9d\n",       TotalSize,TotalSize-1+FragSize, FragSize)  ; TotalSize += FragSize;
    printf("Views Size:  %7X %7X %9d\t| %7d views  * %4d B \n", TotalSize,TotalSize-1+ViewSize,  ViewSize, nviews,    ViewSize/nviews) ; TotalSize += ViewSize;

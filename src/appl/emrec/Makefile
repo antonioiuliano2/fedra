@@ -5,6 +5,8 @@ include $(FEDRA_ROOT)/src/config/RootDef.mk
 
 TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emalign$(ExeSuf)      \
+		$(BIN_DIR)/emaligns2s$(ExeSuf)      \
+		$(BIN_DIR)/emalignraw$(ExeSuf)      \
 		$(BIN_DIR)/makescanset$(ExeSuf)      \
 		$(BIN_DIR)/emtra$(ExeSuf)      \
 		$(BIN_DIR)/emshow$(ExeSuf)      \

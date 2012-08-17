@@ -263,18 +263,40 @@ void EdbDisplay::GuessRange(float margZmin,float margZmax,float margR )
 
   float xmin=0,xmax=1,ymin=0,ymax=1,zmin=0,zmax=1;
 
+  if (eArrSegG) {
+    EdbSegG *s=0;
+    for(int i=0; i<eArrSegG->GetEntries(); i++) {
+      s = (EdbSegG *)(eArrSegG->At(i));
+      if(!s) continue;
+      if(xmax-xmin<margR) {
+        xmax=s->X()+margR;
+        xmin=s->X()-margR;
+        ymax=s->Y()+margR;
+        ymin=s->Y()-margR;
+        zmax=s->Z()+margZmax;
+        zmin=s->Z()-margZmin;
+      }
+      if(xmax<s->X()+margR) xmax=s->X()+margR;
+      if(xmin>s->X()-margR) xmin=s->X()-margR;
+      if(ymax<s->Y()+margR) ymax=s->Y()+margR;
+      if(ymin>s->Y()-margR) ymin=s->Y()-margR;
+      if(zmax<s->Z()+margZmax) zmax=s->Z()+margZmax;
+      if(zmin>s->Z()-margZmin) zmin=s->Z()-margZmin;
+    }
+  }
+  
   if (eArrSegP) {
     EdbSegP *s=0;
     for(int i=0; i<eArrSegP->GetEntries(); i++) {
       s = (EdbSegP *)(eArrSegP->At(i));
       if(!s) continue;
       if(xmax-xmin<margR) {
-	xmax=s->X()+margR;
-	xmin=s->X()-margR;
-	ymax=s->Y()+margR;
-	ymin=s->Y()-margR;
-	zmax=s->Z()+margZmax;
-	zmin=s->Z()-margZmin;
+        xmax=s->X()+margR;
+        xmin=s->X()-margR;
+        ymax=s->Y()+margR;
+        ymin=s->Y()-margR;
+        zmax=s->Z()+margZmax;
+        zmin=s->Z()-margZmin;
       }
       if(xmax<s->X()+margR) xmax=s->X()+margR;
       if(xmin>s->X()-margR) xmin=s->X()-margR;
@@ -1733,6 +1755,7 @@ void EdbVertexG::SetAsWorking()
 //_____________________________________________________________________________
 void EdbTrackG::SetAsWorkingVertex()
 {
+  printf("1\n");
   EdbTrackP *tr = 0;
   EdbDisplay *eDs = 0;
   EdbVTA *vta = 0;
@@ -1744,71 +1767,72 @@ void EdbTrackG::SetAsWorkingVertex()
     if (eDs->eWait_Answer) return;
     if (eDs->eWorking)
     {
-	eDs->DialogModifiedVTX();
-	return;
+      eDs->DialogModifiedVTX();
+      return;
     }
     if (eDs->eVertex)
     {
-	if (eDs->eVertex->ID()<0 && eDs->eVertex->N() >= 2)
-	{
-	    eDs->DialogModifiedVTX();
-	    return;
-	}
+      if (eDs->eVertex->ID()<0 && eDs->eVertex->N() >= 2)
+      {
+        eDs->DialogModifiedVTX();
+        return;
+      }
     }
     if (eDs->eVertex)
     {
-    	eDs->CancelModifiedVTX();
+      eDs->CancelModifiedVTX();
     }
     if (eDs->eSegPM)
     { 
-	eDs->ClearSegmentEnv();
+      eDs->ClearSegmentEnv();
     }
     if (GetMarkerColor() == kRed) zpos = 0;
     if ((old = eTr->VertexS()) && (zpos == 1))
     {
     
-	    printf("Track alredy connected to a vertex by this edge!\n");
-	    fflush(stdout);
-	    return;
+      printf("Track alredy connected to a vertex by this edge!\n");
+      fflush(stdout);
+      return;
     }
     if ((old = eTr->VertexE()) && (zpos == 0))
     {
     
-	    printf("Track alredy connected to a vertex by this edge!\n");
-	    fflush(stdout);
-	    return;
+      printf("Track alredy connected to a vertex by this edge!\n");
+      fflush(stdout);
+      return;
     }
     eVs = new EdbVertex();
     if ((vta = (eD->eVerRec)->AddTrack(*eVs, eTr, zpos)))
     {
-	eTr->AddVTA(vta);
+      eTr->AddVTA(vta);
     }
     else
     {
-	delete eVs;
-	printf("Can't connect track to a vertex!\n");
-	fflush(stdout);
-	return;
+      delete eVs;
+      printf("Can't connect track to a vertex!\n");
+      fflush(stdout);
+      return;
     }
     double dz = 0.;
     EdbSegP *seg = 0;
     if( zpos == 0 )
     {
-             seg = eTr->TrackZmax();
-	     dz = TMath::Abs(seg->DZ());
+      seg = eTr->TrackZmax();
+      dz = TMath::Abs(seg->DZ());
     }
     else
     {
-	     seg = eTr->TrackZmin();
+      seg = eTr->TrackZmin();
     }
     if(!seg)
     {
-	eVs->SetXYZ(eTr->X(), eTr->Y(), eTr->Z());
+      eVs->SetXYZ(eTr->X(), eTr->Y(), eTr->Z());
     }
     else
     {
-	eVs->SetXYZ(seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
+      eVs->SetXYZ(seg->X()+seg->TX()*dz, seg->Y()+seg->TY()*dz, seg->Z()+dz);
     }
+    printf("2\n");
     eVs->SetID(-1);
     SetMarkerColor(kGreen);
     eDs->eSegment = 0;
@@ -1819,35 +1843,36 @@ void EdbTrackG::SetAsWorkingVertex()
     (eDs->eCreatedTracks).Clear();
     if (!(eDs->eArrV)) 
     {
-	eDs->eArrV = new TObjArray(20);
-	eDs->eArrV->Add((TObject *)eVs);
-	if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
-	for (int i=0; i<eVs->N(); i++)
-	{
-	    tr = eVs->GetTrack(i);
-	    if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
-	}
-	eDs->Draw();
+      eDs->eArrV = new TObjArray(20);
+      eDs->eArrV->Add((TObject *)eVs);
+      if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+      for (int i=0; i<eVs->N(); i++)
+      {
+        tr = eVs->GetTrack(i);
+        if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
+      }
+      eDs->Draw();
     }
     else
     {
-	if (!((eDs->eArrV)->FindObject(eVs)))
-	{
-	    eDs->eArrV->Add(eVs);
-	    if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
-	    for (int i=0; i<eVs->N(); i++)
-	    {
-		tr = eVs->GetTrack(i);
-		if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
-	    }
-	    eDs->Draw();
-	}
+      if (!((eDs->eArrV)->FindObject(eVs)))
+      {
+        eDs->eArrV->Add(eVs);
+        if (!(eDs->eArrTr))  eDs->eArrTr = new TObjArray(20);
+        for (int i=0; i<eVs->N(); i++)
+        {
+          tr = eVs->GetTrack(i);
+          if(!(eDs->eArrTr->FindObject(tr))) eDs->eArrTr->Add(tr);
+        }
+        eDs->Draw();
+      }
     }
     //eD->DrawEnv();
     eD->DrawAcc();
     eD->DrawCan();
     eD->DrawUnd();
     eD->Draw();
+    printf("3\n");
   }
 }
 

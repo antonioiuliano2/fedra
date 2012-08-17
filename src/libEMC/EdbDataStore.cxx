@@ -473,7 +473,7 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     run.GetView()->SetNframes(1,0);
     for(int ns=0;ns<ptop->N();++ns){
       seg=ptop->GetSegment(ns);
-      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),1,seg->W(),seg->ID());
+      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),1,(int)(seg->W()),seg->ID());
     }
     run.AddView();
     run.GetView()->Clear();
@@ -482,7 +482,7 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     run.GetView()->SetNframes(0,1);
     for(int ns=0;ns<pbot->N();++ns){
       seg=pbot->GetSegment(ns);
-      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),2,seg->W(),seg->ID());
+      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),2,(int)(seg->W()),seg->ID());
     }
     run.AddView();
     printf("close\n");

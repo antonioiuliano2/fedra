@@ -11,6 +11,7 @@
 #include "TSystem.h"
 #include "TArrayL.h"
 #include "TArrayI.h"
+#include "TEventList.h"
 #include "EdbMath.h"
 #include "EdbSegment.h"
 #include "EdbCluster.h"
@@ -78,6 +79,8 @@ void EdbRunAccess::Set0()
   eHViewXY[2].InitH2(500,-250,250, 500, -250, 250);
   eDoPixelCorr=0;
   ePixelCorrX = ePixelCorrY= 1.;
+  eHeaderCut="1";
+  eTracking=-1;
 }
 
 ///_________________________________________________________________________
@@ -461,11 +464,13 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
 
   EdbSegP    segP;
   EdbView    *view = eRun->GetView();
-  int nviews = eRun->GetEntries();
+  //int nviews = eRun->GetEntries();
+  int nviews = eVP[side]->N();
   int   nseg=0;
   int   nsegV;
   
-  for(int entry=0; entry<nviews; entry++) {
+  for(int ie=0; ie<nviews; ie++) {
+    int entry=eVP[side]->GetSegment(ie)->ID();
     if(eCLUST)       {
       view = eRun->GetEntry(entry,1,1,1);
       view->AttachClustersToSegments();
@@ -771,6 +776,13 @@ int EdbRunAccess::FillVP()
   EdbViewHeader  *head = view->GetHeader();
 
   int nentr = eRun->GetEntries();
+
+  eRun->GetTree()->Draw(">>lst", eHeaderCut );
+  TEventList *lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
+  if(!lst) {Log(1,"EdbRunAccess::FillVP","ERROR!: events list (lst) did not found!"); return 0;}
+  nentr =lst->GetN();
+
+
   if( eVP[1] ) delete  eVP[1];
   if( eVP[2] ) delete  eVP[2];
   eVP[1] = new EdbPattern( 0.,0.,   0., nentr);
@@ -783,7 +795,8 @@ int EdbRunAccess::FillVP()
 
   int side;
   int nseg,ncl;
-  for(int iv=0; iv<nentr; iv++ ) {
+  for(int ie=0; ie<nentr; ie++ ) {
+    int iv = lst->GetEntry(ie);
     view = eRun->GetEntry(iv,1,0,0,0,0);
     
     nseg = head->GetNsegments();
@@ -824,6 +837,9 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   EdbSegment *seg = view->GetSegment(id);
 
   if( !PassCuts(side,*seg) )     return false;
+  
+  if(eTracking>=0)
+    if((seg->GetUniqueID()>>16)!=eTracking) return false;
 
   float pix, chi2;
   if(eCLUST) {

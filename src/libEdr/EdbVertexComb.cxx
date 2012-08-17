@@ -187,7 +187,7 @@ void EdbVertexComb::SetTracksErrors(TObjArray &tracks, EdbScanCond &cond)
 }
 
 //______________________________________________________________________________
-void EdbVertexComb::FindTopologies()
+int EdbVertexComb::FindTopologies()
 {
   FormVertices();
   eTopologies.Clear();
@@ -195,10 +195,16 @@ void EdbVertexComb::FindTopologies()
   SortTopologies(eTopologies);
   ClearDoublets(eTopologies);
   int n = eTopologies.GetEntries();
-  
-  printf("\nEdbVertexComb::FindTopologies: %d input tracks, upto %d vtx to search  -> %d topologies found\n", eTracks.GetEntries(), eRecursionMax, n);
+  Log(2,"EdbVertexComb::FindTopologies"," %d input tracks, upto %d vtx to search  -> %d topologies found", eTracks.GetEntries(), eRecursionMax, n);
+  return n;
+}
+
+//______________________________________________________________________________
+void EdbVertexComb::PrintTopologies()
+{
+  int n = eTopologies.GetEntries();
   PrintTracks();
-  for(int i=0; i<n; i++) ((EdbTopology*)(eTopologies.At(i)))->Print();
+  for(int i=0; i<n; i++) GetTopology(i)->Print();
 }
 
 //______________________________________________________________________________

@@ -288,6 +288,8 @@ class EdbPVRec : public EdbPatternsVolume {
   float        Xmax();
   float        Ymin();
   float        Ymax();
+  //float        Zmin();
+  //float        Zmax();
   
   void 		PrintSummary();
 

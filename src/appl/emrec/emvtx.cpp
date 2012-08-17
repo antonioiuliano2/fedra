@@ -15,7 +15,7 @@ using namespace std;
 using namespace TMath;
 
 void vtxComb(TObjArray &tracks, TObjArray &aux_tr, TEnv &env);
-void test_EdbVertexComb(TObjArray &tracks);
+void test_EdbVertexComb(TObjArray &tracks, TEnv &env);
 
 
 //-----------------------------------------------------------------------------
@@ -306,7 +306,7 @@ EdbVertex *vtxCS(const char *file, TEnv &env)
   fclose(f);
   v->Print();
 
-  test_EdbVertexComb(tracks);
+  test_EdbVertexComb( tracks, env );
   return v;
 }
 
@@ -444,25 +444,26 @@ void vtxBTcomb(const char *file, TEnv &env)
   if(ntr < 0)  { printf("bad file - skip\n"); return; }
   if(ntr < 2) return;
   MakeScanCondBT(gCond);
-  vtxComb(tracks,aux_tr,env);
-  test_EdbVertexComb(tracks);
+  //vtxComb(tracks,aux_tr,env);
+  test_EdbVertexComb(tracks, env);
 }
 
 ///-----------------------------------------------------------------------------
-void test_EdbVertexComb(TObjArray &tracks)
+void test_EdbVertexComb(TObjArray &tracks, TEnv &env)
 {
   EdbVertexComb vcomb( tracks );
-  vcomb.eVPar.eImpMax     = 5000.;       // used in EstimateVertexPosition!
+  gCond.SetSigma0( env.GetValue("emvtx.comb.Sigma0", "1. 1. 0.002 0.002" ) );
+  vcomb.SetTracksErrors(gCond);
+  vcomb.eVPar.eImpMax     = env.GetValue("emvtx.comb.maxImp", 1000. );     // used in EstimateVertexPosition!
+  vcomb.eVPar.eProbMin    = env.GetValue("emvtx.comb.ProbMin", 0.00000001 );
   vcomb.eVPar.eUseMom     = true;
   vcomb.eVPar.eUseSegPar  = false;     // use fitted track parameters
   vcomb.eVPar.eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
   vcomb.eVPar.eUseLimits  = false;     // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
-  vcomb.SetTracksErrors(gCond);
-  vcomb.eZ0 = -10000;                  // the firs approximation for the vertex z
-  int   nprongMin=2;
-  float probMin = 1e-10;
-  vcomb.SelectSortVertices( nprongMin, probMin );
-  vcomb.PrintSelectedVTX();
+  vcomb.eZ0               = env.GetValue("emvtx.comb.Z0", -10000 );;                  // the first approximation for the vertex z
+  vcomb.eRecursionMax     = env.GetValue("emvtx.comb.NVmax", 3 );
+  vcomb.eProbMinV         = env.GetValue("emvtx.comb.ProbMinV", 0.001 );
+  vcomb.FindTopologies();
 }
 
 //-----------------------------------------------------------------------------
@@ -511,7 +512,7 @@ int main(int argc, char* argv[])
   
   set_default(cenv);
   cenv.ReadFile("emvtx.rootrc" ,kEnvLocal);
-  cenv.Print();
+  //cenv.Print();
   
   if(do_fcs) 
   {

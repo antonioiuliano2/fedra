@@ -207,6 +207,9 @@ class EdbSegG : public TPolyLine3D {
   virtual ~EdbSegG(){}
 
   void SetSeg(const EdbSegP *s) {eSeg=s;}
+  float X() { return GetP()[0]; }
+  float Y() { return GetP()[1]; }
+  float Z() { return GetP()[2]; }
 
   virtual void          DumpSegment(); 	   // *MENU*
   virtual void          InspectSegment();  // *MENU*
