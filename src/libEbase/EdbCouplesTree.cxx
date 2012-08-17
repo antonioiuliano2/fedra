@@ -79,9 +79,9 @@ bool EdbCouplesTree::InitCouplesTree(const char *name, const char *fname, Option
   if(fname) {                                      // if fname==0 - assumed that file is already opened 
     //TFile *f = new TFile(fname, mode);
     //printf("\n ROOT dir before:\n"); gDirectory->ls();  printf("\n");
-   TFile *f = TFile::Open(fname, mode);
+    TFile *f = TFile::Open(fname, mode);
     //printf("\n ROOT dir after:\n"); gDirectory->ls();  printf("\n");
-   if (!f->IsOpen()) return 0;
+    if (!f->IsOpen()) return 0;
     f->cd();
   }
   if( (strcmp(mode,"READ")==0)||(strcmp(mode,"UPDATE")==0)) {

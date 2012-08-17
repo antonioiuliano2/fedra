@@ -24,6 +24,6 @@ bool EdbID::Set(const char *id_string)
 char *EdbID::AsString() const
 {
   char *str = new char[32];
-  sprintf(str,"%d.%d.%d.%d",eBrick,ePlate,eMajor,eMinor );
+  sprintf(str,"%6.6d.%d.%d.%d",eBrick,ePlate,eMajor,eMinor );
   return str;
 }

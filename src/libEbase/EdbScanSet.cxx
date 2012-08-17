@@ -24,6 +24,20 @@ EdbScanSet::EdbScanSet(int id)
 }
 
 //----------------------------------------------------------------
+void EdbScanSet::UpdateIDS(int brick, int ma, int mi)
+{
+  // update all identifiers in dataset with (brik,ma,mi) keeping plateids unchanged
+  
+  eID.Set(brick, eID.ePlate, ma, mi);
+  TIter next( &(eIDS) );
+  TObject *obj=0;
+  while((obj = next())) {
+    EdbID *id=(EdbID*)obj;
+    id->Set(brick, id->ePlate, ma, mi);
+  }
+}
+
+//----------------------------------------------------------------
 void EdbScanSet::Copy(EdbScanSet &sc)
 {
   // copy from ss to this

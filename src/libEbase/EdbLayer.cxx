@@ -75,7 +75,11 @@ void EdbLayer::ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbA
 {
   eShr *= shr;
   eZcorr += zcorr;
+  Log(3,"EdbLayer::ApplyCorrections","aff before: %s", eAffXY.AsString());
+  Log(3,"EdbLayer::ApplyCorrections","corr      : %s", affxy.AsString());
   eAffXY.Transform(affxy);
+  Log(3,"EdbLayer::ApplyCorrections","aff after: %s", eAffXY.AsString());
+  Log(3,"EdbLayer::ApplyCorrections","afftxty  : %s", afftxty.AsString());
   eAffTXTY.Transform(afftxty);
 }
 

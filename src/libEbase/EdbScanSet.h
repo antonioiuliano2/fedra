@@ -65,6 +65,7 @@ class EdbScanSet : public TNamed
 
   void WriteGeom(const char *fname);
   void ReadGeom( const char *fname);
+  void UpdateIDS(int brick, int ma, int mi);
 
   ClassDef(EdbScanSet,2)  // 
 };
