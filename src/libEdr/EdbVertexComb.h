@@ -28,7 +28,7 @@ class EdbTopology: public TObject {
     char       *VertexStr(EdbVertex &v);
     void        OrderVtxByZ();
     bool        IsEqual(EdbTopology &t);
-    Int_t       MaxV();
+    Int_t       MaxV(){return 0;}
 
     ClassDef(EdbTopology,1) //class to keep the reconstructed topology
 };
