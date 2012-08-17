@@ -76,16 +76,23 @@ class EdbAlignmentV : public TObject
   Int_t           Ncp() {return  CheckEqualArr( eS[0], eS[1]); }
   void            AddSegCouple(EdbSegP *s1, EdbSegP *s2) { eS[0].Add(s1); eS[1].Add(s2); }
   Float_t         CalcMeanDiff(int ivar);
+  Float_t         CalcFractMeanDiff(int ivar, float fraction);
+  Float_t           FindDensityPeak(TArrayF &arr, float fraction);
   Float_t         CalcMeanShr(float tmin=0.1, float tmax=2.);
   Float_t         CalcMeanDZ(float tmin=0.1, float tmax=2.);
   Int_t           CalcApplyMeanDiff();
-  //int             FillH1Diff(int ivar, EdbH1 &h1);
+  Int_t           CalcApplyFractMeanDiff();
+        //int             FillH1Diff(int ivar, EdbH1 &h1);
   
   Int_t           FindDiff(TObjArray &arr1, TObjArray &arr2, float dvlim[4], float dvfound[4] );
   Int_t           FindCorrDiff(float dvsame[4], int side=0, int nlim=10);
+  float           FineCorrZ() { return FineCorrZ(eS[0], eS[1]); }
   float           FineCorrZ(TObjArray &sel1, TObjArray &sel2);
   float           FineCorrPhi(TObjArray &sel1, TObjArray &sel2);
   static Int_t    CheckEqualArr(TObjArray &arr1, TObjArray &arr2);
+  
+  Int_t           CalculateAffXY( EdbAffine2D &aff) {return CalculateAffXY( eS[0], eS[1], aff);}
+  Int_t           CalculateAffTXTY( EdbAffine2D &aff) {return CalculateAffTXTY( eS[0], eS[1], aff);}
   Int_t           CalculateAffXY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffTXTY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   

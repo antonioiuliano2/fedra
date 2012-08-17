@@ -14,6 +14,7 @@ class EdbLinking : public EdbAlignmentV
    bool   eDoCorrectAngles;
    bool   eDoCorrectShrinkage;
    bool   eDoFullLinking;
+   bool   eDoDumpDoubletsTree;
    
    float  eDRfull, eDTfull;       // acceptance for the full linking
    float  eCHI2Pmax;              // acceptance to save into couples tree
@@ -63,7 +64,8 @@ class EdbLinking : public EdbAlignmentV
   void     RankCouples( TObjArray &arr1,TObjArray &arr2 );
   
   void     DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist=0);
-
+  void     DumpDoubletsTree(EdbAlignmentV &adup, const char *name);
+  
   void ProduceReport();
 
   ClassDef(EdbLinking,1)  // microtracks linking in one plate

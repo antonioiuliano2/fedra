@@ -47,6 +47,7 @@ void EdbCorrectionBin::CalculateCorrections()
 {
    float dzold = eAl.eCorr[0].V(2);
    eAl.CalcApplyMeanDiff();
+//   eAl.CalcApplyFractMeanDiff();
    eAl.Corr2Aff(eLayer);
    Log(2,"EdbCorrectionBin::CalculateCorrections","%6d %9.2f (dx:dy:dz:dtx:dty:shr:phy):  %9.3f %9.3f %11.3f %9.5f %9.5f %9.5f %9.5f",eAl.Ncp(), dzold, 
           eAl.eCorr[0].V(0), eAl.eCorr[0].V(1), eAl.eCorr[0].V(2)-dzold, eAl.eCorr[0].V(3), eAl.eCorr[0].V(4), eAl.eCorr[0].V(5), eAl.eCorr[0].V(6) );

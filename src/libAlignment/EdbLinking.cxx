@@ -51,6 +51,9 @@ void EdbLinking::GetPar(TEnv &env)
   eCHI2Pmax            = env.GetValue("fedra.link.full.CHI2Pmax"       , 3.   );
 
   eDoSaveCouples       = env.GetValue("fedra.link.DoSaveCouples"       , true );
+  
+  eDoDumpDoubletsTree  = env.GetValue("fedra.link.DumpDoubletsTree"    , false );
+  
   GetDoubletsPar(env);
 }
 
@@ -161,14 +164,17 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   eCorr[1].Write("corr2");
 
   if(eDoFullLinking)   {
-    seq1.eNsigma = eNsigmaEQlnk;
-    seq2.eNsigma = eNsigmaEQlnk;
-    
     TObjArray p1lnk(p1pre.GetEntriesFast());
     TObjArray p2lnk(p2pre.GetEntriesFast());
-    
-    seq1.EqualizeMT(p1pre, p1lnk, area1);
-    seq2.EqualizeMT(p2pre, p2lnk, area2);
+    if(eNsigmaEQlnk>0.1) {
+      seq1.eNsigma = eNsigmaEQlnk;
+      seq2.eNsigma = eNsigmaEQlnk;
+      seq1.EqualizeMT(p1pre, p1lnk, area1);
+      seq2.EqualizeMT(p2pre, p2lnk, area2);
+    } else {
+      p1lnk=p1pre;
+      p2lnk=p2pre;
+    }
     DoubletsFilterOut(p1lnk,p2lnk, 1);
     
     TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
@@ -384,7 +390,7 @@ void EdbLinking::CorrectShrinkage(float dshr)
   EdbSegCorr c0 = eCorr[0], c1 = eCorr[1];  //save initial values
   float dz = eL2.Z()-eL1.Z();
 
-  eDVsame[0] = eDVsame[1] = 30;  eDVsame[2] = eDVsame[3] = 0.03;
+  eDVsame[0] = eDVsame[1] = 50;  eDVsame[2] = eDVsame[3] = 0.03;
   InitHshr0(   25,  eCorr[0].V(5)/(1+dshr),   eCorr[0].V(5)*(1+dshr) );
   InitHshr1(   25,  eCorr[1].V(5)/(1+dshr),   eCorr[1].V(5)*(1+dshr) );
   
@@ -456,6 +462,7 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     seg.SetFlag(0);
     seg.SetSide(0);
     seg.SetVolume(seg1.Volume()+seg2.Volume());
+    seg.SetDZ( Abs(seg1.eZ - seg2.eZ) );
     
     EdbSegCouple *sc=new EdbSegCouple();
     sc->eS1=s1;
@@ -593,13 +600,28 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
+  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
 
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
+  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments
   if(hxy1)   hxy1->Write();
   if(hxy2)   hxy2->Write();
   if(htxty1) htxty1->Write();
   if(htxty2) htxty2->Write();
+}
+
+//---------------------------------------------------------------------
+void EdbLinking::DumpDoubletsTree(EdbAlignmentV &adup, const char *name)
+{
+  EdbCouplesTree dup;
+  dup.InitCouplesTree(name, 0 ,"RECREATE");
+  int n=adup.CheckEqualArr(adup.eS[0],adup.eS[1]);
+  for(int i=0; i<n; i++)
+  {
+    dup.Fill( (EdbSegP*)(adup.eS[0].At(i)), (EdbSegP*)(adup.eS[1].At(i)));
+  }
+  dup.WriteTree();
 }

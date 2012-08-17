@@ -62,6 +62,7 @@ class EdbCorrectionMapper : public EdbCorrectionBin
   void              UpdateLayerWithLocalCorr( EdbLayer &la );
   void              AddSegCouple(EdbSegP *s1, EdbSegP *s2);
   void              Fill(EdbSegP &s1, EdbSegP &s2);
+  void              FillS(EdbSegP *s1, EdbSegP *s2) { eAl.AddSegCouple(s1,s2); }
   void              Write(const char *suffix = "");
   TCanvas          *DrawSum(const char *suffix);
   TCanvas          *DrawMap(EdbCorrectionMap &map, const char *suffix = "");

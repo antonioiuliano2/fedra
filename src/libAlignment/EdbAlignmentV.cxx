@@ -84,7 +84,7 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
       if(hxy)   hxy->Fill( s1->X()-s2->X() , s1->Y()-s2->Y());
       if(htxty) htxty->Fill(s1->TX()-s2->TX(),s1->TY()-s2->TY());
     }
-    if(checkview==1) {
+    if(checkview==1||checkview==0) {
       if( s2->W()>s1->W() ) s1->SetFlag(-10);   else     s2->SetFlag(-10);
       nout++;
     }
@@ -529,6 +529,69 @@ Float_t EdbAlignmentV::CalcMeanDiff(int ivar)
 }
 
 //---------------------------------------------------------------------
+Float_t EdbAlignmentV::CalcFractMeanDiff(int ivar, float fraction)
+{
+  //  Calculate mean difference for the highest density region
+  int n = CheckEqualArr(eS[0],eS[1]);
+  TArrayF arr(n);
+  for(int i=0; i<n; i++) {
+    arr[i] = ( Var( 1, i, ivar ) - Var( 0, i, ivar) );
+  }
+  return FindDensityPeak( arr, fraction);
+}
+
+//---------------------------------------------------------------------
+Float_t EdbAlignmentV::FindDensityPeak(TArrayF &arr, float fraction)
+{
+  if(fraction<=0||fraction>1) Log(1,"EdbAlignmentV::FindDensityPeak","ERROR! fraction out of limits: %f",fraction);
+  TArrayI ind(arr.fN);
+  Sort( arr.fN, arr.GetArray(), ind.GetArray(), 0 );
+  int nfra = (int)(fraction*arr.fN);
+  float dxmin = arr[ ind[nfra] ] - arr[ ind[0] ];
+  int   ibest=0;
+ for(int i=1; i<arr.fN-nfra; i++)   {
+    float dx = arr[ ind[nfra+i] ] - arr[ind[i]];
+    if( dx < dxmin) {
+      dxmin = dx;
+      ibest=i;
+    }
+  }
+
+  Double_t sd=0;
+  int ic=0;
+  for(int i=ibest; i<ibest+nfra-1; i++) {
+    sd   += arr[ ind[i] ];
+    ic++;
+  }
+  sd /= ic;
+  Log(2,"EdbAlignmentV::FindDensityPeak", "nfra/n: %d/%d     dxmin = %g   sd = %g",nfra,arr.fN,dxmin,sd);
+  return (Float_t)sd;
+}
+
+//---------------------------------------------------------------------
+Int_t EdbAlignmentV::CalcApplyFractMeanDiff()
+{
+  // by default apply it to side 0
+  int side=0;
+  int n = CheckEqualArr(eS[0],eS[1]);
+
+//  if(n<nlim) return 0;           //TODO
+  
+  eCorr[side].AddV( 3, CalcFractMeanDiff( 2, 0.4 ) );                    // calc and  apply angles
+  eCorr[side].AddV( 4, CalcFractMeanDiff( 3, 0.4 ) );
+  
+  //eCorr[side].SetV( 2, CalcMeanDZ()  );                      // calc and apply DZ
+  
+  //eCorr[side].SetV( 5, eCorr[side].V(5) * CalcMeanShr() );   // calc and apply shrinkage
+  
+  
+  eCorr[side].AddV( 0, CalcFractMeanDiff( 0, 0.4 ) );                    // then apply coord
+  eCorr[side].AddV( 1, CalcFractMeanDiff( 1, 0.4 ) );
+  
+  return n;
+}
+
+//---------------------------------------------------------------------
 Int_t EdbAlignmentV::CalcApplyMeanDiff()
 {
   // by default apply it to side 0
@@ -537,12 +600,13 @@ Int_t EdbAlignmentV::CalcApplyMeanDiff()
 
 //  if(n<nlim) return 0;           //TODO
   
+  eCorr[side].AddV( 3, CalcMeanDiff(2) );                    // then apply angles
+  eCorr[side].AddV( 4, CalcMeanDiff(3) );
+  
   eCorr[side].SetV( 2, CalcMeanDZ()  );                      // at first calc and apply DZ
   
   eCorr[side].SetV( 5, eCorr[side].V(5) * CalcMeanShr() );   // second calc and apply shrinkage
   
-  eCorr[side].AddV( 3, CalcMeanDiff(2) );                    // then apply angles
-  eCorr[side].AddV( 4, CalcMeanDiff(3) );
   
   eCorr[side].AddV( 0, CalcMeanDiff(0) );                    // then apply coord
   eCorr[side].AddV( 1, CalcMeanDiff(1) );
