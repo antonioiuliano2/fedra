@@ -3774,7 +3774,6 @@ void EdbShowRec::WriteParametrisation_FJ() {
 
         //Fill tree with values from parametrisation:
         ShowerAxisAngle=para_FJ.ShowerAxisAngle;
-//     cout << "GGGGGGGGGGGGGG       ShowerAxisAngle= " <<  ShowerAxisAngle << endl;
         nseg=para_FJ.nseg;
         BT_deltaR_mean=para_FJ.BT_deltaR_mean;
         BT_deltaR_rms=para_FJ.BT_deltaR_rms;
@@ -3917,6 +3916,133 @@ void EdbShowRec::WriteParametrisation_YC() {
 
 
 
+
+//______________________________________________________________________________
+
+
+void EdbShowRec::WriteParametrisation_JC() {
+
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","WriteParametrisation_JC()");
+
+    if (eRecoShowerArrayN==0 || eRecoShowerArray==NULL) {
+        cout << "EdbShowRec::WriteParametrisation_JC   WARNING ::  eRecoShowerArrayN = 0.    Return!" << endl;
+        return;
+    }
+
+    // Steps for creating the file:
+    // Because in root we have error messagens "Failed filling branch" we have to:
+    // First step into the file and then create the Tree:
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","Writing Tree in  eFilename_Out_treebranch  = ");
+    cout << "eFile_Out_treebranch = " << eFile_Out_treebranch << endl;
+    cout << "eFilename_Out_treebranch = " << eFilename_Out_treebranch << endl;
+
+    if (!eFile_Out_treebranch) {
+        Log(2,"EdbShowRec::WriteParametrisation_JC()","Creating new  eFile_Out_treebranch.");
+        eFile_Out_treebranch= new TFile(eFilename_Out_treebranch,"UPDATE");
+    }
+    else {
+        Log(2,"EdbShowRec::WriteParametrisation_JC()","Open existing  eFile_Out_treebranch.");
+        cout << "EdbShowRec::WriteParametrisation_JC()   Is File  eFile_Out_treebranch  already open? :" << eFile_Out_treebranch->IsOpen() << endl;
+        if (!eFile_Out_treebranch->IsOpen()) eFile_Out_treebranch->Open(eFilename_Out_treebranch,"UPDATE");
+    }
+
+    // Go into file (if necessary)
+    eFile_Out_treebranch->cd();
+
+    TString targettreename="Para_JC";
+
+    // Variables part from Para_YC:
+    Float_t ShowerAxisAngle,C1,a1,alpha,nmax;
+    Int_t nseg;
+    TTree* treevar=0;
+    if (!treevar) treevar = new TTree(targettreename,targettreename);
+    // Branches part from Para_YC:
+    treevar->Branch("ShowerAxisAngle",&ShowerAxisAngle,"ShowerAxisAngle/F");
+    treevar->Branch("C1",&C1,"C1/F");
+    treevar->Branch("a1",&a1,"a1/F");
+    treevar->Branch("alpha",&alpha,"alpha/F");
+    treevar->Branch("nmax",&nmax,"nmax/F");
+    treevar->Branch("nseg",&nseg,"nseg/I");
+
+    // Variables part from Para_FJ:
+    Float_t BT_deltaR_mean,BT_deltaR_rms,BT_deltaT_mean,BT_deltaT_rms;
+    Int_t longprofile[57];
+    // Branches part from Para_FJ:
+    treevar->Branch("BT_deltaR_mean",&BT_deltaR_mean,"BT_deltaR_mean/F");
+    treevar->Branch("BT_deltaR_rms",&BT_deltaR_rms,"BT_deltaR_rms/F");
+    treevar->Branch("BT_deltaT_mean",&BT_deltaT_mean,"BT_deltaT_mean/F");
+    treevar->Branch("BT_deltaT_rms",&BT_deltaT_rms,"BT_deltaT_rms/F");
+    treevar->Branch("longprofile",longprofile,"longprofile[57]/I");
+
+    EdbShowerP* show=0;
+    EdbShowerP::Para_JC para_JC;
+
+    // Check for first shower if desired parametrisation was already done:
+    show=(EdbShowerP*)eRecoShowerArray->At(0);
+    Bool_t ToDoPara= show->GetParametrisationIsDone(3); // JC==3
+    cout << "EdbShowRec::WriteParametrisation_JC()   show->GetParametrisationIsDone(3): " << ToDoPara << endl;
+    if (!ToDoPara) {
+        cout << "EdbShowRec::WriteParametrisation_JC()   Start Building BuildParametrisation(3);" << endl;
+    }
+
+    Int_t statuscounter=eRecoShowerArrayN/10;
+
+    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+        if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
+
+        show=(EdbShowerP*)eRecoShowerArray->At(i);
+        if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::WriteParametrizations   i= " << i <<  " of (" << eRecoShowerArrayN << "). BuildParametrization IsDone?"<< show->GetParametrisationIsDone(3) << endl;
+
+        // Do parametrisation if necessary:
+        // BuildParametrisation(3) (JC) automatically invokes BuildParametrisation(FJ) and BuildParametrisation(YC)
+        if (!ToDoPara) show->BuildParametrisation(3);
+
+        // Print Parametrisation:
+        if (gEDBDEBUGLEVEL>3) show->PrintParametrisation_JC();
+
+        // Get it:
+        para_JC=show->GetPara_JC();
+
+        // Fill tree with values from parametrisation:
+        ShowerAxisAngle=para_JC.ShowerAxisAngle;
+        // YC-Part:
+        C1=para_JC.C1;
+        a1=para_JC.a1;
+        alpha=para_JC.alpha;
+        nmax=para_JC.nmax;
+        nseg=para_JC.nseg;
+        // FJ-Part:
+        BT_deltaR_mean=para_JC.BT_deltaR_mean;
+        BT_deltaR_rms=para_JC.BT_deltaR_rms;
+        BT_deltaT_mean=para_JC.BT_deltaT_mean;
+        BT_deltaT_rms=para_JC.BT_deltaT_rms;
+        for (int k=0; k<57; k++) longprofile[k]=(Int_t)para_JC.longprofile[k];
+
+        treevar->Fill();
+        if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
+    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+
+
+    if (gEDBDEBUGLEVEL>3) {
+        treevar->Print();
+    }
+
+
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","Writing tree for para_JC parametrisation into file...");
+//   treevar->Write();
+    treevar->Write("",TObject::kWriteDelete);
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","Writing tree for para_JC parametrisation into file...done.");
+
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","Delete treevar...");
+    delete treevar;
+    treevar=0;
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","Delete treevar...done.");
+
+//   eFile_Out_treebranch->Close(); // gives crash... dont know why, some tree has to be still connected...
+    Log(2,"EdbShowRec::WriteParametrisation_JC()","WriteParametrisation_JC()...done.");
+    return;
+}
+//______________________________________________________________________________
 
 
 

@@ -533,7 +533,7 @@ public:
     void      WriteParametrisation_FJ(); //0
     void      WriteParametrisation_LT(); //1
     void      WriteParametrisation_YC(); //2
-    ///void      WriteParametrisation_JC(); //3
+    void      WriteParametrisation_JC(); //3
     void      WriteParametrisation_XX(); //4
     void      WriteParametrisation_YY(); //5
     ///void      WriteParametrisation_PP(); //6

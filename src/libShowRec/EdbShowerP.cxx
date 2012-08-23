@@ -1566,14 +1566,27 @@ void EdbShowerP::BuildParametrisation_FJ()
     eParametrisationIsDone[1]=kTRUE;
     eParametrisationIsDone[7]=kTRUE;
 
-    // 	  cout << "eParametrisationIsDone[0]= " << eParametrisationIsDone[0] << endl;
-    // 	  cout << "GetParametrisationIsDone(0)= " << GetParametrisationIsDone(0) << endl;
-
     Log(3,"EdbShowerP::BuildParametrisation_FJ()","EdbShowerP::BuildParametrisation_FJ()  ...done.");
     Log(3,"EdbShowerP::BuildParametrisation_LT()","EdbShowerP::BuildParametrisation_LT()  ...done.");
     Log(3,"EdbShowerP::BuildParametrisation_AS()","EdbShowerP::BuildParametrisation_AS()  ...done.");
     return;
 }
+
+
+
+//______________________________________________________________________________
+
+void EdbShowerP::BuildParametrisation_LT()
+{
+    Log(3,"EdbShowerP::BuildParametrisation_LT()","EdbShowerP::BuildParametrisation_LT()");
+    // Since this Parametrisation inherits from _FJ we execute BuildParametrisation_FJ
+    // then it is automatically done!
+    if (!eParametrisationIsDone[0]) BuildParametrisation_FJ();
+    eParametrisationIsDone[1]=kTRUE;
+    Log(3,"EdbShowerP::BuildParametrisation_LT()","EdbShowerP::BuildParametrisation_LT()  ...done.");
+    return;
+}
+
 
 //______________________________________________________________________________
 
@@ -1643,10 +1656,10 @@ void EdbShowerP::BuildParametrisation_YC()
     Float_t nbtkcylinder[57];
     Float_t nbtkcylindertmp[57];
     Float_t nbtktmp=0;
-    Float_t alphacalc[1]={0};
-    Float_t nmaxcalc[1]={0};
-    Float_t C1calc[1]={0};
-    Float_t a1calc[1]={0};
+    Float_t alphacalc[1]= {0};
+    Float_t nmaxcalc[1]= {0};
+    Float_t C1calc[1]= {0};
+    Float_t a1calc[1]= {0};
     Int_t		nbshower=0;
     for (int i=0; i<nbfilm; i++) {
         nbtkfilm[i]=0;
@@ -1828,18 +1841,6 @@ void EdbShowerP::BuildParametrisation_YC()
     return;
 }
 
-//______________________________________________________________________________
-
-void EdbShowerP::BuildParametrisation_LT()
-{
-    Log(3,"EdbShowerP::BuildParametrisation_LT()","EdbShowerP::BuildParametrisation_LT()");
-    // Since this Parametrisation inherits from _FJ we execute BuildParametrisation_FJ
-    // then it is automatically done!
-    if (!eParametrisationIsDone[0]) BuildParametrisation_FJ();
-    eParametrisationIsDone[1]=kTRUE;
-    Log(3,"EdbShowerP::BuildParametrisation_LT()","EdbShowerP::BuildParametrisation_LT()  ...done.");
-    return;
-}
 
 //______________________________________________________________________________
 
@@ -1851,8 +1852,8 @@ void EdbShowerP::BuildParametrisation_JC()
     // BuildParametrisation_FJ and BuildParametrisation_YC then it is automatically done!
     if (!eParametrisationIsDone[0]) BuildParametrisation_FJ();
     if (!eParametrisationIsDone[2]) BuildParametrisation_YC();
-    eParametrisationIsDone[3]=kFALSE;
-    Log(2,"EdbShowerP::BuildParametrisation_JC()","EdbShowerP::BuildParametrisation_JC()  ...done. NOT YET FULLY INCLUDED !!!!");
+    eParametrisationIsDone[3]=kTRUE;
+    Log(3,"EdbShowerP::BuildParametrisation_JC()","EdbShowerP::BuildParametrisation_JC()  ...done.");
 
     return;
 }

@@ -507,6 +507,9 @@ public:
     inline Para_YC   GetPara_YC()       const         {
         return ePara_YC;
     }
+    inline Para_JC   GetPara_JC()       const         {
+        return ePara_JC;
+    }
     inline Para_XX   GetPara_XX()       const         {
         return ePara_XX;
     }
