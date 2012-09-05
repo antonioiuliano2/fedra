@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
         cout << "---      \t\t :	 -FLMC		use only MC Flag  \t (PdgId)\n";
         cout << "---      \t\t :	 -ALI		use gALI either from cp.root files (0) or from linkedtracks.root (1) or from volume root file: ScanVolume_Ali.root (2) or from volume tracks root file: ScanVolumeLinkedTracks_Ali (3)\n";
         cout << "---      \t\t :	 -MIXMC		Extract Subpattern with all MCEvents mixed! --!WARNING!--  \n";
+        cout << "---      \t\t :	 -EXTHETA	Extract Subpattern with Delta Theta Cut on Initiator BT angle. \n";
         cout << "---      \t\t :	 -PADI		ParentDirectory     (only for naming the output file)\n";
         cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  (only for naming the output file)\n";
         cout << "---      \t\t :	 -BGTP		BackgroundType  (only for naming the output file)\n";
@@ -171,6 +172,11 @@ int main(int argc, char *argv[])
         else if (!strncmp(key,"-MIXMC",6)) {
             if (strlen(key)>6) {
                 sscanf(key+6,"%d",&cmd_MCMIX);
+            }
+        }
+        else if (!strncmp(key,"-EXTHETA",8)) {
+            if (strlen(key)>8) {
+                sscanf(key+8,"%d",&cmd_EXTHETA);
             }
         }
         else if (!strncmp(key,"-VTX",4)) {
@@ -398,6 +404,8 @@ void SetDefaultValues_CommandLine() {
     cmd_FILETP=0;
     cmd_GBMC=0;
     cmd_lnkdef_name = "lnk.def";
+    cmd_EXTHETA=0;
+    return;
 }
 
 //-------------------------------------------------------------------------------------------
@@ -415,6 +423,7 @@ void ReadDefaultValues_CommandLine() {
     cout << "---      \t\t :	 -FZHP		use first Z-position of Event Occurence " << cmd_FZHP << endl;
     cout << "---      \t\t :	 -ALI		use which Ali  " << cmd_ALI << endl;
     cout << "---      \t\t :	 -MCMIX		use MCMIX :DANGEROUS !!! ... Be Careful! " << cmd_MCMIX << endl;
+    cout << "---      \t\t :	 -EXTHETA		Extract Subpattern with Delta Theta Cut on Initiator BT angle " << cmd_EXTHETA << endl;
     cout << "---      \t\t :	 -VTX		For InBT: Cut to IP for MC vertex    " << cmd_vtx << endl;
     cout << "---      \t\t :	 -PADI		ParentDirectory  " << cmd_PADI << endl;
     cout << "---      \t\t :	 -BTPA		BasetrackParametrisation  " << cmd_BTPA << endl;
@@ -540,19 +549,18 @@ EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory()
 //   cmd_ALI==3: read gAli from ScanVolumeLinkedTracks_Ali.root
 
     if (cmd_ALI==3) {
+        Log(2, "ShowRec.cpp", "--- EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory() cmd_ALI==3: read gAli from ScanVolumeLinkedTracks_Ali.root");
         TFile* f= new TFile("ScanVolumeLinkedTracks_Ali.root");
         gAli= (EdbPVRec*) f->Get("EdbPVRec");
         return gAli;
     }
     if (cmd_ALI==2) {
+        Log(2, "ShowRec.cpp", "--- EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory() cmd_ALI==2: read gAli from ScanVolume_Ali.root");
         TFile* f= new TFile("ScanVolume_Ali.root");
         f->ls();
         gAli= (EdbPVRec*) f->Get("EdbPVRec");
         return gAli;
     }
-
-
-
 
     //-----------------------------------
     // current dir has to contain:
@@ -568,9 +576,12 @@ EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory()
     // new: (4.2.2010) can distinguish between gAli from cp.root or from linked tracks
 
     if (cmd_ALI==1) {
+        Log(2, "ShowRec.cpp", "--- EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory() cmd_ALI==1: read gAli from linked.tracks.root");
         dset->InitVolume(100, "");	// Read in (all) BT from linked_tracks.root
     }
     if (cmd_ALI==0) {
+        Log(2, "ShowRec.cpp", "--- EdbPVRec* ReadEdbPVRecObjectFromCurrentDirectory() cmd_ALI==0: read gAli from lnk.def Basetracks");
+
         dset->InitVolume(0, "");	// Read in (all) BT from cp.root.
     }
 
@@ -716,9 +727,9 @@ void Read_ParasetDefinitionTree()
             else {
                 cout << "----- cmd_CUTTP==else -----"<<endl;
                 dr_max=150.0;
-                dt_max=0.13;
-                coneangle=0.025;
-                tubedist=700.0; // cuttype. standard  // OI ALG, cmd_ALTP==4
+                dt_max=0.15;
+                coneangle=0.02;
+                tubedist=800.0; // cuttype. FJ_Standard   // OI ALG, cmd_ALTP==4
             }
         }
 
@@ -2394,7 +2405,7 @@ void ReconstructShowers_OPENMP() {
     int nthreads=0;
     int chunk=2;
 
-#pragma omp parallel shared(nthreads) private(i,tid)
+    #pragma omp parallel shared(nthreads) private(i,tid)
     {
         // 		cout << "tid = omp_get_thread_num() " <<  omp_get_thread_num() << endl;
         if (tid == 0)
@@ -2409,7 +2420,7 @@ void ReconstructShowers_OPENMP() {
 
         cout << endl;
 
-#pragma omp for
+        #pragma omp for
         for (Int_t ii=GLOBAL_InBTArrayEntries-1; ii>=0; --ii) {
             EdbSegP* seg = (EdbSegP*) GLOBAL_InBTArray -> At(ii);
             printf("Thread %d: %i execute now ReconstructShowers_OPENMP_TEST \n",tid,ii);
@@ -2968,7 +2979,7 @@ void ReconstructShowers_OI()
             CalcEfficencyNumbers(pat_interim, InBT->MCEvt(), NBT_Neff, NBTMC_Neff ,NBTMCe_Neff);
         }
         // end of loop over all plates of local_gAli
-        if (gEDBDEBUGLEVEL>2) PrintShowerObjectArray(GLOBAL_ShowerSegArray);
+        if (gEDBDEBUGLEVEL>2)  PrintShowerObjectArray(GLOBAL_ShowerSegArray);
 
 
         //-----------------------------------
@@ -5385,7 +5396,7 @@ void ReconstructShowers_GS()
     GLOBAL_InBTArrayEntries=GLOBAL_InBTArray->GetEntries();
     GLOBAL_INBTSHOWERNR=0;
 
-
+    Bool_t IsFirstLoopCount=kTRUE;
     Int_t LastGlobalMCEventNr=1;
 
     EdbVertex* vtx=new EdbVertex();
@@ -5447,23 +5458,24 @@ void ReconstructShowers_GS()
             // tracks always extrapolated to themselves, but SIM basetracks extrapolated to
             // the vertex. This leads to a wrong deltaZ distribution which spoils the
             // ANN Training.
+            if( IsFirstLoopCount==kTRUE) cout << "Option: GLOBAL_InBT_MC<0&& cmd_GBMC<0"<<endl;
             vtx->SetXYZ(GLOBAL_VtxArrayX[LastGlobalMCEventNr],GLOBAL_VtxArrayY[LastGlobalMCEventNr],GLOBAL_VtxArrayZ[LastGlobalMCEventNr]);
         }
         //
         else if (GLOBAL_InBT_MC<0 && cmd_GBMC==0) {
-            //cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC==0"<<endl;
+            if( IsFirstLoopCount==kTRUE) cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC==0"<<endl;
             vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
         }
         else if (GLOBAL_InBT_MC<0 && cmd_GBMC>0) {
-            //cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC>0"<<endl;
+            if( IsFirstLoopCount==kTRUE)  cout << "Option: GLOBAL_InBT_MC<0 && cmd_GBMC>0"<<endl;
             vtx->SetXYZ(GLOBAL_VtxArrayX[cmd_GBMC],GLOBAL_VtxArrayY[cmd_GBMC],GLOBAL_VtxArrayZ[cmd_GBMC]);
         }
         else if (GLOBAL_InBT_MC>0 && GLOBAL_IsBrickTreePGunInfo==kFALSE) {
-            //cout << "Option: GLOBAL_InBT_MC>0 && GLOBAL_IsBrickTreePGunInfo==kFALSE"<<endl;
+            if( IsFirstLoopCount==kTRUE) cout << "Option: GLOBAL_InBT_MC>0 && GLOBAL_IsBrickTreePGunInfo==kFALSE"<<endl;
             vtx->SetXYZ(InBT->X()-650*InBT->TX(),InBT->Y()-650*InBT->TY(),InBT->Z()-650);
         }
         else {
-            //cout << "Option: else"<<endl;
+            if( IsFirstLoopCount==kTRUE) cout << "Option: else"<<endl;
             vtx->SetXYZ(GLOBAL_VtxArrayX[GLOBAL_InBT_MC],GLOBAL_VtxArrayY[GLOBAL_InBT_MC],GLOBAL_VtxArrayZ[GLOBAL_InBT_MC]);
         }
         vtx->SetMC(GLOBAL_InBT_MC);
@@ -5552,7 +5564,13 @@ void ReconstructShowers_GS()
 
             // Now here we can add InBT since it passed also the vertex cut.
             // Therefore, the Reconstructed Shower has always InBT as first BT stored.
-            if (GLOBAL_ShowerSegArray->GetEntries()==0) GLOBAL_ShowerSegArray->Add(InBT);
+            if (GLOBAL_ShowerSegArray->GetEntries()==0) {
+                GLOBAL_ShowerSegArray->Add(InBT);
+                if (gEDBDEBUGLEVEL>2) {
+                    cout << "I have added the first InBT  " << InBT << "  to GLOBAL_ShowerSegArray." << endl;
+                    InBT->PrintNice();
+                }
+            }
 
             // Check if pattern dist Z to Vtx  is ok:
             distZ=pat_one->Z()-vtx->Z();
@@ -5685,7 +5703,7 @@ void ReconstructShowers_GS()
         ///============================================================================================
         ///============================================================================================
 
-        //cout << " GLOBAL_ShowerSegArray->GetEntries() " << GLOBAL_ShowerSegArray->GetEntries() << endl;
+        if (gEDBDEBUGLEVEL>2) cout << " GLOBAL_ShowerSegArray->GetEntries() " << GLOBAL_ShowerSegArray->GetEntries() << endl;
 
         ///----------------------
         /// ONLY FOR THE ANN TRAINING FOR GS ALGO:
@@ -5695,6 +5713,26 @@ void ReconstructShowers_GS()
 
             Segment=(EdbSegP*)GLOBAL_ShowerSegArray->At(0);
             Segment2=(EdbSegP*)GLOBAL_ShowerSegArray->At(1);
+
+
+
+            if (gEDBDEBUGLEVEL>2) {
+                cout << "ONLY FOR THE ANN TRAINING FOR GS ALGO: "  << endl;
+                cout << "DO THIS ONLY IF YOU HAVE PAIRS !!!: "  << endl;
+                cout << "YES WE HAVE A PAIR Print all segs in the array: "  << endl;
+                for (int l=0; l<GLOBAL_ShowerSegArray->GetEntries(); ++l) {
+                    EdbSegP* s=(EdbSegP*)GLOBAL_ShowerSegArray->At(l);
+                    s->PrintNice();
+                }
+// 					Segment->PrintNice();
+// 					Segment2->PrintNice();
+                cout << "Print again the InBT for crosscheck: InBT= " << endl;
+                InBT->PrintNice();
+                cout << "Address of Segment   = " << Segment << endl;
+                cout << "Address of Segment2  = " << Segment2 << endl;
+            }
+
+
 
             // Implicitly, we assume that InBT= Seg->At(0), which I checked is
             // correct. Also in the code it is done this way that InBT is added
@@ -5706,38 +5744,73 @@ void ReconstructShowers_GS()
             IP_Pair_To_InBT_Seg2=CalcIP(Segment2,vtx);
             IP_Pair_To_InBT=CalcIP(Segment,vtx);
 
-            h_GSNN_var00->Fill(TMath::Min(IP_Pair_To_InBT_Seg2,IP_Pair_To_InBT));
-            h_GSNN_var01->Fill(GetMinimumDist(Segment,Segment2));
-            h_GSNN_var02->Fill(GetdeltaRWithPropagation(Segment,Segment2));
-            h_GSNN_var03->Fill(InBT->Z()-vtx->Z());
-            h_GSNN_var04->Fill(GetdeltaThetaSingleAngles(Segment,Segment2));
-            h_GSNN_var05->Fill(TMath::Abs(Segment->PID()-Segment2->PID()));
-            h_GSNN_var06->Fill(Segment2->Flag()+Segment->Flag());
-
-            // Purity 1:    Input =  1.0;
-            // Purity 0.5:  Input =  0.5;
-            // Purity else: Input =  0.0;
-            if (Segment2->Flag()+Segment->Flag()==0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
-                value_GSNN_varInput=1;
-            }
-            else if (Segment2->Flag()+Segment->Flag()!=0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
-                value_GSNN_varInput=0.5;
+            // Check if both basetracks have a vertex which is upstream
+            // of both tracks (only then the two BT are really pointing).
+            TObjArray *segments = new TObjArray(2);
+            segments->Clear();
+            segments->Add(Segment);
+            segments->Add(Segment2);
+            EdbVertex* vetex = new EdbVertex();
+            vetex = CalcVertex(segments);
+            cout << "Calculated helper _vetex_ out of the first two segments. " << endl;
+            cout <<"vetex ->X,Y,Z:  " << vetex ->X() << " " << vetex ->Y() << " " << vetex ->Z()<< endl;
+            if (vetex ->Z()> TMath::Min(Segment->Z(),Segment2->Z()) ) cout << "The interims vertex to which the two segments points lies downstream, or in between the to segmnets, i.e. the do NOT point to an originating vertex. continue now...." << endl;
+            cout << "Check:  TMath::Min(Segment->Z(),Segment2->Z())  " <<  TMath::Min(Segment->Z(),Segment2->Z())  << endl;
+            cout <<"Segment->Z(): " << Segment->Z() << "  Segment2->Z() " << Segment2->Z() << endl;
+            cout << "Address of Segment   = " << Segment << endl;
+            cout << "Address of Segment2  = " << Segment2 << endl;
+            if (vetex ->Z()> TMath::Min(Segment->Z(),Segment2->Z()) ) {
+                cout << " Hmm, do nothing..." << endl;
             }
             else {
-                value_GSNN_varInput=0;
+
+                Float_t IP_Seg1ToVtxSeg1Seg2=0;
+                Float_t IP_Seg2ToVtxSeg1Seg2=0;
+                IP_Seg1ToVtxSeg1Seg2 = CalcIP(Segment ,vetex);
+                IP_Seg2ToVtxSeg1Seg2 = CalcIP(Segment2,vetex);
+
+                Int_t eRecoMode=2;
+                cout << "WARNING   eRecoMode konstant set to =2   TODO ....   change on prompt!!" << endl;
+                Float_t eValueGSNN_var00;
+                Float_t IP_InBT_To_Vtx=IP_Pair_To_InBT;
+                if (eRecoMode==0) eValueGSNN_var00=IP_InBT_To_Vtx;
+                if (eRecoMode==1) eValueGSNN_var00=IP_InBT_To_Vtx;
+                if (eRecoMode==2) {
+                    eValueGSNN_var00=TMath::Min(IP_Seg1ToVtxSeg1Seg2,IP_Seg2ToVtxSeg1Seg2);
+                }
+
+                h_GSNN_var00->Fill(eValueGSNN_var00);
+                h_GSNN_var01->Fill(GetMinimumDist(Segment,Segment2));
+                h_GSNN_var02->Fill(GetdeltaRWithPropagation(Segment,Segment2));
+                h_GSNN_var03->Fill(InBT->Z()-vtx->Z());
+                h_GSNN_var04->Fill(GetdeltaThetaSingleAngles(Segment,Segment2));
+                h_GSNN_var05->Fill(TMath::Abs(Segment->PID()-Segment2->PID()));
+                h_GSNN_var06->Fill(Segment2->Flag()+Segment->Flag());
+
+                // Purity 1:    Input =  1.0;
+                // Purity 0.5:  Input =  0.5;
+                // Purity else: Input =  0.0;
+                if (Segment2->Flag()+Segment->Flag()==0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+                    value_GSNN_varInput=1;
+                }
+                else if (Segment2->Flag()+Segment->Flag()!=0&&TMath::Abs(Segment2->Flag())==11&&Segment->MCEvt()>0) {
+                    value_GSNN_varInput=0.5;
+                }
+                else {
+                    value_GSNN_varInput=0;
+                }
+                value_GSNN_var00=eValueGSNN_var00;
+                value_GSNN_var01=GetMinimumDist(Segment,Segment2);
+                value_GSNN_var02=GetdeltaRWithPropagation(Segment,Segment2);
+                value_GSNN_var03=InBT->Z()-vtx->Z();
+                value_GSNN_var04=GetdeltaThetaSingleAngles(Segment,Segment2);
+                value_GSNN_var05=TMath::Abs(Segment->PID()-Segment2->PID());
+                value_GSNN_var06=Segment2->Flag()+Segment->Flag();
+
+                t_GSNN->Fill();
+
+                cout << "I have filled the GSNN Tree now. End of this bracket." << endl;
             }
-            value_GSNN_var00=TMath::Min(IP_Pair_To_InBT_Seg2,IP_Pair_To_InBT);
-            value_GSNN_var01=GetMinimumDist(Segment,Segment2);
-            value_GSNN_var02=GetdeltaRWithPropagation(Segment,Segment2);
-            value_GSNN_var03=InBT->Z()-vtx->Z();
-            value_GSNN_var04=GetdeltaThetaSingleAngles(Segment,Segment2);
-            value_GSNN_var05=TMath::Abs(Segment->PID()-Segment2->PID());
-            value_GSNN_var06=Segment2->Flag()+Segment->Flag();
-
-            t_GSNN->Fill();
-
-
-
         }
         ///----------------------
 
@@ -5783,7 +5856,7 @@ void ReconstructShowers_GS()
         //-----------------------------------
         // 5) Fill Tree:
         //-----------------------------------
-// 				cout << "// 5) Fill Tree:" << endl;
+        if (gEDBDEBUGLEVEL>2)	cout << "// 5) Fill Tree:" << endl;
         TREE_ShowRecEff->Fill();
         if (gEDBDEBUGLEVEL>3) TREE_ShowRecEff->Show(TREE_ShowRecEff->GetEntries()-1);
 
@@ -5802,11 +5875,15 @@ void ReconstructShowers_GS()
         // also  to avoid memory problems ...
         //-----------------------------------
         GLOBAL_ShowerSegArray->Clear();
-        if (gEDBDEBUGLEVEL>3) cout << "--- ---GLOBAL_ShowerSegArray->GetEntries(): "<< GLOBAL_ShowerSegArray->GetEntries() << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "--- --- after clear:  GLOBAL_ShowerSegArray->GetEntries(): "<< GLOBAL_ShowerSegArray->GetEntries() << endl;
         delete local_gAli;
         local_gAli=0;
         ++GLOBAL_INBTSHOWERNR;
         //------------------------------------
+
+
+
+        IsFirstLoopCount=kFALSE;
     }
     // end of loop over GLOBAL_InBTArrayEntries
     //-----------------------------------------------------------------
@@ -6275,6 +6352,18 @@ EdbPVRec* TransformEdbPVRec(EdbPVRec* gAli, EdbSegP* InitiatorBT)
     maxi[2]=0.5;
     maxi[3]=0.5;
     maxi[4]=100.0;
+
+
+    ///----------------------------------------------------------
+    /// DEBUG TEST !!! MAYBE IT GOES FASTER LIKE THIS;
+    /// AND ALSO THE BG CALCULATION IS BETTER PERFORMED .....
+    if (cmd_EXTHETA==1) {
+        mini[2]=ExtrapolateInitiatorBT->TX()-0.15;
+        mini[3]=ExtrapolateInitiatorBT->TY()-0.15;
+        maxi[2]=ExtrapolateInitiatorBT->TX()+0.15;
+        maxi[3]=ExtrapolateInitiatorBT->TY()+0.15;
+    }
+    ///----------------------------------------------------------
 
     EdbPattern* singlePattern;
     Int_t MCMixFlag=-1;
@@ -6757,9 +6846,14 @@ Bool_t FindPrecedingBTsSingleThetaAngle(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAl
     // This does not affect the normal results, but helps for
     // events which may have a second BT close to InBT (like in e+e-)
     if (s->Z()==InBT->Z()) {
-        //cout << "Test here..."<<endl;
-        //cout << "GetdeltaThetaSingleAngles(s, InBT)= " << GetdeltaThetaSingleAngles(s, InBT) << endl;
-        //cout << "GetdeltaRWithPropagation(s, InBT)= " << GetdeltaRWithPropagation(s, InBT) << endl;
+        /*
+          cout << "Bool_t FindPrecedingBTsSingleThetaAngle(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, TObjArray* showersegarray)" << endl;
+          cout << "Test here... for s ( " << s << " ) and InBT ( " << InBT << " ) :" <<   endl;
+        s->PrintNice();
+        InBT->PrintNice();
+               cout << "GetdeltaThetaSingleAngles(s, InBT)= " << GetdeltaThetaSingleAngles(s, InBT) << endl;
+               cout << "GetdeltaRWithPropagation(s, InBT)= " << GetdeltaRWithPropagation(s, InBT) << endl;
+        */
         if (GetdeltaThetaSingleAngles(s, InBT) < 0.08 && GetdeltaRWithPropagation(s, InBT) < 50.0) {
             return kTRUE;
         }
@@ -8944,6 +9038,83 @@ void Fill2GlobalInBTArray() {
     return;
 }
 
+////////////////////////////////////////////////////////////////////////////
+
+EdbVertex* CalcVertex(TObjArray *segments) {
+
+    // Exactly same implementation as in EdbEDAUtil.C
+    // but I do not want to link in hardcoded all eda libraries.
+    // calc vertex point with given segments. just topological calculation.
+    // VTA is currently not set.
+    // in case of Single-stop. make a vertex 650 micron upstream ob base.
+
+
+    double xx,yy,zz,Det,Ax,Ay,Az,Bx,By,Bz,Cx,Cy,Cz,Dx,Dy,Dz;
+    Ax=0.;
+    Ay=0.;
+    Az=0.;
+    Bx=0.;
+    By=0.;
+    Bz=0.;
+    Cx=0.;
+    Cy=0.;
+    Cz=0.;
+    Dx=0.;
+    Dy=0.;
+    Dz=0.;
+
+    if (segments->GetEntries()==1) {
+        // in case of Single-stop. make a vertex 650 micron upstream ob base.
+        EdbSegP *s = new EdbSegP(*((EdbSegP *) segments->At(0)));
+        s->PropagateTo(s->Z()-650);
+        xx=s->X();
+        yy=s->Y();
+        zz=s->Z();
+        delete s;
+    }
+    else {
+        for (int i=0; i<segments->GetEntries(); i++) {
+            EdbSegP *s = (EdbSegP *) segments->At(i);
+            double ax = s->TX();
+            double ay = s->TY();
+            double az = 1.0;
+            double x  = s->X();
+            double y  = s->Y();
+            double z  = s->Z();
+            double a = ax*ax+ay*ay+az*az;
+            double c = -ax*x-ay*y-az*z;
+            double b = (ax*ax+ay*ay);
+            //		double w = 1.0/a/a; // weight for small angle tracks.
+            double w = 1.0; // no weight
+
+            Ax+=2.0*w/b*( a*(ay*ay+az*az) );
+            Bx+=2.0*w/b*( -a*ax*ay );
+            Cx+=2.0*w/b*( -a*ax*az );
+            Dx+=2.0*w/b*( -(a*x+c*ax)*(ax*ax-a)-(a*y+c*ay)*ax*ay-(a*z+c*az)*az*ax );
+
+            Ay+=2.0*w/b*( -a*ay*ax );
+            By+=2.0*w/b*( a*(az*az+ax*ax) );
+            Cy+=2.0*w/b*( -a*ay*az );
+            Dy+=2.0*w/b*( -(a*y+c*ay)*(ay*ay-a)-(a*z+c*az)*ay*az-(a*x+c*ax)*ax*ay );
+
+            Az+=2.0*w/b*( -a*az*ax );
+            Bz+=2.0*w/b*( -a*az*ay );
+            Cz+=2.0*w/b*( a*b );
+            Dz+=2.0*w/b*( -(a*z+c*az)*(az*az-a)-(a*x+c*ax)*az*ax-(a*y+c*ay)*ay*az );
+
+        }
+
+        Det=fabs( Ax*(By*Cz-Cy*Bz)-Bx*(Ay*Cz-Cy*Az)+Cx*(Ay*Bz-By*Az) );
+        xx=( (By*Cz-Cy*Bz)*Dx-(Bx*Cz-Cx*Bz)*Dy+(Bx*Cy-Cx*By)*Dz)/Det;
+        yy=(-(Ay*Cz-Cy*Az)*Dx+(Ax*Cz-Cx*Az)*Dy-(Ax*Cy-Cx*Ay)*Dz)/Det;
+        zz=( (Ay*Bz-By*Az)*Dx-(Ax*Bz-Bx*Az)*Dy+(Ax*By-Bx*Ay)*Dz)/Det;
+    }
+
+    EdbVertex *v = new EdbVertex();
+    v->SetXYZ(xx,yy,zz);
+
+    return v;
+}
 
 
 

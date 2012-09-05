@@ -26,6 +26,7 @@ Int_t cmd_vtx=0;
 Int_t cmd_CLEAN=0;  // clean gAli Object with tighter Quality Cuts!
 Int_t cmd_FILETP=0; // addition variable to distinguis different treebranches...
 Int_t cmd_GBMC=0; // addition variable to tell the program which MCEvt is doing (if only one is done).
+Int_t cmd_EXTHETA=0; // if set to 1 then extract subpatterns with delta theta cut w.r.t. InBT.
 
 char *cmd_lnkdef_name = "lnk.def";
 Int_t cmd_gEDBDEBUGLEVEL=2;   //  2: normal; 3: long, 4 very long; 1: none
@@ -185,6 +186,8 @@ void SortShowerZ(TObjArray* showerarray);
 void Fill2GlobalInBTArray();
 void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename);
 
+
+EdbVertex* CalcVertex(TObjArray *segments);
 
 // -------------------------------
 void CalcTrackDensity(EdbPattern* pat_interim,Float_t pat_interim_halfsize,Int_t& npat_int,Int_t& npat_total,Int_t& npatN);

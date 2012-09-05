@@ -64,6 +64,7 @@
 #include <TTreeFormula.h>
 #include "TTreePlayer.h"
 
+#include "EdbEDAUtil.h"
 #include "EdbDataSet.h"
 #include "EdbPattern.h"
 #include "EdbPVRec.h"
