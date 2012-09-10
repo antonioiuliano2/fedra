@@ -125,8 +125,8 @@ class EdbPlateTracking : public TObject {
   int FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred );
 
   int FindBestCandidateOpEmuRec(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float wmindegrad, float chi2max, EdbSegP &spred, float maxdmin);
-  int FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred );
-  int FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd, EdbSegP &spred);
+  int FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred, float maxdmin);
+  int FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd, EdbSegP &spred, float maxdmin);
 
   //void TransformToPlateRS( EdbPlateP &plate);
   //void TransformFromPlateRS( EdbPlateP &plate);
