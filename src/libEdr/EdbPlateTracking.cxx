@@ -291,7 +291,7 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
     fndbt.AddSegment(*s);
   }
 
-  Log(2,"FindCandidates","Found %d basetrack candidate in %d+%d preselected microtracks",fndbt.N(),fnds1.N(),fnds2.N());
+  //  Log(2,"FindCandidates","Found %d basetrack candidate in %d+%d preselected microtracks",fndbt.N(),fnds1.N(),fnds2.N());
 
   return 1; //TODO!
 }
@@ -302,7 +302,7 @@ int EdbPlateTracking::FindCandidateMT( EdbPattern &fnds1, EdbPattern &fnds2, Edb
   EdbSegP s1,s2;
   int n1=FindBestCandidate( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT);
   int n2=FindBestCandidate( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT);
-  Log(2,"FindCandidateMT","Found %d+%d microtrack candidates after cuts",n1,n2);
+  //  Log(2,"FindCandidateMT","Found %d+%d microtrack candidates after cuts",n1,n2);
 
   if( n1==0&&n2==0 )  return 0;
 
@@ -434,11 +434,11 @@ int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &f
 
  RESUME:
   
-  Log(2,"FindPrediction","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
+  /*  Log(2,"FindPrediction","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
       eStatus, 
       eScnd.N(),eS1cnd.N(),eS2cnd.N(),
       eSpre.N(),eS1pre.N(),eS2pre.N()
-      );
+      );*/
   snewpred.Copy(eNext);
   fndbt.Copy(eS);
   fnds1.Copy(eS1);
@@ -447,12 +447,15 @@ int EdbPlateTracking::FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &f
 }
 
 //----------------------------------------------------------------------------------------
-int EdbPlateTracking::FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd,EdbSegP &spred )
+int EdbPlateTracking::FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd,EdbSegP &spred, float maxdmin = 1.)
 {
   EdbSegP s1,s2;
-  int n1=FindBestCandidateOpEmuRec( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);
-  int n2=FindBestCandidateOpEmuRec( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);
-  Log(2,"FindCandidateMTOpEmuRec","Found %d+%d microtrack candidates after cuts",n1,n2);
+  /*int n1=FindBestCandidateOpEmuRec( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);
+    int n2=FindBestCandidateOpEmuRec( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, 2.);*/ //SAVE
+  int n1=FindBestCandidateOpEmuRec( fnds1, s1, eS1cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, maxdmin);
+  int n2=FindBestCandidateOpEmuRec( fnds2, s2, eS2cnd, ePulsMinMT, ePulsMinDegradMT, eChi2MaxMT, spred, maxdmin);
+
+  //  Log(2,"FindCandidateMTOpEmuRec","Found %d+%d microtrack candidates after cuts",n1,n2);
 
   if( n1==0&&n2==0 )  return 0;
 
@@ -511,7 +514,7 @@ int EdbPlateTracking::FindBestCandidateOpEmuRec(EdbPattern &cand, EdbSegP &fnd, 
 }
 
 //----------------------------------------------------------------------------------------
-int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred )
+int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred, float maxdmin = 1.)
 {
   // Select the best (micro or base) track matching with the prediction
   // and prepare for a new search.
@@ -565,7 +568,7 @@ int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, Ed
 
 
   EdbSegP fnd;
-  int nbt = FindBestCandidateOpEmuRec(eSpre,fnd, eScnd, ePulsMinBT, ePulsMinDegradBT, eChi2MaxBT,spred);
+  int nbt = FindBestCandidateOpEmuRec(eSpre,fnd, eScnd, ePulsMinBT, ePulsMinDegradBT, eChi2MaxBT, spred, maxdmin);
   if ( nbt > 0 ) {
     eS.Copy(fnd);
     eS1.Copy(*(eS1pre.GetSegment(fnd.Flag()%10000)));
@@ -576,8 +579,7 @@ int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, Ed
     eStatus = 0;
    }
 
-  //  int if_mt = FindCandidateMT(eS1pre,eS2pre,fnd);
-  int if_mt = FindCandidateMTOpEmuRec(eS1pre,eS2pre,fnd,spred);
+  int if_mt = FindCandidateMTOpEmuRec(eS1pre,eS2pre,fnd,spred,maxdmin);
   if(eStatus!=-1) goto RESUME;
 
   switch(if_mt) {
@@ -610,11 +612,11 @@ int EdbPlateTracking::FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, Ed
 
  RESUME:
   
-  Log(2,"FindPredictionOpEmuRec","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
+  /*  Log(2,"FindPredictionOpEmuRec","status = %d, good candidates [s:s1:s2] %d:%d:%d ;  preliminary [s:s1:s2] %d:%d:%d",
       eStatus, 
       eScnd.N(),eS1cnd.N(),eS2cnd.N(),
       eSpre.N(),eS1pre.N(),eS2pre.N()
-      );
+      );*/
   snewpred.Copy(eNext);
   fndbt.Copy(eS);
   fnds1.Copy(eS1);
@@ -799,7 +801,7 @@ int EdbPlateTracking::FindTrack(EdbTrackP &pred, EdbTrackP &found, EdbPlateP &pl
     found.SetSegmentsTrack();
   }
 
-  Log(2,"EdbPlateTracking::FindTracks","status = %d",status);
+  //  Log(2,"EdbPlateTracking::FindTracks","status = %d",status);
   return status;
 }
 
