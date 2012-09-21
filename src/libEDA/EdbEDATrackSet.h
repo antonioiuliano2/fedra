@@ -497,7 +497,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	void ReadTextTracks(char *filename = NULL);
 	void ReadMxxFile(char *filename);
 	void ReadListFile  (char *filename = NULL, bool clear_previous=kTRUE);
-	char *WriteListFile  (char *filename = NULL, bool open_editor = kTRUE);
+	char *WriteListFile  (char *filename = NULL, bool append = kFALSE, bool open_editor = kFALSE);
 
 	void DoVertexing(EdbVertexRec *VR = NULL, int ntrkcut = 3);
 	void DoSelection() { EdbEDATrackSelection::DoSelection(eTracksBase,eTracks);}

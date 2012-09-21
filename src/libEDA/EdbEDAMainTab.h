@@ -124,8 +124,8 @@ class EdbEDAMainTab{
 	void PickCenter();
 	void SetAnimation();
 	void SetColorMode();
-	void ReadListFile();
-	void WriteListFile();
+	void ReadListFile(char *filename=NULL, bool clear_previous=kFALSE);
+	char * WriteListFile(char *filename=NULL);
 	void ReadFilteredText();
 	void WriteFilteredText();
 	void SetProjection();

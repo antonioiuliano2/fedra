@@ -873,6 +873,8 @@ void EdbEDAPlotTab::CheckKinkTracks(){
 TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	// Search kink and make a plot.
 	
+	float Rthreshold = 3;
+	
 	if(trk->N()<2) {
 		printf("Track %d nseg=%d, too short for kink search\n", trk->ID(), trk->N());
 		return NULL;
@@ -939,8 +941,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 		tree->Fill( t->ID(), ipl1, ipl2, p, dtt, dtl, dt, Pt, rmst, rmsl, rms, dxt, dxl);
 		
 		// if there is kink.
-		// if kink angle is bigger than 5 times delta-theta rms in one of the 2 projection.
-		if( fabs(dtt)>rmst*5 || fabs(dtl)>rmsl*5 ) {
+		// if kink angle is bigger than Rthreshold(5) times delta-theta rms in one of the 2 projection.
+		if( fabs(dtt)>rmst*Rthreshold || fabs(dtl)>rmsl*Rthreshold ) {
 			// put the data in a struct.
 			// calculate vertex point with 2 segments.
 			TObjArray segs;
@@ -957,7 +959,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 			printf("Kink candidate. itrk %d plate %d - %d kink angle %.4lf P %.3lf Pt %.3lf\n", 
 				t->ID(), ipl1, ipl2, dt, p, Pt);
 			printf(" (Transverse, Longitudinal) = ( %.4lf, %.4lf ) threshold ( %.4lf, %.4lf ), R = %.2f %.2f\n",
-				dtt, dtl, rmst*5, rmsl*5, dtt/rmst, dtl/rmsl);
+				dtt, dtl, rmst*Rthreshold, rmsl*Rthreshold, dtt/rmst, dtl/rmsl);
 			printf(" rms=%.4lf rms_transvers=%.4lf rms_longitudinal=%.4lf\n", rms, rmst, rmsl);
 			printf(" kinkpoint %.1f %.1f %.1f\n", v->X(), v->Y(), v->Z());
 				
@@ -982,8 +984,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	dt6[1] = fabs(tree->GetMinimum("dtt"));
 	dt6[2] = fabs(tree->GetMaximum("dtl"));
 	dt6[3] = fabs(tree->GetMinimum("dtl"));
-	dt6[4] = tree->GetMaximum("rmst") * 5;
-	dt6[5] = tree->GetMaximum("rmsl") * 5;
+	dt6[4] = tree->GetMaximum("rmst") * Rthreshold;
+	dt6[5] = tree->GetMaximum("rmsl") * Rthreshold;
 	double dtmax = TMath::MaxElement(6,dt6) * 1.15 * 1e3;
 	
 	double rmst = tree->GetMinimum("rmst");
@@ -1010,7 +1012,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	TH1F *h15 = (TH1F *) gROOT->FindObject(hname);
 	if(h15) h15->Delete();
 	h15 = new TH1F(hname,Form("#delta#theta^{RMS}Transverse itrk=%d",trk->ID()), (int)(iplmax-iplmin+1), iplmin-0.5, iplmax+0.5);
-	tree->Draw("ipl2 >>"+hname,"rmst*1e3*5");
+	tree->Draw("ipl2 >>"+hname,Form("rmst*1e3*%f",Rthreshold));
 	h15->SetLineColor(kCyan-10);
 	h15->SetFillColor(kCyan-10);
 	h15->SetXTitle("Plate number");
@@ -1027,10 +1029,10 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	double xmax = h1->GetXaxis()->GetXmax();
 	l->DrawLine(xmin, rmst*1e3, xmax, rmst*1e3);
 	l->SetLineColor(kCyan);
-	l->DrawLine(xmin, rmst*5*1e3, xmax, rmst*5*1e3);
+	l->DrawLine(xmin, rmst*Rthreshold*1e3, xmax, rmst*Rthreshold*1e3);
 	
 	textrms->DrawText(xmin+0.8*(xmax-xmin), rmst*1e3, Form("%.1lfmrad",rmst*1e3));
-	textrms->DrawText(xmin+0.8*(xmax-xmin), 5*rmst*1e3, Form("%.1lfmrad",5*rmst*1e3));
+	textrms->DrawText(xmin+0.8*(xmax-xmin), Rthreshold*rmst*1e3, Form("%.1lfmrad",Rthreshold*rmst*1e3));
 	
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){
@@ -1052,8 +1054,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	hname+="_5";
 	h15 = (TH1F *) gROOT->FindObject(hname);
 	if(h15) h15->Delete();
-	h15 = new TH1F(hname,Form("#delta#theta^{RMS}Transverse itrk=%d",trk->ID()), (int)(iplmax-iplmin+1), iplmin-0.5, iplmax+0.5);
-	tree->Draw("ipl2 >>"+hname,"rmsl*1e3*5");
+	h15 = new TH1F(hname,Form("#delta#theta^{RMS}Longitudinal itrk=%d",trk->ID()), (int)(iplmax-iplmin+1), iplmin-0.5, iplmax+0.5);
+	tree->Draw("ipl2 >>"+hname,Form("rmsl*1e3*%f",Rthreshold));
 	h15->SetLineColor(kCyan-10);
 	h15->SetFillColor(kCyan-10);
 	h15->SetXTitle("Plate number");
@@ -1068,10 +1070,10 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	l = new TLine();
 	l->DrawLine(xmin, rmsl*1e3, xmax, rmsl*1e3);
 	l->SetLineColor(kCyan);
-	l->DrawLine(xmin, rmsl*5*1e3, xmax, rmsl*5*1e3);
+	l->DrawLine(xmin, rmsl*Rthreshold*1e3, xmax, rmsl*Rthreshold*1e3);
 	
 	textrms->DrawText(xmin+0.8*(xmax-xmin), rmsl*1e3, Form("%.1lfmrad",rmsl*1e3));
-	textrms->DrawText(xmin+0.8*(xmax-xmin), 5*rmsl*1e3, Form("%.1lfmrad",5*rmsl*1e3));
+	textrms->DrawText(xmin+0.8*(xmax-xmin), Rthreshold*rmsl*1e3, Form("%.1lfmrad",Rthreshold*rmsl*1e3));
 	
 	if(kinks->GetEntries()){
 		for(int i=0;i<kinks->GetEntries();i++){

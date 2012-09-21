@@ -15,7 +15,7 @@ ClassImp(EdbEDATrackSetList)
 
 
 void EdbEDAListTab::WriteListFile(){ 
-	TString filename=gEDA->GetTrackSet("TS")->WriteListFile(NULL,kFALSE);
+	TString filename=gEDA->GetMainTab()->WriteListFile(NULL);
 	fListFilesOpened->RemoveAll();
 	
 	fListFilesOpened->AddEntry(filename.Data(),0);
@@ -57,7 +57,7 @@ void EdbEDAListTab::ReadSelectedList(){
 		fListFilesOpened->RemoveAll();
 	}
 	
-	set->ReadListFile(const_cast<char*> (e->GetTitle()), clear_previous);
+	gEDA->GetMainTab()->ReadListFile(const_cast<char*> (e->GetTitle()), clear_previous);
 	
 	fListFilesOpened->AddEntry(e->GetTitle(),0);
 	fListFilesOpened->MoveResize(fListFilesOpened->GetX(), fListFilesOpened->GetY(), fListFilesOpened->GetWidth(), fListFilesOpened->GetHeight());

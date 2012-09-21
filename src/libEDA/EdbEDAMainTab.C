@@ -1174,13 +1174,134 @@ void EdbEDAMainTab::SetColorMode(){
 	gEDA->SetColorMode(mode);
 }
 
-void EdbEDAMainTab::ReadListFile(){
+void EdbEDAMainTab::ReadListFile(char *filename, bool clear_previous){
+	// Read list file.
+	// search tracks with plateID and segmentID of BT.
+	// if corresponding track is not found in TS, it search in BT (couples file).
+	//
+	// previously EdbEDATrackSet::ReadListFile is used.
+	// however, in order to allow to read BT, this has changed.
+	// and now this func play a real role.
+	
 	gEDA->StorePrevious(); 
-	eTrackSet->ReadListFile(NULL); 
+	
+	// previously EdbEDATrackSet::ReadListFile is used.
+	// eTrackSet->ReadListFile(NULL); 
+	
+	if(filename==NULL){
+		TGFileInfo *fi = new TGFileInfo;
+		fi->fIniDir    = StrDup(".");
+		const char *filetypes[] = { "List file", "*.lst", "All files","*",0,0};
+		fi->fFileTypes = filetypes;
+		new TGFileDialog(gClient->GetRoot(), gEve->GetMainWindow(), kFDOpen, fi);
+		filename=fi->fFilename;
+	}
+
+	EdbEDATrackSet *setTS = gEDA->GetTrackSet("TS");
+	EdbEDATrackSet *setBT = gEDA->GetTrackSet("BT");
+	printf("Read List file : %s\n", filename);
+
+	FILE *fp=NULL;
+	if(filename!=NULL) fp = fopen(filename,"rt");
+	
+	if(fp==NULL){
+		printf("List file is not available.\n");
+		return;
+	}
+
+	if(clear_previous) {
+		setTS->ClearTracks();
+		setTS->ClearComments();
+		setBT->ClearTracks();
+		setBT->ClearComments();
+	}
+	
+	char buf[256];
+	int ipl, iseg;
+	char comment[256];
+	// read list, setting TObjArray *selected.
+	for(int i=0;NULL!=fgets(buf,sizeof(buf),fp);i++){
+		if(feof(fp)||ferror(fp)) break;
+		sscanf(buf,"%d %d %s", &ipl, &iseg, comment);
+		
+		EdbTrackP *t=NULL;
+		for(int j=0;j<setTS->NBase();j++){
+			EdbTrackP *tt = setTS->GetTrackBase(j);
+			if(NULL==tt) continue;
+			for(int k=0;k<tt->N();k++){
+				EdbSegP *s = tt->GetSegment(k);
+				if(s->ID()==iseg){
+				if(s->Plate()==ipl){
+					setTS->SetTrack(tt); // add tt for drawing
+					t=tt;
+					break;
+				}}
+			}
+		}
+		
+		EdbEDATrackSet *set = NULL; // set for comments
+		if(t) set = setTS;
+		else  set = setBT;
+		
+		if(t==NULL) {
+			// no track found in TS
+			// search in BT
+			
+			EdbPattern *pat = gEDA->GetPatternIPL(ipl);
+			for(int j=0; j<pat->N(); j++){
+				EdbSegP *s = pat->GetSegment(j);
+				if(s->ID()==iseg){
+					t = new EdbTrackP(s);
+					t->SetCounters();
+					t->SetPlate(s->Plate());
+					setBT->AddTrack(t);
+				}
+			}
+			
+		}
+		
+		
+		if(t==NULL) continue;
+		
+		unsigned int l;
+		for(l=0;l<strlen(buf);l++){
+			if(buf[l]=='\"') break;
+		}
+		if(l<strlen(buf) ){
+			strcpy(comment, buf+l+1);
+			for(l=0;l<strlen(comment);l++){
+				if(comment[l]=='\"') comment[l]='\0';
+			}
+			if(strlen(comment)!=0) {
+				set->AddComment(t,comment);
+			}
+		}
+	
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	gEDA->Redraw();
 }
-void EdbEDAMainTab::WriteListFile(){
-	eTrackSet->WriteListFile(NULL);
+
+char * EdbEDAMainTab::WriteListFile(char *filename){
+	filename = eTrackSet->WriteListFile(filename);
+	
+	EdbEDATrackSet *setBT = gEDA->GetTrackSet("BT");
+	
+	if (setBT->N()){
+	     gEDA->GetTrackSet("BT")->WriteListFile(filename, kTRUE);
+	}
+	
+	return filename;
+	
 }
 
 void EdbEDAMainTab::WriteFilteredText(){

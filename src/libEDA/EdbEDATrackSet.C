@@ -1042,8 +1042,13 @@ void EdbEDATrackSet::ReadMxxFile(char *filename){
 
 
 void EdbEDATrackSet::ReadListFile(char *filename, bool clear_previous){
+	// Read list file.
+	// Search tracks in this track set.
+	// see also EdbEDAMainTab::ReadListFile(), which try to search 
+	// in BT files.
+	
 	if(filename==NULL){
-				TGFileInfo *fi = new TGFileInfo;
+		TGFileInfo *fi = new TGFileInfo;
 		fi->fIniDir    = StrDup(".");
 		const char *filetypes[] = { "List file", "*.lst", "All files","*",0,0};
 		fi->fFileTypes = filetypes;
@@ -1086,6 +1091,7 @@ void EdbEDATrackSet::ReadListFile(char *filename, bool clear_previous){
 				}}
 			}
 		}
+		
 		if(t==NULL) continue;
 		unsigned int l;
 		for(l=0;l<strlen(buf);l++){
@@ -1104,7 +1110,7 @@ void EdbEDATrackSet::ReadListFile(char *filename, bool clear_previous){
 	}
 }
 
-char * EdbEDATrackSet::WriteListFile(char *filename, bool open_editor){
+char * EdbEDATrackSet::WriteListFile(char *filename, bool append, bool open_editor){
 	// Write List file.
 	// ouput plate_number and segment_id. (track ID could change everytime after reconstruction, but segment ID doesn't change.)
 	// the result of MT search will be ignored.
@@ -1118,9 +1124,10 @@ char * EdbEDATrackSet::WriteListFile(char *filename, bool open_editor){
 	}
 
 	if(NULL==filename) return NULL;
-	printf("Write List file : %s -> TrackSet:%s\n", filename, GetName());
+	printf("Write List file : %s (%6s) <- TrackSet:%s\n", filename, append?"append":"create", GetName());
 	FILE *fp;
-	fp = fopen(filename,"wt");
+	if(append) fp = fopen(filename,"at");
+	else       fp = fopen(filename,"wt");
 	
 	if(fp==NULL){
 		printf("Couldn't open the file.\n");
