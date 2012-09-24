@@ -15,6 +15,7 @@
 #include "TCanvas.h"
 #include "TSpectrum.h"
 #include "TPolyMarker.h"
+#include "TRandom3.h"
 
 #include "EdbVertex.h"
 #include "EdbPVRec.h"
@@ -106,6 +107,10 @@ private:
     // eCutMethod == 5: Constant X2Hat BT density also in tangens theta space
     /// TO BE IMPLEMENTED HERE ...
 
+    // eCutMethod == 6: Random Cut
+    Float_t	eRandomCutThreshold;
+    
+    
 
 protected:
 
@@ -241,6 +246,7 @@ public:
     void Execute_ConstantBTDensityInAngularBins();
     void Execute_ConstantBTQualityInAngularBins();
     void Execute_ConstantBTX2HatInAngularBins();
+    void Execute_RandomCut();
 
     TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
@@ -279,6 +285,7 @@ public:
     void PrintCutType3(); // Constant BT quality
     void PrintCutType4(); // Constant BT X2Hat
     void PrintCutType5(); // Constant BT X2Hat
+    void PrintCutType6(); // Random Test Cut
     void Help();
     ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };

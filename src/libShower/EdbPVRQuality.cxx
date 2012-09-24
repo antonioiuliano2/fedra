@@ -36,11 +36,12 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 {
     // Default Constructor with a EdbPVRec object.
     // (the EdbPVRec object corresponds to the collection of plates scanned with the collection
-    //  of basetracks (and additionally linked tracks)).
+    // of basetracks (and additionally linked tracks)).
     // This constructor automatically checks the original data for background level and
     // creates a new EdbPVRec object that contains only segments that fulfill the quality
     // cut in accordance with the desired (predefined) background level.
     // If general basetrack density is lower than 20BT/mm2 then no cleaning is done.
+    
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)   Constructor (does automatically all in one...)"<<endl;
 
     Init();
@@ -54,7 +55,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     // Set ali as eAli_orig
     eAli_orig=ali;
     eIsSource=kTRUE;
-
+    // Check EdbPVRec object for defects:
     CheckEdbPVRec();
 
 
@@ -64,10 +65,14 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
 
     /// TO BE CHECKED WHICH METHOD SHOULD BE THE DEFAULT ONE...
 //     Execute_ConstantBTDensity();
-    Execute_ConstantBTX2Hat();
+//     Execute_ConstantBTX2Hat();
 //    Execute_ConstantBTQuality();
 //    Execute_ConstantBTDensityInAngularBins();
+    Execute_RandomCut();
+    
+    // Create then the modified EdbPVRec object.
     CreateEdbPVRec();
+    // Finally Print Status Information
     Print();
 }
 
@@ -137,7 +142,7 @@ void EdbPVRQuality::Set0()
     eIsSource=kFALSE;
     eIsTarget=kFALSE;
     eAli_maxNpatterns=0;
-    for (int i=0; i<6; i++) eCutMethodIsDone[i]=kFALSE;
+    for (int i=0; i<7; i++) eCutMethodIsDone[i]=kFALSE;
 
     // Default BT density level for which the standard cutroutine
     // will be put. This is for all tangens theta values integrated.
@@ -176,7 +181,8 @@ void EdbPVRQuality::Set0()
         eXi2Hat_s_WTilde[i]=0;
     }
 
-
+    eRandomCutThreshold=1.0;
+    
     eProfileBTdens_vs_PID_source_meanX=0;
     eProfileBTdens_vs_PID_source_meanY=0;
     eProfileBTdens_vs_PID_source_rmsX=0;
@@ -243,6 +249,8 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 
     // 4: (testing): Do cut based Xi2Hat relation.
     // 5: (testing): Do cut based Xi2Hat relation.	 In Angular Bins
+    
+    // 6: (testing): Do random cut based relation --> Just for quick test purposes....
 
 
     Log(2,"EdbPVRQuality::SetCutMethod","EdbPVRQuality::SetCutMethod");
@@ -258,9 +266,10 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 
     if (CutMethod==4) cout << "// 4: (testing): Do cut based Xi2Hat relation. " << endl;
     if (CutMethod==5) cout << "// 5: (testing): Do cut based Xi2Hat relation.	 In Angular Bins " << endl;
+    if (CutMethod==6) cout << "// 6: (testing): Do random cut based relation --> Just for quick test purposes.... " << endl;
 
 
-    if (CutMethod>5) {
+    if (CutMethod>6) {
         eCutMethod=0;
         cout << "WARNING   EdbPVRQuality::SetCutMethod  eCutMethod invalid, Set back to default eCutMethod=  " << eCutMethod << endl;
     }
@@ -745,7 +754,7 @@ void EdbPVRQuality::PrintCutType()
 {
     // Print PrintCutType data for this class.
     cout << "EdbPVRQuality::Print()   " << endl;
-    for (int i=0; i<6; i++) {
+    for (int i=0; i<7; i++) {
         cout << "EdbPVRQuality::Print()   eCutMethodIsDone["<<i<<"] " << eCutMethodIsDone[i] << endl;
     }
     if (eCutMethodIsDone[0]) PrintCutType0();
@@ -754,6 +763,7 @@ void EdbPVRQuality::PrintCutType()
     if (eCutMethodIsDone[3]) PrintCutType3();
     if (eCutMethodIsDone[4]) PrintCutType4();
     if (eCutMethodIsDone[5]) PrintCutType5();
+    if (eCutMethodIsDone[6]) PrintCutType6();
     return;
 }
 
@@ -780,6 +790,7 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[3] = " << eCutMethodIsDone[3] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[4] = " << eCutMethodIsDone[4] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[5] = " << eCutMethodIsDone[5] << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[6] = " << eCutMethodIsDone[6] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
@@ -963,6 +974,14 @@ void EdbPVRQuality::PrintCutType4()
 void EdbPVRQuality::PrintCutType5()
 {
     cout << "void EdbPVRQuality::PrintCutType5() NOT  YET IMPLEMENTED" << endl;
+    return;
+}
+
+//______________________________________________________________________________
+
+void EdbPVRQuality::PrintCutType6()
+{
+    cout << "void EdbPVRQuality::PrintCutType6() NOT  YET IMPLEMENTED" << endl;
     return;
 }
 
@@ -2077,9 +2096,210 @@ void EdbPVRQuality::Execute_ConstantBTX2HatInAngularBins()
 
 void EdbPVRQuality::Execute_ConstantBTQualityInAngularBins()
 {
-    cout << "void EdbPVRQuality::Execute_ConstantBTX2Hat() TO BE DONE ! ATTENTION WARNING " << endl;
+    cout << "void EdbPVRQuality::Execute_ConstantBTQualityInAngularBins() TO BE DONE ! ATTENTION WARNING " << endl;
 
 }
+
+
+//___________________________________________________________________________________
+
+void EdbPVRQuality::Execute_RandomCut()
+{
+    // EdbPVRQuality::Execute_RandomCut()
+    // Execute the modified cut routines to achieve arbitrary basetrack density level.
+
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+    cout << "-";
+    cout << endl;
+    cout << "EdbPVRQuality::Execute_RandomCut " << endl;
+    cout << "-";
+    cout << endl;
+    for (int i=0; i<80; ++i) cout << "-";
+    cout << endl;
+
+    if (!eIsSource) return;
+    if (NULL==eAli_orig) return;
+
+    // Check the patterns of the EdbPVRec:
+    eAli_maxNpatterns= eAli_orig->Npatterns();
+    if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
+    if (eAli_maxNpatterns>114) {
+        cout << "ERROR!  EdbPVRQuality::Execute_RandomCut  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
+        eAli_maxNpatterns=114;
+    }
+
+    TH1F* histPatternBTDensity = new TH1F("histPatternBTDensity","histPatternBTDensity",200,0,200);
+
+    // Before Starting Create the Random Generator:
+    cout << "EdbPVRQuality::Execute_RandomCut()    Create the Random Generator with unique Seed" << endl;
+    cout << "EdbPVRQuality::Execute_RandomCut()    Trandom3* RandomGenerator = new TRandom3(0);" << endl;
+    TRandom3* RandomGenerator = new TRandom3(0);
+    
+    
+    // Loop over the patterns:
+    for (int i=0; i<eAli_maxNpatterns; i++) {
+        if (i>56) {
+            cout << "WARNING     EdbPVRQuality::Execute_RandomCut()    Your EdbPVRec object has more than 57 patterns! " << endl;
+            cout << "WARNING     EdbPVRQuality::Execute_RandomCut()    Check it! " << endl;
+        }
+        
+        cout << "EdbPVRQuality::Execute_RandomCut()    Set eCutp1[i] to the initial eRandomCutThreshold " << endl;
+        eCutp1[i]=eRandomCutThreshold;
+        
+        if (gEDBDEBUGLEVEL>2) cout << "Execute_RandomCut   Doing Pattern " << i << endl;
+
+        // Now the condition loop:
+        // Loop over 50 steps to determine new BG rate....s
+        for (int l=0; l<50; l++) {
+            eHistYX->Reset(); // important to clean the histogram
+            eHistChi2W->Reset(); // important to clean the histogram
+            histPatternBTDensity->Reset(); // important to clean the histogram
+	    eHistTYTX->Reset(); // important to clean the histogram
+	    eHistTT->Reset(); // important to clean the histogram
+	    
+            EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
+            Int_t npat=pat->N();
+            EdbSegP* seg=0;
+            // Loop over the segments.
+            for (int j=0; j<npat; j++) {
+                seg=pat->GetSegment(j);
+                // Very important:
+                // For the data case, we assume the following:
+                // Data (MCEvt<0) will     be taken for BTdensity calculation
+                // Sim (MCEvt>0)      will NOT be taken for BTdensity calculation
+                // We take it ONLY and ONLY into account if it is especially wished
+                // by the user!
+                // Therefore (s)he needs to know how many Gauge Coupling Parameters
+                // in the Standard Model exist (at least)...
+                Bool_t result=kTRUE;
+                if (seg->MCEvt()>0) {
+                    if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
+                        result = kTRUE;
+                        // cout << "result = kTRUE !! " << endl;
+                    }
+                    else {
+                        result = kFALSE;
+                    }
+                }
+
+                if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+
+                // Main decision for segment to be kept or not (seg is of MC or data type).
+                if ( kFALSE == result ) continue;
+		
+		// Random CutMethod:
+		if (RandomGenerator->Uniform()>eCutp1[i]) continue;
+
+		// For the check, fill the histograms in any case:
+		eHistYX->Fill(seg->Y(),seg->X());
+		eHistTYTX->Fill(seg->TY(),seg->TX());
+		eHistTT->Fill(TMath::Sqrt(seg->TY()*seg->TY()+seg->TX()*seg->TX()));
+		eHistChi2W->Fill(seg->W(),seg->Chi2());
+            }
+
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+
+            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            for (int k=1; k<nbins-1; k++) {
+                if (eHistYX->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+            }
+
+            ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
+            if (gEDBDEBUGLEVEL>2) cout <<"Execute_ConstantBTDensity      Loop l= " << l << ":  for the eCutp1[i] : " << eCutp1[i] <<   "  we have a dens: "  << ePatternBTDensity_modified[i] << endl;
+
+            // Now the condition check:
+            if (ePatternBTDensity_modified[i]<=eBTDensityLevel) {
+                if (gEDBDEBUGLEVEL>2)  cout << "Execute_RandomCut      We reached the loop end due to random cut based condition  ... ... and break loop." << endl;
+                break;
+            }
+            else {
+                // Next step, tighten cut:
+                eCutp1[i] += -0.02;
+            }
+
+        } // of condition loop...
+
+        // Fill target profile histogram:
+        Float_t bincontentXY=histPatternBTDensity->GetMean();
+        eProfileBTdens_vs_PID_target->Fill(i,bincontentXY);
+
+    } // of Npattern loops..
+
+    eCutMethodIsDone[6]=kTRUE;
+
+    // Check if modified or original PVRec object should be returned:
+    if (eProfileBTdens_vs_PID_source_meanY>eBTDensityLevel) {
+        eNeedModified=kTRUE;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Check if modified or original PVRec object should be returned: " << endl;
+        cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() " << eNeedModified << endl;
+    }
+
+/*
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(2,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(4);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_target->SetLineStyle(2);
+    eProfileBTdens_vs_PID_target->Draw("profileZsame");
+    c1->cd();
+    histPatternBTDensity->Reset();
+    eHistYX->Reset();
+    eHistChi2W->Reset();
+    */
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(3,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    eHistTYTX->DrawCopy("colz");
+    c1->cd(4);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(5);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    c1->cd(6);
+    eHistTT->DrawCopy("");
+    c1->cd();
+
+    eHistYX->Reset();
+    eHistTYTX->Reset();
+    eHistTT->Reset();
+    eHistChi2W->Reset();
+
+    eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
+    eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
+    eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
+    eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
+
+    eProfileBTdens_vs_PID_target_meanX=eProfileBTdens_vs_PID_target->GetMean(1);
+    eProfileBTdens_vs_PID_target_meanY=eProfileBTdens_vs_PID_target->GetMean(2);
+    eProfileBTdens_vs_PID_target_rmsX=eProfileBTdens_vs_PID_target->GetRMS(1);
+    eProfileBTdens_vs_PID_target_rmsY=eProfileBTdens_vs_PID_target->GetRMS(2);
+
+    delete histPatternBTDensity;
+
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() Cuts are done and saved to obtain desired BT density. " << endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() If you want to apply the cuts now, run the  CreateEdbPVRec()  function now.  " <<   endl;
+    cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity()....done." << endl;
+    return;
+}
+
+//______________________________________________________________________________
 
 
 
@@ -2205,7 +2425,7 @@ void EdbPVRQuality::CreateEdbPVRec()
     // Checks
     // should be revised, such that the condition reads: "at least one cutmethod had to be done."
     Bool_t doStop=kFALSE;
-    for (int i=0; i<5; i++) if (eCutMethodIsDone[i]==kTRUE) doStop=kTRUE;
+    for (int i=0; i<7; i++) if (eCutMethodIsDone[i]==kTRUE) doStop=kTRUE;
     if (doStop!=kTRUE) {
         cout << "WARNING!   EdbPVRQuality::CreateEdbPVRec    No eCutMethodIsDone[..] was done. STOP and DONT create a new EdbPVR."<<endl;
         return;
@@ -2282,6 +2502,10 @@ void EdbPVRQuality::CreateEdbPVRec()
                 X2Hat=chi2Normalized + WTildeNormalized;
 
                 if (X2Hat>eX2HatCut[i]) continue;
+            }
+            else if (eCutMethodIsDone[6]==kTRUE) {
+	      // Random Uniform Cut value was before written in eCutp1[i]
+                if (gRandom->Uniform()<eCutp1[i]) continue;
             }
             else {
                 // do nothing;
