@@ -55,21 +55,21 @@ private:
     Float_t    eDz;         // length of the shower along Z
     Int_t      eL;          // length of the shower in number of film
 
-    Int_t      eIDb[1000];  // ID of basetrack
-    Int_t      ePlateb[1000];  // Plate ID of basetrack
-    Float_t    eXb[1000];   // X position of basetrack
-    Float_t    eYb[1000];   // Y position of basetrack
-    Float_t    eZb[1000];   // Z position of basetrack
-    Float_t    eTXb[1000];   // Slope X position of basetrack
-    Float_t    eTYb[1000];   // Slope Y position of basetrack
-    Float_t    eChi2b[1000];   // Chi2 of basetrack
-    Float_t    ePb[1000];   // P of basetrack
-    Int_t      eWb[1000];   // W of basetrack
-    Int_t      eFlagb[1000];   // Flag of basetrack
-    Int_t      eNFilmb[1000]; // Plate number of basetrack in the shower reference
-    Float_t    eDeltarb[1000];  // Distance criteria of  basetrack
-    Float_t    eDeltathetab[1000]; // Angular criteria of  basetrack
-    Int_t    eTagPrimary[1000]; // 1 for first Basetrack - 0 for the other
+    Int_t      eIDb[10000];  // ID of basetrack
+    Int_t      ePlateb[10000];  // Plate ID of basetrack
+    Float_t    eXb[10000];   // X position of basetrack
+    Float_t    eYb[10000];   // Y position of basetrack
+    Float_t    eZb[10000];   // Z position of basetrack
+    Float_t    eTXb[10000];   // Slope X position of basetrack
+    Float_t    eTYb[10000];   // Slope Y position of basetrack
+    Float_t    eChi2b[10000];   // Chi2 of basetrack
+    Float_t    ePb[10000];   // P of basetrack
+    Int_t      eWb[10000];   // W of basetrack
+    Int_t      eFlagb[10000];   // Flag of basetrack
+    Int_t      eNFilmb[10000]; // Plate number of basetrack in the shower reference
+    Float_t    eDeltarb[10000];  // Distance criteria of  basetrack
+    Float_t    eDeltathetab[10000]; // Angular criteria of  basetrack
+    Int_t    eTagPrimary[10000]; // 1 for first Basetrack - 0 for the other
 
     Int_t eSize;            // number of BT in the shower
     Int_t eSize15;          // number of BT in the shower (for 15 films crossed)
@@ -178,25 +178,25 @@ public:
     Int_t sizeb;		// number of basetracks
     Int_t isizeb;		// ??? forgot what it was ???
     Int_t showerID;		// ??? forgot what it was ???
-    Int_t idb[1000];		// ??? forgot what it was ???
-    Int_t plateb[1000];		// plate id of segment i
-    Float_t xb[1000];		// position of segment i
-    Float_t yb[1000];		// position of segment i
-    Float_t zb[1000];		// position of segment i
-    Float_t txb[1000];		// position of segment i
-    Float_t tyb[1000];		// position of segment i
-    Int_t nfilmb[1000];		// plate position of segment i w.r.t. starting segment.
-    Int_t ngrainb[1000];
-    Int_t ntrace1simub[1000];
-    Int_t ntrace2simub[1000];
-    Float_t ntrace3simub[1000];
-    Int_t ntrace4simub[1000];
-    Float_t chi2btkb[1000];
-    Float_t deltarb[1000];
-    Float_t deltathetab[1000];
-    Float_t deltaxb[1000];
-    Float_t deltayb[1000];
-    Float_t tagprimary[1000];
+    Int_t idb[10000];		// ??? forgot what it was ???
+    Int_t plateb[10000];		// plate id of segment i
+    Float_t xb[10000];		// position of segment i
+    Float_t yb[10000];		// position of segment i
+    Float_t zb[10000];		// position of segment i
+    Float_t txb[10000];		// position of segment i
+    Float_t tyb[10000];		// position of segment i
+    Int_t nfilmb[10000];		// plate position of segment i w.r.t. starting segment.
+    Int_t ngrainb[10000];
+    Int_t ntrace1simub[10000];
+    Int_t ntrace2simub[10000];
+    Float_t ntrace3simub[10000];
+    Int_t ntrace4simub[10000];
+    Float_t chi2btkb[10000];
+    Float_t deltarb[10000];
+    Float_t deltathetab[10000];
+    Float_t deltaxb[10000];
+    Float_t deltayb[10000];
+    Float_t tagprimary[10000];
 
     Float_t EnergyCorrectedb;
     Float_t EnergyUnCorrectedb;

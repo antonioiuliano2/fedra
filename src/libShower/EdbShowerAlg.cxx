@@ -3691,24 +3691,24 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     Int_t shower_number_eventb, shower_sizeb, shower_isizeb,shower_showerID;
     Int_t shower_sizeb15, shower_sizeb20, shower_sizeb30;
     Float_t shower_energy_shot_particle;
-    Float_t shower_xb[1000];
-    Float_t shower_yb[1000];
-    Float_t shower_zb[1000];
-    Float_t shower_txb[1000];
-    Float_t shower_tyb[1000];
-    Float_t shower_deltarb[1000];
-    Float_t shower_deltathetab[1000];
-    Float_t shower_deltaxb[1000];
-    Float_t shower_deltayb[1000];
-    Int_t   shower_nfilmb[1000];
-    Float_t shower_chi2btkb[1000];
-    Int_t shower_ntrace1simub[1000]; // MCEvt
-    Int_t shower_ntrace2simub[1000]; // s->W()
-    Float_t shower_ntrace3simub[1000]; // s->P()
-    Int_t shower_ntrace4simub[1000]; // s->Flag()
-    Float_t shower_tagprimary[1000];
-    Int_t   shower_idb[1000];
-    Int_t   shower_plateb[1000];
+    Float_t shower_xb[10000];
+    Float_t shower_yb[10000];
+    Float_t shower_zb[10000];
+    Float_t shower_txb[10000];
+    Float_t shower_tyb[10000];
+    Float_t shower_deltarb[10000];
+    Float_t shower_deltathetab[10000];
+    Float_t shower_deltaxb[10000];
+    Float_t shower_deltayb[10000];
+    Int_t   shower_nfilmb[10000];
+    Float_t shower_chi2btkb[10000];
+    Int_t shower_ntrace1simub[10000]; // MCEvt
+    Int_t shower_ntrace2simub[10000]; // s->W()
+    Float_t shower_ntrace3simub[10000]; // s->P()
+    Int_t shower_ntrace4simub[10000]; // s->Flag()
+    Float_t shower_tagprimary[10000];
+    Int_t   shower_idb[10000];
+    Int_t   shower_plateb[10000];
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower

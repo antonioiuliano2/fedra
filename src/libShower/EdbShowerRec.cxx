@@ -285,10 +285,10 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
 void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr)
 {
     // Another reconstruction function ...
-    double chi20[1000];
-    double P0[1000];
-    int W0[1000];
-    int Flag0[1000];
+    double chi20[10000];
+    double P0[10000];
+    int W0[10000];
+    int Flag0[10000];
     chi20[0]=-9999999;
     W0[0]=-9999999;
     P0[0]=-9999999;
@@ -682,11 +682,11 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                     SY0 = ss->TY();
                 }
 
-                if (fabs(SX0)>0.4) continue;
-                if (fabs(SY0)>0.4) continue;
+                if (fabs(SX0)>0.5) continue;
+                if (fabs(SY0)>0.5) continue;
 
-                if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
-                {
+                //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
+                //{
                     //Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
                     //rayon = 800.; // cylinder with 800 microns radius
                     Delta = 20.+   fabs(eAlgoParameterConeAngle*fabs(Z0-a->GetZ0())); // cone with eAlgoParameterConeAngle mrad
@@ -767,7 +767,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                             }
                         }
                     }
-                }
+                //}
             }
             ii++;
         }
@@ -1200,11 +1200,11 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                     SY0 = ss->TY();
                 }
 
-                if (fabs(SX0)>0.4) continue;
-                if (fabs(SY0)>0.4) continue;
+                if (fabs(SX0)>0.5) continue;
+                if (fabs(SY0)>0.5) continue;
 
-                if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
-                {
+                //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
+                //{
                     Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
                     rayon = 800.; // cylinder with 800 microns radius
                     diff = sqrt((X0-Xss)*(X0-Xss)+(Y0-Yss)*(Y0-Yss));
@@ -1273,7 +1273,7 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                             }
                         }
                     }
-                }
+                //}
             }
             ii++;
         }
@@ -3076,20 +3076,20 @@ int EdbShowerRec::SaveLNK()
 
     Int_t sizeb;
     Int_t isizeb;
-    Float_t xb[1000];
-    Float_t yb[1000];
-    Float_t zb[1000];
-    Float_t txb[1000];
-    Float_t tyb[1000];
-    Int_t nfilmb[1000];
-    //   Int_t ngrainb[1000];
-    //   Int_t ntrace1simub[1000];
-    Int_t ntrace2simub[1000];
-    Float_t chi2btkb[1000];
+    Float_t xb[10000];
+    Float_t yb[10000];
+    Float_t zb[10000];
+    Float_t txb[10000];
+    Float_t tyb[10000];
+    Int_t nfilmb[10000];
+    //   Int_t ngrainb[10000];
+    //   Int_t ntrace1simub[10000];
+    Int_t ntrace2simub[10000];
+    Float_t chi2btkb[10000];
     int eProb90;
     int eProb1;
 
-    int number_eventb,w2,plate[1000];
+    int number_eventb,w2,plate[10000];
 
     sprintf(fname_e,"Shower.root");  //input shower tree file
 
@@ -3187,16 +3187,16 @@ TObjArray* EdbShowerRec::ShowerToEdbSegPArray()
 
     float x,y,tx,ty,z;
     Int_t sizeb;
-    Float_t xb[1000];
-    Float_t yb[1000];
-    Float_t zb[1000];
-    Float_t txb[1000];
-    Float_t tyb[1000];
-    Int_t nfilmb[1000];
-    Int_t ntrace2simub[1000];
+    Float_t xb[10000];
+    Float_t yb[10000];
+    Float_t zb[10000];
+    Float_t txb[10000];
+    Float_t tyb[10000];
+    Int_t nfilmb[10000];
+    Int_t ntrace2simub[10000];
     int eProb90;
     int eProb1;
-    int w2,plate[1000];
+    int w2,plate[10000];
 
     if (!eShowerTreeIsDone) {
         TTree * treesaveb = (TTree*)(FileReconstructedShowerTree->Get("treebranch"));
@@ -4553,24 +4553,24 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
     Int_t shower_number_eventb, shower_sizeb, shower_isizeb,shower_showerID;
     Int_t shower_sizeb15, shower_sizeb20, shower_sizeb30;
     Float_t shower_energy_shot_particle;
-    Float_t shower_xb[1000];
-    Float_t shower_yb[1000];
-    Float_t shower_zb[1000];
-    Float_t shower_txb[1000];
-    Float_t shower_tyb[1000];
-    Float_t shower_deltarb[1000];
-    Float_t shower_deltathetab[1000];
-    Float_t shower_deltaxb[1000];
-    Float_t shower_deltayb[1000];
-    Int_t   shower_nfilmb[1000];
-    Float_t shower_chi2btkb[1000];
-    Int_t shower_ntrace1simub[1000]; // MCEvt
-    Int_t shower_ntrace2simub[1000]; // s->W()
-    Float_t shower_ntrace3simub[1000]; // s->P()
-    Int_t shower_ntrace4simub[1000]; // s->Flag()
-    Float_t shower_tagprimary[1000];
-    Int_t   shower_idb[1000];
-    Int_t   shower_plateb[1000];
+    Float_t shower_xb[10000];
+    Float_t shower_yb[10000];
+    Float_t shower_zb[10000];
+    Float_t shower_txb[10000];
+    Float_t shower_tyb[10000];
+    Float_t shower_deltarb[10000];
+    Float_t shower_deltathetab[10000];
+    Float_t shower_deltaxb[10000];
+    Float_t shower_deltayb[10000];
+    Int_t   shower_nfilmb[10000];
+    Float_t shower_chi2btkb[10000];
+    Int_t shower_ntrace1simub[10000]; // MCEvt
+    Int_t shower_ntrace2simub[10000]; // s->W()
+    Float_t shower_ntrace3simub[10000]; // s->P()
+    Int_t shower_ntrace4simub[10000]; // s->Flag()
+    Float_t shower_tagprimary[10000];
+    Int_t   shower_idb[10000];
+    Int_t   shower_plateb[10000];
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower
