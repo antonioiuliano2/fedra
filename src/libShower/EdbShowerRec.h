@@ -51,6 +51,8 @@ private:
     Int_t      eW0;         // W of the first shower segment
     Float_t    eP0;         // P of the first shower segment
     Int_t      eFlag0;      // Flag of the first shower segment
+    Int_t      emcDigitIndexTop0;         // Top Digit index of the first shower segment
+    Int_t      emcDigitIndexBottom0;      // Bottom Digit index of the first shower segment
 
     Float_t    eDz;         // length of the shower along Z
     Int_t      eL;          // length of the shower in number of film
@@ -70,6 +72,8 @@ private:
     Float_t    eDeltarb[10000];  // Distance criteria of  basetrack
     Float_t    eDeltathetab[10000]; // Angular criteria of  basetrack
     Int_t    eTagPrimary[10000]; // 1 for first Basetrack - 0 for the other
+    Int_t      emcDigitIndexTop[1000];   // mc top digit index  of basetrack
+    Int_t      emcDigitIndexBottom[1000];   // mc bottom digit index  of basetrack
 
     Int_t eSize;            // number of BT in the shower
     Int_t eSize15;          // number of BT in the shower (for 15 films crossed)
@@ -197,6 +201,8 @@ public:
     Float_t deltaxb[10000];
     Float_t deltayb[10000];
     Float_t tagprimary[10000];
+    Int_t mcDigitIndexTop[1000];
+    Int_t mcDigitIndexBottom[1000];
 
     Float_t EnergyCorrectedb;
     Float_t EnergyUnCorrectedb;
@@ -373,6 +379,12 @@ public:
     Float_t    GetEnergyUnSigma()     const {
         return eEnergySigmaUnCorrectedb;
     }
+    Float_t    GetmcDigitIndexTop(int i) const {
+        return emcDigitIndexTop[i];
+    }
+    Float_t    GetmcDigitIndexBottom(int i) const {
+        return emcDigitIndexBottom[i];
+    }
     void    SetID(int id)    {
         eID = id;
     }
@@ -397,6 +409,12 @@ public:
     }
     void    SetFlag0(int flag) {
         eFlag0=flag;
+    }
+    void    SetmcDigitIndexTop0(int mcDt) {
+        emcDigitIndexTop0=mcDt;
+    }
+    void    SetmcDigitIndexBottom0(int mcDb) {
+        emcDigitIndexBottom0=mcDb;
     }
     void    SetTx( float tx ) {
         eTx = tx;
@@ -486,6 +504,12 @@ public:
     void    SetPrimary(int tagprimary, int i)  {
         eTagPrimary[i]= tagprimary;
     }
+    void    SetmcDigitIndexTop(int mcDt, int i)  {
+        emcDigitIndexTop[i]= mcDt;
+    }
+    void    SetmcDigitIndexBottom(int mcDb, int i)  {
+        emcDigitIndexBottom[i]= mcDb;
+    }
 
     void InitPiece(EdbDataPiece &piece, const char *cpfile, const char *parfile);
     int  ReadPiece(EdbDataPiece &piece, EdbPattern &pat);
@@ -501,11 +525,11 @@ public:
     //     void recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par);
     //     void recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par);
     /// NEW  --- to be used from now on .... (svn. Revision 889)
-    void rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par, int DOWN,EdbPVRec  *pvr);
+    void rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop, int *mcDigitIndexBottom, int piece2, int piece2par, int DOWN,EdbPVRec  *pvr);
     void rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0, int* Flag0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr);
 
-    void recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0, int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par,EdbPVRec  *pvr);
-    void recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par);
+    void recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0, int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop0, int *mcDigitIndexBottom0, int piece2, int piece2par,EdbPVRec  *pvr);
+    void recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0, int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop0, int *mcDigitIndexBottom0, int piece2, int piece2par,EdbPVRec  *pvr);
 
 
     void rec(TObjArray *sarr, EdbPVRec  *pvr);

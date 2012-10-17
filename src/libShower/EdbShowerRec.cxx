@@ -270,19 +270,19 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
     // or downstream reco.
     // This function contains also arrays for Chi2,W,P,Flag of the first BT...
 
-    if (DOWN == 1) {
-        recdown(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,piece2, piece2par,pvr);
-    }
-    if (DOWN == 0) {
-        recup(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,piece2, piece2par);
-    }
+//    if (DOWN == 1) {
+//        recdown(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,mcDigitIndexTop0,mcDigitIndexBottom0,piece2, piece2par,pvr);
+//    }
+//    if (DOWN == 0) {
+//        recup(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,mcDigitIndexTop0,mcDigitIndexBottom0,piece2, piece2par,pvr);
+//    }
     return;
 }
 
 
 
 //-------------------------------------------------------------------
-void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr)
+void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop0, int *mcDigitIndexBottom0,int piece2, int piece2par,int DOWN,EdbPVRec  *pvr)
 {
     // Another reconstruction function ...
     double chi20[10000];
@@ -294,10 +294,10 @@ void EdbShowerRec::rec(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, d
     P0[0]=-9999999;
     Flag0[0]=-9999999;
     if (DOWN == 1) {
-        recdown(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,piece2, piece2par,pvr);
+        recdown(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,mcDigitIndexTop0,mcDigitIndexBottom0,piece2, piece2par,pvr);
     }
     if (DOWN == 0) {
-        recup(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,piece2, piece2par);
+        recup(num,MAXPLATE,DATA,Ncand,x0,y0,z0,tx0,ty0,chi20,W0,P0,Flag0,plate0,id0,TRid,Esim,mcDigitIndexTop0,mcDigitIndexBottom0,piece2, piece2par,pvr);
     }
     return;
 }
@@ -356,7 +356,7 @@ void EdbShowerRec::rec(TObjArray *sarr, EdbPVRec  *pvr)
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 //void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *TRid, int piece2, int piece2par, float Rcut=100., float Tcut=0.05)
-void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,  int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par,EdbPVRec  *pvr)
+void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,  int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop0, int *mcDigitIndexBottom0, int piece2, int piece2par,EdbPVRec  *pvr)
 {
     // Old style implementation of downstream reconstruction.
     // Starts with arrays that contain Initiator Basetracks,
@@ -397,6 +397,8 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
     treesaveb->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
     treesaveb->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
     treesaveb->Branch("purityb",&purityb,"purityb/F");
+    treesaveb->Branch("mcDigitIndexTop",mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
+    treesaveb->Branch("mcDigitIndexBottom",mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
     fileout = new TFile("shower1.root","RECREATE");
 
@@ -500,6 +502,8 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
         shower->SetWb(W0[ii],0);
         shower->SetPb(P0[ii],0);
         shower->SetFlagb(Flag0[ii],0);
+        shower->SetmcDigitIndexTop(mcDigitIndexTop0[ii],0);
+        shower->SetmcDigitIndexBottom(mcDigitIndexBottom0[ii],0);
 
 
         ind = 0 +  ii*eNTM;
@@ -682,8 +686,8 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                     SY0 = ss->TY();
                 }
 
-                if (fabs(SX0)>0.5) continue;
-                if (fabs(SY0)>0.5) continue;
+                if (fabs(SX0)>0.4) continue;
+                if (fabs(SY0)>0.4) continue;
 
                 //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
                 //{
@@ -750,6 +754,9 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
                                             wbb[ind] = int(ss->W());
                                             Pbb[ind] = ss->P();
                                             Flagbb[ind] = ss->Flag();
+					    
+					    a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
+					    a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
                                             ok =1;
 
 //                       ss->PrintNice();
@@ -823,6 +830,9 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
             deltathetab[j] = a->GetDeltathetab(j);
             nfilmb[j] = a->GetNFilmb(j);
             tagprimary[j] = 0;
+	    
+	    mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
+	    mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
 
             //gEDBDEBUGLEVEL=3;
             if (gEDBDEBUGLEVEL>2) cout <<  xb[j] << "  " << yb[j]  << "  " << zb[j] << "  " << txb[j] << "  " << tyb[j] << "  " << sizeb << endl;
@@ -897,7 +907,7 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 //void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, int *TRid, int piece2, int piece2par,float Rcut=100., float Tcut=0.05)
-void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,  int *plate0, int *id0, int *TRid, double *Esim, int piece2, int piece2par)
+void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0, double *y0, double *z0, double *tx0, double *ty0, double* chi20, int* W0, double* P0,int* Flag0,  int *plate0, int *id0, int *TRid, double *Esim, int *mcDigitIndexTop0, int *mcDigitIndexBottom0, int piece2, int piece2par,EdbPVRec  *pvr)
 {
 
 // shower tree definition
@@ -930,6 +940,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
     treesaveb->Branch("deltayb",deltayb,"deltayb[sizeb]/F");
     treesaveb->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
     treesaveb->Branch("purityb",&purityb,"purityb/F");
+    treesaveb->Branch("mcDigitIndexTop",mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
+    treesaveb->Branch("mcDigitIndexBottom",mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
     fileout = new TFile("shower1.root","RECREATE");
 
@@ -1033,6 +1045,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
         shower->SetWb(W0[ii],0);
         shower->SetPb(P0[ii],0);
         shower->SetFlagb(Flag0[ii],0);
+        shower->SetmcDigitIndexTop(mcDigitIndexTop0[ii],0);
+        shower->SetmcDigitIndexBottom(mcDigitIndexBottom0[ii],0);
 
         ind = 0 +  ii*eNTM;
 
@@ -1200,8 +1214,8 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                     SY0 = ss->TY();
                 }
 
-                if (fabs(SX0)>0.5) continue;
-                if (fabs(SY0)>0.5) continue;
+                if (fabs(SX0)>0.4) continue;
+                if (fabs(SY0)>0.4) continue;
 
                 //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
                 //{
@@ -1260,6 +1274,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
                                             wbb[ind] = int(ss->W());
                                             Pbb[ind] = ss->P();
                                             Flagbb[ind] = ss->Flag();
+					    
+					    a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
+					    a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
                                             ok =1;
                                             add[ii]++;
                                         }
@@ -1324,6 +1341,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
             deltathetab[j] = a->GetDeltathetab(j);
             nfilmb[j] = a->GetNFilmb(j);
             tagprimary[j] = 0;
+	    
+	    mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
+	    mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
 
 //      printf("txb[j]  %f\n", a->GetTXb(j));
 
@@ -1908,6 +1928,8 @@ void EdbShowerRec::NeuralNet() {
     treesaveb3->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
     treesaveb3->Branch("purityb",&purityb,"purityb/F");
     treesaveb3->Branch("trackdensb",&trackdensb,"trackdensb/F");
+    treesaveb3->Branch("mcDigitIndexTop",mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
+    treesaveb3->Branch("mcDigitIndexBottom",mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
     treesaveb3->Branch("Energy",&EnergyCorrectedb,"EnergyCorrectedb/F");
     treesaveb3->Branch("EnergyUnCorrected",&EnergyUnCorrectedb,"EnergyUnCorrectedb/F");
@@ -2052,6 +2074,8 @@ void EdbShowerRec::NeuralNet() {
     treebranch_e->SetBranchAddress("ntrace4simub", &ntrace4simub);
     treebranch_e->SetBranchAddress("purityb", &purityb);
     treebranch_e->SetBranchAddress("E_MC", &E_MC);
+    treebranch_e->SetBranchAddress("mcDigitIndexTop",mcDigitIndexTop);
+    treebranch_e->SetBranchAddress("mcDigitIndexBottom",mcDigitIndexBottom);
 
 
     for (Int_t ik = 0; ik < treebranch_e->GetEntries(); ik++)
@@ -2491,6 +2515,9 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     treesaveb3->Branch("purityb",&purityb,"purityb/F");
     treesaveb3->Branch("trackdensb",&trackdensb,"trackdensb/F");
     treesaveb3->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
+    
+    treesaveb3->Branch("mcDigitIndexTop",mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
+    treesaveb3->Branch("mcDigitIndexBottom",mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
     treesaveb3->Branch("Energy",&EnergyCorrectedb,"EnergyCorrectedb/F");
     treesaveb3->Branch("EnergyUnCorrected",&EnergyUnCorrectedb,"EnergyUnCorrectedb/F");
@@ -4574,6 +4601,8 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower
+    Int_t shower_mcDigitIndexTop[1000]; // 
+    Int_t shower_mcDigitIndexBottom[1000]; // 
 
 
     // Set Addresses of treebranch tree:
@@ -4607,6 +4636,8 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
     eShowerTree->SetBranchAddress("deltasigmathetab",shower_deltasigmathetab);
     eShowerTree->SetBranchAddress("lenghtfilmb",&shower_numberofilms);
     eShowerTree->SetBranchAddress("purityb",&shower_purb); // shower purity
+    eShowerTree->SetBranchAddress("mcDigitIndexTop",shower_mcDigitIndexTop);
+    eShowerTree->SetBranchAddress("mcDigitIndexBottom",shower_mcDigitIndexBottom);
 
 
     Int_t nent=eShowerTree->GetEntries();

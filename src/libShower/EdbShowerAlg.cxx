@@ -3736,6 +3736,8 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     Float_t shower_OldEnergySigmaCorrectedb;
     Float_t shower_OldEnergySigmaUnCorrectedb;
 
+    Int_t   shower_mcDigitIndexTop[1000];
+    Int_t   shower_mcDigitIndexBottom[1000];
     //- Old Shower File:
     TFile* fileOld = new TFile(sourcefilename.Data(),"READ");
     // Set Addresses of treebranch tree:
@@ -3782,6 +3784,8 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     eShowerTree->SetBranchAddress("EnergyUnCorrected",&shower_OldEnergyUnCorrectedb);
     eShowerTree->SetBranchAddress("EnergySigma",&shower_OldEnergySigmaCorrectedb);
     eShowerTree->SetBranchAddress("EnergySigmaUnCorrected",&shower_OldEnergySigmaUnCorrectedb);
+    eShowerTree->SetBranchAddress("mcDigitIndexTop",shower_mcDigitIndexTop);
+    eShowerTree->SetBranchAddress("mcDigitIndexBottom",shower_mcDigitIndexBottom);
 
 
     Int_t nent=eShowerTree->GetEntries();
@@ -3839,6 +3843,8 @@ void EdbShowerAlgESimple::WriteNewRootFile(TString sourcefilename, TString treen
     ShowerTreeNew->Branch("OldEnergyUnCorrected",&shower_OldEnergyUnCorrectedb,"OldEnergyUnCorrected/F");
     ShowerTreeNew->Branch("OldEnergySigma",&shower_OldEnergySigmaCorrectedb,"OldEnergySigma/F");
     ShowerTreeNew->Branch("OldEnergySigmaUnCorrected",&shower_OldEnergySigmaUnCorrectedb,"OldEnergySigmaUnCorrected/F");
+    ShowerTreeNew->Branch("mcDigitIndexTop",shower_mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
+    ShowerTreeNew->Branch("mcDigitIndexBottom",shower_mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
 
     // Loop over Tree Entries (==different showers):
