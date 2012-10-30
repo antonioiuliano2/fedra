@@ -85,6 +85,9 @@ class EdbPlateTracking : public TObject {
 	eSide1.AddSegment(*(S1.GetSegment(i)));
       for(int i=0;i<S2.N();i++)
 	eSide2.AddSegment(*(S2.GetSegment(i)));
+
+      eSide1.SetZ(S1.Z());
+      eSide2.SetZ(S2.Z());
       
       ePred.Copy(prediction);
       ePlate.Copy(plate);
@@ -99,6 +102,9 @@ class EdbPlateTracking : public TObject {
       for(int i=0;i<S2.N();i++)
 	eSide2.AddSegment(*(S2.GetSegment(i)));
       
+      eSide1.SetZ(S1.Z());
+      eSide2.SetZ(S2.Z());
+
       ePred.Copy(prediction);
       Set0(); 
     };
@@ -124,9 +130,9 @@ class EdbPlateTracking : public TObject {
   int FindBestCandidate(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float wmindegrad, float chi2max);
   int FindPrediction( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred );
 
-  int FindBestCandidateOpEmuRec(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float wmindegrad, float chi2max, EdbSegP &spred, float maxdmin);
-  int FindPredictionOpEmuRec( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred, float maxdmin);
-  int FindCandidateMTOpEmuRec( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd, EdbSegP &spred, float maxdmin);
+  int FindBestCandidateDS(EdbPattern &fndbt, EdbSegP &fnd,EdbPattern &cnd, float wmin, float wmindegrad, float chi2max, EdbSegP &spred, float maxdmin);
+  int FindPredictionDS( EdbSegP &spred, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &snewpred, float maxdmin);
+  int FindCandidateMTDS( EdbPattern &fnds1, EdbPattern &fnds2, EdbSegP &fnd, EdbSegP &spred, float maxdmin);
 
   //void TransformToPlateRS( EdbPlateP &plate);
   //void TransformFromPlateRS( EdbPlateP &plate);
