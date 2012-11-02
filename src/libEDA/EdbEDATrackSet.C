@@ -1092,6 +1092,23 @@ void EdbEDATrackSet::ReadListFile(char *filename, bool clear_previous){
 			}
 		}
 		
+		if(t==NULL) {
+			// no track found in TS
+			// search in BT
+			
+			EdbPattern *pat = gEDA->GetPatternIPL(ipl);
+			for(int j=0; j<pat->N(); j++){
+				EdbSegP *s = pat->GetSegment(j);
+				if(s->ID()==iseg){
+					t = new EdbTrackP(s);
+					t->SetCounters();
+					t->SetPlate(s->Plate());
+					AddTrack(t);
+				}
+			}
+			
+		}
+		
 		if(t==NULL) continue;
 		unsigned int l;
 		for(l=0;l<strlen(buf);l++){
