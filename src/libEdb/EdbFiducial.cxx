@@ -436,6 +436,57 @@ Int_t  EdbMarksSet::ReadMap( char *file, char spacer, char shape)
 }
 
 //______________________________________________________________________________
+Int_t  EdbMarksSet::ReadMap2( char *file, char spacer, char shape)
+{
+  // Reads map file and adds informations to eAbsolute and eStage
+  // If shape is 'S', then the "Front X-Ray Mark Map or Optical Mark Map" format is assumed
+  // If shape is 'L', then the "Lateral X-Ray Mark Map" format is assumed
+  Int_t nmarks = 0;
+  Int_t mark, flag;
+  Float_t xabs, yabs, xst, yst;
+
+  FILE *fp = fopen( file,"r");
+
+  TString str_header;
+  TString str_mark;
+
+  if (shape=='S'||shape=='X') {
+    str_header = "mapext:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%f_%f_%*d_%*d_%d";
+  } else if (shape=='L') {
+    str_header = "mapx:_%ld_%*d_%*d_%*d;_%d_%f_%f_%f_%f";
+    str_mark = ";_%d_%f_%f_%f_%f_%*d_%*d_%d";
+  } else {
+    Log(1,"EdbMarksSet::ReadMap2","ERROR: shape '%c' is not implemented\n", shape); return 0;
+  }
+
+  ChangeMapStringSpacer(str_header,'_',spacer);
+  ChangeMapStringSpacer(str_mark,'_',spacer);
+
+  if(!fp)
+  { Log(1,"EdbMarksSet::ReadMap2","ERROR: can not open file %s\n", file); return 0; }
+
+  if ( fscanf(fp, str_header.Data(), &eBrick,&nmarks,&eXmin,&eYmin,&eXmax,&eYmax) != 6 )
+  { Log(1,"EdbMarksSet::ReadMap2","ERROR: file %s is empty or wrong format\n", file); return 0; }
+
+  GetAbsolute()->GetMarks()->Clear("C");
+  GetStage()->GetMarks()->Clear("C");
+
+  for (int imarks=0;imarks<nmarks;imarks++)
+  {
+    if (fscanf(fp, str_mark.Data(), &mark, &xabs, &yabs, &xst, &yst, &flag) != 6)
+    { Log(1,"EdbMarksSet::ReadMap2","ERROR: file %s is empty or wrong format\n", file); return 0; }
+    GetAbsolute()->AddMark(mark,xabs,yabs,flag);
+    GetStage()->AddMark(mark,xst,yst,flag);
+  }
+
+  fclose(fp);
+
+  Log(3,"EdbMarksSet::ReadMap","%d marks are read from file %s\n", nmarks, file);
+  return nmarks;
+}
+
+//______________________________________________________________________________
 Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape, int plate)
 {
   // Create a map string starting from the informations stored in this class
@@ -478,6 +529,55 @@ Int_t  EdbMarksSet::WriteMap( char *file, char spacer, char shape, int plate)
 
   Log(3,"EdbMarksSet::WriteMap","%d marks are written as string map in the file %s\n", nmarks, file);
   return nmarks;
+}
+
+//______________________________________________________________________________
+Int_t  EdbMarksSet::WriteMap2( char *file, char spacer, char shape, int plate)
+{
+  // Create a map string starting from the informations stored in this class: eAbsolute and eStage
+  // If shape is 'S', then the "Front X-Ray Mark Map or Optical Mark Map" format is assumed
+  // If shape is 'L', then the "Lateral X-Ray Mark Map" format is assumed
+
+  FILE *fp = fopen( file,"w");
+
+  TString str_header;
+  TString str_mark;
+
+  if (shape=='S'||shape=='X') {
+    str_header = "mapext:_%ld_%02d_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
+    str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
+  } else if (shape=='L') {
+    str_header = "mapx:_%ld_%02d_0_0;_%d_%.4f_%.4f_%.4f_%.4f";
+    str_mark = ";_%d_%0.0f_%0.0f_%0.0f_%0.0f_1_1_%d";
+  } else {
+    Log(1,"EdbMarksSet::WriteMap2","ERROR: shape '%c' is not implemented\n", shape); return 0;
+  }
+
+  ChangeMapStringSpacer(str_header,'_',spacer);
+  ChangeMapStringSpacer(str_mark,'_',spacer);
+
+  if(!fp)
+  { Log(1,"EdbMarksSet::WriteMap2","ERROR: can not open file %s\n", file); return 0; }
+  
+  int nmarksAbs = GetAbsolute()->GetN();
+  int nmarksSt  = GetStage()->GetN();
+  if(nmarksAbs!=nmarksSt) Log(1,"EdbMarksSet::WriteMap2","ERROR: nmarksAbs != nmarksSt: %d %d use only Abs!\n", nmarksAbs, nmarksSt ); return 0;
+  
+  fprintf(fp, str_header.Data(), eBrick,plate,nmarksAbs,eXmin,eYmin,eXmax,eYmax);
+  
+  for (int imarks=0;imarks<nmarksAbs;imarks++)
+  {
+    EdbMark *markAbs = GetAbsolute()->GetMark(imarks);
+    EdbMark *markSt  = 0;
+    if(nmarksAbs!=nmarksSt) markSt = markAbs;
+    else markSt  = GetStage()->GetMark(imarks);
+    fprintf(fp, str_mark.Data(), markAbs->GetID(),markAbs->GetX(),markAbs->GetY(),markSt->GetX(),markSt->GetY(),markAbs->Flag());
+  }
+  
+  fclose(fp);
+
+  Log(3,"EdbMarksSet::WriteMap2","%d marks are written as string map in the file %s\n", nmarksAbs, file);
+  return nmarksAbs;
 }
 
 //______________________________________________________________________________
