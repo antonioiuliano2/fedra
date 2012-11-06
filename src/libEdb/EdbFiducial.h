@@ -99,7 +99,7 @@ class EdbMarksSet : public TObject {
 
  public: 
   EdbMarksSet();
-  EdbMarksSet( EdbMarksSet &ms );
+  EdbMarksSet( const EdbMarksSet &ms );
   virtual ~EdbMarksSet();
 
   Int_t           GetN()     const;

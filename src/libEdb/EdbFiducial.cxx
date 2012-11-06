@@ -217,8 +217,13 @@ EdbMarksSet::EdbMarksSet()
 }
 
 //______________________________________________________________________________
-EdbMarksSet::EdbMarksSet( EdbMarksSet &ms )
+EdbMarksSet::EdbMarksSet( const EdbMarksSet &ms )
 {
+  eXmin=ms.eXmin;
+  eXmax=ms.eXmax;
+  eYmin=ms.eYmin;
+  eYmax=ms.eYmax;
+  eBrick=ms.eBrick;
   if(ms.GetAbsolute()) eAbsolute = new EdbMarksBox( *(ms.GetAbsolute()) );
   else                 eAbsolute     = new EdbMarksBox();
   if(ms.GetStage())    eStage    = new EdbMarksBox( *(ms.GetStage()) );
