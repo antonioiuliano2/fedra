@@ -561,7 +561,11 @@ Int_t  EdbMarksSet::WriteMap2( char *file, char spacer, char shape, int plate)
   
   int nmarksAbs = GetAbsolute()->GetN();
   int nmarksSt  = GetStage()->GetN();
-  if(nmarksAbs!=nmarksSt) Log(1,"EdbMarksSet::WriteMap2","ERROR: nmarksAbs != nmarksSt: %d %d use only Abs!\n", nmarksAbs, nmarksSt ); return 0;
+  if(nmarksAbs!=nmarksSt) 
+  {
+  	Log(1,"EdbMarksSet::WriteMap2","ERROR: nmarksAbs != nmarksSt: %d %d use only Abs!\n", nmarksAbs, nmarksSt ); 
+  	return 0;
+  };
   
   fprintf(fp, str_header.Data(), eBrick,plate,nmarksAbs,eXmin,eYmin,eXmax,eYmax);
   
