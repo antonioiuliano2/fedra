@@ -16,42 +16,43 @@ EdbDataStore::~EdbDataStore(){ Clear();};
 ///------------------------------------------------
 void EdbDataStore::TransferGeometry(EdbDataStore* ds){
   Log(2,"transfer geometry","");
-  ds->eBrick.Clear();
-  ds->eBrick.Copy(eBrick);
+  ds->eBrick->Clear();
+  ds->eBrick->Copy(*eBrick);
 }
 ///------------------------------------------------
-void EdbDataStore::TransferTo(EdbDataStore* ds, char level,EdbSegmentCut* cut){
+void EdbDataStore::TransferTo(EdbDataStore* ds, char level,EdbSegmentCut* cut,int FromPlate, int ToPlate){
   assert(level>=0 && level<16);
   
   if(level&0x1){
-    printf("transfer MTK segments\n");
-    TransferSegs(&eRawPV,&(ds->eRawPV),cut);
-    printf("done\n");
+    Log(2,"EdbDataStore::TransferTo","transfer MTK segments\n");
+    TransferSegs(&eRawPV,&(ds->eRawPV),cut,FromPlate,ToPlate);
+    Log(2,"EdbDataStore::TransferTo","done");
   }
   
   if(level&0x2){
-    printf("transfer BTK segments\n");
-    TransferSegs(&eSegPV,&(ds->eSegPV),cut);
-    printf("done\n");
+    Log(2,"EdbDataStore::TransferTo","transfer BTK segments\n");
+    TransferSegs(&eSegPV,&(ds->eSegPV),cut,FromPlate,ToPlate);
+    Log(2,"EdbDataStore::TransferTo","done");
   }
   
   if(level&0x4){
-    printf("transfer Tracks\n");
+    Log(2,"EdbDataStore::TransferTo","transfer Tracks\n");
     for(int nt=0;nt<eTracks.GetEntries();++nt){
       if(GetTrack(nt)->N())ds->AddTrack(GetTrack(nt));
     }
     ds->SetOwnTracks(0);
-    printf("done\n");
+    Log(2,"EdbDataStore::TransferTo","done");
   }
   if(level&0x8){
-    printf("transfer Vertices\n");
+    Log(2,"EdbDataStore::TransferTo","transfer Vertices\n");
     for(int nv=0;nv<eVTX.GetEntries();++nv)ds->AddVertex(GetVertex(nv));
     ds->SetOwnVertices(0);
-    printf("done\n");
+    Log(2,"EdbDataStore::TransferTo","done");
   }
 }
 ///------------------------------------------------
-void EdbDataStore::TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,EdbSegmentCut* cut){
+void EdbDataStore::TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,EdbSegmentCut* cut,int FromPlate,int ToPlate){
+  Log(1,"EdbDataStore::TransferSegs()","Transfer segments");
   assert(pv0);
   assert(pv1);
   EdbPattern* pat0=0;
@@ -65,8 +66,12 @@ void EdbDataStore::TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,E
   int nseg=0;
   float p[5];
   for(int np=0;np<npat;++np){
+//     if(np<FromPlate)continue;
+//     if(np>ToPlate)continue;
 //     printf("pat#%d of %d\n",np,npat);
     pat0=pv0->GetPattern(np);
+    if(pat0->Plate()<FromPlate)continue;
+    if(pat0->Plate()>ToPlate)continue;
     pat1=pv1->GetPattern(np); ///find corresponding DEST pattern 
     assert(pat1);
     assert(pat1->Z()==pat0->Z());
@@ -81,15 +86,19 @@ void EdbDataStore::TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,E
       p[3]=seg->TY();
       p[4]=seg->W();
       if(cut && !cut->PassCut(p))continue;
-      pat1->AddSegment(*seg);
+      seg=pat1->AddSegment(*seg);
+      seg->SetTrack(0);
     };
 //     printf("dest.pat#%d has #%d segments\n",pat1->ID(),pat1->N());
+    pat1->SetID(np);
+    pat1->SetSegmentsPID();
+    
   }
   
 }
 
 ///------------------------------------------------
-void EdbDataStore::RestoreFromID(){
+void EdbDataStore::Restore_PIDFromID(){
   ///restore patterns' "plate" and "side" from their ID
   EdbPattern* p;
   int plate, side;
@@ -110,12 +119,25 @@ void EdbDataStore::RestoreFromID(){
   }
 };
 ///------------------------------------------------
-void EdbDataStore::RestoreTracks(){
+void EdbDataStore::Restore_PatFromGeom(int np0, int np1){
+  ///fill patterns array from eBrick plates
+  assert(eBrick);
+  EdbPlateP* plt=0;
+  for(int np=0;np<eBrick->Npl();++np){
+    if(np<np0 || np>np1)continue;
+    plt=eBrick->GetPlate(np);
+    assert(plt);
+    for(int side=0;side<3;++side)
+      MakePattern(plt->Z()+plt->GetLayer(side)->Z(),np,side);
+  }
+}
+///------------------------------------------------
+void EdbDataStore::Restore_TrxFromVtx(){
   ///restore tracks from vertex
   ClearTracks();
   EdbVertex* v;
   for(int nv=0;nv<eVTX.GetEntries();nv++){
-    v=(EdbVertex*)GetVertex(nv);
+    v=GetVertex(nv);
     for(int nt=0;nt<v->N();nt++){
       EdbTrackP* trk=v->GetTrack(nt);
       trk->AddVTA(v->GetVTa(nt));
@@ -124,10 +146,42 @@ void EdbDataStore::RestoreTracks(){
   }
 }
 ///------------------------------------------------
+void EdbDataStore::Restore_SegFromTrx(EdbSegmentCut* cut,int Plt0, int Plt1){
+  ///restore segments from tracks
+  EdbTrackP* t=0;
+  EdbSegP* s=0;
+  EdbPattern* p=0;
+  float par[5];
+  for(int nt=0;nt<eTracks.GetEntries();++nt){
+    t=GetTrack(nt);
+    if(t->N()==0)continue;
+    for(int ns=0;ns<t->N();++ns){
+      s=t->GetSegment(ns);
+      s->SetMC(t->MCEvt(),t->MCTrack());
+//       s->SetFlag(1);
+      if(s->Plate()<Plt0 || s->Plate()>Plt1)continue;
+      if(cut){
+	par[0]=s->X();
+	par[1]=s->Y();
+	par[2]=s->TX();
+	par[3]=s->TY();
+	par[4]=s->W();
+	if(!cut->PassCut(par))continue;
+      }
+      p=FindPattern(s->Plate(),s->Side());
+      assert(p);
+      p->AddSegment(*s);
+      p->SetID(s->Plate());
+      p->SetSegmentsPID();
+    }
+  }
+}
+///------------------------------------------------
 EdbTrackP* EdbDataStore::FindTrack(int id){
   EdbTrackP* trk=0;
   for(int nt=0;nt<eTracks.GetEntries();++nt){
     trk=GetTrack(nt);
+//     printf("id%d/%d=%d\n",nt,eTracks.GetEntries(),trk->ID());
     if(trk->ID()==id)return trk;
   }
   return 0;
@@ -147,8 +201,8 @@ EdbLayer*  EdbDataStore::FindLayer(int plate, int side){
   assert(side>=0 && side<3);
   
   EdbPlateP* plt=0;
-  for(int np=0;np<eBrick.Npl();++np){
-    plt=eBrick.GetPlate(np);
+  for(int np=0;np<eBrick->Npl();++np){
+    plt=eBrick->GetPlate(np);
     if(plt->ID()==plate){
       return plt->GetLayer(side);
     }
@@ -198,12 +252,25 @@ void EdbDataStore::AddPattern(EdbPattern* pat){
    else eRawPV.AddPattern(pat);
 }
 ///------------------------------------------------
+void EdbDataStore::MakePattern(double z,int plate,int side){
+  Log(3,"EdbDataStore::MakePattern()",Form("plt#%d (side %d) z=%2.1f",plate,side,z));
+  EdbPattern* p=new EdbPattern(0,0,z,0);
+  p->SetID(plate);
+  p->SetScanID(EdbID(0,plate,0,0));
+  p->SetSide(side);
+  p->SetPID(side?(plate*10+side):plate);
+  if(side==0)eSegPV.AddPattern(p);
+  else eRawPV.AddPattern(p);
+   
+}
+///------------------------------------------------
 void EdbDataStore::ClearGeom(){
-  for(int np=0;np<eBrick.Npl();++np){
-    eBrick.GetPlate(np)->Clear();
-    delete eBrick.GetPlate(np);
+  if(eBrick==0)return;
+  for(int np=0;np<eBrick->Npl();++np){
+    eBrick->GetPlate(np)->Clear();
+    delete eBrick->GetPlate(np);
   }
-  eBrick.Clear();
+  eBrick->Clear();
 }
 ///------------------------------------------------
 void EdbDataStore::ClearVTX(){
@@ -223,9 +290,6 @@ void EdbDataStore::ClearSeg(bool hard){
 //     Sgs=pv->GetPattern(k)->GetSegments();
 //     if(Sgs)Sgs->Delete();
 //   }
-  pv->ePatterns->SetOwner(1);
-  pv->DropCell();
-  pv->DropCouples();
   int N=pv->Npatterns();
   if(!N)return;
   TObjArray* Sgs=0;
@@ -234,16 +298,19 @@ void EdbDataStore::ClearSeg(bool hard){
     if(Sgs)Sgs->Delete();
 //     delete pv->GetPattern(k);
   }
-  if(hard)pv->ePatterns->Clear();
-  pv->Clear();
+  if(hard){
+    pv->ePatterns->SetOwner(1);
+    pv->DropCell();
+    pv->DropCouples();
+    pv->ePatterns->Clear();
+    pv->Clear();
+  }
 }
 ///------------------------------------------------
 void EdbDataStore::ClearRaw(bool hard){
   EdbPatternsVolume* pv=&eRawPV;
 
-  pv->ePatterns->SetOwner(1);
-  pv->DropCell();
-  pv->DropCouples();
+  
   int N=pv->Npatterns();
   if(!N)return;
   TObjArray* Sgs=0;
@@ -252,23 +319,44 @@ void EdbDataStore::ClearRaw(bool hard){
     if(Sgs)Sgs->Delete();
 //     delete pv->GetPattern(k);
   }
-  if(hard)pv->ePatterns->Clear();
-  pv->Clear();
+  if(hard){
+    pv->ePatterns->SetOwner(1);
+    pv->ePatterns->Clear();
+    pv->Clear();
+    pv->DropCell();
+    pv->DropCouples();
+  }
 }
 ///------------------------------------------------
 void EdbDataStore::PrintBrief(){
   printf("EdbDataStore. We have here:\n");
-  printf(" --%d vertcies\n --%d tracks\n --%d Plates (geometry)\n",eVTX.GetEntries(),eTracks.GetEntries(),eBrick.Npl());
+  printf(" --%d vertcies\n --%d tracks\n --%d Plates (geometry)\n",eVTX.GetEntries(),eTracks.GetEntries(),(eBrick)?eBrick->Npl():0);
   printf(" --%d BT Patterns\n --%d MT Patterns\n",eSegPV.Npatterns(),eRawPV.Npatterns());
 }
 ///------------------------------------------------
-void EdbDataStore::PrintTracks(){
-  printf("EdbDataStore. We have %d tracks:\n",eTracks.GetEntries());
+void EdbDataStore::PrintTracks(int vlev){
+  printf("EdbDataStore. We have %d tracks\n",eTracks.GetEntries());
+  if(vlev<1)return;
   EdbTrackP* trk=0;
   for(int nt=0;nt<eTracks.GetEntries();++nt){
     trk=GetTrack(nt);
     printf(" (trk #%3d) PDG=% 4d P=% 4.2f [X,Y,Z]=[% 7.2f % 7.2f % 7.2f]\t[TX,TY]=[% 2.2f % 2.2f] Nseg=%d\n",
     trk->ID(),trk->PDG(),trk->P(),trk->X(),trk->Y(),trk->Z(),trk->TX(),trk->TY(),trk->N());
+    if(vlev<2)continue;
+    for(int ns=0;ns<trk->N();++ns){
+      EdbSegP* s=trk->GetSegment(ns);
+      printf("    seg#%d  Plate=%d pid=%d flag=%d\n",s->ID(),s->Plate(),s->PID(),s->Flag());
+    }
+  }
+}
+///--------------------------------------------------
+void EdbDataStore::PrintPatterns(){
+  printf("EdbDataStore. We have %d BT patterns:\n",eSegPV.Npatterns());
+  EdbPattern* pat=0;
+  for(int np=0;np<eSegPV.Npatterns();++np){
+    pat=GetSegPat(np);
+    printf(" (pat #%3d) [X,Y,Z]=[% 7.2f % 7.2f % 7.2f]\t Nseg=%d\n",
+	   pat->Plate(),pat->X(),pat->Y(),pat->Z(),pat->N());
   }
 }
 ///--------------------------------------------------
@@ -291,13 +379,14 @@ void EdbDataStore::DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk){
 ClassImp(EdbDSRec);
 ///------------------------------------------------
 EdbDSRec::EdbDSRec(){
-  ///init tracker:
-  eTracker.eCond.SetSigma0(3,3,0.005,0.005);
-  eTracker.eDTmax=0.07;
-  eTracker.eDRmax=45.;
-  eTracker.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
   ///init Vertexing:
   eVRec.eEdbTracks=&eTracks;
+  eVRec.eDZmax=5000;
+  eVRec.eProbMin=0.001;
+  eVRec.eImpMax=50;
+  eVRec.eUseMom=0;
+  eVRec.eUseSegPar=1;
+  eVRec.eQualityMode=0;
   ///init momentum estimator:
   eMomEst.SetParPMS_Mag();
   eMomEst.eAlg = 0;
@@ -305,16 +394,21 @@ EdbDSRec::EdbDSRec(){
 }
 
 ///------------------------------------------------
-void EdbDSRec::Clear(){
-  EdbDataStore::Clear();
+void EdbDSRec::Clear(bool hard){
+  EdbDataStore::Clear(hard);
   eVRec.Reset();
-  printf("DSRec cleared:\n");
-  PrintBrief();
 }
 ///------------------------------------------------
 
-int EdbDSRec::DoTracking(bool use_btk){
-  
+int EdbDSRec::DoTracking(bool use_btk, int p0, int p1){
+  ///init tracker:
+  EdbTrackAssembler tracker;
+  tracker.eCond=use_btk?eCond_b:eCond_m;
+//   .SetSigma0(3,3,0.005,0.005);
+  tracker.eDTmax=0.07;
+  tracker.eDRmax=45.;
+//   tracker.eDZGapMax=10000;
+  tracker.InitTrZMap(  2400, eBrick->Xmin(), eBrick->Xmax(),   2000, eBrick->Ymin(), eBrick->Ymax(),   30 );
   ///doing tracking using microtracks or basetracks
   int nsegmin=use_btk?2:3;
   SetOwnTracks(1);
@@ -324,11 +418,13 @@ int EdbDSRec::DoTracking(bool use_btk){
   EdbLayer *plate=0;
   for(int ipass=0; ipass<2; ipass++) {
     printf("\n\n*************** ipass=%d ************\n",ipass);
-    eTracker.eCollisionsRate=0;
+    tracker.eCollisionsRate=0;
     for(int i=0; i<npl; i++) {
+      if(i<p0 || i>p1)continue;
       pat=pv->GetPattern(i);
-//       printf("plate=%d side=%d\n",pat->Plate(),pat->Side());
-      plate = eBrick.GetPlate(pat->Plate());
+      if(pat->N()==0)continue;
+      Log(3,Form("EdbDSRec::DoTracking(%d,%d,%d)",use_btk,p0,p1),Form("plate=%d at Z=%4.1f side=%d [%d segm]\n",pat->Plate(),pat->Z(),pat->Side(),pat->N()));
+      plate = eBrick->GetPlate(pat->Plate());
 //       printf("pattern z = (%2.4f vs %2.4f)\n", pat->Z(),plate->Z());
       pat->SetSegmentsZ();
       pat->SetSegmentsPID();
@@ -336,31 +432,36 @@ int EdbDSRec::DoTracking(bool use_btk){
       pat->TransformShr( plate->Shr() );
       pat->TransformA(   plate->GetAffineTXTY() );
       pat->SetSegmentsPlate(pat->Plate());
+//       printf("flag0=%d\n",pat->GetSegment(0)->Flag());
       
       //       pat=ds_rec->eRawPV.GetPattern(i);
       
-      printf("pat #%d has %d segments\n",i,pat->N());
-      eTracker.AddPattern(*pat);
+//       printf("pat #%d has %d segments\n",i,pat->N());
+      if(i>0) tracker.ExtrapolateTracksToZ(pat->Z());
+      tracker.FillTrZMap();
+      tracker.AddPattern(*pat);
+//       printf("ok\n");
     }
   }
 
   int Ntr=0;
-  int ntr = eTracker.Tracks().GetEntries();
+  int ntr = tracker.Tracks().GetEntries();
   for( int i=0; i<ntr; i++ )     {
-    EdbTrackP *t = (EdbTrackP*)(eTracker.Tracks().At(i));
+    EdbTrackP *t = (EdbTrackP*)(tracker.Tracks().At(i));
     int nseg=t->N();
+//     printf("trk %d/%d: nseg=%d (min %d)\n",i,ntr,nseg);
     if(nseg>=nsegmin) {
       for(int j=0; j<nseg; j++) {
 	EdbSegP *s = t->GetSegment(j);
 	s->SetErrors();
-	eTracker.eCond.FillErrorsCov(s->TX(),s->TY(),s->COV());
+	tracker.eCond.FillErrorsCov(s->TX(),s->TY(),s->COV());
       }
       t->SetP(1.);
       t->FitTrackKFS(0);
       //fit.FitTrackLine(*t);
-      eTracker.RecalculateSegmentsProb(*t);
+      tracker.RecalculateSegmentsProb(*t);
       t->SetCounters();
-      AddTrack(t);
+      AddTrack(new EdbTrackP(*t));
       
       Ntr++;
     }
@@ -371,16 +472,89 @@ int EdbDSRec::DoTracking(bool use_btk){
 }
 
 ///------------------------------------------------
+
+int EdbDSRec::DoTracking0(bool use_btk,int p0, int p1){
+  float  momentum = 0.3;
+  float  mass     = 0.139;  // particle mass
+  float  ProbMinP = 0.001;   // minimal probability to accept segment on propagation
+  int    nsegmin  = 1;      // minimal number of segments to propagate this track
+  int    ngapmax  = 3;      // maximal gap for propagation
+  
+  EdbPVRec gAli;
+  EdbPatternsVolume* pv=use_btk?&eSegPV:&eRawPV;
+  
+  ///transfer patterns
+  EdbPattern* pat,*pat1;
+  for(int np=0; np<pv->Npatterns(); ++np){
+    pat=pv->GetPattern(np);
+    if(pat->Plate()<p0 || pat->Plate()>p1)continue;
+    pat1=(EdbPattern*)pat->Clone();
+    pat1->SetSegmentsZ();
+    pat1->SetID(np);
+    pat1->SetSegmentsPID();
+    Log(1,"EdbDSRec",Form("add pattern %d with %d segments",pat1->PID(),pat1->N()));
+    gAli.AddPattern(pat1);
+  }
+  
+  gAli.SetScanCond(use_btk?&eCond_b:&eCond_m);
+  gAli.SetCouplesPeriodic(0,1);
+  int ntr = EdbDataProc::LinkTracksWithFlag( &gAli, momentum, ProbMinP, nsegmin, ngapmax, 0 );
+  gAli.FitTracks( momentum, mass );
+  Log(2,"EdbDSRec::DoTracking0",Form("ntr = %d\n",ntr));
+  
+  ///propagate
+  EdbTrackFitter tf;
+  
+  EdbTrackP *tr=0;
+  ntr = gAli.eTracks->GetEntries();
+  
+  for(int i=0; i<ntr; i++) {
+    tr = (EdbTrackP*)(gAli.eTracks->At(i));
+    tr->SetID(i);
+    tr->SetSegmentsTrack();
+    tr->SetFlag(0);
+  }
+  
+  int nadd = 0;
+  int nseg=0;
+  int Ntr=0;
+//   nadd=gAli.PropagateTracks(0,57,0.001,3,0);
+  for(int i=0; i<ntr; i++) {
+    tr = (EdbTrackP*)(gAli.eTracks->At(i));
+ 
+    float p=momentum;
+    
+    tr->SetErrorP(0.2*0.2*p*p);
+    
+    nseg = tr->N();
+    tr->SetP(p);
+    printf("pid=%d\n",tr->GetSegmentFirst()->PID());
+    if(tr->Flag()<0) continue;
+    //     tr->PrintNice();
+    nadd += gAli.PropagateTrack( *tr, true, 0.001, 3, 0 );
+    if(tr->Flag()<0) printf("%d flag=%d\n",i,tr->Flag());
+    //if(tr->N() != nseg) printf("%d nseg=%d (%d) \t p = %f\n",i,tr->N(),nseg,tr->P());
+    ///add track here
+    AddTrack((EdbTrackP*)tr->Clone());
+    Ntr++;
+  }
+  printf("nadd = %d\n",nadd);
+      
+  return Ntr;
+}
+///------------------------------------------------
 int EdbDSRec::DoVertexing(){
   SetOwnVertices(1);
   // performing vertexing
-  if(gEDBDEBUGLEVEL>1) printf("%d tracks vor vertexing\n",  eVRec.eEdbTracks->GetEntries() );
+  if(gEDBDEBUGLEVEL>=1) printf("%d tracks for vertexing\n",  eVRec.eEdbTracks->GetEntries() );
   int nvtx = eVRec.FindVertex();
-  if(gEDBDEBUGLEVEL>1) printf("%d 2-track vertexes was found\n",nvtx);
+  if(gEDBDEBUGLEVEL>=1) printf("%d 2-track vertexes was found\n",nvtx);
   if(nvtx == 0) return 0;
   eVRec.ProbVertexN();
   for(int nv=0;nv<eVRec.Nvtx();nv++){
-    eVTX.Add(eVRec.GetVertex(nv));
+    EdbVertex* v=eVRec.GetVertex(nv);
+    if(v->Flag()<0)delete v;
+    else eVTX.Add(v);
   }
   return eVRec.Nvtx();
 }
@@ -390,28 +564,68 @@ int EdbDSRec::DoMomEst(){
   float p,p0,p1;
   float tl,tt;
   EdbTrackP* trk=0;
+  EdbTrackP* clon=0;
   int Nest=0;
   for(int nt=0;nt<eTracks.GetEntries();++nt){
     trk=GetTrack(nt);
-    if(trk->N()<8){trk->SetFlag(-1); printf("track #%d (%dseg) - skip!\n",nt,trk->N());continue;}
-    p=eMomEst.PMS(*trk);
+    clon=(EdbTrackP*)trk->Clone();
+    Log(1,"EdbDSRec::DoMomEst",Form("Mom Est: track #%d (%dseg)",nt,trk->N()));
+//     if(trk->N()<5){trk->SetP(0); printf("track #%d (%dseg) - skip!\n",nt,trk->N());continue;}
+    p=eMomEst.PMSang(*clon);
 //     if(eMomEst.eStatus==-1){printf("track #%d (%dseg) - skip!\n",nt,trk->N());continue;}
+    printf("track #%d (%dseg) mom %f - status %d\n",nt,trk->N(),p,eMomEst.eStatus);
     p0=eMomEst.ePmin;
     p1=eMomEst.ePmax;
-    tl=eMomEst.eGX->GetY()[0];
-    tt=eMomEst.eGY->GetY()[0];
-//   tf->DrawPlots();
-    printf("track #%d (%dseg) mom %f [%2.2f <> %2.2f]\n",nt,trk->N(),p,p0,p1);
-    printf("dTL=%2.4g, dTT=%2.4g\n",tl,tt);
-    if(p<0 && (tl>0.015 || tt>0.015)){
-      printf("BAD!\n");
-      trk->SetFlag(-2);
-      continue;
-    }
+/*    tl=eMomEst.eGX->GetY()[0];
+    tt=eMomEst.eGY->GetY()[0]; */
+//     printf("track #%d (%dseg) mom %f [%2.2f <> %2.2f]\n",nt,trk->N(),p,p0,p1);
+//     printf("dTL=%2.4g, dTT=%2.4g\n",tl,tt);
+//     if(p<0 && (tl>0.015 || tt>0.015)){
+//       printf("BAD!\n");
+//       trk->SetP(-p);
+//       continue;
+//     }
+//     if(p<0)p=0;
     trk->SetP(p);
     trk->SetPerr(p0,p1);
+    delete clon;
   }
   return Nest;
+}
+///------------------------------------------------
+int EdbDSRec::DoFindBlkSeg(EdbVertex* v,int w0, double ImpMax, double RMax, int Dpat){
+  int nn=0;
+  v->ClearNeighborhood();
+  EdbVTA* vta=0;
+  printf("start\n");
+  EdbPattern* pat=0;
+  EdbSegP* seg=0;
+  double dzmax=Dpat*1300;
+  double dx,dy,dz;
+  double imp=0;
+  for(int np=0;np<eSegPV.Npatterns();++np){
+    pat=eSegPV.GetPattern(np);
+    dz=fabs(pat->Z()-v->Z());
+    if(dz<0 || dz>dzmax)continue;
+    for(int ns=0;ns<pat->N();++ns){
+      seg=pat->GetSegment(ns);
+      if(seg->Track()!=-1)continue; ///segment assigned to track
+      if(seg->W()<w0)continue; ///not black enough
+      imp=v->DistSeg(seg);
+      printf("imp =%2.1f\n",imp);
+      if (imp > ImpMax) continue;
+      dx=seg->X()-v->X();
+      dy=seg->Y()-v->Y();
+      vta = new EdbVTA((EdbTrackP *)seg, v);
+      vta->SetZpos(1);
+      vta->SetFlag(1);
+      vta->SetImp(imp);
+      vta->SetDist(sqrt(dx*dx+dy*dy+dz*dz));
+      v->AddVTA(vta);
+      ++nn;
+    }
+  }
+  return nn;
 }
 ///------------------------------------------------
 int EdbDSRec::DoDecaySearch(){
@@ -457,13 +671,12 @@ void EdbDSRec::FillErrorsCOV(){
   FillECovPV(&eRawPV,&eCond_m);
   FillECovPV(&eSegPV,&eCond_b);
   FillECovTrks();
-  
 }
 ///--------------------------------------------------
 void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     ///Convert this event to RAW data format!
 //     char* fname=Form("%s/p%03d/%d.%d.%d.%d.raw.root",dir,PID+1,id,PID+1,0,0);
-    char* fname=Form("%s/%d.%d.%d.%d.raw.root",dir,id,PID+1,100,10);
+    char* fname=Form("%s/%d.%d.%d.%d.raw.root",dir,id,PID+1,1,10);
     EdbRun run(fname,"RECREATE");
     printf("created run\n");
     printf("added view\n");
@@ -488,54 +701,7 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     printf("close\n");
     run.PrintBranchesStatus();
     run.Save();
-    run.Close();
-    //   EdbPattern* pbot=FindPattern(PID,2);
-    
-//   TFile* fout=new TFile(Form("%s/run%d.%d.root",dir,id,PID),"recreate");
-//   EdbRunHeader *hdrR=new EdbRunHeader(id);
-//   hdrR->Write();
-// 
-//   TTree* Views=new TTree("Views","Views");
-//   EdbViewHeader *hdrV=new EdbViewHeader();
-//   Views->Branch("headers","EdbViewHeader",&hdrV);
-//   
-//   EdbPattern* ptop=FindPattern(PID,1);
-//   EdbPattern* pbot=FindPattern(PID,2);
-//   TClonesArray segarr("EdbSegment",ptop->N());
-//   Views->Branch("segments", &segarr);
-// 
-//   EdbSegP* seg;
-//   printf("saving %d TOP segments...\n",ptop->N());
-//   hdrV->SetCoordXY(ptop->X(),ptop->Y());
-//   hdrV->SetNframes(1,0);
-//   hdrV->SetViewID(1);
-//   hdrV->SetNsegments(ptop->N());
-//   for(int ns=0;ns<ptop->N();++ns){
-//     seg=ptop->GetSegment(ns);
-//     new(segarr[ns]) EdbSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),
-// 				 1,seg->W(),seg->ID());
-//   }
-//   Views->Fill();
-//   segarr.Clear("C");
-//   segarr.Expand(pbot->N());
-//     
-//   printf("saving %d BOT segments...\n",pbot->N());
-//   hdrV->SetCoordXY(pbot->X(),pbot->Y());
-//   hdrV->SetNframes(0,1);
-//   hdrV->SetViewID(2);
-//   hdrV->SetNsegments(pbot->N());
-//   for(int ns=0;ns<pbot->N();++ns){
-//     seg=pbot->GetSegment(ns);
-//     new(segarr[ns]) EdbSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),
-// 				 2,seg->W(),seg->ID());
-//   }
-//   Views->Fill();
-//   
-//   printf("Done!\n");
-//   Views->Write();
-//   segarr.Clear("C");
-//   fout->Close();
-    
+    run.Close();    
 };
 ///--------------------------------------------------
 void EdbDataStore::SaveToRaw(char* dir,int id){
