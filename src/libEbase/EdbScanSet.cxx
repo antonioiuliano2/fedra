@@ -17,9 +17,18 @@ ClassImp(EdbID)
 ClassImp(EdbScanSet)
 
 //----------------------------------------------------------------
+EdbScanSet::EdbScanSet(EdbID id)
+{
+  eID = id;
+  eB.SetID(id.eBrick);
+  eReferencePlate=0;
+}
+
+//----------------------------------------------------------------
 EdbScanSet::EdbScanSet(int id)
 {
   eB.SetID(id);
+  eID.eBrick=id;
   eReferencePlate=0;
 }
 
@@ -64,6 +73,8 @@ void EdbScanSet::Copy(EdbScanSet &sc)
 void EdbScanSet::MakeNominalSet( EdbID id, Int_t from_plate, Int_t to_plate, 
 				 Float_t z0, Float_t dz, float shr, float dzbase, float dzem)
 {
+  eID=id;
+  Log(2,"EdbScanSet::MakeNominalSet","%s",eID.AsString());
   eReferencePlate = from_plate;
   eB.SetID(id.eBrick);
   Int_t step= (from_plate>to_plate)?-1:1;

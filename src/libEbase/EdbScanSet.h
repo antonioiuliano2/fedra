@@ -20,6 +20,7 @@ class EdbScanSet : public TNamed
   EdbID      eID;      // id of the scanset itself
 
  public:
+  EdbScanSet(EdbID id);
   EdbScanSet(int brickid=0);
   virtual ~EdbScanSet(){}
 

@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
     EdbScanProc sproc;
     sproc.eProcDirClient=outdir;
     if(id.eBrick<1) return 0;
-    id.Print();
+    Log(1,"makescanset"," for id %s",  id.AsString());
     
     if     (resetaff) {
       EdbScanSet *sc = sproc.ReadScanSet(id);
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
       //SafeDelete(ssu);
     }
     else {
-      EdbScanSet sc(id.eBrick);
+      EdbScanSet sc(id);
       sc.MakeNominalSet(id,from_plate, to_plate, z0, dz);
       sproc.MakeScannedIDList( id, sc, 60, 0, suff);
       sproc.WriteScanSet(id,sc);
