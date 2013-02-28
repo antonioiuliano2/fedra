@@ -175,6 +175,10 @@ void EdbDataStore::Restore_SegFromTrx(EdbSegmentCut* cut,int Plt0, int Plt1){
 	par[4]=s->W();
 	if(!cut->PassCut(par))continue;
       }
+      if(gEDBDEBUGLEVEL>5){
+        s->PrintNice();
+        printf("plt#%d side#%d\n",s->Plate(),s->Side());
+        }
       p=FindPattern(s->Plate(),s->Side());
       assert(p);
       p->AddSegment(*s);
@@ -218,6 +222,7 @@ EdbLayer*  EdbDataStore::FindLayer(int plate, int side){
 }
 ///------------------------------------------------
 EdbPattern* EdbDataStore::FindPattern(int plate, int side){
+  Log(3,"EdbDataStore::FindPattern",Form("search plt#%d side=%d",plate,side));
   assert(plate>=0);
   assert(side>=0 && side<3);
   
@@ -226,6 +231,7 @@ EdbPattern* EdbDataStore::FindPattern(int plate, int side){
   EdbPattern* pat=0;
   for(int np=0;np<pv->Npatterns();++np){
     pat=pv->GetPattern(np);
+    //Log(6,"pat",Form("#%d/%d plt#%d side#%d",np,pv->Npatterns(),pat->Plate(),pat->Side()));
     if(pat->Plate()==plate && pat->Side()==side)return pat;
   }
   return 0;
@@ -719,7 +725,7 @@ void EdbDataStore::SaveToRaw(char* dir,int id){
     gSystem->mkdir(dir1.Data());
   }
 
-  TString dirAF=dir1+"AFF";
+  TString dirAF=dir1+"/AFF";
   if(gSystem->AccessPathName(dirAF.Data())){
     Log(2,"EdbDataStore::SaveToRaw",Form("create dir \"%s\"\n",dirAF.Data())); 
     gSystem->mkdir(dirAF.Data());
