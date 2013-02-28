@@ -21,6 +21,7 @@ class EdbDataStore: public TObject{
     void TransferGeometry(EdbDataStore* ds);
     static void TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,EdbSegmentCut* cut=0,int FromPlate=0, int ToPlate=57);
     ///restore MC info methods
+    void LoadMCVertices(TObjArray* vtx);
     void Restore_PIDFromID();
     void Restore_PatFromGeom(int np0=0, int np1=1000);
     void Restore_TrxFromVtx();
@@ -92,9 +93,9 @@ class EdbDSRec: public EdbDataStore{
     
     int DoTracking(bool use_btk=true,int p0=0, int p1=100);
     int DoTracking0(bool use_btk=true,int p0=0, int p1=100);
-    int DoMomEst();
+    int DoMomEst();  
     int DoVertexing();
-    int DoDecaySearch();
+    int DoDecaySearch(); ///TODO
     int DoFindBlkSeg(EdbVertex* v,int w0,double ImpMax=50., double RMax=3000, int Dpat=1);
     ///prepare segments' cov matrix
     void FillECovPV(EdbPatternsVolume*,EdbScanCond* cnd=0);

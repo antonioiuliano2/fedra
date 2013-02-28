@@ -14,6 +14,13 @@ EdbDataStore::EdbDataStore(){
 ///------------------------------------------------
 EdbDataStore::~EdbDataStore(){ Clear();};
 ///------------------------------------------------
+void EdbDataStore::LoadMCVertices(TObjArray* vtx){
+  Log(2,"EdbDataStore::LoadMCVertices",Form("Reading %d vertices",vtx->GetEntries()));
+  for(int nv=0; nv<vtx->GetEntries();++nv){
+    AddVertex((EdbVertex*)vtx->At(nv));
+  }
+}
+///------------------------------------------------
 void EdbDataStore::TransferGeometry(EdbDataStore* ds){
   Log(2,"transfer geometry","");
   ds->eBrick->Clear();
@@ -677,12 +684,13 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     ///Convert this event to RAW data format!
 //     char* fname=Form("%s/p%03d/%d.%d.%d.%d.raw.root",dir,PID+1,id,PID+1,0,0);
     char* fname=Form("%s/%d.%d.%d.%d.raw.root",dir,id,PID+1,1,10);
-    EdbRun run(fname,"RECREATE");
-    printf("created run\n");
-    printf("added view\n");
     EdbSegP* seg=0;
     EdbPattern* ptop=FindPattern(PID,2);
-    printf("cycle through %d TOP segs\n",ptop->N());
+    EdbPattern* pbot=FindPattern(PID,1);
+    if(ptop->N()==0 || pbot->N()==0)return;
+    EdbRun run(fname,"RECREATE");
+    Log(2,"EdbDataStore::SavePlateToRaw","created run");
+    Log(2,"EdbDataStore::SavePlateToRaw",Form("cycle through %d TOP segs",ptop->N()));
     run.GetView()->SetNframes(1,0);
     for(int ns=0;ns<ptop->N();++ns){
       seg=ptop->GetSegment(ns);
@@ -690,15 +698,15 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
     }
     run.AddView();
     run.GetView()->Clear();
-    EdbPattern* pbot=FindPattern(PID,1);
-    printf("cycle through %d BOT segs\n",pbot->N());
+ 
+    Log(2,"EdbDataStore::SavePlateToRaw",Form("cycle through %d BOT segs",pbot->N()));
     run.GetView()->SetNframes(0,1);
     for(int ns=0;ns<pbot->N();++ns){
       seg=pbot->GetSegment(ns);
       run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),2,(int)(seg->W()),seg->ID());
     }
     run.AddView();
-    printf("close\n");
+    Log(2,"EdbDataStore::SavePlateToRaw","Close plate");
     run.PrintBranchesStatus();
     run.Save();
     run.Close();    
@@ -707,14 +715,20 @@ void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
 void EdbDataStore::SaveToRaw(char* dir,int id){
   TString dir1=Form("%s/b%06d",dir,id);
   if(gSystem->AccessPathName(dir1.Data())){
-    printf("create dir \"%s\"\n",dir1.Data()); 
+    Log(2,"EdbDataStore::SaveToRaw",Form("create dir \"%s\"\n",dir1.Data())); 
     gSystem->mkdir(dir1.Data());
+  }
+
+  TString dirAF=dir1+"AFF";
+  if(gSystem->AccessPathName(dirAF.Data())){
+    Log(2,"EdbDataStore::SaveToRaw",Form("create dir \"%s\"\n",dirAF.Data())); 
+    gSystem->mkdir(dirAF.Data());
   }
   TString dir2=dir1;
   for(int i=0;i<Nplt();i++){
     dir2=Form("%s/p%03d",dir1.Data(),i+1);
     if(gSystem->AccessPathName(dir2.Data())){
-      printf("... create dir \"%s\"\n",dir2.Data()); 
+      Log(3,"EdbDataStore::SaveToRaw",Form("... create dir \"%s\"\n",dir2.Data())); 
       gSystem->mkdir(dir2.Data());
     }
     SavePlateToRaw(i,dir2.Data(),id);
