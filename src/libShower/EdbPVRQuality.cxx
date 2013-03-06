@@ -303,7 +303,7 @@ void EdbPVRQuality::CheckEdbPVRec()
     }
     // Check the patterns of the EdbPVRec:
     eAli_maxNpatterns= eAli_orig->Npatterns();
-//     cout << "EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << endl;
+
     if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
     if (eAli_maxNpatterns>114) {
         cout << "ERROR! EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns()=  " << eAli_maxNpatterns << " is greater than possible basetrack data two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114!!!." << endl;
@@ -320,12 +320,12 @@ void EdbPVRQuality::CheckEdbPVRec()
             cout << "WARNING     EdbPVRQuality::CheckEdbPVRec()    Your EdbPVRec object has more than 57 patterns! " << endl;
             cout << "WARNING     EdbPVRQuality::CheckEdbPVRec()    Check it! " << endl;
         }
-        if (gEDBDEBUGLEVEL>2) cout << "CheckEdbPVRec   Doing Pattern " << i << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRec   Doing Pattern " << i << endl;
 
 
         eHistYX->Reset(); // important to clean the histogram
         eHistYX->SetMinimum(0);
-        eHistYX->SetMaximum(150);
+        eHistYX->SetMaximum(150); // Why did I write this? What when Maximum is exceeded?
         eHistChi2W->Reset(); // important to clean the histogram
 
         EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
@@ -347,14 +347,13 @@ void EdbPVRQuality::CheckEdbPVRec()
             if (seg->MCEvt()>0) {
                 if (eBTDensityLevelCalcMethodMCConfirmationNumber==18&&eBTDensityLevelCalcMethodMC==kTRUE) {
                     result = kTRUE;
-                    // cout << "result = kTRUE !! " << endl;
                 }
                 else {
                     result = kFALSE;
                 }
             }
 
-            if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+            if (gEDBDEBUGLEVEL>4)  cout << "EdbPVRQuality::CheckEdbPVRec  Doing segment " << j << " result for bool query is: " << result << endl;
 
             // Main decision for segment to be kept or not  (seg is of MC or data type).
             if ( kFALSE == result ) continue;
@@ -367,7 +366,7 @@ void EdbPVRQuality::CheckEdbPVRec()
 
         } // for (Int_t j=0; j<npat; j++)
 
-        if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRec  I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
 
         // Important to reset histogram before it is filled.
         histPatternBTDensity->Reset();
@@ -404,7 +403,6 @@ void EdbPVRQuality::CheckEdbPVRec()
     // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
     // This will be done in one of the two Execute_ functions.
 
-// eHistTT->DrawCopy("");
 
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
@@ -503,10 +501,6 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
     TProfile* 	eProfileBTdens_vs_TanTheta = new TProfile("eProfileBTdens_vs_TanTheta","eProfileBTdens_vs_TanTheta",40,0,1,0,200);
 
-//     Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
-//     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
-
-
 
     // Loop over the patterns of the EdbPVRec:
     for (Int_t i=0; i<Npat; i++) {
@@ -515,7 +509,7 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
             cout << "WARNING     EdbPVRQuality::CheckEdbPVRecThetaSpace()    Your EdbPVRec object has more than 57 patterns! " << endl;
             cout << "WARNING     EdbPVRQuality::CheckEdbPVRecThetaSpace()    Check it! " << endl;
         }
-        if (gEDBDEBUGLEVEL>2) cout << "CheckEdbPVRec   Doing Pattern " << i << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace    Doing Pattern " << i << endl;
 
 
         eHistYX->Reset(); // important to clean the histogram
@@ -549,7 +543,7 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
                 }
             }
 
-            if (gEDBDEBUGLEVEL>4)  cout << "Doing segment " << j << " result for bool query is: " << result << endl;
+            if (gEDBDEBUGLEVEL>4)  cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   Doing segment " << j << " result for bool query is: " << result << endl;
 
             // Main decision for segment to be kept or not  (seg is of MC or data type).
             if ( kFALSE == result ) continue;
@@ -578,10 +572,9 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
             Double_t xxx = TMath::Sqrt((seg->Chi2()-0.8)*(seg->Chi2()-0.8)/0.2/0.2+(seg->W()-17.)*(seg->W()-17.)/2./2.);
             QualityValue_Total->Fill(xxx);
 
-
         }
 
-        if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
 
         // Important to reset histogram before it is filled.
         histPatternBTDensity->Reset();
@@ -602,7 +595,7 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
         }
 
 
-        cout << "histPatternBTDensity->GetMean() = " << histPatternBTDensity->GetMean() << endl;
+        cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   histPatternBTDensity->GetMean() = " << histPatternBTDensity->GetMean() << endl;
 
         // failsafe warning in case that there are many bins with zero content.
         // for now we print a error message: TODO  REBIN THE YX HISTOGRA WITH 2.5x2.5 mm!!!!
@@ -617,8 +610,6 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
     eProfileBTdens_vs_PID_source_rmsX=eProfileBTdens_vs_PID_source->GetRMS(1);
     eProfileBTdens_vs_PID_source_rmsY=eProfileBTdens_vs_PID_source->GetRMS(2);
-
-
 
 
 
