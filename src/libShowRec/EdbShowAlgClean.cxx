@@ -58,16 +58,16 @@ void EdbShowAlgClean::Print()
     cout << " EdbShowAlgClean::Print().Possible options:  SetTarget(TObjArray*)"<<endl;
     cout << " EdbShowAlgClean::Print().Possible options:  CheckClassType()"<<endl;
     cout << " EdbShowAlgClean::Print().Possible options:  Execute()"<<endl;
-    cout << " EdbShowAlgClean::Print().Possible options:   SimpleRemoveDoubleBTViewOverlap(EdbShowerP* shower)"<<endl;
-    cout << " EdbShowAlgClean::Print().Possible options:   SimpleRemoveBGSegmentsFromShower(EdbShowerP* shower)"<<endl;
-    cout << " EdbShowAlgClean::Print().Possible options:   SimpleRemovePassingDirtFromSource(EdbShowerP* shower, EdbTrackP* track)"<<endl;
+    cout << " EdbShowAlgClean::Print().Possible options:  SimpleRemoveDoubleBTViewOverlap(EdbShowerP* shower)"<<endl;
+    cout << " EdbShowAlgClean::Print().Possible options:  SimpleRemoveBGSegmentsFromShower(EdbShowerP* shower)"<<endl;
+    cout << " EdbShowAlgClean::Print().Possible options:  SimpleRemovePassingDirtFromSource(EdbShowerP* shower, EdbTrackP* track)"<<endl;
     cout << " EdbShowAlgClean::Print():"<<endl;
     cout << " EdbShowAlgClean::Print()     Source Is Set? "<<    eIsSet[0] << endl;
-    cout << " EdbShowAlgClean::Print()     Dirt Is Set?   "<<    eIsSet[1] << endl;
+    cout << " EdbShowAlgClean::Print()     Dirt   Is Set?   "<<    eIsSet[1] << endl;
     cout << " EdbShowAlgClean::Print()     Target Is Set? "<<    eIsSet[2] << endl;
 
     cout << " EdbShowAlgClean::Print()     Source ClassType? "<<    eSourceClassType << endl;
-    cout << " EdbShowAlgClean::Print()     Dirt ClassType?   "<<    eDirtClassType << endl;
+    cout << " EdbShowAlgClean::Print()     Dirt   ClassType?   "<<    eDirtClassType << endl;
     cout << " EdbShowAlgClean::Print()     Target ClassType? "<<    eTargetClassType << endl;
 
     cout << " EdbShowAlgClean::Print()     Source Entries? "  <<    eSource->GetEntries() << endl;
@@ -115,12 +115,12 @@ void EdbShowAlgClean::Set0()
 
 void EdbShowAlgClean::CheckClassType()
 {
-    cout << " EdbShowAlgClean::CheckClassType()"<<endl;
+    cout << "EdbShowAlgClean::CheckClassType()"<<endl;
 
     TString eSourceClassName="";
     TString eDirtClassName="";
 
-    cout << "Now checking eSource= " << eSource << endl;
+    cout << "EdbShowAlgClean::CheckClassType() Now checking eSource= " << eSource << endl;
 
     if (!eIsSet[0] || eSource->GetEntries()==0) return;
     eSourceClassName=eSource->At(0)->ClassName();
@@ -128,10 +128,10 @@ void EdbShowAlgClean::CheckClassType()
     if (eSource->At(0)->ClassName()=="EdbTrackP") eSourceClassType=1;
     if (eSource->At(0)->ClassName()=="EdbSegP") eSourceClassType=2;
 
-    cout << "eSourceClassType= " << eSourceClassType << endl;
-    cout << "eSourceClassName= " << eSourceClassName << endl;
+    cout << "EdbShowAlgClean::CheckClassType() eSourceClassType= " << eSourceClassType << endl;
+    cout << "EdbShowAlgClean::CheckClassType() eSourceClassName= " << eSourceClassName << endl;
 
-    cout << "Now checking eDirt= " << eDirt << endl;
+    cout << "EdbShowAlgClean::CheckClassType() Now checking eDirt= " << eDirt << endl;
 
     if (!eIsSet[1] || eDirt->GetEntries()==0) return;
     eDirtClassName=eDirt->At(0)->ClassName();
@@ -139,10 +139,10 @@ void EdbShowAlgClean::CheckClassType()
     if (eDirt->At(0)->ClassName()=="EdbTrackP") eDirtClassType=1;
     if (eDirt->At(0)->ClassName()=="EdbSegP") eDirtClassType=2;
 
-    cout << "eDirtClassType= " << eDirtClassType << endl;
-    cout << "eDirtClassName= " << eDirtClassName << endl;
+    cout << "EdbShowAlgClean::CheckClassType() eDirtClassType= " << eDirtClassType << endl;
+    cout << "EdbShowAlgClean::CheckClassType() eDirtClassName= " << eDirtClassName << endl;
 
-    cout << " EdbShowAlgClean::CheckClassType()...done."<<endl;
+    cout << "EdbShowAlgClean::CheckClassType()...done."<<endl;
 }
 
 
