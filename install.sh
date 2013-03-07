@@ -53,6 +53,9 @@ echo 'INC_DIR = $(PROJECT_ROOT)/include' >> $ProjectDef
 echo >> $ProjectDef
 #echo 'PROJECT_LIBS = -L$(LIB_DIR)' >> $ProjectDef
 
+cat $ProjectDef
+# exit 0
+
 # create RootDef.mk and TargetsDef.mk links
 configdir="$installdir/src/config"
 ln -fs $configdir/RootDef.linux.mk $configdir/RootDef.mk 

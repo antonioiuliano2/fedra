@@ -17,13 +17,12 @@ int main(int argc, char* argv[])
       cout<< "\t\t  -l    - link up/down\n";
       cout<< "\t\t  -ang  - correct up/down angles offset and rotations\n";
       cout<< "\t\t  -a[n] - plate to plate alignment (if n=2: rigid patterns) \n";
-      cout<< "\t\t  -f[n] - fine alignment based on passed-throw tracks (if n=2: rigid patterns)\n";
+      cout<< "\t\t  -f[n] - fine alignment based on passed-through tracks (if n=2: rigid patterns)\n";
       cout<< "\t\t  -z[n] - z-position ajustment, n is the tracks length in segs (minimum 2 is a default)\n";
-      cout<< "\t\t  -t[n] - tracking (if n>1, holes isertion started - historical option - do not recommended!)\n";
+      cout<< "\t\t  -t[n] - tracking (if n>1, holes insertion started - historical option - NOT recommended!)\n";
       cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle in [GeV])\n";
-      //      cout<< "\t\t  -rt  - raw tracking \n";
       cout<< "\t\t  -nu   - suppress the update of par files\n";
-			cout<< "\t\t  -wPVR - write the EdbPVRec object into PVR.root (usefull for batch processing)\n";
+      cout<< "\t\t  -wPVR - write the EdbPVRec object into PVR.root file (useful for batch processing)\n";
       cout<<endl;
       return 0;
     };
@@ -91,6 +90,7 @@ int main(int argc, char* argv[])
   if(doFine)             { proc.FineAlignment(doFine);    doFine=0; }
   if(doZ)                { proc.AjustZ(doZ);              doZ=0;    }
   if(doRaw)              { proc.LinkRawTracks(doRaw);     doRaw=0;  }
+  if(doWritePVR)         { cout << "NOW HERE SHOULD THE PVR OBJECT BE WRITTEN IN THE ROOT FILE... To Do ..." << endl;  }
 
   return 0;
 }

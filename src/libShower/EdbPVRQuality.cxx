@@ -682,8 +682,6 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     cout << yarr[1] << endl;
 
 
-
-
     Log(2,"EdbPVRQuality::CheckEdbPVRec","EdbPVRQuality::CheckEdbPVRecThetaSpace...done");
     return;
 }
@@ -697,7 +695,7 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
     // BinArea is 1mmx1mm.
     eHistYX->Reset();
     eHistYX->SetBins(100,0,100000,120,0,120000);
-    //cout << "SetHistGeometry_OPERA :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","EdbPVRQuality::SetHistGeometry_OPERA...done");
     return;
 }
 //______________________________________________________________________________
@@ -708,7 +706,7 @@ void EdbPVRQuality::SetHistGeometry_MC()
     // BinArea is 1mmx1mm
     eHistYX->Reset();
     eHistYX->SetBins(100,-50000,50000,100,-50000,50000);
-    //cout << "SetHistGeometry_MC :binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    Log(3,"EdbPVRQuality::SetHistGeometry_MC","EdbPVRQuality::SetHistGeometry_MC...done");
     return;
 }
 //______________________________________________________________________________
