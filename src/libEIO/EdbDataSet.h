@@ -194,6 +194,7 @@ class EdbDataProc : public TObject {
 
   EdbDataSet *GetDataSet() {return eDataSet;}
   EdbPVRec *PVR() const {return ePVR;}
+  EdbPVRec* GetPVR() const {return ePVR;}
   void   SetPVR(EdbPVRec *pvr)  {ePVR=pvr;}
 
   EdbPVRec *ExtractDataVolume( EdbSegP &v, int plmin, int plmax,

@@ -2327,6 +2327,13 @@ void EdbDataProc::LinkTracks( int alg, float p )
   ali->FitTracks( p, mass );         // is important to call it before MakeTracksTree!
 
   MakeTracksTree(ali);
+  
+  // After the EdbPVRec is created and filled, set it also as the EdbDataProc own object.
+  SetPVR(ali);
+  if (gEDBDEBUGLEVEL>2) {
+    ali->Print();
+    Log(2,"EdbDataProc::LinkTracks","EdbDataProc::LinkTracks...Done.");
+  }
 }
 
 ///______________________________________________________________________________
