@@ -63,6 +63,7 @@ class EdbDisplay: public EdbDisplayBase {
   Double_t eM;             // track mass (creation from segment, propagation)
   Double_t eTImpMax;       // Maximal impact for interactive add track
   Double_t eTProbMin;      // Minimal probability for interactive add track
+  Double_t eSegWmin;       // Minimal segment W for neighbouring selection
 
   TObjArray *eArrSegG;     // additional array of segments for the presentation purpose only
 

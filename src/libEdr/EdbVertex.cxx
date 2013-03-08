@@ -160,7 +160,7 @@ EdbSegP   *EdbVertex::GetTrackV(int i, bool usesegpar)
 {
 	EdbTrackP *t = GetTrack(i); if(!t) return 0;
 	EdbSegP *s = t->TrackExtremity(Zpos(i), usesegpar);
-	if(s->P() != t->P()) Log(1,"GetTrackV","Warning! segment momentum=%f is not equal to the track momentum=%f",s->P(), t->P() );
+  if( s->P()>=0 && (s->P() != t->P()) ) Log(1,"GetTrackV","Warning! segment momentum=%f is not equal to the track momentum=%f",s->P(), t->P() );
 	return s;
 }
 
@@ -1957,7 +1957,7 @@ int EdbVertexRec::SelSegNeighbor( EdbSegP *sin, int seltype, float RadMax, int D
     } 
     if((trind < 0 || trflg == -10)&&(seltype == 1))
     {
-	if (ao) ao->Add(s);
+      if (ao) ao->Add(s);
 	nadd++;
     }
   }
@@ -3002,7 +3002,7 @@ int EdbVertexRec::VertexNeighbor(EdbVertex *v, float RadMax, int Dpat, float Imp
 } 
 
 //______________________________________________________________________________
-int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, float ImpMax, TObjArray *arrs, TObjArray *arrt, TObjArray *arrv)
+int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, float ImpMax, float SegWmin, TObjArray *arrs, TObjArray *arrt, TObjArray *arrv)
 {
   //if(!ePVR) ePVR = ((EdbPVRec *)(gROOT->GetListOfSpecials()->FindObject("EdbPVRec")));
   if (ePVR) if (ePVR->IsA() != EdbPVRec::Class()) ePVR = 0;
@@ -3165,8 +3165,9 @@ int EdbVertexRec::SegmentNeighbor(EdbSegP *s, float RadMax, int Dpat, float ImpM
 		    {
 			    if (ss != s)
 			    {
-				if (Tdistance(*(const EdbSegP *)s, *ss) > ImpMax) continue;
-				arrs->Add((TObject *)ss);
+            if ( ss->W() < SegWmin) continue;
+        if (Tdistance(*(const EdbSegP *)s, *ss) > ImpMax) continue;
+        arrs->Add((TObject *)ss);
 				nn++;
 			    }
 		    }

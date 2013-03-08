@@ -260,11 +260,9 @@ class EdbVertexRec: public EdbVertexPar {
 			    float ImpMax = 1000000.);
   Int_t	     SelVertNeighbor(EdbVertex *v, int seltype, float RadMax, 
 			     int Dpat, TObjArray *ao);
-  Int_t	     SelSegNeighbor(EdbSegP *s, int seltype, float RadMax, int Dpat, 
-			    TObjArray *ao);
-  Int_t	     SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1, 
-			     float ImpMax = 1000000., TObjArray *aseg = 0, 
-			     TObjArray *atr = 0, TObjArray *arv = 0);
+  Int_t	     SelSegNeighbor(EdbSegP *s, int seltype, float RadMax, int Dpat, TObjArray *ao);
+  Int_t	     SegmentNeighbor(EdbSegP *s, float RadMax = 1000., int Dpat = 1, float ImpMax = 1000000., float SegWmin=9, 
+                             TObjArray *aseg = 0, TObjArray *atr = 0, TObjArray *arv = 0);
   Float_t    CheckImpact( EdbSegP *s1,   EdbSegP *s2, int zpos1, int zpos2, float pv[3] );
   Float_t    CheckImpactN( EdbSegP *s1,   EdbSegP *s2, float pv[3], bool &parallel, float dzMax=6000. );
   Bool_t     EstimateVertexQuality(EdbVertex &v);

@@ -213,9 +213,10 @@ void EdbDisplay::Set0()
   eWait_Answer = false;
   eIndVert = -1;
   eIndVertSave = -1;
-  eRadMax = 1000.;
+  eRadMax = 10000.;
   eDpat = 2;
-  eImpMax = 10000.;
+  eImpMax = 1000.;
+  eSegWmin = 9;
   eP = 0.;
   eM = 0.;
   eTImpMax = 10000.;
@@ -3786,7 +3787,7 @@ void EdbDisplay::DrawVertexEnvironment()
     else if (eSegment)
     {
 	eIndVert = -1;
-	eVerRec->SegmentNeighbor(eSegment, Rmax, Dpat, ImpMax, eArrSegP, eArrTr, eArrV);
+	eVerRec->SegmentNeighbor(eSegment, Rmax, Dpat, ImpMax, eSegWmin, eArrSegP, eArrTr, eArrV);
 	if (eArrV->GetEntries()) eDrawVertex = 1;
     }
     Draw();
@@ -3848,13 +3849,13 @@ void EdbDisplay::DialogNeighborParameters()
    // use hierarchical cleaning
 //    fTra->SetCleanup(kDeepCleanup);
 
-    TGHorizontalFrame *fF[3] = {0,0,0};
-    TGLabel *fLabel[3] = {0,0,0};
-    Double_t parinit[3] = {eRadMax, eDpat,  eImpMax};
-    Double_t parmax[3] =  { 50000.,   25.,  100000.};
-    Double_t parmin[3] =  {    10.,    0.,      10.};
+    TGHorizontalFrame *fF[4] = {0,0,0,0};
+    TGLabel *fLabel[4] = {0,0,0,0};
+    Double_t parinit[4] = {eRadMax, eDpat,  eImpMax, eSegWmin};
+    Double_t parmax[4] =  { 150000.,   50.,   10000., 1000. };
+    Double_t parmin[4] =  {    0.,    0.,      0.,    0. };
     //if (eVerRec) if (eVerRec->ePVR) parmax[1] = ((eVerRec->ePVR)->Npatterns()-1);
-    char *parlabel[3] = {"Maximal radius","+/- patterns", "Maximal impact"};
+    char *parlabel[4] = {"Maximal radius","+/- patterns", "Maximal impact", "Minimal seg W"};
 
     TGGC myGC = *(gClient->GetResourcePool()->GetFrameGC());
     TGFont *myfont = gClient->GetFont("-adobe-helvetica-bold-r-*-*-12-*-*-*-*-*-iso8859-1");
@@ -3864,7 +3865,7 @@ void EdbDisplay::DialogNeighborParameters()
     TGLayoutHints *fL1 = new TGLayoutHints(kLHintsTop | kLHintsLeft, 2, 2, 2, 2);
     fTra->AddFrame(fF1, fL1);
     TGLayoutHints *fL2 = new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 2, 2, 2);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
       fF[i] = new TGHorizontalFrame(fF1, 220, 35);
       fF1->AddFrame(fF[i], fL2);
       fNumericEntries[i] = new TGNumberEntry(fF[i], parinit[i], 12, i+1000,
@@ -3982,8 +3983,9 @@ void EdbDisplay::AcceptModifiedParams()
     if(fNumericEntries[0]) eRadMax = fNumericEntries[0]->GetIntNumber();
     if(fNumericEntries[1]) eDpat   = fNumericEntries[1]->GetIntNumber();
     if(fNumericEntries[2]) eImpMax = fNumericEntries[2]->GetIntNumber();
+    if(fNumericEntries[3]) eSegWmin= fNumericEntries[3]->GetIntNumber();
 
-    for (Int_t i = 0; i < 3; i++) SafeDelete(fNumericEntries[i]);
+    for (Int_t i = 0; i < 4; i++) SafeDelete(fNumericEntries[i]);
 
     fMain->SendCloseMessage();
     fMain = 0;
