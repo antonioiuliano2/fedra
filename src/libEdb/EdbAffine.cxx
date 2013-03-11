@@ -308,7 +308,7 @@ Int_t EdbAffine2D::Calculate( EdbPointsBox2D *b0, EdbPointsBox2D *b1 )
     Double_t    sdr = sy0y0 - sy0*sy0;
     Double_t    det = sar*sdr-sbr*scr;
 
-    if ( det == 0 )                           return 0;
+    if ( det < 0.0000000001 )  { Log(1,"EdbAffine2D::Calculate","determinant is too small: %g",det);  return 0; }
 
     Double_t    sa =  sdr/det;
     Double_t    sb = -sbr/det;

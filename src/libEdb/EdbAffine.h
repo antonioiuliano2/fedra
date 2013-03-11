@@ -73,6 +73,9 @@ class EdbAffine2D : public TObject{
   Double_t  Phi(Double_t x, Double_t y) const;
 
   const char *AsString() const;
+  
+  Float_t Xtrans( Float_t x, Float_t y) const { return eA11*x + eA12*y + eB1; }
+  Float_t Ytrans( Float_t x, Float_t y) const { return eA21*x + eA22*y + eB2; }
 
   void Print(Option_t *opt="") const;
 
