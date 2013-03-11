@@ -75,9 +75,8 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
   EdbSegP *s1,*s2;
   for(int i=0; i<n; i++) {
     s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-    if(s1->Flag()==-10) continue;
     s2 = (EdbSegP*)eS[1].UncheckedAt(i);
-    if(s2->Flag()==-10) continue;
+    if( s1->Flag()==-10 && s2->Flag()==-10) continue;
     if(checkview>0) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
     if( !IsInsideDVsame(*s1,*s2) )                                                                      continue;
     if(s1->Flag()>-10 && s2->Flag()>-10) {
@@ -85,10 +84,29 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
       if(htxty) htxty->Fill(s1->TX()-s2->TX(),s1->TY()-s2->TY());
     }
     if(checkview==1||checkview==0) {
-      if( s2->W()>s1->W() ) s1->SetFlag(-10);   else     s2->SetFlag(-10);
+      if( s2->W()>s1->W() )                                        s1->SetFlag(-10);
+      else if( s2->W() == s1->W() &&  s2->Chi2() <  s1->Chi2() )   s1->SetFlag(-10);
+      else if( s2->W() == s1->W() &&  s2->Chi2() >= s1->Chi2() )   s2->SetFlag(-10);
+      else if( s2->W()<s1->W() )                                   s2->SetFlag(-10);
       nout++;
     }
   }
+  
+  //check 
+  int miss=0, wrong=0;
+  for(int i=0; i<n; i++) {
+    s1 = (EdbSegP*)eS[0].UncheckedAt(i);
+    s2 = (EdbSegP*)eS[1].UncheckedAt(i);
+    if( s1->Flag()==-10 && s2->Flag()==-10 )                  continue;
+    if( s1->Flag()!=-10 && s2->Flag()!=-10 )        { miss++; continue;}
+    if( s1->Flag()==-10 && (s1->W() > s2->W()) )    {
+      wrong++;
+      s1->SetFlag(0);
+      s2->SetFlag(-10);
+    }
+  }
+  Log(2,"DubletsFilterOut","miss: %d wrong: %d",miss,wrong);
+  
   Log(2,"DubletsFilterOut","%d segments discarded with DX,DY,DTX,DTY: (%5.1f %5.1f %5.3f %5.3f) checkview =%d", 
       nout,eDVsame[0],eDVsame[1],eDVsame[2],eDVsame[3], checkview );
   return nout;
@@ -239,8 +257,8 @@ int EdbAlignmentV::FillCombinations(float dv[4], float dxMax, float dyMax, bool 
       if( Abs(TY(1, *s2)- ty1)  > dv[3] )                 continue;
 
       if(doFill) {
-	eS[0].Add(s1);
-	eS[1].Add(s2);
+        eS[0].Add(s1);
+        eS[1].Add(s2);
       }
       ncomb++;
     }
@@ -251,7 +269,7 @@ int EdbAlignmentV::FillCombinations(float dv[4], float dxMax, float dyMax, bool 
   arr1.Clear();
   arr2.Clear();
 
-  Log(3,"FillCombinations","%d selected with the acceptance: %7.2f %7.2f (%d,%d) and tolerance (%7.2f%7.2f %7.4f %7.4f)",
+  Log(3,"FillCombinations","%d selected with the acceptance: %7.2f %7.2f (%d,%d) and tolerance (%7.2f %7.2f %7.4f %7.4f)",
       nout, dxMax,dyMax, ir2[0], ir2[1], dv[0], dv[1], dv[2], dv[3] );
   return nout;
 }

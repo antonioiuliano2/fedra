@@ -1,6 +1,7 @@
 #ifndef ROOT_EdbLinking
 #define ROOT_EdbLinking
 
+#include "EdbScanCond.h"
 #include "TEnv.h"
 #include "EdbAlignmentV.h"
 #include "EdbSEQ.h"
@@ -24,6 +25,7 @@ class EdbLinking : public EdbAlignmentV
    float  eShr0;                  // starting value for shrinkage correction search
    float  eDShr;                  // range for the shrinkage correction
    float  eBinOK;                 // mean cell occupancy
+   EdbScanCond eCond;             // scanning conditions for couples ranking
   
    int    eNshr[2];               // number of coins found for shrinkage correction
    int    eNcorrMin;              // min number of segments for the correction calculation

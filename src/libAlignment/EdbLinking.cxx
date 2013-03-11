@@ -16,7 +16,6 @@
 #include "EdbCouplesTree.h"
 #include "EdbTrackFitter.h"
 #include "EdbLayer.h"
-#include "EdbScanCond.h"
 #include "EdbSEQ.h"
 #include "EdbTraceBack.h"
 
@@ -53,6 +52,12 @@ void EdbLinking::GetPar(TEnv &env)
   eDoSaveCouples       = env.GetValue("fedra.link.DoSaveCouples"       , true );
   
   eDoDumpDoubletsTree  = env.GetValue("fedra.link.DumpDoubletsTree"    , false );
+  
+  eCond.SetSigma0(       env.GetValue("fedra.link.Sigma0"         , "1 1 0.013 0.013") );
+  eCond.SetPulsRamp0(    env.GetValue("fedra.link.PulsRamp0"      , "6 9") );
+  eCond.SetPulsRamp04(   env.GetValue("fedra.link.PulsRamp04"     , "6 9") );
+  eCond.SetDegrad(       env.GetValue("fedra.link.Degrad"         , 5) );
+
   
   GetDoubletsPar(env);
 }
@@ -435,9 +440,6 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
   Log(3,"RankCouples","%d" ,n);
 
   EdbTrackFitter tf;
-  EdbScanCond cond1,cond2;
-  cond1.SetSigma0(1.,1., 0.013,0.013);  cond1.SetDegrad(4); cond1.SetPulsRamp0(6,9); cond1.SetPulsRamp04(6,9);
-  cond2.SetSigma0(1.,1., 0.013,0.013);  cond2.SetDegrad(4); cond2.SetPulsRamp0(6,9); cond2.SetPulsRamp04(6,9);
   eSegCouples.Delete();
   EdbSegP seg, seg1, seg2;
   for(int i=0; i<n; i++) {
@@ -452,7 +454,7 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     eCorr[1].ApplyCorrections(seg2);
    
     //tf.Chi2SegM( *s1, *s2, seg, cond1, cond2);
-    tf.Chi2ASeg( seg1, seg2, seg, cond1, cond2);
+    tf.Chi2ASeg( seg1, seg2, seg, eCond, eCond);
     //seg.SetChi2( tf.Chi2ACP( *s1, *s2, cond1) );   //TODO test!!
     
     if(seg.Chi2() > eCHI2Pmax)  continue;
@@ -600,13 +602,16 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
-  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
+//  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
+  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
 
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
-  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
+//  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments
+  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
+  
   if(hxy1)   hxy1->Write();
   if(hxy2)   hxy2->Write();
   if(htxty1) htxty1->Write();
@@ -621,7 +626,10 @@ void EdbLinking::DumpDoubletsTree(EdbAlignmentV &adup, const char *name)
   int n=adup.CheckEqualArr(adup.eS[0],adup.eS[1]);
   for(int i=0; i<n; i++)
   {
-    dup.Fill( (EdbSegP*)(adup.eS[0].At(i)), (EdbSegP*)(adup.eS[1].At(i)));
+    EdbSegP *s0 = (EdbSegP*)(adup.eS[0].At(i));
+    EdbSegP *s1 = (EdbSegP*)(adup.eS[1].At(i));
+    if( s0->Flag() !=-10)
+      dup.Fill( s0, s1);
   }
   dup.WriteTree();
 }

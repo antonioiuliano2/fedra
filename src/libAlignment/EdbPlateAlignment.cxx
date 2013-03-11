@@ -77,6 +77,7 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
 
   if(eDoCoarse) {
     SetParCoarseAl( eCorr[0].V(2) , eOffsetMax, 3*eSigma[1], eDZ, eDPHI );
+    //SetParCoarseAl( eCorr[0].V(2) , 3*eSigma[0], 3*eSigma[1], eDZ, eDPHI );
     CoarseAl(p1,p2);
     if(!eCoarseOK)    goto END;
   }
@@ -523,7 +524,9 @@ void EdbPlateAlignment::SetParFineAl()
 void EdbPlateAlignment::SetParCoarseAl(float zcorr, float dpos, float dang, float dz, float dphi)
 {
   // medium-wide parameters setting for the coarse alignment
+  Log(3,"EdbPlateAlignment::SetParCoarseAl","zcorr = %f  dpos = %f dang=%f  dz=%f  dphi=%f",zcorr, dpos, dang, dz, dphi);
   eDVsame[0] = eDVsame[1] = dpos;
+  //eDVsame[0] = eDVsame[1] = 3*eSigma[0];
   eDVsame[2] = eDVsame[3] = dang;
   int n = (int)( 2*dpos/ (4*eSigma[0]) );
   n = n%2 ? n : n+1;              // make n - odd
