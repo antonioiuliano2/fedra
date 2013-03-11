@@ -626,7 +626,7 @@ void EdbMomentumEstimator::DrawPlots(TCanvas *c1)
 	if(eAlg<2)
 	  {
 	    gx->Draw("ALPR");
-	    gx->SetTitle("Theta vs cell (longitudinal component)");
+	    gx->SetTitle("Theta vs cell (transverse component)");
 	    TF1 *fxmin = new TF1(*(eF1X));
 	    fxmin->SetLineColor(kBlue);
 	    fxmin->SetParameter(0,ePXmin);
@@ -678,7 +678,7 @@ void EdbMomentumEstimator::DrawPlots(TCanvas *c1)
 	if(eAlg<2)
 	  {
 	    g->Draw("ALPR");
-	    g->SetTitle("Theta vs cell (longitudinal component)");
+	    g->SetTitle("Theta vs cell (3D)");
 	    //g->Print();
 	    TF1 *fmin = new TF1(*(eF1));
 	    fmin->SetLineColor(kBlue);

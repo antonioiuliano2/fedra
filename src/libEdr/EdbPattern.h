@@ -90,7 +90,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   void    Print( Option_t *opt="") const;
   void    Set0();
   void    Reset();
-  void    ProjectTo(const float z);
+  void    ProjectTo(const float dz);
   void    TransformA(    const EdbAffine2D *affA );
   void    TransformARot( const EdbAffine2D *affA );
   void    TransformShr(  const float shr );

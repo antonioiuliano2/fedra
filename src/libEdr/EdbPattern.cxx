@@ -201,15 +201,14 @@ void EdbSegmentsBox::SetSegmentsDZ(float dz)
 void EdbSegmentsBox::ProjectTo(const float dz)
 {
   eZ += dz;  eDZkeep += dz;
- 
-  EdbSegP *p;
   int nseg = N();
-  for(int i=0; i<nseg; i++ ) {
+  for(int i=0; i<nseg; i++ ) GetSegment(i)->PropagateToDZ(dz);
+/*  for(int i=0; i<nseg; i++ ) {
     p = GetSegment(i);
     p->SetX( p->X() + p->TX()*dz );
     p->SetY( p->Y() + p->TY()*dz );
     p->SetZ( Z() );
-  }
+  }*/
 }
  
 //______________________________________________________________________________
