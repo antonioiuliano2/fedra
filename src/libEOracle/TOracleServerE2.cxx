@@ -52,6 +52,47 @@ Int_t  TOracleServerE2::ReadCSPredictions(Int_t id_brick, EdbPattern &pred)
 }
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2::ReadCSPredictions_remote_v2(Int_t id_brick, EdbPattern &pred, int csid)
+{
+  // Fills an EdbPattern object with CS predictions
+  // The query is better than the one in ReadCSPredictions because takes
+  // into account also the 3 over 4 selection
+  // csid: 1 or 2
+
+  pred.Reset();
+  EdbSegP seg;
+  char *query= new char[2048];
+
+  try{
+    if (!fStmt)
+      fStmt = fConn->createStatement();
+
+    if(csid==1) {
+      sprintf(query, "select distinct candidate,posx_1,posy_1,slopex_1,slopey_1,grains_1 from vw_cs_candidates_v2 where mod(id_eventbrick,1000000)=%d order by candidate", id_brick);
+    } else if(csid==2) {
+      sprintf(query, "select distinct candidate,posx_2,posy_2,slopex_2,slopey_2,grains_2 from vw_cs_candidates_v2 where mod(id_eventbrick,1000000)=%d order by candidate", id_brick);
+    }
+
+    fStmt->setSQL(query);
+    Log(2,"ReadCSPredictions2","execute sql query: %s ...",query);
+    fStmt->execute();
+    ResultSet *rs = fStmt->getResultSet();
+    while (rs->next()){
+      seg.Set(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),
+	      rs->getInt(6),0);
+      seg.SetPID(csid);
+      pred.AddSegment(seg);
+    }
+    delete rs;
+
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE::ReadCSPredictions2", "Error!!! %s", (oraex.getMessage()).c_str());
+    return false;
+  }
+  return (pred.N());
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
 {
   // Fills an EdbPattern object with CS predictions
@@ -71,13 +112,13 @@ Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
     // where vld.id_eventbrick = 3021343 and vld.valid = 'Y';
 
     sprintf(query,
-	    "select cand, posx, posy, slopex, slopey, grains, id_plate from \
-             (select idcand, cand, posx, posy, slopex, slopey, id_plate, grains, row_number() \
-             over (partition by idcand order by grains desc, id_plate desc) as rnum from \
-             vw_local_cs_candidates where id_cs_eventbrick in \
-             (select id from tb_eventbricks where mod(id_brick,1000000)=%d)) \
-             where rnum = 1 order by cand",
-	    id_brick);
+            "select cand, posx, posy, slopex, slopey, grains, id_plate from \
+                (select idcand, cand, posx, posy, slopex, slopey, id_plate, grains, row_number() \
+                over (partition by idcand order by grains desc, id_plate desc) as rnum from \
+                vw_local_cs_candidates where id_cs_eventbrick in \
+                (select id from tb_eventbricks where mod(id_brick,1000000)=%d)) \
+                where rnum = 1 order by cand",
+            id_brick);
     
     fStmt->setSQL(query);
     Log(2,"ReadCSPredictions2","execute sql query: %s ...",query);
@@ -85,7 +126,7 @@ Int_t  TOracleServerE2::ReadCSPredictions2(Int_t id_brick, EdbPattern &pred)
     ResultSet *rs = fStmt->getResultSet();
     while (rs->next()){
       seg.Set(rs->getInt(1),rs->getFloat(2),rs->getFloat(3),rs->getFloat(4),rs->getFloat(5),
-	      rs->getInt(6),0);
+              rs->getInt(6),0);
       seg.SetPID(rs->getInt(7));
       pred.AddSegment(seg);
     }
