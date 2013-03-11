@@ -155,10 +155,11 @@ class EdbCell2 : public EdbH2 {
 
  public:
   EdbCell2();
-  EdbCell2( const EdbCell2 &cell ) {Copy(cell);}
+  EdbCell2( const EdbCell2 &cell ) { Set0(); Copy(cell); }
   ~EdbCell2();
 
   //virtual void  Streamer(TBuffer &R__b);
+  void  Set0();
   void  Copy( const EdbCell2 &cell);
   void  InitEPC();
   int   CellLim() { return eCellLim; }
