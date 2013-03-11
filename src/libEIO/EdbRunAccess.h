@@ -112,6 +112,7 @@ class EdbRunAccess : public TObject {
   int GetEntryXY(int ud, float x, float y);
   int GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol);
 
+  int GetPatternXYcut(EdbSegP &s, int side, EdbPattern &pat, float dr, float dt);
   int GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin=200);
   int GetPatternData(EdbPattern &pat, int side, int nviews, TArrayI &srt, int &nrej);
   int GetPatternDataForPrediction( int id, int side, EdbPattern &pat );

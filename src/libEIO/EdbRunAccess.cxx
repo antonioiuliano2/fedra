@@ -284,6 +284,32 @@ int EdbRunAccess::GetVolumeXY(EdbSegP &s, EdbPatternsVolume &vol)
 }
 
 ///_________________________________________________________________________
+int EdbRunAccess::GetPatternXYcut(EdbSegP &s0, int side, EdbPattern &pat, float dr, float dt)
+{
+  Log(2,"EdbRunAccess::GetPatternXYcut","side %d     [%f %f %f %f] +-%5.1f +-%5.3f:", side, s0.X(), s0.Y(), s0.TX(),s0.TY(),dr,dt );
+
+  EdbPattern p0;
+  int nseg = GetPatternXY(s0, side, p0, dr);
+  Log(2,"EdbRunAccess::GetPatternXYcut","nseg = %d",nseg);
+  Log(2,"EdbRunAccess::GetPatternXYcut","side = %d zlayer=%f zseg= %f",side,eLayers[side]->Z(),s0.Z() );
+  float x = s0.X()+ (eLayers[side]->Z()-s0.Z())*s0.TX();
+  float y = s0.Y()+ (eLayers[side]->Z()-s0.Z())*s0.TY();
+  int ic=0;
+  for(int i=0; i<nseg; i++)
+  {
+    EdbSegP *s = p0.GetSegment(i);
+    if( Abs(s->X()-x) > dr) continue;
+    if( Abs(s->Y()-y) > dr) continue;
+    if( Abs(s->TX()-s0.TX()) > dt) continue;
+    if( Abs(s->TY()-s0.TY()) > dt) continue;
+    pat.AddSegment(*s);
+    ic++;
+  }
+  Log(2,"EdbRunAccess::GetPatternXYcut","selected = %d",ic);
+  return ic;
+}
+
+///_________________________________________________________________________
 int EdbRunAccess::GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin)
 {
   // assuming s as the prediction in plate RS (also Z), fill vol with the segments 
@@ -292,11 +318,9 @@ int EdbRunAccess::GetPatternXY(EdbSegP &s, int side, EdbPattern &pat, float rmin
 
   if(side<1||side>2) return 0;
   TArrayI entr(100000);
-  float x,y; 
-  x = s.X()+ (eLayers[side]->Z()-s.Z())*s.TX();
-  y = s.Y()+ (eLayers[side]->Z()-s.Z())*s.TY();
-  //entr[0] = GetEntryXY(side,x,y);
-  int nv = GetViewsXY(side,entr,x,y, rmin);
+  float x = s.X()+ (eLayers[side]->Z()-s.Z())*s.TX();
+  float y = s.Y()+ (eLayers[side]->Z()-s.Z())*s.TY();
+  int nv = GetViewsXY(side,entr,x,y, Max(rmin,(float)300.) );
   pat.SetZ(eLayers[side]->Z());
   int nrej=0;
   return GetPatternData(pat,side,nv,entr,nrej);
@@ -839,7 +863,7 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   if( !PassCuts(side,*seg) )     return false;
   
   if(eTracking>=0)
-    if((seg->GetUniqueID()>>16)!=eTracking) return false;
+    if(((Int_t)(seg->GetUniqueID()>>16))!=eTracking) return false;
 
   float pix, chi2;
   if(eCLUST) {
@@ -881,21 +905,25 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   y  += layer->Zcorr()*ty;
   z    = layer->Z() + layer->Zcorr();
   
-  float xx, yy;
+  float xx, yy, txr, tyr;
   if(eAFID==0) {
     xx = x+view->GetXview();
     yy = y+view->GetYview();
+    txr = tx;
+    tyr = ty;
   } else {
     seg->Transform( view->GetHeader()->GetAffine() );
-    xx = affview->A11()*x+affview->A12()*y+affview->B1();
-    yy = affview->A21()*x+affview->A22()*y+affview->B2();
+    xx  = affview->A11()*x+affview->A12()*y+affview->B1();
+    yy  = affview->A21()*x+affview->A22()*y+affview->B2();
+    txr = affview->A11()*tx+affview->A12()*ty;                   // rotate also angles
+    tyr = affview->A21()*tx+affview->A22()*ty;
   }
   
   puls = seg->GetPuls();
 
   EdbAffine2D *aff = layer->GetAffineTXTY();
-  float txx = aff->A11()*tx+aff->A12()*ty+aff->B1();
-  float tyy = aff->A21()*tx+aff->A22()*ty+aff->B2();
+  float txx = aff->A11()*txr+aff->A12()*tyr+aff->B1();
+  float tyy = aff->A21()*txr+aff->A22()*tyr+aff->B2();
   
   segP.Set( seg->GetID(),xx,yy,txx,tyy,puls,0);
   segP.SetZ( z );

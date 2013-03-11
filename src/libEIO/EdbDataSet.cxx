@@ -2577,6 +2577,8 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 				 const char *rcut )
 {
   TFile f(fname);
+  if(f.IsZombie()) { Log(1,"EdbDataProc::ReadTracksTree","Error open file %s", fname);  return 0; }
+  
   TTree *tracks = (TTree*)f.Get("tracks");
   Int_t   trid=0;
   Int_t   nseg=0;
