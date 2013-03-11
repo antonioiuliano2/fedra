@@ -63,11 +63,24 @@ void EdbScanCond::Print() const
 }
 
 //______________________________________________________________________________
+void EdbScanCond::SetPulsRamp0(const char *str)
+{
+  float p1,p2;
+  if(str) if( sscanf(str,"%f %f",&p1,&p2) == 2 )  {ePuls0[0]=p1; ePuls0[1]=p2;}
+}
+//______________________________________________________________________________
+void EdbScanCond::SetPulsRamp04(const char *str)
+{
+  float p1,p2;
+  if(str) if( sscanf(str,"%f %f",&p1,&p2) == 2 ) {ePuls04[0]=p1; ePuls04[1]=p2;}
+}
+
+//______________________________________________________________________________
 void EdbScanCond::SetSigma0(const char *str)
 {
   float x,y,tx,ty;
   if( sscanf(str,"%f %f %f %f",&x,&y,&tx,&ty) == 4 )
-     {eSigmaX0=x;  eSigmaY0=y;  eSigmaTX0=tx;  eSigmaTY0=ty;}
+  {eSigmaX0=x;  eSigmaY0=y;  eSigmaTX0=tx;  eSigmaTY0=ty;}
 }
 
 //______________________________________________________________________________

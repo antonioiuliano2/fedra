@@ -120,12 +120,12 @@ void EdbBrickP::SetDXDY(float dx, float dy)
 //____________________________________________________________________________________
 void EdbBrickP::ResetAffXY()
 {
-  for(int i=0; i<Npl(); i++) GetPlate(i)->GetAffineXY()->Reset();
+  for(int i=0; i<Npl(); i++) GetPlate(i)->ResetAffXY();
 }
 //____________________________________________________________________________________
 void EdbBrickP::ResetAffTXTY()
 {
-  for(int i=0; i<Npl(); i++) GetPlate(i)->GetAffineTXTY()->Reset();
+  for(int i=0; i<Npl(); i++) GetPlate(i)->ResetAffTXTY();
 }
 
 //____________________________________________________________________________________

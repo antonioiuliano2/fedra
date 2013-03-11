@@ -62,10 +62,12 @@ class EdbLayer : public TObject {
 
  public:
   EdbLayer();
+  EdbLayer(const EdbLayer &l);
   virtual ~EdbLayer(){}
 
-  void Copy(EdbLayer &l);
-  void CopyCorr(EdbLayer &l);
+  void Set0();
+  void Copy(const EdbLayer &l);
+  void CopyCorr(const EdbLayer &l);
   EdbCorrectionMap    &Map() { return eMap; }
   int   ID()   const {return eID;}
   int   Ncp()  const {return eNcp;}
@@ -106,9 +108,13 @@ class EdbLayer : public TObject {
   void SubstructCorrections(EdbLayer &la);
   void ApplyCorrections(EdbLayer &la);
   void ApplyCorrectionsLocal(EdbCorrectionMap &map) { eMap.ApplyCorrections(map); }
-  void ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbAffine2D &afftxty);
+  void ApplyCorrections(float shr, float zcorr, const EdbAffine2D &affxy, const EdbAffine2D &afftxty);
+  void ResetAffXY() { eAffXY.Reset(); }
+  void ResetAffTXTY() { eAffTXTY.Reset(); }
   void ResetCorr();
 
+  const EdbAffine2D *AffineXY()   const {return &eAffXY;}
+  const EdbAffine2D *AffineTXTY() const {return &eAffTXTY;}
   EdbAffine2D *GetAffineXY()   {return &eAffXY;}
   EdbAffine2D *GetAffineTXTY() {return &eAffTXTY;}
 
@@ -125,6 +131,8 @@ class EdbLayer : public TObject {
   
   void CorrectSeg( EdbSegP &s );
   void CorrectSegLocal( EdbSegP &s );
+  
+  void Invert();
 
   void Print();
 

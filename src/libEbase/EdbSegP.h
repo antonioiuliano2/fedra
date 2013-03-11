@@ -64,6 +64,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
 
   //void Transform(EdbAffine2D &aff) { ((EdbTrack2D*)this)->Transform(&aff); }
   static void LinkMT(const EdbSegP* s1,const EdbSegP* s2, EdbSegP* s);
+  void    PropagateToDZ( float dz );
   void    PropagateTo( float z );
   void    PropagateToCOV( float z );
   void    MergeTo( EdbSegP &s );

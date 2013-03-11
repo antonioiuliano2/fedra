@@ -10,6 +10,19 @@ using namespace TMath;
 ///==============================================================================
 EdbLayer::EdbLayer()
 {
+  Set0();
+}
+
+///==============================================================================
+EdbLayer::EdbLayer(const EdbLayer &l)
+{
+  Set0();
+  Copy(l);
+}
+
+///==============================================================================
+void EdbLayer::Set0()
+{
   eID=0;
   eZ=0; eZmin=0; eZmax=0;
   eX=0; eY=0; eTX=0; eTY=0;
@@ -19,7 +32,7 @@ EdbLayer::EdbLayer()
 }
 
 ///______________________________________________________________________________
-void EdbLayer::Copy(EdbLayer &l)
+void EdbLayer::Copy(const EdbLayer &l)
 {
   eID = l.ID();
   eZ = l.Z(); 
@@ -37,10 +50,18 @@ void EdbLayer::Copy(EdbLayer &l)
 }
 
 ///______________________________________________________________________________
-void EdbLayer::CopyCorr(EdbLayer &l)
+void EdbLayer::CopyCorr(const EdbLayer &l)
 {
   ResetCorr();
-  ApplyCorrections( l.Shr(), l.Zcorr(), *(l.GetAffineXY()), *(l.GetAffineTXTY()) );
+  ApplyCorrections( l.Shr(), l.Zcorr(), *(l.AffineXY()),  *(l.AffineTXTY()));
+}
+
+///______________________________________________________________________________
+void EdbLayer::Invert()
+{
+  eAffXY.Invert();
+  eAffTXTY.Invert();
+  eShr = 1./eShr;
 }
 
 ///______________________________________________________________________________
@@ -71,7 +92,7 @@ void EdbLayer::ApplyCorrections(EdbLayer &la)
 }
 
 ///______________________________________________________________________________
-void EdbLayer::ApplyCorrections(float shr, float zcorr, EdbAffine2D &affxy, EdbAffine2D &afftxty)
+void EdbLayer::ApplyCorrections(float shr, float zcorr, const EdbAffine2D &affxy, const EdbAffine2D &afftxty)
 {
   eShr *= shr;
   eZcorr += zcorr;

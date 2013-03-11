@@ -276,17 +276,22 @@ void EdbSegP::PropagateToCOV( float z )
 }
 
 //______________________________________________________________________________
-void EdbSegP::PropagateTo( float z ) 
+void EdbSegP::PropagateToDZ( float dz ) 
 {
-  float dz = z-Z();
-
-  eX  = X() + TX()*dz;
-  eY  = Y() + TY()*dz;
-  eZ  = z;
+  eX  = eX + eTX*dz;
+  eY  = eY + eTY*dz;
+  eZ  += dz;
   if(eCOV) {
     (*eCOV)(0,0) = SX() + STX()*dz*dz;
     (*eCOV)(1,1) = SY() + STY()*dz*dz;
   }
+}
+
+//______________________________________________________________________________
+void EdbSegP::PropagateTo( float z ) 
+{
+  float dz = z-Z();
+  PropagateToDZ(dz);
 }
 
 //______________________________________________________________________________

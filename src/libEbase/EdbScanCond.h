@@ -68,6 +68,8 @@ class EdbScanCond : public TNamed {
 
   void SetPulsRamp0(  float p1, float p2 )  {ePuls0[0]=p1; ePuls0[1]=p2;}
   void SetPulsRamp04(  float p1, float p2 ) {ePuls04[0]=p1; ePuls04[1]=p2;}
+  void SetPulsRamp0(  const char *str );
+  void SetPulsRamp04( const char *str );
   float BinX()  const {return eBinX;}
   float BinY()  const {return eBinY;}
   float BinTX() const {return eBinTX;}
