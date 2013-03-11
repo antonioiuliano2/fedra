@@ -46,9 +46,16 @@ void print_help_message()
 //---------------------------------------------------------------------
 void set_default(TEnv &cenv)
 {
-  // default parameters for the new alignment
+  // default parameters
   cenv.SetValue("emvtx.CS.minRank",   0 );
   cenv.SetValue("emvtx.CS.maxImp", 1000);
+  
+  cenv.SetValue("emvtx.comb.Sigma0", "1. 1. 0.002 0.002");
+  cenv.SetValue("emvtx.comb.maxImp", 1000.);
+  cenv.SetValue("emvtx.comb.ProbMin", 0.00000001);
+  cenv.SetValue("emvtx.comb.Z0", -10000);
+  cenv.SetValue("emvtx.comb.NVmax", 3 );
+  cenv.SetValue("emvtx.comb.ProbMinV", 0.001);
 }
 
 //---------------------------------------------------------------------
@@ -339,6 +346,7 @@ EdbVertex *vtxBT1(TObjArray &tracks, TEnv &env)
 void vtxComb(TObjArray &tracks, TObjArray &aux_tr, TEnv &env)
 {
   int ntr = tracks.GetEntries();
+  Log(3,"vtxComb","ntr=%d",ntr);
   TObjArray vertices1, vertices2;
 
   int ic=0;
@@ -464,6 +472,7 @@ void test_EdbVertexComb(TObjArray &tracks, TEnv &env)
   vcomb.eRecursionMax     = env.GetValue("emvtx.comb.NVmax", 3 );
   vcomb.eProbMinV         = env.GetValue("emvtx.comb.ProbMinV", 0.001 );
   vcomb.FindTopologies();
+  vcomb.PrintTopologies();
 }
 
 //-----------------------------------------------------------------------------

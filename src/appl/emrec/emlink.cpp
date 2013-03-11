@@ -57,6 +57,10 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.full.CHI2Pmax"       , 3.   );
   cenv.SetValue("fedra.link.DoSaveCouples"       , true );
   cenv.SetValue("fedra.link.DumpDoubletsTree"    , false);
+  cenv.SetValue("fedra.link.Sigma0"         , "1 1 0.013 0.013");
+  cenv.SetValue("fedra.link.PulsRamp0"      , "6 9");
+  cenv.SetValue("fedra.link.PulsRamp04"     , "6 9");
+  cenv.SetValue("fedra.link.Degrad"         ,  5   );
 
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");

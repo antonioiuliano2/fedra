@@ -39,10 +39,15 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.refPlate"  , 999 );
   cenv.SetValue("fedra.track.nsegmin"   , 2 );
   cenv.SetValue("fedra.track.ngapmax"   , 4 );
-  cenv.SetValue("fedra.track.DZgapmax"  , 5000. );
+  cenv.SetValue("fedra.track.DZGapMax"  , 5000. );
   cenv.SetValue("fedra.track.DRmax"     , 45. );
   cenv.SetValue("fedra.track.DTmax"     , 0.07 );
+  
   cenv.SetValue("fedra.track.Sigma0" , "3 3 0.005 0.005");
+  cenv.SetValue("fedra.track.PulsRamp0"      , "15 20");
+  cenv.SetValue("fedra.track.PulsRamp04"     , "15 20");
+  cenv.SetValue("fedra.track.Degrad"         ,  4   );
+ 
   cenv.SetValue("fedra.track.probmin"   , 0.01 );
   cenv.SetValue("fedra.track.momentum"  , 2 );
   cenv.SetValue("fedra.track.mass"      , 0.14 );
