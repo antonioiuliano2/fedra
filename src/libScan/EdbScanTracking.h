@@ -54,6 +54,9 @@ class EdbTrackAssembler: public TObject {
   float       ProbSeg(EdbSegP &s1, EdbSegP &s2 );
   void        RecalculateSegmentsProb(EdbTrackP &t);
   bool        AcceptDZGap(EdbTrackP &t, float z);
+  void        SetSegmentsErrors();
+  void        FitTracks();
+  void        CombTracks( TObjArray &selected );
   
   void CheckPatternAlignment(EdbPattern &p, int nsegmin);
   
@@ -66,16 +69,18 @@ class EdbTrackAssembler: public TObject {
 class EdbScanTracking: public TObject {
 
  public:
-  EdbScanProc *eSproc;
-  bool         eDoRealign;
+   int          eNsegMin;
+   int          eNgapMax;
+   EdbScanProc *eSproc;
+   bool         eDoRealign;
   
  public:
-  EdbScanTracking(){}
-  virtual ~EdbScanTracking(){}
+   EdbScanTracking();
+   virtual ~EdbScanTracking(){}
 
-  void TrackSetBT(EdbID id, TEnv &env);
-
- ClassDef(EdbScanTracking,1) // To handle tracking in the scanset
+   void  TrackSetBT(EdbID id, TEnv &env);
+ 
+   ClassDef(EdbScanTracking,1) // To handle tracking in the scanset
 };
 
 

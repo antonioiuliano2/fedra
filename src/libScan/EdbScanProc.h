@@ -18,6 +18,7 @@ public:
   EdbScanProc();
   virtual ~EdbScanProc(){}
 
+  char *BrickDir(int brick);
   bool    CheckDir(const char *dir, bool create=true);
   bool    CheckDirWritable(const char *dir);
   bool    CheckAFFDir(int brick, bool create=true);
@@ -64,6 +65,7 @@ public:
   int     ReadPred(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return ReadPred(pred,id4,flag);}
   int     WritePred(EdbPattern &pred, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return WritePred(pred,id4,flag);}
   int     WriteFound(EdbPattern &found, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return WriteFound(found,id4,flag);}
+  int     WritePatTXT(EdbPattern &pred, EdbID id, const char *suffix, int flag=-1) {int id4[4]; id.Get(id4); return WritePatTXT(pred,id4,suffix,flag);}
 
   EdbRun *InitRun(int id[4]);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);

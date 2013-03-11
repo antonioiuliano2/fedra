@@ -1702,6 +1702,15 @@ bool EdbScanProc::CheckProcDir( int id[4], bool create)
 }
 
 //----------------------------------------------------------------
+char *EdbScanProc::BrickDir( int brick )
+{
+  char *str = new char[256];
+  sprintf(str,"%s/b%6.6d",
+          eProcDirClient.Data(),brick);
+  return str;
+}
+
+//----------------------------------------------------------------
 void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool inplate)
 {
   //make file pathname as .../bXXXXXX/pYYY/a.a.a.a.suffix if inplate==true
@@ -1709,10 +1718,10 @@ void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool i
   char str[256];
   if (inplate)
     sprintf(str,"%s/b%6.6d/p%3.3d/%d.%d.%d.%d.%s",
-	    eProcDirClient.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
+            eProcDirClient.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
   else
     sprintf(str,"%s/b%6.6d/b%6.6d.%d.%d.%d.%s",
-	    eProcDirClient.Data(),ID[0], ID[0], ID[1], ID[2], ID[3],suffix);
+            eProcDirClient.Data(),ID[0], ID[0], ID[1], ID[2], ID[3],suffix);
     
   s=str;
 }
