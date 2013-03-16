@@ -42,7 +42,7 @@ private:
     // The source and target EdbPVRec objects:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
-    Bool_t		eNeedModified;
+    Bool_t    eNeedModified;
     Bool_t    eIsSource;
     Bool_t    eIsTarget;
     Int_t     eHistGeometry;
@@ -50,10 +50,12 @@ private:
 
     // Variables related for calculation Issues
     Int_t		eCutMethod;
+    TString		eCutMethodString;
+    Bool_t		eCutMethodIsDone[7];
+    
     Float_t		eBTDensityLevel;
     Float_t		eBTDensityLevelAngularSpace[20];
-
-    Bool_t		eCutMethodIsDone[4];
+    
     Bool_t		eBTDensityLevelCalcMethodMC;
     Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
 
@@ -67,9 +69,9 @@ private:
     TH1F*			eHistTT;
     TH2F*			eHistTanTheta;
     Int_t			NbinsX,NbinsY;
-
     Float_t		minX,maxX;
     Float_t		minY,maxY;
+    
     // TProfile: BT dens/mm2 versus PID()	source histogram
     TProfile* 		eProfileBTdens_vs_PID_source;
     Float_t  		eProfileBTdens_vs_PID_source_meanX,eProfileBTdens_vs_PID_source_meanY;
@@ -96,20 +98,27 @@ private:
     Float_t 	eAgreementChi2CutRMSW;
     // eCutMethod == 3: Constant Chi2W quality also in tangens theta space
     /// TO BE IMPLEMENTED HERE ...
-
+    /// ... ... ...
+    /// ... ... ...
+    /// ... ... ...
     // eCutMethod == 4: Constant X2Hat BT density
     Float_t	eX2Hat;
     Float_t	eX2HatCut[114];
-    Float_t	     eXi2Hat_m_chi2[114];
+    Float_t	eXi2Hat_m_chi2[114];
     Float_t     eXi2Hat_s_chi2[114];
     Float_t     eXi2Hat_m_WTilde[114];
     Float_t     eXi2Hat_s_WTilde[114];
     // eCutMethod == 5: Constant X2Hat BT density also in tangens theta space
     /// TO BE IMPLEMENTED HERE ...
-
+    /// ... ... ...
+    /// ... ... ...
+    /// ... ... ...
     // eCutMethod == 6: Random Cut
     Float_t	eRandomCutThreshold;
-    
+    // eCutMethod == 7: Random Cut also in tangens theta space
+    /// TO BE IMPLEMENTED HERE ...
+    /// ... ... ...
+    /// ... ... ...
     
 
 protected:
@@ -241,12 +250,13 @@ public:
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
     void Execute_ConstantBTDensity();
-    void Execute_ConstantBTQuality();
-    void Execute_ConstantBTX2Hat();
     void Execute_ConstantBTDensityInAngularBins();
+    void Execute_ConstantBTQuality();
     void Execute_ConstantBTQualityInAngularBins();
+    void Execute_ConstantBTX2Hat();
     void Execute_ConstantBTX2HatInAngularBins();
     void Execute_RandomCut();
+    void Execute_RandomCutInAngularBins();
 
     TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
@@ -280,12 +290,14 @@ public:
     void Print();
     void PrintCutType();
     void PrintCutType0(); // Constant BT density
-    void PrintCutType1(); // Constant BT density
+    void PrintCutType1(); // Constant BT density in Angular Bins
     void PrintCutType2(); // Constant BT quality
-    void PrintCutType3(); // Constant BT quality
+    void PrintCutType3(); // Constant BT quality in Angular Bins
     void PrintCutType4(); // Constant BT X2Hat
-    void PrintCutType5(); // Constant BT X2Hat
+    void PrintCutType5(); // Constant BT X2Hat in Angular Bins
     void PrintCutType6(); // Random Test Cut
+    void PrintCutType7(); // Random Test Cut in Angular Bins
+    void PrintCutValues(Int_t CutType);
     void Help();
     ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };
