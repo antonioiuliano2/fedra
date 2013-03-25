@@ -13,7 +13,7 @@
 :MAIN
    @ECHO OFF
    SET eLIBS= libEdb libEmath libVt++ libEbase libDataConversion libEphys libEGA libEdr libEIO libEdd libEMC libAlignment libScan libEdr libEbase libEOracle libACQ libShower appl\bmatrix libEGraphTool libEmr libEDA libAnalysis
-   SET eBINS=appl\recset appl\rwc2edb appl\macros appl\display appl\o2root appl\comptonmap appl\m2track appl\eda appl\emrec appl\rwcToEdb
+   SET eBINS=appl\recset appl\rwc2edb appl\macros appl\display appl\o2root appl\comptonmap appl\m2track appl\eda appl\emrec appl\rwcToEdb appl\viewcorr
 
    IF /I '%1'=='check' (
       GOTO CHECKALL
