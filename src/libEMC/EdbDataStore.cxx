@@ -2,7 +2,8 @@
 #include "EdbDataStore.h"
 
 #include <TSystem.h>
-
+#include <TRandom.h>
+#include <TF1.h>
 #include "EdbPVGen.h"
 
 ClassImp(EdbDataStore);
@@ -66,24 +67,20 @@ void EdbDataStore::TransferSegs(EdbPatternsVolume* pv0, EdbPatternsVolume* pv1,E
   EdbPattern* pat1=0;
   EdbSegP* seg=0;
   int npat=pv0->Npatterns();
-//   printf("pv0 - %d pat\n",pv0->Npatterns());
-//   printf("pv1 - %d pat\n",pv1->Npatterns());
+
   if(pv1->Npatterns()==0)pv0->PassProperties(*pv1);
-//   printf("pv1 - %d pat (!)\n",pv1->Npatterns());
+
   int nseg=0;
   float p[5];
   for(int np=0;np<npat;++np){
-//     if(np<FromPlate)continue;
-//     if(np>ToPlate)continue;
-//     printf("pat#%d of %d\n",np,npat);
+
     pat0=pv0->GetPattern(np);
     if(pat0->Plate()<FromPlate)continue;
     if(pat0->Plate()>ToPlate)continue;
     pat1=pv1->GetPattern(np); ///find corresponding DEST pattern 
     assert(pat1);
     assert(pat1->Z()==pat0->Z());
-//     assert(pat1->Plate()==pat0->Plate());
-//     assert(pat1->Side() ==pat0->Side() );
+
     nseg=pat0->N();
     for(int ns=0;ns<nseg;++ns){
       seg=pat0->GetSegment(ns);
@@ -183,7 +180,7 @@ void EdbDataStore::Restore_SegFromTrx(EdbSegmentCut* cut,int Plt0, int Plt1){
       assert(p);
       p->AddSegment(*s);
       p->SetID(s->Plate());
-      p->SetSegmentsPID();
+      s->SetPID(p->ID());
     }
   }
 }
@@ -384,6 +381,29 @@ void EdbDataStore::DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk){
     pvg.SetVolume(&eRawPV);
     pvg.SetScanCond(cond_mtk);
     pvg.SmearSegments();
+  }
+}
+///--------------------------------------------------
+void EdbDataStore::DoEfficiency(TF1* eff_seg,TF1* eff_mtk){
+  EdbSegP* s=0;
+  TRandom* ran=gRandom;
+  if(eff_seg){
+    for(int np=0;np<eRawPV.Npatterns();++np){
+      EdbPattern* pat=GetSegPat(np);
+      for(int ns=0; ns< pat->N();++ns){
+        s=pat->GetSegment(ns);
+        if(ran->Rndm()>eff_seg->Eval(s->Theta()))s->SetW(-s->W());
+     } 
+    }
+  }  
+  if(eff_mtk){
+    for(int np=0;np<eRawPV.Npatterns();++np){
+      EdbPattern* pat=GetSegPat(np);
+      for(int ns=0; ns< pat->N();++ns){
+        s=pat->GetSegment(ns);
+        if(ran->Rndm()>eff_mtk->Eval(s->Theta()))s->SetW(-s->W());
+     } 
+    }
   }
 }
 ///==============================================================================
@@ -686,57 +706,96 @@ void EdbDSRec::FillErrorsCOV(){
   FillECovTrks();
 }
 ///--------------------------------------------------
-void EdbDataStore::SavePlateToRaw(int PID,const char* dir,int id){
-    ///Convert this event to RAW data format!
-//     char* fname=Form("%s/p%03d/%d.%d.%d.%d.raw.root",dir,PID+1,id,PID+1,0,0);
-    char* fname=Form("%s/%d.%d.%d.%d.raw.root",dir,id,PID+1,1,10);
+void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
+    ///Convert this event to RAW data format!    
     EdbSegP* seg=0;
+    EdbSegment* seg1=0;
     EdbPattern* ptop=FindPattern(PID,2);
     EdbPattern* pbot=FindPattern(PID,1);
-    if(ptop->N()==0 || pbot->N()==0)return;
-    EdbRun run(fname,"RECREATE");
+    if(ptop->N()==0 && pbot->N()==0)return;
+    
+    ///Get plate geometry:
+    EdbPlateP* p=eBrick->GetPlate(PID);
+    ///--------------------------
+    
+    EdbRun run(fname,option);
+    Log(1,"EdbDataStore::SavePlateToRaw",Form("Open file \"%s\" opt=\"%s\"",fname,option));
     Log(2,"EdbDataStore::SavePlateToRaw","created run");
     Log(2,"EdbDataStore::SavePlateToRaw",Form("cycle through %d TOP segs",ptop->N()));
+    int Vid=0;
+    const int NsegPerView=1000; ///maximum segments per view. When this is reached - create a new view.
+    int Ns=0;
     run.GetView()->SetNframes(1,0);
+    run.GetView()->GetHeader()->SetViewID(++Vid);
     for(int ns=0;ns<ptop->N();++ns){
+      if(Ns==NsegPerView){
+	Ns=0;
+	run.AddView();
+	run.GetView()->Clear();
+	run.GetView()->GetHeader()->SetViewID(++Vid);
+      }
       seg=ptop->GetSegment(ns);
-      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),1,(int)(seg->W()),seg->ID());
+      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),1,(int)(seg->W()),seg->ID());
+      seg1->SetSigma(seg->P(),1);
+      ++Ns;
     }
     run.AddView();
     run.GetView()->Clear();
  
     Log(2,"EdbDataStore::SavePlateToRaw",Form("cycle through %d BOT segs",pbot->N()));
     run.GetView()->SetNframes(0,1);
+    run.GetView()->GetHeader()->SetViewID(++Vid);
+    Ns=0;
     for(int ns=0;ns<pbot->N();++ns){
+      if(Ns==NsegPerView){
+	Ns=0;
+	run.AddView();
+	run.GetView()->Clear();
+	run.GetView()->GetHeader()->SetViewID(++Vid);
+      }
       seg=pbot->GetSegment(ns);
-      run.GetView()->AddSegment(seg->X(),seg->Y(),seg->Z(),seg->TX(),seg->TY(),seg->DZ(),2,(int)(seg->W()),seg->ID());
+      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),2,(int)(seg->W()),seg->ID());      
+      seg1->SetSigma(seg->P(),1);
+      ++Ns;
     }
     run.AddView();
+    run.GetView()->Clear();
     Log(2,"EdbDataStore::SavePlateToRaw","Close plate");
     run.PrintBranchesStatus();
     run.Save();
     run.Close();    
 };
 ///--------------------------------------------------
-void EdbDataStore::SaveToRaw(char* dir,int id){
-  TString dir1=Form("%s/b%06d",dir,id);
-  if(gSystem->AccessPathName(dir1.Data())){
-    Log(2,"EdbDataStore::SaveToRaw",Form("create dir \"%s\"\n",dir1.Data())); 
-    gSystem->mkdir(dir1.Data());
-  }
+void EdbDataStore::SaveToRaw(char* dir,int id,Option_t* option){
+/// Save the raw data to FEDRA brick structure
+  EdbScanProc sp;
+  EdbID Eid(id,0,1,10);
+  
+  sp.eProcDirClient=dir;
+  sp.CheckBrickDir(Eid);
+  sp.CheckAFFDir(id);
 
-  TString dirAF=dir1+"/AFF";
-  if(gSystem->AccessPathName(dirAF.Data())){
-    Log(2,"EdbDataStore::SaveToRaw",Form("create dir \"%s\"\n",dirAF.Data())); 
-    gSystem->mkdir(dirAF.Data());
-  }
-  TString dir2=dir1;
-  for(int i=0;i<Nplt();i++){
-    dir2=Form("%s/p%03d",dir1.Data(),i+1);
-    if(gSystem->AccessPathName(dir2.Data())){
-      Log(3,"EdbDataStore::SaveToRaw",Form("... create dir \"%s\"\n",dir2.Data())); 
-      gSystem->mkdir(dir2.Data());
+  EdbID PL=Eid;
+  EdbID PL0=Eid;
+  EdbPlateP* p=0;
+
+  float z,z0;
+  for(int i=0;i<eBrick->Npl();i++){
+    p=eBrick->GetPlate(i);
+    z=p->Z();
+    PL.ePlate=i+1;
+    sp.CheckPlateDir(PL);
+    TString fnm;
+    sp.MakeFileName(fnm,PL,"raw.root",true); ///generate plate filename
+    SavePlateToRaw(fnm.Data(),i,option); ///save plate.
+    if(i>0){
+      ///save affine tranformations
+      sp.MakeAffName(fnm,PL,PL0);
+      FILE* afF=fopen(fnm.Data(),"w"); ///save affine parameters
+      fprintf(afF,"ZLAYER 0   %4f 0 0\n",z0-z);
+      fclose(afF);
     }
-    SavePlateToRaw(i,dir2.Data(),id);
+    PL0=PL;
+    z0=z;
   }
 }

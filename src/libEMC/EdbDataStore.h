@@ -69,10 +69,11 @@ class EdbDataStore: public TObject{
     void PrintTracks(int vlev=0);
 //     void PrintVertices();
     ///save methods:
-    void SaveToRaw(char* dir="./",int id=1234);
-    void SavePlateToRaw(int PID,const char* dir="./",int id=1234);
+    void SaveToRaw(char* dir="./",int id=1234,Option_t* option="RECREATE");
+    void SavePlateToRaw(const char* fname,int PID,Option_t* option="RECREATE");
     ///methods for simulation:
     void DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk=0);
+    void DoEfficiency(TF1* eff_seg,TF1* eff_mtk);
 //     void DoSmearTrack(EdbTrackP*);
   public:
     EdbBrickP * eBrick;  ///geometry
