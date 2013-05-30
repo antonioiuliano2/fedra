@@ -17,7 +17,7 @@
 #include <EdbLog.h> 
 //--------------------------------------------------------
 void Help(){
-  printf(" ------------------------------------------------\n");
+  printf(" -------------------------------------------------\n");
   printf(" usage:\n\t mc2raw [options] BrickID input.root\n");
   printf(" Convert simulation data from file [input.root] to FEDRA brick structure b0[BrickID].\n");
   printf(" Options: \n") ;

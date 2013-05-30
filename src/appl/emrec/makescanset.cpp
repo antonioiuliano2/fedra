@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
   int         to_plate    =  1;
   float       z0          =  0;
   float       dz          = -1300;
+  float       dzbase      = 210;
   int refplate = -1;
 
   EdbAffine2D affup;
@@ -129,6 +130,10 @@ int main(int argc, char* argv[])
     {
       if(strlen(key)>4)	dz = atof(key+4);
     }
+    else if(!strncmp(key,"-dzbase=",8))
+    {
+      if(strlen(key)>8)	dzbase = atof(key+8);
+    }
   }
 
   if(!do_set) print_help_message();
@@ -186,7 +191,7 @@ int main(int argc, char* argv[])
     }
     else {
       EdbScanSet sc(id);
-      sc.MakeNominalSet(id,from_plate, to_plate, z0, dz);
+      sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
       sproc.MakeScannedIDList( id, sc, 60, 0, suff);
       sproc.WriteScanSet(id,sc);
       if(resetpar) sproc.MakeParSet(sc);

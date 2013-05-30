@@ -2,7 +2,7 @@
 #include "EdbDataStore.h"
 
 #include <TSystem.h>
-#include <TRandom.h>
+#include <TRandom3.h>
 #include <TF1.h>
 #include "EdbPVGen.h"
 
@@ -386,23 +386,35 @@ void EdbDataStore::DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk){
 ///--------------------------------------------------
 void EdbDataStore::DoEfficiency(TF1* eff_seg,TF1* eff_mtk){
   EdbSegP* s=0;
-  TRandom* ran=gRandom;
+  TRandom3 Rando;
+  double eff, ran, th;
   if(eff_seg){
-    for(int np=0;np<eRawPV.Npatterns();++np){
+    for(int np=0;np<eSegPV.Npatterns();++np){
       EdbPattern* pat=GetSegPat(np);
       for(int ns=0; ns< pat->N();++ns){
         s=pat->GetSegment(ns);
-        if(ran->Rndm()>eff_seg->Eval(s->Theta()))s->SetW(-s->W());
+        th=s->Theta();
+        eff=(th<=eff_seg->GetXmax())?eff_seg->Eval(th):0;
+        ran=Rando.Rndm();
+        if(ran>eff)s->SetW(-s->W());
      } 
     }
   }  
   if(eff_mtk){
     for(int np=0;np<eRawPV.Npatterns();++np){
-      EdbPattern* pat=GetSegPat(np);
+      int n1=0;
+      EdbPattern* pat=GetRawPat(np);
       for(int ns=0; ns< pat->N();++ns){
         s=pat->GetSegment(ns);
-        if(ran->Rndm()>eff_mtk->Eval(s->Theta()))s->SetW(-s->W());
+        th=s->Theta();
+        Log(5,"DoEfficiency",Form("mtk#%d/%d theta=%2.4f [%2.4f %2.4f]\n",ns,pat->N(),th,s->TX(),s->TY()));
+        eff=(th<=eff_mtk->GetXmax())?eff_mtk->Eval(th):0;
+        ran=gRandom->Rndm();
+        Log(5,"DoEfficiency",Form("eff=%2.4f, ran=%2.4f => %s\n",eff,ran,eff>ran?"survive":"KILL"));
+        if(ran>eff)s->SetW(-s->W());
+        else ++n1;
      } 
+     Log(2,"DoEfficiency",Form("Plate #%d side#%d - efficiency %d/%d\n",pat->Plate(),pat->Side(),n1,pat->N()));
     }
   }
 }
@@ -735,7 +747,8 @@ void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
 	run.GetView()->GetHeader()->SetViewID(++Vid);
       }
       seg=ptop->GetSegment(ns);
-      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),1,(int)(seg->W()),seg->ID());
+      if(seg->W()<0)continue;
+      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),0,(int)(seg->W()),seg->ID());
       seg1->SetSigma(seg->P(),1);
       ++Ns;
     }
@@ -754,14 +767,14 @@ void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
 	run.GetView()->GetHeader()->SetViewID(++Vid);
       }
       seg=pbot->GetSegment(ns);
-      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),2,(int)(seg->W()),seg->ID());      
+      if(seg->W()<0)continue;
+      seg1=run.GetView()->AddSegment(p->Xp(*seg),p->Yp(*seg),seg->Z(),p->TXp(*seg),p->TYp(*seg),seg->DZ(),1,(int)(seg->W()),seg->ID());      
       seg1->SetSigma(seg->P(),1);
       ++Ns;
     }
     run.AddView();
     run.GetView()->Clear();
     Log(2,"EdbDataStore::SavePlateToRaw","Close plate");
-    run.PrintBranchesStatus();
     run.Save();
     run.Close();    
 };
