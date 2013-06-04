@@ -40,7 +40,9 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.BinOK"               , 6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );
   cenv.SetValue("fedra.link.DoCorrectShrinkage"  , true );
+  cenv.SetValue("fedra.link.read.InvertSides"    , 0  );
   cenv.SetValue("fedra.link.read.HeaderCut"      , "1"  );
+  cenv.SetValue("fedra.link.read.UseDensityAsW"      , false  );
   cenv.SetValue("fedra.link.read.ICUT"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       0.  50.");
   cenv.SetValue("fedra.link.RemoveDoublets"      , "1    5. .1   1");  //yes/no   dr  dt  checkview(0,1,2)
   cenv.SetValue("fedra.link.DumpDoubletsTree"    , false );

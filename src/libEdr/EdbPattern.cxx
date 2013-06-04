@@ -511,6 +511,16 @@ int EdbTrackP::GetSegmentsMCTrack( int& nsegf ) const
 }
 
 //______________________________________________________________________________
+Float_t EdbTrackP::Wmean() const
+{
+  int n = N();
+  double wtot=0;
+  for(int i=0; i<n; i++) wtot+=GetSegment(i)->W();
+  wtot/=n;
+  return (Float_t)wtot;
+}
+
+//______________________________________________________________________________
 int EdbTrackP::GetSegmentsFlag( int& nsegf ) const
 {
   printf(" EdbTrackP::GetSegmentsFlag: obsolete, to be deleted!  now replaced by GetSegmentsMCTrack\n");

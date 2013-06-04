@@ -81,6 +81,7 @@ void EdbRunAccess::Set0()
   ePixelCorrX = ePixelCorrY= 1.;
   eHeaderCut="1";
   eTracking=-1;
+  eUseDensityAsW=false;
 }
 
 ///_________________________________________________________________________
@@ -856,6 +857,15 @@ void EdbRunAccess::SetPixelCorrection(const char *str)
 }
 
 ///______________________________________________________________________________
+float EdbRunAccess::SegmentWeight(const EdbSegment &s)
+{
+  if(eUseDensityAsW) {
+    return Sqrt(s.GetPuls()*s.GetSigmaY()/2.);
+  }
+  return s.GetPuls();
+}
+
+///______________________________________________________________________________
 bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
 {
   EdbSegment *seg = view->GetSegment(id);
@@ -919,7 +929,8 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
     tyr = affview->A21()*tx+affview->A22()*ty;
   }
   
-  puls = seg->GetPuls();
+  //puls = seg->GetPuls();
+  puls = SegmentWeight(*seg);
 
   EdbAffine2D *aff = layer->GetAffineTXTY();
   float txx = aff->A11()*txr+aff->A12()*tyr+aff->B1();
@@ -931,6 +942,7 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   segP.SetW( puls );
   segP.SetVolume( seg->GetVolume() );
   segP.SetChi2( seg->GetSigmaX() );
+  segP.SetProb( seg->GetSigmaY() );       //test: grains density after LASSO
   
   return true;
 }
@@ -943,7 +955,8 @@ bool  EdbRunAccess::PassCuts(int id, EdbSegment &seg)
   var[1] = seg.GetY0();
   var[2] = seg.GetTx();
   var[3] = seg.GetTy();
-  var[4] = seg.GetPuls();
+//  var[4] = seg.GetPuls();
+  var[4] = SegmentWeight(seg);
 
   int nc = NCuts(id);
   for(int i=0; i<nc; i++)

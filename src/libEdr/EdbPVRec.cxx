@@ -676,6 +676,7 @@ int EdbPatCouple::LinkFast()
 	   Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink() );
 
   FillCell_XYaXaY(Cond(), Zlink() );
+  Log(3,"EdbPatCouple::LinkFast","1");
 
   //CheckSegmentsDuplication(Pat1());
   //CheckSegmentsDuplication(Pat2());
@@ -683,8 +684,12 @@ int EdbPatCouple::LinkFast()
   Long_t vdiff[4]={1,1,1,1};
 
   npat = DiffPat( Pat1(), Pat2(), vdiff );
+  Log(3,"EdbPatCouple::LinkFast","2");
 
   FillCHI2P();
+  Log(3,"EdbPatCouple::LinkFast","End of linking: %3d (%7d)  and  %3d (%7d) at Z = %13.3f  npat= %d",
+      Pat1()->ID(), Pat1()->N(), Pat2()->ID(),Pat2()->N(), Zlink(),npat );
+
   return npat;
 }
 
@@ -827,6 +832,7 @@ void EdbPatCouple::FillCell_XYaXaY( EdbPattern *pat, EdbScanCond *cond, float dz
   Long_t  val[5];  // x,y,ax,ay,i
   EdbSegP *p;
   int npat = pat->N();
+  Log(3,"EdbPatCouple::FillCell_XYaXaY","npat = %d",npat);
   for(int i=0; i<npat; i++ ) {
     p = pat->GetSegment(i);
     if( p->Track() >-1 )      continue;       //to check side effects!!!
@@ -1158,9 +1164,26 @@ int EdbPVRec::LinkSlow()
 }
 
 //______________________________________________________________________________
+void EdbPVRec::DummyCycle()
+{
+  int npat=Npatterns();
+  Log(1,"EdbPVRec::DummiCycle","npat=%d",npat);
+  for(int ipat=0; ipat<npat; ipat++) {
+    EdbPattern *p = GetPattern(ipat);
+    int nseg=p->N();
+    Log(1,"EdbPVRec::DummiCycle","pat %d, nseg= %d",ipat, nseg);
+    for(int iseg=0; iseg<npat; iseg++) {
+      EdbSegP *s = p->GetSegment(iseg);
+      if(s->Flag()==-999)  Log(1,"EdbPVRec::DummiCycle","jo pa");
+    }
+  }
+}
+
+//______________________________________________________________________________
 int EdbPVRec::Link()
 {
   // link tracks in aligned volume
+  
   int npat=0;
   SetCouples();
 
@@ -1168,6 +1191,7 @@ int EdbPVRec::Link()
 
   int ncp=Ncouples();
   for(int i=0; i<ncp; i++ ) {
+    DummyCycle();
     pc = GetCouple(i);
     pc->LinkFast();
     pc->CutCHI2P(eChi2Max);
@@ -2367,26 +2391,34 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   cp=0; 
   c=0;
   nn=cn.GetEntries();
+  Log(3,"EdbPVRec::CombTracks","1 nn = %d",nn);
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
 
     int np = cp->GetEntries();
+    Log(3,"EdbPVRec::CombTracks","1 np = %d",np);
     for(int ip=0; ip<np; ip++) {
       c = cp->At(ip);                           // tracks with fixed Npl & Prob
 
       int nt = c->GetEntries();
+      Log(3,"EdbPVRec::CombTracks","1 nt = %d",nt);
       for(int it=0; it<nt; it++) {
 	
-	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
+        tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
+        
+        if(!tr) Log(1,"EdbPVRec::CombTracks","ERROR: nn:np:nt:it = %d:%d:%d     value = %d",nn,np,nt,it, c->At(it)->Value() );
 
-  	if(tr->RemoveAliasSegments()>0){
-  	  if(tr->N()<nplmin)             tr->SetFlag(-10);
-  	  if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
-  	}
+
+        if(tr->RemoveAliasSegments()>0){
+          if(tr->N()<nplmin)             tr->SetFlag(-10);
+          if(tr->CheckMaxGap()>ngapMax)  tr->SetFlag(-10);
+        }
 
       }
     }
   }
+  Log(3,"EdbPVRec::CombTracks","2");
+
 
   // discard tracks with low probability
 //   for(int i=0; i<ntr; i++) {
@@ -2409,6 +2441,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
       if ( GetTrack(trind)->Flag() == -10 ) seg->SetTrack(-1);     // release segment
     }
   }
+  Log(3,"EdbPVRec::CombTracks","3");
 
   for(int i=ntr-1; i>-1; i--) {
     tr = GetTrack(i);
@@ -2417,6 +2450,8 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
     SafeDelete(tr);
   }
   eTracks->Compress();
+  Log(3,"EdbPVRec::CombTracks","4");
+
 
   nsegtot = 0;
 

@@ -55,6 +55,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.do_misalign",false );
   cenv.SetValue("fedra.track.misalign_offset", 500.);
   cenv.SetValue("fedra.track.do_local_corr"  ,    1 );
+  cenv.SetValue("fedra.track.do_comb"        ,    0 );
   cenv.SetValue("emtra.outdir"          , "..");
   cenv.SetValue("emtra.env"             , "track.rootrc");
   cenv.SetValue("emtra.EdbDebugLevel"   , 1);
@@ -213,7 +214,8 @@ void MakeEraseFiles(EdbID id, TEnv &cenv)
   for(int i=0; i<60; i++)
     if( ali.GetPattern(i) ) {
       EdbPattern *pat = ali.GetPattern(i);
-      pat->SetPID( pat->GetSegment(0)->Vid(0));
+      //pat->SetPID( pat->GetSegment(0)->Vid(0));
+      pat->SetPID( pat->GetSegment(0)->Plate() );
       printf(" %d PID=%d ID=%d nseg=%d\n", i, pat->PID(),  pat->ID(), pat->N() );
       
       EdbID idp(id); idp.ePlate=pat->PID();

@@ -422,6 +422,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     float       misalign_offset = env.GetValue("fedra.track.misalign_offset",    500.  );
     bool        do_local_corr   = env.GetValue("fedra.track.do_local_corr"  ,      1   );
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
+    bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
   
   //  etra.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
     etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
@@ -491,10 +492,14 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.SetSegmentsErrors();
     etra.FitTracks();
 
-    TObjArray selectedTracks(ntr);
-    etra.CombTracks(selectedTracks);
-
-    EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
+    if(do_comb) {
+      TObjArray selectedTracks(ntr);
+      etra.CombTracks(selectedTracks);
+      EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
+    } else {
+      EdbDataProc::MakeTracksTree( etra.Tracks(), 0., 0., Form("b%s.trk.root", idset.AsString()) );
+    }
+    
     TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
     env.Write();
     f.Close();

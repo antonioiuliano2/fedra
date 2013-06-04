@@ -165,6 +165,8 @@ class EdbPVRec : public EdbPatternsVolume {
   EdbPVRec();
   ~EdbPVRec();
 
+  void DummyCycle();
+  
   void  FillCell( float stepx,  float stepy, float steptx,float stepty);
   void  SetScanCond(EdbScanCond *scan) { eScanCond=scan; }
   EdbScanCond const *GetScanCond() { return eScanCond; }

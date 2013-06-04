@@ -145,6 +145,8 @@ class EdbTrackP : public EdbSegP {
 
   void    SetPDG( int pdg )  { ePDG=pdg; }
   Int_t   PDG()      const {return ePDG;}
+  
+  Float_t Wmean()      const;
 
   void    SetM( float m )  { eM=m; }
   Float_t M()      const {return eM;}

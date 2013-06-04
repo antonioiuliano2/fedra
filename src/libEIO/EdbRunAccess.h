@@ -28,6 +28,7 @@ class EdbRunAccess : public TObject {
   Bool_t    eDoViewAnalysis;     // fill or not the histograms for optional view analysis
   EdbH2     eHViewXY[3];         // XY segments distribution in a view local coords
   Bool_t    eInvertSides;        // 0 -do nothing, 1-invert sides
+  Bool_t    eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW
   
   Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
   Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data
@@ -125,7 +126,8 @@ class EdbRunAccess : public TObject {
   //  else return 0; }
 
   ///////
-
+  float SegmentWeight(const EdbSegment &s);
+      
   bool  PassCuts(int ud, EdbSegment &seg);
   int  NCuts(int ud) {
     if(!eCuts[ud])  return 0;

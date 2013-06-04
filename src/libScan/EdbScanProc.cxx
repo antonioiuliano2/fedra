@@ -2957,7 +2957,8 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   r.eHeaderCut = cenv.GetValue("fedra.link.read.HeaderCut"      , "1");
   r.eHeaderCut.Print();
   InitRunAccessNew(r,id,plate);
-  r.eAFID        =  cenv.GetValue("fedra.link.AFID"      , 1);
+  r.eAFID           =  cenv.GetValue("fedra.link.AFID"      , 1);
+  r.eUseDensityAsW  =  cenv.GetValue("fedra.link.read.UseDensityAsW"      , false  );
   r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
   r.SetPixelCorrection( cenv.GetValue("fedra.link.PixelCorr"      , "0 1. 1.") );
   r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);

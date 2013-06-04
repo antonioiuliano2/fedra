@@ -33,18 +33,31 @@ void print_help_message()
 void set_default(TEnv &cenv)
 {
   // default parameters for the new alignrawment
-  cenv.SetValue("fedra.alignraw.OffsetMax"   , 1000. );
-  cenv.SetValue("fedra.alignraw.DZ"          ,  250. );
-  cenv.SetValue("fedra.alignraw.DPHI"        ,  0.02 );
-  cenv.SetValue("fedra.alignraw.SigmaR"      ,  25.  );
-  cenv.SetValue("fedra.alignraw.SigmaT"      ,  0.012);
-  cenv.SetValue("fedra.alignraw.DoFine"      ,  1    );
-  cenv.SetValue("fedra.readCPcut"         , "eCHI2P<2.0&&s.eW>10&&eN1==1&&eN2==1&&s.Theta()>0.05&&s.Theta()<0.99");
-  cenv.SetValue("fedra.alignraw.SaveCouples" ,  1    );
+  
+  cenv.SetValue("fedra.alignRaw.offsetMax" , 500. );
+  cenv.SetValue("fedra.alignRaw.DZ"        ,  25.   );
+  cenv.SetValue("fedra.alignRaw.DPHI"      ,   0.02 );
+  cenv.SetValue("fedra.alignRaw.AFID1"     , 1);
+  cenv.SetValue("fedra.alignRaw.AFID2"     , 1);
+  cenv.SetValue("fedra.alignRaw.side1"     , 1);
+  cenv.SetValue("fedra.alignRaw.side2"     , 1);
+  cenv.SetValue("fedra.alignRaw.Z1"        , 0);
+  cenv.SetValue("fedra.alignRaw.Z2"        , 0);
+  cenv.SetValue("fedra.alignRaw.sigmaR"    , 2.5 );
+  cenv.SetValue("fedra.alignRaw.sigmaT"    , 0.005 );
+  
+  cenv.SetValue("fedra.alignRaw.ICUT1"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       8.  50.");
+  cenv.SetValue("fedra.alignRaw.ICUT2"           , "-1     -500. 500.   -500.   500.    -1.   1.      -1.   1.       8.  50.");
+  
+  cenv.SetValue("fedra.alignRaw.path1"      , -1 );
+  cenv.SetValue("fedra.alignRaw.path2"      , -1 );
 
-  cenv.SetValue("emalignraw.outdir"          , ".."  );
-  cenv.SetValue("emalignraw.env"             , "alignraw.rootrc");
-  cenv.SetValue("emalignraw.EdbDebugLevel"   ,  1    );
+  cenv.SetValue("fedra.alignRaw.DoFine"      ,  1    );
+  cenv.SetValue("fedra.alignRaw.SaveCouples" ,  1    );
+
+  cenv.SetValue("emalignRaw.outdir"          , ".."  );
+  cenv.SetValue("emalignRaw.env"             , "alignraw.rootrc");
+  cenv.SetValue("emalignRaw.EdbDebugLevel"   ,  1    );
 }
 
 int main(int argc, char* argv[])
@@ -103,6 +116,7 @@ int main(int argc, char* argv[])
 
   EdbScanProc sproc;
   sproc.eProcDirClient = cenv.GetValue("emalignraw.outdir","..");
+  cenv.WriteFile("alignraw.save.rootrc");
 
   printf("\n----------------------------------------------------------------------------\n");
   printf("alignraw  %s and  %s\n"      ,idA.AsString(),idB.AsString()	   );
@@ -155,23 +169,11 @@ int AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
   int       side2      = cenv.GetValue("fedra.alignRaw.side2"     , 1);
   float        z1      = cenv.GetValue("fedra.alignRaw.Z1"        , 0);
   float        z2      = cenv.GetValue("fedra.alignRaw.Z2"        , 0);
-  float     wmin1      = cenv.GetValue("fedra.alignRaw.Wmin1"     , 8);
-  float     wmin2      = cenv.GetValue("fedra.alignRaw.Wmin2"     , 8);
   float      sigmaR    = cenv.GetValue("fedra.alignRaw.sigmaR"    , 2.5 );
   float      sigmaT    = cenv.GetValue("fedra.alignRaw.sigmaT"    , 0.005 );
   float      offsetMax = cenv.GetValue("fedra.alignRaw.offsetMax" , 500. );
-  float      thetaMax  = cenv.GetValue("fedra.alignRaw.thetaMax"  ,   1. );
   int        path1     = cenv.GetValue("fedra.alignRaw.path1"      , -1 );
   int        path2     = cenv.GetValue("fedra.alignRaw.path2"      , -1 );
-
-  float      xmin1  = cenv.GetValue("fedra.alignRaw.xmin1"  ,   -500. );
-  float      xmax1  = cenv.GetValue("fedra.alignRaw.xmax1"  ,    500. );
-  float      xmin2  = cenv.GetValue("fedra.alignRaw.xmin2"  ,   -500. );
-  float      xmax2  = cenv.GetValue("fedra.alignRaw.xmax2"  ,    500. );
-  float      ymin1  = cenv.GetValue("fedra.alignRaw.ymin1"  ,   -500. );
-  float      ymax1  = cenv.GetValue("fedra.alignRaw.ymax1"  ,    500. );
-  float      ymin2  = cenv.GetValue("fedra.alignRaw.ymin2"  ,   -500. );
-  float      ymax2  = cenv.GetValue("fedra.alignRaw.ymax2"  ,    500. );
 
   float      DZ     = cenv.GetValue("fedra.alignRaw.DZ"     ,     25.   );
   float      DPHI   = cenv.GetValue("fedra.alignRaw.DPHI"   ,     0.02 );
@@ -183,12 +185,8 @@ int AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
   r1.eAFID = cenv.GetValue("fedra.alignRaw.AFID1"   , 1);
   r2.eAFID = cenv.GetValue("fedra.alignRaw.AFID2"   , 1);
 
-  float min1[5] = {xmin1,ymin1,-thetaMax,-thetaMax, wmin1 };
-  float max1[5] = {xmax1,ymax1, thetaMax, thetaMax, 100   };
-  r1.AddSegmentCut(side1, 1, min1, max1);
-  float min2[5] = {xmin2,ymin2,-thetaMax,-thetaMax, wmin2 };
-  float max2[5] = {xmax2,ymax2, thetaMax, thetaMax, 100   };
-  r2.AddSegmentCut(side2, 1, min2, max2);
+  r1.AddSegmentCut(1,cenv.GetValue("fedra.alignRaw.ICUT1"      , "-1") );
+  r2.AddSegmentCut(1,cenv.GetValue("fedra.alignRaw.ICUT2"      , "-1") );
 
   EdbPattern p1, p2;
   //r1.Print();
@@ -221,7 +219,8 @@ int AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
   av.eOffsetMax = offsetMax;
   av.eDZ        = DZ;
   av.eDPHI      = DPHI;
-  av.eDoFine = 1;
+  av.eDoFine = cenv.GetValue("fedra.alignRaw.DoFine"      ,  1    );
+  av.eSaveCouples = cenv.GetValue("fedra.alignRaw.SaveCouples" , 1);
   TString dataout;  sproc.MakeAffName(dataout,id1,id2,"al.root");
   av.InitOutputFile( dataout );
 
