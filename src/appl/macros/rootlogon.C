@@ -16,11 +16,11 @@ void rootlogon()
   loadlib( "libGeom" , "TGeoVolume" );            // required for VMC
   loadlib( "libGui"  , "TGNumberEntry" );         // required only in batch mode
   loadlib( "libEdd"  , "EdbDisplay" );            // optional
-  loadlib( "libEMC"  , "EdbPVGen" );              // optional
   if(gSystem->Load("libDataConversion"))          // optional
     printf("libDataConversion is NOT loaded!\n"); 
   loadlib( "libAlignment", "EdbPositionAlignment" );   // optional
   loadlib( "libScan"  , "EdbScanProc" );          // optional
+  loadlib( "libEMC"  , "EdbPVGen" );              // optional
   loadlib( "libShower", "EdbShowerRec" );         // optional, beta-version
   loadlibEOracle();                               // optional
   loadlib( "libEmr", "EdbEmrFileAccess" );        // optional
