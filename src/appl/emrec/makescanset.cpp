@@ -23,7 +23,8 @@ void print_help_message()
   cout<< "\t\t -updatesetaff -A=ida   - update scanset with affine transformations of set A\n";
   cout<< "\t\t -copyset      -A=ida   - copy A into set - keep geometry, modify only ID's\n";
   cout<< "\t\t -dzbase=base           - set dzbase (210 default)\n";
-  cout<< "\t\t -npl=n           - set maximum plates number\n";
+  cout<< "\t\t -from_plate=nfirst     - the first plate id (default=57)\n";
+  cout<< "\t\t -to_plate=nlast        - the last plate id (default=1)\n";
   cout<< "\nExample: \n";
   cout<< "\t makescanset -set=4554.0.1.1000 -o=/scratch/BRICKS \n";
   cout<< "\n If the data location directory if not explicitly define\n";
@@ -50,7 +51,6 @@ int main(int argc, char* argv[])
   float       z0          =  0;
   float       dz          = -1300;
   float       dzbase      = 210;
-  int npl=57;
   int refplate = -1;
 
   EdbAffine2D affup;
@@ -137,9 +137,13 @@ int main(int argc, char* argv[])
     {
       if(strlen(key)>8) dzbase = atof(key+8);
     }
-    else if(!strncmp(key,"-npl=",5))
+    else if(!strncmp(key,"-from_plate=",12))
     {
-      if(strlen(key)>5) npl = atoi(key+5);
+      if(strlen(key)>12) from_plate = atoi(key+12);
+    }
+    else if(!strncmp(key,"-to_plate=",10))
+    {
+      if(strlen(key)>10) to_plate = atoi(key+10);
     }
   }
 
@@ -199,7 +203,7 @@ int main(int argc, char* argv[])
     else {
       EdbScanSet sc(id);
       sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
-      sproc.MakeScannedIDList( id, sc, npl, 0, suff);
+      sproc.MakeScannedIDList( id, sc, 100, 0, suff);
       sproc.WriteScanSet(id,sc);
       if(resetpar) sproc.MakeParSet(sc);
       else if(reset)    sproc.PrepareSetStructure(sc);
