@@ -56,6 +56,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.misalign_offset", 500.);
   cenv.SetValue("fedra.track.do_local_corr"  ,    1 );
   cenv.SetValue("fedra.track.do_comb"        ,    0 );
+  cenv.SetValue("fedra.track.NsegMin"        ,    2 );
   cenv.SetValue("emtra.outdir"          , "..");
   cenv.SetValue("emtra.env"             , "track.rootrc");
   cenv.SetValue("emtra.EdbDebugLevel"   , 1);

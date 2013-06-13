@@ -13,13 +13,13 @@
 #include "EdbPlateAlignment.h"
 #include "EdbTrackFitter.h"
   
-  using namespace TMath;
+using namespace TMath;
   
-  ClassImp(EdbTrackAssembler)
-      ClassImp(EdbScanTracking)
+ClassImp(EdbTrackAssembler)
+ClassImp(EdbScanTracking)
   
-  //--------------------------------------------------------------------------------------
-      EdbTrackAssembler::~EdbTrackAssembler()
+//--------------------------------------------------------------------------------------
+EdbTrackAssembler::~EdbTrackAssembler()
 {
 }
   
@@ -279,6 +279,7 @@ void EdbTrackAssembler::SetSegmentsErrors()
   int ntr = eTracks.GetEntries();
     for( int i=0; i<ntr; i++ )     {
       EdbTrackP *t = (EdbTrackP*)(eTracks.At(i));
+      if(t->Flag()==-10) continue;
       int nseg=t->N();
       if(nseg>0)  { 
         for(int j=0; j<nseg; j++) {
@@ -423,6 +424,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     bool        do_local_corr   = env.GetValue("fedra.track.do_local_corr"  ,      1   );
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
     bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
+    eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
   
   //  etra.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
     etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
@@ -488,17 +490,25 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     }
 
     int ntr = etra.Tracks().GetEntries();
-
+    
+    for(int i=0; i<ntr; i++) {
+      EdbTrackP *t = (EdbTrackP *)(etra.Tracks().At(i));
+      if(t->N()<eNsegMin)  t->SetFlag(-10);
+    }
+    
     etra.SetSegmentsErrors();
     etra.FitTracks();
 
+    TObjArray selectedTracks(ntr);
     if(do_comb) {
-      TObjArray selectedTracks(ntr);
       etra.CombTracks(selectedTracks);
-      EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
     } else {
-      EdbDataProc::MakeTracksTree( etra.Tracks(), 0., 0., Form("b%s.trk.root", idset.AsString()) );
+      for(int i=0; i<ntr; i++) {
+        EdbTrackP *t = (EdbTrackP *)(etra.Tracks().At(i));
+        if(t->Flag()!=-10)  selectedTracks.Add(t);
+      }
     }
+    EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
     
     TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
     env.Write();
