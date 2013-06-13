@@ -123,6 +123,24 @@ void EdbDataStore::Restore_PIDFromID(){
   }
 };
 ///------------------------------------------------
+EdbSegP* EdbDataStore::AddSegment(EdbSegP* s, EdbSegmentCut* cut,int Plt0, int Plt1){
+  if(s->Plate()<Plt0 || s->Plate()>Plt1)return 0;
+      if(cut){
+	float par[]={s->X(),s->Y(),s->TX(),s->TY(),s->W()};
+	if(!cut->PassCut(par))return 0;
+      }
+      if(gEDBDEBUGLEVEL>5){
+        s->PrintNice();
+        printf("plt#%d side#%d\n",s->Plate(),s->Side());
+        }
+      EdbPattern* p=FindPattern(s->Plate(),s->Side());
+      assert(p);
+      EdbSegP* seg=p->AddSegment(*s);
+      //p->SetID(s->Plate());
+      seg->SetPID(p->ID());
+      return seg;
+}
+///------------------------------------------------
 void EdbDataStore::Restore_PatFromGeom(int np0, int np1){
   ///fill patterns array from eBrick plates
   assert(eBrick);
@@ -153,9 +171,7 @@ void EdbDataStore::Restore_TrxFromVtx(){
 void EdbDataStore::Restore_SegFromTrx(EdbSegmentCut* cut,int Plt0, int Plt1){
   ///restore segments from tracks
   EdbTrackP* t=0;
-  EdbSegP* s=0;
-  EdbPattern* p=0;
-  float par[5];
+   EdbSegP* s=0;
   for(int nt=0;nt<eTracks.GetEntries();++nt){
     t=GetTrack(nt);
     if(t->N()==0)continue;
@@ -163,25 +179,8 @@ void EdbDataStore::Restore_SegFromTrx(EdbSegmentCut* cut,int Plt0, int Plt1){
       s=t->GetSegment(ns);
       s->SetMC(t->MCEvt(),t->MCTrack());
 //       s->SetFlag(1);
-      if(s->Plate()<Plt0 || s->Plate()>Plt1)continue;
-      if(cut){
-	par[0]=s->X();
-	par[1]=s->Y();
-	par[2]=s->TX();
-	par[3]=s->TY();
-	par[4]=s->W();
-	if(!cut->PassCut(par))continue;
+      AddSegment(s,cut,Plt0,Plt1);
       }
-      if(gEDBDEBUGLEVEL>5){
-        s->PrintNice();
-        printf("plt#%d side#%d\n",s->Plate(),s->Side());
-        }
-      p=FindPattern(s->Plate(),s->Side());
-      assert(p);
-      p->AddSegment(*s);
-      p->SetID(s->Plate());
-      s->SetPID(p->ID());
-    }
   }
 }
 ///------------------------------------------------
@@ -386,7 +385,6 @@ void EdbDataStore::DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk){
 ///--------------------------------------------------
 void EdbDataStore::DoEfficiency(TF1* eff_seg,TF1* eff_mtk){
   EdbSegP* s=0;
-  TRandom3 Rando;
   double eff, ran, th;
   if(eff_seg){
     for(int np=0;np<eSegPV.Npatterns();++np){
@@ -395,7 +393,7 @@ void EdbDataStore::DoEfficiency(TF1* eff_seg,TF1* eff_mtk){
         s=pat->GetSegment(ns);
         th=s->Theta();
         eff=(th<=eff_seg->GetXmax())?eff_seg->Eval(th):0;
-        ran=Rando.Rndm();
+        ran=gRandom->Rndm();
         if(ran>eff)s->SetW(-s->W());
      } 
     }
@@ -418,6 +416,48 @@ void EdbDataStore::DoEfficiency(TF1* eff_seg,TF1* eff_mtk){
     }
   }
 }
+///------------------------------------------------
+long EdbDataStore::Gen_mtk_BG(long NBG, int Plate, int Side, TH2* pdf_Ang, TH2* pdf_WT){
+  /// Generate background microtracks, using distributions: 
+  ///   1)from pdf_Ang(TY:TX) - should be normalized so that its maximum bin content = 1
+  ///   2)from pdb_WT (W:tan(Theta)) - each row with fixed X(i.e. slope) should have maximum content = 1
+  EdbPattern* pat=FindPattern(Plate,Side);
+  EdbPattern *p1=0,*p2=0;
+  if(Side==0){
+  ///Side==0 - this is basetrack. So we need to project each segment to RAW patterns
+    p1=FindPattern(Plate,1);
+    p2=FindPattern(Plate,2);
+  }
+  assert(pat!=0);
+  EdbLayer  * lay=FindLayer  (Plate,Side);
+  assert(lay!=0);
+  float x,y,z,tx,ty,w=16,p; 
+  z=lay->Z();
+  int Ntot=0;
+  EdbSegP *seg=0,*s1=0;
+  for(long n=0; n<NBG; ++n){
+    tx=gRandom->Uniform(pdf_Ang->GetXaxis()->GetXmin(),pdf_Ang->GetXaxis()->GetXmax());
+    ty=gRandom->Uniform(pdf_Ang->GetYaxis()->GetXmin(),pdf_Ang->GetYaxis()->GetXmax());
+    p=pdf_Ang->Interpolate(tx,ty);
+    Log(5,"Gen_mtk_BG",Form("tt=[%4.2f %4.2f] p=%6.4f\n",tx,ty,p));
+    if(gRandom->Uniform()>p){n--; continue;}
+    Ntot++;
+    x=gRandom->Uniform(lay->Xmin(),lay->Xmax());
+    y=gRandom->Uniform(lay->Ymin(),lay->Ymax());
+    seg=pat->AddSegment(-1,x,y,tx,ty,w,0);
+    if(p1){
+      s1=p1->AddSegment(*seg);
+      s1->PropagateTo(p1->Z());
+      }
+    if(p2){
+      s1=p2->AddSegment(*seg);
+      s1->PropagateTo(p2->Z());
+      }
+  }
+  Log(0,"Gen_mtk_BG",Form("Generated %ld/%ld\n",Ntot,NBG));
+  return Ntot;
+}
+                              
 ///==============================================================================
 ///==============================================================================
 
@@ -779,7 +819,7 @@ void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
     run.Close();    
 };
 ///--------------------------------------------------
-void EdbDataStore::SaveToRaw(char* dir,int id,Option_t* option){
+void EdbDataStore::SaveToRaw(char* dir,int id,Option_t* option, bool doaff){
 /// Save the raw data to FEDRA brick structure
   EdbScanProc sp;
   EdbID Eid(id,0,1,10);
@@ -801,7 +841,7 @@ void EdbDataStore::SaveToRaw(char* dir,int id,Option_t* option){
     TString fnm;
     sp.MakeFileName(fnm,PL,"raw.root",true); ///generate plate filename
     SavePlateToRaw(fnm.Data(),i,option); ///save plate.
-    if(i>0){
+    if(doaff && i>0){
       ///save affine tranformations
       sp.MakeAffName(fnm,PL,PL0);
       FILE* afF=fopen(fnm.Data(),"w"); ///save affine parameters

@@ -323,11 +323,22 @@ void EdbPVGen::SmearSegment( EdbSegP &s, EdbScanCond &cond )
   float rx,ry,rtx,rty;
   gRandom->Rannor(rx,ry);
   gRandom->Rannor(rtx,rty);
+ 
+/// --------------using angular corellation now---------------------  
+/* 
+ vx.Set( vx.X() + rx*cond.SigmaX(vt.X()),
+  vx.Y() + ry*cond.SigmaY(vt.Y()) ); 
+ */
+ 
+  rx*= cond.SigmaX(0);
+  ry*= cond.SigmaY(0);
+  rtx*=cond.SigmaTXf(vt.X());
+  rty*=cond.SigmaTYf(vt.Y());
   
-  vx.Set( vx.X() + rx*cond.SigmaX(vt.X()),
-	  vx.Y() + ry*cond.SigmaY(vt.Y()) );
-  vt.Set( vt.X() + rtx*cond.SigmaTX(vt.X()),
-	  vt.Y() + rty*cond.SigmaTY(vt.Y()) );
+  vx.Set( vx.X() + rx+rtx*0.5*s.DZ(),
+	  vx.Y() + ry+rty*0.5*s.DZ());	  
+  vt.Set( vt.X() + rtx,
+	  vt.Y() + rty);
 
   vt.Rotate( phi );
   vx.Rotate( phi );

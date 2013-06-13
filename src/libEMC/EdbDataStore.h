@@ -58,6 +58,7 @@ class EdbDataStore: public TObject{
     EdbTrackP* FindLongTrk(int nsmin=8);
     EdbVertex* FindPrimVtx();
     ///add methods
+    EdbSegP* AddSegment(EdbSegP* seg, EdbSegmentCut* cut=0, int Plt0=0, int Plt1=100);
     void AddTrack(EdbTrackP* tr){assert(tr!=0); eTracks.Add(tr);}
     void AddVertex(EdbVertex* v){assert(v!=0);  eVTX.Add(v);}
     void AddPattern(EdbPattern* pat);
@@ -69,11 +70,12 @@ class EdbDataStore: public TObject{
     void PrintTracks(int vlev=0);
 //     void PrintVertices();
     ///save methods:
-    void SaveToRaw(char* dir="./",int id=1234,Option_t* option="RECREATE");
+    void SaveToRaw(char* dir="./",int id=1234,Option_t* option="RECREATE",bool doaff=true);
     void SavePlateToRaw(const char* fname,int PID,Option_t* option="RECREATE");
     ///methods for simulation:
     void DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk=0);
     void DoEfficiency(TF1* eff_seg,TF1* eff_mtk);
+    long Gen_mtk_BG(long NBG, int Plate, int Side, TH2* pdf_Ang, TH2* pdf_WT=0);
 //     void DoSmearTrack(EdbTrackP*);
   public:
     EdbBrickP * eBrick;  ///geometry
