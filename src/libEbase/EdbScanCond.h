@@ -98,9 +98,12 @@ class EdbScanCond : public TNamed {
   float SigmaY(float ay)  const { return eSigmaY0*(1. + TMath::Abs(ay)*eDegrad); }
   float SigmaZ(float ax, float ay)  const 
     { return eSigmaZ0; } // TODO
-  float SigmaTX(float ax) const { return eSigmaTX0*(1. + TMath::Abs(ax)*eDegrad); }
-  float SigmaTY(float ay) const { return eSigmaTY0*(1. + TMath::Abs(ay)*eDegrad); }
-
+  float SigmaTX(float ax) const  { return eSigmaTX0*(1. + TMath::Abs(ax)*eDegrad); }
+  float SigmaTY(float ay) const  { return eSigmaTY0*(1. + TMath::Abs(ay)*eDegrad); }
+ /// full functions for sigmaTX(TX) - use them for simulation
+  float SigmaTXf(float ax) const { return eSigmaTX0*TMath::Sqrt(1. + ax*ax*eDegrad*eDegrad); }
+  float SigmaTYf(float ay) const { return eSigmaTY0*TMath::Sqrt(1. + ay*ay*eDegrad*eDegrad); }
+  
   float Ramp(float x, float x1, float x2) const;
 
   float ProbSeg( float tx, float ty, float puls) const;
