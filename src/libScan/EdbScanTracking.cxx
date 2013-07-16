@@ -503,9 +503,15 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     if(do_comb) {
       etra.CombTracks(selectedTracks);
     } else {
+      int cnt=0;
       for(int i=0; i<ntr; i++) {
         EdbTrackP *t = (EdbTrackP *)(etra.Tracks().At(i));
-        if(t->Flag()!=-10)  selectedTracks.Add(t);
+        if(t->Flag()!=-10)  {
+          t->SetID(cnt++);
+          t->SetCounters();
+          t->SetSegmentsTrack();
+          selectedTracks.Add(t);
+        }
       }
     }
     EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
