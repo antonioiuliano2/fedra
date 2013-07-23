@@ -1,10 +1,10 @@
 CFG = Release
 
 all:
-	@cd vt++ && make -j4
+	@cd vt++ && $(MAKE) -j4
 
 clean:
-	@cd vt++ && make -s clean
+	@cd vt++ && $(MAKE) -s clean
 
 check:
-	@cd vt++ &&  make  -s check
+	@cd vt++ && $(MAKE) -s check

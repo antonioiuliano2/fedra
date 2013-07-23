@@ -773,7 +773,7 @@ bool EdbScanProc::FlashRawDir(EdbScanClient &scan, int id[4])
 
   char str[256];
   TDatime dt;
-  sprintf(str,"%s/rw_%u",scan.eRawDirClient.Data(),dt.Get());
+  sprintf(str,"%s/rw_%u",scan.GetRawDirClient(),dt.Get());
   LogPrint(id[0],2,"FlashRawDir","%d.%d.%d.%d: move all into %s", id[0],id[1],id[2],id[3],str);
   if(!gSystem->OpenDirectory(str))   
     if( gSystem->MakeDirectory(str) == -1) 
@@ -785,9 +785,9 @@ bool EdbScanProc::FlashRawDir(EdbScanClient &scan, int id[4])
   char str2[256];
 
 #ifdef WIN32
-  sprintf(str2,"ren %s/raw.* %s",scan.eRawDirClient.Data(),str);
+  sprintf(str2,"ren %s/raw.* %s",scan.GetRawDirClient(),str);
 #else
-  sprintf(str2,"mv %s/raw.* %s",scan.eRawDirClient.Data(),str);
+  sprintf(str2,"mv %s/raw.* %s",scan.GetRawDirClient(),str);
 #endif
 
   gSystem->Exec(str2);
@@ -904,13 +904,27 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, int id[4], int flag, const char 
 	   id[0],id[1],id[2],id[3],pred.N(),flag);
   EdbPattern predopt;
   OptimizeScanPath(pred,predopt,id[0]);
-  EdbRun *run = InitRun(id);
-  if(!run) return 0;
-  int scanned = scan.ScanAreas(id,predopt,*run,opt);
+
+	bool createRun = !scan.ServerCreatesRootFile(); // if is created by server side - no need to create it
+	char runname[512];
+  EdbRun *run = InitRun(id, runname, createRun);
+  if(!run && createRun) return 0;
+  int scanned = scan.ScanAreas(id,predopt,run,opt);
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", 
-	   id[0],id[1],id[2],id[3],scanned, run->GetEntries() );
-  run->Close();
-  delete run;
+	   id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
+  if(run){
+    run->Close();
+    delete run;
+  }
+  if(!createRun){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
+    char str[1024];
+#ifdef WIN32
+    sprintf(str,"move %s %s", eServerCreatedRunName.Data(), runname);
+#else
+    sprintf(str,"mv %s %s", eServerCreatedRunName.Data(), runname);
+#endif
+    gSystem->Exec(str);
+  }
   return scanned;
 }
 
@@ -920,12 +934,29 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], con
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions", id[0],id[1],id[2],id[3],pred.N());
   EdbPattern predopt;
   OptimizeScanPath(pred,predopt,id[0]);
-  EdbRun *run = InitRun(id);
-  if(!run) return 0;
-  int scanned = scan.ScanAreas(id,predopt,*run,opt);
-  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, run->GetEntries() );
-  run->Close();
-  delete run;
+
+  bool createRun = !scan.ServerCreatesRootFile(); // if is created by server side - no need to create it
+  char runname[512];
+  EdbRun *run = InitRun(id, runname, createRun);
+  if(!run && createRun) return 0;
+
+  int scanned = scan.ScanAreas(id,predopt,run,opt);
+  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
+	
+  if(run){
+    run->Close();
+    delete run;
+  }
+
+  if(!createRun){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
+    char str[1024];
+#ifdef WIN32
+    sprintf(str,"move %s %s", eServerCreatedRunName.Data(), runname);
+#else
+    sprintf(str,"mv %s %s", eServerCreatedRunName.Data(), runname);
+#endif
+    gSystem->Exec(str);
+  }
   return scanned;
 }
 
@@ -1757,7 +1788,7 @@ bool EdbScanProc::GetMap(int brick, TString &map)
 }
 
 //----------------------------------------------------------------
-EdbRun *EdbScanProc::InitRun(int id[4])
+EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, bool createrun_)
 {
   // create new run file as eProcDirClient/bXXXXXX/pYYY/x.y.s.p.raw.root
   if(!CheckProcDir(id)) return 0;
@@ -1775,7 +1806,13 @@ EdbRun *EdbScanProc::InitRun(int id[4])
     LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str2.Data());
   }
   LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
-  return new EdbRun(str.Data(),"RECREATE");
+  if(runname_ != NULL)
+    strcpy(runname_, str.Data());
+
+  EdbRun* run = NULL;
+  if(createrun_)
+    run = new EdbRun(str.Data(),"RECREATE");
+  return run;
 }
 //-------------------------------------------------------------------
 bool EdbScanProc::AddParLine(const char *file, const char *line, bool recreate)
@@ -2677,8 +2714,8 @@ void EdbScanProc::MakeAlignSetSummary(EdbID idset)
     if(c) {
       c->SetName(Form("%s_%s",id1->AsString(), id2->AsString()));
     //c->Draw();
-      if(i==0)         c->Print(Form("%s(",name.Data()),"pdf");
-      else if(i==n-2)  c->Print(Form("%s)",name.Data()),"pdf");
+      if(i==0&&n>2)         c->Print(Form("%s(",name.Data()),"pdf");
+      else if(i==n-2&&n>2)  c->Print(Form("%s)",name.Data()),"pdf");
       else             c->Print(name,"pdf");
     }
     f->Close();
@@ -3210,3 +3247,10 @@ void EdbScanProc::ExtractRawVolume(EdbScanSet &ss, EdbScanSet &ssnew, EdbSegP &p
   }
 
 }
+
+void EdbScanProc::SetServerRunName(const char* fname_){
+	eServerCreatedRunName = fname_;
+};
+const char* EdbScanProc::GetServerRunName()const{
+	return eServerCreatedRunName.Data();
+};

@@ -1,67 +1,106 @@
 #ifndef ROOT_EdbScanClient
 #define ROOT_EdbScanClient
 
+#include <memory>
 #include "TSocket.h"
-#include "TString.h"
 #include "EdbRun.h"
 #include "EdbPattern.h"
+#include "EdbScanClientBase.h"
 
-class EdbScanClient
+
+class EdbScanClient:public EdbScanClientBase
 {
-public:
-  TSocket*  eSock;          // socket for connection to scanning mashine
-  char      eCMD[256];      // command line
-  char      eMess[256];     // message line
-  char      eMess1[256];    // message line
-
-public:
-  float       eNXview, eNYview;   // the fragment size in view
-  float       eXstep, eYstep;     // between views in the fragment - to calculate the fragment size
-
-  int       eMAXSCANATTEMPTS;
-  int       eMAXFAILS;          // the max number for predictions failed to scan before break
-  int       ePORT;              // port number where BernScanDriver expect connection (default 1777)
-  TString   eServer;            // address of the scanning mashine
-
-  TString eRawDirServer;     // directory path for raw data files visible from the Scan Server (i.e. "o:/MIC5")
-  TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw")
-
 public: 
-  EdbScanClient();
-  virtual ~EdbScanClient(){}
+	enum ScanClientType {scanClientSySal, scanClientPavicom, scanClientLasso};
+	
+	EdbScanClient(ScanClientType type_ = scanClientSySal);
+  ~EdbScanClient(){};
+  
 
-  int    InitializeSocket();
-  int    RcvLine(TSocket* sock, char* line, int size);
-  int    UnloadPlate();
-  int    LoadPlate(int BRICK, int PLATE, const char *mapext, int nAttempts=1);
-  void   SetParameter(char* Object, char* Parameter, char* Value);
-  void   SetClusterThresholds(int TOP, int BOT);
-  void   SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT);
-  int    SetFragmentSize(int X, int Y);
-  void   AsyncScanAreaS( int id1, int id2, int id3, int id4,	
-						 float x1, float y1, float x2, float y2,	const char *fname);
-  int    ScanAreaS( int id1, int id2, int id3, int id4,	
-					float x1, float y1, float x2, float y2,	const char *fname);
-  void   AsyncScanPreloadAreaS( int id1, int id2, int id3, int id4,	
-								float x1, float y1, float x2, float y2,	const char *fname, 
-								float x1n, float y1n, float x2n, float y2n);
-  int    ScanPreloadAreaS( int id1, int id2, int id3, int id4,
-							float x1, float y1, float x2, float y2,	const char *fname, 
-							float x1n, float y1n, float x2n, float y2n);
-  int    AsyncWaitForScanResult();
 
-  int   ScanAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
-  int   ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
-  int   ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
+	int    InitializeSocket();
+	int    ScanPreloadAreaS( int id1, int id2, int id3, int id4,
+							float x1, float x2, float y1, float y2,	const char *fname, 
+							float x1n, float x2n, float y1n, float y2n);
+	int   ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
+	int     AddRWC_(EdbRun* run, char* rwcname, int bAddRWD=true, const char* options="");
+	Short_t  ShortBrick(Int_t brick);
+	int   ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
 
-// "short" version of brickID to be passed into sysal command line via BernScanDriver
-  Short_t  ShortBrick(Int_t brick){ return brick%10000; }
+	virtual int    UnloadPlate();
+	virtual int    LoadPlate(int BRICK, int PLATE, const char *mapext, int nAttempts=1);
+  virtual void   SetParameter(const char* Object, const char* Parameter, const char* Value);
 
-  static int     AddRWC_(EdbRun* run, char* rwcname, int bAddRWD=true, const char* options="");
+  virtual void   SetClusterThresholds(int TOP, int BOT);
+  virtual void   SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT);
+  virtual int    SetFragmentSize(int X, int Y);
+  virtual void   AsyncScanAreaS( int id1, int id2, int id3, int id4,	
+						 float x1, float x2, float y1, float y2,	const char *fname);
+  virtual void   AsyncScanPreloadAreaS( int id1, int id2, int id3, int id4,	
+								 float x1, float x2, float y1, float y2,	const char *fname, 
+								 float x1n, float x2n, float y1n, float y2n);
+  virtual int    AsyncWaitForScanResult();
+	virtual void   Print();
 
-  void   Print();
+public:
+	const char * GetCmd(){return m_implementation->GetCmd(); };
+	void SetCmd(const char* cmd_){
+		m_implementation->SetCmd(cmd_);
+	};
 
-  ClassDef(EdbScanClient,1)  // remote scanning from Bern
+	const char * GetMess(){return m_implementation->GetMess();};
+	void SetMess(const char* mess_){
+		m_implementation->SetMess(mess_);
+	};
+
+	const char * GetMess1(){return m_implementation->GetMess1(); };
+	void SetMess1(const char* mess_){
+		m_implementation->SetMess1(mess_);
+	};
+
+	float GetNXView(){return m_implementation->GetNXView();};
+	void SetNXview(float nxview_){m_implementation->SetNXview(nxview_);};
+
+	float GetNYView(){return m_implementation->GetNYView();};
+	void SetNYview(float nyview_){m_implementation->SetNYview(nyview_);};
+
+	float GetXstep(){return m_implementation->GetXstep();};
+	void SetXstep(float xstep_){m_implementation->SetXstep(xstep_);};
+
+	float GetYstep(){return m_implementation->GetYstep();};
+	void SetYstep(float ystep_){m_implementation->SetYstep(ystep_);};
+
+	int GetMaxAttempts(){return m_implementation->GetMaxAttempts();};
+	void SetMaxAttempts(int attempts_){m_implementation->SetMaxAttempts(attempts_);};
+
+	int GetMaxFails(){return m_implementation->GetMaxFails();};
+	void SetMaxFails(int fails_){m_implementation->SetMaxFails(fails_);};
+
+	int GetPort(){return m_implementation->GetPort();};
+	void SetPort(int port_){m_implementation->SetPort(port_);};
+
+	const char * GetServer(){return m_implementation->GetServer(); };
+	void SetServer(const char* server_){
+		m_implementation->SetServer(server_);
+	};
+
+	const char * GetRawDirServer(){return m_implementation->GetRawDirServer(); };
+	void SetRawDirServer(const char* rawdirserver_){
+		m_implementation->SetRawDirServer(rawdirserver_);
+	};
+
+	const char * GetRawDirClient(){return m_implementation->GetRawDirClient(); };
+	void SetRawDirClient(const char* rawdirclient_){
+		m_implementation->SetRawDirClient(rawdirclient_);
+	};
+
+	bool ServerCreatesRootFile(){return eServerCreatesRootFile;};
+private:
+	std::auto_ptr<EdbScanClientCommon> m_implementation;
+	bool eServerCreatesRootFile;
+
+  ClassDef(EdbScanClient,1) 
 };
+
 
 #endif /* ROOT_EdbScanClient */

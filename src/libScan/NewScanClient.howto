@@ -1,0 +1,21 @@
+To use new Scan client only few changes to scanning scripts are needed:
+All direct queries to EdbScanClient's members are replaced with Set/Get functions. For example setting scan client parameters should look like:
+
+      scan.SetServer("10.10.10.2");
+	  
+      scan.SetRawDirServer("X:/mic1");
+      scan.SetRawDirClient("/opera/scan/samba/mic1");
+      scan.InitializeSocket();
+      scan.SetXstep(360);
+      scan.SetYstep(275);  
+
+
+
+To use scanning with LASSO scan client object should be created like:
+
+      EdbScanClient scan(EdbScanClient::scanClientLasso);
+
+
+and path to *.raw.root files stored by LASSO properly set:
+
+      sproc.SetServerRunName("/mnt/DATA/mic8/mt.root");

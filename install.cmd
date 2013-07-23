@@ -48,6 +48,9 @@
  %ln% %configdir%\RootDef.windows.mk            %configdir%\RootDef.mk
  %ln% %configdir%\TargetsDef.windows.mk         %configdir%\TargetsDef.mk
 
+ if exist %installdir%\src\libScan\Makefile      del /q %installdir%\src\libScan\Makefile
+ %ln% %installdir%\src\libScan\Makefile.w32 %installdir%\src\libScan\Makefile 
+
 :: create setup_new.cmd (and delete the old setup vars)
 :: ----------------------------------------------------
 (

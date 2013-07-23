@@ -4,6 +4,10 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class EdbScanClientBase;
+#pragma link C++ class EdbScanClientCommon;
+#pragma link C++ class EdbScanClientPav;
+#pragma link C++ class EdbScanClientSysal;
 #pragma link C++ class EdbScanClient;
 #pragma link C++ class EdbScanProc;
 #pragma link C++ class EdbProcPars;

@@ -13,6 +13,8 @@ class EdbScanProc : public TNamed
  public:
 
   TString eProcDirClient;    // directory path for root data
+private:
+	TString eServerCreatedRunName; //EdbRun file name that is screated by scanserver side
 
 public: 
   EdbScanProc();
@@ -67,7 +69,7 @@ public:
   int     WriteFound(EdbPattern &found, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return WriteFound(found,id4,flag);}
   int     WritePatTXT(EdbPattern &pred, EdbID id, const char *suffix, int flag=-1) {int id4[4]; id.Get(id4); return WritePatTXT(pred,id4,suffix,flag);}
 
-  EdbRun *InitRun(int id[4]);
+  EdbRun *InitRun(int id[4], char* runname_ = NULL, bool createrun_=true);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
   int     LoadPlate(EdbScanClient &scan, int id[4], int attempts=1);
   int     ScanAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
@@ -211,6 +213,9 @@ public:
 
   void    ExtractRawVolume(EdbID id, EdbID idnew,EdbSegP pred, int plate, TEnv &cenv);
   void    ExtractRawVolume(EdbScanSet &ss, EdbScanSet &ssnew, EdbSegP &pred, float dR);
+
+  void SetServerRunName(const char* fname_);
+  const char* GetServerRunName()const;
 
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();

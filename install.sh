@@ -61,6 +61,8 @@ configdir="$installdir/src/config"
 ln -fs $configdir/RootDef.linux.mk $configdir/RootDef.mk 
 ln -fs $configdir/TargetsDef.linux.mk $configdir/TargetsDef.mk 
 
+ln -fs $installdir/src/libScan/Makefile.linux $installdir/src/libScan/Makefile 
+
 # create setup_new.sh, depending on default-shell used
 usedshell=`echo $SHELL`
 if [[ (${usedshell##*/} == "tcsh") ||  (${usedshell##*/} == "csh") ]] ; then 

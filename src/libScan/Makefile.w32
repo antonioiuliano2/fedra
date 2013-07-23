@@ -1,0 +1,20 @@
+#------------------------------------------------------------------------------
+include ../config/ProjectDef.mk
+include ../config/RootDef.mk
+#------------------------------------------------------------------------------
+
+NAME          = Scan
+
+LIBSALL       = $(LIBSALL) msvcrt.lib
+
+#EXTRAFLAGS    = $(EXTRAFLAGS) -DTIXML_USE_STL
+
+
+headers       = EdbScanClient.h EdbScanProc.h EdbProcPars.h EdbScanTracking.h EdbScanClientBase.h EdbScanClientPav.h EdbScanClientSysal.h MessageManager.h MessageReader.h tinyxml.h tinystr.h tinyxmlerror.h tinyxmlparser.h PAVProtocol.h
+
+PROJECT_LIBS  = $(PROJECT_LIBS) -lEmath -lEdb -lEbase -lvt -lEdr -lEIO -lEMC -lDataConversion -lAlignment
+
+#------------------------------------------------------------------------------
+include ../config/TargetsDef.mk
+#------------------------------------------------------------------------------
+CXXFLAGS    = $(CXXFLAGS) -DTIXML_USE_STL
