@@ -1849,8 +1849,12 @@ bool EdbScanProc::MakeInPar(int id[4], const char *option)
     LogPrint(id[0],2,"MakeInPar","ERROR! can't open file: %s",name.Data() );
     return false;
   }
-  fprintf(f,"INCLUDE %s/parset/opera_emulsion.par\n",eProcDirClient.Data());
-  fprintf(f,"INCLUDE %s/parset/%s.par\n",eProcDirClient.Data(),option);
+  if(eParDir.IsNull()) { 
+    eParDir=eProcDirClient; eParDir+="/parset";  // for backword scripts compatibility
+    Log(3,"EdbScanProc::MakeInPar","take default parameters from: %s",eParDir.Data());
+  }
+  fprintf(f,"INCLUDE %s/opera_emulsion.par\n",eParDir.Data());
+  fprintf(f,"INCLUDE %s/%s.par\n",eParDir.Data(),option);
   TString nm;
   MakeFileName(nm,id,"par");
   fprintf(f,"INCLUDE %s\n",nm.Data());
@@ -2632,7 +2636,7 @@ void EdbScanProc::UpdateSetWithPlatePar(EdbScanSet &ss)
   for(int i=0; i<n; i++) {
     EdbID *id  = ss.GetID(i);
     EdbPlateP  *plate = ss.GetPlate(id->ePlate);
-    printf("before\n"); plate->Print();
+    printf("plate %d before\n",i); plate->Print();
     if(id) ReadPiecePar( *id, *plate);
     printf("after\n"); plate->Print();
   }

@@ -13,14 +13,16 @@ class EdbScanProc : public TNamed
  public:
 
   TString eProcDirClient;    // directory path for root data
+  TString eParDir;           // directory path for off-line processing parameters
+
 private:
-	TString eServerCreatedRunName; //EdbRun file name that is screated by scanserver side
+  TString eServerCreatedRunName; //EdbRun file name that is created by scanserver side
 
 public: 
   EdbScanProc();
   virtual ~EdbScanProc(){}
 
-  char *BrickDir(int brick);
+  char   *BrickDir(int brick);
   bool    CheckDir(const char *dir, bool create=true);
   bool    CheckDirWritable(const char *dir);
   bool    CheckAFFDir(int brick, bool create=true);
