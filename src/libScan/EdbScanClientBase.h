@@ -12,7 +12,8 @@
 #define CMD_LEN 256
 class EdbScanClientBase
 {
-public: 
+public:
+  enum ScanType{ stPred, stVolume};
 	EdbScanClientBase(){};
 	virtual ~EdbScanClientBase(){};
 	
@@ -22,7 +23,7 @@ public:
   virtual int    ScanPreloadAreaS( int id1, int id2, int id3, int id4,
 							float x1, float x2, float y1, float y2,	const char *fname, 
 							float x1n, float x2n, float y1n, float y2n)=0;
-  virtual int    ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="")=0;
+  virtual int    ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options="")=0;
 //  virtual int    ScanAreaS( int id1, int id2, int id3, int id4,	
 //														float x1, float y1, float x2, float y2,	const char *fname);
 //  virtual int   ScanAreasAsync(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");
@@ -50,7 +51,7 @@ public:
 };
 
 //-------------------------------------------------------------------
-class EdbScanClientCommon:EdbScanClientBase
+class EdbScanClientCommon: public EdbScanClientBase
 {
 protected:
   TSocket*  eSock;          // socket for connection to scanning mashine
@@ -90,7 +91,7 @@ public:
 
 	
 	//protocol-specific part
-  virtual int   ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="")=0;
+  virtual int   ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options="")=0;
 	virtual int    UnloadPlate()=0;
 	virtual int    LoadPlate(int BRICK, int PLATE, const char *mapext, int nAttempts=1)=0;
   virtual void   SetParameter(const char* Object, const char* Parameter, const char* Value)=0;

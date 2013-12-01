@@ -66,53 +66,51 @@ int EdbScanClientPav::SetFragmentSize(int X, int Y)
 }
 
 //-------------------------------------------------------------------
-int EdbScanClientPav::ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options)
+int EdbScanClientPav::ScanAreas(EdbScanClientBase::ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options)
 {
   // this function scans the FIRST area from the list. Saving is done by server-side
   // for propper interaction the run  filename should be set in EdbScanProc::SetServerRunName fn
-	// predictions are assumed to be in the stage coord
   // returns 1 if scan was successful
 
   int n = areas.N();
   printf("ScanAreas: %d \n",n);
-  if(n>1)
-		printf("WARNING: only first area will be scanned!\n");
+  if(n == 0){
+    printf("Nothing to scan.\n");
+    return 0;
+  }
   int scanned=0, failed=0;
   EdbSegP *s = 0;
-  EdbSegP *sn = 0;
   char str[256];
-  for(int i=0; i<1; i++) {
-    s = areas.GetSegment(i);
-
-    if( (s->SX() < 0.5*eNXview*eXstep) || (s->SY() < 0.5*eNYview*eYstep) )  // set the fragments size for sysal
-      s->SetErrors(0.5*eNXview*eXstep, 0.5*eNYview*eYstep, 0., .1, .1);
-
-    if(i<n-1) sn = areas.GetSegment(i+1); 
-    else  sn = areas.GetSegment(i);
-
-#ifdef WIN32
-    sprintf(str,"del %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
-#else
-    sprintf(str,"rm -f %s/raw.%d.%d.%d.%d.*",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID()); // s->ID() must be unique!
-#endif
-
-    gSystem->Exec(str);
-    printf("ScanAreas: scan progress: %d out of %d (%4.1f%%)\n",i,n,100.*i/n);
+  if(st == stVolume){
+    if(n!=1)
+      printf("WARNING! Only first prediction is scanned in Volume mode");
+    s = areas.GetSegment(0);
+    printf("ScanAreas: scan progress: 0 out of 1\n");
     sprintf(str,"%s/raw.%d.%d.%d.%d",eRawDirServer.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
-    if( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),
-			   s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
-			   str,sn->X()-sn->SX(), sn->X()+sn->SX(), sn->Y()-sn->SY(), sn->Y()+sn->SY() ) )  {
-      //      i--; //? Igor added this line?
-      printf("EdbScanClient::ScanAreas: WARNING!!! scanning failed for area %d (%d.%d.%d.%d)!\n",
-	     i,  id[0], id[1], id[2], s->ID());
-      if(++failed > eMAXFAILS)  {
-	printf("EdbScanClient::ScanAreas: ERROR!!! too many failures - stop scanning!\n");
-	break;
-      }
-      continue;  // still try to scan other predictions
+    while( !ScanPreloadAreaS( id[0], id[1], id[2], s->ID(),
+        s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY(), 
+        str,s->X()-s->SX(), s->X()+s->SX(), s->Y()-s->SY(), s->Y()+s->SY() ) && failed < eMAXFAILS)
+      failed++;
+    if(failed >= eMAXFAILS)
+      printf("EdbScanClient::ScanAreas: ERROR!!! too many failures - stop scanning!\n");
+    else
+      scanned = 1;
+  }else{
+    s = areas.GetSegment(0);
+    float dx = s->SX(), dy = s->SY();
+    for(int i=1; i<n; i++){
+      s = areas.GetSegment(1);
+      if(s->SX() > dx)
+        dx = s->SX();
+      if(s->SY() > dy)
+        dy = s->SY();
     }
-    sprintf(str,"%s/raw.%d.%d.%d.%d.rwc",eRawDirClient.Data(),ShortBrick(id[0]), id[1], id[2], s->ID());
-    scanned++;
+    while( !ScanFromPrediction( id[0], id[1], id[2], id[3], dx, dy) && failed < eMAXFAILS)
+      failed++;
+    if(failed >= eMAXFAILS)
+      printf("EdbScanClient::ScanAreas: ERROR!!! too many failures - stop scanning!\n");
+    else
+      scanned = n;
   }
   
   return scanned;
@@ -143,6 +141,39 @@ void EdbScanClientPav::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id
 
 	m_mm.AddStartNode(m_pathLib.c_str(), m_pathName.c_str(), "");
 	m_mm.FillBuff();
+
+  AsyncStartScan();
+}
+
+//----------------------------------------------------------------
+bool EdbScanClientPav::ScanFromPrediction(int id1, int id2, int id3, int id4, float dx, float dy){
+  if(!eSock)
+		InitializeSocket();
+	if(!eSock)
+		return false;
+
+
+	char pars[200];
+	sprintf(pars, "%f %f", dx, dy);
+	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_predPathName.c_str(), "pred_sigma", pars, NULL_TRM);
+
+	sprintf(pars, "%u %u %u %u", id1, id2, id3, id4);
+	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_predPathName.c_str(), "pred_id", pars, NULL_TRM);
+
+	m_mm.AddStartNode(m_pathLib.c_str(), m_predPathName.c_str(), "");
+	m_mm.FillBuff();
+
+  AsyncStartScan();
+  
+  if(AsyncWaitForScanResult()==1)
+    return true;
+  else
+    return false;
+}
+
+//----------------------------------------------------------------
+void EdbScanClientPav::AsyncStartScan()
+{
 	uint32 len = m_mm.GetBufSize();
 
 	int res;
@@ -183,7 +214,7 @@ void EdbScanClientPav::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id
 	if(!strlen(startstr))
 		startcode = PAVPROT_OK;
 	else if(res != 1){
-		printf("bad server responce, stopping\n");
+		printf("bad server response, stopping\n");
 		return;
 	};
 	switch(startcode){
@@ -199,14 +230,13 @@ void EdbScanClientPav::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id
 
 	case PAVPROT_ERROR:
 	default:
-		printf("scanning not started, some error occured\n");
+		printf("scanning not started, some error occurred\n");
 		m_scanningStarted = false;
 		break;
 
 	}
 }
 
-//----------------------------------------------------------------
 int EdbScanClientPav::AsyncWaitForScanResult()
 {
 	if(!m_scanningStarted)

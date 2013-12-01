@@ -25,7 +25,7 @@ public:
   virtual void   SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT);
   virtual int    SetFragmentSize(int X, int Y);
 
-  virtual int    ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
+  virtual int    ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
   virtual void   AsyncScanAreaS( int id1, int id2, int id3, int id4,	
 						 float x1, float x2, float y1, float y2,	const char *fname);
   virtual void   AsyncScanPreloadAreaS( int id1, int id2, int id3, int id4,	

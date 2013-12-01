@@ -10,7 +10,7 @@
 
 class EdbScanClient:public EdbScanClientBase
 {
-public: 
+public:
 	enum ScanClientType {scanClientSySal, scanClientPavicom, scanClientLasso};
 	
 	EdbScanClient(ScanClientType type_ = scanClientSySal);
@@ -22,7 +22,7 @@ public:
 	int    ScanPreloadAreaS( int id1, int id2, int id3, int id4,
 							float x1, float x2, float y1, float y2,	const char *fname, 
 							float x1n, float x2n, float y1n, float y2n);
-	int   ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
+	int   ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
 	int     AddRWC_(EdbRun* run, char* rwcname, int bAddRWD=true, const char* options="");
 	Short_t  ShortBrick(Int_t brick);
 	int   ConvertAreas(int id[4], EdbPattern &areas, EdbRun &run, const char* options="");

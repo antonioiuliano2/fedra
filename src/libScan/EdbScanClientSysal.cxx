@@ -157,7 +157,7 @@ int EdbScanClientSysal::SetFragmentSize(int X, int Y)
 }
 
 //-------------------------------------------------------------------
-int EdbScanClientSysal::ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options)
+int EdbScanClientSysal::ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options)
 {
   // this function scan the list of areas and save into  EdbRun
   // the run should be already correctly opened

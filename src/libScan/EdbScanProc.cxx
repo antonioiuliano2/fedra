@@ -896,40 +896,15 @@ int EdbScanProc::ConvertAreas(EdbScanClient &scan, int id[4], int flag, const ch
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ScanAreas(EdbScanClient &scan, int id[4], int flag, const char *opt)
+int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, int id[4], int flag, const char *opt)
 {
   EdbPattern pred;
   ReadPred(pred, id, flag);
-  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions with flag %d", 
-	   id[0],id[1],id[2],id[3],pred.N(),flag);
-  EdbPattern predopt;
-  OptimizeScanPath(pred,predopt,id[0]);
-
-	bool createRun = !scan.ServerCreatesRootFile(); // if is created by server side - no need to create it
-	char runname[512];
-  EdbRun *run = InitRun(id, runname, createRun);
-  if(!run && createRun) return 0;
-  int scanned = scan.ScanAreas(id,predopt,run,opt);
-  LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", 
-	   id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
-  if(run){
-    run->Close();
-    delete run;
-  }
-  if(!createRun){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
-    char str[1024];
-#ifdef WIN32
-    sprintf(str,"move %s %s", eServerCreatedRunName.Data(), runname);
-#else
-    sprintf(str,"mv %s %s", eServerCreatedRunName.Data(), runname);
-#endif
-    gSystem->Exec(str);
-  }
-  return scanned;
+  return ScanAreas(st, scan, pred, id, opt);
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt) // NEW!!!
+int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt) // NEW!!!
 {
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  with %d predictions", id[0],id[1],id[2],id[3],pred.N());
   EdbPattern predopt;
@@ -940,7 +915,7 @@ int EdbScanProc::ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], con
   EdbRun *run = InitRun(id, runname, createRun);
   if(!run && createRun) return 0;
 
-  int scanned = scan.ScanAreas(id,predopt,run,opt);
+  int scanned = scan.ScanAreas(st, id,predopt,run,opt);
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
 	
   if(run){

@@ -11,7 +11,6 @@ class TEnv;
 class EdbScanProc : public TNamed
 {
  public:
-
   TString eProcDirClient;    // directory path for root data
   TString eParDir;           // directory path for off-line processing parameters
 
@@ -74,8 +73,8 @@ public:
   EdbRun *InitRun(int id[4], char* runname_ = NULL, bool createrun_=true);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
   int     LoadPlate(EdbScanClient &scan, int id[4], int attempts=1);
-  int     ScanAreas(EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
-  int     ScanAreas(EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt="NOCLCLFRAMESUM"); // NEW!!!
+  int     ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");
+  int     ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbPattern &pred, int id[4], const char *opt="NOCLCLFRAMESUM"); // NEW!!!
 
   bool    InitPiece(EdbDataPiece &piece, int id[4]);
   bool    InitPiece(EdbDataPiece &piece, EdbID id) {int id4[4]; id.Get(id4); return InitPiece(piece,id4);}

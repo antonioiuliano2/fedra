@@ -45,8 +45,8 @@ int EdbScanClient::ScanPreloadAreaS( int id1, int id2, int id3, int id4,
 };
 
 //----------------------------------------------------------------
-int EdbScanClient::ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options){
-	return m_implementation->ScanAreas(id, areas, run, options);
+int EdbScanClient::ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options){
+	return m_implementation->ScanAreas(st, id, areas, run, options);
 };
 
 //----------------------------------------------------------------

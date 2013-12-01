@@ -7,7 +7,7 @@
 
 class EdbScanClientPav:public EdbScanClientCommon
 {public: 
-	EdbScanClientPav():m_pathLib("OpBTPath.pth"), m_pathName("Volume_Scan"), m_scanningStarted(false)
+	EdbScanClientPav():m_pathLib("OpBTPath.pth"), m_pathName("Volume_Scan"), m_predPathName("Prediction_Scan"), m_scanningStarted(false)
 	{
 		m_mm.CreateMessage();
 	};
@@ -20,12 +20,15 @@ class EdbScanClientPav:public EdbScanClientCommon
   virtual void   SetOdysseyThresholds(int itop, int ibottom, int size, int TOP, int BOT);//+
   virtual int    SetFragmentSize(int X, int Y);//converted to whole region for cont.mode
 
-  virtual int    ScanAreas(int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
+  virtual int    ScanAreas(ScanType st, int id[4], EdbPattern &areas, EdbRun *run, const char* options="");
   virtual void   AsyncScanAreaS( int id1, int id2, int id3, int id4,	
 						 float x1, float x2, float y1, float y2,	const char *fname);//N/A, not used ever
   virtual void   AsyncScanPreloadAreaS( int id1, int id2, int id3, int id4,	
 								 float x1, float x2, float y1, float y2,	const char *fname, 
 								 float x1n, float x2n, float y1n, float y2n);
+  virtual bool   ScanFromPrediction(int id1, int id2, int id3, int id4, float dx, float dy);
+
+  virtual void   AsyncStartScan();
   virtual int    AsyncWaitForScanResult();//+
 	virtual void   Print();//s
 
@@ -39,6 +42,7 @@ class EdbScanClientPav:public EdbScanClientCommon
 		std::vector<uint8> m_inbuf;
 		std::string m_pathLib;
 		std::string m_pathName;
+		std::string m_predPathName;
 		bool m_scanningStarted;
 
   ClassDef(EdbScanClientPav,1)  // remote scanning for PAVICOM
