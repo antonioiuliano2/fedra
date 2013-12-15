@@ -39,9 +39,11 @@ int EdbScanClientPav::LoadPlate(int BRICK, int PLATE, const char *mapext, int nA
 //----------------------------------------------------------------
 void EdbScanClientPav::SetParameter(const char* Object, const char* Parameter, const char* Value)
 {
+  if(!strcmp(Object, "VertigoScanner"))
+    return;
+    //prevent too many fake sysal stuff
 	printf("%s[%s]=%s\n", Object, Parameter, Value);
 	m_mm.AddSetModuleParamsNode(Object, Parameter, Value, NULL_TRM);
-	printf("+\n");
 }
 
 //----------------------------------------------------------------
@@ -134,7 +136,8 @@ void EdbScanClientPav::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id
 	if(!eSock)
 		return;
 
-
+  SetServerTarget();
+  
 	char area[100];
 	sprintf(area, "%f %f %f %f", x1, y1, x2, y2); // here goes xmin, ymin, xmax, ymax
 	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_pathName.c_str(), "area", area, NULL_TRM);
@@ -152,6 +155,7 @@ bool EdbScanClientPav::ScanFromPrediction(int id1, int id2, int id3, int id4, fl
 	if(!eSock)
 		return false;
 
+  SetServerTarget();
 
 	char pars[200];
 	sprintf(pars, "%f %f", dx, dy);
@@ -271,3 +275,69 @@ int EdbScanClientPav::AsyncWaitForScanResult()
 	return 1;
 }
 
+void EdbScanClientPav::SetServerTarget(){
+  std::string spath(eRawPthServer.Data());         //   /opera/ONLINE/b800000/p009/asd.root
+  if(spath.find(eRawDirClient.Data()) == 0){
+    spath = spath.substr(eRawDirClient.Length());  //   /b800000/p009/asd.root
+    while(spath.find("/") == 0)
+      spath = spath.substr(1);                     //   b800000/p009/asd.root
+
+    std::string path(eRawDirServer.Data());        //   S:/
+    int f1 = path.find("/", path.length()-1);
+    int f2 = path.find("\\", path.length()-1);
+    if(f1 == -1 && f2 == -1)
+      path += "/";
+    path += spath;                                 //   S:\b800000/p009/asd.root
+
+    m_mm.AddSetModuleParamsNode("processor", "clprc.output_file", path.c_str(), NULL_TRM);
+
+  }else{
+    m_createdTarget = false;
+    printf("Error in target path format, raw dir client prefix not found.\n");
+    return;
+  }
+
+  m_mm.AddGetModuleParamsNode("processor", "clprc.output_file", NULL_TRM);
+  m_mm.FillBuff();
+  
+  uint32 len = m_mm.GetBufSize();
+
+	int res;
+	if(eSock && eSock->IsValid()){
+		eSock->SendRaw(&len, sizeof(len));
+		eSock->SendRaw(m_mm.GetBuf(), len);
+		m_mm.CreateMessage();
+
+		int recvBytes = eSock->RecvRaw(&m_insize, sizeof(m_insize));
+		if(recvBytes<=0){
+			CloseSocket();
+			return;
+		}
+		if(m_inbuf.size()<m_insize)
+			m_inbuf.resize(m_insize);
+		recvBytes = eSock->RecvRaw(&m_inbuf[0], m_insize);
+		if(recvBytes<=0){
+			CloseSocket();
+			return;
+		}
+		if(m_insize>0 && m_inbuf.size()){
+			printf("msg='%s'\n", &m_inbuf[8]);
+			bool res1 = m_mr.Load(&m_inbuf[0], m_insize);
+			if(!res1){
+				CloseSocket();
+				return;
+			}
+			m_mr.Process();
+		}
+	};
+
+	std::string key = PAVPROT_NODE_GMP;
+	key += "R.processor.clprc.output_file";
+	if(m_mr.GetValueForKey(key).length() != 0){
+	    printf("Server creates target file.\n");
+      m_createdTarget = true;
+	}else{
+	    m_createdTarget = false;
+	    printf("Server doesn't create target file. Please update to speedup.\n");
+  }
+};

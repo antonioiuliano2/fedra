@@ -94,7 +94,13 @@ public:
 		m_implementation->SetRawDirClient(rawdirclient_);
 	};
 
+	const char * GetRawPthServer(){return m_implementation->GetRawPthServer(); };
+	void SetRawPthServer(const char* rawpthserver_){
+		m_implementation->SetRawPthServer(rawpthserver_);
+	};
+
 	bool ServerCreatesRootFile(){return eServerCreatesRootFile;};
+	bool ServerCreatesTarget(){return m_implementation->ServerCreatesTarget();};
 private:
 	std::auto_ptr<EdbScanClientCommon> m_implementation;
 	bool eServerCreatesRootFile;

@@ -34,6 +34,7 @@ public:
 
 	bool GetJobFinished(){return m_stoped;};
 
+	bool        HasValueForKey(const char* key_){return (m_keysMap.find(key_) != m_keysMap.end());};
 	std::string GetValueForKey(const char* key_){return m_keysMap[key_];};
 	std::string GetValueForKey(std::string& key_){return m_keysMap[key_];};
 

@@ -69,6 +69,7 @@ protected:
 
   TString eRawDirServer;     // directory path for raw data files visible from the Scan Server (i.e. "o:/MIC5")
   TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw")
+  TString eRawPthServer;     // path for raw data files visible from processing comp (i.e. "./raw")
 
 public: 
   EdbScanClientCommon();
@@ -105,6 +106,8 @@ public:
 								float x1n, float x2n, float y1n, float y2n)=0;
   virtual int    AsyncWaitForScanResult()=0;
 	virtual void   Print()=0;
+  
+  virtual bool ServerCreatesTarget()=0;
 
 	const char * GetCmd(){return eCMD; };
 	void SetCmd(const char* cmd_){
@@ -167,6 +170,11 @@ public:
 	const char * GetRawDirClient(){return eRawDirClient.Data(); };
 	void SetRawDirClient(const char* rawdirclient_){
 		eRawDirClient = rawdirclient_;
+	};
+
+	const char * GetRawPthServer(){return eRawPthServer.Data(); };
+	void SetRawPthServer(const char* rawpthserver_){
+		eRawPthServer = rawpthserver_;
 	};
 
   ClassDef(EdbScanClientBase,1)  // remote scanning from Bern

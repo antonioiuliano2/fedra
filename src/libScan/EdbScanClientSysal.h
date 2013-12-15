@@ -33,6 +33,7 @@ public:
 								 float x1n, float x2n, float y1n, float y2n);
   virtual int    AsyncWaitForScanResult();
 	virtual void   Print();
+  virtual bool ServerCreatesTarget(){return false;};
 
 
   ClassDef(EdbScanClientSysal,1)  // remote scanning from Bern

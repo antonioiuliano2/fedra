@@ -7,7 +7,7 @@
 
 class EdbScanClientPav:public EdbScanClientCommon
 {public: 
-	EdbScanClientPav():m_pathLib("OpBTPath.pth"), m_pathName("Volume_Scan"), m_predPathName("Prediction_Scan"), m_scanningStarted(false)
+	EdbScanClientPav():m_pathLib("OpBTPath.pth"), m_pathName("Volume_Scan"), m_predPathName("Prediction_Scan"), m_scanningStarted(false), m_createdTarget(false)
 	{
 		m_mm.CreateMessage();
 	};
@@ -35,6 +35,12 @@ class EdbScanClientPav:public EdbScanClientCommon
 	void SetPathLib(const char* lib_){ m_pathLib=lib_; };
 	void SetPathName(const char* name_){ m_pathName=name_; };
 
+  virtual bool ServerCreatesTarget(){ return m_createdTarget;};
+  
+protected:
+  void SetServerTarget();
+
+    
 	MessageManager m_mm;
 	MessageReader m_mr;
 
@@ -44,6 +50,7 @@ class EdbScanClientPav:public EdbScanClientCommon
 		std::string m_pathName;
 		std::string m_predPathName;
 		bool m_scanningStarted;
+    bool m_createdTarget;
 
   ClassDef(EdbScanClientPav,1)  // remote scanning for PAVICOM
 };

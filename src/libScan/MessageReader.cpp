@@ -188,7 +188,16 @@ void MessageReader::ProcessGMPNode(TiXmlElement *el_){
 	else
 		param = el_->FirstChildElement();
 
+	std::string rootkey = PAVPROT_NODE_GMP;
+	rootkey += "R.";
+	rootkey += mod;
+	rootkey += ".";
+
 	while(param){
+		std::string key = rootkey;
+		key += param->Value();
+		m_keysMap[key] = param->Attribute("val");
+
 		printf("\t%s=%s\n", param->Value(), param->Attribute("val"));
 		param = param->NextSiblingElement();
 	};

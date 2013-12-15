@@ -915,6 +915,9 @@ int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbP
   EdbRun *run = InitRun(id, runname, createRun);
   if(!run && createRun) return 0;
 
+  if(!createRun)
+    scan.SetRawPthServer(runname);
+    
   int scanned = scan.ScanAreas(st, id,predopt,run,opt);
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
 	
@@ -923,7 +926,7 @@ int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbP
     delete run;
   }
 
-  if(!createRun){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
+  if(!createRun && !scan.ServerCreatesTarget()){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
     char str[1024];
 #ifdef WIN32
     sprintf(str,"move %s %s", eServerCreatedRunName.Data(), runname);
