@@ -884,28 +884,28 @@ char *EdbEDAUtil::FindProcDirClient(){
 	// "ONLINE" is the hard coded name for ProcDirClient.
 	TString buf=gSystem->WorkingDirectory();
 	
-	int index = buf.Index("scanner");
+	int index = buf.Index("ONLINE");
 	if(index==kNPOS) {
-		printf("FindProcDirClient   : Not found \"scanner\" in the path. set eProcDirClient = \"..\"\n");
+		printf("FindProcDirClient   : Not found \"ONLINE\" in the path. set eProcDirClient = \"..\"\n");
 		return "..";
 	}
 	
 	char *path = new char[256];
-	strncpy(path, buf.Data(), index+7);
-	path[index+7]='\0';
+	strncpy(path, buf.Data(), index+6);
+	path[index+6]='\0';
 	printf("FindProcDirClient = %s\n", path);
 	return path;
 }
 
 int EdbEDAUtil::FindBrickIDFromPath(){
 	TString buf=gSystem->WorkingDirectory();
-	int index = buf.Index("scanner");
+	int index = buf.Index("ONLINE");
 	if(index==kNPOS) {
-		printf("FindBrickIDFromPath : Not found \"scanner\" in the path. set eBrickID = 0\n");
+		printf("FindBrickIDFromPath : Not found \"ONLINE\" in the path. set eBrickID = 0\n");
 		return 0;
 	}
 	int ibrick=0;
-	sscanf(buf.Data()+index+9,"%d", &ibrick);
+	sscanf(buf.Data()+index+8,"%d", &ibrick);
 	printf("FindBrickIDFromPath : set eBrickID = %d\n", ibrick);
 	return ibrick;
 }
@@ -1368,5 +1368,4 @@ void EdbEDAUtil::FillTracksFromPatterns(EdbPVRec *pvr){
 	}
 	
 }
-
 
