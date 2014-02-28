@@ -1,4 +1,5 @@
 #include "PAVProtocol.h"
+#include <string.h>
 
 uint32 PAVProtocol::Crc32(uint32 len_,const uint8* buf_)
 {
