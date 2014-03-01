@@ -12,7 +12,7 @@ LIBS="${LIBS} libEOracle"
 fi
 
 for lib in ${LIBS} ; do
-    if [ "$1" != "check" ]; then 
+    if [ "$1" == "check" ]; then 
 	echo 
 	echo "make $1 in ${lib} ............."
 	cd ${lib}
@@ -42,4 +42,3 @@ if [ "$1" == "" ] ; then
   echo ------------------------------------
   ./makeall.sh check
 fi
-

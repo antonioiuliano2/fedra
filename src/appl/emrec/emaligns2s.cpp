@@ -88,6 +88,8 @@ int main(int argc, char* argv[])
 
   EdbScanProc sproc;
   sproc.eProcDirClient = cenv.GetValue("emalign.outdir","..");
+  
+  cenv.WriteFile("align.save.rootrc");
 
   EdbAffine2D aff(cenv.GetValue("emaligns2s.applyAff"         , "1 0 0 1 0 0") );
 

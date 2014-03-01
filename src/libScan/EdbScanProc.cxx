@@ -2610,13 +2610,15 @@ void EdbScanProc::UpdateSetWithPlatePar(EdbID idset)
 //----------------------------------------------------------------
 void EdbScanProc::UpdateSetWithPlatePar(EdbScanSet &ss)
 {
-   int n = ss.eIDS.GetEntries();
+  int n = ss.eIDS.GetEntries();
+  Log(3,"EdbScanProc::UpdateSetWithPlatePar","set with %d plates",n);
   for(int i=0; i<n; i++) {
     EdbID *id  = ss.GetID(i);
     EdbPlateP  *plate = ss.GetPlate(id->ePlate);
-    printf("plate %d before\n",i); plate->Print();
-    if(id) ReadPiecePar( *id, *plate);
-    printf("after\n"); plate->Print();
+    if(!plate)   Log(1,"EdbScanProc::UpdateSetWithPlatePar","ERROR! plate %d do not found!",id->ePlate);
+    //printf("plate %d before\n",i); plate->Print();
+    if(plate) ReadPiecePar( *id, *plate);
+    //printf("after\n"); plate->Print();
   }
 }
 

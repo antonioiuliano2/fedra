@@ -16,6 +16,7 @@
 #include "EdbAlignmentV.h"
 #include "EdbTrackFitter.h"
 #include "EdbCorrectionMapper.h"
+#include "EdbCouplesTree.h"
 
 using namespace std;
 using namespace TMath;
@@ -24,6 +25,7 @@ bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv);
 void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv);
 void GlobalDiff(EdbPVRec &ali, const char *suff);
 void GlobalEff(EdbPVRec &ali, const char *suff);
+void CheckGap(EdbPVRec &ali, const char *suff);
 
 //----------------------------------------------------------------------------------------
 void print_help_message()
@@ -298,6 +300,7 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   
 
   GlobalDiff(ali,"before_fit");
+  CheckGap(ali,"before_fit");
   
   EdbTrackFitter fitter;
   for(int i=0; i<ntr; i++) {
@@ -386,7 +389,7 @@ void GlobalDiff(EdbPVRec &ali, const char *suff="")
   float ymin = ali.Ymin();
   float ymax = ali.Ymax();
   
-  int pmin = 57, pmax=0;
+  int pmin = 512, pmax=0;
   for(int i=0; i<npat; i++) {
     int p = ali.GetPattern(i)->ScanID().ePlate;
     if(p<pmin) pmin=p;
@@ -462,7 +465,6 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
     int nseg = t->N();
     for(int j=0; j<nseg; j++) {
       EdbSegP *s  = t->GetSegment(j);
-      EdbSegP *sf = t->GetSegmentF(j);
       int plateid = s->ScanID().ePlate;
       
       hNSeg.Fill(plateid);
@@ -508,4 +510,65 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
   
   c->Write();
   f.Close();
+}
+
+
+//---------------------------------------------------------------------------
+void CheckGap(EdbPVRec &ali, const char *suff="")
+{
+  int   ntr  = ali.Ntracks();
+  Log(2,"CheckGap","for %d tracks",ntr);
+  //TH1F hGapN("gapN","GapN",   20, 0, 20 );
+  //TH1F hGapZ("gapZ","GapZ",   200, 0, 20000 );
+  //TH2F hDXfwd("DXfwd","DXfwd vs gap",  20, 0,20, 100, -200.,200. );
+  //TH2F hDYfwd("DYfwd","DYfwd vs gap",  20, 0,20, 100, -200.,200. );
+  //TH2F hDXbwd("DXbwd","DXbwd vs gap",  20, 0,20, 100, -200.,200. );
+  //TH2F hDYbwd("DYbwd","DYbwd vs gap",  20, 0,20, 100, -200.,200. );
+  
+  TString name;
+  sproc.MakeFileName(name,idset,"trk.an.root",false);
+  TFile f(name,"UPDATE");
+  
+  EdbCouplesTree cpt;
+  cpt.InitCouplesTree("gaps", 0, "WRITE");
+  
+  int gapcnt=0;
+  for(int i=0; i<ntr; i++) {
+    EdbTrackP *t = ali.GetTrack(i);
+    int nseg = t->N();
+    for(int j=0; j<nseg-1; j++) {
+      EdbSegP *s  = t->GetSegment(j);
+      EdbSegP *sn  = t->GetSegment(j+1);
+      //int   ngap    = sn->ScanID().ePlate - s->ScanID().ePlate;
+      //float dz      = sn->Z() - s->Z();
+      //float dxfwd   = sn->X() - (s->X() + s->TX()*dz);
+      //float dyfwd   = sn->Y() - (s->Y() + s->TY()*dz);
+      //float dxbwd   = s->X() - (sn->X() - sn->TX()*dz);
+      //float dybwd   = s->Y() - (sn->Y() - sn->TY()*dz);
+      
+      cpt.Fill(s,sn,t);
+      gapcnt++;
+      //hGapN.Fill(Abs(ngap));
+      //hGapZ.Fill(Abs(dz));
+      //hDXfwd.Fill( Abs(ngap) , dxfwd );
+      //hDYfwd.Fill( Abs(ngap) , dyfwd );
+      //hDXbwd.Fill( Abs(ngap) , dxbwd );
+      //hDYbwd.Fill( Abs(ngap) , dybwd );
+    }
+  }
+  /*
+  TCanvas *c = new TCanvas(Form("Gap_%s",suff), Form("Gap_%s",suff), 900,900);
+  c->Divide(2,3);
+  c->cd(1)->SetLogy();   hGapN.Draw();
+  c->cd(2)->SetLogy();   hGapZ.Draw();
+  c->cd(3)->SetLogz();   hDXfwd.Draw("colz");
+  c->cd(4)->SetLogz();   hDYfwd.Draw("colz");
+  c->cd(5)->SetLogz();   hDXbwd.Draw("colz");
+  c->cd(6)->SetLogz();   hDYbwd.Draw("colz");
+  
+  c->Write();
+  */
+  cpt.Close();
+  Log(2,"CheckGap"," %d gaps saved",gapcnt);
+  //f.Close();
 }

@@ -48,6 +48,7 @@ void EdbLinking::GetPar(TEnv &env)
   eDRfull              = env.GetValue("fedra.link.full.DR"             , 30.  );
   eDTfull              = env.GetValue("fedra.link.full.DT"             , 0.1  );
   eCHI2Pmax            = env.GetValue("fedra.link.full.CHI2Pmax"       , 3.   );
+  eCPRankingAlg        = env.GetValue("fedra.link.CPRankingAlg"        , 0   );
 
   eDoSaveCouples       = env.GetValue("fedra.link.DoSaveCouples"       , true );
   
@@ -57,8 +58,8 @@ void EdbLinking::GetPar(TEnv &env)
   eCond.SetPulsRamp0(    env.GetValue("fedra.link.PulsRamp0"      , "6 9") );
   eCond.SetPulsRamp04(   env.GetValue("fedra.link.PulsRamp04"     , "6 9") );
   eCond.SetDegrad(       env.GetValue("fedra.link.Degrad"         , 5) );
+  eCond.DefineLLFunction(  env.GetValue("fedra.link.LLfunction"         , "0.256336-0.16489*x+2.11098*x*x") );
 
-  
   GetDoubletsPar(env);
 }
 
@@ -292,10 +293,10 @@ void EdbLinking::FullLinking(EdbPattern &p1, EdbPattern &p2)
 }
 
 //---------------------------------------------------------------------
-void EdbLinking::SaveCouplesTree()
+void EdbLinking::SaveCouplesTree(const char *file)
 {
   EdbCouplesTree ect;
-  ect.InitCouplesTree("couples",0,"NEW");
+  ect.InitCouplesTree("couples",file,"NEW");
   
   ect.eTree->SetAlias("dz1"  ,"107.");
   ect.eTree->SetAlias("dz2"  ,"-107.");
@@ -307,10 +308,10 @@ void EdbLinking::SaveCouplesTree()
   ect.eTree->SetAlias("ty1c" , Form("s1.eTY/(%f)+(%f)",eCorr[0].V(5),eCorr[0].V(4)) );
   ect.eTree->SetAlias("tx2c" , Form("s2.eTX/(%f)+(%f)",eCorr[1].V(5),eCorr[1].V(3)) );
   ect.eTree->SetAlias("ty2c" , Form("s2.eTY/(%f)+(%f)",eCorr[1].V(5),eCorr[1].V(4)) );
-  ect.eTree->SetAlias("x1c"  ,  "s1.eX+dz1*tx1c" );
-  ect.eTree->SetAlias("y1c"  ,  "s1.eY+dz1*ty1c" );
-  ect.eTree->SetAlias("x2c"  ,  "s2.eX+dz2*tx2c" );
-  ect.eTree->SetAlias("y2c"  ,  "s2.eY+dz2*ty2c" );
+  ect.eTree->SetAlias("x1c"  , "s1.eX+dz1*tx1c" );
+  ect.eTree->SetAlias("y1c"  , "s1.eY+dz1*ty1c" );
+  ect.eTree->SetAlias("x2c"  , "s2.eX+dz2*tx2c" );
+  ect.eTree->SetAlias("y2c"  , "s2.eY+dz2*ty2c" );
   ect.eTree->SetAlias("dx"   , "x2c-x1c" );
   ect.eTree->SetAlias("dy"   , "y2c-y1c" );
   ect.eTree->SetAlias("dtx"  , "tx2c-tx1c" );
@@ -333,7 +334,6 @@ void EdbLinking::SaveCouplesTree()
     EdbSegCouple *sc = (EdbSegCouple *)eSegCouples.At(i);
     eCorr[0].ApplyCorrections( *(sc->eS1) );
     eCorr[1].ApplyCorrections( *(sc->eS2) );
-    
     hxy.Fill(sc->eS->X(), sc->eS->Y());
     htxy.Fill(sc->eS->TX(), sc->eS->TY());
     hchi.Fill(sc->CHI2P());
@@ -359,6 +359,7 @@ void EdbLinking::SaveCouplesTree()
   hdtx2.Write();
   hdty1.Write();
   hdty2.Write();
+  Log(2,"EdbLinking::SaveCouplesTree","%d couples are strored into %s",ntr,file);
 }
 
 
@@ -454,8 +455,9 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     eCorr[1].ApplyCorrections(seg2);
    
     //tf.Chi2SegM( *s1, *s2, seg, cond1, cond2);
-    tf.Chi2ASeg( seg1, seg2, seg, eCond, eCond);
     //seg.SetChi2( tf.Chi2ACP( *s1, *s2, cond1) );   //TODO test!!
+    if(eCPRankingAlg==1) tf.Chi2ASegLL( seg1, seg2, seg, eCond, eCond);
+    else tf.Chi2ASeg( seg1, seg2, seg, eCond, eCond);
     
     if(seg.Chi2() > eCHI2Pmax)  continue;
     
@@ -633,3 +635,28 @@ void EdbLinking::DumpDoubletsTree(EdbAlignmentV &adup, const char *name)
   }
   dup.WriteTree();
 }
+
+///______________________________________________________________________________
+void EdbLinking::CloneCouplesTree( const char *ifile, const char *ofile, EdbAffine2D *aff, TCut *cut )
+{
+  //read tree using eCut, apply affine transformation if any and write tree
+  EdbPattern pat, p1, p2;
+
+  EdbCouplesTree ict;
+  if(cut) ict.eCut = (*cut);
+  ict.InitCouplesTree("couples",ifile,"READ");
+  int n = ict.GetCPData(eSegCouples);
+  ict.Close();
+
+  if(aff) {
+    for(int i=0; i<n; i++) {
+      EdbSegCouple *sc = (EdbSegCouple*)(eSegCouples.UncheckedAt(i));
+      if(sc->eS) sc->eS->Transform(aff);
+      if(sc->eS) sc->eS1->Transform(aff);
+      if(sc->eS) sc->eS2->Transform(aff);
+    }
+  }
+
+  SaveCouplesTree(ofile);
+}
+

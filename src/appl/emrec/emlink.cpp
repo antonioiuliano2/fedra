@@ -63,6 +63,9 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.PulsRamp0"      , "6 9");
   cenv.SetValue("fedra.link.PulsRamp04"     , "6 9");
   cenv.SetValue("fedra.link.Degrad"         ,  5   );
+  
+  cenv.SetValue("fedra.link.LLfunction"     , "0.256336-0.16489*x+2.11098*x*x" );
+  cenv.SetValue("fedra.link.CPRankingAlg"   , 0 );
 
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");

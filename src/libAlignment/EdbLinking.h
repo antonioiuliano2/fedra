@@ -16,6 +16,7 @@ class EdbLinking : public EdbAlignmentV
    bool   eDoCorrectShrinkage;
    bool   eDoFullLinking;
    bool   eDoDumpDoubletsTree;
+   int    eCPRankingAlg;          // couples ranking algorithm (0-default, 1-likelihood used)
    
    float  eDRfull, eDTfull;       // acceptance for the full linking
    float  eCHI2Pmax;              // acceptance to save into couples tree
@@ -51,7 +52,7 @@ class EdbLinking : public EdbAlignmentV
   void     GetPar(TEnv &env);
   void     GetDoubletsPar(TEnv &env);
   void     GetPreselectionPar(EdbSEQ &seq, TEnv &env);
-  void     SaveCouplesTree();
+  void     SaveCouplesTree(const char *file=0);
   void     FullLinking(TObjArray &p1, TObjArray &p2);
   void     FullLinking(EdbPattern &p1, EdbPattern &p2);
   void     FillCombinationsAtMeanZ(TObjArray &p1, TObjArray &p2);
@@ -67,6 +68,10 @@ class EdbLinking : public EdbAlignmentV
   
   void     DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist=0);
   void     DumpDoubletsTree(EdbAlignmentV &adup, const char *name);
+  
+  void     CloneCouplesTree( const char *ifile, const char *ofile, EdbAffine2D *aff=0, TCut *cut=0 );
+  
+  void      SetApplyCorr(bool corr) {eCorr[0].eApplyCorr=corr;eCorr[1].eApplyCorr=corr;eCorr[2].eApplyCorr=corr;}
   
   void ProduceReport();
 

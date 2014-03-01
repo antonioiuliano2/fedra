@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
     else {
       EdbScanSet sc(id);
       sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
-      sproc.MakeScannedIDList( id, sc, 100, 0, suff);
+      sproc.MakeScannedIDList( id, sc, from_plate, to_plate, suff);
       sproc.WriteScanSet(id,sc);
       if(resetpar) sproc.MakeParSet(sc);
       else if(reset)    sproc.PrepareSetStructure(sc);

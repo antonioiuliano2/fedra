@@ -1167,12 +1167,12 @@ int EdbPVRec::LinkSlow()
 void EdbPVRec::DummyCycle()
 {
   int npat=Npatterns();
-  Log(1,"EdbPVRec::DummiCycle","npat=%d",npat);
+  Log(3,"EdbPVRec::DummiCycle","npat=%d",npat);
   for(int ipat=0; ipat<npat; ipat++) {
     EdbPattern *p = GetPattern(ipat);
     int nseg=p->N();
-    Log(1,"EdbPVRec::DummiCycle","pat %d, nseg= %d",ipat, nseg);
-    for(int iseg=0; iseg<npat; iseg++) {
+    Log(3,"EdbPVRec::DummiCycle","pat %d, nseg= %d",ipat, nseg);
+    for(int iseg=0; iseg<nseg; iseg++) {
       EdbSegP *s = p->GetSegment(iseg);
       if(s->Flag()==-999)  Log(1,"EdbPVRec::DummiCycle","jo pa");
     }

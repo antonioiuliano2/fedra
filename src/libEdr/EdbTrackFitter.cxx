@@ -164,6 +164,53 @@ float EdbTrackFitter::Chi2ACP( EdbSegP s1, EdbSegP s2, EdbScanCond &cond)
 }
 
 //______________________________________________________________________________
+float EdbTrackFitter::Chi2ASegLL( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
+{
+  // fast estimation of chi2 in the special case when the position
+  // errors of segments are negligible in respect to angular errors:
+  // sigmaXY/dz << sigmaTXY
+  // application: up/down linking,
+  //
+  // All calculation are done in the track plane which remove the
+  // dependency of the polar angle (phi)
+  // In this function the Likelihood estimated by Andrey and stored in s1.eChi2 and s2.eChi2 are used
+
+  Float_t dz =  s2.Z() - s1.Z();
+  seg.Set( 0,
+	   0.5*(s1.X() + s2.X()),
+	   0.5*(s1.Y() + s2.Y()),
+	   (s2.X() - s1.X())/dz,
+	   (s2.Y() - s1.Y())/dz,
+	   s1.W() + s2.W(),
+	   0);
+  seg.SetZ( 0.5*(s2.Z()+s1.Z()) );
+
+  Float_t  phi = -seg.Phi();
+  Double_t s   = TMath::Sin(phi);
+  Double_t c   = TMath::Cos(phi);
+  Float_t  tx  = seg.TX()*c-seg.TY()*s;
+  Float_t  ty  = seg.TX()*s+seg.TY()*c;
+  Float_t  tx1 = s1.TX()*c-s1.TY()*s;
+  Float_t  ty1 = s1.TX()*s+s1.TY()*c;
+  Float_t  tx2 = s2.TX()*c-s2.TY()*s;
+  Float_t  ty2 = s2.TX()*s+s2.TY()*c;
+
+  Float_t stx   = cond1.SigmaTX(tx);
+  Float_t sty   = cond1.SigmaTY(ty);
+  Float_t prob1 = cond1.ProbLL(tx,ty,s1.Chi2());
+  Float_t prob2 = cond2.ProbLL(tx,ty,s2.Chi2());
+
+  Float_t dtx1  = (tx1-tx)*(tx1-tx)/stx/stx/prob1;
+  Float_t dty1  = (ty1-ty)*(ty1-ty)/sty/sty/prob1;
+  Float_t dtx2  = (tx2-tx)*(tx2-tx)/stx/stx/prob2;
+  Float_t dty2  = (ty2-ty)*(ty2-ty)/sty/sty/prob2;
+  Float_t chi2a = Sqrt(dtx1+dty1+dtx2+dty2)/2.;
+
+  seg.SetChi2(chi2a);
+  return chi2a;
+}
+
+///______________________________________________________________________________
 float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
 {
   // fast estimation of chi2 in the special case when the position
@@ -176,12 +223,12 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanC
 
   Float_t dz =  s2.Z() - s1.Z();
   seg.Set( 0,
-	   0.5*(s1.X() + s2.X()),
-	   0.5*(s1.Y() + s2.Y()),
-	   (s2.X() - s1.X())/dz,
-	   (s2.Y() - s1.Y())/dz,
-	   s1.W() + s2.W(),
-	   0);
+           0.5*(s1.X() + s2.X()),
+           0.5*(s1.Y() + s2.Y()),
+           (s2.X() - s1.X())/dz,
+           (s2.Y() - s1.Y())/dz,
+           s1.W() + s2.W(),
+           0);
   seg.SetZ( 0.5*(s2.Z()+s1.Z()) );
 
   Float_t  phi = -seg.Phi();
@@ -208,6 +255,7 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanC
   seg.SetChi2(chi2a);
   return chi2a;
 }
+
 //______________________________________________________________________________
 float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2)
 {
