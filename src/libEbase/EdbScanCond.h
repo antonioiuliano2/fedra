@@ -3,6 +3,7 @@
 
 #include "TNamed.h"
 #include "TMatrixD.h"
+#include "TF1.h"
 #include "TMath.h"
 
 //______________________________________________________________________________
@@ -42,6 +43,10 @@ class EdbScanCond : public TNamed {
                               // itself in respect to the upper level RS
 
   Float_t eRadX0;             // radiation length for ECC media [microns]
+  
+ public:
+    
+  TF1 *eLikelihoodMT;          // the likelihood function used for microtrack probablility estimation
 
  public:
   EdbScanCond();
@@ -108,6 +113,10 @@ class EdbScanCond : public TNamed {
 
   float ProbSeg( float tx, float ty, float puls) const;
   float ProbSeg( float t, float puls) const; 
+  
+  void DefineLLFunction( const char *str );
+  float ProbLL( float tx, float ty, float puls) const;
+  float ProbLL( float t, float puls) const;
 
   void FillErrorsCov( float tx,float ty, TMatrixD &cov );
 

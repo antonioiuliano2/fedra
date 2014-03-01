@@ -10,9 +10,26 @@ ClassImp(EdbSegCouple)
 
 int EdbSegCouple::egSortFlag=0;
 ///______________________________________________________________________________
-EdbSegCouple::EdbSegCouple() 
+EdbSegCouple::EdbSegCouple()
 { 
   Set0();
+}
+
+///______________________________________________________________________________
+EdbSegCouple::EdbSegCouple( const EdbSegCouple &sc )
+{
+  eID1=sc.eID1;
+  eID2=sc.eID2;
+  eN1=sc.eN1;
+  eN2=sc.eN2;
+  eN1tot=sc.eN1tot;
+  eN2tot=sc.eN2tot;
+  eCHI2=sc.eCHI2;
+  eCHI2P=sc.eCHI2P;
+  if(sc.eS)  eS  = new EdbSegP( *(sc.eS) );
+  if(sc.eS1) eS1 = new EdbSegP( *(sc.eS1) );
+  if(sc.eS2) eS2 = new EdbSegP( *(sc.eS2) );
+  eIsOwner=sc.eIsOwner;
 }
 
 ///______________________________________________________________________________

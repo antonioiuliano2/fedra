@@ -34,6 +34,7 @@ public:
   virtual ~EdbCouplesTree();
 
   bool   InitCouplesTree(const char *name="couples", const char *fname=0, Option_t *mode="READ");
+  TEventList *InitCutList();
   void   Close();
   Int_t  Fill(EdbSegP *s1, EdbSegP *s2, EdbSegP *s=0, EdbSegCouple *cp=0, float xv=0, float yv=0, int pid1=0, int pid2=0 );
   Int_t  Fill();
@@ -41,6 +42,7 @@ public:
   int    GetEntry(int i);
   void   ApplyCorrections();
   int    GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0, TIndex2 *trseg=0 );
+  int    GetCPData( TObjArray &cparr );
   void   Print();
 
   ClassDef(EdbCouplesTree,1)  // service class for couples tree access

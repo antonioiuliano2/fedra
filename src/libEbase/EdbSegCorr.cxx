@@ -12,6 +12,8 @@ void EdbSegCorr::Print()
 ///---------------------------------------------------------------------
 void EdbSegCorr::ApplyCorrections(EdbSegP &s)
 {
-  float x=X(s), y=Y(s), tx=TX(s), ty=TY(s);
-  s.SetX(x); s.SetY(y); s.SetTX(tx); s.SetTY(ty);
+  if(eApplyCorr) {
+    float x=X(s), y=Y(s), tx=TX(s), ty=TY(s);
+    s.SetX(x); s.SetY(y); s.SetTX(tx); s.SetTY(ty);
+  }
 }

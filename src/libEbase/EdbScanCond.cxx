@@ -1,5 +1,6 @@
 #include "EdbScanCond.h"
 #include "EdbPhys.h"
+#include "EdbLog.h"
 
 ClassImp(EdbScanCond)
 
@@ -41,6 +42,8 @@ void EdbScanCond::SetDefault()
   eOffY=0;
 
   eRadX0 = EdbPhysics::kX0_Cell();
+  
+  eLikelihoodMT=0;
 }
 
 //______________________________________________________________________________
@@ -125,6 +128,32 @@ float EdbScanCond::ProbSeg(float t, float puls) const
   float pa1 = ePuls0[0] - t/.4*(ePuls0[0]-ePuls04[0]);
   float pa2 = ePuls0[1] - t/.4*(ePuls0[1]-ePuls04[1]);
   return Ramp(puls,pa1,pa2);
+}
+
+//______________________________________________________________________________
+void EdbScanCond::DefineLLFunction(const char *str)
+{
+  //get polinomial function parameters
+  if(!str) return;
+  SafeDelete(eLikelihoodMT);
+  eLikelihoodMT = new TF1("LikelihoodMT",str,0,2);
+  Log(2,"EdbScanCond::DefineLLFunction",str);
+}
+
+//______________________________________________________________________________
+float EdbScanCond::ProbLL(float tx, float ty, float ll) const
+{
+  return ProbLL( Sqrt(tx*tx + ty*ty), ll);
+}
+
+//______________________________________________________________________________
+float EdbScanCond::ProbLL(float t, float ll) const 
+{
+  // use eLikelihoodMT function
+  // TODO: to make this function statistically correct
+  if(!eLikelihoodMT) return 1;
+  Double_t ell =  eLikelihoodMT->Eval( ATan(t) );
+  return 1./Exp( Abs(ell-ll) );
 }
 
 //______________________________________________________________________________

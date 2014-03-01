@@ -194,19 +194,59 @@ void   EdbCouplesTree::ApplyCorrections()
 }
 
 ///______________________________________________________________________________
-int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
+int EdbCouplesTree::GetCPData( TObjArray &cparr )
+{
+  //read segments into array of EdbSegCouple objects
+  TEventList *lst = InitCutList();
+  int nlst =lst->GetN();
+  int nseg = 0, nerase=0;
+  int entr=0;
+  for(int i=0; i<nlst; i++ ) {
+    entr = lst->GetEntry(i);
+
+    if(eEraseMask) if(eEraseMask->At(entr)) {
+      Log(3,"EdbCouplesTree::GetCPData","erase %d\n",entr);
+      nerase++;
+      continue;
+    }
+  
+    GetEntry(entr);
+    EdbSegCouple *cp = new EdbSegCouple(*eCP);
+    cp->eS = new EdbSegP(*eS);
+    cp->eS1 = new EdbSegP(*eS1);
+    cp->eS2 = new EdbSegP(*eS2);
+    cparr.Add( cp );
+
+    nseg++;
+  }
+   
+  SafeDelete(lst);
+
+  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s ; %d erased by mask",nlst, (int)(eTree->GetEntries()), eCut.GetTitle(), nerase);
+
+  return nseg;
+}
+
+///______________________________________________________________________________
+TEventList *EdbCouplesTree::InitCutList()
 {
   if(!eTree)  return  0;
   int nentr = (int)(eTree->GetEntries());  if(nentr<1) return 0;
-
   eTree->Draw(">>lst", eCut );
   TEventList *lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
   if(!lst) {Log(1,"EdbCouplesTree::GetCPData","ERROR!: events list (lst) did not found! In couples tree %d entries",nentr); return 0;}
+  return lst;
+}
+
+///______________________________________________________________________________
+int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
+{
+  TEventList *lst = InitCutList();
   int nlst =lst->GetN();
 
-  int nseg = 0;
+  int nseg = 0, nerase=0;
   pat->SetID(0);
-  
+
   int entr=0;
   for(int i=0; i<nlst; i++ ) {
     entr = lst->GetEntry(i);
@@ -216,9 +256,10 @@ int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, 
 //     }
 
     if(eEraseMask) if(eEraseMask->At(entr)) {
-       printf("EdbCouplesTree::GetCPData erase %d\n",entr); 
-       continue;
-       }
+      Log(3,"EdbCouplesTree::GetCPData","erase %d\n",entr);
+      nerase++;
+      continue;
+    }
 
     GetEntry(entr);
 
@@ -243,7 +284,7 @@ int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, 
 
   SafeDelete(lst);
 
-  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s",nlst, nentr, eCut.GetTitle() );
+  Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s ; %d are erased by mask",nlst, (int)(eTree->GetEntries()), eCut.GetTitle(), nerase);
 
   return nseg;
 }

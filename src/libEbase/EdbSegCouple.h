@@ -8,18 +8,7 @@
 // service class for couples handling                                   //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
-// #include "THashList.h"
-// #include "TIndexCell.h"
 #include "EdbSegP.h"
-// #include "EdbScanCond.h"
-// 
-// class EdbAffine2D;
-// class TIndexCell;
-// class EdbVertex;
-// class EdbVTA;
-// class TIndex2;
-// class EdbScanSet;
 
 //______________________________________________________________________________
 class EdbSegCouple : public TObject {
@@ -42,6 +31,7 @@ class EdbSegCouple : public TObject {
 
  public:
   EdbSegCouple();
+  EdbSegCouple(const EdbSegCouple &sc );
   EdbSegCouple( int id1, int id2 )
     { Set0();eID1=id1;eID2=id2; eCHI2=0; eCHI2P=0; eN1=0; eN2=0; }
   ~EdbSegCouple();
@@ -54,7 +44,6 @@ class EdbSegCouple : public TObject {
   void SetCHI2(float chi2)  {eCHI2=chi2;}
   void SetCHI2P(float chi2)  {eCHI2P=chi2;}
 
-  //  void CalculateS // TODO
   void Print();
 
   static void SetSortFlag(int s=0);
