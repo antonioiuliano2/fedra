@@ -511,7 +511,8 @@ Float_t EdbAlignmentV::CalcMeanDZ(float tmin, float tmax)
   //  Calculate mean shrinkage (to be applied to side 0 to get side 1)
   int n = CheckEqualArr(eS[0],eS[1]);
   int ic=0;
-  float dz = eCorr[0].V(2);    eCorr[0].SetV(2,0.);
+  float dz = eCorr[0].V(2); if(Abs(dz)<0.000001) return 0;
+  eCorr[0].SetV(2,0.);
   Double_t dzn=0;
   for(int i=0; i<n; i++) {
     EdbSegP *s1=(EdbSegP*)eS[0].UncheckedAt(i);

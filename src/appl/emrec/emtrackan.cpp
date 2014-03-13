@@ -17,6 +17,7 @@
 #include "EdbTrackFitter.h"
 #include "EdbCorrectionMapper.h"
 #include "EdbCouplesTree.h"
+#include "EdbMomentumEstimator.h"
 
 using namespace std;
 using namespace TMath;
@@ -26,6 +27,7 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv);
 void GlobalDiff(EdbPVRec &ali, const char *suff);
 void GlobalEff(EdbPVRec &ali, const char *suff);
 void CheckGap(EdbPVRec &ali, const char *suff);
+void CheckMom(EdbPVRec &ali, TEnv &cenv);
 
 //----------------------------------------------------------------------------------------
 void print_help_message()
@@ -35,6 +37,7 @@ void print_help_message()
   cout<< "\t  Analyse the tracks tree and produce the report file: ID.trk.an.root\n";
   cout<< "\t\t -corraff    -  save corrections to set.root file\n";
   cout<< "\t\t -global     -  global corrections using long tracks to unbend the full set\n";
+  cout<< "\t\t -momentum   -  tracks momentum estimation\n";
   cout<< "\t\t -divide=NxM -  divide set into into NxM zones and calculate local correction in each zone\n";
   cout<< "\t\t                the following tracking may use this correction if the parameter fedra.track.do_local_corr in track.rootrc is set to 1\n";
   cout<< "\t\t                normally is required several iterations (>3) like emtra.../emtrackan... to converge the local corrections. \n";
@@ -52,6 +55,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("trackan.read_cut"        , "1");
   cenv.SetValue("trackan.NCPmin"          , "50");
   cenv.SetValue("trackan.EdbDebugLevel"   ,   1 );
+  cenv.SetValue("trackan.DoRefitLine"            , 1 );
   cenv.SetValue("trackan.global.doXYcorr"        , 1);
   cenv.SetValue("trackan.global.doTXTYcorr"      , 1);
   cenv.SetValue("trackan.global.doZcorr"         , 1);
@@ -60,6 +64,7 @@ void set_default(TEnv &cenv)
 bool      do_set      = false;
 bool      do_file     = false;
 bool      do_corraff  = false;
+bool      do_momentum = false;
 EdbID idset;
 EdbScanProc sproc;
 
@@ -101,6 +106,10 @@ int main(int argc, char* argv[])
     {
       do_corraff=true;
     }
+    else if(!strncmp(key,"-momentum",9))
+    {
+      do_momentum=true;
+    }
     else if(!strncmp(key,"-global",7))
     {
       do_global=true;
@@ -121,10 +130,11 @@ int main(int argc, char* argv[])
   EdbPVRec ali;
   if(do_set)       sproc.ReadTracksTree( idset,ali, cut );
   else if(do_file) sproc.ReadTracksTree( name ,ali, cut );
-  ali.Print();
+  //ali.Print();
   
-  if(do_global) DoGlobalCorr(ali,cenv);
-  else MakeCorrectionMap(ali,cenv);
+  if(do_momentum)     CheckMom(ali,cenv);
+  else if(do_global)  DoGlobalCorr(ali,cenv);
+  else                MakeCorrectionMap(ali,cenv);
 
   return 1;
 }
@@ -294,6 +304,7 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   Log(2,"DoGlobalCorr","with %d tracks and %d patterns",ntr, npat);
   
   cenv.Print();
+  bool doRefitLine= cenv.GetValue("trackan.DoRefitLine"            , 1);
   bool doXYcorr   = cenv.GetValue("trackan.global.doXYcorr"        , 1);
   bool doTXTYcorr = cenv.GetValue("trackan.global.doTXTYcorr"      , 1);
   bool doZcorr    = cenv.GetValue("trackan.global.doZcorr"         , 1);
@@ -302,10 +313,12 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   GlobalDiff(ali,"before_fit");
   CheckGap(ali,"before_fit");
   
-  EdbTrackFitter fitter;
-  for(int i=0; i<ntr; i++) {
-    EdbTrackP *t = ali.GetTrack(i);
-    fitter.FitTrackLine(*t);
+  if(doRefitLine) {
+    EdbTrackFitter fitter;
+    for(int i=0; i<ntr; i++) {
+      EdbTrackP *t = ali.GetTrack(i);
+      fitter.FitTrackLine(*t);
+    }
   }
   
   GlobalDiff(ali,"before_corr");
@@ -510,6 +523,31 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
   
   c->Write();
   f.Close();
+}
+
+
+//---------------------------------------------------------------------------
+void CheckMom(EdbPVRec &ali, TEnv &cenv)
+{
+  int   ntr  = ali.Ntracks();
+  Log(2,"Check momentum","for %d tracks",ntr);
+  
+  EdbMomentumEstimator mes;
+  //mes.eDTx0=0.001;  mes.eDTx1=0; mes.eDTx2=0;
+  //mes.eDTy0=0.001;  mes.eDTy1=0; mes.eDTy2=0;
+
+  TObjArray fitted_tracks;
+  
+  for(int i=0; i<ntr; i++) {
+    EdbTrackP *t = ali.GetTrack(i);
+    //int nseg = t->N();
+//    Float_t P = mes.PMSang(*t);
+    Float_t P = mes.PMS(*t);
+    t->SetP(P);
+    fitted_tracks.Add(t);
+  }
+  
+  EdbDataProc::MakeTracksTree( fitted_tracks, 0., 0., Form("b%s.trk.mom.root", idset.AsString()) );
 }
 
 

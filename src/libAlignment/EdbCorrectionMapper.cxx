@@ -168,6 +168,7 @@ TCanvas   *EdbCorrectionMapper::DrawMap(EdbCorrectionMap &map, const char *suffi
     TCanvas   *corrmap = new TCanvas( Form("corrmap_%s",suffix), Form("corrmap_%s",suffix), 800,800 );
     corrmap->SetRightMargin(0.14);
     corrmap->SetLeftMargin(0.08);
+    corrmap->SetFillColor(3);
     //TH2F *h2f = MapDZ()->DrawH2( Form("mapDZ_%s" ,suffix),"Map DZ" );
     TH2F *h2f = map.DrawH2( Form("mapDZ_%s" ,suffix),"Map DZ" );
     h2f->GetXaxis()->SetLabelSize(0.025);
