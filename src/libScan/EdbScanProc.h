@@ -70,6 +70,7 @@ public:
   int     WriteFound(EdbPattern &found, EdbID id, int flag=-1) {int id4[4]; id.Get(id4); return WriteFound(found,id4,flag);}
   int     WritePatTXT(EdbPattern &pred, EdbID id, const char *suffix, int flag=-1) {int id4[4]; id.Get(id4); return WritePatTXT(pred,id4,suffix,flag);}
 
+  bool    WaitFileReady(const char* fname_); //waits file copied/moved, in ready state
   EdbRun *InitRun(int id[4], char* runname_ = NULL, bool createrun_=true);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
   int     LoadPlate(EdbScanClient &scan, int id[4], int attempts=1);

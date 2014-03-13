@@ -68,8 +68,8 @@ protected:
   TString   eServer;            // address of the scanning mashine
 
   TString eRawDirServer;     // directory path for raw data files visible from the Scan Server (i.e. "o:/MIC5")
-  TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw")
-  TString eRawPthServer;     // path for raw data files visible from processing comp (i.e. "./raw")
+  TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw/MIC5")
+  TString eRawPthServer;     // path for raw data files visible from processing comp (i.e. "./raw/MIC5/b123456/p012/123456.12.1.1000.raw.root")
 
 public: 
   EdbScanClientCommon();

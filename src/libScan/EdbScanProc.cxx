@@ -8,6 +8,10 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
+#include <stdio.h>
+#include <time.h>
+#include <sys/stat.h>
+
 #include "Varargs.h"
 #include "TROOT.h"
 #include "TSystem.h"
@@ -901,14 +905,19 @@ int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbP
     delete run;
   }
 
-  if(!createRun && !scan.ServerCreatesTarget()){//move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
-    char str[1024];
-#ifdef WIN32
-    sprintf(str,"move %s %s", eServerCreatedRunName.Data(), runname);
-#else
-    sprintf(str,"mv %s %s", eServerCreatedRunName.Data(), runname);
-#endif
-    gSystem->Exec(str);
+  if(!createRun){
+    if(!scan.ServerCreatesTarget()){//server creates *.root in tmp dir move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
+      WaitFileReady(eServerCreatedRunName.Data());
+      char str[1024];
+  #ifdef WIN32
+      sprintf(str,"move /F %s %s", eServerCreatedRunName.Data(), runname);
+  #else
+      sprintf(str,"mv -f %s %s", eServerCreatedRunName.Data(), runname);
+  #endif
+      gSystem->Exec(str);
+    }else{//Server creates *.root on place
+      WaitFileReady(runname);
+    }
   }
   return scanned;
 }
@@ -1741,6 +1750,44 @@ bool EdbScanProc::GetMap(int brick, TString &map)
 }
 
 //----------------------------------------------------------------
+bool EdbScanProc::WaitFileReady(const char* fname_){//waits file copied/moved, in ready state
+time_t t0 = time(0);
+  const int dt=5; //wait max 5 sec till file ready
+  const int dtupd=500000; //wait 500 msec to check if file is updating
+  const int dtslp=100000; //wait 100 msec before recheck
+  
+  bool ready = false;
+  LogPrint(0,2,"WaitFileReady","source file \"%s\"\n",fname_);
+  while(t0+dt > time(0) && !ready){
+    FILE *f=fopen(fname_, "r");
+    if(f != NULL){
+      fclose(f);
+      //printf("file there\n");
+      struct stat statbuf1, statbuf2;
+      int v=stat(fname_, &statbuf1);
+      if (v != -1) {
+        if(statbuf1.st_size != 0){
+          gSystem->Sleep(dtupd);
+          if (stat(fname_, &statbuf2) != -1) {
+            if(statbuf2.st_size == statbuf1.st_size){
+              ready=true;
+            }else{
+              //printf("file updating\n");
+            }
+          }
+        }
+      }
+      //printf("%d\n", v);
+    }else{
+      //printf("file not there\n");
+      gSystem->Sleep(dtslp);
+
+    }
+  }
+  LogPrint(0,2,"WaitFileReady","%s\n", ready ? "file is ready." : "file waiting timeout!");
+  return ready;
+}
+
 EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, bool createrun_)
 {
   // create new run file as eProcDirClient/bXXXXXX/pYYY/x.y.s.p.raw.root
@@ -1755,7 +1802,14 @@ EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, bool createrun_)
       if( !gSystem->AccessPathName(str2.Data(), kFileExists) ) continue;
       else                                                     break;
     }
-    gSystem->CopyFile(str.Data(), str2.Data());
+    //gSystem->CopyFile(str.Data(), str2.Data());
+    char strbuf[1024];
+#ifdef WIN32
+    sprintf(strbuf,"move /F %s %s", str.Data(), str2.Data());
+#else
+    sprintf(strbuf,"mv -f %s %s", str.Data(), str2.Data());
+#endif
+    gSystem->Exec(strbuf);
     LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str2.Data());
   }
   LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
