@@ -67,9 +67,12 @@ protected:
   int       ePORT;              // port number where ScanDriver expect connection (default 1777)
   TString   eServer;            // address of the scanning mashine
 
-  TString eRawDirServer;     // directory path for raw data files visible from the Scan Server (i.e. "o:/MIC5")
-  TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw/MIC5")
-  TString eRawPthServer;     // path for raw data files visible from processing comp (i.e. "./raw/MIC5/b123456/p012/123456.12.1.1000.raw.root")
+  TString eRawDirServer;     // directory path for raw data files visible from the Scan Server (i.e. "o:/MIC5/tmp_SYSAL")
+  TString eRawDirClient;     // directory path for raw data files visible from processing comp (i.e. "./raw/MIC5/tmp_SYSAL")
+  TString eProcTgtServer;     // path for raw data files visible from processing comp (i.e. "o:/MIC5/b123456/p012/123456.12.1.1000.raw.root")
+  TString eProcPthServer;     // path for raw data files visible from processing comp (i.e. "o:/MIC5/")
+
+  TString eServerCreatedRunName;
 
 public: 
   EdbScanClientCommon();
@@ -172,10 +175,17 @@ public:
 		eRawDirClient = rawdirclient_;
 	};
 
-	const char * GetRawPthServer(){return eRawPthServer.Data(); };
-	void SetRawPthServer(const char* rawpthserver_){
-		eRawPthServer = rawpthserver_;
+	const char * GetProcTgtServer(){return eProcTgtServer.Data(); };
+	void SetProcTgtServer(const char* prctgtserver_){
+		eProcTgtServer = prctgtserver_;
 	};
+
+	const char * GetProcPthServer(){return eProcPthServer.Data(); };
+	void SetProcPthServer(const char* prcpthserver_){
+		eProcPthServer = prcpthserver_;
+	};
+
+	const char * GetServerCreatedRunName(){return eServerCreatedRunName.Data();};
 
   ClassDef(EdbScanClientBase,1)  // remote scanning from Bern
 };

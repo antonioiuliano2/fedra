@@ -891,11 +891,14 @@ int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbP
 
   bool createRun = !scan.ServerCreatesRootFile(); // if is created by server side - no need to create it
   char runname[512];
-  EdbRun *run = InitRun(id, runname, createRun);
+  char runNameSrv[512];
+  
+  EdbRun *run = InitRun(id, runname, runNameSrv, createRun);
   if(!run && createRun) return 0;
 
-  if(!createRun)
-    scan.SetRawPthServer(runname);
+  if(!createRun && eProcDirServer.Length())//if ProcDir not set - server cant create proper files
+    scan.SetProcTgtServer(runNameSrv);
+  scan.SetProcPthServer(eProcDirServer.Data());
     
   int scanned = scan.ScanAreas(st, id,predopt,run,opt);
   LogPrint(id[0],1,"ScanAreas","%d.%d.%d.%d  %d predictions scanned; run with %d views stored", id[0],id[1],id[2],id[3],scanned, (createRun)? run->GetEntries(): (-1) );
@@ -907,12 +910,17 @@ int EdbScanProc::ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, EdbP
 
   if(!createRun){
     if(!scan.ServerCreatesTarget()){//server creates *.root in tmp dir move server-side created file in target loaction (<*>/brick/plate/*.*.*.*.raw.root)
-      WaitFileReady(eServerCreatedRunName.Data());
+      TString serverCreatedRunName = scan.GetServerCreatedRunName();
+      if(serverCreatedRunName.Length()==0){
+	printf("Server had to create run but we don't know where it is.\n");
+	return 0;
+      }
+      WaitFileReady(serverCreatedRunName.Data());
       char str[1024];
   #ifdef WIN32
-      sprintf(str,"move /F %s %s", eServerCreatedRunName.Data(), runname);
+      sprintf(str,"move /F %s %s", serverCreatedRunName.Data(), runname);
   #else
-      sprintf(str,"mv -f %s %s", eServerCreatedRunName.Data(), runname);
+      sprintf(str,"mv -f %s %s", serverCreatedRunName.Data(), runname);
   #endif
       gSystem->Exec(str);
     }else{//Server creates *.root on place
@@ -1720,6 +1728,22 @@ void EdbScanProc::MakeFileName(TString &s, int ID[4], const char *suffix, bool i
 }
 
 //----------------------------------------------------------------
+void EdbScanProc::MakeFileNameSrv(TString &s, int ID[4], const char *suffix, bool inplate)
+{
+  //make file pathname as .../bXXXXXX/pYYY/a.a.a.a.suffix if inplate==true
+  //otherwise as .../bXXXXXX/a.a.a.a.suffix
+  char str[256];
+  if (inplate)
+    sprintf(str,"%s/b%6.6d/p%3.3d/%d.%d.%d.%d.%s",
+            eProcDirServer.Data(),ID[0], ID[1], ID[0], ID[1], ID[2], ID[3],suffix);
+  else
+    sprintf(str,"%s/b%6.6d/b%6.6d.%d.%d.%d.%s",
+            eProcDirServer.Data(),ID[0], ID[0], ID[1], ID[2], ID[3],suffix);
+    
+  s=str;
+}
+
+//----------------------------------------------------------------
 void EdbScanProc::MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix)
 {
   //make affine file name as ../bXXXXXX/AFF/a.a.a.a_b.b.b.b.aff.par
@@ -1753,8 +1777,8 @@ bool EdbScanProc::GetMap(int brick, TString &map)
 bool EdbScanProc::WaitFileReady(const char* fname_){//waits file copied/moved, in ready state
 time_t t0 = time(0);
   const int dt=5; //wait max 5 sec till file ready
-  const int dtupd=500000; //wait 500 msec to check if file is updating
-  const int dtslp=100000; //wait 100 msec before recheck
+  const int dtupd=500; //wait 500 msec to check if file is updating
+  const int dtslp=100; //wait 100 msec before recheck
   
   bool ready = false;
   LogPrint(0,2,"WaitFileReady","source file \"%s\"\n",fname_);
@@ -1788,12 +1812,15 @@ time_t t0 = time(0);
   return ready;
 }
 
-EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, bool createrun_)
+EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, char* runnamesrv_, bool createrun_)
 {
   // create new run file as eProcDirClient/bXXXXXX/pYYY/x.y.s.p.raw.root
   if(!CheckProcDir(id)) return 0;
   TString str;
+  TString strSrv;
+
   MakeFileName(str,id,"raw.root");   // the file will have the requested name 
+  MakeFileNameSrv(strSrv,id,"raw.root");   // the file will have the requested name 
 
   if( !gSystem->AccessPathName(str.Data(), kFileExists) ) {   // if the file with the same name exists it will be saved as *root.xxx.save
     TString str2;
@@ -1813,9 +1840,12 @@ EdbRun *EdbScanProc::InitRun(int id[4], char* runname_, bool createrun_)
     LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str2.Data());
   }
   LogPrint(id[0], 3,"EdbScanProc::InitRun"," %s\n",str.Data());
-  if(runname_ != NULL)
+  if(runname_ != NULL){
     strcpy(runname_, str.Data());
-
+  }
+  if(runnamesrv_ != NULL){
+    strcpy(runnamesrv_, strSrv.Data());
+  }
   EdbRun* run = NULL;
   if(createrun_)
     run = new EdbRun(str.Data(),"RECREATE");

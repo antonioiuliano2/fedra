@@ -11,7 +11,8 @@ class TEnv;
 class EdbScanProc : public TNamed
 {
  public:
-  TString eProcDirClient;    // directory path for root data
+ TString eProcDirClient;    // directory path for root data
+ TString eProcDirServer;    // directory path for root data
   TString eParDir;           // directory path for off-line processing parameters
 
 private:
@@ -32,6 +33,9 @@ public:
   void    MakeFileName(TString &s, int id[4], const char *suffix, bool inplate=true);
   void    MakeFileName(TString &s, EdbID id, const char *suffix, bool inplate=true) 
     {int id4[4]; id.Get(id4); return MakeFileName(s,id4,suffix,inplate);}
+  void    MakeFileNameSrv(TString &s, int id[4], const char *suffix, bool inplate=true);
+  void    MakeFileNameSrv(TString &s, EdbID id, const char *suffix, bool inplate=true) 
+    {int id4[4]; id.Get(id4); return MakeFileNameSrv(s,id4,suffix,inplate);}
   void    MakeAffName(TString &s, int id1[4], int id2[4], const char *suffix="aff.par");
   void    MakeAffName(TString &s, EdbID id1, EdbID id2, const char *suffix="aff.par") 
     { int id14[4]; id1.Get(id14); int id24[4]; id2.Get(id24); return MakeAffName(s,id14,id24,suffix); }
@@ -71,7 +75,7 @@ public:
   int     WritePatTXT(EdbPattern &pred, EdbID id, const char *suffix, int flag=-1) {int id4[4]; id.Get(id4); return WritePatTXT(pred,id4,suffix,flag);}
 
   bool    WaitFileReady(const char* fname_); //waits file copied/moved, in ready state
-  EdbRun *InitRun(int id[4], char* runname_ = NULL, bool createrun_=true);
+  EdbRun *InitRun(int id[4], char* runname_ = NULL, char* runnamesrv_ = NULL, bool createrun_=true);
   bool    FlashRawDir(EdbScanClient &scan, int id[4]);
   int     LoadPlate(EdbScanClient &scan, int id[4], int attempts=1);
   int     ScanAreas(EdbScanClient::ScanType st, EdbScanClient &scan, int id[4], int flag=-1, const char *opt="NOCLCLFRAMESUM");

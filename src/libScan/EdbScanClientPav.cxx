@@ -136,12 +136,13 @@ void EdbScanClientPav::AsyncScanPreloadAreaS(  int id1, int id2, int id3, int id
 	if(!eSock)
 		return;
 
-  SetServerTarget();
   
 	char area[100];
 	sprintf(area, "%f %f %f %f", x1, y1, x2, y2); // here goes xmin, ymin, xmax, ymax
 	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_pathName.c_str(), "area", area, NULL_TRM);
 
+	SetServerTarget();
+	
 	m_mm.AddStartNode(m_pathLib.c_str(), m_pathName.c_str(), "");
 	m_mm.FillBuff();
 
@@ -155,24 +156,28 @@ bool EdbScanClientPav::ScanFromPrediction(int id1, int id2, int id3, int id4, fl
 	if(!eSock)
 		return false;
 
-  SetServerTarget();
 
 	char pars[200];
 	sprintf(pars, "%f %f", dx, dy);
 	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_predPathName.c_str(), "pred_sigma", pars, NULL_TRM);
 
+	if(eProcPthServer.Length() != 0)//only if proc path is set, i.e. path to processing directory as seen from scanning srv
+	  m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_predPathName.c_str(), "pred_list", eProcPthServer.Data(), NULL_TRM);
+
 	sprintf(pars, "%u %u %u %u", id1, id2, id3, id4);
 	m_mm.AddSetPathParamsNode(m_pathLib.c_str(), m_predPathName.c_str(), "pred_id", pars, NULL_TRM);
 
+	SetServerTarget();
+	
 	m_mm.AddStartNode(m_pathLib.c_str(), m_predPathName.c_str(), "");
 	m_mm.FillBuff();
 
-  AsyncStartScan();
+	AsyncStartScan();
   
-  if(AsyncWaitForScanResult()==1)
-    return true;
-  else
-    return false;
+	if(AsyncWaitForScanResult()==1)
+	  return true;
+	else
+	  return false;
 }
 
 //----------------------------------------------------------------
@@ -276,24 +281,22 @@ int EdbScanClientPav::AsyncWaitForScanResult()
 }
 
 void EdbScanClientPav::SetServerTarget(){
-  std::string spath(eRawPthServer.Data());         //   /opera/ONLINE/b800000/p009/asd.root
-  if(spath.find(eRawDirClient.Data()) == 0){
-    spath = spath.substr(eRawDirClient.Length());  //   /b800000/p009/asd.root
-    while(spath.find("/") == 0)
-      spath = spath.substr(1);                     //   b800000/p009/asd.root
-
-    std::string path(eRawDirServer.Data());        //   S:/
-    int f1 = path.find("/", path.length()-1);
-    int f2 = path.find("\\", path.length()-1);
-    if(f1 == -1 && f2 == -1)
-      path += "/";
-    path += spath;                                 //   S:\b800000/p009/asd.root
-
+  std::string path(eProcTgtServer.Data());         //   /opera/ONLINE/b800000/p009/asd.root
+  if(eProcPthServer.Length() != 0){
     m_mm.AddSetModuleParamsNode("processor", "clprc.output_file", path.c_str(), NULL_TRM);
-
   }else{
     m_createdTarget = false;
-    printf("Error in target path format, raw dir client prefix not found.\n");
+    std::string spath = eRawDirServer.Data();
+    std::string cpath = eRawDirClient.Data();
+    char buf[500];
+    unsigned int tid=static_cast<unsigned int>(time(0));
+    sprintf(buf, "/tracks_%u.raw.root", tid);
+    spath += buf;
+    cpath += buf;
+
+    eServerCreatedRunName = cpath.c_str();
+    m_mm.AddSetModuleParamsNode("processor", "clprc.output_file", spath.c_str(), NULL_TRM);
+    printf("Server proc dir not set. Please set for speedup.\n");
     return;
   }
 
@@ -302,7 +305,7 @@ void EdbScanClientPav::SetServerTarget(){
   
   uint32 len = m_mm.GetBufSize();
 
-	int res;
+  //int res;
 	if(eSock && eSock->IsValid()){
 		eSock->SendRaw(&len, sizeof(len));
 		eSock->SendRaw(m_mm.GetBuf(), len);

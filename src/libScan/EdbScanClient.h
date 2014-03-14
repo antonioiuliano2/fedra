@@ -94,10 +94,17 @@ public:
 		m_implementation->SetRawDirClient(rawdirclient_);
 	};
 
-	const char * GetRawPthServer(){return m_implementation->GetRawPthServer(); };
-	void SetRawPthServer(const char* rawpthserver_){
-		m_implementation->SetRawPthServer(rawpthserver_);
+	const char * GetProcTgtServer(){return m_implementation->GetProcTgtServer(); };
+	void SetProcTgtServer(const char* prcpthserver_){
+		m_implementation->SetProcTgtServer(prcpthserver_);
 	};
+
+	const char * GetProcPthServer(){return m_implementation->GetProcPthServer(); };
+	void SetProcPthServer(const char* prcpthserver_){
+		m_implementation->SetProcPthServer(prcpthserver_);
+	};
+
+	const char * GetServerCreatedRunName(){ return m_implementation->GetServerCreatedRunName(); };
 
 	bool ServerCreatesRootFile(){return eServerCreatesRootFile;};
 	bool ServerCreatesTarget(){return m_implementation->ServerCreatesTarget();};
