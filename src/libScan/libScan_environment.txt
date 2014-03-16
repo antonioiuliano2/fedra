@@ -1,0 +1,37 @@
+The file storage, exchange and sharing between FEDRA and scanning server concept was revised for full and easy support of last LASSO features.
+
+Version supported:
+FEDRA revision 1346
+LASSO v0.0.1.68
+SySal: no changes
+
+The changes affect the scanning scripts and system environment setup, but you will easily setup all of them following this note.
+
+1)File sharing.
+The files on processing machine should be available for writing from windows machine running Scanning Server through samba for direct on-place *.raw.root storage and correct work of scanback/manual check features
+
+If there are different users used for data processing, say mic1, mic2, mic3,... and another one for access through Samba, say scanner, they should be mutually be members of each others' groups:
+
+mic1, mic2, mic3 - also member of scanner group
+scanner - member of also all mic1, mic2, mic3,.. groups
+
+with all new files created having the rw group privilege.
+
+
+2)Scanning script should provide the following variables:
+    //EdbScanProc sproc;
+    //EdbScanClient scan;
+    scan.SetServer("10.145.0.1");// IP of the scanning server on mic1, LASSO or SySal
+    scan.SetRawDirClient("/data/raw/mic1"); //raw SySal and temporary LASSO data directory as seen from processing machine. Data is written there if scanned from mic1
+    scan.SetRawDirServer("T:/"); // same path as seen by mic1. It is here where SySal scanning server stores data (concerning cases when this path is used by LASSO see below)
+    sproc.eProcDirClient="/data/opera/mic3/ONLINE/"; // processing dir on the processing machine for current brick
+    sproc.eProcDirServer="P:/mic3/ONLINE/"; // same dir as seen by microscope machine
+
+First three are usually set from scan.C script under mic variable switch since they depend on the machine where scanning server is running.
+
+On the other hand last two depend on the place where the brick is created and processed. The eProcDirServer should be in the final end accessed from every microscope in the same way. This puts a constraint that the samba server hosting the brick data has to be connected as a network disk with the same letter on every microscope (P: in the example above). 
+This two variables should be set for-brick, as they depend on the place where it's data is located and so are normally placed in b******.h
+
+Please note, that one brick may be created on one mic and after scanned/rescanned/etc on another one (in the example above the brick is created from mic3 and configured to be scanned on mic1)
+
+The path set be SetRawDirClient call is used by LASSO only in case sproc.eProcDirServer is not set. In this case a temporary file called tracks_<timestamp>.raw.root is created in this directory and then moved by FEDRA in target place. This approach provides compatibility for TS of already created bricks (i.e. without eProcDirServer set in b******.h file) but slows down performance and makes impossible manual check procedure thus should be avoided. 
