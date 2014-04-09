@@ -359,7 +359,7 @@ void EdbLinking::SaveCouplesTree(const char *file)
   hdtx2.Write();
   hdty1.Write();
   hdty2.Write();
-  Log(2,"EdbLinking::SaveCouplesTree","%d couples are strored into %s",ntr,file);
+  Log(2,"EdbLinking::SaveCouplesTree","%d couples are stored into %s",ntr, ect.GetFileName() );
 }
 
 
@@ -467,6 +467,8 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     seg.SetSide(0);
     seg.SetVolume(seg1.Volume()+seg2.Volume());
     seg.SetDZ( Abs(seg1.eZ - seg2.eZ) );
+    
+    seg.SetDZem( seg1.Chi2() + seg2.Chi2() );    // HACK: use eDZem variable to keep microtracking Likelihood 
     
     EdbSegCouple *sc=new EdbSegCouple();
     sc->eS1=s1;

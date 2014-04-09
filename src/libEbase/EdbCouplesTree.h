@@ -2,6 +2,7 @@
 #define ROOT_EdbCouplesTree
 
 #include "TTree.h"
+#include "TFile.h"
 #include "TCut.h"
 #include "EdbSegCouple.h"
 #include "EdbAffine.h"
@@ -43,6 +44,7 @@ public:
   void   ApplyCorrections();
   int    GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0, TIndex2 *trseg=0 );
   int    GetCPData( TObjArray &cparr );
+  const char* GetFileName() const { if(eTree->GetCurrentFile()) return eTree->GetCurrentFile()->GetName(); else return 0;}
   void   Print();
 
   ClassDef(EdbCouplesTree,1)  // service class for couples tree access
