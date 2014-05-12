@@ -40,6 +40,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.nsegmin"   , 2 );
   cenv.SetValue("fedra.track.ngapmax"   , 4 );
   cenv.SetValue("fedra.track.DZGapMax"  , 5000. );
+  cenv.SetValue("fedra.track.ProbMin"   , 0.001 );
   cenv.SetValue("fedra.track.DRmax"     , 45. );
   cenv.SetValue("fedra.track.DTmax"     , 0.07 );
   

@@ -28,14 +28,19 @@ class EdbTrackAssembler: public TObject {
   
   EdbTrackFitter eFitter;
   
- public:
+  public:
   float         eDTmax;        // angular acceptance for the fast preselection
   float         eDRmax;        // position acceptance for the fast preselection
   float         eDZGapMax;     // maxgap acceptance for the fast preselection
+  float         eProbMin;      // min acceptable probability for segments preselection
   
   int            eCollisionsRate;  //
   EdbScanCond    eCond;
  
+  TH1F           *eHistProbBest;    // prob of the best candidate
+  TH1F           *eHistProbAll;    // prob of all candidate
+  TH1F           *eHistNcnd;       // number of candidates after preliminary selection
+  
  public:
   EdbTrackAssembler();
   virtual ~EdbTrackAssembler();

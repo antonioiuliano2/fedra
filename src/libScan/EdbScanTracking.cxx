@@ -21,6 +21,9 @@ ClassImp(EdbScanTracking)
 //--------------------------------------------------------------------------------------
 EdbTrackAssembler::~EdbTrackAssembler()
 {
+  SafeDelete(eHistNcnd);
+  SafeDelete(eHistProbAll);
+  SafeDelete(eHistProbBest);
 }
   
   //--------------------------------------------------------------------------------------
@@ -32,8 +35,13 @@ EdbTrackAssembler::~EdbTrackAssembler()
   eDTmax=0.07;
   eDRmax=45.;
   eDZGapMax = 5000;
+  eProbMin = 0.001;
   eCollisionsRate=0;
-    
+  
+  eHistNcnd     = new TH1F("Ncnd","number of candidates after preliminary selection", 1000,0,1000);
+  eHistProbBest = new TH1F("ProbBest","prob of the best selected candidate", 1000,0,1);
+  eHistProbAll  = new TH1F("ProbAll","prob of the all candidates", 1000,0,1);
+
     // for basetracks:
   eCond.SetDefault();
   eCond.SetSigma0( 4, 4, 0.005, 0.005 );
@@ -100,38 +108,36 @@ EdbTrackAssembler::~EdbTrackAssembler()
 {
   TObjArray trsel;
   float v[2] = { s.X(), s.Y() };
-  int nsel =  eTrZMap.SelectObjectsC( v, eDRmax+50 , trsel ); 
+  int nsel =  eTrZMap.SelectObjectsC( v, eDRmax+50 , trsel );
   if(!nsel) { 
-      //printf("nsel=%d\n",nsel); s.PrintNice(); 
     return 0;  }
-    //printf("nsel=%d\n",nsel);
-    float prob, probmax = 0.00000001;
+    float prob, probmax = eProbMin;
     EdbSegP *ssbest = 0;
+    int ncnd = 0;
     for(int i=0; i<nsel; i++) {
       EdbSegP *ss = (EdbSegP*)(trsel.At(i));
-      //printf("\nbefore: ");    s.PrintNice();
       prob = ProbSeg( *ss, s );
-      //printf("prob probmax:  %f %f\n",  prob, probmax);
+      if(prob<eProbMin) continue;
+      ncnd++;
+      if(eHistProbAll) eHistProbAll->Fill(prob);
       if( prob > probmax ) { ssbest = ss; probmax=prob; }
     }
     if(!ssbest)  return 0;
-    //printf("probmax = %10.7f \n", probmax);
     s.SetProb(probmax);
+    if(eHistNcnd)     eHistNcnd->Fill(ncnd);
+    if(eHistProbBest) eHistProbBest->Fill(probmax);
     EdbTrackP *t = (EdbTrackP*)(ssbest);
     EdbSegP *sz = t->GetSegmentWithClosestZ( t->Z(), 45. );
-    //if(sz) printf("%f %f \n", s.Prob(),sz->Prob());
     if(!sz) t->AddSegment( eSegments.AddSegment(s) );
     else {
       if( !SameSegment(s,*sz) ) {
         if( s.Prob() > sz->Prob() )  t->SubstituteSegment( sz ,  eSegments.AddSegment(s) );
-      //printf("%f %f \n", s.Prob(),sz->Prob());
-      //s.PrintNice();
         eCollisionsRate++;
       }
     }
     return t;
 }
-  
+
   //--------------------------------------------------------------------------------------
   bool EdbTrackAssembler::SameSegment( EdbSegP &s1, EdbSegP &s2 )
 {
@@ -416,6 +422,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
     etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
     etra.eDZGapMax              = env.GetValue("fedra.track.DZGapMax"       ,  5000.   );
+    etra.eProbMin               = env.GetValue("fedra.track.ProbMin"        ,  0.001   );
     bool        do_erase        = env.GetValue("fedra.track.erase"          ,  false   );
     const char  *cut            = env.GetValue("fedra.readCPcut"            ,     "1"  );
     bool        do_misalign     = env.GetValue("fedra.track.do_misalign"    ,      0   );
@@ -518,5 +525,13 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     
     TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
     env.Write();
+    if(etra.eHistNcnd) etra.eHistNcnd->Write();
+    if(etra.eHistProbAll) etra.eHistProbAll->Write();
+    if(etra.eHistProbBest) etra.eHistProbBest->Write();
+    if(etra.eHistProbAll&&etra.eHistProbBest) {
+      TH1F *probrest = (TH1F*)(etra.eHistProbAll->Clone("ProbRest"));
+      probrest->Add(etra.eHistProbBest,-1);
+      probrest->Write();
+    }
     f.Close();
 }
