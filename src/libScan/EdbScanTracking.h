@@ -38,8 +38,10 @@ class EdbTrackAssembler: public TObject {
   EdbScanCond    eCond;
  
   TH1F           *eHistProbBest;    // prob of the best candidate
-  TH1F           *eHistProbAll;    // prob of all candidate
-  TH1F           *eHistNcnd;       // number of candidates after preliminary selection
+  TH1F           *eHistProbAll;     // prob of all candidate
+  TH1F           *eHistThetaBest;   // theta of the best candidate
+  TH1F           *eHistThetaAll;    // theta of all candidate
+  TH1F           *eHistNcnd;        // number of candidates after preliminary selection
   
  public:
   EdbTrackAssembler();
@@ -84,6 +86,7 @@ class EdbScanTracking: public TObject {
    virtual ~EdbScanTracking(){}
 
    void  TrackSetBT(EdbID id, TEnv &env);
+   void  SaveHist(EdbID idset, EdbTrackAssembler &etra);
  
    ClassDef(EdbScanTracking,1) // To handle tracking in the scanset
 };

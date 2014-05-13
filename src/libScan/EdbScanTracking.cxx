@@ -12,6 +12,9 @@
 #include "EdbAlignmentV.h"
 #include "EdbPlateAlignment.h"
 #include "EdbTrackFitter.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TROOT.h"
   
 using namespace TMath;
   
@@ -24,6 +27,8 @@ EdbTrackAssembler::~EdbTrackAssembler()
   SafeDelete(eHistNcnd);
   SafeDelete(eHistProbAll);
   SafeDelete(eHistProbBest);
+  SafeDelete(eHistThetaBest);
+  SafeDelete(eHistThetaAll);
 }
   
   //--------------------------------------------------------------------------------------
@@ -38,9 +43,11 @@ EdbTrackAssembler::~EdbTrackAssembler()
   eProbMin = 0.001;
   eCollisionsRate=0;
   
-  eHistNcnd     = new TH1F("Ncnd","number of candidates after preliminary selection", 1000,0,1000);
-  eHistProbBest = new TH1F("ProbBest","prob of the best selected candidate", 1000,0,1);
-  eHistProbAll  = new TH1F("ProbAll","prob of the all candidates", 1000,0,1);
+  eHistNcnd     = new TH1F("Ncnd","number of candidates after preliminary selection", 20,0.5,20.5);
+  eHistProbBest = new TH1F("ProbBest","prob for best selected candidate", 250,0,1);
+  eHistProbAll  = new TH1F("ProbAll","prob for all candidates", 250,0,1);
+  eHistThetaBest = new TH1F("ThetaBest","angle theta for best selected candidate", 180,0,TMath::PiOver2());
+  eHistThetaAll  = new TH1F("ThetaAll","angle theta for all candidates", 180,0,TMath::PiOver2());
 
     // for basetracks:
   eCond.SetDefault();
@@ -120,12 +127,14 @@ EdbTrackAssembler::~EdbTrackAssembler()
       if(prob<eProbMin) continue;
       ncnd++;
       if(eHistProbAll) eHistProbAll->Fill(prob);
+      if(eHistThetaAll) eHistThetaAll->Fill(ATan(ss->Theta()));
       if( prob > probmax ) { ssbest = ss; probmax=prob; }
     }
     if(!ssbest)  return 0;
     s.SetProb(probmax);
     if(eHistNcnd)     eHistNcnd->Fill(ncnd);
     if(eHistProbBest) eHistProbBest->Fill(probmax);
+    if(eHistThetaBest) eHistThetaBest->Fill(ATan(ssbest->Theta()));
     EdbTrackP *t = (EdbTrackP*)(ssbest);
     EdbSegP *sz = t->GetSegmentWithClosestZ( t->Z(), 45. );
     if(!sz) t->AddSegment( eSegments.AddSegment(s) );
@@ -422,7 +431,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
     etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
     etra.eDZGapMax              = env.GetValue("fedra.track.DZGapMax"       ,  5000.   );
-    etra.eProbMin               = env.GetValue("fedra.track.ProbMin"        ,  0.001   );
+    etra.eProbMin               = env.GetValue("fedra.track.probmin"        ,  0.001   );
     bool        do_erase        = env.GetValue("fedra.track.erase"          ,  false   );
     const char  *cut            = env.GetValue("fedra.readCPcut"            ,     "1"  );
     bool        do_misalign     = env.GetValue("fedra.track.do_misalign"    ,      0   );
@@ -522,16 +531,77 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
       }
     }
     EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
-    
     TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
     env.Write();
-    if(etra.eHistNcnd) etra.eHistNcnd->Write();
-    if(etra.eHistProbAll) etra.eHistProbAll->Write();
-    if(etra.eHistProbBest) etra.eHistProbBest->Write();
-    if(etra.eHistProbAll&&etra.eHistProbBest) {
-      TH1F *probrest = (TH1F*)(etra.eHistProbAll->Clone("ProbRest"));
-      probrest->Add(etra.eHistProbBest,-1);
-      probrest->Write();
-    }
     f.Close();
+    
+    SaveHist(idset,etra);
+}
+
+//--------------------------------------------------------------------------------------
+void EdbScanTracking::SaveHist(EdbID idset, EdbTrackAssembler &etra)
+{
+  TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
+  if(etra.eHistNcnd) etra.eHistNcnd->Write();
+  if(etra.eHistProbAll) etra.eHistProbAll->Write();
+  if(etra.eHistProbBest) etra.eHistProbBest->Write();
+  TH1F *probrest = 0, *probPurity=0;
+  if(etra.eHistProbAll&&etra.eHistProbBest) {
+    probrest = (TH1F*)(etra.eHistProbAll->Clone("ProbRest"));
+    probrest->SetTitle("prob for the other candidates");
+    probrest->Add(etra.eHistProbBest,-1);
+    probrest->Write();
+    probPurity = (TH1F*)(probrest->Clone("ProbPurity"));
+    probPurity->SetTitle("Nother/Nall vs prob");
+    probPurity->Divide(etra.eHistProbAll);
+    probPurity->Write();
+  }
+  if(etra.eHistThetaAll) etra.eHistThetaAll->Write();
+  if(etra.eHistThetaBest) etra.eHistThetaBest->Write();
+  TH1F *thetarest = 0, *thetaPurity=0;
+  if(etra.eHistThetaAll&&etra.eHistThetaBest) {
+    thetarest = (TH1F*)(etra.eHistThetaAll->Clone("ThetaRest"));
+    thetarest->SetTitle("theta for other candidates");
+    thetarest->Add(etra.eHistThetaBest,-1);
+    thetarest->Write();
+    thetaPurity = (TH1F*)(thetarest->Clone("ThetaPurity"));
+    thetaPurity->SetTitle("Nother/Nall vs theta");
+    thetaPurity->Divide(etra.eHistThetaAll);
+    thetaPurity->Write();
+  }
+  
+  gStyle->SetPalette(1);
+  gStyle->SetOptStat(1);
+  bool batch = gROOT->IsBatch();
+  gROOT->SetBatch();
+  
+  TCanvas *c = new TCanvas("purity","tracking purity",900,800);
+  c->Divide(2,3);
+
+  c->cd(1)->SetLogy(); 
+  etra.eHistNcnd->SetAxisRange(0,10);
+  etra.eHistNcnd->Draw();
+
+  c->cd(2); probrest->SetLineColor(kBlue); probrest->Draw();
+
+  c->cd(3)->SetLogy();
+  etra.eHistProbAll->Draw();
+  etra.eHistProbBest->SetLineColor(kRed); etra.eHistProbBest->Draw("same");
+  probrest->SetLineColor(kBlue); probrest->Draw("same");
+
+  c->cd(5);
+  probPurity->Draw();
+
+  c->cd(4)->SetLogy();
+  etra.eHistThetaAll->Draw();
+  etra.eHistThetaBest->SetLineColor(kRed); etra.eHistThetaBest->Draw("same");
+  thetarest->SetLineColor(kBlue); thetarest->Draw("same");
+
+  c->cd(6);
+  thetaPurity->Draw();
+
+  c->Write();
+  SafeDelete(c);
+  gROOT->SetBatch(batch);
+  f.Close();
 }
