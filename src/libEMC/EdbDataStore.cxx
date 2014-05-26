@@ -769,7 +769,13 @@ void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
     ///Get plate geometry:
     EdbPlateP* p=eBrick->GetPlate(PID);
     ///--------------------------
-    
+    if(strcmp(option,"UPDATE")==0){
+      //test if file exists
+      FILE *file= fopen(fname, "r");
+      if (file) fclose(file);
+      else{ 
+        option="RECREATE";}
+    }
     EdbRun run(fname,option);
     Log(1,"EdbDataStore::SavePlateToRaw",Form("Open file \"%s\" opt=\"%s\"",fname,option));
     Log(2,"EdbDataStore::SavePlateToRaw","created run");
