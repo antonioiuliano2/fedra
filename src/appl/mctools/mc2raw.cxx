@@ -36,7 +36,7 @@ void Help(){
   printf("---------------------------------------------------\n");
 }
 ///====================================================================
-long NEV0=0,NEV1=0,NBG=0;
+long NEV0=0,NEV1=0,dNEV=0,NBG=0;
 int BRICK_ID=0;
 const char* fname=0;
 const char* opt="RECREATE";
@@ -96,7 +96,7 @@ void read_args(int argc, char** argv){
       continue;
       }
     if(strncmp(argv[n],"-n=",3)==0){
-      NEV1=NEV0+readNum(argv[n]+3);
+      dNEV=readNum(argv[n]+3);
       continue;
       }
     if(strncmp(argv[n],"-nB=",4)==0){
@@ -120,6 +120,7 @@ void read_args(int argc, char** argv){
       continue;
       }
   }
+  NEV1=NEV0+dNEV;
   BRICK_ID=atoi(argv[argc-2]);
   fname=argv[argc-1];
   
