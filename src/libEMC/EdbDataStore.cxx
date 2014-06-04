@@ -825,17 +825,16 @@ void EdbDataStore::SavePlateToRaw(const char* fname,int PID,Option_t* option){
     run.Close();    
 };
 ///--------------------------------------------------
-void EdbDataStore::SaveToRaw(char* dir,int id,Option_t* option, bool doaff){
+void EdbDataStore::SaveToRaw(const char* dir,const EdbID &idset,Option_t* option, bool doaff){
 /// Save the raw data to FEDRA brick structure
   EdbScanProc sp;
-  EdbID Eid(id,0,1,10);
-  
-  sp.eProcDirClient=dir;
-  sp.CheckBrickDir(Eid);
-  sp.CheckAFFDir(id);
 
-  EdbID PL=Eid;
-  EdbID PL0=Eid;
+  sp.eProcDirClient=dir;
+  sp.CheckBrickDir(idset);
+  sp.CheckAFFDir(idset.eBrick);
+
+  EdbID PL=idset;
+  EdbID PL0=idset;
   EdbPlateP* p=0;
 
   float z,z0;

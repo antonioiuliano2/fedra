@@ -70,7 +70,7 @@ class EdbDataStore: public TObject{
     void PrintTracks(int vlev=0);
 //     void PrintVertices();
     ///save methods:
-    void SaveToRaw(char* dir="./",int id=1234,Option_t* option="RECREATE",bool doaff=true);
+    void SaveToRaw(const char* dir="./",const EdbID &idset="0.0.0.0",Option_t* option="RECREATE",bool doaff=true);
     void SavePlateToRaw(const char* fname,int PID,Option_t* option="RECREATE");
     ///methods for simulation:
     void DoSmearing(EdbScanCond* cond_btk,EdbScanCond* cond_mtk=0);
