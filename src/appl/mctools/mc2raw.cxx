@@ -19,7 +19,7 @@
 //--------------------------------------------------------
 void Help(){
   printf(" -------------------------------------------------\n");
-  printf(" usage:\n\t mc2raw [options] BrickID input.root\n");
+  printf(" usage:\n\t mc2raw [options] -set=ID input.root\n");
   printf(" Convert simulation data from file [input.root] to FEDRA brick structure b0[BrickID].\n");
   printf(" Options: \n") ;
   printf(" \t-h           \t - display this help message");
@@ -31,13 +31,13 @@ void Help(){
   printf(" \t-noaff       \t - Do not modify AFF files\n");
   printf(" Note: you can use modifiers like \'k\' and \'m\', they will be substituted with \'000\' and \'000000\' correspondingly\n");
   printf("---------------------------------------------------\n");
-  printf(" Usage example:\n mc2raw -a -n0=2m -n=200k 90001 /data/sim5m.root\n");
+  printf(" Usage example:\n mc2raw -a -n0=2m -n=200k -set=90001.0.10.100 /data/sim5m.root\n");
   printf(" will read file \"/data/sim5m.root\", take events [2000000,2200000] and and APPEND them to brick directory \"b090001\"\n");
   printf("---------------------------------------------------\n");
 }
 ///====================================================================
 long NEV0=0,NEV1=0,dNEV=0,NBG=0;
-int BRICK_ID=0;
+EdbID idset;
 const char* fname=0;
 const char* opt="RECREATE";
 const char* envfname="mceff.rootrc";
@@ -87,7 +87,7 @@ int readNum(char* st){
 void read_args(int argc, char** argv){
   gEDBDEBUGLEVEL=0;
   if(argc<3){Help(); exit(0);}
-  for(int n=1;n<argc-2;++n){
+  for(int n=1;n<argc-1;++n){
     if(strncmp(argv[n],"-h",2)==0){
       Help(); exit(0);
     }
@@ -119,12 +119,17 @@ void read_args(int argc, char** argv){
       gEDBDEBUGLEVEL=atoi(argv[n]+3);
       continue;
       }
+    if(strncmp(argv[n],"-set=",5)==0){
+      printf("SET: \"%s\"\n",argv[n]+5);
+      idset.Set(argv[n]+5);
+      continue;
+      }
   }
   NEV1=NEV0+dNEV;
-  BRICK_ID=atoi(argv[argc-2]);
+  // BRICK_ID=atoi(argv[argc-2]);
   fname=argv[argc-1];
   
-  printf("Fname=\"%s\"\n BrickID=%06d\n,Taking events in range [%ld, %ld].\n",fname,BRICK_ID,NEV0,NEV1);
+  printf("Fname=\"%s\"\n BrickID=%s\n,Taking events in range [%ld, %ld].\n",fname,idset.AsString(),NEV0,NEV1);
 }
 
 //--------------------------------------------------------
@@ -235,7 +240,7 @@ void WriteLog(const char* logfnm,TF1* efff,EdbScanCond* smr,EdbDataStore* DS){
   time ( &rawtime );
   timeinfo = localtime ( &rawtime );
   fprintf(f,"======= mc2raw run at ======\n %s\n",asctime(timeinfo));
-  fprintf(f,"%s to b%06d\n",opt,BRICK_ID);
+  fprintf(f,"%s to b%s\n",opt,idset.AsString());
   if(NEV1>NEV0)
     fprintf(f," * READ INPUT : Read %ld events [%ld-%ld] from file \'%s\'\n",NEV1-NEV0,NEV0,NEV1,fname);
   if(NBG && bg_Ang && bg_Puls){
@@ -355,8 +360,8 @@ int main(int argc, char** argv){
   }
   if(mtk_eff)DS.DoEfficiency(0,mtk_eff);
   if(mtk_smear)DS.DoSmearing(0,mtk_smear);
-  DS.SaveToRaw(".",BRICK_ID,opt,!noaff);
-  WriteLog(Form("./b%06d/b%06d.mc.log",BRICK_ID,BRICK_ID),mtk_eff,mtk_smear, &DS);
-  cenv.WriteFile(Form("./b%06d/mceff.rootrc",BRICK_ID));
+  DS.SaveToRaw("./",idset,opt,!noaff);
+  cenv.WriteFile(Form("./b%06d/mceff.save.rootrc",idset.eBrick));
+  WriteLog(Form("./b%06d/b%s.mc.log",idset.eBrick,idset.AsString()),mtk_eff,mtk_smear, &DS);
   return 0;
 }
