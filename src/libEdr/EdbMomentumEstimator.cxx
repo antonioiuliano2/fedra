@@ -6,6 +6,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include "TString.h"
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TMath.h"
@@ -83,11 +84,30 @@ void EdbMomentumEstimator::SetParPMS_Mag()
 //________________________________________________________________________________________
 void EdbMomentumEstimator::Print()
 {
-  printf("EdbMomentumEstimator:\n");
+  printf("\nEdbMomentumEstimator:\n");
+  printf("Algorithm: %s\n", AlgStr(eAlg).Data());
   printf("eX0 = %f \n", eX0);
   printf("eDT0,  eDT1,  eDT2 = %f %f %f\n", eDT0, eDT1, eDT2);
   printf("eDTx0, eDTx1, eDTx2 = %f %f %f\n", eDTx0, eDTx1, eDTx2);
   printf("eDTy0, eDTy1, eDTy2 = %f %f %f\n", eDTy0, eDTy1, eDTy2);
+}
+
+//________________________________________________________________________________________
+TString EdbMomentumEstimator::AlgStr(int alg)
+{
+  char *str = new char[256];
+  switch(alg) {
+    case 0:
+      sprintf(str,"%d (PMSang)        Version rewised by VT 13/05/2008 (see PMSang_base) and further modified by Magali at the end of 2008", alg); break;
+    case 1:
+      sprintf(str,"%d (PMSang_base)   Version rewised by VT 13/05/2008",alg); break;
+    case 2:
+      sprintf(str,"%d (PMSang_base_A) Version revised by Andrea Russo 13/03/2009 based on PMSang_base() by VT",alg); break;
+    case 3:
+      sprintf(str,"%d (PMScoordinate) Momentum estimation by coordinate method A.Russo 2010",alg); break;
+  }
+  TString s(str);
+  return s;
 }
 
 //________________________________________________________________________________________
@@ -494,21 +514,21 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
   SafeDelete(eGY);
   */
 
-  eF1X = MCSCoordErrorFunction("eF1X",tmean);    
+  eF1X = MCSCoordErrorFunction("eF1X",tmean,eX0);
   //eF1X->SetRange(0,Min(57,maxX));
   eF1X->SetParLimits(0,0.0001,100);
   eF1X->SetParLimits(1,0.0001,100);
   eF1X->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1X->SetParameter(1,10);                              // starting value for coordinate error
   
-  eF1Y = MCSCoordErrorFunction("eF1Y",tmean); 
+  eF1Y = MCSCoordErrorFunction("eF1Y",tmean,eX0); 
   //eF1Y->SetRange(0,Min(57,maxY));
   eF1Y->SetParLimits(0,0.0001,100);
   eF1Y->SetParLimits(1,0.0001,100);
   eF1Y->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1Y->SetParameter(1,10);                              // starting value for coordinate error
   
-  eF1 = MCSCoordErrorFunction("eF1",tmean);
+  eF1 = MCSCoordErrorFunction("eF1",tmean,eX0);
   //eF1->SetRange(0,Min(57,max3D));
   eF1->SetParLimits(0,0.0001,100);
   eF1->SetParLimits(1,0.0001,100);
@@ -570,7 +590,7 @@ TF1 *EdbMomentumEstimator::MCSErrorFunction(const char *name, float x0, float dt
 }
 
 //________________________________________________________________________________________
-TF1 *EdbMomentumEstimator::MCSCoordErrorFunction(const char *name, float tmean)
+TF1 *EdbMomentumEstimator::MCSCoordErrorFunction(const char *name, float tmean,float x0)
 {
   // return the function of the expected position deviation as function of range
   //
@@ -579,7 +599,7 @@ TF1 *EdbMomentumEstimator::MCSCoordErrorFunction(const char *name, float tmean)
   // log term in HLD formula is neglected
   
   
-  return new TF1(name,Form("sqrt(([1])**2+(2./3)*((x*sqrt(1+%f**2))**3)*(0.0136**2)*[0]/5600.)",tmean));
+  return new TF1(name,Form("sqrt(([1])**2+(2./3)*((x*sqrt(1+%f**2))**3)*(0.0136**2)*[0]/%f)",tmean,x0));
   
   //P is returned in GeV
 }
@@ -1235,4 +1255,3 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
   
   return statFitPX+statFitPY;
 }
-

@@ -12,6 +12,7 @@
 #include "TCanvas.h"
 
 class TGraphErrors;
+class TString;
 class TGraphAsymmErrors;
 class TF1;
 
@@ -68,7 +69,7 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   void    EstimateMomentumError(float P, int npl, float ang, float &pmin, float &pmax);
   double  Mat(float P, int npl, float ang);
   TF1    *MCSErrorFunction(const char *name, float x0, float dtx);
-  TF1    *MCSCoordErrorFunction(const char *name, float tmean);
+  TF1    *MCSCoordErrorFunction(const char *name, float tmean, float x0);
 
   int     PMSang_base(EdbTrackP &tr);
   int     PMSang_base_A(EdbTrackP &tr);
@@ -77,7 +78,8 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   float   P_MS(EdbTrackP &tr);
 //  void    DrawPlots();
   void    DrawPlots(TCanvas *c1=NULL);
-
+  
+  TString AlgStr(int alg);
   void    Print();
 
   ClassDef(EdbMomentumEstimator,1)  // track momentum estimator

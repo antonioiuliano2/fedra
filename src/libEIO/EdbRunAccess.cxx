@@ -491,6 +491,7 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
   EdbView    *view = eRun->GetView();
   //int nviews = eRun->GetEntries();
   int nviews = eVP[side]->N();
+  Log(3,"EdbRunAccess::GetPatternDataForPrediction","%d views are selected for side %d",nviews,side);
   int   nseg=0;
   int   nsegV;
   
@@ -506,6 +507,7 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
 
     nsegV = view->Nsegments();
     if( ViewSide(view) != side )   continue;
+    //Log(3,"EdbRunAccess::GetPatternDataForPrediction","ie = %d   nsegV = %d",ie,nsegV);
 
     for(int j=0;j<nsegV;j++) {
       if(!AcceptRawSegment(view,j,segP,side))   continue;
@@ -959,8 +961,9 @@ bool  EdbRunAccess::PassCuts(int id, EdbSegment &seg)
   var[4] = SegmentWeight(seg);
 
   int nc = NCuts(id);
-  for(int i=0; i<nc; i++)
+  for(int i=0; i<nc; i++) {
     if( !(GetCut(id,i)->PassCut(var)) )  return false;
+  }
   return true;
 }
 
