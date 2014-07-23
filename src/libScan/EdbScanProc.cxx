@@ -1487,7 +1487,7 @@ int EdbScanProc::WriteSBcndTXT(int id[4], const char *suffix)
     int pid = t.eNext.ID();
     for(int j = 0; j<t.eScnd.N(); ++j){
       s=t.eScnd.GetSegment(j);
-      fprintf(f, "%d\t%.3lf\t%.3lf\t%.5lf\t%.5lf\0\n", pid*1000+j, s->X(), s->Y(), s->TX(), s->TY());
+      fprintf(f, "%d\t%.3lf\t%.3lf\t%.5lf\t%.5lf\t0\n", pid*1000+j, s->X(), s->Y(), s->TX(), s->TY());
       num++;
     }
     for(int j = 0; j<t.eS1cnd.N(); ++j){
