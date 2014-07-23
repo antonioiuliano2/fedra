@@ -1462,6 +1462,54 @@ int EdbScanProc::WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, in
 }
 
 //----------------------------------------------------------------
+int EdbScanProc::WriteSBcndTXT(int id[4], const char *suffix)
+{
+  // write ascii found candidates file as .../bXXXXXX/pYYY/a.a.a.a.suffix
+  //                 - new id = 1000*id + 100* [BT:0; MT1:1; MT2:2]+ #
+  TString sbtname;
+  MakeFileName(sbtname,id,"sbt.root");
+  
+  TString outname;
+  MakeFileName(outname,id,suffix);
+  
+  
+  FILE *f = fopen(outname.Data(),"w");
+  if(!f) { LogPrint(id[0],1,"WriteSBcndTXT","ERROR! can not open file %s", outname.Data()); return 0; }
+  int num=0;
+  
+  
+  EdbRunTracking t;
+  TTree *st = t.InitSBtree(sbtname.Data(), "OPEN");
+  int n = st->GetEntries();
+  EdbSegP *s=0;
+  for(int i =0; i<n; ++i){
+    t.GetSBtreeEntry(i, *st);
+    int pid = t.eNext.ID();
+    for(int j = 0; j<t.eScnd.N(); ++j){
+      s=t.eScnd.GetSegment(j);
+      fprintf(f, "%d\t%.3lf\t%.3lf\t%.5lf\t%.5lf\0\n", pid*1000+j, s->X(), s->Y(), s->TX(), s->TY());
+      num++;
+    }
+    for(int j = 0; j<t.eS1cnd.N(); ++j){
+      s=t.eS1cnd.GetSegment(j);
+      fprintf(f, "%d\t%.3lf\t%.3lf\t%.5lf\t%.5lf\t10001\n", pid*1000+100+j, s->X(), s->Y(), s->TX(), s->TY());
+      num++;
+    }
+    for(int j = 0; j<t.eS2cnd.N(); ++j){
+      s=t.eS2cnd.GetSegment(j);
+      fprintf(f, "%d\t%.3lf\t%.3lf\t%.5lf\t%.5lf\t10002\n", pid*1000+200+j, s->X(), s->Y(), s->TX(), s->TY());
+      num++;
+    }
+  }
+  t.CloseSBtree(st);
+  
+  
+  fclose(f);
+  LogPrint(id[0],2,"WriteSBcndTXT","%s with %d predictions", outname.Data(),num);
+  return num;
+}
+
+//----------------------------------------------------------------
 int EdbScanProc::ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag)
 {
   TString str;

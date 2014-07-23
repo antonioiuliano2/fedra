@@ -62,6 +62,7 @@ public:
   int     ReadPatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     ReadPatTXT(const char *file, EdbPattern &pred, int flag=-1);
   int     WritePatTXT(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
+  int     WriteSBcndTXT(int id[4], const char *suffix="man.sbt.txt");
   int     ReadPatRoot(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     WritePatRoot(EdbPattern &pred, int id[4], const char *suffix, int flag=-1);
   int     ReadPred(EdbPattern &pred, int id[4], int flag=-1) {return ReadPatRoot(pred,id,"pred.root",flag);}
