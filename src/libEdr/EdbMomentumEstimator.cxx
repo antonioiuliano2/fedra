@@ -584,7 +584,7 @@ TF1 *EdbMomentumEstimator::MCSErrorFunction(const char *name, float x0, float dt
   // 13.6*13.6/1000/1000   = 0.0001849599  - we need p in GeV
 
 
-  return new TF1(name,Form("sqrt(214.3296*x/%f*((1+0.038*log(x/(%f)))**2)/([0])**2+%f)",x0,x0,dtx));
+  return new TF1(name,Form("sqrt(214.3296*x/%f*((1+0.038*log(x/(%f)))**2)/([0])**2+%e)",x0,x0,dtx));
 
   //P is returned in MeV by this function for more convinience, but given in GeV as output.
 }
