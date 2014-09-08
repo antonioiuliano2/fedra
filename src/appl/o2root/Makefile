@@ -3,7 +3,8 @@ include ../../config/ProjectDef.mk
 include ../../config/RootDef.mk
 #------------------------------------------------------------------------------
 
-TARGET  =       $(BIN_DIR)/o2root$(ExeSuf)
+TARGET  =       $(BIN_DIR)/o2root$(ExeSuf) \
+					$(BIN_DIR)/fb2db$(ExeSuf)
 
 ORA           = $(OCCIHOME)
 ORAINC        = $(ORA)/sdk/include
