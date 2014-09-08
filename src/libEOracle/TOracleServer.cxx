@@ -387,3 +387,41 @@ Int_t TOracleServer::QueryTree(char *query, TTree *tree, char *leafs)
   }
   return 0;
 }
+
+//______________________________________________________________________________
+Int_t TOracleServer::PrintResult()
+{
+  if (!fStmt) printf("statement is not defined!\n");
+  else {
+    ResultSet *rset = fStmt->getResultSet();
+    vector<MetaData> cmd = rset->getColumnListMetaData();
+    const int  nlmax=cmd.size();
+    printf("TOracleServer::PrintResult: %d columns\n", nlmax);
+    if(nlmax<1) return 0;
+    
+    TString leaflist(nlmax*64);
+    
+    for (int i = 0; i < nlmax; i++) {
+      string s = cmd[i].getString(MetaData::ATTR_NAME);
+      if (i > 0) leaflist+=" : ";
+      leaflist+= s.c_str();
+    }
+    
+    printf("\n     #: %s\n", leaflist.Data());
+    
+    int line=0;
+    while (rset->next())
+    {
+      printf("%6d: ",++line);
+      for (int i = 1; i <= nlmax; i++) 
+      {
+        string fruit = rset->getString(i);
+        printf("%s ", rset->getString(i).c_str() );
+      }
+      printf("\n");
+    }
+    
+    delete rset;
+  }
+  return 0;
+}

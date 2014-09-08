@@ -4,6 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class EdbFeedback;
+#pragma link C++ class TOracleServerE2WFB;
 #pragma link C++ class TOracleServerE2W;
 #pragma link C++ class TOracleServerE2;
 #pragma link C++ class TOracleServerE;

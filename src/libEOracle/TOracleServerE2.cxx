@@ -1122,7 +1122,7 @@ Int_t TOracleServerE2::DumpEventsID(char *id_eventbrick)
 }
 
 //------------------------------------------------------------------------------------
-Int_t TOracleServerE2::GetId_EventBrick(char *id_brick,char *id_set, char *id)
+Int_t TOracleServerE2::GetId_EventBrick(const char *id_brick, const char *id_set, char *id)
 {
   // Get the brick ID related to a given brick name and brick-set
 

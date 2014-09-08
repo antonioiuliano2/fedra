@@ -38,7 +38,7 @@ public:
    Int_t       DumpBrickVolumesID(char *id_eventbrick);
    Int_t       DumpProcessOperations(char *id_eventbrick,char *id_programsettings);
    Int_t       DumpProcessOperations(char *id_eventbrick, Int_t driverlevel);
-   Int_t       GetId_EventBrick (char *id_brick, char*id_set, char *id);
+   Int_t       GetId_EventBrick (const char *id_brick, const char*id_set, char *id);
    Int_t       GetId_Zone(char *id_eventbrick,char *id_plate, char *id_process_operation, char *series, char* id);
    Int_t       GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id);
    Int_t       GetId_Volume(char *id_eventbrick, char *id_process_operation, int ivolume, char *id);

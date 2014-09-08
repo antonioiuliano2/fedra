@@ -39,6 +39,7 @@ class TOracleServer : public TSQLServer {
   friend class TOracleServerE;
   friend class TOracleServerE2;
   friend class TOracleServerE2W;
+  friend class TOracleServerE2WFB;
 
 private:
    Environment  *fEnv;    // environment of Oracle access
@@ -72,6 +73,7 @@ public:
 
    // new functions in respect to basic root class (VT)
    Int_t       QueryTree(char *query, TTree *tree, char *leafs=0);
+   Int_t       PrintResult();
 
    ClassDef(TOracleServer,0)  // Connection to Oracle server
 };
