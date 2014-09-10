@@ -63,6 +63,7 @@ public:
    Int_t       ReadCSPredictions2(Int_t id_brick, EdbPattern &pred);
    Int_t       ReadCSPredictions_remote_v2(Int_t id_brick, EdbPattern &pred, int csid);
    Int_t       ReadVetoTracks(Int_t id_brick, EdbPattern &pred);
+   void        Print();
 
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };

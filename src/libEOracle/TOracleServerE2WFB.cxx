@@ -20,7 +20,7 @@ void TOracleServerE2WFB::Set0()
 void TOracleServerE2WFB::Print()
 {
   TOracleServerE2::Print();
-  printf( "eDebug = %d  eLab.Data() = %s   eLa = %s\n", eDebug, eLab.Data(), eLa.Data() );
+  printf( " eDebug = %d  \n eLab = %s   \n eLa = %s\n", eDebug, eLab.Data(), eLa.Data() );
 }
  
 //------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ Int_t  TOracleServerE2WFB::MyQuery(const char *query)
       Log(2,"TOracleServerE2WFB::MyQuery","debug sql query: %s ...",query);
     }
   } catch (SQLException &oraex) {
-    Log(1,"TOracleServerE2WFB::MyQuery","AddEventBricks; failed: (error: %s)",(oraex.getMessage()).c_str());
+    Log(1,"TOracleServerE2WFB::MyQuery","failed: (error: %s)",(oraex.getMessage()).c_str());
     return 0;
   }
   return 1;
@@ -321,17 +321,37 @@ Int_t  TOracleServerE2WFB::CloseFeedbackDataset(
 EdbFeedback::EdbFeedback()
 {
   eDB=0;
+  eEvent=0;
   eEventBrick=0;
   eProcOp=0;
   eNvtx=0;
   eV=0;
+  eIdMachine=0;
+  eIdProgramsettings=0;
+  eIdRequester=0;
+}
+
+//------------------------------------------------------------------------------------
+void EdbFeedback::Print()
+{
+  printf("\n--------------------------------------------------------\n");
+  printf("EdbFeedback: \n\
+  \t eEventBrick=%lld \n\
+      \t eEvent=%lld \n\
+      \t eProcOp=%lld \n\
+      \t eNvtx=%d  \n\
+      \t eIdMachine=%lld  \n\
+      \t eIdProgramsettings=%lld  \n\
+      \t eIdRequester=%lld \n", 
+  eEventBrick,eEvent,eProcOp,eNvtx,eIdMachine,eIdProgramsettings,eIdRequester);
+  if(eDB) eDB->Print();
+  printf("--------------------------------------------------------\n\n");
 }
 
 //------------------------------------------------------------------------------------
 int EdbFeedback::InitDB( const char *conn, const char *user, const char *pwd )
 {
   eDB = new TOracleServerE2WFB( conn, user, pwd );
-  printf("Server info: %s\n", eDB->ServerInfo());
   if(!eDB) return 0;
   return 1;
 }
@@ -342,21 +362,15 @@ int EdbFeedback::LoadFBintoDB()
   if(eNvtx<1) return 0; 
   if(!eDB)    return 0;
  
-  //eDB->eLab.Data()="NAPOLI";
-  //eDB->eLa="NA";
-  //eDB->Print();
-  
- eProcOp = eDB->AddProcessOperationBrick(
-      6000000000010002,    // id_machine
-  81000100000000087,   // id_programsettings
-  6000000000100375,    // id_requester
+  eProcOp = eDB->AddProcessOperationBrick(
+      eIdMachine,      // id_machine
+  eIdProgramsettings,  // id_programsettings
+  eIdRequester,        // id_requester
   eEventBrick,         // id_eventbrick
-  0 ,             // id_parent_operation
+  0 ,                  // id_parent_operation
   eDB->Timestamp(),    // starttime
   "Feedback");         // notes
  
-  eDB->Print();
-  
   eRecID  = eDB->AddFeedbackReconstruction( eEventBrick,eProcOp );
 
  

@@ -15,9 +15,9 @@ class TOracleServerE2WFB : public TOracleServerE2 {
 
   public:
 
-    Bool_t eDebug;     // true - do not execute queries (default false)
-    TString eLab;   //! as "NAPOLI"
-    TString eLa;    //! as "NA"
+    Bool_t     eDebug;     // true - do not execute queries (default false)
+    TString    eLab;   //! as "NAPOLI"
+    TString    eLa;    //! as "NA"
 
   public:
     TOracleServerE2WFB(const char *db, const char *uid, const char *pw):TOracleServerE2(db, uid, pw) {Set0();}
@@ -183,6 +183,9 @@ class EdbFeedback : public TObject {
   public:
   
   TOracleServerE2WFB *eDB;
+  ULong64_t eIdMachine;         // as 6000000000010002
+  ULong64_t eIdProgramsettings; // as 81000100000000087
+  ULong64_t eIdRequester;       // as 6000000000100375
   ULong64_t eBrick;
   ULong64_t eEventBrick;
   ULong64_t eEvent;
@@ -201,6 +204,7 @@ class EdbFeedback : public TObject {
   fbtrack   *ReadTrack( FILE *f );
   fbsegment *ReadSegment( FILE *f );
   
+  void Print();
   void PrintFB();
   void Print( fbvertex *v );
   void Print( fbtrack *t );

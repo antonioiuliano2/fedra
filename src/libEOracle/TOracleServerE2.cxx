@@ -1125,7 +1125,7 @@ Int_t TOracleServerE2::DumpEventsID(char *id_eventbrick)
 Int_t TOracleServerE2::GetId_EventBrick(const char *id_brick, const char *id_set, char *id)
 {
   // Get the brick ID related to a given brick name and brick-set
-
+  Int_t idnum=0;
   char *query= new char[2048];
    try{
     if (!fStmt)
@@ -1139,15 +1139,17 @@ Int_t TOracleServerE2::GetId_EventBrick(const char *id_brick, const char *id_set
     //    fStmt->execute();
     Query(query);
     ResultSet *rs = fStmt->getResultSet();
-    while (rs->next()){
-      strcpy(id,rs->getString(1).c_str());
+    if(rs) {
+      while (rs->next()){
+        if(id) strcpy(id,rs->getString(1).c_str());
+        sscanf(rs->getString(1).c_str(),"%d", &idnum);
+      }
+      delete rs;
     }
-    delete rs;
-
-  } catch (SQLException &oraex) {
+   } catch (SQLException &oraex) {
     Error("TOracleServerE2", "GetId_Eventbrick; failed: (error: %s)", (oraex.getMessage()).c_str());
   }
-  return 0;
+  return idnum;
 }
 
 
@@ -1304,4 +1306,11 @@ void TOracleServerE2::PrintBrickInfo(Long_t brick, int level)
   DumpProcessOperations( Form("%ld",brick), 0);
   DumpBrickVolumesID( Form("%ld",brick));
   DumpEventsID( Form("%ld",brick) );
+}
+
+//------------------------------------------------------------------------------------
+void TOracleServerE2::Print()
+{
+  if(IsConnected()) printf("TOracleServerE2 is connected to: %s://%s:%d/%s\n", ServerInfo(),GetHost(),GetPort(),GetDB() );
+  else printf("TOracleServerE2 is not connected!\n");
 }
