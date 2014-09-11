@@ -22,10 +22,10 @@ defined in tnsnames.ora file
 There are 2 operation modes:
 
 1) Load brick geometry information as:
-   fb2db -addbrick=102089 -online=/opera/scan/mic3/ONLINE -v=2 -lab=NA -commit
+   fb2db -addbrick=102089 -online=/opera/scan/mic3/ONLINE -v=2 -commit
 
 2) Load feedback file as:
-   fb2db -file=/opera/scan/mic3/ONLINE/b102089/b102089_e11184031419.feedback -v=2 -lab=NA -commit
+   fb2db -file=/opera/scan/mic3/ONLINE/b102089/b102089_e11184031419.feedback -v=2 -commit
 
 By default the program started in the test mode and do not modify the database - it's useful 
 to check files compatibility and db connection.To modify the database use -commit option.
@@ -38,6 +38,13 @@ b102089.map
 b102089.map.LL
 b102089.map.XG
 b102089.map.XL
+
+Additional options:
+  -lab=NA/BE/...  laboratory id (NA for Napoli, BE for Bern) - useful only the first time to 
+                  create the fd2db.save.rootrc file with the predefied set of parameters.
+                  The fd2db.save.rootrc should be then renamed as fd2db.rootrc and modified if necessary
+  -v=0/1/2/3      verbosity level (0-to suppress all messages)
+
 
 --------------
 VT: 11/09/2014
