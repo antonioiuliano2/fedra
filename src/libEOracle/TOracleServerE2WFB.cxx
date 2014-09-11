@@ -325,6 +325,9 @@ EdbFeedback::EdbFeedback()
   eEventBrick=0;
   eProcOp=0;
   eNvtx=0;
+  eNvtxLim=1000;
+  eNtr=0;
+  eNtrLim=5000;
   eV=0;
   eIdMachine=0;
   eIdProgramsettings=0;
@@ -373,57 +376,57 @@ int EdbFeedback::LoadFBintoDB()
  
   eRecID  = eDB->AddFeedbackReconstruction( eEventBrick,eProcOp );
 
- 
-  for( int iv=0; iv<eNvtx; iv++ ) {
+  for( int iv=0; iv<eNvtxLim; iv++ ) {
     fbvertex *v = eV[iv];
-    if(!v) { Log(1,"EdbFeedback::LoadFBintoDB","ERROR: vertex %d is missing!", iv); return 0; }
-    const char *vprim  = v->isprim? "Y" : "N";
-    const char *vcharm = v->ischarm? "Y" : "N";
-    const char *vtau   = v->istau? "Y" : "N";
-    const char *vout   = v->ofb? "Y" : "N";
-    eDB->AddFeedbackVertex(eEventBrick, eRecID, v->idvtx, v->x, v->y, v->z, vprim,vcharm,vtau,vout);
+    if(v) { 
+      const char *vprim  = v->isprim? "Y" : "N";
+      const char *vcharm = v->ischarm? "Y" : "N";
+      const char *vtau   = v->istau? "Y" : "N";
+      const char *vout   = v->ofb? "Y" : "N";
+      eDB->AddFeedbackVertex(eEventBrick, eRecID, v->idvtx, v->x, v->y, v->z, vprim,vcharm,vtau,vout);
+    }
+  }
+  
+  for(int it=0; it<eNtr; it++ ) {
+    fbtrack *t = eT[it];
+    if(!t) { 
+      Log(1,"EdbFeedback::LoadFBintoDB","ERROR: track %d is missing!", it);
+      return 0; 
+    }
+ 
+    const char *tman = t->isman? "Y" : "N";
+    const char *tparticle = PartType(t->type);
+    const char *tscanback = t->scanback? "Y" : "N";
+    const char *tdarkness = Darkness(t->darkness);
+    const char *tofb = Ofb(t->ofb);
+    const char *tdecaysearch = DecayFlag(t->flag);
 
-    for(int it=0; it<(v->ndown + v->nup); it++ ) {
-      fbtrack *t = v->tracks[it];
-      if(!t) { 
-        Log(1,"EdbFeedback::LoadFBintoDB","ERROR: track %d of vertex %d is missing!", it, iv); 
+    eDB->AddFeedbackTrack( eEventBrick, eRecID,t->id_track, t->id_upvtx, t->id_downvtx,
+                           t->x, t->y, t->z, t->sx, t->sy,
+                           tman, tparticle, tscanback, tdarkness,
+                           t->upip, t->downip, t->p, t->pmin,  t->pmax,
+                           tofb,
+                           t->lastplate,
+                           t->rslopet , t->rslopel, t->rmsslopet , t->rmsslopel,
+                           t->kinkplatedown , t->kinkplateup,
+                           tdecaysearch,
+                           eEvent
+                         );
+
+    for(int is=0; is<t->nseg; is++ ) {
+      fbsegment *s = t->segments[is];
+      if(!s) { 
+        Log(1,"EdbFeedback::LoadFBintoDB","ERROR: segment %d of track %d is missing!", is, it);
         return 0; 
       }
- 
-      const char *tman = t->isman? "Y" : "N";
-      const char *tparticle = PartType(t->type);
-      const char *tscanback = t->scanback? "Y" : "N";
-      const char *tdarkness = Darkness(t->darkness);
-      const char *tofb = Ofb(t->ofb);
-      const char *tdecaysearch = DecayFlag(t->flag);
-
-      eDB->AddFeedbackTrack( eEventBrick, eRecID,t->id_track, t->id_upvtx, t->id_downvtx,
-                             t->x, t->y, t->z, t->sx, t->sy,
-                             tman, tparticle, tscanback, tdarkness,
-                             t->upip, t->downip, t->p, t->pmin,  t->pmax,
-                             tofb,
-                             t->lastplate,
-                             t->rslopet , t->rslopel, t->rmsslopet , t->rmsslopel,
-                             t->kinkplatedown , t->kinkplateup,
-                             tdecaysearch,
-                             eEvent
-                           );
-
-      for(int is=0; is<t->nseg; is++ ) {
-        fbsegment *s = t->segments[is];
-        if(!s) { 
-          Log(1,"EdbFeedback::LoadFBintoDB","ERROR: segment %d of track %d and vertex %d is missing!", is, it, iv);
-          return 0; 
-        }
-        if(s->id_plate!=44)
-          eDB->AddFeedbackSegment( eEventBrick, eRecID, 
-                                   s->id_plate, t->id_track, 
-                                   SegmentType(s->type),
-                                   s->x, s->y, s->z, s->sx, s->sy,
-                                   s->grains, 
-                                   SegmentRecMode(s->irec)
-                                 );
-      }
+      if(s->id_plate!=44)
+        eDB->AddFeedbackSegment( eEventBrick, eRecID, 
+                                 s->id_plate, t->id_track, 
+                                 SegmentType(s->type),
+                                 s->x, s->y, s->z, s->sx, s->sy,
+                                 s->grains, 
+                                 SegmentRecMode(s->irec)
+                               );
     }
   }
 
@@ -488,7 +491,7 @@ const char *EdbFeedback::Darkness(int drk)
   if (drk==2) return  "GRAY";
   return  "UNKNOWN";
 }
-    
+
 //------------------------------------------------------------------------------------
 int EdbFeedback::ReadFBFile( const char *file )
 {
@@ -496,58 +499,74 @@ int EdbFeedback::ReadFBFile( const char *file )
     Log(1,"EdbFeedback::ReadFBFile","ERROR! open file %s", file); 
     return 0;
   }
-  Log(2,"EdbFeedback::ReadFBFile","%s", file); 
+  Log(2,"EdbFeedback::ReadFBFile","%s", file);
    
   eNvtx=0;
-  eV = new fbvertex*[100]; for(int i=0; i<100; i++) eV[i]=0;
+  eV = new fbvertex*[eNvtxLim]; for(int i=0; i<eNvtxLim; i++) eV[i]=0;
   
-  while( fbvertex *v = ReadVertex(f) )
+  eNtr=0;
+  eT = new fbtrack*[eNtrLim]; for(int i=0; i<eNtrLim; i++) eT[i]=0;
+
+  char str[1024];
+  while(  fgets( str, sizeof(str), f) )
   {
-    eV[eNvtx++] = v;
-    int ntr = v->nup + v->ndown;
-    if( ntr > 0 ) {
-      v->tracks = new fbtrack*[ntr]; 
-      for(int it=0; it<ntr; it++) {
-        v->tracks[it] = ReadTrack(f);  if(v->tracks[it]);
-        if( v->tracks[it]->nseg > 0) {
-          v->tracks[it]->segments = new fbsegment*[v->tracks[it]->nseg];
-          for(int iseg=0; iseg < v->tracks[it]->nseg; iseg++) {
-            v->tracks[it]->segments[iseg] = ReadSegment(f);  
-            if(v->tracks[it]->segments[iseg]);
-          }
+    if( fbvertex *v = ReadVertex(str) )
+    {
+      if( v->idvtx<0 && v->idvtx>=eNvtxLim )
+      {
+        Log(1,"EdbFeedback::ReadFBFile","ERROR: vertex id %d is out of range (0-%d)!",v->idvtx,eNvtxLim); 
+        break;
+      }
+      if( eV[v->idvtx]!=0 ) 
+      {
+        Log(1,"EdbFeedback::ReadFBFile","ERROR: vertex id (%d) is duplicated!",v->idvtx);
+        break;
+      }
+
+      eV[v->idvtx] = v;
+      eNvtx++;
+    }
+    else if( fbtrack *t = ReadTrack(str) )
+    {
+      if( eNtr>=eNtrLim )
+      {
+        Log(1,"EdbFeedback::ReadFBFile","ERROR: tracks out of limit %d!",eNtrLim);
+        break;
+      }
+
+      if( t->nseg > 0) {
+        t->segments = new fbsegment*[t->nseg];
+        for(int iseg=0; iseg < t->nseg; iseg++) {
+          t->segments[iseg] = ReadSegment(f);
+          if( !(t->segments[iseg]) ) Log(1,"EdbFeedback::ReadFBFile","ERROR: read segment (%d) of track %d!",iseg,t->id_track);
         }
       }
+      eT[eNtr++]=t;
+    }
+    else 
+    {
+      Log(1,"EdbFeedback::ReadFBFile","ERROR! bad line: %s", str); 
     }
   }
-  Log(2,"EdbFeedback::ReadFBFile","%d vertices read from %s", eNvtx,file );
+  Log(2,"EdbFeedback::ReadFBFile","%d vertices and %d tracks read from %s", eNvtx,eNtr,file );
   return eNvtx;
 }
 
 //------------------------------------------------------------------------------------
-fbvertex *EdbFeedback::ReadVertex( FILE *f )
+fbvertex *EdbFeedback::ReadVertex( const char *str )
 {
-  char str[256];
-  if( fgets( str, sizeof(str), f) ) {
-    fbvertex *v = new fbvertex();
-    int npar=sscanf(str,"%d %f %f %f %d %d %d %d %d %d",
-                    &v->idvtx, &v->x, &v->y, &v->z,
-                    &v->isprim, &v->ischarm, &v->istau, &v->nup, &v->ndown, &v->ofb
-                   );
-    if(10 != npar)
-    {
-      if(npar!=0) Log(1,"EdbFeedback::ReadVertex","ERROR! bad vtx line: %s", str); 
-      delete v; v=0;
-    }
-    return v;
-  } else 
-    return 0;
+  fbvertex *v = new fbvertex();
+  int npar=sscanf(str,"%d %f %f %f %d %d %d %d %d %d",
+                  &v->idvtx, &v->x, &v->y, &v->z,
+                  &v->isprim, &v->ischarm, &v->istau, &v->nup, &v->ndown, &v->ofb
+                 );
+  if(10 != npar)  SafeDelete(v);
+  return v;
 }
 
 //------------------------------------------------------------------------------------
-fbtrack   *EdbFeedback::ReadTrack( FILE *f )
+fbtrack   *EdbFeedback::ReadTrack( const char *str )
 {
-  char str[512];
-  fgets( str, sizeof(str), f);
   fbtrack *t = new fbtrack();
   if( 27 != sscanf(str,"%d %d %d %f %f %f %f %f %f %f %f %f %f %d %d %d %d %d %d %d %f %f %f %f %d %d %d",
       &t->id_track, &t->id_upvtx, &t->id_downvtx, 
@@ -560,7 +579,7 @@ fbtrack   *EdbFeedback::ReadTrack( FILE *f )
                   ))
   {
     Log(1,"EdbFeedback::ReadTrack","ERROR! bad trk line: %s", str); 
-    delete t;
+    SafeDelete(t);
     return 0; 
   }
   return t;
@@ -587,24 +606,18 @@ fbsegment   *EdbFeedback::ReadSegment( FILE *f )
 //------------------------------------------------------------------------------------
 void EdbFeedback::PrintFB()
 {
-  for( int iv=0; iv<eNvtx; iv++ ) {
+  for( int iv=0; iv<eNvtxLim; iv++ ) {
     fbvertex *v = eV[iv];
-    if(!v) { Log(1,"EdbFeedback::LoadFBintoDB","ERROR: vertex %d is missing!", iv); return; }
-    Print(v);
-    for(int it=0; it<(v->ndown + v->nup); it++ ) {
-      fbtrack *t = v->tracks[it];
-      if(!t) { 
-        Log(1,"EdbFeedback::LoadFBintoDB","ERROR: track %d of vertex %d is missing!", it, iv); 
-        return; 
-      }
+    if(v)    Print(v);
+  }
+
+  for(int it=0; it<eNtrLim; it++ ) {
+    fbtrack *t = eT[it];
+    if(t) {
       Print(t);
       for(int is=0; is<t->nseg; is++ ) {
         fbsegment *s = t->segments[is];
-        if(!s) { 
-          Log(1,"EdbFeedback::LoadFBintoDB","ERROR: segment %d of track %d and vertex %d is missing!", is, it, iv);
-          return; 
-        }
-        Print(s);
+        if(s) Print(s);
       }
     }
   }

@@ -192,16 +192,20 @@ class EdbFeedback : public TObject {
   ULong64_t eProcOp;
   ULong64_t eRecID;
   
+  int eNvtxLim;   // limit for vtx array size
   int eNvtx;      // number of vertices
+  int eNtrLim;    // limit for tracks array size
+  int eNtr;       // number of tracks
   fbvertex **eV;  //! array of vertices
+  fbtrack  **eT;  //! array of tracks
   
   public:
     EdbFeedback();
   ~EdbFeedback(){}
     
   int ReadFBFile( const char *file );
-  fbvertex  *ReadVertex( FILE *f );
-  fbtrack   *ReadTrack( FILE *f );
+  fbvertex  *ReadVertex( const char *str );
+  fbtrack   *ReadTrack( const char *str );
   fbsegment *ReadSegment( FILE *f );
   
   void Print();

@@ -147,7 +147,8 @@ int main(int argc, char* argv[])
     fb.eEventBrick=brickid;
     fb.eEvent=eventid;
     fb.ReadFBFile(fname);
-    //fb.PrintFB();
+    fb.PrintFB();
+    
     if( !InitDB( fb, cenv)) return 0;
     fb.eDB->eDebug=do_testdb;
     fb.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
@@ -160,6 +161,7 @@ int main(int argc, char* argv[])
     fb.eDB->SetTransactionRW();
     fb.LoadFBintoDB();
     fb.eDB->Commit();
+    
   }  else if(do_addbrick) {
     AddBrick(brick,dir,cenv, do_testdb);
   }
