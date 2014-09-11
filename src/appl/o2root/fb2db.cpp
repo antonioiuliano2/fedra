@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
     fb.eEventBrick=brickid;
     fb.eEvent=eventid;
     fb.ReadFBFile(fname);
-    fb.PrintFB();
+    if(gEDBDEBUGLEVEL>2) fb.PrintFB();
     
     if( !InitDB( fb, cenv)) return 0;
     fb.eDB->eDebug=do_testdb;

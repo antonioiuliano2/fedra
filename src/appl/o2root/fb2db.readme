@@ -1,0 +1,44 @@
+fb2db - feedback file loader into databse
+
+assume the presence in working directory of the parameter file fb2db.rootrc with 
+database connection information and laboratory dependent parameters like this one:
+
+fb2db.dbname:                            oracle://nusrv9/COPDB
+fb2db.username:                          username
+fb2db.password:                          password
+fb2db.rdb:
+fb2db.X_MARKS:                           1
+fb2db.labName:                           NAPOLI
+fb2db.labN:                              NA
+fb2db.BS_ID:                             'OPERA NA SET  04'
+fb2db.id_machine:                        6000000000010002
+fb2db.id_programsettings:                81000100000000087
+fb2db.id_requester:                      6000000000100375
+fb2db.EdbDebugLevel:                     3
+
+All of them should be correctly set depending on your laboratory and database connection as
+defined in tnsnames.ora file
+
+There are 2 operation modes:
+
+1) Load brick geometry information as:
+   fb2db -addbrick=102089 -online=/opera/scan/mic3/ONLINE -v=2 -lab=NA -commit
+
+2) Load feedback file as:
+   fb2db -file=/opera/scan/mic3/ONLINE/b102089/b102089_e11184031419.feedback -v=2 -lab=NA -commit
+
+By default the program started in the test mode and do not modify the database - it's useful 
+to check files compatibility and db connection.To modify the database use -commit option.
+
+To load brick geometry the availability of files with X-marks information and geometry
+is expected in the brick directory as:
+/opera/scan/mic3/ONLINE/b102089    - brick directory with files:
+b102089.geometry
+b102089.map
+b102089.map.LL
+b102089.map.XG
+b102089.map.XL
+
+--------------
+VT: 11/09/2014
+--------------
