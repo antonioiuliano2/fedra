@@ -38,6 +38,7 @@ void print_help_message()
   cout<< "\t\t -corraff    -  save corrections to set.root file\n";
   cout<< "\t\t -global     -  global corrections using long tracks to unbend the full set\n";
   cout<< "\t\t -momentum   -  tracks momentum estimation\n";
+  cout<< "\t\t -momentum   -  tracks momentum estimation\n";
   cout<< "\t\t -divide=NxM -  divide set into into NxM zones and calculate local correction in each zone\n";
   cout<< "\t\t                the following tracking may use this correction if the parameter fedra.track.do_local_corr in track.rootrc is set to 1\n";
   cout<< "\t\t                normally is required several iterations (>3) like emtra.../emtrackan... to converge the local corrections. \n";
@@ -59,6 +60,11 @@ void set_default(TEnv &cenv)
   cenv.SetValue("trackan.global.doXYcorr"        , 1);
   cenv.SetValue("trackan.global.doTXTYcorr"      , 1);
   cenv.SetValue("trackan.global.doZcorr"         , 1);
+  cenv.SetValue("trackan.MomEst.DT","0.0021 0.0054 0");
+  cenv.SetValue("trackan.MomEst.DTx","0.0021 0.0093 0");
+  cenv.SetValue("trackan.MomEst.DTy","0.0021 0 0");
+  cenv.SetValue("trackan.MomEst.X0", 5600);
+  cenv.SetValue("trackan.MomEst.M", 139.6);
 }
 
 bool      do_set      = false;
@@ -436,7 +442,7 @@ void GlobalDiff(EdbPVRec &ali, const char *suff="")
   
   TCanvas *c = new TCanvas(Form("GDiff_%s",suff), Form("global_diff_%s",suff), 800,600);
   c->Divide(2,2);
-  c->cd(1);   hDXR.Draw();
+  c->cd(1);   hDXR.Draw(); 
   c->cd(2);   hDYR.Draw();
   c->cd(3);   hDTXR.Draw();
   c->cd(4);   hDTYR.Draw();
@@ -533,6 +539,19 @@ void CheckMom(EdbPVRec &ali, TEnv &cenv)
   Log(2,"Check momentum","for %d tracks",ntr);
   
   EdbMomentumEstimator mes;
+
+  //get fitter parameters from TEnv
+  TString line;
+  line=cenv.GetValue("trackan.MomEst.DT","0.0021 0.0054 0");
+  if(sscanf(line.Data(),"%g %g %g",&mes.eDT0, &mes.eDT1, &mes.eDT2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  line=cenv.GetValue("trackan.MomEst.DTx","0.0021 0.0093 0");
+  if(sscanf(line.Data(),"%g %g %g",&mes.eDTx0,&mes.eDTx1,&mes.eDTx2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  line=cenv.GetValue("trackan.MomEst.DTy","0.0021 0 0");
+  if(sscanf(line.Data(),"%g %g %g",&mes.eDTy0,&mes.eDTy1,&mes.eDTy2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  mes.eX0=cenv.GetValue("trackan.MomEst.X0",5600);
+  mes.eM=cenv.GetValue("trackan.MomEst.M",128);
+  mes.Print();
+  printf("eAlg=%d\n",mes.eAlg);
   //mes.eDTx0=0.001;  mes.eDTx1=0; mes.eDTx2=0;
   //mes.eDTy0=0.001;  mes.eDTy1=0; mes.eDTy2=0;
 
