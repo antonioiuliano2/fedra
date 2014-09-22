@@ -60,11 +60,12 @@ void set_default(TEnv &cenv)
   cenv.SetValue("trackan.global.doXYcorr"        , 1);
   cenv.SetValue("trackan.global.doTXTYcorr"      , 1);
   cenv.SetValue("trackan.global.doZcorr"         , 1);
+  cenv.SetValue("trackan.MomEst.Alg",0);
   cenv.SetValue("trackan.MomEst.DT","0.0021 0.0054 0");
   cenv.SetValue("trackan.MomEst.DTx","0.0021 0.0093 0");
   cenv.SetValue("trackan.MomEst.DTy","0.0021 0 0");
   cenv.SetValue("trackan.MomEst.X0", 5600);
-  cenv.SetValue("trackan.MomEst.M", 139.6);
+  cenv.SetValue("trackan.MomEst.M", 0.13957);
 }
 
 bool      do_set      = false;
@@ -548,10 +549,10 @@ void CheckMom(EdbPVRec &ali, TEnv &cenv)
   if(sscanf(line.Data(),"%g %g %g",&mes.eDTx0,&mes.eDTx1,&mes.eDTx2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
   line=cenv.GetValue("trackan.MomEst.DTy","0.0021 0 0");
   if(sscanf(line.Data(),"%g %g %g",&mes.eDTy0,&mes.eDTy1,&mes.eDTy2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  mes.eAlg=cenv.GetValue("trackan.MomEst.Alg",0);
   mes.eX0=cenv.GetValue("trackan.MomEst.X0",5600);
-  mes.eM=cenv.GetValue("trackan.MomEst.M",128);
+  mes.eM=cenv.GetValue("trackan.MomEst.M",0.13957);
   mes.Print();
-  printf("eAlg=%d\n",mes.eAlg);
   //mes.eDTx0=0.001;  mes.eDTx1=0; mes.eDTx2=0;
   //mes.eDTy0=0.001;  mes.eDTy1=0; mes.eDTy2=0;
 
