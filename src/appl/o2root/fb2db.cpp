@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
 
   gEDBDEBUGLEVEL       = cenv.GetValue("fb2db.EdbDebugLevel" , 1);
   
+  int do_checkbrick=0;
   int do_addbrick=0, brick=0;
   char *dir=0;
   char *lab=0;
@@ -105,6 +106,13 @@ int main(int argc, char* argv[])
       if(strlen(key)>10) {
         brick = atoi(key+10);
         do_addbrick=1;
+      }
+    }
+    else if(!strncmp(key,"-checkbrick=",12))
+    {
+      if(strlen(key)>12) {
+        brick = atoi(key+12);
+        do_checkbrick=1;
       }
     }
     else if(!strncmp(key,"-online=",8))
@@ -164,7 +172,16 @@ int main(int argc, char* argv[])
     
   }  else if(do_addbrick) {
     AddBrick(brick,dir,cenv, do_testdb);
+  } else if(do_checkbrick) {
+    EdbFeedback db;
+    if( !InitDB( db, cenv)) return 0;
+    db.eDB->eDebug=0;
+    db.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
+    db.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
+    const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
+    db.eDB->IfEventBrick(1000000+brick,BS_ID);
   }
+  
   return 1;
 }
 
@@ -215,7 +232,7 @@ int AddBrick( int BRICK,const char *dir, TEnv &cenv, int test  )
 
   char databrick[500];
   sprintf(databrick,"%d, %f, %f, %f, %f, %f, %f, %s, %d, %f, %f, %f", 1000000+BRICK, MINX, MAXX, MINY, MAXY, MINZ, MAXZ, BS_ID, BRICK, ZEROX, ZEROY, ZEROZ);
-  db.eDB->AddEventBricks(databrick);
+  db.eDB->AddEventBrick(databrick);
   
   /*********** Getting brick id ***********/
   int id_eventbrick = db.eDB->GetId_EventBrick( Form("%d",BRICK), BS_ID, 0);

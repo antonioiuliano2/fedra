@@ -62,7 +62,7 @@ Int_t  TOracleServerE2WFB::MyQuery(const char *query)
 }
 
 //------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WFB::AddEventBricks(const char *databrick)
+Int_t  TOracleServerE2WFB::AddEventBrick(const char *databrick)
 {
   // Adds a brick into the DB
   
@@ -70,8 +70,33 @@ Int_t  TOracleServerE2WFB::AddEventBricks(const char *databrick)
       INSERT INTO OPERA.PV_%s_EVENTBRICKS \
       (ID, MINX, MAXX, MINY, MAXY, MINZ, MAXZ, ID_SET, ID_BRICK, ZEROX, ZEROY, ZEROZ) VALUES (%s)", eLa.Data(),
   databrick )))  return 0;
-  Log(2,"TOracleServerE2WFB:AddEventBricks","Brick added");
+  Log(2,"TOracleServerE2WFB:AddEventBrick","Brick added");
   return 1;
+}
+
+//------------------------------------------------------------------------------------
+ULong64_t  TOracleServerE2WFB::IfEventBrick(ULong64_t id_eventbrick, const char *id_set )
+{
+  // Check if brick structure is in DB
+  
+  if(MyQuery(Form( "\
+     SELECT * FROM OPERA.PV_%s_EVENTBRICKS \
+     WHERE ID=%lld and ID_SET=%s", eLa.Data(), 
+  id_eventbrick,id_set))) {
+    ULong64_t id;
+    if(fStmt) {
+      ResultSet *rs = fStmt->getResultSet();
+      if(rs) 
+        if(rs->next()) {
+        sscanf( (rs->getString(1)).c_str(),"%lld",&id);
+        Log(2,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is found in DB!",id,id_set);
+        PrintResult();
+        return id;
+        }
+    }
+  }
+  Log(2,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is not found in DB!",id_eventbrick,id_set);
+  return 0;
 }
 
 //------------------------------------------------------------------------------------
