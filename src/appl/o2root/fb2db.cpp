@@ -4,15 +4,20 @@
 #include <string.h>
 #include <iostream>
 #include <TEnv.h>
+#include <TString.h>
 #include <TSystem.h>
 #include "TOracleServerE2WFB.h"
 #include "EdbScanProc.h"
 #include "EdbLog.h"
 
 using namespace std;
-bool InitDB( EdbFeedback &fb, TEnv &cenv);
-int  AddBrick( int BRICK,const char *dir, TEnv &cenv, int test  );
+bool InitDB( EdbFeedback &fb, TEnv &cenv, int test);
+int  AddBrick( EdbFeedback &fb, int BRICK, const char *dir, TEnv &cenv );
+int  AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
+int ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event , TString &dir );
+int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv );
 
+//-------------------------------------------------------------------------------------
 void print_help_message()
 {
   cout<< "\nUsage: \n\t  fb2db -file=feedback_file [-commit -v=V -lab=LA]\n";
@@ -36,6 +41,7 @@ void print_help_message()
   cout<<endl;
 }
 
+//-------------------------------------------------------------------------------------
 void set_default(TEnv &cenv)
 {
   cenv.SetValue("fb2db.dbname"             , "connection_string");
@@ -52,6 +58,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fb2db.EdbDebugLevel"      , 1);
 }
  
+//-------------------------------------------------------------------------------------
 void set_default_NA(TEnv &cenv)
 {
   cenv.SetValue("fb2db.labName"            , "NAPOLI");
@@ -62,6 +69,7 @@ void set_default_NA(TEnv &cenv)
   cenv.SetValue("fb2db.id_requester"       , "6000000000100375");
 }
  
+//-------------------------------------------------------------------------------------
 void set_default_BE(TEnv &cenv)
 {
   cenv.SetValue("fb2db.labName"            , "BERN");
@@ -72,6 +80,7 @@ void set_default_BE(TEnv &cenv)
   cenv.SetValue("fb2db.id_requester"       , "5000000000328005");
 }
  
+//-------------------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
   if (argc < 2)   { print_help_message();  return 0; }
@@ -90,6 +99,9 @@ int main(int argc, char* argv[])
   int do_feedback=0;
   char *fname=0;
   
+  char *listfile=0;
+  int do_addlist=0;
+
   int do_testdb=1;
   
   for(int i=1; i<argc; i++ ) {
@@ -106,6 +118,13 @@ int main(int argc, char* argv[])
       if(strlen(key)>10) {
         brick = atoi(key+10);
         do_addbrick=1;
+      }
+    }
+    else if(!strncmp(key,"-list=",6))
+    {
+      if(strlen(key)>6) {
+        listfile = key+6;
+        do_addlist=1;
       }
     }
     else if(!strncmp(key,"-checkbrick=",12))
@@ -140,71 +159,131 @@ int main(int argc, char* argv[])
   }
   cenv.WriteFile("fb2db.save.rootrc");
 
-  if(do_feedback) {
-    if(!fname)   { print_help_message(); return 0; }
-    ULong64_t brickid=0,eventid=0;
-    if(2 != sscanf(gSystem->BaseName(fname),"b%lld_e%lld.feedback",&brickid,&eventid)) {
-      Log(1,"Error parsing feedback filename (expected bXXXX_eXXXXX.feedback): %s", fname);
-      return 0;
-    }
-    if(brickid>0&&brickid<1000000) brickid+=1000000;
-    printf("\n-------------------------------------------------------\n");
-    printf("Load feedback file  %s into database for brick %lld, event %lld\n", fname, brickid, eventid);
-    printf("---------------------------------------------------------\n");
-    EdbFeedback fb;
-    fb.eEventBrick=brickid;
-    fb.eEvent=eventid;
-    fb.ReadFBFile(fname);
-    if(gEDBDEBUGLEVEL>2) fb.PrintFB();
-    
-    if( !InitDB( fb, cenv)) return 0;
-    fb.eDB->eDebug=do_testdb;
-    fb.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
-    fb.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
-    sscanf( cenv.GetValue("fb2db.id_machine"         , "6000000000010002"), "%lld", &(fb.eIdMachine) );
-    sscanf( cenv.GetValue("fb2db.id_programsettings" , "81000100000000087"), "%lld", &(fb.eIdProgramsettings) );
-    sscanf( cenv.GetValue("fb2db.id_requester"       , "6000000000100375"), "%lld", &(fb.eIdRequester) );
-    fb.Print();
-    
-    fb.eDB->SetTransactionRW();
-    fb.LoadFBintoDB();
-    fb.eDB->Commit();
-    
-  }  else if(do_addbrick) {
-    AddBrick(brick,dir,cenv, do_testdb);
-  } else if(do_checkbrick) {
-    EdbFeedback db;
-    if( !InitDB( db, cenv)) return 0;
-    db.eDB->eDebug=0;
-    db.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
-    db.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
-    const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
-    db.eDB->IfEventBrick(1000000+brick,BS_ID);
+  EdbFeedback fb;
+  if(do_feedback || do_addbrick || do_addlist || do_checkbrick)
+  {   
+    if( !InitDB( fb, cenv, do_testdb)) return 0;
   }
   
+  if(do_feedback) 
+  {
+    if(!fname)   { print_help_message(); return 0; }
+    AddFeedback( fb, fname, cenv );
+  }
+  else if(do_addbrick) 
+  {
+    AddBrick( fb, brick, dir, cenv);
+  }
+  else if(do_addlist) 
+  {
+    AddList(fb, listfile, cenv);
+  } 
+  else if(do_checkbrick) 
+  {
+    fb.eDB->eDebug=0;
+    const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
+    fb.eDB->IfEventBrick(1000000+brick,BS_ID);
+  }
+
   return 1;
 }
 
-bool InitDB( EdbFeedback &fb, TEnv &cenv )
+//-------------------------------------------------------------------------------------
+bool InitDB( EdbFeedback &fb, TEnv &cenv, int test)
 {
   const char *dbname   = cenv.GetValue("fb2db.dbname"   , "connection_string");
   const char *username = cenv.GetValue("fb2db.username" , "username");
   const char *password = cenv.GetValue("fb2db.password" , "password");
   const char *rdb      = cenv.GetValue("fb2db.rdb"      , "");
+  
   printf("Init database \t\t%s%s\n", dbname, rdb);
-  return fb.InitDB( dbname, username, password);
+  if( fb.InitDB( dbname, username, password) ) {
+    fb.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
+    fb.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
+    fb.eDB->eDebug=test;
+    fb.eDB->SetTransactionRW();
+    sscanf( cenv.GetValue("fb2db.id_machine"         , "6000000000010002"),  "%lld", &(fb.eIdMachine) );
+    sscanf( cenv.GetValue("fb2db.id_programsettings" , "81000100000000087"), "%lld", &(fb.eIdProgramsettings) );
+    sscanf( cenv.GetValue("fb2db.id_requester"       , "6000000000100375"),  "%lld", &(fb.eIdRequester) );
+    fb.Print();
+    return 1;
+  }
+  return 0;
 }
 
-int AddBrick( int BRICK,const char *dir, TEnv &cenv, int test  )
+//-------------------------------------------------------------------------------------
+int AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv)
 {
   fprintf(stderr,"AddBrick started\n");
-  EdbFeedback db;
-  if( !InitDB( db, cenv)) return 0;
-  db.eDB->eDebug=test;
-  db.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
-  db.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
-  db.eDB->SetTransactionRW();
+  FILE *f = fopen( listfile, "r" );
+  char str[1024];
+  
+  while( fgets( str, sizeof(str), f) )
+  {
+    char fname[1024];
+    if( 1 != sscanf(str,"%s", fname )) {
+      Log(1,"fb2db::AddList","ERROR! bad filename line: %s", str);
+      continue;
+    }
+    
+    ULong64_t brickid=0,eventid=0;
+    TString onlinedir;
+    if( !ParseFileName( fname, brickid, eventid, onlinedir ) ) continue;
+    Log(2,"fb2db::ParseFileName","brick = %lld, event = %lld, onlinedir=%s",brickid, eventid,onlinedir.Data());
+    
+    if( !fb.eDB->IfEventBrick(1000000+brickid, cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'") ) ) 
+    {
+      if( !AddBrick(fb, brickid, onlinedir, cenv) ) return 0;
+    }
+    
+    AddFeedback( fb, fname, cenv );
+    
+  }
+  return 0;
+}
 
+//-------------------------------------------------------------------------------------
+int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid , TString &onlinedir )
+{
+  if( gSystem->AccessPathName(fname) ) {
+    Log(1,"fb2db::ParseFileName","ERROR: can not access file: %s", fname);
+    return 0;
+  }
+  if(2 != sscanf(gSystem->BaseName(fname),"b%lld_e%lld.feedback",&brickid,&eventid)) {
+    Log(1,"Error parsing feedback filename (expected bXXXX_eXXXXX.feedback): %s", fname);
+    return 0;
+  }
+  const char *dir = gSystem->DirName(fname);
+  int n = strlen(dir) - strlen( Form("/b%6.6d",int(brickid)) );
+  onlinedir=dir;
+  onlinedir.Resize( n );
+  return 1;
+}
+
+//-------------------------------------------------------------------------------------
+int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv )
+{
+  TString onlinedir;
+  ULong64_t brickid=0,eventid=0;
+  if( !ParseFileName( fname, brickid, eventid, onlinedir ) ) return 0;
+  if(brickid>0&&brickid<1000000) brickid+=1000000;
+  printf("\n-------------------------------------------------------\n");
+  printf("Load feedback file  %s into database for brick %lld, event %lld\n", fname, brickid, eventid);
+  printf("---------------------------------------------------------\n");
+  fb.eEventBrick=brickid;
+  fb.eEvent=eventid;
+  fb.ReadFBFile(fname);
+  if(gEDBDEBUGLEVEL>2) fb.PrintFB();
+    
+  fb.LoadFBintoDB();
+  fb.eDB->Commit();
+  return 1;
+}
+
+//-------------------------------------------------------------------------------------
+int AddBrick( EdbFeedback &db, int BRICK, const char *dir, TEnv &cenv )
+{
+  fprintf(stderr,"AddBrick started\n");
   EdbScanProc sproc;
   sproc.eProcDirClient=dir;
   time_t ti = time(NULL);
