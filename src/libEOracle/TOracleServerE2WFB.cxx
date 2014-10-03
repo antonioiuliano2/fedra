@@ -81,21 +81,46 @@ ULong64_t  TOracleServerE2WFB::IfEventBrick(ULong64_t id_eventbrick, const char 
   
   if(MyQuery(Form( "\
      SELECT * FROM OPERA.PV_%s_EVENTBRICKS \
-     WHERE ID=%lld and ID_SET=%s", eLa.Data(), 
-  id_eventbrick,id_set))) {
-    ULong64_t id;
+     WHERE ID=%lld and ID_SET=%s", 
+  eLa.Data(),  id_eventbrick,id_set))) {
     if(fStmt) {
       ResultSet *rs = fStmt->getResultSet();
-      if(rs) 
-        if(rs->next()) {
-        sscanf( (rs->getString(1)).c_str(),"%lld",&id);
-        Log(2,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is found in DB!",id,id_set);
-        PrintResult();
-        return id;
+      if(rs) {
+        TString result;
+        int nrows = PrintResultStr(result);
+        if(nrows>0) {
+          Log(2,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is found in DB!",id_eventbrick,id_set);
+          printf( "%s",result.Data() );
+          return nrows;
         }
+      }
     }
   }
-  Log(2,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is not found in DB!",id_eventbrick,id_set);
+  Log(1,"TOracleServerE2WFB::IfEventBrick","brick %lld of set %s is not found in DB!",id_eventbrick,id_set);
+  return 0;
+}
+
+//------------------------------------------------------------------------------------
+ULong64_t  TOracleServerE2WFB::IfEventRec(ULong64_t id_eventbrick)
+{
+  // Check if reconstruction was already published
+  
+  if(MyQuery(Form( "select * from vw_feedback_reconstructions where id_eventbrick=%lld",
+  id_eventbrick))) {
+    if(fStmt) {
+      ResultSet *rs = fStmt->getResultSet();
+      if(rs) {
+        TString result;
+        int nrows = PrintResultStr(result);
+        if(nrows>0) {
+          Log(2,"TOracleServerE2WFB::IfEventRec","%d reconstructions are found for brick %lld in DB!", nrows, id_eventbrick);
+          printf( "%s",result.Data() );
+          return nrows;
+        }
+      }
+    }
+  }
+  Log(1,"TOracleServerE2WFB::IfEventBrick","brick %lld is not found in DB!",id_eventbrick);
   return 0;
 }
 

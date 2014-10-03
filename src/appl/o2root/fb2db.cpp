@@ -16,6 +16,7 @@ int  AddBrick( EdbFeedback &fb, int BRICK, const char *dir, TEnv &cenv );
 int  AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
 int ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event , TString &dir );
 int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv );
+int CheckList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
 
 //-------------------------------------------------------------------------------------
 void print_help_message()
@@ -26,6 +27,16 @@ void print_help_message()
   
   cout<< "\n\t fb2db -addbrick=BRICK -online=onlinedir\n";
   cout<< "\t\t assumed that in onlinedir/bBRICK there are all necessary files";
+  
+  cout<< "\n\t fb2db -checkbrick=BRICK \n";
+  cout<< "\t\t check if the brick structure was already loaded";
+  
+  cout<< "\n\t fb2db -addlist=listfile \n";
+  cout<< "\t\t add all feedbacks from the listfile formated like that:\n";
+  cout<< "\t\t /full_path_to_a_valid_brick_directory/bBBBBBBB_eEEEEEEEEE.feedback \n\t\t ...";
+  
+  cout<< "\n\t fb2db -checklist=listfile -v=1\n";
+  cout<< "\t\t check for a leested feedbacks if the brick structure and reconstruction are in DB (use -v=1 for compact output)";
   
   cout<< "\n\n\t-----------------------------------------------------------------------------------------";
   cout<< "\n\t By default the application is started in test mode and do not change the database content";
@@ -101,6 +112,7 @@ int main(int argc, char* argv[])
   
   char *listfile=0;
   int do_addlist=0;
+  int do_checklist=0;
 
   int do_testdb=1;
   
@@ -120,11 +132,18 @@ int main(int argc, char* argv[])
         do_addbrick=1;
       }
     }
-    else if(!strncmp(key,"-list=",6))
+    else if(!strncmp(key,"-addlist=",9))
     {
-      if(strlen(key)>6) {
-        listfile = key+6;
+      if(strlen(key)>9) {
+        listfile = key+9;
         do_addlist=1;
+      }
+    }
+    else if(!strncmp(key,"-checklist=",11))
+    {
+      if(strlen(key)>11) {
+        listfile = key+11;
+        do_checklist=1;
       }
     }
     else if(!strncmp(key,"-checkbrick=",12))
@@ -160,7 +179,7 @@ int main(int argc, char* argv[])
   cenv.WriteFile("fb2db.save.rootrc");
 
   EdbFeedback fb;
-  if(do_feedback || do_addbrick || do_addlist || do_checkbrick)
+  if(do_feedback || do_addbrick || do_addlist || do_checkbrick || do_checklist )
   {   
     if( !InitDB( fb, cenv, do_testdb)) return 0;
   }
@@ -174,15 +193,22 @@ int main(int argc, char* argv[])
   {
     AddBrick( fb, brick, dir, cenv);
   }
-  else if(do_addlist) 
+  else if( do_addlist ) 
   {
     AddList(fb, listfile, cenv);
   } 
-  else if(do_checkbrick) 
+  else if(do_checkbrick)
   {
     fb.eDB->eDebug=0;
     const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
-    fb.eDB->IfEventBrick(1000000+brick,BS_ID);
+    int id = brick>1000000? brick: 1000000+brick;
+    fb.eDB->IfEventBrick(id,BS_ID);
+    fb.eDB->IfEventRec(id);
+  }
+  else if(do_checklist)
+  {
+    fb.eDB->eDebug=0;
+    CheckList(fb, listfile, cenv);
   }
 
   return 1;
@@ -212,9 +238,37 @@ bool InitDB( EdbFeedback &fb, TEnv &cenv, int test)
 }
 
 //-------------------------------------------------------------------------------------
+int CheckList( EdbFeedback &fb, const char *listfile, TEnv &cenv)
+{
+  Log(3,"fb2db::CheckList","started");
+  FILE *f = fopen( listfile, "r" );
+  if( !f )  Log(1,"fb2db::CheckList","ERROR listfile %s is not found!", listfile);
+  char str[1024];
+  
+  const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
+  while( fgets( str, sizeof(str), f) )
+  {
+    char fname[1024];
+    if( 1 != sscanf(str,"%s", fname )) {
+      Log(1,"fb2db::AddList","ERROR! bad filename line: %s", str);
+      continue;
+    }
+    ULong64_t brickid=0,eventid=0;
+    TString onlinedir;
+    if( !ParseFileName( fname, brickid, eventid, onlinedir ) ) continue;
+    Log(2,"fb2db::ParseFileName","brick = %lld, event = %lld, onlinedir=%s",brickid, eventid,onlinedir.Data());
+
+    int id = brickid>1000000? brickid: 1000000+brickid;
+    fb.eDB->IfEventBrick(id,BS_ID);
+    fb.eDB->IfEventRec(id);
+  }
+  return 0;
+}
+
+//-------------------------------------------------------------------------------------
 int AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv)
 {
-  fprintf(stderr,"AddBrick started\n");
+  Log(2,"fb2db::AddList", "started");
   FILE *f = fopen( listfile, "r" );
   char str[1024];
   

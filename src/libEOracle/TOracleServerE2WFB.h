@@ -30,6 +30,7 @@ class TOracleServerE2WFB : public TOracleServerE2 {
   Bool_t Commit() {return MyQuery("COMMIT");}
   const char *Timestamp();
     
+  ULong64_t  IfEventRec( ULong64_t id_eventbrick );
   ULong64_t  IfEventBrick( ULong64_t id_eventbrick, const char *id_set );
   Int_t AddEventBrick(const char *databrick);
   Int_t AddPlate(ULong64_t id_eventbrick, const char *dataplate);

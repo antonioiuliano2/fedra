@@ -13,6 +13,7 @@
 #include "TOracleResult.h"
 #include "TUrl.h"
 #include "TTree.h"
+#include "TString.h"
 #include "EdbLog.h"
 
 ClassImp(TOracleServer)
@@ -424,4 +425,43 @@ Int_t TOracleServer::PrintResult()
     delete rset;
   }
   return 0;
+}
+
+//______________________________________________________________________________
+Int_t TOracleServer::PrintResultStr(TString &result)
+{
+  int nlines=0;
+  if (!fStmt) Log(1,"TOracleServer::PrintResultStr","ERROR: statement is not defined!");
+  else {
+    ResultSet *rset = fStmt->getResultSet();
+    vector<MetaData> cmd = rset->getColumnListMetaData();
+    const int  nlmax=cmd.size();
+    Log(2,"TOracleServer::PrintResult","%d columns", nlmax);
+    if(nlmax<1) return nlines;
+
+    TString leaflist(nlmax*64);
+
+    for (int i = 0; i < nlmax; i++) {
+      string s = cmd[i].getString(MetaData::ATTR_NAME);
+      if (i > 0) leaflist+=" : ";
+      leaflist+= s.c_str();
+    }
+
+    result += Form("     #: %s\n", leaflist.Data());
+
+    int line=0;
+    while (rset->next())
+    {
+      result += Form("%6d: ",++line);
+      for (int i = 1; i <= nlmax; i++) 
+      {
+        result += Form("%s ", rset->getString(i).c_str() );
+      }
+      result += Form("\n");
+      nlines++;
+    }
+
+    delete rset;
+  }
+  return nlines;
 }

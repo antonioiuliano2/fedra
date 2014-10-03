@@ -33,6 +33,7 @@ class Statement;
 #endif
 
 class TTree;
+class TString;
 
 class TOracleServer : public TSQLServer {
 
@@ -74,6 +75,7 @@ public:
    // new functions in respect to basic root class (VT)
    Int_t       QueryTree(char *query, TTree *tree, char *leafs=0);
    Int_t       PrintResult();
+   Int_t       PrintResultStr( TString &result );
 
    ClassDef(TOracleServer,0)  // Connection to Oracle server
 };
