@@ -184,6 +184,11 @@ ULong64_t  TOracleServerE2WFB::AddProcessOperationBrick(
       fStmt->setSQL( s.Data() );
       fStmt->registerOutParam(1, OCCISTRING,64);
       fStmt->execute();
+      if(!(fStmt->getString(1)).c_str()) {
+        Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","ERROR! empty operation returned!");
+        return 0;
+      }
+      Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","returned string is: %s",(fStmt->getString(1)).c_str());
       sscanf( (fStmt->getString(1)).c_str(),"%lld",&id);
       Log(2,"TOracleServerE2WFB::AddProcessOperation","output: %lld",id);
     }

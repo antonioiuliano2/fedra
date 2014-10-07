@@ -88,7 +88,7 @@ void set_default_BE(TEnv &cenv)
   cenv.SetValue("fb2db.BS_ID"              , "'OPERA BE SET  04'");
   cenv.SetValue("fb2db.id_machine"         , "5000000000000022");
   cenv.SetValue("fb2db.id_programsettings" , "81000100000000087");
-  cenv.SetValue("fb2db.id_requester"       , "5000000000328005");
+  cenv.SetValue("fb2db.id_requester"       , "5000000003280005");
 }
  
 //-------------------------------------------------------------------------------------
