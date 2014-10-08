@@ -14,6 +14,7 @@ using namespace std;
 bool InitDB( EdbFeedback &fb, TEnv &cenv, int test);
 int  AddBrick( EdbFeedback &fb, int BRICK, const char *dir, TEnv &cenv );
 int  AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
+int ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event );
 int ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event , TString &dir );
 int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv );
 int CheckList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
@@ -297,7 +298,7 @@ int AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv)
 }
 
 //-------------------------------------------------------------------------------------
-int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid , TString &onlinedir )
+int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid )
 {
   if( gSystem->AccessPathName(fname) ) {
     Log(1,"fb2db::ParseFileName","ERROR: can not access file: %s", fname);
@@ -307,19 +308,28 @@ int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid , T
     Log(1,"Error parsing feedback filename (expected bXXXX_eXXXXX.feedback): %s", fname);
     return 0;
   }
-  const char *dir = gSystem->DirName(fname);
-  int n = strlen(dir) - strlen( Form("/b%6.6d",int(brickid)) );
-  onlinedir=dir;
-  onlinedir.Resize( n );
   return 1;
 }
 
 //-------------------------------------------------------------------------------------
+int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid , TString &onlinedir )
+{
+  if(ParseFileName( fname, brickid, eventid) ) {
+    const char *dir1 = gSystem->DirName(fname);
+    if(!dir1) return 0;
+    const char *dir  = gSystem->DirName(dir1);
+    if(!dir) return 0;
+    if( strlen(dir1) < 2 )  return 0;
+    onlinedir=dir;
+    return 1;
+  }
+  return 0;
+}
+//-------------------------------------------------------------------------------------
 int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv )
 {
-  TString onlinedir;
   ULong64_t brickid=0,eventid=0;
-  if( !ParseFileName( fname, brickid, eventid, onlinedir ) ) return 0;
+  if( !ParseFileName( fname, brickid, eventid ) ) return 0;
   if(brickid>0&&brickid<1000000) brickid+=1000000;
   printf("\n-------------------------------------------------------\n");
   printf("Load feedback file  %s into database for brick %lld, event %lld\n", fname, brickid, eventid);
