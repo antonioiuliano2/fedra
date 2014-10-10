@@ -170,6 +170,8 @@ public:
   void          *GetTracksAddr()    { return &eTracks;   }
   void          *GetFramesAddr()    { return &eFrames;   }
 
+  int          AttachSegmentsToTracks();
+  
   int          AttachClustersToSegments();
   int          AttachClustersToSegmentsFast();
   int          AttachClustersToSegmentsSlow();

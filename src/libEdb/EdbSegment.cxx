@@ -85,7 +85,7 @@ EdbSegment::EdbSegment( float x, float y, float z, float tx, float ty,
 //______________________________________________________________________________
 EdbSegment::~EdbSegment()
 {
-  if(eElements)  SafeDelete(eElements);
+  if(eElements)  {eElements->Clear(); SafeDelete(eElements);}
 }
 
 //______________________________________________________________________________
@@ -170,7 +170,7 @@ EdbTrack::EdbTrack( float x, float y, float z, float tx, float ty,
 //______________________________________________________________________________
 EdbTrack::~EdbTrack()
 {
-  if(eElements)  eElements->Delete();
+  if(eElements)  {eElements->Clear(); SafeDelete(eElements);}
 }
 
 //______________________________________________________________________________

@@ -19,6 +19,7 @@
 #include "EdbView.h"
 #include "EdbSegment.h"
 #include "EdbRun.h"
+#include "EdbLog.h"
 
 ClassImp(EdbView)
 ClassImp(EdbViewHeader)
@@ -325,6 +326,34 @@ TPolyMarker3D *EdbView::DrawClustersSegments(Option_t *opt) const
       marks->SetNextPoint( cluster->GetX(), cluster->GetY(), cluster->GetZ() );
   }
   return marks;
+}
+
+//______________________________________________________________________________
+int EdbView::AttachSegmentsToTracks()
+{
+  // Assumed that:
+  // tracks.eID                       - number of segments in a track
+  // Segments are written consecutively in the order they appear in microtracks (i.e. m0c0,m0c1,m0c2,m1c0,m1c1,m2c0,m2c1...)
+
+  int nseg = eSegments->GetLast()+1; if(nseg<1) return 0;
+  int ntr = eTracks->GetLast()+1;     if(ntr<1) return 0;
+
+  int icnt=0;
+  for(int itr=0; itr<ntr; itr++)
+  {
+    EdbTrack *t = (EdbTrack*)(eTracks->UncheckedAt(itr));
+    if(!t) continue;
+    int nst = t->GetID(); if(nst<1) continue;
+    if( t->GetElements() ) t->GetElements()->Clear();
+    for(int ist=0; ist<nst; ist++)
+    {
+      if(icnt >= nseg) break;
+      EdbSegment *s = (EdbSegment*)(eSegments->UncheckedAt(icnt++));
+      if(s) t->AddElement(s);
+    }
+  }
+  Log(3,"EdbView::AttachSegmentsToTracks", "ntr = %d nseg = %d icnt = %d",ntr,nseg,icnt);
+  return icnt;
 }
 
 //______________________________________________________________________________
