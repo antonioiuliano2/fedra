@@ -36,6 +36,9 @@ EdbMomentumEstimator::EdbMomentumEstimator()
   eG     = 0;
   eGX    = 0;
   eGY    = 0;
+  eGA    = 0;
+  eGAX   = 0;
+  eGAY   = 0;
   eVerbose=0;
   eMinEntr = 1;
   SetParPMS_Mag();
@@ -119,16 +122,6 @@ float EdbMomentumEstimator::PMS(EdbTrackP &tr)
   eTrack.Copy(tr);
 
   Set0();
-  /*
-  if(eAlg==0) {
-    return PMSang(eTrack);
-  }
-  else if(eAlg==1) {
-    eStatus = PMSang_base(eTrack);
-    if(eStatus>0) return eP;
-    else return -100.;     // todo
-  }
-  */
 
   if(eAlg==0) 
     {
@@ -897,6 +890,8 @@ int EdbMomentumEstimator::PMSang_base(EdbTrackP &tr)
   SafeDelete(eF1Y);
   SafeDelete(eGX);
   SafeDelete(eGY);
+  
+  const char *fitopt = "MQR"; //MQR
 
   bool statFitPX = false, statFitPY  = false;
   float initP = 1., minP=0., maxP=100.;                             // starting value for momentum in GeV
@@ -906,11 +901,11 @@ int EdbMomentumEstimator::PMSang_base(EdbTrackP &tr)
   //  eF1X->SetParameter(1, 0.002);
   eF1X->SetParLimits(0, minP, maxP);
   eGX=new TGraphErrors(vind,dax,errvind,errdax);
-  eGX->Fit("eF1X","MQR");
+  eGX->Fit("eF1X",fitopt);
   ePx=eF1X->GetParameter(0);
   if( Abs(ePx-initP)<0.00001 ) {
     eF1X->SetParameter(0, 2*initP);
-    eGX->Fit("eF1X","MQR");
+    eGX->Fit("eF1X",fitopt);
     ePx=eF1X->GetParameter(0);
     if( Abs(ePx - 2*initP)>0.00001 ) statFitPX=true;
   }
@@ -923,11 +918,11 @@ int EdbMomentumEstimator::PMSang_base(EdbTrackP &tr)
   eF1Y->SetParameter(0,initP);
   eF1Y->SetParLimits(0, minP, maxP);
   eGY=new TGraphErrors(vind,day,errvind,errday);
-  eGY->Fit("eF1Y","MQR");
+  eGY->Fit("eF1Y",fitopt);
   ePy=eF1Y->GetParameter(0);
   if( Abs(ePy-initP)<0.00001 ) {
     eF1Y->SetParameter(0, 2*initP);
-    eGY->Fit("eF1Y","MQR");
+    eGY->Fit("eF1Y",fitopt);
     ePy=eF1Y->GetParameter(0);
     if( Abs(ePy - 2*initP)>0.00001 ) statFitPY=true;
   }
@@ -1126,7 +1121,6 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
 	}
     }
 
- 
   float maxX =0;                                  // maximum value for the function fit
   TVector vind(size), errvind(size);
   
@@ -1158,7 +1152,6 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
       }
     }
 
-
   float dtx = eDTx0 + eDTx1*Abs(txmean) + eDTx2*txmean*txmean;  // measurements errors parametrization
   dtx*=dtx;
   float dty = eDTy0 + eDTy1*Abs(tymean) + eDTy2*tymean*tymean;  // measurements errors parametrization
@@ -1166,7 +1159,7 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
 
   float Zcorr = Sqrt(1+txmean*txmean+tymean*tymean);
   float x0    = eX0/1000/Zcorr;                       // the effective rad length in [mm]
- 
+
   SafeDelete(eF1X);
   SafeDelete(eF1Y);
   SafeDelete(eGAX);
@@ -1182,14 +1175,14 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
   
   eGAX=new TGraphAsymmErrors(vind,dax,errvind,errvind,errdaxL,errdaxH);
   
-  eGAX->Fit("eF1X","MQR");
+  const char *fitopt = "MQR"; //MQR
+  eGAX->Fit("eF1X",fitopt);
   ePx=eF1X->GetParameter(0);
-
   
   /*
   if( Abs(ePx-initP)<0.00001 ) {
     eF1X->SetParameter(0, 2*initP);
-    eGAX->Fit("eF1X","MQR");
+    eGAX->Fit("eF1X",fitopt);
     ePx=eF1X->GetParameter(0);
     if( Abs(ePx - 2*initP)>0.00001 ) statFitPX=true;
   }
@@ -1210,22 +1203,20 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
   eF1Y = MCSErrorFunction_base("eF1Y",x0,dty);    eF1Y->SetRange(0,maxX);
   eF1Y->SetParameter(0,initP);
   eF1Y->SetParLimits(0, minP, maxP);
-  
 
   eGAY=new TGraphAsymmErrors(vind,day,errvind,errvind,errdayL,errdayH);
   
-  eGAY->Fit("eF1Y","MQR");
+  eGAY->Fit("eF1Y", fitopt);
   ePy=eF1Y->GetParameter(0);
   /*
   if( Abs(ePy-initP)<0.00001 ) {
     eF1Y->SetParameter(0, 2*initP);
-    eGAY->Fit("eF1Y","MQR");
+    eGAY->Fit("eF1Y",fitopt);
     ePy=eF1Y->GetParameter(0);
     if( Abs(ePy - 2*initP)>0.00001 ) statFitPY=true;
   }
   else  statFitPY=true;
   */
-  
 
   if(eF1Y->GetChisquare()> TMath::ChisquareQuantile(0.05,eF1Y->GetNDF())) //checking if fit procedure gives a reasonable result (i.e., p>0.05)
     statFitPY=false;
@@ -1246,7 +1237,6 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
     eP  = (ePx*wx + ePy*wy)/(wx+wy);   // TODO: check on MC the biases of different estimations
     eDP = Sqrt(1./(wx+wy));
   } else {eP = -1; eDP=-1; }
-
 
   if(gEDBDEBUGLEVEL>1)
     printf("id=%6d (%2d/%2d) px=%7.2f +-%5.2f (%6.2f : %6.2f)    py=%7.2f +-%5.2f  (%6.2f : %6.2f)  pmean =%7.2f  %d %d\n",
