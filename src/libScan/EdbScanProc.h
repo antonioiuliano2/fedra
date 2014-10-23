@@ -164,8 +164,8 @@ public:
   bool    AddAFFtoScanSet(EdbScanSet &sc, int b1, int p1, int s1, int e1,int b2, int p2, int s2, int e2);
 
   int     AssembleScanSet(  EdbScanSet &ss);
-  int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1", bool do_erase=true);
-  int     ReadScanSetCP(    EdbID id, EdbPVRec &ali, TCut c="1", bool do_erase=true, bool do_assemble=true);
+  int     ReadScanSetCP(    EdbScanSet &ss, EdbPVRec &ali, TCut c="1", bool do_erase=true, int minplate=-1000, int maxplate=-1000);
+  int     ReadScanSetCP(    EdbID id, EdbPVRec &ali, TCut c="1", bool do_erase=true, bool do_assemble=true, int minplate=-1000, int maxplate=-1000);
   int     ReadFoundSegment( EdbID id,  EdbSegP &s, int flag=-1);
   int     ReadFoundTrack(   EdbScanSet &ss, EdbTrackP &track, int flag=-1);
   int     ReadFoundTracks(   EdbScanSet &ss,  EdbPVRec &ali, int flag=-1);

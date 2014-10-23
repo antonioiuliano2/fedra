@@ -325,7 +325,7 @@ void EdbScanProc::MakeEraseFile(EdbID id,  EdbPattern &pat)
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadScanSetCP(EdbID id,  EdbPVRec &ali, TCut c, bool do_erase, bool do_assemble)
+int EdbScanProc::ReadScanSetCP(EdbID id,  EdbPVRec &ali, TCut c, bool do_erase, bool do_assemble, int minplate, int maxplate)
 {
   // read data for scanset defined with id  apply cut c and fill ali
   // if(do_erase)    - exclude segmets from the erase mask if it is exist (default is true) 
@@ -334,17 +334,21 @@ int EdbScanProc::ReadScanSetCP(EdbID id,  EdbPVRec &ali, TCut c, bool do_erase, 
     EdbScanSet *ss = ReadScanSet(id);
     ss->Brick().SetID(id.eBrick);
     if(do_assemble) AssembleScanSet(*ss);
-    return ReadScanSetCP(*ss, ali, c, do_erase);
+    return ReadScanSetCP(*ss, ali, c, do_erase, minplate, maxplate);
 }
 
 //----------------------------------------------------------------
-int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_erase)
+int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_erase, int minplate, int maxplate)
 {
   // read data from scanset sc with cut c and fill ali
   // sc.eIDS is used as an id list
   // sc.eB   is used to get the brick geometry and affine transformations - must be filled before
   // if(do_erase) - exclude segmets from the erase mask if it is exist (default is true) 
 
+  if(minplate>maxplate) { 
+    Log(1,"EdbScanProc::ReadScanSetCP","ERROR: minplate (%d) grater then maxplate(%d)!",minplate, maxplate);
+    return 0;
+  }
   int cnt=0;
   int n = sc.eIDS.GetEntries();    // number of pieces to get
   EdbID      *id;
@@ -352,6 +356,10 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
   EdbPattern *pat;
   for(int i=0; i<n; i++) {
     id    = (EdbID *)(sc.eIDS.At(i));
+    if( !(minplate==-1000&&maxplate==-1000) ) {
+      if( id->ePlate < minplate) continue;
+      if( id->ePlate > maxplate) continue;
+    }
     plate = sc.GetPlate(id->ePlate);
     pat   = new EdbPattern();
     cnt += ReadPatCPnopar( *pat, *id, c, do_erase);
@@ -369,7 +377,8 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
   }
 
   ali.SetPatternsID();
-  for(int i=0; i<n; i++)  ali.GetPattern(i)->SetSegmentsPID();  // PID of the segment must be ID of the pattern!
+  int np = ali.Npatterns();
+  for(int i=0; i<np; i++)  ali.GetPattern(i)->SetSegmentsPID();  // PID of the segment must be ID of the pattern!
 
   // to be moved into the processing part???
   ali.SetSegmentsErrors();
