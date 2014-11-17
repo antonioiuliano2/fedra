@@ -28,6 +28,7 @@ void GlobalDiff(EdbPVRec &ali, const char *suff);
 void GlobalEff(EdbPVRec &ali, const char *suff);
 void CheckGap(EdbPVRec &ali, const char *suff);
 void CheckMom(EdbPVRec &ali, TEnv &cenv);
+bool ReadFunParameters(const char* key);
 
 //----------------------------------------------------------------------------------------
 void print_help_message()
@@ -61,7 +62,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("trackan.global.doTXTYcorr"      , 1);
   cenv.SetValue("trackan.global.doZcorr"         , 1);
   cenv.SetValue("trackan.MomEst.Alg",0);
-  cenv.SetValue("trackan.MomEst.DT","0.0021 0.0054 0");
+  cenv.SetValue("trackan.MomEst.DT", "0.0021 0.0054 0");
   cenv.SetValue("trackan.MomEst.DTx","0.0021 0.0093 0");
   cenv.SetValue("trackan.MomEst.DTy","0.0021 0 0");
   cenv.SetValue("trackan.MomEst.X0", 5600);
@@ -143,7 +144,7 @@ int main(int argc, char* argv[])
   else if(do_global)  DoGlobalCorr(ali,cenv);
   else                MakeCorrectionMap(ali,cenv);
 
-  return 1;
+  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -533,6 +534,24 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
 }
 
 
+int ReadFunParameters(const char* line, TF1& fun){
+  const int Npars=10;
+  
+  double p[Npars];
+  int NparsRead=0;
+  std::string lineString(line);
+  size_t pos=0;
+  
+  for (int i = 0; i < Npars; ++i){
+    p[i]=0;
+    if(sscanf(line+pos,"%lg",p+i)<=0)break;
+    NparsRead++;
+    // printf("Read parameter#%d=%g\n",i,p[i]);
+    pos=lineString.find_first_of(' ',pos+1);
+  }
+  fun.SetParameters(p);
+  return NparsRead;
+}
 //---------------------------------------------------------------------------
 void CheckMom(EdbPVRec &ali, TEnv &cenv)
 {
@@ -544,11 +563,11 @@ void CheckMom(EdbPVRec &ali, TEnv &cenv)
   //get fitter parameters from TEnv
   TString line;
   line=cenv.GetValue("trackan.MomEst.DT","0.0021 0.0054 0");
-  if(sscanf(line.Data(),"%g %g %g",&mes.eDT0, &mes.eDT1, &mes.eDT2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  if(ReadFunParameters(line.Data(),mes.eDTsErrorFun)<=0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
   line=cenv.GetValue("trackan.MomEst.DTx","0.0021 0.0093 0");
-  if(sscanf(line.Data(),"%g %g %g",&mes.eDTx0,&mes.eDTx1,&mes.eDTx2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  if(ReadFunParameters(line.Data(),mes.eDTxErrorFun)<=0) throw Form("Wrong line for \"trackan.MomEst.DTx\":\'%s\'",line.Data());
   line=cenv.GetValue("trackan.MomEst.DTy","0.0021 0 0");
-  if(sscanf(line.Data(),"%g %g %g",&mes.eDTy0,&mes.eDTy1,&mes.eDTy2)<0) throw Form("Wrong line for \"trackan.MomEst.DT\":\'%s\'",line.Data());
+  if(ReadFunParameters(line.Data(),mes.eDTyErrorFun)<=0) throw Form("Wrong line for \"trackan.MomEst.DTy\":\'%s\'",line.Data());
   mes.eAlg=cenv.GetValue("trackan.MomEst.Alg",0);
   mes.eX0=cenv.GetValue("trackan.MomEst.X0",5600);
   mes.eM=cenv.GetValue("trackan.MomEst.M",0.13957);
