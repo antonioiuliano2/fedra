@@ -27,9 +27,9 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   int   eMinEntr;            // min number of entries in the cell to accept it for fitting (def=1)
 
   // input parameters for PMS_mag
-  float eDT0,  eDT1,  eDT2;  // detheta  = eDT0 *(1+ eDT1*theta0- eDT2*theta0*theta0);
-  float eDTx0, eDTx1, eDTx2; // dethetaX = eDTx0*(1+eDTx1*theta0-eDTx2*theta0*theta0);
-  float eDTy0, eDTy1, eDTy2; // dethetaY = eDTy0*(1+eDTy1*theta0-eDTy2*theta0*theta0);
+  TF1 eDTxErrorFun; 
+  TF1 eDTyErrorFun;
+  TF1 eDTsErrorFun; 
 
   // the fit results
   float ePx,ePy;             // the estimated momentum
@@ -64,12 +64,21 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   void    Set0();
   float   PMS(EdbTrackP &tr);
   float   PMSang(EdbTrackP &tr);
+  float   PMSang_corr(EdbTrackP &tr);
   float   PMScoordinate(EdbTrackP &tr);
   float   CellWeight(int npl, int m);
   void    EstimateMomentumError(float P, int npl, float ang, float &pmin, float &pmax);
   double  Mat(float P, int npl, float ang);
   TF1    *MCSErrorFunction(const char *name, float x0, float dtx);
   TF1    *MCSCoordErrorFunction(const char *name, float tmean, float x0);
+
+  void    SetDTxErrorFunction(TF1& f){eDTxErrorFun=f;}
+  void    SetDTyErrorFunction(TF1& f){eDTyErrorFun=f;};
+  void    SetDTsErrorFunction(TF1& f){eDTsErrorFun=f;};
+  
+  double  GetDTx(double Tx){return eDTxErrorFun.Eval(Tx);}
+  double  GetDTy(double Ty){return eDTyErrorFun.Eval(Ty);}
+  double  GetDTs(double Ts){return eDTsErrorFun.Eval(Ts);}
 
   int     PMSang_base(EdbTrackP &tr);
   int     PMSang_base_A(EdbTrackP &tr);

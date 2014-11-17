@@ -41,6 +41,10 @@ EdbMomentumEstimator::EdbMomentumEstimator()
   eGAY   = 0;
   eVerbose=0;
   eMinEntr = 1;
+
+  eDTxErrorFun=TF1("dTxError","pol4");
+  eDTyErrorFun=TF1("dTyError","pol4");
+  eDTsErrorFun=TF1("dTxError","pol4");
   SetParPMS_Mag();
 }
 
@@ -71,17 +75,9 @@ void EdbMomentumEstimator::SetParPMS_Mag()
   // set the default values for parameters used in PMS_Mag
   eX0 = 5600;
 
-  eDT0  = 0.0021;
-  eDT1  = 0.0054; 
-  eDT2  = 0.;
-
-  eDTx0 =  0.0021;
-  eDTx1 =  0.0093;
-  eDTx2 = 0.;
-
-  eDTy0 =  0.0021;
-  eDTy1 =  0.;     // transversal error do not depends on the angle
-  eDTy2 = 0.;
+  eDTsErrorFun.SetParameters(0.0021, 0.0054,0,0,0);
+  eDTxErrorFun.SetParameters(0.0021, 0.0093,0,0,0);
+  eDTyErrorFun.SetParameters(0.0021, 0.0   ,0,0,0);
 }
 
 //________________________________________________________________________________________
@@ -90,9 +86,9 @@ void EdbMomentumEstimator::Print()
   printf("\nEdbMomentumEstimator:\n");
   printf("Algorithm: %s\n", AlgStr(eAlg).Data());
   printf("eX0 = %f \n", eX0);
-  printf("eDT0,  eDT1,  eDT2 = %f %f %f\n", eDT0, eDT1, eDT2);
-  printf("eDTx0, eDTx1, eDTx2 = %f %f %f\n", eDTx0, eDTx1, eDTx2);
-  printf("eDTy0, eDTy1, eDTy2 = %f %f %f\n", eDTy0, eDTy1, eDTy2);
+  printf("eDTxErrorFun parameters:");eDTxErrorFun.Print();
+  printf("eDTyErrorFun parameters:");eDTyErrorFun.Print();
+  printf("eDTsErrorFun parameters:");eDTsErrorFun.Print();
 }
 
 //________________________________________________________________________________________
@@ -108,6 +104,8 @@ TString EdbMomentumEstimator::AlgStr(int alg)
       sprintf(str,"%d (PMSang_base_A) Version revised by Andrea Russo 13/03/2009 based on PMSang_base() by VT",alg); break;
     case 3:
       sprintf(str,"%d (PMScoordinate) Momentum estimation by coordinate method A.Russo 2010",alg); break;
+    case 4:
+      sprintf(str,"%d (PMSang_corr)  PMS_ang corrected by ASh",alg); break;
   }
   TString s(str);
   return s;
@@ -123,33 +121,130 @@ float EdbMomentumEstimator::PMS(EdbTrackP &tr)
 
   Set0();
 
-  if(eAlg==0) 
-    {
-      return PMSang(eTrack);
-    }
-
-  if(eAlg==1) 
-    {
+  switch(eAlg){
+    case 0: return PMSang(eTrack);
+    
+    case 1: 
       eStatus = PMSang_base(eTrack);
       if(eStatus>0) return eP;
       else return -100.;     // todo
-    }
 
-  if(eAlg==2) 
-    {
+    case 2: 
       eStatus = PMSang_base_A(eTrack);
       if(eStatus>0) return eP;
       else return -100.;     // todo
-    }
 
-  if(eAlg==3) 
-    {
-      return PMScoordinate(eTrack);
-    }
-
+  case 3: return PMScoordinate(eTrack);
+  case 4: return PMSang_corr(eTrack);
+  }
   return -100;
 }
 
+double CalcTheta(const EdbSegP &s1, const EdbSegP &s2){
+  double S1 =s1.TX()*s1.TX()+s1.TY()*s1.TY()+1;
+  double S2 =s2.TX()*s2.TX()+s2.TY()*s2.TY()+1;
+  double S12=s1.TX()*s2.TX()+s1.TY()*s2.TY()+1;
+  double cosTheta2=S12*S12/(S1*S2);
+  return 1-cosTheta2;
+}
+
+//________________________________________________________________________________________
+float EdbMomentumEstimator::PMSang_corr(EdbTrackP &tr)
+{
+  ////  !Corrections by ASh!
+  // Version rewised by VT 13/05/2008 (see PMSang_base) and further modified by Magali at the end of 2008
+  // Momentum estimation by multiple scattering (Annecy implementation Oct-2007)
+  //
+  // Input: tr  - can be modified by the function
+  //
+  // calculate momentum in transverse and in longitudinal projections using the different 
+  // measurements errors parametrisation
+   
+  int nseg = tr.N();
+  int npl=tr.Npl();
+  if(nseg<2)   { Log(1,"PMSang","Warning! nseg<2 (%d)- impossible estimate momentum!",nseg);             return -99;}
+  if(npl<nseg) { Log(1,"PMSang","Warning! npl<nseg (%d, %d) - use track.SetCounters() first",npl,nseg);  return -99;}
+  int plmax = Max( tr.GetSegmentFirst()->PID(), tr.GetSegmentLast()->PID() ) + 1;
+  if(plmax<1||plmax>1000)   { Log(1,"PMSang","Warning! plmax = %d - correct the segments PID's!",plmax); return -99;}
+
+  float xmean0,ymean0,zmean0,txmean0,tymean0,wmean0;
+  FitTrackLine(tr,xmean0,ymean0,zmean0,txmean0,tymean0,wmean0);    // calculate mean track parameters
+  float tmean=Sqrt(txmean0*txmean0+ tymean0*tymean0);
+
+  // -- start calcul --
+  const int size = npl;       // vectors size
+
+  TVectorF da(size);
+  TArrayI  nentr(size);
+
+  EdbSegP *s1,*s2;
+  for(int i1=0; i1<nseg-1; i1++){
+        s1 = tr.GetSegment(i1);
+        if(!s1) continue;
+        
+        for(int i2=i1+1; i2<nseg; i2++){
+            s2 = tr.GetSegment(i2);
+            if(!s2) continue;
+            int icell = Abs(s2->PID()-s1->PID());
+            da[icell-1] += CalcTheta(*s1,*s2);
+            nentr[icell-1] +=1;
+        }
+    }
+ 
+  float Zcorr = Sqrt(1+tmean*tmean);  // correction due to non-zero track angle and crossed lead thickness
+
+  int max3D=0;                                  // maximum value for the function fit
+  TVectorF vind3d(size), errvind3d(size);
+  TVectorF errda(size);
+  int ist=0;                          // use the counter for case of missing cells 
+  for(int i=0; i<size; i++) 
+    {
+      if( nentr[i] >= eMinEntr/2 && Abs(da[i])<0.1 ) 
+        {
+          vind3d[ist]    = i+1;                            // x-coord is defined as the number of cells
+          errvind3d[ist] = .25;
+          da[ist]    = Sqrt( da[i]/(2*nentr[i]) );
+          errda[ist] = da[ist]/Sqrt(4*nentr[i]);//CellWeight(npl,i+1)); 
+          ist++;
+          max3D=i+1;
+        }
+    }
+
+  float dt = GetDTs(tmean);
+  dt*=dt;
+  
+  float x0    = eX0/(1000*Zcorr);
+  float chi2_3D =0;
+  
+  SafeDelete(eF1);
+  SafeDelete(eG);
+
+  eF1 = MCSErrorFunction("eF1",x0,dt);     eF1->SetRange(0,Min(14,max3D));
+  eF1->SetParameter(0,2000.);                             // starting value for momentum in GeV
+
+  if (max3D>0)
+    {
+      eG=new TGraphErrors(vind3d,da,errvind3d,errda);
+      if(eG->Fit("eF1","QR")!=0)return -99;
+      eP= 0.001*Abs(eF1->GetParameter(0));
+      eDP=0.001*eF1->GetParError(0);
+      EstimateMomentumError( eP, npl, tmean, ePmin, ePmax );
+      chi2_3D = eF1->GetChisquare()/eF1->GetNDF();
+      if (eVerbose) printf("P3D=%7.2f GeV ; 90%%C.L. range = [%6.2f : %6.2f] ; chi2_3D %6.2f\n", eP, ePmin, ePmax,chi2_3D);
+    }
+  return eP;
+    // if(eP>50 || eP==2)eP=-99;
+
+  // float ptrue=eP;
+
+  //-----------------------------TO TEST with MC studies------------------------------------
+  //  float wx = 1./eDPx/eDPx;
+  //  float wy = 1./eDPy/eDPy;
+  //  float ptest  = (ePx*wx + ePy*wy)/(wx+wy);  
+  //----------------------------------------------------------------------------------------
+
+  // return ptrue;
+}
 //________________________________________________________________________________________
 float EdbMomentumEstimator::PMSang(EdbTrackP &tr)
 {
@@ -294,11 +389,11 @@ float EdbMomentumEstimator::PMSang(EdbTrackP &tr)
 	}
     }
 
-  float dt = eDT0 + eDT1*Abs(tmean) + eDT2*tmean*tmean;  // measurements errors parametrization
+  float dt = GetDTs(tmean);// measurements errors parametrization
   dt*=dt;
-  float dtx = eDTx0 + eDTx1*Abs(txmean) + eDTx2*txmean*txmean;  // measurements errors parametrization
+  float dtx = GetDTx(txmean);// measurements errors parametrization
   dtx*=dtx;
-  float dty = eDTy0 + eDTy1*Abs(tymean) + eDTy2*tymean*tymean;  // measurements errors parametrization
+  float dty = GetDTy(tymean);// measurements errors parametrization
   dty*=dty;
   
   float x0    = eX0/1000;      
@@ -422,7 +517,7 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
 
   EdbSegP *s1=0,*s2=0,*s3=0;
 
-
+  
   for(int i =0;i<=nseg-3;i++)                   // cycle by the first  seg
     {
       s1 = tr.GetSegment(i);
@@ -449,7 +544,7 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
 	      DX2 = cos(ang)*dx2+sin(ang)*dy2;
 	      DY2 = cos(ang)*dy2-sin(ang)*dx2;
 
-  	      appx = (  DX1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DX2  ) * (  DX1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DX2  );
+	      appx = (  DX1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DX2  ) * (  DX1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DX2  );
 	      appy = (  DY1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DY2  ) * (  DY1 * ((s2->Z()-s3->Z())/(s1->Z()-s2->Z())) - DY2  );
 
 
@@ -459,24 +554,32 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
 	      da[nr1] += (appx + appy)/2.; 
 	      nentr[nr1] += 1;
 
-	    }//end cycle 3rd seg
+      }//end cycle 3rd seg
 
-	}//end cycle 2nd seg
+  }//end cycle 2nd seg
 
     }//end cycle 1st seg
   
-  
+  bool IsEmpty=true; 
   for(int i=0;i<npl;i++)
     {
       if(nentr[i]>0)
-	{
-	  dax[i] = sqrt(dax[i]/nentr[i]);
-	  day[i] = sqrt(day[i]/nentr[i]);
-	  da[i]  = sqrt(da[i]/nentr[i]);
-	}
+  {
+    IsEmpty=false;
+    dax[i] = sqrt(dax[i]/nentr[i]);
+    day[i] = sqrt(day[i]/nentr[i]);
+    da[i]  = sqrt(da[i]/nentr[i]);
+  }
     }
   
+  SafeDelete(eF1);
+  SafeDelete(eF1X);
+  SafeDelete(eF1Y);
+  SafeDelete(eG);
+  SafeDelete(eGX);
+  SafeDelete(eGY);
 
+  if(IsEmpty)return -99;
   eG  = new TGraphErrors();
   eGX = new TGraphErrors();
   eGY = new TGraphErrors();
@@ -495,20 +598,9 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
 	  eG->SetPointError(cont,0,da[i]/Sqrt(nentr[i]));
 	  cont++;
 	}
-    }
-  
-
-  /*
-  SafeDelete(eF1);
-  SafeDelete(eF1X);
-  SafeDelete(eF1Y);
-  SafeDelete(eG);
-  SafeDelete(eGX);
-  SafeDelete(eGY);
-  */
-
+    }  
+  if(cont==0)return -99;
   eF1X = MCSCoordErrorFunction("eF1X",tmean,eX0);
-  //eF1X->SetRange(0,Min(57,maxX));
   eF1X->SetParLimits(0,0.0001,100);
   eF1X->SetParLimits(1,0.0001,100);
   eF1X->SetParameter(0,5);                             // starting value for momentum in GeV
@@ -523,21 +615,20 @@ float EdbMomentumEstimator::PMScoordinate(EdbTrackP &tr)
   
   eF1 = MCSCoordErrorFunction("eF1",tmean,eX0);
   //eF1->SetRange(0,Min(57,max3D));
-  eF1->SetParLimits(0,0.0001,100);
-  eF1->SetParLimits(1,0.0001,100);
+  eF1->SetParLimits(0,0.0,100);
+  eF1->SetParLimits(1,0.0,100);
   eF1->SetParameter(0,5);                             // starting value for momentum in GeV
   eF1->SetParameter(1,10);                              // starting value for coordinate error  
 
-
-  eG->Fit("eF1");
-  eGX->Fit("eF1X");
-  eGY->Fit("eF1Y");
+  const char *fitopt = "MQ"; //MQR
+  eG ->Fit(eF1, fitopt);
+  eGX->Fit(eF1X,fitopt);
+  eGY->Fit(eF1Y,fitopt);
 
 
   eP  = 1./sqrt(eF1->GetParameter(0));
   ePx = 1./sqrt(eF1X->GetParameter(0));
   ePy = 1./sqrt(eF1Y->GetParameter(0));
-  
   return eP;
 }
 
@@ -578,6 +669,7 @@ TF1 *EdbMomentumEstimator::MCSErrorFunction(const char *name, float x0, float dt
 
 
   return new TF1(name,Form("sqrt(214.3296*x/%f*((1+0.038*log(x/(%f)))**2)/([0])**2+%e)",x0,x0,dtx));
+  // return new TF1(name,Form("sqrt(184.9599*x/%f*((1+0.038*log(x/(%f)))**2)/([0])**2+%e)",x0,x0,dtx));
 
   //P is returned in MeV by this function for more convinience, but given in GeV as output.
 }
@@ -878,9 +970,9 @@ int EdbMomentumEstimator::PMSang_base(EdbTrackP &tr)
       }
     }
 
-  float dtx = eDTx0 + eDTx1*Abs(txmean) + eDTx2*txmean*txmean;  // measurements errors parametrization
+  float dtx = GetDTx(txmean);  // measurements errors parametrization
   dtx*=dtx;
-  float dty = eDTy0 + eDTy1*Abs(tymean) + eDTy2*tymean*tymean;  // measurements errors parametrization
+  float dty = GetDTx(tymean);  // measurements errors parametrization
   dty*=dty;
 
   float Zcorr = Sqrt(1+txmean*txmean+tymean*tymean);
@@ -1106,19 +1198,19 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
   for(int ist=1; ist<=stepmax; ist++)         // cycle by the step size
     {
       for(int i1=0; i1<nseg-1; i1++)          // cycle by the first seg
-	{
-	  s1 = tr.GetSegment(i1);
-	  for(int i2=i1+1; i2<nseg; i2++)      // cycle by the second seg
-	    {
-	      s2 = tr.GetSegment(i2);
-	      int icell = Abs(s2->PID()-s1->PID());
-	      if( icell == ist ) {
-		dax[icell-1]   += ( (ATan(s2->TX())- ATan(s1->TX())) * (ATan(s2->TX())- ATan(s1->TX())) );
-		day[icell-1]   += ( (ATan(s2->TY())- ATan(s1->TY())) * (ATan(s2->TY())- ATan(s1->TY())) );
-		nentr[icell-1] +=1;
-	      }
-	    }
-	}
+    	{
+    	  s1 = tr.GetSegment(i1);
+    	  for(int i2=i1+1; i2<nseg; i2++)      // cycle by the second seg
+    	  {
+    	      s2 = tr.GetSegment(i2);
+    	      int icell = Abs(s2->PID()-s1->PID());
+    	      if( icell == ist ) {
+          		dax[icell-1]   += ( (ATan(s2->TX())- ATan(s1->TX())) * (ATan(s2->TX())- ATan(s1->TX())) );
+          		day[icell-1]   += ( (ATan(s2->TY())- ATan(s1->TY())) * (ATan(s2->TY())- ATan(s1->TY())) );
+          		nentr[icell-1] +=1;
+    	      }
+    	  }
+    	}
     }
 
   float maxX =0;                                  // maximum value for the function fit
@@ -1128,33 +1220,33 @@ int EdbMomentumEstimator::PMSang_base_A(EdbTrackP &tr)
   TVector errdaxH(size), errdayH(size);           // H stands for high, hogher error bar
   int ist=0;                                      // use the counter for case of missing cells 
   for(int i=0; i<size; i++) 
-    {
-      if( nentr[i] >= minentr ) {
-	float ndf = CellWeight(npl,i+1);           // CellWeight is interpreted as the ndf in the determination of dax and day
+  {
+    if( nentr[i] >= minentr ) {
+        	float ndf = CellWeight(npl,i+1);           // CellWeight is interpreted as the ndf in the determination of dax and day
 
-	vind[ist]    = i+1;                           // x-coord is defined as the number of cells
-	dax[ist]     = Sqrt( dax[ist]/nentr[i] );
-	day[ist]     = Sqrt( day[ist]/nentr[i] );
+        	vind[ist]    = i+1;                           // x-coord is defined as the number of cells
+        	dax[ist]     = Sqrt( dax[ist]/nentr[i] );
+        	day[ist]     = Sqrt( day[ist]/nentr[i] );
 
-	errvind[ist] = 0.25;
+        	errvind[ist] = 0.25;
 
-	//errdax[ist]  = dax[ist]/CellWeight(npl,i+1);
-	//errday[ist]  = day[ist]/CellWeight(npl,i+1);
+        	//errdax[ist]  = dax[ist]/CellWeight(npl,i+1);
+        	//errday[ist]  = day[ist]/CellWeight(npl,i+1);
 
-	errdaxL[ist]  = dax[ist] - dax[ist]/(Sqrt(TMath::ChisquareQuantile(0.84,ndf)/ndf));
-	errdaxH[ist]  = dax[ist]/(Sqrt(TMath::ChisquareQuantile(0.16,ndf)/ndf)) - dax[ist];
+        	errdaxL[ist]  = dax[ist] - dax[ist]/(Sqrt(TMath::ChisquareQuantile(0.84,ndf)/ndf));
+        	errdaxH[ist]  = dax[ist]/(Sqrt(TMath::ChisquareQuantile(0.16,ndf)/ndf)) - dax[ist];
 
-	errdayL[ist]  = day[ist] - day[ist]/(Sqrt(TMath::ChisquareQuantile(0.84,CellWeight(npl,i+1))/ndf));
-	errdayH[ist]  = day[ist]/(Sqrt(TMath::ChisquareQuantile(0.16,ndf)/ndf)) - day[ist];
+        	errdayL[ist]  = day[ist] - day[ist]/(Sqrt(TMath::ChisquareQuantile(0.84,CellWeight(npl,i+1))/ndf));
+        	errdayH[ist]  = day[ist]/(Sqrt(TMath::ChisquareQuantile(0.16,ndf)/ndf)) - day[ist];
 
-	maxX         = vind[ist];
-	ist++;
-      }
+        	maxX         = vind[ist];
+        	ist++;
     }
+  }
 
-  float dtx = eDTx0 + eDTx1*Abs(txmean) + eDTx2*txmean*txmean;  // measurements errors parametrization
+  float dtx = GetDTx(txmean);  // measurements errors parametrization
   dtx*=dtx;
-  float dty = eDTy0 + eDTy1*Abs(tymean) + eDTy2*tymean*tymean;  // measurements errors parametrization
+  float dty = GetDTy(txmean);  // measurements errors parametrization
   dty*=dty;
 
   float Zcorr = Sqrt(1+txmean*txmean+tymean*tymean);
