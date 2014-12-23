@@ -10,11 +10,11 @@
 //////////////////////////////////////////////////////////////////////////
 #include "EdbTrackFitter.h"
 #include "TCanvas.h"
+#include "TF1.h"
 
 class TGraphErrors;
 class TString;
 class TGraphAsymmErrors;
-class TF1;
 
 //______________________________________________________________________________
 class EdbMomentumEstimator : public EdbTrackFitter {
