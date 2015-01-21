@@ -246,7 +246,7 @@ Int_t  TOracleServerE2WFB::AddFeedbackVertex(
   TString query;
   query+=Form("insert into %s.vw_feedback_vertices_j ", eLab.Data());
   query+="(id_eventbrick,id_reconstruction,id_vertex,posx,posy,posz,isprimary,ischarm,istau, outofbrick) ";
-  query+=Form("values(%s, %s, %s, %12.2f, %12.2f, %12.2f, '%s', '%s', '%s', '%s')",
+  query+=Form("values(%s, %s, %s, %12.2f, %12.2f, %12.2f, %s, %s, %s, %s)",
               Ostr(id_eventbrick),
               Ostr(id_reconstruction),
               Ostr(id_vertex),
@@ -296,17 +296,22 @@ Int_t  TOracleServerE2WFB::AddFeedbackTrack(
   query+="rslopet,rslopel,rmsslopet,rmsslopel,kinkplatedown,kinkplateup,decaysearch,event";
   query+=Form(") values(\
       %s, %s, %s, %s, %s, \
-      %12.2f, %12.2f, %12.2f, %8.5f, %8.5f, '%s', '%s', '%s', '%s', \
-      %10.3f, %10.3f, %10.3f, %10.3f, %10.3f, '%s', %d, %8.5f, %8.5f, %8.5f, %8.5f, \
-      %d, %d, '%s', %lld )",
+      %12.2f, %12.2f, %12.2f, %8.5f, %8.5f, %s, %s, %s, %s, \
+      %10.3f, %10.3f, %10.3f, %10.3f, %10.3f, %s, %d, %8.5f, %8.5f, %8.5f, %8.5f, \
+      %s, %s, %s, %lld )",
   Ostr(id_eventbrick), 
   Ostr(id_reconstruction), 
   Ostr(id_track), 
   Ostr(id_upvtx), 
   Ostr(id_downvtx),
-  x, y, z, sx, sy, manual, particle, scanback, darkness,
+  x, y, z, sx, sy, 
+  manual, particle, scanback, darkness,
   upip,downip, p, pmin, pmax,outofbrick,lastplate,rslopet,rslopel,rmsslopet,rmsslopel,
-  kinkplatedown,kinkplateup,decaysearch,event);
+  Ostr(kinkplatedown),
+  Ostr(kinkplateup),
+  decaysearch,
+  event
+             );
 
   if(!MyQuery(query.Data())) { return 0;}
   Log(3,"TOracleServerE2WFB::AddFeedbackTrack","ok");
@@ -333,9 +338,9 @@ Int_t  TOracleServerE2WFB::AddFeedbackSegment(
   query+=Form("insert into %s.vw_feedback_segments_j",eLab.Data());
   query+="(id_eventbrick, id_reconstruction, id_plate,id_track,tracktype,posx, posy, posz, slopex, slopey, grains,trackmode) ";
   query+=Form("values(\
-      %s, %s, %s, %s, '%s',\
+      %s, %s, %s, %s, %s,\
       %12.2f, %12.2f, %12.2f, %8.5f, %8.5f,\
-      %d, '%s')",
+      %d, %s)",
   Ostr(id_eventbrick), 
   Ostr(id_reconstruction), 
   Ostr(id_plate),
@@ -417,7 +422,7 @@ int EdbFeedback::InitDB( const char *conn, const char *user, const char *pwd )
 //------------------------------------------------------------------------------------
 int EdbFeedback::LoadFBintoDB()
 {
-  if(eNvtx<1) return 0; 
+  if(eNtr<1)  return 0; 
   if(!eDB)    return 0;
  
   eProcOp = eDB->AddProcessOperationBrick(
@@ -430,14 +435,16 @@ int EdbFeedback::LoadFBintoDB()
   "Feedback");         // notes
  
   eRecID  = eDB->AddFeedbackReconstruction( eEventBrick,eProcOp );
+  
+  Log(2,"EdbFeedback::LoadFBintoDB","%d tracks to be added to RecID %d",eNtr, eRecID);
 
   for( int iv=0; iv<eNvtxLim; iv++ ) {
     fbvertex *v = eV[iv];
     if(v) { 
-      const char *vprim  = v->isprim? "Y" : "N";
-      const char *vcharm = v->ischarm? "Y" : "N";
-      const char *vtau   = v->istau? "Y" : "N";
-      const char *vout   = v->ofb? "Y" : "N";
+      const char *vprim  = v->isprim? "'Y'" : "'N'";
+      const char *vcharm = v->ischarm? "'Y'" : "'N'";
+      const char *vtau   = v->istau? "'Y'" : "'N'";
+      const char *vout   = v->ofb? "'Y'" : "'N'";
       eDB->AddFeedbackVertex(eEventBrick, eRecID, v->idvtx, v->x, v->y, v->z, vprim,vcharm,vtau,vout);
     }
   }
@@ -449,9 +456,9 @@ int EdbFeedback::LoadFBintoDB()
       return 0; 
     }
  
-    const char *tman = t->isman? "Y" : "N";
+    const char *tman = t->isman? "'Y'" : "'N'";
     const char *tparticle = PartType(t->type);
-    const char *tscanback = t->scanback? "Y" : "N";
+    const char *tscanback = t->scanback? "'Y'" : "'N'";
     const char *tdarkness = Darkness(t->darkness);
     const char *tofb = Ofb(t->ofb);
     const char *tdecaysearch = DecayFlag(t->flag);
@@ -493,58 +500,58 @@ int EdbFeedback::LoadFBintoDB()
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::SegmentRecMode(int mode)
 {
-  if (mode==0) return "A";
-  if (mode==1) return "S";
-  if (mode==2) return "M";
-  return  "UNKNOWN";
+  if (mode==0) return "'A'";
+  if (mode==1) return "'S'";
+  if (mode==2) return "'M'";
+  return  "null";
 }
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::SegmentType(int type)
 {
-  if (type==0) return "B";
-  if (type==1) return "U";
-  if (type==2) return "D";
-  return  "UNKNOWN";
+  if (type==0) return "'B'";
+  if (type==1) return "'U'";
+  if (type==2) return "'D'";
+  return  "null";
 }
 
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::DecayFlag(int flag)
 {
-  if (flag==1) return "PRIMARY";
-  if (flag==2) return "E+E-";
-  if (flag==3) return "LOWP";
-  if (flag==4) return "SF TODO";
-  if (flag==5) return "SF DONE";
-  return  "UNKNOWN";
+  if (flag==1) return "'PRIMARY'";
+  if (flag==2) return "'E+E-'";
+  if (flag==3) return "'LOWP'";
+  if (flag==4) return "'SF TODO'";
+  if (flag==5) return "'SF DONE'";
+  return  "null";
 }
 
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::Ofb(int ofb)
 {
-  if (ofb==0) return  "  ";
-  if (ofb==1) return  "PASSING_THROUGH";
-  if (ofb==2) return  "EDGE_OUT";
-  return  "UNKNOWN";
+  if (ofb==0) return  "'  '";
+  if (ofb==1) return  "'PASSING_THROUGH'";
+  if (ofb==2) return  "'EDGE_OUT'";
+  return  "null";
 }
 
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::PartType(int partype)
 {
-  if (partype==1) return  "MUON";
-  if (partype==2) return  "CHARM";
-  if (partype==3) return  "ELECTRON";
-  if (partype==4) return  "E-PAIR";
-  if (partype==5) return  "TAU";
-  return  "UNKNOWN";
+  if (partype==1) return  "'MUON'";
+  if (partype==2) return  "'CHARM'";
+  if (partype==3) return  "'ELECTRON'";
+  if (partype==4) return  "'E-PAIR'";
+  if (partype==5) return  "'TAU'";
+  return  "null";
 }
 
 //------------------------------------------------------------------------------------
 const char *EdbFeedback::Darkness(int drk)
 {
-  if (drk==0) return  "MIP";
-  if (drk==1) return  "BLACK";
-  if (drk==2) return  "GRAY";
-  return  "UNKNOWN";
+  if (drk==0) return  "'MIP'";
+  if (drk==1) return  "'BLACK'";
+  if (drk==2) return  "'GRAY'";
+  return  "null";
 }
 
 //------------------------------------------------------------------------------------
