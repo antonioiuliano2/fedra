@@ -24,6 +24,8 @@ class EdbMath {
 				    float LineStart[3], float LineEnd[3], 
 				    bool inside );
 
+  static double Angle3( float tx1, float ty1, float tx2, float ty2);
+
   static bool LineLineIntersect( float p1[3], float p2[3], float p3[3], float p4[3],
 				 float pa[3], float pb[3],
 				 double &mua, double &mub );

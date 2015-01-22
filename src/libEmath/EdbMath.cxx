@@ -39,6 +39,16 @@ int EdbMath::ArrStat( int n, float *x, float par[4] )
 }
 
 //-------------------------------------------------------------------------------------
+double EdbMath::Angle3( float tx1, float ty1, float tx2, float ty2 )
+{
+  // calculate space angle between two vectors defined by the direction tangents
+  double a2 = tx1*tx1+ty1*ty1+1;
+  double b2 = tx2*tx2+ty2*ty2+1;
+  double c2 = tx1*tx2+ty1*ty2+1;
+  return ACos( c2/Sqrt(a2*b2) );
+}
+
+//-------------------------------------------------------------------------------------
 double EdbMath::Magnitude3( float Point1[3], float Point2[3] )
 {
     double dx = Point2[0] - Point1[0];
