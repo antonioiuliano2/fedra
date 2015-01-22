@@ -28,6 +28,21 @@
 #include "EdbFiducial.h"
 #endif
 
+struct AlignmentPar
+{
+  Int_t id0;
+  Int_t id1;
+  Float_t dx;
+  Float_t dy;
+  Float_t dz;
+  Int_t n0tot;
+  Int_t n1tot;
+  Int_t n0;
+  Int_t n1;
+  Int_t nsg;
+  Int_t nbg;
+  Int_t flag;
+};
 
 //______________________________________________________________________________
 class EdbRun : public TObject {
@@ -44,6 +59,13 @@ private:
 
   EdbPredictionsBox *ePredictions;    // predictions to scan ($c)
 
+  TTree             *eViewMerge;      // view merging alignment
+  TTree             *eViewAlign;      // view neighbours  alignment
+  TTree             *eFrameAlign;     // frames alignment
+  AlignmentPar      eVM;
+  AlignmentPar      eVA;
+  AlignmentPar      eFA;
+      
 public:
   EdbMarksSet       *eMarks;          // fiducial marks
 
@@ -115,8 +137,20 @@ public:
 
   int  AddAsciiFile(const char *fname, const char *objname);
   int  ExtractAsciiFile(const char *fname, const char *objname);
+  
+  void AddViewMerge( Int_t v0, Int_t v1,
+                     Float_t dx, Float_t dy, Float_t dz, 
+                     Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
 
-  ClassDef(EdbRun,2)  // main run class contained all objects
+  void AddViewAlign( Int_t v0, Int_t v1,
+                     Float_t dx, Float_t dy, Float_t dz, 
+                     Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
+  
+  void AddFrameAlign( Int_t v, Int_t f0, Int_t f1,
+                      Float_t dx, Float_t dy, Float_t dz,
+                      Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
+
+  ClassDef(EdbRun,3)  // main run class contained all objects
 };
 #endif /* ROOT_EdbRun */
 

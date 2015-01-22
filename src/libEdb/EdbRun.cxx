@@ -141,6 +141,9 @@ void EdbRun::Init( )
   ePath        = "";
   ePredictions = 0;
   eMarks       = 0;
+  eViewMerge   = 0;
+  eViewAlign   = 0;
+  eFrameAlign  = 0;
 }
 
 //______________________________________________________________________________
@@ -164,6 +167,9 @@ void EdbRun::Open( const char *fname )
   eFile = new TFile(fname);
   if(!eFile) return;
   eTree = (TTree*)eFile->Get("Views");
+  eViewMerge = (TTree*)eFile->Get("ViewMerge");
+  eViewAlign = (TTree*)eFile->Get("ViewAlign");
+  eFrameAlign = (TTree*)eFile->Get("FrameAlign");
   if(!eTree) {
     Log(1,"EdbRun::Open","ERROR: %s has no Views tree",fname);
     return;
@@ -191,6 +197,13 @@ void EdbRun::OpenUpdate( const char *fname )
 
   eTree = (TTree*)eFile->Get("Views");
   SetView();
+  
+  eViewMerge  = (TTree*)eFile->Get("ViewMerge");
+  eViewAlign  = (TTree*)eFile->Get("ViewAlign");
+  eFrameAlign = (TTree*)eFile->Get("FrameAlign");
+  eViewAlign->SetBranchAddress("alpar",&eVA);
+  eViewMerge->SetBranchAddress("alpar",&eVM);
+  eFrameAlign->SetBranchAddress("alpar",&eFA);
 
   SafeDelete(eHeader);
   eHeader = (EdbRunHeader*)eFile->Get("RunHeader");
@@ -303,11 +316,78 @@ void EdbRun::AddView( EdbView *view )
 }
 
 //______________________________________________________________________________
+void EdbRun::AddViewMerge( Int_t v0, Int_t v1,
+                   Float_t dx, Float_t dy, Float_t dz, 
+                   Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+{
+  if(!eViewMerge) {
+    eViewMerge = new TTree("ViewMerge","Merging offsets");
+    eViewMerge->Branch("alpar",&eVM,"v0/I:v1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+  }
+  if(eViewMerge) {
+    eVM.id0=v0; eVM.id1=v1;
+    eVM.dx=dx;   eVM.dy=dy; eVM.dz=dz;
+    eVM.n0tot=n0tot; eVM.n1tot=n1tot;
+    eVM.n0=n0; eVM.n1=n1;
+    eVM.nsg=nsg; eVM.nbg=nbg;
+    eVM.flag=flag;
+    eViewMerge->Fill();
+  }
+}
+
+//______________________________________________________________________________
+void EdbRun::AddViewAlign( Int_t v0, Int_t v1,
+                   Float_t dx, Float_t dy, Float_t dz, 
+                   Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+{
+  if(!eViewAlign) {
+    eViewAlign = new TTree("ViewAlign","Neighbour views offsets");
+    eViewAlign->Branch("alpar",&eVA,"v0/I:v1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+  }
+  if(eViewAlign) {
+    eVA.id0=v0; eVA.id1=v1;
+    eVA.dx=dx;   eVA.dy=dy; eVA.dz=dz;
+    eVA.n0tot=n0tot; eVA.n1tot=n1tot;
+    eVA.n0=n0; eVA.n1=n1;
+    eVA.nsg=nsg; eVA.nbg=nbg;
+    eVA.flag=flag;
+    eViewAlign->Fill();
+  }
+}
+
+//______________________________________________________________________________
+void EdbRun::AddFrameAlign( Int_t view, Int_t f0, Int_t f1,
+                    Float_t dx, Float_t dy, Float_t dz, 
+                    Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+{
+  if(!eFrameAlign) {
+    eFrameAlign = new TTree("FrameAlign","Neighbour frames offsets");
+    eFrameAlign->Branch("v",&view,"v/I");
+    eFrameAlign->Branch("alpar",&eFA,"f0/I:f1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+  }
+  if(eFrameAlign) {
+    eFrameAlign->SetBranchAddress("v",&view);
+    eVA.id0=f0; eVA.id1=f1;
+    eVA.dx=dx;   eVA.dy=dy; eVA.dz=dz;
+    eVA.n0tot=n0tot; eVA.n1tot=n1tot;
+    eVA.n0=n0; eVA.n1=n1;
+    eVA.nsg=nsg; eVA.nbg=nbg;
+    eVA.flag=flag;
+    eFrameAlign->Fill();
+  }
+}
+
+//______________________________________________________________________________
 void EdbRun::Save()
 {
   if(eHeader)        eHeader->Write("RunHeader");
   if(ePredictions)   ePredictions->Write("Predictions");
   if(eMarks)         eMarks->Write("Marks");
+
+  //if(eViewMerge)     eViewMerge->Write();
+  //if(eViewAlign)     eViewAlign->Write();
+  //if(eFrameAlign)    eViewMerge->Write();
+  
   //SaveViews();
   //eFile->Purge();
 }
@@ -323,12 +403,12 @@ void EdbRun::Close()
 
   if( strcmp(status,"READ") ) {             // file is in "write" mode
     if( !strcmp(status,"CREATE") ) {        // save header in CREATE mode only
-      if(eHeader)        eHeader->Write("RunHeader");
-      if(ePredictions)   ePredictions->Write("Predictions");
-      if(eMarks)         eMarks->Write("Marks");
+      Save();
     }
-    //eTree->BuildIndex("eAreaID","eViewID");
-    eTree->Write();
+    if(eTree)          eTree->Write();
+    if(eViewMerge)     eViewMerge->Write();
+    if(eViewAlign)     eViewAlign->Write();
+    if(eFrameAlign)    eFrameAlign->Write();
   }
   eFile->Purge();
   eFile->Close();
