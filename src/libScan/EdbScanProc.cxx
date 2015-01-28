@@ -3081,8 +3081,10 @@ bool EdbScanProc::InitRunAccessNew(EdbRunAccess &r, EdbID id, EdbPlateP &plate, 
       LogPrint(id.eBrick,2,"InitRunAccess"," %s with %d views",runfile.Data(), r.GetRun()->GetEntries() );
   r.GetLayer(2)->Copy( *(plate.GetLayer(1)) );
   r.GetLayer(1)->Copy( *(plate.GetLayer(2)) );
+  r.GetLayer(0)->Copy( *((EdbLayer*)(&plate)) );
   //r.GetLayer(2)->Print();
   //r.GetLayer(1)->Print();
+  //r.GetLayer(0)->Print();
   return true;
 }
 

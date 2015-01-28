@@ -127,8 +127,8 @@ class EdbLayer : public TObject {
   float Yp(EdbSegP &s)  { return eAffXY.A21()*s.eX + eAffXY.A22()*s.eY + eAffXY.B2(); }
   float X(EdbSegP &s)   { return Xp(s) + TX(s)*eZcorr; } // apply propagation
   float Y(EdbSegP &s)   { return Yp(s) + TY(s)*eZcorr; }
-  
-  
+  float Zxy()           { return eZ+eZcorr; }
+
   void CorrectSeg( EdbSegP &s );
   void CorrectSegLocal( EdbSegP &s );
   

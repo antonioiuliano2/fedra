@@ -16,6 +16,7 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/empred$(ExeSuf)    \
 		$(BIN_DIR)/emtrackan$(ExeSuf) \
 		$(BIN_DIR)/emcpan$(ExeSuf) \
+		$(BIN_DIR)/emtraceback$(ExeSuf) \
 		$(BIN_DIR)/emtrfind$(ExeSuf)
 
 

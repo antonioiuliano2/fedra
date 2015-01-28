@@ -66,8 +66,10 @@ class EdbRunAccess : public TObject {
   EdbRunAccess(const char *fname);
   virtual ~EdbRunAccess();
 
+  EdbSegment  *GetRawSegmentN( int vid, int sid, int rs=0);
   EdbSegment  *GetRawSegment( int vid, int sid, int rs=0 );
   EdbSegment  *GetRawSegment( EdbView &v, int sid, int rs=0 );
+  void ApplyCorrections( const EdbView &view, EdbSegment &s, const int rs );
   
   void Set0();
   void SetPixelCorrection(const char *str);
@@ -120,7 +122,7 @@ class EdbRunAccess : public TObject {
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side);
 
-  int ViewSide(EdbView *view) const;
+  int ViewSide(const EdbView *view) const;
 //    {    if(view->GetNframesTop()==0) return 2;         // 2- bottom
  //   else if(view->GetNframesBot()==0) return 1;         // 1- top
   //  else return 0; }

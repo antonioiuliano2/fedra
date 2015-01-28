@@ -17,6 +17,8 @@ class EdbID : public TObject
   EdbID(Int_t id[]) {Set(id);}
   virtual ~EdbID() {}
 
+  bool operator==(const EdbID &id) { return eBrick==id.eBrick&&ePlate==id.ePlate&&eMajor==id.eMajor&&eMinor==id.eMinor; }
+  bool operator!=(const EdbID &id) { return eBrick!=id.eBrick||ePlate!=id.ePlate||eMajor!=id.eMajor||eMinor!=id.eMinor; }
   bool  Set(const char *id_string);
   void  Set(Int_t b = 0, Int_t p = 0, Int_t ma = 0, Int_t mi = 0) 
         {eBrick = b; ePlate = p; eMajor = ma; eMinor = mi;}

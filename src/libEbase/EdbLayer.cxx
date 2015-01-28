@@ -62,26 +62,19 @@ void EdbLayer::Invert()
   eAffXY.Invert();
   eAffTXTY.Invert();
   eShr = 1./eShr;
+  //TODO: invert also zcorr?
 }
 
 ///______________________________________________________________________________
 void EdbLayer::CorrectSeg( EdbSegP &s)
 {
-  //float dz = eZcorr;
-  //float x = s.X() + dz*s.TX();
-  //float y = s.Y() + dz*s.TY();
-  //s.Set( s.ID(), x, y, TX(s), TY(s), s.W(), s.Flag() );
-  
   s.Set( s.ID(), X(s), Y(s), TX(s), TY(s), s.W(), s.Flag() );
-  //s.SetZ(z);
 }
 
 ///______________________________________________________________________________
 void EdbLayer::CorrectSegLocal( EdbSegP &s)
 {
   eMap.CorrectSeg(s);
-  //EdbLayer *loc = (EdbLayer *)(eMap.GetObject(s.X(), s.Y(), 0));
-  //if(loc) loc->CorrectSeg(s);
 }
 
 ///______________________________________________________________________________
