@@ -85,6 +85,7 @@ class EdbScanTracking: public TObject {
    EdbScanTracking();
    virtual ~EdbScanTracking(){}
 
+   void  TrackAli(EdbPVRec &ali, TEnv &env);
    void  TrackSetBT(EdbID id, TEnv &env);
    void  SaveHist(EdbID idset, EdbTrackAssembler &etra);
  

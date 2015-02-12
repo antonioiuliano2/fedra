@@ -95,6 +95,7 @@ EdbTrackAssembler::~EdbTrackAssembler()
     
     //DoubletsFilterOut();
   int nseg = p.N();
+  Log(3,"EdbTrackAssembler::AddPattern","try to add %d segments",p.N());
   int attached=0;
   for(int j=0; j<nseg; j++) {
     EdbSegP *s = p.GetSegment(j);
@@ -110,8 +111,8 @@ EdbTrackAssembler::~EdbTrackAssembler()
       p.Z(), attached, nseg, eCollisionsRate, ntrAfter );
 }
   
-  //--------------------------------------------------------------------------------------
-  EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
+//--------------------------------------------------------------------------------------
+EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
 {
   TObjArray trsel;
   float v[2] = { s.X(), s.Y() };
@@ -150,11 +151,11 @@ EdbTrackAssembler::~EdbTrackAssembler()
   //--------------------------------------------------------------------------------------
   bool EdbTrackAssembler::SameSegment( EdbSegP &s1, EdbSegP &s2 )
 {
-  if( Abs( s1.X() - s2.X() )   <0.0001 &&
-      Abs( s1.Y() - s2.Y() )   <0.0001 &&
-      Abs( s1.TX()- s2.TX() )  <0.0001 &&
-      Abs( s1.TY()- s2.TY() )  <0.0001 &&
-      Abs( s1.W() - s2.W() )   <0.0001  )    return true;
+  if( Abs( s1.X() - s2.X() )   <0.000001 &&
+      Abs( s1.Y() - s2.Y() )   <0.000001 &&
+      Abs( s1.TX()- s2.TX() )  <0.000001 &&
+      Abs( s1.TY()- s2.TY() )  <0.000001 &&
+      Abs( s1.W() - s2.W() )   <0.000001  )    return true;
   return false;
 }
   
@@ -316,7 +317,6 @@ void EdbTrackAssembler::FitTracks()
     EdbTrackP *t = (EdbTrackP*)(eTracks.At(i));
     if(t->Flag()==-10) continue;
     int nseg=t->N();
-    t->SetP(1.);
     t->FitTrackKFS(0,10000);
         //fit.FitTrackLine(*t);
     if(nseg>1) RecalculateSegmentsProb(*t);
@@ -426,7 +426,8 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.eCond.SetSigma0(        env.GetValue("fedra.track.Sigma0"         , "3 3 0.005 0.005") );
     etra.eCond.SetPulsRamp0(     env.GetValue("fedra.track.PulsRamp0"      , "15 20") );
     etra.eCond.SetPulsRamp04(    env.GetValue("fedra.track.PulsRamp04"     , "15 20") );
-    etra.eCond.SetDegrad(        env.GetValue("fedra.track.Degrad"          , 4) );
+    etra.eCond.SetDegrad(        env.GetValue("fedra.track.Degrad"         , 4) );
+    etra.eCond.SetRadX0(         env.GetValue("fedra.track.RadX0"          , 5810.) );
       
     etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
     etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
@@ -441,11 +442,11 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
     bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
     eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
+    float       momentum        = env.GetValue("fedra.track.momentum"       ,      2.  );
   
-  //  etra.InitTrZMap(  2400, 0, 120000,   2000, 0, 100000,   30 );
     etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
   
-    EdbPattern p;
+    //EdbPattern p;
     
     EdbAffine2D misalign[60];
     if(do_misalign) {
@@ -526,6 +527,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
           t->SetID(cnt++);
           t->SetCounters();
           t->SetSegmentsTrack();
+          t->SetP(momentum);
           selectedTracks.Add(t);
         }
       }
@@ -605,3 +607,109 @@ void EdbScanTracking::SaveHist(EdbID idset, EdbTrackAssembler &etra)
   gROOT->SetBatch(batch);
   f.Close();
 }
+
+//--------------------------------------------------------------------------------------
+void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
+{
+    EdbTrackAssembler etra;
+  
+    etra.eCond.SetSigma0(        env.GetValue("fedra.track.Sigma0"         , "3 3 0.005 0.005") );
+    etra.eCond.SetPulsRamp0(     env.GetValue("fedra.track.PulsRamp0"      , "15 20") );
+    etra.eCond.SetPulsRamp04(    env.GetValue("fedra.track.PulsRamp04"     , "15 20") );
+    etra.eCond.SetDegrad(        env.GetValue("fedra.track.Degrad"          , 4) );
+    etra.eCond.SetRadX0(         env.GetValue("fedra.track.RadX0"          , 5810.) );
+      
+    etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
+    etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
+    etra.eDZGapMax              = env.GetValue("fedra.track.DZGapMax"       ,  5000.   );
+    etra.eProbMin               = env.GetValue("fedra.track.probmin"        ,  0.001   );
+    
+    bool        do_misalign     = env.GetValue("fedra.track.do_misalign"    ,      0   );
+    int         npass           = env.GetValue("fedra.track.npass"          ,      1   );
+    float       misalign_offset = env.GetValue("fedra.track.misalign_offset",    500.  );
+    //bool        do_local_corr   = env.GetValue("fedra.track.do_local_corr"  ,      1   );
+    bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
+    bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
+    eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
+    float       momentum        = env.GetValue("fedra.track.momentum",     2. );
+    etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
+
+    EdbAffine2D misalign[60];
+    if(do_misalign) {
+        //           1 2 3 4 5 6  7  8  9
+      int dx[9] = {0,0,1,1,1,0,-1,-1,-1};
+      int dy[9] = {0,1,1,0,-1,-1,-1,0,1};
+      for(int i=0; i<60; i++) {
+        misalign[i].ShiftX( dx[i%9] * misalign_offset );
+        misalign[i].ShiftY( dy[i%9] * misalign_offset );
+        printf("%d |  %d  %d\n",i, dx[i%9], dy[i%9]);
+      }
+    }
+  
+    int npl = ali.Npatterns();
+  
+    // read segments and use them for tracking
+    for(int ipass=0; ipass<npass; ipass++) {
+      printf("\n\n*************** ipass=%d ************\n",ipass);
+      etra.eCollisionsRate=0;
+      for(int i=0; i<npl; i++) {
+        
+        EdbPattern &p = *ali.GetPattern(i);
+        
+        //p.SetZ(plate->Z());
+        p.SetSegmentsZ();
+        p.SetID(i);
+        p.SetPID(i);
+        p.SetSegmentsPID();
+//        p.SetSegmentsPlate(id->ePlate);
+        printf("pattern with z: %f\n", p.Z());
+      
+        if(do_misalign) {
+          p.Transform(&misalign[i]);
+          Log(2,"EdbScanTracking::TrackSetBT","apply misalignment of %f",misalign_offset);
+        }
+  
+        if(i>0) etra.ExtrapolateTracksToZ(p.Z());
+        if( eDoRealign && i==1 ) etra.CheckPatternAlignment(p,1);
+        if( eDoRealign && i>1  ) etra.CheckPatternAlignment(p,2);
+        etra.FillTrZMap();
+        etra.AddPattern(p);
+      }
+    }
+
+    int ntr = etra.Tracks().GetEntries();
+    
+    for(int i=0; i<ntr; i++) {
+      EdbTrackP *t = (EdbTrackP *)(etra.Tracks().At(i));
+      if(t->N()<eNsegMin)  t->SetFlag(-10);
+    }
+    
+    etra.SetSegmentsErrors();
+    etra.FitTracks();
+
+    TObjArray selectedTracks(ntr);
+    if(do_comb) {
+      etra.CombTracks(selectedTracks);
+    } else {
+      int cnt=0;
+      for(int i=0; i<ntr; i++) {
+        EdbTrackP *t = (EdbTrackP *)(etra.Tracks().At(i));
+        if(t->Flag()!=-10)  {
+          t->SetID(cnt++);
+          t->SetCounters();
+          t->SetSegmentsTrack();
+          t->SetP(momentum);
+          selectedTracks.Add(t);
+        }
+      }
+    }
+    
+    EdbID idset;
+    EdbDataProc::MakeTracksTree( selectedTracks, 0., 0., Form("b%s.trk.root", idset.AsString()) );
+    TFile f( Form("b%s.trk.root", idset.AsString()) ,"UPDATE");
+    env.Write();
+    f.Close();
+    
+    SaveHist(idset,etra);
+}
+
