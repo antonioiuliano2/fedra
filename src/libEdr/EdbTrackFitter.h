@@ -21,6 +21,7 @@ class EdbTrackFitter : public TNamed {
  public:
   float eX0;             // rad length of the media [microns]
   float eM;              // mass of the particle (if negative - use the mass setted in the track)
+  float ePdef;           // default momentum
   float eTPb;            // ?
   float ePcut;           // minimal momentum?
   bool  eDE_correction;  // take into account the energy loss or not
@@ -48,6 +49,7 @@ class EdbTrackFitter : public TNamed {
   static float   Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   static float   Chi2ASegLL( EdbSegP &s1, EdbSegP &s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   static float   Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
+  float          Chi2SegMCS( const EdbSegP &s1, const EdbSegP &s2);
   void           Print();
 
   ClassDef(EdbTrackFitter,1)  // track fitter

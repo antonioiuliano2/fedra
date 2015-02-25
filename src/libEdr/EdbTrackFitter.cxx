@@ -257,6 +257,27 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanC
 }
 
 //______________________________________________________________________________
+float EdbTrackFitter::Chi2SegMCS(const EdbSegP &s1, const EdbSegP &s2){
+  
+  // double DZemul=s1.DZem()+s2.DZem();
+  ///Use hardcoded value because EdbSegP::DZem() contains sum of chi2 for microtracks.
+  double DZemul=88;
+
+  double dzem=0.5*(s1.DZ()+s2.DZ())+DZemul;
+  double dz=TMath::Abs(s1.Z()-s2.Z());
+  double dzpb=dz-dzem;
+  if(dzpb<=0)return 0;
+  double dist=EdbSegP::Distance(s1,s2);
+  dist*=dzpb/dz;
+  double theta=TMath::Sqrt2()*EdbSegP::Angle(s1,s2);
+  double mom=s1.P();
+  if(mom<=0)mom=ePdef;
+  double theta0=EdbPhysics::ThetaMCS(mom,eM,dist,eX0);
+  double chi=theta/theta0;
+  Log(5,"Chi2SegMCS",Form("dist=%6.4f (%6.4f), p=%6.2f, th=%4.3g(%4.3g) => chi2=%5.4g",dist,eX0,mom,theta,theta0,chi*chi));
+  return chi*chi;
+}
+//______________________________________________________________________________
 float EdbTrackFitter::Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2)
 {
   // full estimation of chi2 without covariance matrix - the result seems to be identical to Chi2Seg 
