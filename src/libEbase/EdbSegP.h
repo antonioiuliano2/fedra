@@ -168,7 +168,9 @@ class EdbSegP : public TObject, public EdbTrack2D {
   //other functions
   Float_t Phi()      const {return TMath::ATan2(eTY,eTX);}
   Float_t Theta()    const {return TMath::Sqrt(eTY*eTY+eTX*eTX);}
- 
+  static Float_t Distance(const EdbSegP &s1,const EdbSegP &s2);
+  static Float_t Angle(const EdbSegP &s1,const EdbSegP &s2);
+  
   void    Print( Option_t *opt="") const;
   void    PrintNice() const;
 
