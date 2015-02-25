@@ -24,6 +24,7 @@ class EdbPhysics: public TObject {
   static  float kX0_Cell(){ return 5810.;}
 
 //	functions
+  static double ThetaMCS( float p, float mass, float dx, float x0 );
   static double ThetaMS2( float p, float mass, float dx, float X0 );
   static double ThetaPb2( float p, float mass, float dx );
   static double DeAveragePb( float p, float mass, float dx);

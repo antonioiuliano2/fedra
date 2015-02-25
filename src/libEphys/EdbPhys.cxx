@@ -39,6 +39,13 @@ namespace Pb_CONST {
   static double const aa = -0.3291;
 }
 
+
+//______________________________________________________________________________
+double  EdbPhysics::ThetaMCS(float p, float m,float dz, float x0){
+    double radLen=dz/x0;
+    double beta=(m>0)?1./TMath::Sqrt(1+m*m/(p*p)):1;
+    return 0.0136/(beta*p)*TMath::Sqrt(radLen)*(1+0.038*TMath::Log(radLen));
+}
 //______________________________________________________________________________
 double EdbPhysics::ThetaMS2( float pr, float mass, float dx, float X0 )
 {
