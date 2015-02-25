@@ -12,6 +12,7 @@
 #include "EdbAlignmentV.h"
 #include "EdbPlateAlignment.h"
 #include "EdbTrackFitter.h"
+#include "EdbPhys.h"
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TROOT.h"
@@ -187,11 +188,17 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
   double dr2 = dx*dx +  dy*dy;
   if(dr2>eDRmax*eDRmax)        return 0;
   
+  double chi_mcs = 0;
+  if(eDoUseMCS){
+    ///workaround to get previous(not propagated) segment
+    EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
+    EdbSegP* previousSeg = t?(t->GetSegmentLast()):0;
+    chi_mcs = previousSeg?(eFitter.Chi2SegMCS( *previousSeg, s2)):0;
+  }
   EdbSegP s;
-  float chi2 = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
-    
-  float prob = (float)TMath::Prob( chi2*chi2, 4 );
-    
+  float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
+  float chi2 = chi*chi+chi_mcs*chi_mcs;
+  float prob = (float)TMath::Prob( chi2, 4);
   prob *= eCond.ProbSeg( s2.Theta(), s2.W() );            // the proability component depending on the grains number
   prob *= (float)TMath::Prob( s2.Chi2()*s2.Chi2(), 4 );   // the proability component depending on the segment strength
     
@@ -224,7 +231,6 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
       
     if( t->N() < nsegmin )      continue;
     if( !AcceptDZGap(*t, z) )   continue;
-      
     t->MakePredictionTo(eZ,*t);                        // extrapolation of tracks itself
       //((EdbSegP *)t)->PrintNice();
     eTrZ.Add(t);
@@ -427,7 +433,8 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     etra.eCond.SetPulsRamp0(     env.GetValue("fedra.track.PulsRamp0"      , "15 20") );
     etra.eCond.SetPulsRamp04(    env.GetValue("fedra.track.PulsRamp04"     , "15 20") );
     etra.eCond.SetDegrad(        env.GetValue("fedra.track.Degrad"         , 4) );
-    etra.eCond.SetRadX0(         env.GetValue("fedra.track.RadX0"          , 5810.) );
+    etra.SetRadLength(           env.GetValue("fedra.track.RadX0"          , 5810.) );
+    etra.eDoUseMCS              = env.GetValue("fedra.track.do_use_mcs"    , 0 );
       
     etra.eDTmax                 = env.GetValue("fedra.track.DTmax"          ,     0.07 );
     etra.eDRmax                 = env.GetValue("fedra.track.DRmax"          ,    45.   );
@@ -442,8 +449,9 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
     bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
     eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
-    float       momentum        = env.GetValue("fedra.track.momentum"       ,      2.  );
-  
+    float       momentum        = env.GetValue("fedra.track.momentum"       ,      2.  );  
+    etra.SetMomentum (momentum);
+    
     etra.InitTrZMap(  env.GetValue("fedra.track.TrZmap", "2400 0 120000   2000 0 100000   30" ) );
   
     //EdbPattern p;

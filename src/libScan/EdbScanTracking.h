@@ -33,7 +33,8 @@ class EdbTrackAssembler: public TObject {
   float         eDRmax;        // position acceptance for the fast preselection
   float         eDZGapMax;     // maxgap acceptance for the fast preselection
   float         eProbMin;      // min acceptable probability for segments preselection
-  
+  bool          eDoUseMCS;     //flag to use MultipleScattering addition for chi2 
+
   int            eCollisionsRate;  //
   EdbScanCond    eCond;
  
@@ -47,6 +48,9 @@ class EdbTrackAssembler: public TObject {
   EdbTrackAssembler();
   virtual ~EdbTrackAssembler();
 
+  void SetMomentum (float p ){eFitter.ePdef=p;}
+  void SetRadLength(float x0){eFitter.eX0=x0; eCond.SetRadX0(x0);}
+  
   bool        SameSegment( EdbSegP &s1, EdbSegP &s2 );
   void        DoubletsFilterOut(EdbPattern &p);
   void        InitTrZMap( const char *str );
