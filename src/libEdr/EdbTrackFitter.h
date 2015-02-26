@@ -48,8 +48,9 @@ class EdbTrackFitter : public TNamed {
   static float   Chi2ACP( EdbSegP s1, EdbSegP s2, EdbScanCond &cond);
   static float   Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   static float   Chi2ASegLL( EdbSegP &s1, EdbSegP &s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
-  static float   Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
+  float          Chi2SegM( EdbSegP s1, EdbSegP s2, EdbSegP &s, EdbScanCond &cond1, EdbScanCond &cond2);
   float          Chi2SegMCS( const EdbSegP &s1, const EdbSegP &s2);
+  double         ProbSegMCS(EdbSegP *s1, EdbSegP *s2);
   void           Print();
 
   ClassDef(EdbTrackFitter,1)  // track fitter

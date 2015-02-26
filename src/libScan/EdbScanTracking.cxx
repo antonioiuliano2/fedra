@@ -101,6 +101,8 @@ EdbTrackAssembler::~EdbTrackAssembler()
   for(int j=0; j<nseg; j++) {
     EdbSegP *s = p.GetSegment(j);
     if(s->Flag()==-10)   continue;
+    s->SetErrors();
+    eCond.FillErrorsCov(s->TX(),s->TY(),s->COV());
     if( !AddSegment( *(p.GetSegment(j)) ) )
       AddSegmentAsTrack( *(p.GetSegment(j)) );
     else attached++;
@@ -188,17 +190,19 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
   double dr2 = dx*dx +  dy*dy;
   if(dr2>eDRmax*eDRmax)        return 0;
   
-  double chi_mcs = 0;
+  float prob;
   if(eDoUseMCS){
     ///workaround to get previous(not propagated) segment
     EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
-    EdbSegP* previousSeg = t?(t->GetSegmentLast()):0;
-    chi_mcs = previousSeg?(eFitter.Chi2SegMCS( *previousSeg, s2)):0;
+    EdbSegP* seg = t?(const_cast<EdbSegP*>(t->TrackEnd())):0;
+    prob = seg?(eFitter.ProbSegMCS(seg, &s2)):0;
   }
-  EdbSegP s;
-  float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
-  float chi2 = chi*chi+chi_mcs*chi_mcs;
-  float prob = (float)TMath::Prob( chi2, 4);
+  else
+  {
+    EdbSegP s;
+    float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
+    prob = (float)TMath::Prob( chi*chi, 4);  
+  }
   prob *= eCond.ProbSeg( s2.Theta(), s2.W() );            // the proability component depending on the grains number
   prob *= (float)TMath::Prob( s2.Chi2()*s2.Chi2(), 4 );   // the proability component depending on the segment strength
     

@@ -16,6 +16,7 @@
 #include "EdbPhys.h"
 #include "EdbAffine.h"
 #include "EdbLayer.h"
+#include "EdbPVRec.h"
 #include "EdbScanCond.h"
 #include "EdbTrackFitter.h"
 
@@ -257,6 +258,11 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanC
 }
 
 //______________________________________________________________________________
+double EdbTrackFitter::ProbSegMCS(EdbSegP *s1, EdbSegP *s2){
+  if(s1->P()<=0)s1->SetP(ePdef);
+  return EdbPVRec::ProbeSeg(s1,s2,eX0,eM);
+}
+//______________________________________________________________________________
 float EdbTrackFitter::Chi2SegMCS(const EdbSegP &s1, const EdbSegP &s2){
   
   // double DZemul=s1.DZem()+s2.DZem();
@@ -269,10 +275,11 @@ float EdbTrackFitter::Chi2SegMCS(const EdbSegP &s1, const EdbSegP &s2){
   if(dzpb<=0)return 0;
   double dist=EdbSegP::Distance(s1,s2);
   dist*=dzpb/dz;
-  double theta=TMath::Sqrt2()*EdbSegP::Angle(s1,s2);
   double mom=s1.P();
   if(mom<=0)mom=ePdef;
   double theta0=EdbPhysics::ThetaMCS(mom,eM,dist,eX0);
+  
+  double theta=TMath::Sqrt2()*EdbSegP::Angle(s1,s2);
   double chi=theta/theta0;
   Log(5,"Chi2SegMCS",Form("dist=%6.4f (%6.4f), p=%6.2f, th=%4.3g(%4.3g) => chi2=%5.4g",dist,eX0,mom,theta,theta0,chi*chi));
   return chi*chi;
