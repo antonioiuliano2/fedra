@@ -367,12 +367,12 @@ void EdbRun::AddFrameAlign( Int_t view, Int_t f0, Int_t f1,
   }
   if(eFrameAlign) {
     eFrameAlign->SetBranchAddress("v",&view);
-    eVA.id0=f0; eVA.id1=f1;
-    eVA.dx=dx;   eVA.dy=dy; eVA.dz=dz;
-    eVA.n0tot=n0tot; eVA.n1tot=n1tot;
-    eVA.n0=n0; eVA.n1=n1;
-    eVA.nsg=nsg; eVA.nbg=nbg;
-    eVA.flag=flag;
+    eFA.id0=f0; eFA.id1=f1;
+    eFA.dx=dx;   eFA.dy=dy; eFA.dz=dz;
+    eFA.n0tot=n0tot; eFA.n1tot=n1tot;
+    eFA.n0=n0; eFA.n1=n1;
+    eFA.nsg=nsg; eFA.nbg=nbg;
+    eFA.flag=flag;
     eFrameAlign->Fill();
   }
 }
