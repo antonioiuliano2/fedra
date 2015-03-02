@@ -316,19 +316,21 @@ void EdbRun::AddView( EdbView *view )
 }
 
 //______________________________________________________________________________
-void EdbRun::AddViewMerge( Int_t v0, Int_t v1,
+void EdbRun::AddViewMerge( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
                    Float_t dx, Float_t dy, Float_t dz, 
-                   Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag)
 {
   if(!eViewMerge) {
     eViewMerge = new TTree("ViewMerge","Merging offsets");
-    eViewMerge->Branch("alpar",&eVM,"v0/I:v1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+		eViewMerge->Branch("alpar",&eVM,"view1/I:view2/I:area1/I:area2/I:side1/I:side2/I:dx/F:dy/F:dz/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
   }
   if(eViewMerge) {
-    eVM.id0=v0; eVM.id1=v1;
+    eVM.view1=view1; eVM.view2=view2;
+    eVM.area1=area1; eVM.area2=area2;
+    eVM.side1=side1; eVM.side2=side2;
     eVM.dx=dx;   eVM.dy=dy; eVM.dz=dz;
-    eVM.n0tot=n0tot; eVM.n1tot=n1tot;
-    eVM.n0=n0; eVM.n1=n1;
+    eVM.n1tot=n1tot; eVM.n2tot=n2tot;
+    eVM.n1=n1; eVM.n2=n2;
     eVM.nsg=nsg; eVM.nbg=nbg;
     eVM.flag=flag;
     eViewMerge->Fill();
@@ -336,19 +338,21 @@ void EdbRun::AddViewMerge( Int_t v0, Int_t v1,
 }
 
 //______________________________________________________________________________
-void EdbRun::AddViewAlign( Int_t v0, Int_t v1,
+void EdbRun::AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
                    Float_t dx, Float_t dy, Float_t dz, 
-                   Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag)
 {
   if(!eViewAlign) {
-    eViewAlign = new TTree("ViewAlign","Neighbour views offsets");
-    eViewAlign->Branch("alpar",&eVA,"v0/I:v1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+    eViewAlign = new TTree("ViewAlign","Alignment offsets");
+		eViewAlign->Branch("alpar",&eVM,"view1/I:view2/I:area1/I:area2/I:side1/I:side2/I:dx/F:dy/F:dz/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
   }
   if(eViewAlign) {
-    eVA.id0=v0; eVA.id1=v1;
+    eVA.view1=view1; eVA.view2=view2;
+    eVA.area1=area1; eVA.area2=area2;
+    eVA.side1=side1; eVA.side2=side2;
     eVA.dx=dx;   eVA.dy=dy; eVA.dz=dz;
-    eVA.n0tot=n0tot; eVA.n1tot=n1tot;
-    eVA.n0=n0; eVA.n1=n1;
+    eVA.n1tot=n1tot; eVA.n2tot=n2tot;
+    eVA.n1=n1; eVA.n2=n2;
     eVA.nsg=nsg; eVA.nbg=nbg;
     eVA.flag=flag;
     eViewAlign->Fill();
@@ -356,21 +360,25 @@ void EdbRun::AddViewAlign( Int_t v0, Int_t v1,
 }
 
 //______________________________________________________________________________
-void EdbRun::AddFrameAlign( Int_t view, Int_t f0, Int_t f1,
-                    Float_t dx, Float_t dy, Float_t dz, 
-                    Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag)
+void EdbRun::AddFrameAlign( Int_t frame1, Int_t frame2, Int_t view, Int_t area, Int_t side,
+                    Float_t dxglobal, Float_t dyglobal, Float_t dx, Float_t dy, Float_t z1, Float_t z2, 
+                    Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag)
 {
   if(!eFrameAlign) {
     eFrameAlign = new TTree("FrameAlign","Neighbour frames offsets");
-    eFrameAlign->Branch("v",&view,"v/I");
-    eFrameAlign->Branch("alpar",&eFA,"f0/I:f1/I:dx/F:dy/F:dz/F:n0tot/I:n1tot/I:n0/I:n1/I:nsg/I:nbg/I:flag/I");
+		eFrameAlign->Branch("frpar",&eFA,"frame1/I:frame2/I:view/I:area/I:side/I:dxglobal/F:dyglobal/F:dx/F:dy/F:z1/F:z2/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
   }
   if(eFrameAlign) {
-    eFrameAlign->SetBranchAddress("v",&view);
-    eFA.id0=f0; eFA.id1=f1;
-    eFA.dx=dx;   eFA.dy=dy; eFA.dz=dz;
-    eFA.n0tot=n0tot; eFA.n1tot=n1tot;
-    eFA.n0=n0; eFA.n1=n1;
+    eFA.frame1=frame1; eFA.frame2=frame2;
+		eFA.view=view;
+		eFA.area=area;
+		eFA.side=side;
+		eFA.dxglobal=dxglobal;
+		eFA.dyglobal=dyglobal;
+		eFA.dx=dx;   eFA.dy=dy; 
+		eFA.z1=z1;   eFA.z2=z2;
+    eFA.n1tot=n1tot; eFA.n2tot=n2tot;
+    eFA.n1=n1; eFA.n2=n2;
     eFA.nsg=nsg; eFA.nbg=nbg;
     eFA.flag=flag;
     eFrameAlign->Fill();

@@ -28,20 +28,46 @@
 #include "EdbFiducial.h"
 #endif
 
-struct AlignmentPar
+struct AlignmentParView
 {
-  Int_t id0;
-  Int_t id1;
-  Float_t dx;
-  Float_t dy;
-  Float_t dz;
-  Int_t n0tot;
-  Int_t n1tot;
-  Int_t n0;
-  Int_t n1;
-  Int_t nsg;
-  Int_t nbg;
-  Int_t flag;
+  Int_t view1;  // 1-st view
+  Int_t view2;  // 2-d view
+	Int_t area1;
+	Int_t area2;
+	Int_t side1;
+	Int_t side2;
+  Float_t dx;   // found offset
+  Float_t dy;   // found offset
+  Float_t dz;   // found offset
+  Int_t n1tot;  // total number of grains in the view
+  Int_t n2tot;
+  Int_t n1;     // number of grains in intersection area
+  Int_t n2;
+  Int_t nsg;   // peak height
+  Int_t nbg;   // bg level (random coinsidences)
+  Int_t flag;  // 0 - found offsets not applied to saved data; 1-applied
+};
+
+struct AlignmentParFrame
+{
+	Int_t frame1; // 1-st frame id
+	Int_t frame2; // 2-d frame id
+  Int_t view;   // view id
+	Int_t area;
+	Int_t side;
+	Float_t dxglobal;  // global offset applied for all frames of this view (XfrStage=Xframecorrected-dxglobal-flag*dx)
+	Float_t dyglobal;  // global offset applied for all frames of this view
+  Float_t dx;        // found offset
+  Float_t dy;        // found offset
+  Float_t z1;        // z of the first frame
+  Float_t z2;        // z of the second frame
+  Int_t n1tot;       // total number of clusters in the frame
+  Int_t n2tot;
+  Int_t n1;          // number of grains in intersection area
+  Int_t n2;
+  Int_t nsg;         // peak height
+  Int_t nbg;         // bg level (random coinsidences)
+  Int_t flag;        // 0 - found offsets not applied to saved data; 1-applied
 };
 
 //______________________________________________________________________________
@@ -62,9 +88,9 @@ private:
   TTree             *eViewMerge;      // view merging alignment
   TTree             *eViewAlign;      // view neighbours  alignment
   TTree             *eFrameAlign;     // frames alignment
-  AlignmentPar      eVM;
-  AlignmentPar      eVA;
-  AlignmentPar      eFA;
+  AlignmentParView      eVM;
+  AlignmentParView      eVA;
+  AlignmentParFrame     eFA;
       
 public:
   EdbMarksSet       *eMarks;          // fiducial marks
@@ -138,17 +164,17 @@ public:
   int  AddAsciiFile(const char *fname, const char *objname);
   int  ExtractAsciiFile(const char *fname, const char *objname);
   
-  void AddViewMerge( Int_t v0, Int_t v1,
-                     Float_t dx, Float_t dy, Float_t dz, 
-                     Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
+  void AddViewMerge( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
+                   Float_t dx, Float_t dy, Float_t dz, 
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);
 
-  void AddViewAlign( Int_t v0, Int_t v1,
-                     Float_t dx, Float_t dy, Float_t dz, 
-                     Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
+  void AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
+                   Float_t dx, Float_t dy, Float_t dz, 
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);
   
-  void AddFrameAlign( Int_t v, Int_t f0, Int_t f1,
-                      Float_t dx, Float_t dy, Float_t dz,
-                      Int_t n0tot, Int_t n1tot, Int_t n0, Int_t n1, Int_t nsg, Int_t nbg, Int_t flag);
+  void AddFrameAlign( Int_t frame1, Int_t frame2, Int_t view, Int_t area, Int_t side,
+                    Float_t dxglobal, Float_t dyglobal, Float_t dx, Float_t dy, Float_t z1, Float_t z2, 
+                    Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);
 
   ClassDef(EdbRun,3)  // main run class contained all objects
 };
