@@ -344,7 +344,7 @@ void EdbRun::AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, I
 {
   if(!eViewAlign) {
     eViewAlign = new TTree("ViewAlign","Alignment offsets");
-		eViewAlign->Branch("alpar",&eVM,"view1/I:view2/I:area1/I:area2/I:side1/I:side2/I:dx/F:dy/F:dz/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
+		eViewAlign->Branch("alpar",&eVA,"view1/I:view2/I:area1/I:area2/I:side1/I:side2/I:dx/F:dy/F:dz/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
   }
   if(eViewAlign) {
     eVA.view1=view1; eVA.view2=view2;
