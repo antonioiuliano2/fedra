@@ -152,7 +152,7 @@ void EdbEDATrackSelection::DoSelection(TObjArray *tracksbase, TObjArray *tracks)
 	}
 	int nentr = tracksbase->GetEntries();
 	for(int i=0;i<nentr;i++){
-		if(i%1000==0) printf("%d / %d. %d tracks\r", i, tracksbase->GetEntries(), tracks->GetEntries());
+		if(i%1000==0) printf("%d / %d. %d tracks\r", i, tracksbase->GetEntriesFast(), tracks->GetEntriesFast());
 		EdbTrackP *t = (EdbTrackP *) tracksbase->At(i);
 		if(NULL==t) continue;
 		// Selections
@@ -194,7 +194,7 @@ void EdbEDATrackSelection::DoSelection(TObjArray *tracksbase, TObjArray *tracks)
 		double dtrms = DTRMS(t);
 		if(dtrms> ePHDTRMS*(ph-ePHCut)) continue;
 		
-		if(tracks->FindObject(t)==NULL) tracks->Add(t);
+		if(tracks->FindObject(t)==NULL) tracks->AddLast(t);
 	}
 	printf("%d tracks out of %d tracks\n", tracks->GetEntries(), tracksbase->GetEntries());
 }

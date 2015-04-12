@@ -83,6 +83,24 @@ class EdbEDAText : public EdbEDAObject{
 	
 };
 
+class EdbEDALine : public EdbEDAObject{
+	private:
+	float X1,Y1,Z1, X2,Y2,Z2;
+	int col, wid;
+	TString text;
+	
+	public:
+	EdbEDALine( float x1, float y1, float z1, float x2, float y2, float z2, int color, int width, char *comment = "") : X1(x1), Y1(y1), Z1(z1), X2(x2), Y2(y2), Z2(z2), col(color), wid(width), text(comment){}
+	EdbEDALine( int color, int width, char *comment = "") : col(color), wid(width), text(comment){}
+	~EdbEDALine(){}
+	
+	void SetPoint1(float x1, float y1, float z1){ X1=x1; Y1=y1; Z1=z1;}
+	void SetPoint2(float x2, float y2, float z2){ X2=x2; Y2=y2; Z2=z2;}
+	
+	void Draw(Option_t *option="");
+	ClassDef(EdbEDALine, 0) // Line as EdbEDAObject
+};
+
 //-------------------------------------------------------------------
 #include<TGLOverlay.h>
 class EdbEDAOverlay : public TGLOverlayElement{

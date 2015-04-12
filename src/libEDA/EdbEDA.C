@@ -8,6 +8,7 @@ ClassImp(EdbEDABrickData)
 ClassImp(EdbEDASelection)
 ClassImp(EdbEDA)
 ClassImp(EdbEDAText)
+ClassImp(EdbEDALine)
 ClassImp(EdbEDAOverlay)
 
 
@@ -2180,5 +2181,14 @@ void EdbEDAText::Draw(Option_t *opt){
 	gEve->AddElement(tx);
 }
 
-
+void EdbEDALine::Draw(Option_t *option){
+	if(GetDraw()==kFALSE) return;
+	TEveLine *l = new TEveLine;
+	l->SetElementName(text.Data());
+	l->SetNextPoint(X1,Y1,Z1*gEDA->GetScaleZ());
+	l->SetNextPoint(X2,Y2,Z2*gEDA->GetScaleZ());
+	l->SetLineColor(col);
+	l->SetLineWidth(wid);
+	gEve->AddElement(l);
+}
 

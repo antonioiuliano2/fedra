@@ -45,7 +45,7 @@
 
 #pragma link C++ class EdbEDAObject;
 #pragma link C++ class EdbEDAText;
-
+#pragma link C++ class EdbEDALine;
 #pragma link C++ class EdbEDAOverlay;
 
 #pragma link C++ class EdbEDAShowerTab;

@@ -645,6 +645,15 @@ void EdbEDAPlotTab::CheckSingleTrack(EdbTrackP *t){
 	EdbSegP *s1st = t->GetSegmentFirst();
 	EdbSegP *slast= t->GetSegmentLast();
 	
+	// make a better fit by connecting the first and last segment. 2014/7/9 Aki.
+	t2->Set(t2->ID(), 
+	        (s1st->X()+slast->X())/2,
+	        (s1st->Y()+slast->Y())/2,
+	        (s1st->X()-slast->X())/(s1st->Z()-slast->Z()),
+	        (s1st->Y()-slast->Y())/(s1st->Z()-slast->Z()),
+	        t2->W(), t2->Flag());
+	t2->SetZ((s1st->Z()+slast->Z())/2);
+	
 	// momentum
 	double p,pmin,pmax;
 	CalcP(t,p,pmin,pmax);
@@ -1167,8 +1176,20 @@ void EdbEDAPlotTab::MomPlot(){
 
 		eTF.PMS(*t);      
 		
+		float averagex = 0;
+		float averagey = 0;
+		for(int i=0; i<t->N(); i++){
+			averagex += t->GetSegment(i)->TX();
+			averagey += t->GetSegment(i)->TY();
+		}
+		averagex /= t->N();
+		averagey /= t->N();
+		
+		float slope = sqrt(averagex*averagex+averagey*averagey);
+		printf("slope %f\n", slope);
 		float p, pmin, pmax;
-		if (sqrt(t->TX()*t->TX()+t->TY()*t->TY())<=0.2)  // use P3D
+
+		  if (slope<=0.2)  // use P3D
 		{
 			printf("   PT =%7.2f GeV ; 90%%C.L. range = [%6.2f : %6.2f] \n", eTF.ePy, eTF.ePYmin, eTF.ePYmax);	   
 			printf(" ->P3D=%7.2f GeV ; 90%%C.L. range = [%6.2f : %6.2f] \n", eTF.eP, eTF.ePmin, eTF.ePmax);
@@ -1176,7 +1197,7 @@ void EdbEDAPlotTab::MomPlot(){
 			pmin=eTF.ePmin;
 			pmax=eTF.ePmax;
 		}
-		if (sqrt(t->TX()*t->TX()+t->TY()*t->TY())>0.2)  // use PT
+		if (slope>0.2)  // use PT
 		{
 			printf(" ->PT =%7.2f GeV ; 90%%C.L. range = [%6.2f : %6.2f] \n", eTF.ePy, eTF.ePYmin, eTF.ePYmax);	   
 			printf("   P3D=%7.2f GeV ; 90%%C.L. range = [%6.2f : %6.2f] \n", eTF.eP, eTF.ePmin, eTF.ePmax);
