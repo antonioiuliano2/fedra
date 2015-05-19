@@ -88,9 +88,11 @@ private:
   TTree             *eViewMerge;      // view merging alignment
   TTree             *eViewAlign;      // view neighbours  alignment
   TTree             *eFrameAlign;     // frames alignment
+  TTree             *ePinViews;       // pinned views
   AlignmentParView      eVM;
   AlignmentParView      eVA;
   AlignmentParFrame     eFA;
+  EdbViewHeader        *ePVH;        // to add pinned view header
       
 public:
   EdbMarksSet       *eMarks;          // fiducial marks
@@ -175,8 +177,9 @@ public:
   void AddFrameAlign( Int_t frame1, Int_t frame2, Int_t view, Int_t area, Int_t side,
                     Float_t dxglobal, Float_t dyglobal, Float_t dx, Float_t dy, Float_t z1, Float_t z2, 
                     Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);
+  void AddPinViewHeader(EdbViewHeader &h);
 
-  ClassDef(EdbRun,3)  // main run class contained all objects
+  ClassDef(EdbRun,4)  // main run class contained all objects
 };
 #endif /* ROOT_EdbRun */
 

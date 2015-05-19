@@ -47,7 +47,6 @@ private:
   Int_t   eNsegments;    // number of segments saved in the view
 
   EdbAffine2D   eAff;    // affine transformation for the view 
-                         // (make sence for SySal-converted data only)
 
   TArrayF  *eZlevels;    //! z of each taken view (frame) (obsolete!)
 

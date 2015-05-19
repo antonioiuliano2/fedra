@@ -100,7 +100,7 @@ EdbRun::~EdbRun()
   SafeDelete(eHeader);
   SafeDelete(ePredictions);
   SafeDelete(eMarks);
-  SafeDelete(eView);    // provocate crash in EdbRunAccess::CopyRawDataXY  - to understand!
+  //SafeDelete(eView);    // provocate crash in EdbRunAccess::CopyRawDataXY  - to understand!
 }
 
 //______________________________________________________________________________
@@ -144,6 +144,8 @@ void EdbRun::Init( )
   eViewMerge   = 0;
   eViewAlign   = 0;
   eFrameAlign  = 0;
+  ePinViews    = 0;
+  ePVH=new EdbViewHeader();
 }
 
 //______________________________________________________________________________
@@ -170,6 +172,7 @@ void EdbRun::Open( const char *fname )
   eViewMerge = (TTree*)eFile->Get("ViewMerge");
   eViewAlign = (TTree*)eFile->Get("ViewAlign");
   eFrameAlign = (TTree*)eFile->Get("FrameAlign");
+  ePinViews = (TTree*)eFile->Get("PinViews");
   if(!eTree) {
     Log(1,"EdbRun::Open","ERROR: %s has no Views tree",fname);
     return;
@@ -201,9 +204,11 @@ void EdbRun::OpenUpdate( const char *fname )
   eViewMerge  = (TTree*)eFile->Get("ViewMerge");
   eViewAlign  = (TTree*)eFile->Get("ViewAlign");
   eFrameAlign = (TTree*)eFile->Get("FrameAlign");
+  ePinViews   = (TTree*)eFile->Get("PinViews");
   eViewAlign->SetBranchAddress("alpar",&eVA);
   eViewMerge->SetBranchAddress("alpar",&eVM);
   eFrameAlign->SetBranchAddress("alpar",&eFA);
+  ePinViews->SetBranchAddress("pin",&ePVH);
 
   SafeDelete(eHeader);
   eHeader = (EdbRunHeader*)eFile->Get("RunHeader");
@@ -386,6 +391,19 @@ void EdbRun::AddFrameAlign( Int_t frame1, Int_t frame2, Int_t view, Int_t area, 
 }
 
 //______________________________________________________________________________
+void EdbRun::AddPinViewHeader( EdbViewHeader &h )
+{
+  if(!ePinViews) {
+    ePinViews = new TTree("PinViews","Pinned Views");
+    ePinViews->Branch("headers","EdbViewHeader",&ePVH);
+  }
+  if(ePinViews) {
+    *ePVH=h;
+    ePinViews->Fill();
+  }
+}
+
+//______________________________________________________________________________
 void EdbRun::Save()
 {
   if(eHeader)        eHeader->Write("RunHeader");
@@ -417,6 +435,7 @@ void EdbRun::Close()
     if(eViewMerge)     eViewMerge->Write();
     if(eViewAlign)     eViewAlign->Write();
     if(eFrameAlign)    eFrameAlign->Write();
+    if(ePinViews)      ePinViews->Write();
   }
   eFile->Purge();
   eFile->Close();
