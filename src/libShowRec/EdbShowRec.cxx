@@ -5164,6 +5164,7 @@ void EdbShowRec::Help()
     cout << "        And see what happens." << endl;
     cout << "        You can also write specific parameters /and/or cuts in the default.par" << endl;
     cout << "        (Note that every par value has to have the prefix SHOW_ )." << endl;
+    cout << "        ...." << endl;
     cout << endl;
     cout << "---------------------------------------------------------" <<
          endl;
