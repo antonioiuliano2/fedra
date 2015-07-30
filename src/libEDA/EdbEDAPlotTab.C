@@ -1149,9 +1149,14 @@ void EdbEDAPlotTab::MomPlot(){
 	if(selected_tracks->GetEntries()==0) return;
 	
 	double angular_resolution = eMomAngleRes->GetNumber();
-	eTF.eDT0  = angular_resolution;
-	eTF.eDTx0 = angular_resolution;
-	eTF.eDTy0 = angular_resolution;
+// 	eTF.eDT0  = angular_resolution; // commented out for reason of incompability
+// 	eTF.eDTx0 = angular_resolution; // commented out for reason of incompability
+// 	eTF.eDTy0 = angular_resolution; // commented out for reason of incompability
+        
+        // To fix incompability, introduced in revision 1376 me provide a workaround here:
+        eTF.SetParPMS_Mag(0,angular_resolution,0,0,0,0);
+        eTF.SetParPMS_Mag(1,angular_resolution,0,0,0,0);
+        eTF.SetParPMS_Mag(2,angular_resolution,0,0,0,0);
 	
 	for(int i=0;i<selected_tracks->GetEntries();i++){
 		EdbTrackP *t0 = (EdbTrackP *) selected_tracks->At(i);
@@ -1290,7 +1295,8 @@ void EdbEDAPlotTab::MakeGUI(){
 		fb->SetToolTipText("Select angular method or coordinate method\nfor momentum computation.");
 
 		posx+=dx+5;
-		eMomAngleRes = new TGNumberEntry(fGroup, eTF.eDT0, 11,-1,TGNumberFormat::kNESRealFour);
+// 		eMomAngleRes = new TGNumberEntry(fGroup, eTF.eDT0, 11,-1,TGNumberFormat::kNESRealFour);
+                eMomAngleRes = new TGNumberEntry(fGroup, 0.0021, 11,-1,TGNumberFormat::kNESRealFour);
 		eMomAngleRes->MoveResize(posx,posy,dx=60,20);
 		eMomAngleRes->GetNumberEntry()->SetToolTipText("Angular resolution. default=0.0021\n"
 			"This will be applied only for angular method.");

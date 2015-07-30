@@ -44,7 +44,7 @@ EdbMomentumEstimator::EdbMomentumEstimator()
 
   eDTxErrorFun=TF1("dTxError","pol4");
   eDTyErrorFun=TF1("dTyError","pol4");
-  eDTsErrorFun=TF1("dTxError","pol4");
+  eDTsErrorFun=TF1("dTsError","pol4");
   SetParPMS_Mag();
 }
 
@@ -79,7 +79,13 @@ void EdbMomentumEstimator::SetParPMS_Mag()
   eDTxErrorFun.SetParameters(0.0021, 0.0093,0,0,0);
   eDTyErrorFun.SetParameters(0.0021, 0.0   ,0,0,0);
 }
-
+//________________________________________________________________________________________
+void EdbMomentumEstimator::SetParPMS_Mag(Int_t type, Double_t p0, Double_t p1, Double_t p2, Double_t p3,Double_t p4)
+{
+  if (type==0) eDTxErrorFun.SetParameters(p0,p1,p2,p3,p4);
+  if (type==1) eDTyErrorFun.SetParameters(p0,p1,p2,p3,p4);
+  if (type==2) eDTsErrorFun.SetParameters(p0,p1,p2,p3,p4);
+}
 //________________________________________________________________________________________
 void EdbMomentumEstimator::Print()
 {
@@ -970,9 +976,9 @@ int EdbMomentumEstimator::PMSang_base(EdbTrackP &tr)
       }
     }
 
-  float dtx = GetDTx(txmean);  // measurements errors parametrization
+  float dtx = GetDTx(txmean);  // measurements errors parametrization, longtudinal
   dtx*=dtx;
-  float dty = GetDTx(tymean);  // measurements errors parametrization
+  float dty = GetDTy(tymean);  // measurements errors parametrization, transversal
   dty*=dty;
 
   float Zcorr = Sqrt(1+txmean*txmean+tymean*tymean);
