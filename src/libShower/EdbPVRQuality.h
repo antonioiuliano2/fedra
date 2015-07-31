@@ -52,10 +52,10 @@ private:
     Int_t		eCutMethod;
     TString		eCutMethodString;
     Bool_t		eCutMethodIsDone[7];
-    
+
     Float_t		eBTDensityLevel;
     Float_t		eBTDensityLevelAngularSpace[20];
-    
+
     Bool_t		eBTDensityLevelCalcMethodMC;
     Int_t		eBTDensityLevelCalcMethodMCConfirmationNumber;
 
@@ -71,7 +71,7 @@ private:
     Int_t			NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
-    
+
     // TProfile: BT dens/mm2 versus PID()	source histogram
     TProfile* 		eProfileBTdens_vs_PID_source;
     Float_t  		eProfileBTdens_vs_PID_source_meanX,eProfileBTdens_vs_PID_source_meanY;
@@ -82,6 +82,8 @@ private:
     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
 
     // Variables related for cut Issues
+    // For all eCutMethod in TanTheta Space:
+    Float_t	eCutTTSqueezeFactor;
     // eCutMethod == 0: Constant BT density
     Float_t	eCutp0[114];
     Float_t	eCutp1[114];
@@ -109,22 +111,20 @@ private:
     Float_t     eXi2Hat_m_WTilde[114];
     Float_t     eXi2Hat_s_WTilde[114];
     // eCutMethod == 5: Constant X2Hat BT density also in tangens theta space
-    /// TO BE IMPLEMENTED HERE ...
-    /// ... ... ...
-    /// ... ... ...
-    /// ... ... ...
+    // Uses also cutvariables eCutTTp0[114][20] and eCutTTp1[114][20]
+    Float_t	eXi2HatTT_m_chi2[114][20];
+    Float_t     eXi2HatTT_s_chi2[114][20];
+    Float_t     eXi2HatTT_m_WTilde[114][20];
+    Float_t     eXi2HatTT_s_WTilde[114][20];
     // eCutMethod == 6: Random Cut
     Float_t	eRandomCutThreshold;
     // eCutMethod == 7: Random Cut also in tangens theta space
-    /// TO BE IMPLEMENTED HERE ...
-    /// ... ... ...
-    /// ... ... ...
-    
+    // Uses also cutvariables eCutTTp0[114][20] and eCutTTp1[114][20]
 
 protected:
 
-    void 								Set0();
-    void 								Init();
+    void Set0();
+    void Init();
 
 public:
 
@@ -135,6 +135,9 @@ public:
     void SetCutMethod(Int_t CutMethod);
     inline void SetBTDensityLevel(Float_t BTDensityLevel) {
         eBTDensityLevel=BTDensityLevel;
+    }
+    inline void SetCutTTSqueezeFactor(Float_t CutTTSqueezeFactor) {
+        eCutTTSqueezeFactor=CutTTSqueezeFactor;
     }
 
     inline void SetBTDensityLevelCalcMethodMC(Bool_t BTDensityLevelCalcMethodMC) {
@@ -149,7 +152,6 @@ public:
     inline Int_t GetBTDensityLevelCalcMethodMCConfirmation() {
         return eBTDensityLevelCalcMethodMCConfirmationNumber;
     }
-
 
 
     inline EdbPVRec* GetEdbPVRec() {
@@ -181,7 +183,7 @@ public:
         return GetEdbPVRec(1);
     }
 
-    inline void				SetEdbPVRec(EdbPVRec* Ali_orig) {
+    inline void	SetEdbPVRec(EdbPVRec* Ali_orig) {
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
         eAli_maxNpatterns=Ali_orig->Npatterns();
@@ -200,7 +202,7 @@ public:
         return eCutMethod;
     }
     inline Bool_t    GetCutMethodIsDone(Int_t type) {
-        if (type>2) return 0;
+        if (type>7) return 0;
         return eCutMethodIsDone[type];
     }
     inline Float_t   GetBTDensityLevel() {
@@ -249,6 +251,7 @@ public:
 
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
+
     void Execute_ConstantBTDensity();
     void Execute_ConstantBTDensityInAngularBins();
     void Execute_ConstantBTQuality();
@@ -257,6 +260,11 @@ public:
     void Execute_ConstantBTX2HatInAngularBins();
     void Execute_RandomCut();
     void Execute_RandomCutInAngularBins();
+    void Execute_EqualizeTanThetaSpace();
+    void Execute_EqualizeTanThetaSpace_ConstantBTDensity();
+    void Execute_EqualizeTanThetaSpace_ConstantBTQuality();
+    void Execute_EqualizeTanThetaSpace_ConstantBTX2Hat();
+    void Execute_EqualizeTanThetaSpace_RandomCut();
 
     TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
@@ -272,7 +280,7 @@ public:
 
 
 
-    void CreateEdbPVRec();
+    EdbPVRec* CreateEdbPVRec();
     Int_t CheckFilledXYSize();
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
@@ -299,6 +307,7 @@ public:
     void PrintCutType7(); // Random Test Cut in Angular Bins
     void PrintCutValues(Int_t CutType);
     void Help();
+
     ClassDef(EdbPVRQuality,1);         // Root Class Definition for EdbPVRQuality
 };
 

@@ -61,7 +61,7 @@ class EdbMomentumEstimator : public EdbTrackFitter {
   virtual ~EdbMomentumEstimator();
 
   void    SetParPMS_Mag();
-  void    SetParPMS_Mag(Int_t type, Double_t p0, Double_t p1, Double_t p2, Double_t p3,Double_t p4);
+  void    SetParPMS_Mag(Int_t type, Int_t parNumber, Double_t parvalue);
   void    Set0();
   float   PMS(EdbTrackP &tr);
   float   PMSang(EdbTrackP &tr);

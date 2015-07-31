@@ -1154,9 +1154,9 @@ void EdbEDAPlotTab::MomPlot(){
 // 	eTF.eDTy0 = angular_resolution; // commented out for reason of incompability
         
         // To fix incompability, introduced in revision 1376 me provide a workaround here:
-        eTF.SetParPMS_Mag(0,angular_resolution,0,0,0,0);
-        eTF.SetParPMS_Mag(1,angular_resolution,0,0,0,0);
-        eTF.SetParPMS_Mag(2,angular_resolution,0,0,0,0);
+        // Only first parameter in function is changed, others stay as defined in 
+        // EdbMomentumEstimator.cxx
+        for (Int_t i=0; i<3; ++i) eTF.SetParPMS_Mag(i,0,angular_resolution);
 	
 	for(int i=0;i<selected_tracks->GetEntries();i++){
 		EdbTrackP *t0 = (EdbTrackP *) selected_tracks->At(i);
