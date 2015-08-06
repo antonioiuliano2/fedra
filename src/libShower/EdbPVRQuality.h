@@ -63,12 +63,12 @@ private:
     Float_t		ePatternBTDensity_modified[114];
 
     // Histograms for calculations and crosscheck drawings
-    TH2F*			eHistChi2W;
-    TH2F*			eHistYX;
-    TH2F*			eHistTYTX;
-    TH1F*			eHistTT;
-    TH2F*			eHistTanTheta;
-    Int_t			NbinsX,NbinsY;
+    TH2F*		eHistChi2W;
+    TH2F*		eHistYX;
+    TH2F*		eHistTYTX;
+    TH1F*		eHistTT;
+    TH2F*		eHistTanTheta;
+    Int_t		NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
 
@@ -242,7 +242,6 @@ public:
         return eAgreementChi2WDistCut[patNR];
     }
 
-    void Execute();
 
     void SetHistGeometry_OPERA();
     void SetHistGeometry_MC();
@@ -252,6 +251,8 @@ public:
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
 
+    void Execute();
+    void Execute(Int_t CutType);    
     void Execute_ConstantBTDensity();
     void Execute_ConstantBTDensityInAngularBins();
     void Execute_ConstantBTQuality();
