@@ -170,7 +170,13 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Float_t Theta()    const {return TMath::Sqrt(eTY*eTY+eTX*eTX);}
   static Float_t Distance(const EdbSegP &s1,const EdbSegP &s2);
   static Float_t Angle(const EdbSegP &s1,const EdbSegP &s2);
-  
+
+  Float_t DeltaTheta(EdbSegP* seg1)    const {
+                    return TMath::Sqrt( TMath::Power(TX()-seg1->TX(),2)+TMath::Power(TY()-seg1->TY(),2) );
+  }
+  Float_t DeltaR(EdbSegP* seg1)    const {
+                    return TMath::Sqrt( TMath::Power(X()-seg1->X(),2)+TMath::Power(Y()-seg1->Y(),2) );
+  }
   void    Print( Option_t *opt="") const;
   void    PrintNice() const;
 
