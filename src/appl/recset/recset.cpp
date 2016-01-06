@@ -125,15 +125,15 @@ int main(int argc, char* argv[])
     }
 
     if(doWritePVR)         {
-	EdbPVRec    *ali=proc.GetPVR();
-	if (NULL==ali) {
-	  cout << "WARNING! EdbPVRec    *ali=proc.GetPVR()  returns a 0x0 object! CHECK IMMEDIATELY! " << endl;
-	  return 1;
-	}
-	cout << ali << endl;
-	ali->Print();
-      
-        cout << "recset: Create the EdbPVRec object from the EdbDataProc object and write it into the file named  ScanVolume_Ali.root . (Note that this should come at the last step of recset)." << endl;
+        EdbPVRec    *ali=proc.GetPVR();
+        if (NULL==ali) {
+            cout << "WARNING! EdbPVRec    *ali=proc.GetPVR()  returns a 0x0 object! CHECK IMMEDIATELY! " << endl;
+            return 1;
+        }
+        ali->Print();
+
+        cout << "recset: Create the EdbPVRec object from the EdbDataProc object and write it into the file: ScanVolume_Ali.root " << endl;
+        cout << "recset: (Note that this should come at the last step of recset)." << endl;
         TFile* file = new TFile("ScanVolume_Ali.root","RECREATE");
         ali->Write();
         file->Close();
