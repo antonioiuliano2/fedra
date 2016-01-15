@@ -45,7 +45,7 @@ struct AlignmentParView
   Int_t n2;
   Int_t nsg;   // peak height
   Int_t nbg;   // bg level (random coinsidences)
-  Int_t flag;  // 0 - found offsets not applied to saved data; 1-applied
+  Int_t flag;  // enum Flags {f_Applied = 0x01,f_Pin = 0x02,f_Found = 0x04}; f_Pin: view2 is a pinned view
 };
 
 struct AlignmentParFrame
@@ -67,7 +67,7 @@ struct AlignmentParFrame
   Int_t n2;
   Int_t nsg;         // peak height
   Int_t nbg;         // bg level (random coinsidences)
-  Int_t flag;        // 0 - found offsets not applied to saved data; 1-applied
+  Int_t flag;        // in first 3 bits: {f_Applied = 0x01,f_Found = 0x02,f_Recovered = 0x04};
 };
 
 //______________________________________________________________________________
@@ -93,6 +93,8 @@ private:
   AlignmentParView      eVA;
   AlignmentParFrame     eFA;
   EdbViewHeader        *ePVH;        // to add pinned view header
+  EdbViewHeader        *eVH1;        // alignment headers
+  EdbViewHeader        *eVH2;        // alignment headers
       
 public:
   EdbMarksSet       *eMarks;          // fiducial marks
@@ -108,7 +110,8 @@ public:
   void                 SetView(EdbView *view);
   void                 SetView();
   TTree               *GetTree() const {return eTree; }
-
+  TTree               *GetPinViews() const {return ePinViews;}
+  
   EdbPredictionDC    *GetPrediction(int ip)  { return ePredictions->GetPrediction(ip); }
   int                 Npredictions()      const { return ePredictions->N(); }
 
@@ -172,8 +175,9 @@ public:
 
   void AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
                    Float_t dx, Float_t dy, Float_t dz, 
-                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);
-  
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag,
+                   EdbViewHeader &vh1, EdbViewHeader &vh2 );
+
   void AddFrameAlign( Int_t frame1, Int_t frame2, Int_t view, Int_t area, Int_t side,
                     Float_t dxglobal, Float_t dyglobal, Float_t dx, Float_t dy, Float_t z1, Float_t z2, 
                     Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag);

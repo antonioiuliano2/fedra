@@ -345,11 +345,14 @@ void EdbRun::AddViewMerge( Int_t view1, Int_t view2, Int_t area1, Int_t area2, I
 //______________________________________________________________________________
 void EdbRun::AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, Int_t side1, Int_t side2,
                    Float_t dx, Float_t dy, Float_t dz, 
-                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag)
+                   Int_t n1tot, Int_t n2tot, Int_t n1, Int_t n2, Int_t nsg, Int_t nbg, Int_t flag,
+                   EdbViewHeader &vh1, EdbViewHeader &vh2)
 {
   if(!eViewAlign) {
     eViewAlign = new TTree("ViewAlign","Alignment offsets");
 		eViewAlign->Branch("alpar",&eVA,"view1/I:view2/I:area1/I:area2/I:side1/I:side2/I:dx/F:dy/F:dz/F:n1tot/I:n2tot/I:n1/I:n2/I:nsg/I:nbg/I:flag/I");
+    eViewAlign->Branch("vh1","EdbViewHeader",&eVH1);
+    eViewAlign->Branch("vh2","EdbViewHeader",&eVH2);
   }
   if(eViewAlign) {
     eVA.view1=view1; eVA.view2=view2;
@@ -360,6 +363,8 @@ void EdbRun::AddViewAlign( Int_t view1, Int_t view2, Int_t area1, Int_t area2, I
     eVA.n1=n1; eVA.n2=n2;
     eVA.nsg=nsg; eVA.nbg=nbg;
     eVA.flag=flag;
+    *eVH1=vh1;
+    *eVH2=vh2;
     eViewAlign->Fill();
   }
 }
