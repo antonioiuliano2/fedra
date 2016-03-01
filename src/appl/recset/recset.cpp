@@ -1,4 +1,5 @@
 #include <iostream>
+#include "EdbLog.h"
 #include "EdbDataSet.h"
 // #include "EdbPVRec.h"
 
@@ -12,7 +13,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 3)
     {
-        cout<< "usage: \n \trecset { -l | -a | -t | -f | ...} input_data_set_file \n\n";
+        cout<< "usage: \n \trecset { -l | -a | -t | -f | ... } input_data_set_file \n\n";
         cout<< "\t\t  -ccd  - to remove ccd defects (update par/xxx.par file)\n";
         cout<< "\t\t  -l    - link up/down\n";
         cout<< "\t\t  -ang  - correct up/down angles offset and rotations\n";
@@ -22,16 +23,19 @@ int main(int argc, char* argv[])
         cout<< "\t\t  -t[n] - tracking (if n>1, holes insertion started - historical option - NOT recommended!)\n";
         cout<< "\t\t  -t -p[p] - tracking&propagation (p is the momentum of the particle in [GeV])\n";
         cout<< "\t\t  -nu   - suppress the update of par files\n";
-        cout<< "\t\t  -wPVR - write the EdbPVRec object into PVR.root file (useful for batch processing)\n";
+        cout<< "\t\t  -w    - write the EdbPVRec object into a root file (useful for batch processing)\n";
+        cout<< "\t\t  -s    - do shower-reconstruction (To Be Implemented)\n";
+	cout<< "\t\t  -D[n] - Set FEDRA DebugLevel (0..4)\n";
         cout<<endl;
         return 0;
     };
 
     int doCCD=0, doLink=0, doAlign=0, doTrack=0, doTrackCarbonium=0,
         doFine=0, doZ=0, doAngles=0, doRaw=0, noUpdate=0, doWritePVR=0;
+    int doDEBUGLEVEL=-1;
 
     float doPropagation=-1;
-
+    
     char *name = argv[argc-1];
 
     for(int i=1; i<argc-1; i++ ) {
@@ -71,15 +75,24 @@ int main(int argc, char* argv[])
             if(strlen(key)>2)
                 sscanf(key+2,"%f",&doPropagation);
         }
-        else if(!strcmp(key,"-wPVR"))    doWritePVR=1;
+        else if(!strncmp(key,"-D",2)) {
+            if(strlen(key)>2)
+                sscanf(key+2,"%d",&doDEBUGLEVEL);
+        }
+        
+        else if(!strcmp(key,"-w"))    doWritePVR=1;
     }
 
     printf("recset options:  %d %d %d %d %d %d %d %d %f %d %d %s\n",
            doCCD, doLink, doAlign, doTrack, doFine, doZ, doAngles, doRaw, doPropagation, noUpdate, doWritePVR, name);
 
     EdbDataProc proc(name);
-
     proc.SetNoUpdate(noUpdate);
+    
+    if(doDEBUGLEVEL>=0&&doDEBUGLEVEL<=4)       {
+      gEDBDEBUGLEVEL=doDEBUGLEVEL;
+      cout << "gEDBDEBUGLEVEL = " << gEDBDEBUGLEVEL<< endl;
+    }
     if(doCCD)              {
         proc.CheckCCD();
         doCCD=0;
@@ -125,19 +138,24 @@ int main(int argc, char* argv[])
     }
 
     if(doWritePVR)         {
-        EdbPVRec    *ali=proc.GetPVR();
-        if (NULL==ali) {
-            cout << "WARNING! EdbPVRec    *ali=proc.GetPVR()  returns a 0x0 object! CHECK IMMEDIATELY! " << endl;
-            return 1;
-        }
-        ali->Print();
-
-        cout << "recset: Create the EdbPVRec object from the EdbDataProc object and write it into the file: ScanVolume_Ali.root " << endl;
+	cout << "recset: Create the EdbPVRec object from the EdbDataProc object and write it into the file: ScanVolume_Ali.root " << endl;
+        EdbPVRec    *ali  = proc.GetPVR();
+	if (NULL==ali) {
+	  ali  = new EdbPVRec();
+	  proc.InitVolume(ali);
+	  proc.SetPVR(ali);
+	}
+	else {
+	 ali->Print();
+	}
+        
         cout << "recset: (Note that this should come at the last step of recset)." << endl;
         TFile* file = new TFile("ScanVolume_Ali.root","RECREATE");
         ali->Write();
         file->Close();
         cout << "recset: Writing EdbPVRec object into ScanVolume_Ali.root done." << endl;
+
+        doWritePVR=0;
     }
 
     return 0;
