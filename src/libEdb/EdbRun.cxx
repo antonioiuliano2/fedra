@@ -96,11 +96,21 @@ EdbRun::EdbRun( EdbRun &run, const char *fname )
 EdbRun::~EdbRun()
 {
   //SafeDelete(eTree);
+
   SafeDelete(eFile); 
   SafeDelete(eHeader);
   SafeDelete(ePredictions);
   SafeDelete(eMarks);
+
   //SafeDelete(eView);    // provocate crash in EdbRunAccess::CopyRawDataXY  - to understand!
+/*
+	if(ePVH)
+		SafeDelete(ePVH);
+	if(eVH1)
+		SafeDelete(eVH1);
+	if(eVH2)
+		SafeDelete(eVH2);
+*/
 }
 
 //______________________________________________________________________________
@@ -146,6 +156,8 @@ void EdbRun::Init( )
   eFrameAlign  = 0;
   ePinViews    = 0;
   ePVH=new EdbViewHeader();
+	eVH1=new EdbViewHeader();
+	eVH2=new EdbViewHeader();
 }
 
 //______________________________________________________________________________
