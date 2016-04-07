@@ -61,6 +61,7 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   EdbSegP  *AddSegment(EdbSegP &s1, EdbSegP &s2); 
   EdbSegP  *AddSegment(int id, float x, float y, float tx, float ty, 
 		      float w=0, int flag=0);
+  EdbSegP  *AddSegmentNoDuplicate( EdbSegP &s );
   Int_t     GetN() const {return eSegments ? eSegments->GetEntriesFast() : 0;}
   EdbSegP  *GetSegment(int i) const {return (EdbSegP*)eSegments->At(i); }
   EdbSegP  *GetSegmentLast()  const {return GetN() ? (EdbSegP*)eSegments->Last() : 0;}

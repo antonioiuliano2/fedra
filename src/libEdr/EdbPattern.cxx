@@ -88,6 +88,52 @@ EdbSegP *EdbSegmentsBox::AddSegment( EdbSegP &s1, EdbSegP &s2 )
 }
  
 //______________________________________________________________________________
+EdbSegP *EdbSegmentsBox::AddSegmentNoDuplicate( EdbSegP &s )
+{
+  // This function will add the segment s to the current list of
+  // segments checking for duplicates. If any segment in the list is found,
+  // that is compatible to this, the segment will _not_ be added,
+  // instead a warning message will be printed.
+  
+  //cout << endl  << endl;
+  //cout <<"EdbSegmentsBox::AddSegmentNoDuplicate( EdbSegP &s )" << endl;
+  //s.PrintNice();
+  Int_t eSegmentsN = GetN();
+  //cout << "Segments already in the eSegments list: " << eSegmentsN << endl;
+  //cout << "Check now if segment s is already in the list..." << endl;
+  
+  EdbSegP* sComparison; 
+  
+  for (int i=0; i<eSegmentsN; ++i) {
+    
+    sComparison=(EdbSegP* )eSegments->At(i);
+    //sComparison->PrintNice();
+    //Bool_t EdbSegP::IsEqual(const TObject *obj) const
+    //cout << "Evaluating   s.IsEqual(sComparison) = " << s.IsEqual(sComparison) << endl;
+    if (s.IsEqual(sComparison)==kTRUE) {
+      //cout << "Tested Segment is witin one sigma equal with one already in the list. DO NOT ADD THIS Segment..." << endl;
+      return NULL;
+    } 
+    
+    //bool EdbSegP::IsCompatible( EdbSegP &s, float nsigx, float nsigt ) const
+    /*
+     cout << "Evaluating   s.IsCompatible(*sComparison,1,1) = " << s.IsCompatible(*sComparison,1,1) << endl;
+     if (s.IsCompatible(*sComparison,1,1)==kTRUE) {
+      cout << "Tested Segment is witin one sigma compatible with one already in the list. DO NOT ADD THIS Segment..." << endl;
+       return NULL;
+     }
+     */
+    
+  }
+
+  //cout <<" EdbSegmentsBox::AddSegmentNoDuplicate( EdbSegP &s )   Segment s added." << endl;
+  return new((*eSegments)[N()])  EdbSegP( s );
+}
+ 
+ 
+ 
+ 
+//______________________________________________________________________________
 void EdbSegmentsBox::Reset()
 {
   Set0();
