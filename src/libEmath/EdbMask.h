@@ -15,6 +15,7 @@ class EdbMask : public TObject {
   EdbMask(int n) {eBuffer.Set(n);}
   ~EdbMask() {}
 
+  int N() {return eBuffer.fN;}
   int  At(int i) { if(i<0||i>=eBuffer.fN) return 0; else return (int)(eBuffer[i]); }
   void SetAt(int i, int val) { eBuffer.AddAt((Char_t)val, i);  }
   void Print();

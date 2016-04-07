@@ -424,3 +424,158 @@ void TIndex2::Print()
   for(int i=0; i<fN; i++)
     printf("%d \t:  %d  %d\n",i,Major(i),Minor(i));
 }
+
+//---------------------------------------------------------------------------
+void EdbFilter2D::SetKernel(int k)
+{
+  Double_t k1a[1][1] =  {{1}};   // identity filter
+
+  Double_t k3a[3][3] =  
+  { { 0, 1, 0 },   // from root
+  { 1, 2, 1 },
+  { 0, 1, 0 } };
+                        
+  Double_t k3m[3][3] =  
+  { { 1, 1, 1 },   // flat mean filter
+  { 1, 1, 1 },
+  { 1, 1, 1 } };
+
+  if(k==0) {
+    eKX = eKY= 1; 
+    eKernel = new Double_t[eKX*eKY];
+    memcpy( eKernel, (&(k1a[0][0])), eKX*eKY*sizeof(Double_t) );
+  }
+  else if(k==1) {
+    eKX = eKY= 3; 
+    eKernel = new Double_t[eKX*eKY]; 
+    memcpy( eKernel, (&(k3a[0][0])), eKX*eKY*sizeof(Double_t) );
+  }
+  else if(k==2) {
+    eKX = eKY= 3; 
+    eKernel = new Double_t[eKX*eKY]; 
+    memcpy( eKernel, (&(k3m[0][0])), eKX*eKY*sizeof(Double_t) );
+  }
+  
+  /*
+  // normalize kernel to 1
+  Double_t ksum=0;
+  for(int i=0; i<eKX; i++)
+    for(int j=0; j<eKY; j++) ksum += eKernel[ j*eKX+i ];
+  for(int i=0; i<eKX; i++)
+    for(int j=0; j<eKY; j++) eKernel[ j*eKX+i ] /= ksum;
+  */
+  Print();
+}
+
+//---------------------------------------------------------------------------
+void EdbFilter2D::Print()
+{
+  printf("EdbFilter2D with kernel of %dx%d\n:",eKX,eKY);
+  for(int i=0; i<eKX; i++) {
+    for(int j=0; j<eKY; j++) printf("\t%f ",eKernel[ j*eKX+i ]);
+    printf("\n");
+  }
+
+}
+
+//---------------------------------------------------------------------------
+void EdbFilter2D::Smooth(TH2D &h)
+{
+  Int_t nx = h.GetNbinsX();
+  Int_t ny = h.GetNbinsY();
+  Double_t *buf   = new Double_t[nx*ny]; memset(buf,'\0',  nx*ny*sizeof(Double_t));
+  Double_t *nbuf  = new Double_t[nx*ny]; memset(nbuf,'\0', nx*ny*sizeof(Double_t));
+
+  // Copy all the data to the temporary buffers
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+      int ib = nx*j + i;
+      buf[ib] = h.GetBinContent(h.GetBin(i+1,j+1));
+    }
+  }
+  
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+
+      double s=0;
+      double sk=0;
+
+      for (int ik=-(eKX/2); ik<=eKX/2; ik++) {
+        for (int jk=-(eKY/2); jk<=eKY/2; jk++) {
+          double k = eKernel[ (jk+eKY/2)*eKX+(eKX/2+ik) ];
+          if( i+ik>=0 && i+ik<nx && j+jk>=0 && j+jk<ny ) {
+            int ib = nx*(j+jk) + i+ik;
+            s += buf[ib]*k;
+            sk+=k;
+          }
+        }
+      }
+      nbuf[nx*j + i] = s/sk;
+      //printf("%d %d    %f %f\n", i, j, s , sk);
+    }
+  }
+  
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+      h.SetBinContent( h.GetBin(i+1,j+1), nbuf[nx*j + i] );
+    }
+  }
+
+}
+
+//---------------------------------------------------------------------------
+void EdbFilter2D::Smooth0(TH2D &h)
+{
+  Int_t ifirst = h.GetXaxis()->GetFirst();
+  Int_t ilast  = h.GetXaxis()->GetLast();
+  Int_t jfirst = h.GetYaxis()->GetFirst();
+  Int_t jlast  = h.GetYaxis()->GetLast();
+  
+  Int_t nxb= ilast + 2;
+  Int_t nyb= jlast + 2;          // buffer with margins
+  Int_t i0=ifirst;           // buffer index corresponding to h[0][0];
+  Int_t j0=jfirst;
+  Double_t *buf   = new Double_t[nxb*nyb]; memset(buf ,'\0', nxb*nyb*sizeof(Double_t));
+  Double_t *nbuf  = new Double_t[nxb*nyb]; memset(nbuf,'\0', nxb*nyb*sizeof(Double_t));
+
+
+  // Copy all the data to the temporary buffers
+  for (int i=ifirst; i<=ilast; i++) {
+    for (int j=jfirst; j<=jlast; j++) {
+      int ib = nxb*(j0+j) + i0+i;
+      buf[ib] = h.GetBinContent(h.GetBin(i,j));
+    }
+  }
+  
+  for (int i=ifirst; i<=ilast; i++) {
+    for (int j=jfirst; j<=jlast; j++) {
+
+      double s=0;
+      double sk=0;
+
+      for (int ik=-(eKX/2); ik<=eKX/2; ik++) {
+        for (int jk=-(eKY/2); jk<=eKY/2; jk++) {
+          double k = eKernel[ (jk+eKY/2)*eKX+(eKX/2+ik) ];
+
+          if( i0+i+ik>=i0 && i0+i+ik<=nxb )
+            if( j0+j+jk>=j0 && j0+j+jk<=nyb ) {
+              int ib = nxb*(j0+j+jk) + i0+i+ik;
+              s += buf[ib]*k;
+              sk+=k;
+            }
+        }
+      }
+      nbuf[nxb*(j0+j) + i0+i] = s/sk;
+      printf("%d %d    %f %f %f %f\n", i, j, s , sk, buf[nxb*(j0+j) + i0+i], nbuf[nxb*(j0+j) + i0+i]);
+    }
+  }
+
+  for (int i=ifirst; i<=ilast; i++) {
+    for (int j=jfirst; j<=jlast; j++) {
+      h.SetBinContent( i,j, nbuf[nxb*(j0+j) + i0+i] );
+    }
+  }
+
+}
+
+

@@ -11,6 +11,7 @@
 #include "TObject.h"
 #include "TArrayI.h"
 #include "TArrayD.h"
+#include "TH2D.h"
 
 //______________________________________________________________________________
 class EdbMath {
@@ -40,7 +41,7 @@ class EdbMath {
 		    float &X0, float &Y0, float &Z0, float &TX, float &TY, float &EX, float &EY );
   
   static int ArrStat( int n, float *x, float par[4] );
-  
+
   ClassDef(EdbMath,2)  // general matematical algorithms
 };
 
@@ -65,6 +66,25 @@ class TIndex2 : public TArrayD {
   void   Print();
 
   ClassDef(TIndex2,1)  // simple index class for fast search in linear cases
+};
+
+//______________________________________________________________________________
+class EdbFilter2D {
+
+  private:
+    Int_t   eKX,eKY;
+    Double_t *eKernel; //!
+
+    public:
+      EdbFilter2D(){eKernel=0;eKX=0;eKY=0;}
+      virtual ~EdbFilter2D(){}
+    
+     void SetKernel(int k);
+     void Smooth0(TH2D &h);
+     void Smooth(TH2D &h);
+     void Print();
+    
+     ClassDef(EdbFilter2D,1)  // 2D histogram filtering (i.e. smoothing)
 };
 
 #endif /* ROOT_EdbMath */

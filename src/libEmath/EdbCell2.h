@@ -53,6 +53,7 @@ class EdbH2 : public TObject {
   int IY(float y)             const {return (int)((y-eMin[1])/eBin[1]); }
   int IX(int jcell)           const {return jcell%eN[0]; }
   int IY(int jcell)           const {return jcell/eN[0]; }
+  //int Jcell(int ix, int iy)   const {if(ix>0&&ix<eN[0]&&iy>0&&iy<eN[1]) return iy*eN[0]+ix; else return -1;}
   int Jcell(int ix, int iy)   const {if(ix>=0&&ix<eN[0]&&iy>=0&&iy<eN[1]) return iy*eN[0]+ix; else return -1;}
   int Jcell(float x, float y) const {return Jcell( IX(x), IY(y)); }
   int Jcell(float v[2])       const {return Jcell(IX(v[0]),IY(v[1])); }

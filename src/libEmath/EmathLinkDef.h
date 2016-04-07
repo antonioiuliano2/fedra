@@ -23,4 +23,6 @@
 
 #pragma link C++ class EdbCombGen;
 
+#pragma link C++ class EdbFilter2D;
+
 #endif
