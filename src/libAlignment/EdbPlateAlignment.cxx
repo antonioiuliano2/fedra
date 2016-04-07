@@ -558,3 +558,59 @@ void EdbPlateAlignment::SetParTestAl(float zcorr, float dz, float dphi)
   InitHphi( nbinphi,  -dphi,   dphi   );
   eCorr[0].SetV(2,zcorr);
 }
+
+//---------------------------------------------------------------------
+void EdbPlateAlignment::SlowAlignXY(EdbPattern &pat1, EdbPattern &pat2, EdbH2 &hxy, EdbH1 &hphi, const char *name )
+{
+  int n1= pat1.N();
+  int n2= pat2.N();
+  float x0 = (Min(pat1.Xmin(),pat2.Xmin())+Max(pat1.Xmax(),pat2.Xmax()))/2;
+  float y0 = (Min(pat1.Ymin(),pat2.Ymin())+Max(pat1.Ymax(),pat2.Ymax()))/2;
+  struct point{ int i; float x; float y; };
+  point **p1 = new point*[n1];
+  point **p2 = new point*[n2];
+ 
+
+  TFile f( Form("%s.root",name),"RECREATE");
+  TNtuple *ntpeak = new TNtuple("ntpeak","","phi:dx:dy:peak");
+  
+  for(int i=0; i<n1; i++)     p1[i] = new point;
+  for(int i=0; i<n2; i++)     p2[i] = new point;
+  
+  for(int iphi=0; iphi<hphi.N(); iphi++) {
+    float phi=hphi.X(iphi);
+    for(int i=0; i<n1; i++) {
+      EdbSegP *s= pat1.GetSegment(i);
+      p1[i]->x = (s->X()-x0)*Cos(phi) - (s->Y()-y0)*Sin(phi);
+      p1[i]->y = (s->X()-x0)*Sin(phi) + (s->Y()-y0)*Cos(phi);
+      p1[i]->i = i;
+    }
+    for(int i=0; i<n2; i++) {
+      EdbSegP *s= pat2.GetSegment(i);
+      p2[i]->x = (s->X()-x0); 
+      p2[i]->y = (s->Y()-y0); 
+      p2[i]->i = i;
+    }
+
+    for(int i1=0; i1<n1; i1++) {
+      for(int i2=0; i2<n2; i2++) {
+        float dx= p2[i2]->x-p1[i1]->x;
+        float dy= p2[i2]->y-p1[i1]->y;
+        hxy.Fill(dx,dy);
+      }
+    }
+    EdbPeak2 pk2(hxy);
+    float  dx, dy;
+    int npk = pk2.FindPeak( dx, dy );
+    printf("phi = %f  dx = %f dy = %f  npk = %d\n",phi,dx,dy,npk);
+    hphi.Fill(phi,npk);
+    ntpeak->Fill(phi,dx,dy,npk);
+    hxy.Write(Form("hxy%d",iphi));
+    hxy.CleanCells();
+  }
+  hphi.Write("hphi");
+  ntpeak->Write();
+  f.Close();
+}
+
+

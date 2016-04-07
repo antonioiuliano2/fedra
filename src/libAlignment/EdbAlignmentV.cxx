@@ -937,6 +937,21 @@ Int_t  EdbAlignmentV::CalculateAffXY(TObjArray &arr1, TObjArray &arr2, EdbAffine
 }
 
 //---------------------------------------------------------------------
+Int_t  EdbAlignmentV::CalculateAffXYTurn(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff)
+{
+  int n = CheckEqualArr(arr1,arr2);
+  TArrayF x1(n), x2(n), y1(n), y2(n);
+  for(int i=0; i<n; i++ ) {
+    EdbSegP *s1 = (EdbSegP*)arr1.UncheckedAt(i);
+    EdbSegP *s2 = (EdbSegP*)arr2.UncheckedAt(i);
+    x1[i] = X(0,*s1);    y1[i] = Y(0,*s1);
+    x2[i] = X(1,*s2);    y2[i] = Y(1,*s2);
+  }
+  aff.Calculate(n,x1.GetArray(),y1.GetArray(),x2.GetArray(),y2.GetArray(),2);
+  return n;
+}
+
+//---------------------------------------------------------------------
 Int_t  EdbAlignmentV::CalculateAffTXTY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff)
 {
   int n = CheckEqualArr(arr1,arr2);

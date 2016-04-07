@@ -45,6 +45,8 @@ class EdbPlateAlignment : public EdbAlignmentV
   void ProduceReport();
   void SaveCouplesTree();
   void SetSigma(float spos, float sang) { eSigma[0]=spos; eSigma[1]=sang; }
+  
+  void SlowAlignXY(EdbPattern &p1, EdbPattern &p2, EdbH2 &hxy, EdbH1 &hphi, const char *name="slowal" );
 
   ClassDef(EdbPlateAlignment,1)  // plate-to-plate alignment
 };
