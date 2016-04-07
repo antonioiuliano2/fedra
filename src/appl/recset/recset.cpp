@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
     }
 
     if(doWritePVR)         {
-	cout << "recset: Create the EdbPVRec object from the EdbDataProc object and write it into the file: ScanVolume_Ali.root " << endl;
+	cout << "recset: Create the EdbPVRec object from the EdbDataProc object" << endl;
         EdbPVRec    *ali  = proc.GetPVR();
 	if (NULL==ali) {
 	  ali  = new EdbPVRec();
@@ -148,12 +148,13 @@ int main(int argc, char* argv[])
 	else {
 	 ali->Print();
 	}
+	cout << "recset: Create the EdbPVRec object from the EdbDataProc object. Done." << endl;
         
-        cout << "recset: (Note that this should come at the last step of recset)." << endl;
+        cout << "recset: Write EdbPVRec object into file: ScanVolume_Ali.root." << endl;
         TFile* file = new TFile("ScanVolume_Ali.root","RECREATE");
         ali->Write();
         file->Close();
-        cout << "recset: Writing EdbPVRec object into ScanVolume_Ali.root done." << endl;
+	cout << "recset: Write EdbPVRec object into file: ScanVolume_Ali.root. Done." << endl;
 
         doWritePVR=0;
     }
