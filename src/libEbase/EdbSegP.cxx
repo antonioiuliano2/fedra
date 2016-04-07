@@ -440,16 +440,7 @@ Float_t EdbSegP::Distance(const EdbSegP &s1,const EdbSegP &s2){
   return TMath::Sqrt(dx*dx+dy*dy+dz*dz);
 }
 
-Float_t EdbSegP::Angle(const EdbSegP &s1,const EdbSegP &s2){
-  double tx1=s1.TX();
-  double tx2=s2.TX();
-  double ty1=s1.TY();
-  double ty2=s2.TY();
-  double r1m =tx1*tx1+ty1*ty1+1.0;
-  double r2m =tx2*tx2+ty2*ty2+1.0;
-  double r1r2=tx1*tx2+ty1*ty2+1.0;
-  double kink=sqrt(1.0-r1r2*r1r2/(r1m*r2m));
-  // double kink1=EdbMath::Angle3(tx1,ty1,tx2,ty2);
-  // printf("kink= %4.3g vs %4.3g [%4.3g]\n",kink,kink1, kink-kink1);
-  return kink;
+Float_t EdbSegP::Angle(const EdbSegP &s1,const EdbSegP &s2)
+{
+  return EdbMath::Angle3(s1.TX(),s1.TY(),s2.TX(),s2.TY());
 }
