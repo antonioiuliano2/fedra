@@ -103,6 +103,7 @@ float EdbScanCond::StepY(float dz) const
 //______________________________________________________________________________
 float EdbScanCond::Ramp(float x, float x1, float x2) const
 {
+  //printf("%f %f %f\n",x,x1,x2);
   float pmin=.01;
   float pmax=1.;
   if(x2<=x1)   return 1.; //error value

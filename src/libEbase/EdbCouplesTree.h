@@ -23,7 +23,8 @@ public:
 
   TTree *eTree;                   // couples tree
 
-  EdbMask     *eEraseMask;                // id's (entries) of segments to be erased when read couples tree
+  EdbMask     *eEraseMask;        // id's (entries) of segments to be erased when read couples tree
+  EdbMask     *eAcceptMask;       // id's (entries) of segments to be accepted when read couples tree
 
   //Correction parameters
   TCut         eCut;                      // cut to be applied on read
@@ -44,6 +45,7 @@ public:
   void   ApplyCorrections();
   int    GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0, TIndex2 *trseg=0 );
   int    GetCPData( TObjArray &cparr );
+  int    GetCPDataAcceptedMask( EdbPattern *pat );
   const char* GetFileName() const { if(eTree->GetCurrentFile()) return eTree->GetCurrentFile()->GetName(); else return 0;}
   void   Print();
 

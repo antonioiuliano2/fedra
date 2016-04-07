@@ -30,6 +30,7 @@ EdbCouplesTree::EdbCouplesTree()
   eApplyCorrections=0;
   eCut="1";
   eEraseMask=0;
+  eAcceptMask=0;
   eTree=0;
 }
 
@@ -285,6 +286,31 @@ int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, 
   SafeDelete(lst);
 
   Log(2,"EdbCouplesTree::GetCPData","select %d of %d segments by cut %s ; %d are erased by mask",nlst, (int)(eTree->GetEntries()), eCut.GetTitle(), nerase);
+
+  return nseg;
+}
+
+///______________________________________________________________________________
+int EdbCouplesTree::GetCPDataAcceptedMask( EdbPattern *pat )
+{
+  if(!eAcceptMask) return 0;
+  int n = eAcceptMask->N();
+  pat->SetID(0);
+  int nseg=0;
+  for(int i=0; i<n; i++ ) {
+    if(eAcceptMask->At(i)>0) {
+      GetEntry(i);
+      if(pat) {
+        eS->SetZ( eS->Z() + pat->Z() );   /// TO CHECK !!!
+        //ToDo: s->SetVid(ePlate*1000+ePiece,entr);
+        eS->SetChi2(eCP->CHI2P());
+        pat->AddSegment( *eS  );
+        nseg++;
+      }
+    }
+  }
+
+  Log(2,"EdbCouplesTree::GetCPDataAcceptedMask","select %d of %d segments",nseg, (int)(eTree->GetEntries()));
 
   return nseg;
 }
