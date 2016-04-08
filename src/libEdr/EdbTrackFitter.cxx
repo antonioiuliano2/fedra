@@ -13,6 +13,7 @@
 #include "TVector3.h"
 
 #include "EdbLog.h"
+#include "EdbMath.h"
 #include "EdbPhys.h"
 #include "EdbAffine.h"
 #include "EdbLayer.h"
@@ -539,4 +540,21 @@ int EdbTrackFitter::FitTrackLine(const EdbTrackP &tr, float &x, float &y, float 
   tx /= nseg;
   ty /= nseg;
   return nseg;
+}
+
+//______________________________________________________________________________
+int EdbTrackFitter::RMSprojXY( EdbTrackP &tr, float &ex, float &ey )
+{
+  // fit track by straight line using coordinates only and return RMS's
+  int nseg=tr.N();
+  float x[nseg], y[nseg], z[nseg], w[nseg];
+  float x0,y0,z0,tx,ty;
+  for(int i=0; i<nseg; i++) {
+    EdbSegP *s = tr.GetSegment(i);
+    x[i]=s->X();
+    y[i]=s->Y();
+    z[i]=s->Z();
+    w[i]=s->W();
+  }
+  return EdbMath::LFIT3(x,y,z,w,nseg,x0,y0,z0,tx,ty,ex,ey);
 }

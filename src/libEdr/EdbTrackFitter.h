@@ -52,6 +52,8 @@ class EdbTrackFitter : public TNamed {
   float          Chi2SegMCS( const EdbSegP &s1, const EdbSegP &s2);
   double         ProbSegMCS(EdbSegP *s1, EdbSegP *s2);
   void           Print();
+  
+  static int RMSprojXY(EdbTrackP &tr, float &ex, float &ey );
 
   ClassDef(EdbTrackFitter,1)  // track fitter
 };
