@@ -32,8 +32,8 @@ EdbViewMatch::EdbViewMatch()
   eRmax        =  1.;
   eOutputFile  =  0;
 
-  eCl.SetClass("EdbClMatch",20000000);
-  eGr.SetClass("EdbSegment",10000000);
+  eCl.SetClass("EdbClMatch",10); eCl.Expand(100000000);
+  eGr.SetClass("EdbSegment",10); eGr.Expand(10000000);
 
   eXpix  = 0.30625;
   eYpix  = 0.30714;
@@ -56,6 +56,8 @@ void EdbViewMatch::SetPar(TEnv &env)
   eYpix  = env.GetValue("viewdist.Ypix" , 0.30714);
   eNXpix = env.GetValue("viewdist.NXpix", 1280);
   eNYpix = env.GetValue("viewdist.NYpix", 1024);
+  
+  eDumpGr = env.GetValue("viewdist.DumpGr", 0);
 }
 
 //____________________________________________________________________________________
@@ -85,17 +87,17 @@ void EdbViewMatch::InitCorrMap()
 //____________________________________________________________________________________
 void EdbViewMatch::InitGMap()
 {
-  float mi[2] = {-200,-160}, ma[2]={600,500}; 
+  ////float mi[2] = {-200,-160}, ma[2]={600,500}; 
+  float mi[2] = {-500,-400}, ma[2]={1200,900}; 
   int    n[2] = { int((ma[0]-mi[0])/10), int((ma[1]-mi[1])/10) };
-  eGMap.InitCell(20, n, mi, ma);
+  eGMap.InitCell(50, n, mi, ma);
 }
 
 //____________________________________________________________________________________
 void EdbViewMatch::AddCluster( float x,float y,float z, float xv,float yv, int view, int frame )
 {
-  //  EdbClMatch *c = new EdbClMatch(x,y,z, xv,yv, view,frame );
-  //   eCl.Add(c);
   int ind = eCl.GetEntriesFast();
+  //printf("%d\n",ind);
   EdbClMatch *c = new(eCl[ind]) EdbClMatch(x,y,z, xv,yv, view,frame );
   
   float v[2]={ x+xv,  y+yv };
@@ -142,12 +144,24 @@ void EdbViewMatch::CalculateGrRef()
 }
 
 //____________________________________________________________________________________
+TNtuple *EdbViewMatch::DumpGr(const char *name)
+{
+  TNtuple *nt = new TNtuple( name,"grains dump","ig:n:xg:yg:ic:xc:yc:xcv:ycv");
+  int ngr = eGr.GetEntries();
+  for(int ig=0; ig<ngr; ig++) {
+    EdbSegment *s = ((EdbSegment*)eGr.UncheckedAt(ig));
+    int nc = s->GetNelements();                                  if(!nc) continue;
+    for( int ic=0; ic<nc; ic++ ) {
+      EdbClMatch *c = (EdbClMatch *)(s->GetElements()->UncheckedAt(ic));
+      nt->Fill( ig, s->GetNelements(), s->GetX0(), s->GetY0(), ic, c->eX, c->eY, c->eXv, c->eYv );
+    }
+  }
+  return nt;
+}
+
+//____________________________________________________________________________________
 void EdbViewMatch::CalculateCorr()
 {
-  //TFile f("dist.root","RECREATE");
-  //TTree tree("dist","dist");
-  //tree.AddBranch("x",&x,");
-  
   int ngr = eGr.GetEntries();
   Log(2,"EdbViewMatch::CalculateCorr","%d grains used",ngr);
   for(int i=0; i<ngr; i++) {
@@ -232,10 +246,15 @@ void EdbViewMatch::DrawCorrMap()
   meanx /= wtot;
   meany /= wtot;
   printf("\nmeanx = %g    meany = %g  wtot = %f\n", meanx, meany, wtot);
-  
+
+  eGMap.DrawH2("eGMap","entries/bin")->Write();
+  eCorrMap.DrawH2("eCorrMap","entries/bin")->Write();
+  if(eDumpGr) {
+    TNtuple *ntgr = DumpGr("gr");
+    ntgr->Write();
+  }
   cc->Write("corr_map");
   gROOT->SetBatch(batch);
-
 }
 
 //____________________________________________________________________________________
@@ -247,17 +266,15 @@ void EdbViewMatch::GenerateCorrectionMatrix(const char *addfile)
   Double_t *vdx  = new Double_t[nentries];
   Double_t *vdy  = new Double_t[nentries];
 
-  
   for(int i=0; i<nentries; i++) {
     int w = eCorrMap.Bin(i);    if(!w) continue;
     TArrayD *arr = (TArrayD*)eCorrMap.GetObject(i,0);
-    //     if(!arr) break;
+    if(!arr) { Log(1,"EdbViewMatch::GenerateCorrectionMatrix","ERROR: missed bin");  break; }
     vx[i]   = eCorrMap.Xj(i);
     vy[i]   = eCorrMap.Yj(i);
 
     vdx[i]  = arr->At(0);
     vdy[i]  = arr->At(1);
-    //printf("%d %f %f    %f  %f\n", i, vx[i], vy[i], vdx[i], vdy[i] );
   }
 
   TGraph2D *gdx  = new TGraph2D("graphDX","graphDX",nentries,vx,vy,vdx);
@@ -326,6 +343,7 @@ void EdbViewMatch::GenerateCorrectionMatrix(const char *addfile)
 //____________________________________________________________________________________
 void EdbViewMatch::Print()
 {
+  printf("\n-----------------------------------------------------------------------------------------------------\n");
   int ncl = eCl.GetEntries();
   int ngr = eGr.GetEntries();
   int icgr=0,  iccl=0;
@@ -339,5 +357,44 @@ void EdbViewMatch::Print()
   printf("\n%d grains found\n",ngr);
   printf("\n%d grains used (ncl > %d and closer then %f to center) \n",icgr, eNClMin, eR2CenterMax );
   printf("\n%d clusters used in good grains\n",iccl);
-  printf("Matrix definition: %d %d  %f %f\n", eNXpix, eNYpix, eXpix, eYpix);
+  printf("Matrix definition: %d %d  %f %f view size: %f %f\n", eNXpix, eNYpix, eXpix, eYpix, eNXpix*eXpix, eNYpix*eYpix );
+
+  eGMap.PrintStat();
+  eCorrMap.PrintStat();
+  printf("-----------------------------------------------------------------------------------------------------\n");
+}
+
+//____________________________________________________________________________________
+void EdbViewMatch::MakeDistortionMap( const char *fname, TEnv &cenv, const char *addfile )
+{
+  EdbRun run(fname);
+  SetPar(cenv);
+  InitGMap();
+  InitCorrMap();
+  int      n = run.GetEntries();
+
+  EdbView *v = run.GetView();
+  run.GetEntry(0,1);
+  float X0 = v->GetXview();
+  float Y0 = v->GetYview();
+
+  for(int i=0; i<n; i++) {
+    run.GetEntry(i,1,1);
+    int ncl = v->Nclusters();
+    printf("%6d ", ncl);
+
+    for(int ic=0; ic<ncl; ic++) {
+      EdbCluster *c = v->GetCluster(ic);
+      AddCluster( c->eX, c->eY, c->eZ, v->GetXview()-X0, v->GetYview()-Y0, v->GetViewID(), c->GetFrame() );
+    }
+  }
+  printf("\n");
+
+  CalculateGrRef();
+  CalculateCorr();
+  eOutputFile = new TFile("map.root","RECREATE");
+  DrawCorrMap();
+  GenerateCorrectionMatrix(addfile);
+  eOutputFile->Close();
+  Print();
 }

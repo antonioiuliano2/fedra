@@ -10,6 +10,7 @@
 
 #include "TRandom.h"
 #include "TMath.h"
+#include "EdbLog.h"
 #include "EdbPVGen.h"
 #include "EdbPhys.h"
 #include "EdbVertex.h"
@@ -103,6 +104,30 @@ void EdbPVGen::GenerateBackground( int n, float xmin[4], float xmax[4], int flag
       seg->SetFlag(flag);
       pat->AddSegment( *seg );
 
+    }
+  }
+}
+
+//______________________________________________________________________________
+void EdbPVGen::FillRecVolumeBT( EdbPatternsVolume &vrec )
+{
+  // fill extarnal volume vrec with basetracks
+  EdbPatternsVolume *pv = GetVolume();
+  int npat = pv->Npatterns();
+  if( npat!= vrec.Npatterns()) {
+    Log(1,"EdbPVGen::FillRecVolumeBT","Error! different volumes structure");
+    return;
+  }
+  for( int i=0; i<pv->Npatterns(); i++ ) {
+    EdbPattern *pat = pv->GetPattern(i);
+    EdbPattern *patr = vrec.GetPattern(i);
+
+    for( int j=0; j<pat->N(); j++ ) {
+      EdbSegP    *seg = pat->GetSegment(j);
+      printf("%f %f \n", seg->W(), eScanCond->ProbSeg( seg->TX(), seg->TY(), seg->W()) );
+      if( eScanCond->ProbSeg( seg->TX(), seg->TY(), seg->W()) > 0.05 )   {
+        patr->AddSegment(*seg);
+      }
     }
   }
 }

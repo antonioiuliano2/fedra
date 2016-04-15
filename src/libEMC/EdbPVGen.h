@@ -44,6 +44,8 @@ class EdbPVGen : public TObject {
   void GeneratePulsPoisson( float mean, float amp=1., float wmin=0, float wmax=0., int flag=0 );
   void GeneratePulsGaus( float amp, float mean, float sigma, float wmin=0, float wmax=0., int flag=0 );
 
+  void FillRecVolumeBT( EdbPatternsVolume &vrec );
+  
   void AddTrack(EdbTrackP *track) {
     if(!eTracks) { eTracks = new TObjArray(); eEVR->eEdbTracks = eTracks; }
     eTracks->Add(track);

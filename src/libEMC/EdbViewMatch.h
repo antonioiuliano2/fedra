@@ -9,7 +9,9 @@
 #include "TObject.h"
 #include "TFile.h"
 #include "TEnv.h"
+#include "TNtuple.h"
 #include "EdbCell2.h"
+#include "EdbRun.h"
 
 
 //______________________________________________________________________________
@@ -45,9 +47,10 @@ private:
 
   float  eCorrectionMatrixStepX;
   float  eCorrectionMatrixStepY;
-  
+
 public:
   TFile *eOutputFile;
+  bool   eDumpGr;                 // 
 
 public:
   EdbViewMatch();
@@ -64,7 +67,11 @@ public:
   void GenerateCorrectionMatrix(const char *addfile);
   void SetPar(TEnv &env);
   void SetPixelSize(float xpix, float ypix) { eXpix=xpix; eYpix=ypix; }
-  
+
+  TNtuple *DumpGr(const char *name);
+
+  void MakeDistortionMap(const char *fname, TEnv &env, const char *addfile=0);
+
   void Print();
   
   ClassDef(EdbViewMatch,1)  // 
