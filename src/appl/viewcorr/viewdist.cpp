@@ -26,6 +26,7 @@ void set_default(TEnv &cenv)
   // default parameters for the new alignment
   cenv.SetValue("viewdist.env"             , "viewdist.rootrc");
   cenv.SetValue("viewdist.EdbDebugLevel"   ,  1    );
+  cenv.SetValue("viewdist.DumpGr"          ,  0    );
   cenv.SetValue("viewdist.NClMin" , 20);
   cenv.SetValue("viewdist.R2CenterMax" , 15.);
   cenv.SetValue("viewdist.Rmax" ,  1.);
@@ -68,45 +69,10 @@ int main(int argc, char* argv[])
 
   cenv.SetValue("viewdist.env"            , env);
   cenv.ReadFile( cenv.GetValue("viewdist.env"   , "viewdist.rootrc") ,kEnvLocal);
-
-
-  EdbRun run(fname);
-
+  
   EdbViewMatch vm;
-  vm.SetPar(cenv);
-  vm.InitGMap();
-  vm.InitCorrMap();
-
-  int      n = run.GetEntries();
-  printf("process file %s with %d views\n",fname,n);
+  vm.MakeDistortionMap( fname, cenv, addfile );
   
-  EdbView *v = run.GetView();
-  run.GetEntry(0,1);
-  float X0 = v->GetXview();
-  float Y0 = v->GetYview();
-  
-  for(int i=0; i<n; i++) {
-    run.GetEntry(i,1,1);
-    int ncl = v->Nclusters();
-    printf("%6d ", ncl);
-
-    for(int ic=0; ic<ncl; ic++) {
-      EdbCluster *c = v->GetCluster(ic);
-      vm.AddCluster( c->eX, c->eY, c->eZ, v->GetXview()-X0, v->GetYview()-Y0, v->GetViewID(), c->GetFrame() );
-    }
-  }
-  printf("\n");
-
-  
-  vm.CalculateGrRef();
-  vm.CalculateCorr();
-  vm.eOutputFile = new TFile("map.root","RECREATE");
-  vm.DrawCorrMap();
-  vm.GenerateCorrectionMatrix(addfile);
-  vm.eOutputFile->Close();
-  
-  vm.Print();
-
   cenv.WriteFile("viewdist.save.rootrc");
   return 1;
 }
