@@ -22,7 +22,7 @@ void print_help_message()
   cout<< "\t\t  -view - check view overlaps\n";
   cout<< "\t\t  DEBUG - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\nExample: \n";
-  cout<< "\t  o2root -id4554.10.1.0 -o/scratch/BRICKS \n";
+  cout<< "\t  emlink -id=4554.10.1.0 -o=/scratch/BRICKS \n";
   cout<< "\n If the data location directory is not explicitly defined\n";
   cout<< " the current directory assumed to be the brick directory \n";
   cout<< "\n If the parameters file (link.rootrc) is not presented - the default \n";
