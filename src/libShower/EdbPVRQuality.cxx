@@ -816,14 +816,9 @@ void EdbPVRQuality::Print()
     cout << endl;
     cout << "-";
     cout << endl;
-    cout << "EdbPVRQuality::Print()" << endl;
-    cout << "-";
-    cout << endl;
-    for (int i=0; i<80; ++i) cout << "-";
-    cout << endl;
-    cout << "-" << endl;
     cout << "EdbPVRQuality::Print() --- SETTINGS GENERAL: ---" << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethod = " << eCutMethod << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodString = " << eCutMethodString.Data() << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[0] = " << eCutMethodIsDone[0] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[1] = " << eCutMethodIsDone[1] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[2] = " << eCutMethodIsDone[2] << endl;
@@ -833,8 +828,6 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[6] = " << eCutMethodIsDone[6] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutTTSqueezeFactor = " << eCutTTSqueezeFactor << endl;
-
-
 
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
     //cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
@@ -859,7 +852,6 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eProfileBTdens_vs_PID_target_rmsY = " << eProfileBTdens_vs_PID_target_rmsY << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eNeedModified = " << eNeedModified << endl;
     cout << "-" << endl;
-    cout << "EdbPVRQuality::Print()....done." << endl;
     for (int i=0; i<80; ++i) cout << "-";
     cout << endl;
 
@@ -2347,6 +2339,20 @@ EdbPVRec* EdbPVRQuality::CreateEdbPVRec()
             else {
                 // do nothing;
                 cout << "WARNING! YOU CHOSE AN INVALID OPTION. DO NO CUT AT ALL! TAKE ALL SEGMENTS!" << endl;
+
+                cout << " ..........................................................." << endl;
+                cout << " ..........................................................." << endl;
+                cout << " ..........................................................." << endl;
+
+                cout << " ..........................................................." << endl;
+
+                cout << "    BUT I COULD IMPLEMENT HERE THE EXCLUSION SEGMET LIST OPTION    " << endl;
+
+
+                cout << " ..........................................................." << endl;
+
+                cout << " ..........................................................." << endl;
+                cout << " ..........................................................." << endl;
             }
 
             // Add segment:
@@ -2479,20 +2485,22 @@ void EdbPVRQuality::Help()
 
 
 
-TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
+TObjArray* EdbPVRQuality::FindDoubleBT(EdbPVRec* aliSource)
 {
     // Find double counted basetracks.
     // More explanation in Remove_DoubleBT() function.
     // Cutvalues used are the same.
+    // (See also upcoming note on BG-reduction)
 
-    cout << "EdbPVRQuality::Find_DoubleBT()" << endl;
-    cout << "EdbPVRQuality::Find_DoubleBT()  aliSource = " << aliSource << endl;
-    cout << "EdbPVRQuality::Find_DoubleBT()  eAli_orig = " << eAli_orig << endl;
+    cout << "EdbPVRQuality::FindDoubleBT() " << endl;
+    cout << "EdbPVRQuality::FindDoubleBT()  Check pattern volume for (fake) BT pairs." << endl;
+    cout << "EdbPVRQuality::FindDoubleBT()  aliSource = " << aliSource << endl;
+    cout << "EdbPVRQuality::FindDoubleBT()  eAli_orig = " << eAli_orig << endl;
 
     if (NULL==aliSource) {
-        cout << "WARNING!   EdbPVRQuality::Find_DoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
+        cout << "WARNING!   EdbPVRQuality::FindDoubleBT()  Source EdbPVRec is NULL. Try to change to object eAli_orig: " << eAli_orig << endl;
         if (NULL==eAli_orig) {
-            cout << "WARNING!   EdbPVRQuality::Find_DoubleBT() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
+            cout << "WARNING!   EdbPVRQuality::FindDoubleBT() Also eAli_orig EdbPVRec is NULL. Do nothing and return NULL pointer!" << endl;
             return NULL;
         }
         else {
@@ -2506,8 +2514,13 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
     Int_t NdoubleFoundSeg=0;
     TObjArray* DoubleBTArray = new TObjArray();
 
+    // Bool variables for the different "regions" of the FakeBT Doublets
+    Bool_t IsRegion0;
+    Bool_t IsRegion1;
+    Bool_t IsRegion2;
+
     //gEDBDEBUGLEVEL=3;
-    cout << "EdbPVRQuality::Find_DoubleBT()   Start looping now. Attention, this might take a while!" << endl;
+    cout << "EdbPVRQuality::FindDoubleBT()   Start looping now. Attention, this might take a while!" << endl;
 
     if (aliSource->Npatterns()==0) return NULL;
 
@@ -2518,7 +2531,7 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
         // Helper Variable for cout purpose
         Int_t nPat=pat->N();
 
-        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::Find_DoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
+        if (gEDBDEBUGLEVEL>1) cout << "EdbPVRQuality::FindDoubleBT()   Looping over Ali_source->Pat()=" << i << " (PID=" << pat->PID() << ") with N= " <<  nPat << " segs. Until now double Candidates found: " << NdoubleFoundSeg << endl;
 
         for (int j = 0; j < nPat; j++ ) {
 
@@ -2546,36 +2559,52 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
                 if (TMath::Abs(seg->TX()-seg1->TX())>0.1) continue;
                 if (TMath::Abs(seg->TY()-seg1->TY())>0.1) continue;
                 //
-                // a) all BT parings within a square DeltaR and Delta Theta:
+                // Segment Pairs can fall into three regions:
                 //
-                // b) all BT pairings within dT<->dR line:
+                // region 0) all BT pairings within dT<->dR line
+                //
+                // region 1) all BT parings within a dR,dT rectangle at the origin
+                //
+                // region 2) all BT parings within a dR,dT rectangle at (0,6)
                 //
                 Float_t dR_allowed=0;
                 Float_t deltaR=0;
                 Float_t deltaTheta=0;
                 Float_t dR_allowed_m_deltaR=0;
-                
+
                 // Calculate cut values:
                 deltaTheta=TMath::Sqrt( TMath::Power(seg->TX()-seg1->TX(),2)+TMath::Power(seg->TY()-seg1->TY(),2) );
                 if (deltaTheta>0.1) continue;
                 deltaR=TMath::Sqrt( TMath::Power(seg->X()-seg1->X(),2)+TMath::Power(seg->Y()-seg1->Y(),2) );
 
                 // line defined by experimental values (by some arbitrary bricks and my own BG-bricks)
-                dR_allowed = 10.75/0.1*deltaTheta;
+                // dR_allowed = 10.75/0.1*deltaTheta; // old
+                dR_allowed = 14.0/0.13*deltaTheta; // better description of the line
                 dR_allowed_m_deltaR=TMath::Abs(deltaR-dR_allowed);
+
+                // Region check of the (Fake-)BTPair
+                IsRegion0=kFALSE;
+                IsRegion1=kFALSE;
+                IsRegion2=kFALSE;
+
+                // Set flags for region
+                if (dR_allowed_m_deltaR<0.5) IsRegion0=kTRUE;
+                if (deltaR<3.0 && deltaTheta<0.01) IsRegion1=kTRUE;
+                if (abs(deltaR-6.0)<2 && deltaTheta<0.01) IsRegion2=kTRUE;
 
                 // For this function now -in contrary to Remove_DoubleBT- we
                 // ONLY keep double basetrack pairings within the line
-                if (dR_allowed_m_deltaR<0.75) toKeep=kTRUE;
+                if (IsRegion0) toKeep=kTRUE;
                 // or within the small square at the origin
-                if (deltaR<2.0&&deltaTheta<0.02) toKeep=kTRUE;
+                if (IsRegion1) toKeep=kTRUE;
+                // or within the small square at the dR value
+                if (IsRegion2) toKeep=kTRUE;
 
                 if (!toKeep) continue;
 
-                if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::Find_DoubleBT()   Found segment compatible close to another one: seg (" <<seg->PID() << ","<<  seg->ID() << ") is close to seg  (" << seg1->PID()<< ","<< seg1->ID()  << ")." << endl;
+                if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::FindDoubleBT()   Found segment compatible close to another one: seg (" <<seg->PID() << ","<<  seg->ID() << ") is close to seg  (" << seg1->PID()<< ","<< seg1->ID()  << ")." << endl;
 
-                // if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Find_DoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
-                // if ((seg->MCEvt()!=seg1->MCEvt())&&seg->MCEvt()<0) continue;
+                if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::FindDoubleBT()   Do last check if both are MCEvt segments of different event number! " << endl;
                 if ((seg->MCEvt()!=seg1->MCEvt())&&(seg->MCEvt()>0&&seg1->MCEvt()>0)) continue;
                 // I have doubts if I shall take MC events also out, but I guess Yes, because if
                 // in data these small pairings appear, then they will fall also under the
@@ -2593,10 +2622,10 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
         } // of for (int j = 0; j < nPat-1; j++ )
     } // for (int i = 0; i <aliSource->Npatterns(); i++ )
 
-    cout << "EdbPVRQuality::Find_DoubleBT() Statistics: " << endl;
-    cout << "EdbPVRQuality::Find_DoubleBT() We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different BTracks." << endl;
+    cout << "EdbPVRQuality::FindDoubleBT() Statistics: " << endl;
+    cout << "EdbPVRQuality::FindDoubleBT() We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different basetracks." << endl;
 
-    cout << "EdbPVRQuality::Find_DoubleBT()...done." << endl;
+    cout << "EdbPVRQuality::FindDoubleBT()...done." << endl;
     return DoubleBTArray;
 
 }
@@ -2604,6 +2633,64 @@ TObjArray* EdbPVRQuality::Find_DoubleBT(EdbPVRec* aliSource)
 
 //___________________________________________________________________________________
 
+
+EdbPVRec* EdbPVRQuality::CreatePVRWithExcludedSegmentList(EdbPVRec* aliSource, TObjArray *SegmentArray)
+{
+    // Create a new volume, fill with all tracks from the old volume,
+    // _except_ those which appear in the excluded segment list.
+    // Quick and Dirty implementation !
+    cout << "EdbPVRQuality::CreatePVRWithExcludedSegmentList() " << endl;
+
+    EdbPVRec* aliClone = (EdbPVRec*)aliSource->Clone();
+
+    Int_t SegmentArrayN = SegmentArray->GetEntries();
+    Bool_t SegmentInSegmentArray=kFALSE;
+
+
+    for (Int_t i=0; i<aliSource->Npatterns(); ++i) {
+        EdbPattern* patternSource = aliSource->GetPattern(i);
+        EdbPattern* patternTarget = aliClone->GetPattern(i);
+        cout <<"patternTarget->GetEntries()" << patternTarget->GetN() << endl;
+        patternTarget->Reset();
+
+        patternTarget->SetID(patternSource->ID());
+        patternTarget->SetPID(patternSource->PID());
+        patternTarget->SetX(patternSource->X());
+        patternTarget->SetY(patternSource->Y());
+        patternTarget->SetZ(patternSource->Z());
+
+        // Now every basetrack from the original pattern must be compared
+        // with all basetracks from the exclusion list!
+        // If the basetrack is not found in the exclusion list, then
+        // it can be added in the target pattern...
+
+        for (Int_t j=0; j<patternSource->N(); ++j) {
+            EdbSegP* seg = patternSource->GetSegment(j);
+            SegmentInSegmentArray=kFALSE;
+
+            for (Int_t iSegArray=0; iSegArray<SegmentArrayN; ++iSegArray) {
+                EdbSegP* segFromArray = (EdbSegP*)SegmentArray->At(iSegArray);
+                if (seg->IsEqual(segFromArray)) {
+                    cout << "Segment " <<  seg->ID() << " is in exclusion List:  DO NOT ADD THIS IN patternTarget" << endl;
+                    SegmentInSegmentArray=kTRUE;
+                }
+            }
+            // Add segment now:
+            if(!SegmentInSegmentArray) patternTarget->AddSegment(*seg);
+
+        }
+        cout <<"patternTarget->GetEntries()" << patternTarget->GetN() << endl;
+
+    } // for (Int_t i=0; i<aliSource->N(); ++i)
+
+    aliClone->Print();
+
+
+    cout << "EdbPVRQuality::CreatePVRWithExcludedSegmentList()...done." << endl;
+}
+
+
+//___________________________________________________________________________________
 
 
 EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
@@ -2642,6 +2729,11 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
     Int_t NdoubleFoundSeg=0;
     Int_t NdoubleFoundSegPatterns[114];
 
+    // Bool variables for the different "regions" of the FakeBT Doublets
+    Bool_t IsRegion0;
+    Bool_t IsRegion1;
+    Bool_t IsRegion2;
+
     //gEDBDEBUGLEVEL=3;
     cout << "EdbPVRQuality::Remove_DoubleBT()   Start looping now. Attention, this might take a while!" << endl;
 
@@ -2652,7 +2744,6 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
 
     for (int i = 0; i <aliSource->Npatterns(); i++ ) {
-
 
         // Create Target Pattern:
         EdbPattern* pat = aliSource->GetPattern(i);
@@ -2686,17 +2777,23 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
                 // Here decide f.e. which segments to check...
                 Bool_t toContinue=kTRUE;
+                // Here decide f.e. which segments to check...
+                Bool_t toKeep=kFALSE;
+
 
                 // Skip already large distances
                 if (TMath::Abs(seg->X()-seg1->X())>20.1) continue;
                 if (TMath::Abs(seg->Y()-seg1->Y())>20.1) continue;
                 if (TMath::Abs(seg->TX()-seg1->TX())>0.1) continue;
                 if (TMath::Abs(seg->TY()-seg1->TY())>0.1) continue;
-
                 //
-                // a) all BT parings within a square DeltaR and Delta Theta:
+                // Segment Pairs can fall into three regions:
                 //
-                // b) all BT pairings within dT<->dR line:
+                // region 0) all BT pairings within dT<->dR line
+                //
+                // region 1) all BT parings within a dR,dT rectangle at the origin
+                //
+                // region 2) all BT parings within a dR,dT rectangle at (0,6)
                 //
                 Float_t dR_allowed=0;
                 Float_t deltaR=0;
@@ -2708,15 +2805,31 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 
                 deltaR=TMath::Sqrt( TMath::Power(seg->X()-seg1->X(),2)+TMath::Power(seg->Y()-seg1->Y(),2) );
 
-                // line defined by experimental values:
-                // dR_allowed = 11(micron)/0.1(rad) * dTheta  // b??????
-                // dR_allowed = 5(micron)/0.05(rad) * dTheta  // b138756
-                dR_allowed = 10.75/0.1*deltaTheta;
+
+                // line defined by experimental values (by some arbitrary bricks and my own BG-bricks)
+                // dR_allowed = 10.75/0.1*deltaTheta; // old
+                dR_allowed = 14.0/0.13*deltaTheta; // better description of the line
                 dR_allowed_m_deltaR=TMath::Abs(deltaR-dR_allowed);
 
-                if (deltaR<5.0&&deltaTheta<0.01) toContinue=kFALSE;
-                if (dR_allowed_m_deltaR<1.0) toContinue=kFALSE;
-                if (toContinue) continue;
+                // Region check of the (Fake-)BTPair
+                IsRegion0=kFALSE;
+                IsRegion1=kFALSE;
+                IsRegion2=kFALSE;
+
+                // Set flags for region
+                if (dR_allowed_m_deltaR<0.5) IsRegion0=kTRUE;
+                if (deltaR<3.0 && deltaTheta<0.01) IsRegion1=kTRUE;
+                if (abs(deltaR-6.0)<2 && deltaTheta<0.01) IsRegion2=kTRUE;
+
+                // For this function now -in contrary to Remove_DoubleBT- we
+                // ONLY keep double basetrack pairings within the line
+                if (IsRegion0) toKeep=kTRUE;
+                // or within the small square at the origin
+                if (IsRegion1) toKeep=kTRUE;
+                // or within the small square at the dR value
+                if (IsRegion2) toKeep=kTRUE;
+
+                if (!toKeep) continue;
 
                 if (gEDBDEBUGLEVEL>3) cout << "EdbPVRQuality::Remove_DoubleBT()   Found incompatible segment for dR_dT line condition: " << endl;
 
@@ -2769,8 +2882,10 @@ EdbPVRec* EdbPVRQuality::Remove_DoubleBT(EdbPVRec* aliSource)
 EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 {
     // Removes Passing Tracks from the EdbPVRec source object.
-    // Unfortunately, there does Not Exist an easy function like
-    // ->RemoveSegment from EdbPVRec object. That makes implementation complicated.
+    // Unfortunately, there does NOT exist an easy function like
+    // ->RemoveSegment from EdbPVRec object. That makes implementation complicated
+    // and we have to go via the intermediate step of creating a new
+    // EdbPVRec volume.
 
     cout << "EdbPVRQuality::Remove_Passing()." << endl;
     cout << "EdbPVRQuality::Remove_Passing()  aliSource = " << aliSource << endl;
@@ -2867,7 +2982,7 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
                 if (seg_in_eTracks) continue;
             }
             if (seg_in_eTracks) continue;
-            // Arrived here then the segmen has no equivalent in any segments
+//             // Arrived here then the segment has no equivalent in any segments
             // of the tracks array.
 
             // Add segment:

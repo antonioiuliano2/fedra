@@ -252,7 +252,7 @@ public:
     void CheckEdbPVRecThetaSpace(Int_t AliType);
 
     void Execute();
-    void Execute(Int_t CutType);    
+    void Execute(Int_t CutType);
     void Execute_ConstantBTDensity();
     void Execute_ConstantBTDensityInAngularBins();
     void Execute_ConstantBTQuality();
@@ -267,9 +267,9 @@ public:
     void Execute_EqualizeTanThetaSpace_ConstantBTX2Hat();
     void Execute_EqualizeTanThetaSpace_RandomCut();
 
-    TObjArray* Find_DoubleBT(EdbPVRec* aliSource);
-    EdbPVRec* Remove_DoubleBT(EdbPVRec* aliSource);
-    EdbPVRec* Remove_Passing(EdbPVRec* aliSource);
+    TObjArray* 	FindDoubleBT(EdbPVRec* aliSource);
+    EdbPVRec* 	Remove_DoubleBT(EdbPVRec* aliSource);
+    EdbPVRec* 	Remove_Passing(EdbPVRec* aliSource);
 
     // All these functions will call Remove_SegmentArray(..,..,..);
     EdbPVRec* Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource=NULL, Int_t Option=0);
@@ -280,8 +280,10 @@ public:
     TObjArray* TrackArrayToSegmentArray(TObjArray* trackArray);
 
 
-
+    // This function may be merged later with the CreateEdbPVRec(); function!!! to be done...
+    EdbPVRec* CreatePVRWithExcludedSegmentList(EdbPVRec* aliSource, TObjArray *SegmentArray);
     EdbPVRec* CreateEdbPVRec();
+
     Int_t CheckFilledXYSize();
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
