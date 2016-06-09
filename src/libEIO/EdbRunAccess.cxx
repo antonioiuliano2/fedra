@@ -81,7 +81,10 @@ void EdbRunAccess::Set0()
   ePixelCorrX = ePixelCorrY= 1.;
   eHeaderCut="1";
   eTracking=-1;
-  eUseDensityAsW=false;
+  eWeightAlg=0;
+  eViewCorr = 0;
+  eAffStage2Abs=0;
+  eInvertSides=0;
 }
 
 ///_________________________________________________________________________
@@ -104,17 +107,25 @@ void EdbRunAccess::Print()
 ///_________________________________________________________________________
 bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
 {
-  if(eRun) {delete eRun; eRun=0;}
+  if(eRun) SafeDelete(eRun);
   if(runfile) eRunFileName=runfile;
+  if(eAFID==2) ReadVAfile();
   if( gSystem->AccessPathName(eRunFileName.Data(), kFileExists) ) {
-    Log(1,"EdbRunAccess::InitRun","ERROR open file: %s\n",eRunFileName.Data());
+    Log(1,"EdbRunAccess::InitRun","ERROR! open file: %s\n",eRunFileName.Data());
     return false;
   }
   if(do_update) eRun=new EdbRun(eRunFileName.Data(),"UPDATE");
   else          eRun=new EdbRun(eRunFileName.Data());
-  if(!eRun) return false;
-  if(!(eRun->GetTree())) return false;
+  if(!eRun) {Log(1,"EdbRunAccess::InitRun","ERROR! can't open file %s\n",eRunFileName.Data()); return false; }
+  if(!(eRun->GetTree())) {Log(1,"EdbRunAccess::InitRun","ERROR! Vews tree is missed %s\n",eRunFileName.Data());return false;}
   for(int i=0; i<3; i++) if(eLayers[i]==0) GetMakeLayer(i);
+  if(eAFID==11) {
+    eRun->GetMarks()->Print();
+    if(eRun->GetMarks()) eAffStage2Abs = eRun->GetMarks()->Stage2Abs();
+    //if(eRun->GetMarks()) eAffStage2Abs = eRun->GetMarks()->Abs2Stage();
+    if(eAffStage2Abs) eAffStage2Abs->Print();
+    else Log(1,"EdbRunAccess::InitRun","ERROR! Stage2Abs do not available (eAFID=11)");
+  }
   if(do_update) {
     if(FillVP()<1) return false;
     eVP[1]->Write("views_s1");
@@ -143,9 +154,23 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
   if(gEDBDEBUGLEVEL>2) PrintStat();
 
   for(int i=0; i<3; i++) { eXstep[i]=400;   eYstep[i]=400; }
+  
+  Log(1,"EdbRunAccess::InitRun","eAFID=%d",eAFID);
 
   return true;
 }
+
+///_________________________________________________________________________
+void EdbRunAccess::ReadVAfile()
+{
+  int k = eRunFileName.Length();
+  TString s(eRunFileName.Data(),k-4); s+="va.root";
+  Log( 2,"EdbRunAccess::ReadVAfile","Get view corrections from %s",s.Data() );
+  TFile  f( s.Data() );
+  eViewCorr = (TObjArray*)f.Get("viewcorr");
+  f.Close();
+}
+
 ///_________________________________________________________________________
 void EdbRunAccess::SetCutLeft(int side, float wmin)
 {
@@ -389,9 +414,9 @@ int EdbRunAccess::ViewSide(const EdbView *view) const
 
 ///_________________________________________________________________________
 int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol, 
-				int nviews, 
-				TArrayI &srt, 
-				int &nrej)
+                                int nviews, 
+                                TArrayI &srt, 
+                                int &nrej)
 {
   // get raw segments as a volume for the given array of entries
 
@@ -419,14 +444,11 @@ int EdbRunAccess::GetVolumeData(EdbPatternsVolume &vol,
 
     //vol.Print();
     for(int j=0;j<nsegV;j++) {
-      if(!AcceptRawSegment(view,j,segP,side)) {
-	nrej++;
-	continue;
+      if(!AcceptRawSegment(view,j,segP,side,entry)) {
+        nrej++;
+        continue;
       }
       nseg++;
-      segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID(), side);
-      
       vol.GetPattern(side-1)->AddSegment( segP);
     }
   }
@@ -465,13 +487,11 @@ int EdbRunAccess::GetPatternData( EdbPattern &pat, int side,
     if( ViewSide(view) != side )   continue;
 
     for(int j=0;j<nsegV;j++) {
-      if(!AcceptRawSegment(view,j,segP,side)) {
+      if(!AcceptRawSegment(view,j,segP,side,entry)) {
 	nrej++;
 	continue;
       }
       nseg++;
-      segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID(), side);
       pat.AddSegment( segP);
     }
   }
@@ -491,7 +511,7 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
   EdbView    *view = eRun->GetView();
   //int nviews = eRun->GetEntries();
   int nviews = eVP[side]->N();
-  Log(3,"EdbRunAccess::GetPatternDataForPrediction","%d views are selected for side %d",nviews,side);
+  Log(2,"EdbRunAccess::GetPatternDataForPrediction","%d views are selected for side %d",nviews,side);
   int   nseg=0;
   int   nsegV;
   
@@ -507,19 +527,17 @@ int EdbRunAccess::GetPatternDataForPrediction( int id, int side, EdbPattern &pat
 
     nsegV = view->Nsegments();
     if( ViewSide(view) != side )   continue;
-    //Log(3,"EdbRunAccess::GetPatternDataForPrediction","ie = %d   nsegV = %d",ie,nsegV);
+    //Log(2,"EdbRunAccess::GetPatternDataForPrediction","ie = %d   nsegV = %d",ie,nsegV);
 
     for(int j=0;j<nsegV;j++) {
-      if(!AcceptRawSegment(view,j,segP,side))   continue;
+      if(!AcceptRawSegment(view,j,segP,side,entry))   continue;
       nseg++;
-      segP.SetVid(entry,j);
-      segP.SetAid(view->GetAreaID(),view->GetViewID(),side);
       segP.SetScanID(pat.ScanID());
       segP.SetSide(pat.Side());
       pat.AddSegment( segP);
     }
   }
-  Log(2,"GetPatternDataForPrediction","%d segments for pred %d, side %d",nseg,id,side);
+  Log(2,"GetPatternDataForPrediction","%d segments for pred %d, side %d from %s",nseg,id,side, eRunFileName.Data());
   return nseg;
 }
 
@@ -798,6 +816,8 @@ int EdbRunAccess::FillVP()
   // segp->Aid(areaID,viewID);
 
   
+  Log(2,"EdbRunAccess::FillVP","Get data from %s with AFID=%d",eRunFileName.Data(),eAFID);
+  
   if(!eRun) { Log(1,"EdbRunAccess::FillVP","ERROR: run is not opened\n"); return 0; }
   EdbView        *view = eRun->GetView();
   EdbViewHeader  *head = view->GetHeader();
@@ -828,11 +848,26 @@ int EdbRunAccess::FillVP()
     
     nseg = head->GetNsegments();
     ncl  = head->GetNclusters();
-    if(eAFID) {
+    if(eAFID==0){
+      segP.Set( iv,view->GetXview(),view->GetYview(), 0,0,ncl,nseg);
+    }
+    else if(eAFID==1 || eAFID==2) {
       segP.Set( iv,0,0, 0,0,ncl,nseg);
       segP.Transform( head->GetAffine() );
-    } else {
-      segP.Set( iv,view->GetXview(),view->GetYview(), 0,0,ncl,nseg);
+    }
+    else if(eAFID==11) {
+      segP.Set( iv,0,0, 0,0,ncl,nseg);
+      if(!eAffStage2Abs) Log(1,"","eAffStage2Abs =0");
+      segP.Transform( eAffStage2Abs );
+    }
+    else if(eAFID==20) {  //to remove
+      segP.Set( iv,0,0, 0,0,ncl,nseg);
+      EdbAffine2D *aff = (EdbAffine2D*)eViewCorr->At(iv);
+      if(aff) {
+        segP.Transform( aff );
+        head->GetAffine()->Print();
+        aff->Print();
+      } else Log(1,"EdbRunAccess::FillVP", "WARNING! aff is missing for entry %d",iv);
     }
     if( view->GetAreaID() < eFirstArea )  eFirstArea= view->GetAreaID();
     if( view->GetAreaID() > eLastArea )   eLastArea = view->GetAreaID();
@@ -861,14 +896,13 @@ void EdbRunAccess::SetPixelCorrection(const char *str)
 ///______________________________________________________________________________
 float EdbRunAccess::SegmentWeight(const EdbSegment &s)
 {
-  if(eUseDensityAsW) {
-    return Sqrt(s.GetPuls()*s.GetSigmaY()/2.);
-  }
+  if     (eWeightAlg==1) return Sqrt(s.GetPuls()*s.GetSigmaY()/2.);
+  else if(eWeightAlg==2) return s.GetSigmaX();
   return s.GetPuls();
 }
 
 ///______________________________________________________________________________
-bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int side)
+bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int side, int entry)
 {
   EdbSegment *seg = view->GetSegment(id);
 
@@ -898,9 +932,17 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   }
 
   EdbLayer  *layer=GetLayer(side);
-  //if(eAFID) seg->Transform( view->GetHeader()->GetAffine() );   // TO CHECK!!
-  const EdbAffine2D *affview = view->GetHeader()->GetAffine();
-
+  const EdbAffine2D *affview = 0;
+  if      (eAFID==1) affview = view->GetHeader()->GetAffine();
+  else if (eAFID==11) affview = eAffStage2Abs;
+  else if(eAFID==2) {
+    affview = (EdbAffine2D*)eViewCorr->At(entry);
+    if(id==0) {
+      view->GetHeader()->GetAffine()->Print();
+      affview->Print();
+    }
+  }
+      
   float x,y,z,tx,ty,puls;
   tx   = seg->GetTx()/layer->Shr();
   ty   = seg->GetTy()/layer->Shr();
@@ -918,21 +960,30 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   z    = layer->Z() + layer->Zcorr();
   
   float xx, yy, txr, tyr;
-  if(eAFID==0) {
+  if( eAFID==0 ) {
     xx = x+view->GetXview();
     yy = y+view->GetYview();
     txr = tx;
     tyr = ty;
-  } else {
-    seg->Transform( view->GetHeader()->GetAffine() );
+  } 
+  else if(eAFID==11) {
+    x += view->GetXview();
+    y += view->GetYview();
+    xx  = affview->A11()*x+affview->A12()*y+affview->B1();
+    yy  = affview->A21()*x+affview->A22()*y+affview->B2();
+    txr = affview->A11()*tx+affview->A12()*ty;                   // rotate also angles
+    tyr = affview->A21()*tx+affview->A22()*ty;
+  }
+  else {
+    //seg->Transform( affview );
     xx  = affview->A11()*x+affview->A12()*y+affview->B1();
     yy  = affview->A21()*x+affview->A22()*y+affview->B2();
     txr = affview->A11()*tx+affview->A12()*ty;                   // rotate also angles
     tyr = affview->A21()*tx+affview->A22()*ty;
   }
   
-  //puls = seg->GetPuls();
-  puls = SegmentWeight(*seg);
+  if(eWeightAlg==2) puls = seg->GetPuls();           // use SigmaX for cuts only
+  else              puls = SegmentWeight(*seg);
 
   EdbAffine2D *aff = layer->GetAffineTXTY();
   float txx = aff->A11()*txr+aff->A12()*tyr+aff->B1();
@@ -945,6 +996,8 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   segP.SetVolume( seg->GetVolume() );
   segP.SetChi2( seg->GetSigmaX() );
   segP.SetProb( seg->GetSigmaY() );       //test: grains density after LASSO
+  segP.SetVid(entry,id);
+  segP.SetAid(view->GetAreaID(),view->GetViewID(), side);
   
   return true;
 }
@@ -957,7 +1010,6 @@ bool  EdbRunAccess::PassCuts(int id, EdbSegment &seg)
   var[1] = seg.GetY0();
   var[2] = seg.GetTx();
   var[3] = seg.GetTy();
-//  var[4] = seg.GetPuls();
   var[4] = SegmentWeight(seg);
 
   int nc = NCuts(id);

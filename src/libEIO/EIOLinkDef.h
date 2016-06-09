@@ -14,4 +14,6 @@
 
 #pragma link C++ class EdbRunParent;
 
+#pragma link C++ class EdbViewMap;
+
 #endif

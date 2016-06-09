@@ -28,7 +28,8 @@ class EdbRunAccess : public TObject {
   Bool_t    eDoViewAnalysis;     // fill or not the histograms for optional view analysis
   EdbH2     eHViewXY[3];         // XY segments distribution in a view local coords
   Bool_t    eInvertSides;        // 0 -do nothing, 1-invert sides
-  Bool_t    eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW
+  Int_t     eWeightAlg;          // 0-puls, 1 - density(former eUseDensityAsW), 2-Likelyhood (eSigmaX)
+            //eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW
   
   Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
   Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data
@@ -40,6 +41,8 @@ class EdbRunAccess : public TObject {
  private:
   TString  eRunFileName;
   EdbRun   *eRun;        // pointer to the run to be accessed
+  
+  EdbAffine2D *eAffStage2Abs; // affine transformation extracted from Marks (if AFID=11)
 
   Int_t eFirstArea;
   Int_t eLastArea;
@@ -60,6 +63,8 @@ class EdbRunAccess : public TObject {
   Float_t eViewXmin[3], eViewXmax[3];
   Float_t eViewYmin[3], eViewYmax[3];
   
+  TObjArray *eViewCorr; //! corrections obtained from the views alignment
+  
  public:
   EdbRunAccess();
   EdbRunAccess(EdbRun *run);
@@ -70,6 +75,7 @@ class EdbRunAccess : public TObject {
   EdbSegment  *GetRawSegment( int vid, int sid, int rs=0 );
   EdbSegment  *GetRawSegment( EdbView &v, int sid, int rs=0 );
   void ApplyCorrections( const EdbView &view, EdbSegment &s, const int rs );
+  void ReadVAfile();
   
   void Set0();
   void SetPixelCorrection(const char *str);
@@ -120,7 +126,7 @@ class EdbRunAccess : public TObject {
   int GetPatternData(EdbPattern &pat, int side, int nviews, TArrayI &srt, int &nrej);
   int GetPatternDataForPrediction( int id, int side, EdbPattern &pat );
 
-  bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side);
+  bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side, int entry);
 
   int ViewSide(const EdbView *view) const;
 //    {    if(view->GetNframesTop()==0) return 2;         // 2- bottom
