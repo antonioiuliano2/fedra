@@ -42,7 +42,13 @@ void process()
   EdbScanProc sproc;
   EdbScanSet *ss = sproc.ReadScanSet(idset);
   
-  EdbProcPars::SetLinkDef(cenv); sproc.LinkSetNewTest(*ss, cenv);   sproc.MakeLinkSetSummary(idset);
+  Log(1,"emrec::process","Setting linking definitions via: EdbProcPars::SetLinkDef(cenv);");
+  EdbProcPars::SetLinkDef(cenv);
+  
+  Log(1,"emrec::process","Do the linking of the ScanProc instance via sproc.LinkSetNewTest(*ss, cenv);");
+  sproc.LinkSetNewTest(*ss, cenv);   
+  
+  sproc.MakeLinkSetSummary(idset);
 
 }
 

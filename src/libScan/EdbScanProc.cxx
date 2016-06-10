@@ -346,7 +346,7 @@ int EdbScanProc::ReadScanSetCP(EdbScanSet &sc,  EdbPVRec &ali, TCut c, bool do_e
   // if(do_erase) - exclude segmets from the erase mask if it is exist (default is true) 
 
   if(minplate>maxplate) { 
-    Log(1,"EdbScanProc::ReadScanSetCP","ERROR: minplate (%d) grater then maxplate(%d)!",minplate, maxplate);
+    Log(1,"EdbScanProc::ReadScanSetCP","ERROR: minplate (%d) greater then maxplate(%d)!",minplate, maxplate);
     return 0;
   }
   int cnt=0;
@@ -452,7 +452,7 @@ bool  EdbScanProc::PrepareSetStructure(EdbScanSet &sc)
 void EdbScanProc::AlignSetNewNopar(EdbID id, TEnv &cenv )
 {
   EdbScanSet *ss = ReadScanSet(id);
-  if(!ss) { Log(1,"AlignSetNewNopar","Error! set for %s do not found",id.AsString()); return; }
+  if(!ss) { Log(1,"AlignSetNewNopar","Error! set for %s not found",id.AsString()); return; }
   AlignSetNewNopar(*ss, cenv);
   ss->eB.ResetAff();
   WriteScanSet(id,*ss);
@@ -2304,7 +2304,7 @@ bool EdbScanProc::InitPiece(EdbDataPiece &piece, int id[4])
   piece.AddRunFile(runfile);
   piece.eFileNameCP  = cpfile;
   piece.eFileNamePar = parfile;
-  if(piece.TakePiecePar()<0) Log(1,"InitPiece","Warning: file %s do not exist!",parfile.Data());
+  if(piece.TakePiecePar()<0) Log(1,"InitPiece","Warning: file %s does not exist!",parfile.Data());
   return true;
 }
 

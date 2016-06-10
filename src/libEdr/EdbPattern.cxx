@@ -93,7 +93,9 @@ EdbSegP *EdbSegmentsBox::AddSegmentNoDuplicate( EdbSegP &s )
   // This function will add the segment s to the current list of
   // segments checking for duplicates. If any segment in the list is found,
   // that is compatible to this, the segment will _not_ be added,
-  // instead a warning message will be printed.
+  // instead a warning message will be printed (according to    
+  // verbosity level)
+  // This function might be slow. 
   
   //cout << endl  << endl;
   //cout <<"EdbSegmentsBox::AddSegmentNoDuplicate( EdbSegP &s )" << endl;
