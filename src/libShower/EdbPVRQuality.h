@@ -152,6 +152,7 @@ public:
     inline Int_t GetBTDensityLevelCalcMethodMCConfirmation() {
         return eBTDensityLevelCalcMethodMCConfirmationNumber;
     }
+    
 
 
     inline EdbPVRec* GetEdbPVRec() {
@@ -195,7 +196,14 @@ public:
     inline   TH2F* GetHistYX() {
         return eHistYX;
     }
-
+    
+    
+    inline Float_t     GetBTDensity_orig(Int_t patNR) {
+        return ePatternBTDensity_orig[patNR];
+    }
+    inline Float_t     GetBTDensity_modified(Int_t patNR) {
+        return ePatternBTDensity_modified[patNR];
+    }
 
 
     inline Int_t     GetCutMethod() {

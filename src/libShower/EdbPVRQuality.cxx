@@ -189,7 +189,7 @@ void EdbPVRQuality::Set0()
         eXi2Hat_s_WTilde[i]=0;
     }
 
-    eRandomCutThreshold=1.0;
+    eRandomCutThreshold=0.5; // Random Reduction of all BTs by a factor of 2.
 
     eProfileBTdens_vs_PID_source_meanX=0;
     eProfileBTdens_vs_PID_source_meanY=0;
@@ -1038,10 +1038,11 @@ void EdbPVRQuality::Execute()
     // Does the following things:
     //
     // a) Check EdbPVRec object of data.
-    // b) Remove DoubleBasetracks
+    // b) Remove Fake DoubleBasetracks
     // c) Remove passing tracks
     //   (if any stored, either in .root file or in EdbPVRec object itself)
-    // d) Execute quality cuts if necessary: default is Constant BT density
+    // d) Execute quality cuts if necessary: default is
+    //    <<Constant BT density>>
     // e) Store cleaned object. Can be retrieved via GetPVR().
     // --------------------------------------------------------------------
 
@@ -1050,10 +1051,11 @@ void EdbPVRQuality::Execute()
     Log(2,"EdbPVRQuality::Execute","Main Execution Routine.  TODO... ");
     Log(2,"EdbPVRQuality::Execute","Does the following things:");
     Log(2,"EdbPVRQuality::Execute","  a) Check EdbPVRec object of data.");
-    Log(2,"EdbPVRQuality::Execute","  b) Remove DoubleBasetracks");
+    Log(2,"EdbPVRQuality::Execute","  b) Remove Fake DoubleBasetracks");
     Log(2,"EdbPVRQuality::Execute","  c) Remove passing tracks (if any stored, either in");
     Log(2,"EdbPVRQuality::Execute","     the .root file or in EdbPVRec object itself)");
-    Log(2,"EdbPVRQuality::Execute","  d) Execute quality cuts if necessary: default is Constant BT density");
+    Log(2,"EdbPVRQuality::Execute","  d) Execute quality cut algorithm if necessary: default is");
+    Log(2,"EdbPVRQuality::Execute","     <<Constant BT density>>");
     Log(2,"EdbPVRQuality::Execute","  e) Store cleaned object. Can be retrieved via GetPVR().");
 
     cout << " " << endl;
@@ -1156,6 +1158,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
             histPatternBTDensity->Reset(); // important to clean the histogram
+	    eHistTYTX->Reset(); // important to clean the histogram
+            eHistTT->Reset();          // important to clean the histogram
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
             Int_t npat=pat->N();
@@ -1191,6 +1195,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
 
                 eHistYX->Fill(seg->Y(),seg->X());
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
+		eHistTYTX->Fill(seg->TY(),seg->TX());
+		eHistTT->Fill(seg->Theta());
             }
 
             if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
@@ -1232,6 +1238,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     }
 
 
+    /*
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
     TCanvas* c1 = new TCanvas();
@@ -1248,10 +1255,33 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     eProfileBTdens_vs_PID_target->SetLineStyle(2);
     eProfileBTdens_vs_PID_target->Draw("profileZsame");
     c1->cd();
+    */
+    
+    // This will be commented when using in batch mode...
+    // For now its there for clarity reasons.
+    TCanvas* c1 = new TCanvas();
+    c1->Divide(3,2);
+    c1->cd(1);
+    eHistYX->DrawCopy("colz");
+    c1->cd(2);
+    eHistChi2W->DrawCopy("colz");
+    c1->cd(3);
+    eHistTYTX->DrawCopy("colz");
+    c1->cd(4);
+    histPatternBTDensity->DrawCopy("");
+    c1->cd(5);
+    eProfileBTdens_vs_PID_source->Draw("profileZ");
+    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    eProfileBTdens_vs_PID_target->SetLineStyle(2);
+    eProfileBTdens_vs_PID_target->Draw("profileZsame");
+    c1->cd(6);
+    eHistTT->DrawCopy("");
+    c1->cd();
+
+    
     histPatternBTDensity->Reset();
     eHistYX->Reset();
     eHistChi2W->Reset();
-
 
     eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
     eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
@@ -1567,8 +1597,8 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
 void EdbPVRQuality::Execute_ConstantBTDensityInAngularBins()
 {
 
-    Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","Execute_ConstantBTDensityInAngularBins...done.");
-    Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","Execute_ConstantBTDensityInAngularBins...done.");
+    Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTDensityInAngularBins...done.");
+    Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTDensityInAngularBins...done.");
     return;
 }
 
@@ -1745,7 +1775,7 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
                 X2Hat=chi2Normalized + WTildeNormalized;
                 h_X2->Fill(X2Hat);
 
-                // Constant BT density cut:
+                // Constant ConstantBTX2Hat density cut:
                 if (X2Hat>eX2HatCut[i]) continue;
 
                 eHistYX->Fill(seg->Y(),seg->X());
@@ -2019,27 +2049,6 @@ void EdbPVRQuality::Execute_RandomCut()
         cout << "----------void EdbPVRQuality::Execute_ConstantBTDensity() " << eNeedModified << endl;
     }
 
-    /*
-        // This will be commented when using in batch mode...
-        // For now its there for clarity reasons.
-        TCanvas* c1 = new TCanvas();
-        c1->Divide(2,2);
-        c1->cd(1);
-        eHistYX->DrawCopy("colz");
-        c1->cd(2);
-        eHistChi2W->DrawCopy("colz");
-        c1->cd(3);
-        histPatternBTDensity->DrawCopy("");
-        c1->cd(4);
-        eProfileBTdens_vs_PID_source->Draw("profileZ");
-        eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
-        eProfileBTdens_vs_PID_target->SetLineStyle(2);
-        eProfileBTdens_vs_PID_target->Draw("profileZsame");
-        c1->cd();
-        histPatternBTDensity->Reset();
-        eHistYX->Reset();
-        eHistChi2W->Reset();
-        */
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
     TCanvas* c1 = new TCanvas();
