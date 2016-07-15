@@ -152,10 +152,11 @@ void EdbPVRQuality::Set0()
     // will be put. This is for all tangens theta values integrated.
     eBTDensityLevel=20; // #BT/mm2
     // Default factor for equalizing the tan theta space:
-    eCutTTSqueezeFactor = 0.95;
+    eCutTTSqueezeFactor = 0.5;
+    for (int i=0; i<10; i++) eCutReductionFactor[i] = 0.5;
 
-    // Default BT density level will use only segments for
-    // data calculation .
+    // Default BT density level will use only Data-segments for
+    // data calculation and segments of the same MC-event number.
     eBTDensityLevelCalcMethodMC=kFALSE;
     eBTDensityLevelCalcMethodMCConfirmationNumber=0;
 
@@ -207,6 +208,14 @@ void EdbPVRQuality::Set0()
     eAgreementChi2CutMeanW=23;
     eAgreementChi2CutRMSW=3;
 
+
+    // Clear arrays for stored BTs in TT space
+    for (int i = 0; i <10; i++ ) {
+        ArrayPatternTTSource[i]->Clear();
+        ArrayPatternTTRejected[i]->Clear();
+        ArrayPatternTTAccepted[i]->Clear();
+    }
+
     Log(2,"EdbPVRQuality::Set0","Set0...done.");
     return;
 }
@@ -232,6 +241,12 @@ void EdbPVRQuality::Init()
     // there is the danger of being to few entries in the histogram.
     eHistTT = new TH1F("eHistTT","eHistTT",10,0,1);  	 // Filled with EdbSegP::TT() value
 
+    // Arrays for stored BTs in TT space
+    for (int i = 0; i <10; i++ ) {
+        ArrayPatternTTSource[i] = new TObjArray();
+        ArrayPatternTTRejected[i] = new TObjArray();
+        ArrayPatternTTAccepted[i] = new TObjArray();
+    }
 
     // TEMPORARY, later the Standard Geometry should default be OPERA.
     // For now we use a very large histogram that can contain both case
@@ -307,6 +322,7 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 
     if (CutMethod==4) cout << "// 4: (testing): Do cut based Xi2Hat relation. " << endl;
     if (CutMethod==5) cout << "// 5: (testing): Do cut based Xi2Hat relation.	 In Angular Bins " << endl;
+
     if (CutMethod==6) cout << "// 6: (testing): Do random cut based relation --> Just for quick test purposes.... " << endl;
     if (CutMethod==7) cout << "// 7: (testing): Do random cut based relation  In Angular Bins --> Just for quick test purposes.... " << endl;
 
@@ -735,7 +751,6 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 }
 
 //______________________________________________________________________________
-
 void EdbPVRQuality::SetHistGeometry_OPERA()
 {
     // Set the geometry of the basetrack density evaluation using OPERA case,
@@ -747,6 +762,7 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","SetHistGeometry_OPERA...done");
     return;
 }
+
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_MC()
 {
@@ -759,6 +775,7 @@ void EdbPVRQuality::SetHistGeometry_MC()
     Log(3,"EdbPVRQuality::SetHistGeometry_MC","SetHistGeometry_MC...done");
     return;
 }
+
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_OPERAandMC()
 {
@@ -773,6 +790,7 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","SetHistGeometry_OPERAandMC...done");
     return;
 }
+
 //______________________________________________________________________________
 void EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625()
 {
@@ -828,6 +846,7 @@ void EdbPVRQuality::Print()
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutMethodIsDone[6] = " << eCutMethodIsDone[6] << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevel = " << eBTDensityLevel << endl;
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutTTSqueezeFactor = " << eCutTTSqueezeFactor << endl;
+    cout << "EdbPVRQuality::Print() --- " << setw(40) << "eCutReductionFactor[1] = " << eCutReductionFactor[1] << endl;
 
     cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMC = " << eBTDensityLevelCalcMethodMC << endl;
     //cout << "EdbPVRQuality::Print() --- " << setw(40) << "eBTDensityLevelCalcMethodMCConfirmationNumber = " << eBTDensityLevelCalcMethodMCConfirmationNumber << endl;
@@ -1061,7 +1080,7 @@ void EdbPVRQuality::Execute()
     cout << " " << endl;
     cout << "___________________ TODO _______   AT THE MOMENT NOTHING HAPPENS YET IN THIS FUNCTION !!! ____________" << endl;
     cout << " " << endl;
-    
+
     Log(2,"EdbPVRQuality::Execute","Execute...done.");
     return;
 }
@@ -1158,7 +1177,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
             histPatternBTDensity->Reset(); // important to clean the histogram
-	    eHistTYTX->Reset(); // important to clean the histogram
+            eHistTYTX->Reset(); // important to clean the histogram
             eHistTT->Reset();          // important to clean the histogram
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
@@ -1195,8 +1214,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
 
                 eHistYX->Fill(seg->Y(),seg->X());
                 eHistChi2W->Fill(seg->W(),seg->Chi2());
-		eHistTYTX->Fill(seg->TY(),seg->TX());
-		eHistTT->Fill(seg->Theta());
+                eHistTYTX->Fill(seg->TY(),seg->TX());
+                eHistTT->Fill(seg->Theta());
             }
 
             if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
@@ -1238,25 +1257,6 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     }
 
 
-    /*
-    // This will be commented when using in batch mode...
-    // For now its there for clarity reasons.
-    TCanvas* c1 = new TCanvas();
-    c1->Divide(2,2);
-    c1->cd(1);
-    eHistYX->DrawCopy("colz");
-    c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
-    c1->cd(3);
-    histPatternBTDensity->DrawCopy("");
-    c1->cd(4);
-    eProfileBTdens_vs_PID_source->Draw("profileZ");
-    eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
-    eProfileBTdens_vs_PID_target->SetLineStyle(2);
-    eProfileBTdens_vs_PID_target->Draw("profileZsame");
-    c1->cd();
-    */
-    
     // This will be commented when using in batch mode...
     // For now its there for clarity reasons.
     TCanvas* c1 = new TCanvas();
@@ -1278,7 +1278,7 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     eHistTT->DrawCopy("");
     c1->cd();
 
-    
+
     histPatternBTDensity->Reset();
     eHistYX->Reset();
     eHistChi2W->Reset();
@@ -1596,8 +1596,6 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
 
 void EdbPVRQuality::Execute_ConstantBTDensityInAngularBins()
 {
-
-    Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTDensityInAngularBins...done.");
     Log(2,"EdbPVRQuality::Execute_ConstantBTDensityInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTDensityInAngularBins...done.");
     return;
 }
@@ -1657,7 +1655,7 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
         Float_t WTilde=0;
         Float_t WTildeNormalized=0;
         Float_t X2Hat=0;
-        Float_t     m_chi2=0;
+        Float_t m_chi2=0;
         Float_t s_chi2=0;
         Float_t m_WTilde=0;
         Float_t s_WTilde=0;
@@ -1667,7 +1665,7 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
         eX2HatCut[i]=5;
 
         // Now the condition loop:
-        // Loop over 10 steps for the eX2HatCut value:
+        // Loop over 20 steps for the eX2HatCut value:
         for (int l=0; l<20; l++) {
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
@@ -1889,7 +1887,8 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
 
 void EdbPVRQuality::Execute_ConstantBTX2HatInAngularBins()
 {
-    cout << "TODO     void EdbPVRQuality::Execute_ConstantBTX2HatInAngularBins() TO BE DONE ! ATTENTION WARNING" << endl;
+    Log(2,"EdbPVRQuality::Execute_ConstantBTX2HatInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTX2HatInAngularBins...done.");
+    return;
 }
 
 
@@ -1898,8 +1897,8 @@ void EdbPVRQuality::Execute_ConstantBTX2HatInAngularBins()
 
 void EdbPVRQuality::Execute_ConstantBTQualityInAngularBins()
 {
-    cout << "TODO     void EdbPVRQuality::Execute_ConstantBTQualityInAngularBins() TO BE DONE ! ATTENTION WARNING " << endl;
-
+    Log(2,"EdbPVRQuality::Execute_ConstantBTQualityInAngularBins","NOT YET IMPLEMENTED...Execute_ConstantBTQualityInAngularBins...done.");
+    return;
 }
 
 //___________________________________________________________________________________
@@ -1964,7 +1963,7 @@ void EdbPVRQuality::Execute_RandomCut()
         if (gEDBDEBUGLEVEL>2) cout << "Execute_RandomCut   Doing Pattern " << i << endl;
 
         // Now the condition loop:
-        // Loop over 50 steps to determine new BG rate....s
+        // Loop over 50 steps to determine new BG rate....
         for (int l=0; l<50; l++) {
             eHistYX->Reset(); // important to clean the histogram
             eHistChi2W->Reset(); // important to clean the histogram
@@ -2126,12 +2125,18 @@ void EdbPVRQuality::Execute_RandomCut()
 
 
 
+
+
+
+
+
+
 //___________________________________________________________________________________
 
 Int_t EdbPVRQuality::GetAngularSpaceBin(EdbSegP* seg)
 {
     // Returns the number of bin for which the Basetrack corresponds to in tangens theta space.
-    // Goes from 0 to 20.
+    // Goes from 0 to 10.
 
     // ATTENTION and TODO :
     // Make the values in GetAngularSpaceBin() and Execute_ConstantBTDensityInAngularBins() equal !
@@ -2263,7 +2268,7 @@ EdbPVRec* EdbPVRQuality::CreateEdbPVRec()
     Float_t agreementChi2;
     Int_t angularspacebin=0;
 
-    // Type 4:
+    // Variables needed for Type 4:
     Float_t m_chi2,s_chi2,m_WTilde, s_WTilde;
     Float_t X2Hat,WTildeNormalized,WTilde,chi2Normalized,chi2;
 
@@ -2357,7 +2362,7 @@ EdbPVRec* EdbPVRQuality::CreateEdbPVRec()
 
                 cout << " ..........................................................." << endl;
 
-                cout << "    BUT I COULD IMPLEMENT HERE THE EXCLUSION SEGMET LIST OPTION    " << endl;
+                cout << "    BUT I COULD IMPLEMENT HERE THE EXCLUSION SEGMENT LIST OPTION    " << endl;
 
 
                 cout << " ..........................................................." << endl;
@@ -2392,7 +2397,7 @@ Int_t EdbPVRQuality::CheckFilledXYSize()
     // Check the bins filled in the actual pattern.
     // The histogram of the XY distribution is analysed.
     // A warning is given if more than 10 percent of
-    // the bins are empty. Becauseempty bins are NOT counted
+    // the bins are empty. Because empty bins are NOT counted
     // in the BT density distribution.
     // In this case one should look closer at the specific
     // plate distribution, or ...
@@ -3043,6 +3048,8 @@ EdbPVRec* EdbPVRQuality::Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliS
         cout << "EdbPVRQuality::Remove_SegmentArray()   Option =    " << Option << "." << endl;
     }
 
+
+    cout << "WARNING!!! THIS FUNCTION IS NOT YET IMPLEMENTED!!!"<<endl;
 
     cout << "EdbPVRQuality::Remove_SegmentArray()...done." << endl;
     return NULL;
@@ -4099,3 +4106,59 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+//___________________________________________________________________________________
+
+
+void EdbPVRQuality::FillTanThetaTArrays(Int_t patNR) {
+    cout << "EdbPVRQuality::FillTanThetaTArrays(Int_t patNR)" << endl;
+
+    // Clear arrays for stored BTs in TT space
+    for (int i = 0; i <10; i++ ) {
+        ArrayPatternTTSource[i]->Clear();
+        ArrayPatternTTRejected[i]->Clear();
+        ArrayPatternTTAccepted[i]->Clear();
+    }
+
+    EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(patNR);
+    Int_t npat=pat->N();
+    cout << "EdbPVRQuality::FillTanThetaTArrays(Int_t patNR)   For this (" << patNR << ") pattern, I have " << npat << " Edb segments to check..." << endl;
+
+    int nbinsX=10;
+    TH1D* h_TT = new TH1D("h_TT","h_TT",nbinsX,0,1); // helper histogram
+    int filledBin=0;
+    EdbSegP* BTSegment;
+
+    /*
+        cout << "i  BINCENTER BINWIDTH" << endl;
+        for (int i = 0; i <nbinsX; i++ ) {
+          cout << i << "   " << h_TT-> GetBinCenter(i) <<  " " << h_TT-> GetBinWidth(i) << endl;
+        }
+    */
+
+    for (int j = 0; j < npat; j++ ) {
+        BTSegment = pat->GetSegment(j);
+        filledBin=h_TT->Fill(BTSegment->Theta());
+        ArrayPatternTTSource[filledBin]->Add(BTSegment);
+    }
+
+    for (int i = 0; i <nbinsX; i++ ) {
+        cout << " Number of Segments in TT Array " << i << " : " << ArrayPatternTTSource[i]->GetEntries() << endl;
+    }
+
+    delete h_TT;
+
+    cout << "EdbPVRQuality::FillTanThetaTArrays(Int_t patNR)...done" << endl;
+}

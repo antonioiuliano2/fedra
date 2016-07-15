@@ -81,9 +81,15 @@ private:
     Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
 
-    // Variables related for cut Issues
+    // Variables related for cut issues:
+
     // For all eCutMethod in TanTheta Space:
+    // Global CutFactor ...
     Float_t	eCutTTSqueezeFactor;
+    // Each TT bin gets its own reduction factor for each pattern seperately
+    Float_t	eCutReductionFactor[10];
+
+    // For the specific cut methods:
     // eCutMethod == 0: Constant BT density
     Float_t	eCutp0[114];
     Float_t	eCutp1[114];
@@ -121,6 +127,18 @@ private:
     // eCutMethod == 7: Random Cut also in tangens theta space
     // Uses also cutvariables eCutTTp0[114][20] and eCutTTp1[114][20]
 
+
+    // Arrays for each pattern where
+    // Source Basetracks,
+    // Recjected and Accepted Basetracks are stored.
+    // Up to now: refilled for each pattern new.
+    // Constructed in such a way that 10 bins
+    // cover the TT-space
+    TObjArray* ArrayPatternTTSource[10]; // should have same entries as the corresponding EdbPattern
+    TObjArray* ArrayPatternTTRejected[10]; // after specific cut, these BTs wont be taken
+    TObjArray* ArrayPatternTTAccepted[10]; // after specific cut, BTs here will be kept
+
+
 protected:
 
     void Set0();
@@ -152,7 +170,7 @@ public:
     inline Int_t GetBTDensityLevelCalcMethodMCConfirmation() {
         return eBTDensityLevelCalcMethodMCConfirmationNumber;
     }
-    
+
 
 
     inline EdbPVRec* GetEdbPVRec() {
@@ -196,8 +214,11 @@ public:
     inline   TH2F* GetHistYX() {
         return eHistYX;
     }
-    
-    
+
+
+    inline Float_t     GetBTDensity(Int_t patNR) {
+        return GetBTDensity_orig(patNR);
+    }
     inline Float_t     GetBTDensity_orig(Int_t patNR) {
         return ePatternBTDensity_orig[patNR];
     }
@@ -302,6 +323,10 @@ public:
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
 //     Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     /// HERE ANOTERH FUNCTION ???
+
+
+
+    void FillTanThetaTArrays(Int_t patNR);
 
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
