@@ -63,11 +63,12 @@ private:
     Float_t		ePatternBTDensity_modified[114];
 
     // Histograms for calculations and crosscheck drawings
+    // Are either filled per plate (FillHistosPattern)
+    // for the whole pattern (CheckEdbPVRec)
     TH2F*		eHistChi2W;
     TH2F*		eHistYX;
     TH2F*		eHistTYTX;
     TH1F*		eHistTT;
-    TH2F*		eHistTanTheta;
     Int_t		NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
@@ -87,7 +88,7 @@ private:
     // Global CutFactor ...
     Float_t	eCutTTSqueezeFactor;
     // Each TT bin gets its own reduction factor for each pattern seperately
-    Float_t	eCutReductionFactor[10];
+    Float_t	eCutTTReductionFactor[10];
 
     // For the specific cut methods:
     // eCutMethod == 0: Constant BT density
@@ -157,6 +158,17 @@ public:
     inline void SetCutTTSqueezeFactor(Float_t CutTTSqueezeFactor) {
         eCutTTSqueezeFactor=CutTTSqueezeFactor;
     }
+    inline Float_t GetCutTTSqueezeFactor() {
+        return eCutTTSqueezeFactor;
+    }
+
+    inline void SetCutTTReductionFactor(Int_t binTT,Float_t CutTTReductionFactor) {
+        eCutTTReductionFactor[binTT]=CutTTReductionFactor;
+    }
+    inline Float_t GetCutTTReductionFactor(Int_t binTT) {
+        return eCutTTReductionFactor[binTT];
+    }
+
 
     inline void SetBTDensityLevelCalcMethodMC(Bool_t BTDensityLevelCalcMethodMC) {
         eBTDensityLevelCalcMethodMC=BTDensityLevelCalcMethodMC;
@@ -206,6 +218,11 @@ public:
         eAli_orig=Ali_orig;
         eIsSource=kTRUE;
         eAli_maxNpatterns=Ali_orig->Npatterns();
+        if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
+        if (eAli_maxNpatterns>114) {
+            cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns() = " << eAli_maxNpatterns << " is greater than possible basetrack data of two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114 !!!" << endl;
+            eAli_maxNpatterns=114;
+        }
     }
 
     inline   TH2F* GetHistChi2W() {
@@ -327,6 +344,8 @@ public:
 
 
     void FillTanThetaTArrays(Int_t patNR);
+    void DetermineCutTTReductionFactor(Int_t patNR);
+    void FillHistosPattern(Int_t patNR);
 
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
