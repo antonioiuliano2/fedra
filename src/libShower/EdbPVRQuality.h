@@ -69,6 +69,9 @@ private:
     TH2F*		eHistYX;
     TH2F*		eHistTYTX;
     TH1F*		eHistTT;
+    TH1F*		eHistTTFillcheck;
+    TH1F*		eHistBTDensityPattern;
+    TH1F*		eHistBTDensityVolume;
     Int_t		NbinsX,NbinsY;
     Float_t		minX,maxX;
     Float_t		minY,maxY;
@@ -81,6 +84,8 @@ private:
     TProfile* 		eProfileBTdens_vs_PID_target;
     Float_t  		eProfileBTdens_vs_PID_target_meanX,eProfileBTdens_vs_PID_target_meanY;
     Float_t  		eProfileBTdens_vs_PID_target_rmsX,eProfileBTdens_vs_PID_target_rmsY;
+    // TProfile: BT dens/mm2 versus PID()	generic histogram
+    TProfile* 		eProfileBTdens_vs_PID_generic;
 
     // Variables related for cut issues:
 
@@ -88,7 +93,8 @@ private:
     // Global CutFactor ...
     Float_t	eCutTTSqueezeFactor;
     // Each TT bin gets its own reduction factor for each pattern seperately
-    Float_t	eCutTTReductionFactor[10];
+    Float_t	eCutTTReductionFactor[12];
+    Int_t	eBinTT;
 
     // For the specific cut methods:
     // eCutMethod == 0: Constant BT density
@@ -135,9 +141,27 @@ private:
     // Up to now: refilled for each pattern new.
     // Constructed in such a way that 10 bins
     // cover the TT-space
-    TObjArray* ArrayPatternTTSource[10]; // should have same entries as the corresponding EdbPattern
-    TObjArray* ArrayPatternTTRejected[10]; // after specific cut, these BTs wont be taken
-    TObjArray* ArrayPatternTTAccepted[10]; // after specific cut, BTs here will be kept
+    TObjArray* eArrayPatternTTSource[12]; // should have same entries as the corresponding EdbPattern
+    TObjArray* eArrayPatternTTRejected[12]; // after specific cut, these BTs wont be taken
+    TObjArray* eArrayPatternTTAccepted[12]; // after specific cut, BTs here will be kept
+
+    TObjArray* eArrayPatternAllTTSource; // should have same entries as the corresponding EdbPattern
+    TObjArray* eArrayPatternAllTTRejected; // after specific cut, these BTs wont be taken
+    TObjArray* eArrayPatternAllTTAccepted; // after specific cut, BTs here will be kept
+
+    // Arrays of segments which are to be excluded, when creating the new
+    // EdbPVRec volume (see BG Note description)
+    // Nota bene: these arrays contain all pattern BTs, so add them
+    // _after_ pattern looping
+    TObjArray* eArrayPatternAllExcluded[4];
+    // 0: FakeDoubletBTs
+    // 1: High Density BTs
+    // 2: Cosmics Passing Through BTs
+    // 3: Event Related BTs
+
+    // This array is containing all pattern all diffenrent source arrays:
+    TObjArray* eArrayAllExcludedSegments;
+
 
 
 protected:
@@ -152,6 +176,9 @@ public:
     EdbPVRQuality(EdbPVRec* ali, Float_t BTDensityTargetLevel);
 
     void SetCutMethod(Int_t CutMethod);
+    inline void SetCutMethodIsDone(Int_t  CutMethod) {
+        eCutMethodIsDone[CutMethod]=kTRUE;
+    }
     inline void SetBTDensityLevel(Float_t BTDensityLevel) {
         eBTDensityLevel=BTDensityLevel;
     }
@@ -213,6 +240,8 @@ public:
     inline EdbPVRec* GetEdbPVRec_modified() {
         return GetEdbPVRec(1);
     }
+    EdbPVRec* GetEdbPVRecNew();
+
 
     inline void	SetEdbPVRec(EdbPVRec* Ali_orig) {
         eAli_orig=Ali_orig;
@@ -220,7 +249,7 @@ public:
         eAli_maxNpatterns=Ali_orig->Npatterns();
         if (eAli_maxNpatterns>57) cout << " This tells us not yet if we do have one/two brick reconstruction done. A possibility could also be that the dataset was read with microtracks. Further investigation is needed! (On todo list)." << endl;
         if (eAli_maxNpatterns>114) {
-            cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eAli_orig->Npatterns() = " << eAli_maxNpatterns << " is greater than possible basetrack data of two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114 !!!" << endl;
+            cout << "WARNING    EdbPVRQuality::SetEdbPVRec  eAli_orig->Npatterns() = " << eAli_maxNpatterns << " is greater than possible basetrack data of two bricks. This class does (not yet) work with this large number of patterns. Set maximum patterns to 114 !!!" << endl;
             eAli_maxNpatterns=114;
         }
     }
@@ -230,6 +259,15 @@ public:
     }
     inline   TH2F* GetHistYX() {
         return eHistYX;
+    }
+    inline   TH1F* GetHistTT() {
+        return eHistTT;
+    }
+    inline   TH2F* GetHistTYTX() {
+        return eHistTYTX;
+    }
+    inline   TH1F* GetHistTTFillcheck() {
+        return eHistTTFillcheck;
     }
 
 
@@ -288,6 +326,12 @@ public:
         return eAgreementChi2WDistCut[patNR];
     }
 
+    inline TObjArray*   GetArrayAllExcludedSegments() {
+        return eArrayAllExcludedSegments;
+    }
+
+
+
 
     void SetHistGeometry_OPERA();
     void SetHistGeometry_MC();
@@ -313,7 +357,11 @@ public:
     void Execute_EqualizeTanThetaSpace_ConstantBTX2Hat();
     void Execute_EqualizeTanThetaSpace_RandomCut();
 
-    TObjArray* 	FindDoubleBT(EdbPVRec* aliSource);
+    TObjArray* 	FindFakeDoubleBTs(EdbPVRec* aliSource=NULL);
+    void FindHighDensityBTs();
+    void FindPassingBTs();
+    void FindEventRelatedBTs();
+
     EdbPVRec* 	Remove_DoubleBT(EdbPVRec* aliSource);
     EdbPVRec* 	Remove_Passing(EdbPVRec* aliSource);
 
@@ -330,6 +378,11 @@ public:
     EdbPVRec* CreatePVRWithExcludedSegmentList(EdbPVRec* aliSource, TObjArray *SegmentArray);
     EdbPVRec* CreateEdbPVRec();
 
+    TCanvas* GetQualityPlots(Int_t aliSourceType=0);
+
+
+
+
     Int_t CheckFilledXYSize();
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
@@ -342,11 +395,32 @@ public:
     /// HERE ANOTERH FUNCTION ???
 
 
+    Bool_t Chi2WRelation(EdbSegP* seg, Float_t Cutp0, Float_t Cutp1, Int_t qualitycuttype);
+
+
+
 
     void FillTanThetaTArrays(Int_t patNR);
     void DetermineCutTTReductionFactor(Int_t patNR);
-    void FillHistosPattern(Int_t patNR);
 
+    void FillHistosPattern(EdbPVRec* aliSource, Int_t patNR=0, Bool_t DoResetHistos=kTRUE, Float_t weightXY=1);
+    void FillHistosVolume(EdbPVRec* aliSource);
+
+
+    void CreateEdbPVRec_TT_Algorithms();
+
+    void RebinTTHistogram(Int_t nbins=5);
+
+
+    void Cut();
+    void Cut_TTBin(Int_t TTbin);
+    void Cut_ConstantBTDensity();
+    void Cut_ConstantBTQuality();
+    void Cut_ConstantBTX2Hat();
+    void Cut_RandomCut();
+    void MergeTTSegments();
+    void MergeHighDensBTsLists();
+    void MergeExclusionLists();
 
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 
