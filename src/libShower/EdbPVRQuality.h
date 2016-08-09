@@ -51,7 +51,7 @@ private:
     // Variables related for calculation Issues
     Int_t		eCutMethod;
     TString		eCutMethodString;
-    Bool_t		eCutMethodIsDone[7];
+    Bool_t		eCutMethodIsDone[8];
 
     Float_t		eBTDensityLevel;
     Float_t		eBTDensityLevelAngularSpace[20];
@@ -69,6 +69,10 @@ private:
     TH2F*		eHistYX;
     TH2F*		eHistTYTX;
     TH1F*		eHistTT;
+    TH1F*		eHistChi2;
+    TH1F*		eHistW;
+    TH1F*		eHistWTilde;
+
     TH1F*		eHistTTFillcheck;
     TH1F*		eHistBTDensityPattern;
     TH1F*		eHistBTDensityVolume;
@@ -95,6 +99,8 @@ private:
     // Each TT bin gets its own reduction factor for each pattern seperately
     Float_t	eCutTTReductionFactor[12];
     Int_t	eBinTT;
+    // Additional GlobalTTReductionFactorC in case the TT cutting still yields a too high BG density
+    Float_t eGlobalTTReductionFactorC;
 
     // For the specific cut methods:
     // eCutMethod == 0: Constant BT density
@@ -135,11 +141,10 @@ private:
     // Uses also cutvariables eCutTTp0[114][20] and eCutTTp1[114][20]
 
 
-    // Arrays for each pattern where
-    // Source Basetracks,
-    // Recjected and Accepted Basetracks are stored.
+    // Arrays for each pattern where Source Basetracks, Recjected
+    // and Accepted Basetracks are stored.
     // Up to now: refilled for each pattern new.
-    // Constructed in such a way that 10 bins
+    // Constructed in such a way that 10 (+2) bins
     // cover the TT-space
     TObjArray* eArrayPatternTTSource[12]; // should have same entries as the corresponding EdbPattern
     TObjArray* eArrayPatternTTRejected[12]; // after specific cut, these BTs wont be taken
@@ -159,7 +164,11 @@ private:
     // 2: Cosmics Passing Through BTs
     // 3: Event Related BTs
 
-    // This array is containing all pattern all diffenrent source arrays:
+    // TODO: MAYBE MOVE THIS ARRAY TO ONLY ONE OBJECT, SO THAT IT CAN BE FILLED AND ADDED
+    // WITHOUT FURTHER CONSTRAINST.....
+    // OR SIMPLY ADD A FIFTH ARRAY, WHERE ALL excluded SEGMENTS CAN BE PUT IN ANYWAY????
+
+    // This array is containing all pattern all different source arrays:
     TObjArray* eArrayAllExcludedSegments;
 
 
@@ -257,6 +266,18 @@ public:
     inline   TH2F* GetHistChi2W() {
         return eHistChi2W;
     }
+
+
+    inline   TH1F* GetHistChi2() {
+        return eHistChi2;
+    }
+    inline   TH1F* GetHistW() {
+        return eHistW;
+    }
+    inline   TH1F* GetHistWTilde() {
+        return eHistWTilde;
+    }
+
     inline   TH2F* GetHistYX() {
         return eHistYX;
     }
@@ -396,7 +417,7 @@ public:
 
 
     Bool_t Chi2WRelation(EdbSegP* seg, Float_t Cutp0, Float_t Cutp1, Int_t qualitycuttype);
-
+    Bool_t X2HatCutRelation(EdbSegP* seg, Double_t CutValueX2Hat, Double_t  CutValueX2Hat_Chi2Mean, Double_t  CutValueX2Hat_Chi2Sigma, Double_t CutValueX2Hat_WTildeMean, Double_t CutValueX2Hat_WTildeSigma );
 
 
 

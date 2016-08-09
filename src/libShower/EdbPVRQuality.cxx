@@ -151,7 +151,7 @@ void EdbPVRQuality::Set0()
     eIsSource=kFALSE;
     eIsTarget=kFALSE;
     eAli_maxNpatterns=0;
-    for (int i=0; i<8; i++) eCutMethodIsDone[i]=kFALSE;
+    for (int i=0; i<7; i++) eCutMethodIsDone[i]=kFALSE;
     eCutMethod=1;
     eCutMethodString="ConstantBTDensityInAngularBins";
 
@@ -161,9 +161,10 @@ void EdbPVRQuality::Set0()
     eBTDensityLevel=20; // #BT/mm2
 
     // Default factor for equalizing the tan theta space:
-    // soon to be deprecated...
+    // soon to be deprecated... in favour of ... (???)
     eCutTTSqueezeFactor = 0.5;
     for (int i=0; i<12; i++) eCutTTReductionFactor[i] = 0.5;
+
 
     // Default BT density level will use only Data-segments for
     // data calculation and segments of the same MC-event number.
@@ -178,6 +179,9 @@ void EdbPVRQuality::Set0()
     eHistTYTX->Reset();
     eHistChi2W->Reset();
     eHistTT->Reset();
+    eHistChi2->Reset();
+    eHistW->Reset();
+    eHistWTilde->Reset();
     eHistTTFillcheck->Reset();
     eHistBTDensityPattern->Reset();
     eHistBTDensityVolume->Reset();
@@ -205,6 +209,9 @@ void EdbPVRQuality::Set0()
 
     // Random Reduction of all BTs by a factor of 2
     eRandomCutThreshold=0.5;
+
+    // Additional GlobalTTReductionFactorC in case the TT cutting still yields a too high BG density
+    eGlobalTTReductionFactorC=1;
 
     eProfileBTdens_vs_PID_source_meanX=0;
     eProfileBTdens_vs_PID_source_meanY=0;
@@ -253,6 +260,11 @@ void EdbPVRQuality::Init()
 
     // Filled with EdbSegP::Chi2(),W() value
     eHistChi2W = new TH2F("eHistChi2W","eHistChi2W",26,5.5,31.5,100,0,2);
+    // Filled with EdbSegP::Chi2() and W() value
+    eHistChi2 = new TH1F("eHistChi2","eHistChi2",100,0,2);
+    eHistW = new TH1F("eHistW","eHistW",26,5.5,31.5);
+    eHistWTilde = new TH1F("h_WTilde","h_WTilde",50,0,0.1);
+
     // Filled with EdbSegP::Y(),X() value
     eHistYX = new TH2F("eHistYX","eHistYX",200,0,1,200,0,1);
     // eHistYX->SetMinimum(1);  WHY THIS ???? Because of log scale???
@@ -323,50 +335,44 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
         break;
     case 0:
         eCutMethodString = "ConstantBTDensity";
+        cout << "// 0: (option ): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b " << endl;
         break;
     case 1:
         eCutMethodString = "ConstantBTDensityInAngularBins";
+        cout << "// 1: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b 	 In Angular Bins " << endl;
         break;
     case 2:
         eCutMethodString = "ConstantBTQuality";
+        cout << "// 2: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics. " << endl;
         break;
     case 3:
         eCutMethodString = "ConstantBTQualityInAngularBins";
+        cout << "// 3: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics.  In Angular Bins " << endl;
         break;
     case 4:
         eCutMethodString = "ConstantBTX2Hat";
+        cout << "// 4: (testing): Do cut based Xi2Hat relation. " << endl;
         break;
     case 5:
         eCutMethodString = "ConstantBTX2HatInAngularBins";
+        cout << "// 5: (testing): Do cut based Xi2Hat relation.	 In Angular Bins " << endl;
         break;
     case 6:
         eCutMethodString = "RandomCut";
+        cout << "// 6: (option ): Do random cut based relation --> Just for quick test purposes and crosschecks " << endl;
         break;
     case 7:
         eCutMethodString = "RandomCutInAngularBins";
+        cout << "// 7: (option ): Do random cut based relation  In Angular Bins --> Just for quick test purposes and crosschecks. " << endl;
         break;
     }
-
-
-    Log(2,"EdbPVRQuality::SetCutMethod","Chosen Method (eCutMethod) =  %d", eCutMethod);
-
-    if (CutMethod==0) cout << "// 0: (option ): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b " << endl;
-    if (CutMethod==1) cout << "// 1: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b 	 In Angular Bins " << endl;
-
-    if (CutMethod==2) cout << "// 2: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics. " << endl;
-    if (CutMethod==3) cout << "// 3: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics.  In Angular Bins " << endl;
-
-    if (CutMethod==4) cout << "// 4: (testing): Do cut based Xi2Hat relation. " << endl;
-    if (CutMethod==5) cout << "// 5: (testing): Do cut based Xi2Hat relation.	 In Angular Bins " << endl;
-
-    if (CutMethod==6) cout << "// 6: (option ): Do random cut based relation --> Just for quick test purposes and crosschecks " << endl;
-    if (CutMethod==7) cout << "// 7: (option ): Do random cut based relation  In Angular Bins --> Just for quick test purposes and crosschecks. " << endl;
 
     if (CutMethod>7) {
         eCutMethod=0;
         cout << "WARNING   EdbPVRQuality::SetCutMethod  eCutMethod invalid, Set back to default eCutMethod = " << eCutMethod << endl;
     }
 
+    Log(2,"EdbPVRQuality::SetCutMethod","Chosen Method (eCutMethod) =  %d", eCutMethod);
     Log(2,"EdbPVRQuality::SetCutMethod","SetCutMethod...done.");
     return;
 }
@@ -401,6 +407,8 @@ void EdbPVRQuality::CheckEdbPVRec()
     // This will be done in one of the two Execute_/Cut_ functions.
 
     cout << "TO BE DONE HERE: REPORT IF BACKGROUND IS TO HIGH, AND WHAT IS THE CLASS DOING THEN! " << endl;
+    cout << " INFORMATION ON THE SOURCE VOLUME. Average basetrack density is " << eProfileBTdens_vs_PID_source_meanY << " which means ..." << endl;
+
 
     Log(2,"EdbPVRQuality::CheckEdbPVRec","CheckEdbPVRec...done");
     return;
@@ -433,17 +441,29 @@ TCanvas* EdbPVRQuality::GetQualityPlots(Int_t aliSourceType)
     eHistYX->Draw("colz");
     eHistYX->GetXaxis()->SetRangeUser(eHistYX->GetMean(1)-eHistYX->GetRMS(1)*3,eHistYX->GetMean(1)+eHistYX->GetRMS(1)*3);
     eHistYX->GetYaxis()->SetRangeUser(eHistYX->GetMean(2)-eHistYX->GetRMS(2)*3,eHistYX->GetMean(2)+eHistYX->GetRMS(2)*3);
+    eHistYX->GetXaxis()->SetTitle("X (#mum)");
+    eHistYX->GetYaxis()->SetTitle("Y (#mum)");
     eHistYX->DrawCopy("colzSAME");
     c1->cd(2);
+    eHistChi2W->GetXaxis()->SetTitle("W");
+    eHistChi2W->GetYaxis()->SetTitle("#chi^{2}");
     eHistChi2W->DrawCopy("colz");
     c1->cd(3);
+    eHistTYTX->GetXaxis()->SetTitle("tan #theta_{X}");
+    eHistTYTX->GetYaxis()->SetTitle("tan #theta_{Y}");
     eHistTYTX->DrawCopy("colz");
     c1->cd(4);
+    eHistBTDensityVolume->GetXaxis()->SetTitle("Basetrack density (1/mm^{2})");
+    eHistBTDensityVolume->GetYaxis()->SetTitle("entries (arb. u.)");
     eHistBTDensityVolume->DrawCopy("");
     c1->cd(5);
+    eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("Plate");
+    eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("Basetrack density (1/mm^{2})");
     eProfileBTdens_vs_PID_generic->Draw("profileZ");
     eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
     c1->cd(6);
+    eHistTT->GetXaxis()->SetTitle("tan #theta");
+    eHistTT->GetYaxis()->SetTitle("entries (arb. u.)");
     //eHistTTFillcheck->DrawCopy("");
     eHistTT->DrawCopy("");
     c1->cd();
@@ -3025,16 +3045,12 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
     if (gEDBDEBUGLEVEL>1) aliSource->Print();
     if (gEDBDEBUGLEVEL>1) aliTarget->Print();
 
-
-
     cout << "EdbPVRQuality::Remove_Passing() Totally removed segments= " << totallyRemovedSegments << endl;
     cout << "EdbPVRQuality::Remove_Passing()...done." << endl;
     return aliTarget;
 }
 
 //___________________________________________________________________________________
-
-
 
 
 EdbPVRec* EdbPVRQuality::Remove_SegmentArray(TObjArray* segarray, EdbPVRec* aliSource, Int_t Option)
@@ -4148,8 +4164,8 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
     Float_t weight=1;
     // First filling is _always_ resetting the histograms,
     // afterwards not, because we want to have histograms for full volume filled.
-    FillHistosPattern(aliSource, 0,kTRUE,weight);
-    for (int i=1; i< aliSource->Npatterns(); ++i) FillHistosPattern(aliSource, i,kFALSE,weight);
+    FillHistosPattern(aliSource,0,kTRUE,weight);
+    for (int i=1; i< aliSource->Npatterns(); ++i) FillHistosPattern(aliSource,i,kFALSE,weight);
     //-------------------------------------------------------------------
 
     if (aliSource == eAli_modified) {
@@ -4175,7 +4191,6 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
 //___________________________________________________________________________________
 void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t DoResetHistos, Float_t weightXY) {
     cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)" << endl;
-    //Log(2,"EdbPVRQuality::FillHistosPattern","FillHistosPattern");
 
     if (!eIsSource) {
         cout << "WARNING    EdbPVRQuality::FillHistosPattern  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
@@ -4208,6 +4223,9 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
         eHistChi2W->Reset(); // important to clean the histogram
         eHistTT->Reset(); // important to clean the histogram
         eHistTTFillcheck->Reset(); // important to clean the histogram
+        eHistChi2->Reset();
+        eHistW->Reset();
+        eHistWTilde->Reset();
     }
     // Clone is always reseted, since it is responsible for the BT density calculation,
     // which is pattern by pattern based
@@ -4251,6 +4269,10 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
         eHistTT->Fill(seg->Theta());
         eHistTTFillcheck->Fill(seg->Theta());
         eHistChi2W->Fill(seg->W(),seg->Chi2());
+
+        eHistChi2->Fill(seg->Chi2());
+        eHistW->Fill(seg->W());
+        eHistWTilde->Fill(1/seg->W());
 
     } // for (Int_t j=0; j<npat; j++)
 
@@ -4408,8 +4430,8 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
 
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) This function will determine the TT Cut reduction factors. According" << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) to the given formula (explained in the manual)..." << endl;
-    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ...TO BE DONE ... GIVE FORMULA HERE !!! ... " << endl;
-    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ... Find TT-histogram minimum..." << endl;
+    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ... TO BE DONE ... GIVE FORMULA HERE !!! ... " << endl;
+    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ... Find TT-histogram minimum ..." << endl;
 
     // // // // // // // // // // // // // //
     // Find histogram (TT) minimum:
@@ -4428,13 +4450,12 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR)  Make sure if the returned value is " << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR)  in the correct range... "<< endl;
 
-    TH1F* h_TT = eHistTTFillcheck;
-
     // cout << " LET US SEE IF THE PARABULA FIT STILL WORKS WHEN BIN NUMBERS IS RECUDEC....." << endl;
     // No, it does not, so we just choose another simple method:
     // if number of bins in tt histogram is smaller 5, (i.e. 1, one global TT bin)
     // then we just take the entries in the bin at tt=0.2, which is the only one bin then...
 
+    TH1F* h_TT = eHistTTFillcheck;
     TF1* fitFuncParabola = new TF1("fitFuncParabola","pol2",0,1);
 
     //cout << "h_TT->GetMinimumBin () = "  <<  h_TT->GetMinimumBin () << endl;
@@ -4460,15 +4481,13 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
     Int_t n_min = h_TT->GetBinContent(bin_n_min);
 
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) Find minimum TT-value: TTmin (from parabola fit or manually set at 0.2) = " << xmin << endl;
-    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) GetBinContent at TTmin from parabola fit = " << n_min << endl;
-
+    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) GetBinContent at TTmin (from parabola fit or manually set at 0.2) = " << n_min << endl;
 
     // // // // // // // // // // // // // //
     // Calculate the other maximal binentries,
     // according to cufactor c = 0..1 given:
     // \tilde{n}_i = n_{min} + (1-c) (n_i - n_{min})
     // // // // // // // // // // // // // //
-    cout << "// // // // // // // // // // // // // //" << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) Calculate the other maximal binentries," << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) according to cufactor c = 0..1 given:" << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) tilde{n}_i = n_{min} + (1-c) (n_i - n_{min}) " << endl;
@@ -4479,6 +4498,7 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
     // // // // // // // // // // // // // //
     Int_t nbinsX=10;
     Double_t cutfactor=1;
+//     Double_t cutfactor=0;
     Int_t nitilde[nbinsX+2];
     Int_t ni[nbinsX+2];
 
@@ -4490,7 +4510,6 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
     Double_t ratioTarget=GetBTDensityLevel()/GetBTDensity(patNR);
 
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ratioTarget= " << ratioTarget << endl;
-    cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ratioSum = " << ratioSum << endl;
 
     for (Int_t loopctr =0; loopctr<20;  ++loopctr) {
         cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR)    Doing loop (loopctr = " << loopctr << ") for a cutfactor =" << cutfactor << endl;
@@ -4546,18 +4565,50 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
         }
 
 
-
-        cout << "STILL TO CHECK:  ...  WHAT IF THE BT DENSITY IS GREATER THAN TARGET DENSITY, WHEN EVEN THE MINIMUM BIN  IS TOO MUCH ???? " << endl;
-
-
+        //cout << "STILL TO CHECK:  ...  WHAT IF THE BT DENSITY IS GREATER THAN TARGET DENSITY, WHEN EVEN THE MINIMUM BIN  IS TOO MUCH ???? " << endl; -> DONE, see below.
 
         cutfactor-=0.05;
+// 	cutfactor+=0.05;
     } // of loopctr
 
+
+    cout << "NOW WE ARE AT THE POINT WHERE ratioTarget<ratioSum." << endl;
+    cout << "print once again Sumni Sumnitilde and compare with BT density:" << endl;
+    cout << "Sumni        = " << Sumni << endl;
+    cout << "Sumnitilde   = " << Sumnitilde << endl;
+    cout << "GetBTDensityLevel()        = " << GetBTDensityLevel() << endl;
+    cout << "GetBTDensity(patNR)        = " << GetBTDensity(patNR) << endl;
+    cout << "If still at this stage we have the ratio Sumnitilde/Sumni > GetBTDensityLevel()/GetBTDensity(patNR)? " << endl;
+    cout << "Sumnitilde/Sumni = " <<  ratioSum << endl;
+    cout << "GetBTDensityLevel()/GetBTDensity(patNR) = " <<  GetBTDensityLevel()/GetBTDensity(patNR) << endl;
+    cout << "Then we need an additional reducing factor of ratioSum/ratioTarget = "<< ratioSum/ratioTarget << endl;
+
+
+    eGlobalTTReductionFactorC = ratioSum/ratioTarget;
+    if (eGlobalTTReductionFactorC>10) {
+        cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) eGlobalTTReductionFactorC (=ratioSum/ratioTarget) is greater than 10. This means that even after going to TT bin with the lowest entries, the target background density is still a factor 10 tooooooo large!   YOU SHOULD CHECK YOUR INPUT IMMEDIATELY" << endl;
+        eGlobalTTReductionFactorC=10;
+    }
+
+
+    if (eGlobalTTReductionFactorC>1) {
+        cout << " eGlobalTTReductionFactorC>1   that means, all TT bin_entries are rescaled with 1/eGlobalTTReductionFactorC " << endl;
+        cout << setw(4) << "TT bin i " << "   " << setw(12) << " ni[i] " << " " << setw(12) <<  " nitilde[i] " << "   " << setw(12) << " ratio[i] " <<  endl;
+        for (int i = 0; i <nbinsX+2; i++ ) {
+            cout << "" << endl;
+            cout << setw(4) << i << "   " << setw(12) << ni[i] << " " << setw(12) << nitilde[i] << "   " << setw(12) << ratio[i] <<  "        :Before Rescaling." << endl;
+
+            nitilde[i] = nitilde[i]/eGlobalTTReductionFactorC;
+            eCutTTReductionFactor[i]=ratio[i]/eGlobalTTReductionFactorC;
+
+            cout << setw(4) << i << "   " << setw(12) << ni[i] << " " << setw(12) << nitilde[i] << "   " << setw(12) << eCutTTReductionFactor[i] << "        :after Rescaling with nitilde[i] = nitilde[i]/eGlobalTTReductionFactorC" << endl;
+        }
+    }
 
     // Now the cutfactors are set (for this pattern!)...
     // and stored. It is now time for the CUTTING Function,
     // which implements all the different cutting algorithms!
+    // void EdbPVRQuality::Cut()
 
     delete fitFuncParabola;
 
@@ -4604,6 +4655,8 @@ void EdbPVRQuality::Cut() {
     return;
 }
 
+
+
 //___________________________________________________________________________________
 void EdbPVRQuality::Cut_TTBin(Int_t TTbin) {
     cout << "EdbPVRQuality::Cut_TTBin(Int_t TTbin)" << endl;
@@ -4619,7 +4672,7 @@ void EdbPVRQuality::Cut_TTBin(Int_t TTbin) {
     // Cut-Algorithms for TT-binning:
     if (eCutMethod==1) Cut_ConstantBTDensity();
     if (eCutMethod==3) Cut_ConstantBTQuality();	 // NOT YET WORKING
-    if (eCutMethod==5) Cut_ConstantBTX2Hat();	 // NOT YET WORKING
+    if (eCutMethod==5) Cut_ConstantBTX2Hat();	 // NOT YET WORKING // IN DEVELOPEMT (08.08.2016, FWM)
     if (eCutMethod==7) Cut_RandomCut();
     // The "other" algorithms are still tuned for one single TT-space,
     // that means, they work globally.
@@ -4686,7 +4739,6 @@ void EdbPVRQuality::Cut_ConstantBTDensity() {
         }
         return;
     }
-
 
     // Using the linear Cutrelation ( Chi2() < W()*Cutp1-Cutp0 ).
     // Keeping Cutp0 at 1, changing Cutp1 from 0.12 down to 0.072
@@ -4756,9 +4808,111 @@ void EdbPVRQuality::Cut_ConstantBTQuality() {
 void EdbPVRQuality::Cut_ConstantBTX2Hat() {
     cout << "EdbPVRQuality::Cut_ConstantBTX2Hat()" << endl;
     cout << "EdbPVRQuality::Cut_ConstantBTX2Hat()   NOT   YET  IMPLEMENTED   " << endl;
+
+    // More elaborate Tighting of Chi2-W-Cutrelation until the desired number
+    // of accepted BTs is acchieved
+    // Build a Chi2 like variable X2Hat = X2normalized + WTildeNormalized .....
+
+
+
+    cout << "  BUILD IN THIS FUNCTION HERE !!! " << endl;
+    cout << "X2Hat MEAN AND SIGmA VALUES ARE TO BE DETERMINED !!!" << endl;
+    cout << "  B U T    W H Y    T A K E   THE    M E A N  ? ? ?  " << endl;
+    cout << " Lower values would be better, wouldnt thenm???? " << endl;
+
+
+    ///((/////PPPPPPPPP
+
+
+    TObjArray* ArraySource=eArrayPatternTTSource[eBinTT];
+    TObjArray* ArrayAccepted=eArrayPatternTTAccepted[eBinTT];
+    TObjArray* ArrayRejected=eArrayPatternTTRejected[eBinTT];
+    EdbSegP* seg;
+    Int_t  nMaxAccepted=ArraySource->GetEntries()*eCutTTReductionFactor[eBinTT];
+    Int_t  nArraySource=ArraySource->GetEntries();
+
+
+    if (nArraySource==0) {
+        cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() ArraySource->GetEntries()          = " << nArraySource << " ... Nothing to do here -> return." << endl;
+        return;
+    }
+
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() ArraySource->GetEntries()          = " << nArraySource << endl;
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() For this eBinTT, cutfactor is      = " << eCutTTReductionFactor[eBinTT] << endl;
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() and we should accept number of BTs = " << nMaxAccepted << endl;
+
+    // If cutfactor for this bin is 1, then we dont need to do anything in this routine...
+    if (eCutTTReductionFactor[eBinTT]==1) {
+        cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() Cutfactor for this bin is 1: Fill all ArraySource in Array Accepted" << endl;
+        ArrayAccepted->Clear();
+        ArrayRejected->Clear();
+        for (Int_t i=0; i< ArraySource->GetEntries(); ++i) {
+            seg = (EdbSegP* )ArraySource->At(i);
+            ArrayAccepted->Add(seg);
+        }
+        return;
+    }
+
+
+    // Using the cutrelation  on the Xi2Hat Value
+    // Keeping X2Hat_0 at 5, decreasing in 20 steps of 0.1....
+    Double_t CutValueX2HatInitial=5;
+    Double_t DeltaCutValueX2Hat=5./20.;
+    Double_t CutValueX2Hat=5;
+
+    // Need sigma and mean values for the important histograms:
+    Double_t CutValueX2Hat_Chi2Mean=eHistChi2->GetMean();
+    Double_t CutValueX2Hat_Chi2Sigma=eHistChi2->GetRMS();
+    Double_t CutValueX2Hat_WTildeMean=eHistWTilde->GetMean();
+    Double_t CutValueX2Hat_WTildeSigma=eHistWTilde->GetRMS();
+
+    Int_t numberAccepted;
+    Int_t numberRejected;
+
+    for (Int_t iSteps=0; iSteps < 20; ++iSteps) {
+
+        if (ArraySource->GetEntries()==0) continue;
+
+        numberAccepted=0;
+        numberRejected=0;
+
+        // Clear local arrays which are filled from the last stepsCutp1 loop
+        ArrayAccepted->Clear();
+        ArrayRejected->Clear();
+
+        for (Int_t i=0; i< ArraySource->GetEntries(); ++i) {
+            seg = (EdbSegP* )ArraySource->At(i);
+
+            if (X2HatCutRelation(seg, CutValueX2Hat, CutValueX2Hat_Chi2Mean, CutValueX2Hat_Chi2Sigma, CutValueX2Hat_WTildeMean, CutValueX2Hat_WTildeSigma )==kTRUE) {
+                ++numberAccepted;
+                ArrayAccepted->Add(seg);
+            }
+            else {
+                ++numberRejected;
+                ArrayRejected->Add(seg);
+            }
+
+        } // of for (Int_t i=0; i< ArraySource->GetEntries(); ++i)
+
+        cout << "EdbPVRQuality::Cut_ConstantBTX2Hat()   For iSteps = " << iSteps << " ( CutValueX2Hat = " << CutValueX2Hat << ") we have  numberAccepted = " << numberAccepted << " numberRejected = " << numberRejected << ". " << endl;
+
+        // Check if number is sufficient
+        // if so, step out of the Cutp1 loop
+        if (numberAccepted<nMaxAccepted) break;
+
+        // Tighten Cutfactor
+        CutValueX2Hat -= DeltaCutValueX2Hat;
+    } // of for (Int_t stepsCutp1=0; stepsCutp1 < 20; ++stepsCutp1)
+
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() ArraySource->GetEntries()   " << ArraySource->GetEntries() << endl;
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() ArrayAccepted->GetEntries() " << ArrayAccepted->GetEntries() << endl;
+    cout << "EdbPVRQuality::Cut_ConstantBTX2Hat() ArrayRejected->GetEntries() " << ArrayRejected->GetEntries() << endl;
+
     cout << "EdbPVRQuality::Cut_ConstantBTX2Hat()...done." << endl;
     return;
 }
+
+
 //___________________________________________________________________________________
 void EdbPVRQuality::Cut_RandomCut() {
     cout << "EdbPVRQuality::Cut_RandomCut()" << endl;
@@ -4910,6 +5064,13 @@ EdbPVRec* EdbPVRQuality::GetEdbPVRecNew() {
     cout << "EdbPVRQuality::GetEdbPVRecNew()" << endl;
     cout << "EdbPVRQuality::GetEdbPVRecNew() ASSUMING THAT NO CUT HAS BEEN DONE YET." << endl;
 
+    cout << "EdbPVRQuality::GetEdbPVRecNew() MAYBE ADD ALSO SWITCH, WHAT TO DO OR NOT...." << endl;
+
+    cout << "EdbPVRQuality::GetEdbPVRecNew() for Example:   doFindFakeDoubleBTs = ... " << endl;
+    cout << "EdbPVRQuality::GetEdbPVRecNew() for Example:   doFindHighDensityBTs = ... " << endl;
+    cout << "EdbPVRQuality::GetEdbPVRecNew() for Example:   doFindPassingBTs = ... " << endl;
+    cout << "EdbPVRQuality::GetEdbPVRecNew() for Example:   doFindEventRelatedBTs = ... " << endl;
+
     FindFakeDoubleBTs();
     FindHighDensityBTs();
     //FindPassingBTs();			// NOT YET IMPLEMENTED !
@@ -4938,6 +5099,9 @@ void EdbPVRQuality::FindHighDensityBTs() {
 
     // Main Cut Routine for reducing HighDensBTs
     for (int i=0; i< eAli_orig->Npatterns(); ++i) {
+//     cout << "///for (int i=0; i< eAli_orig->Npatterns(); ++i) {"<< endl;
+        //for (int i=0; i< 1; ++i) {
+
         FillTanThetaTArrays(i);
         DetermineCutTTReductionFactor(i);
         Cut();
@@ -5017,4 +5181,17 @@ void EdbPVRQuality::RebinTTHistogram(Int_t nbins) {
 
     cout << "EdbPVRQuality::RebinTTHistogram()...done." << endl;
     return;
+}
+
+
+//___________________________________________________________________________________
+Bool_t EdbPVRQuality::X2HatCutRelation(EdbSegP* seg, Double_t CutValueX2Hat, Double_t  CutValueX2Hat_Chi2Mean, Double_t  CutValueX2Hat_Chi2Sigma, Double_t CutValueX2Hat_WTildeMean, Double_t CutValueX2Hat_WTildeSigma ) {
+
+    Double_t Wtilde=1./seg->W();
+    Double_t Chi2=seg->Chi2();
+
+    Double_t X2Hat= TMath::Power(   (  Chi2 - CutValueX2Hat_Chi2Mean ) / (CutValueX2Hat_Chi2Sigma)  , 2 )  + TMath::Power(   (  Wtilde - CutValueX2Hat_WTildeMean ) / (CutValueX2Hat_WTildeSigma)  , 2 ) ;
+
+    if (X2Hat<CutValueX2Hat) return kTRUE;
+    return kFALSE;
 }
