@@ -3023,6 +3023,14 @@ void  EdbPVRec::PrintSummary()
       s->PrintNice();
     }
   }
+  
+  cout <<"EdbPVRec::PrintSummary()  Track and Vertex Information:" << endl;
+  if (eTracks) {
+    cout << "eTracks= " <<  eTracks << " with "<<  eTracks->GetEntriesFast() << " entries." << endl;
+  }
+  if (eVTX) {
+    cout << "eVTX= " <<  eVTX << " with "<<  eVTX->GetEntriesFast() << " entries." << endl;
+  }
 
   return;
 }

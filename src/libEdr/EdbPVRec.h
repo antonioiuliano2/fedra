@@ -240,8 +240,8 @@ class EdbPVRec : public EdbPatternsVolume {
 
   EdbTrackP* GetTrack(int i) const {return eTracks ? (EdbTrackP*)(eTracks->At(i)) : 0;}
   EdbTrackP* FindTrack(int id) const;
-	
-	EdbSegP* FindSegment(int PlateID, int SegmentID) const;
+  
+  EdbSegP* FindSegment(int PlateID, int SegmentID) const;
 
   void AddTrack(EdbTrackP *track) {
     if (!eTracks) eTracks = new TObjArray();
@@ -254,6 +254,9 @@ class EdbPVRec : public EdbPatternsVolume {
   }
   Int_t      Nvtx()       const  {return eVTX ? eVTX->GetEntriesFast() : 0;}
   EdbVertex *GetVertex(Int_t &i) {return eVTX ? (EdbVertex*)eVTX->At(i) : 0;}
+  
+  inline TObjArray*   GetTracks() {return eTracks;}
+  inline TObjArray*   GetVertices() {return eVTX;}
   
   Int_t      NSeg();
 	  

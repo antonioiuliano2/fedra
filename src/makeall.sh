@@ -20,7 +20,7 @@ for lib in ${LIBS} ; do
 	cd ..
     else
 	cd ${lib}
-	make -j5 $1
+	make -j1 $1
 	cd ..
     fi
 done

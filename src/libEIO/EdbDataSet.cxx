@@ -2506,6 +2506,7 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali, const char *file)
   if(!trarr) return 0;
   float xv=ali->X();
   float yv=ali->Y();
+  
   return MakeTracksTree(*trarr,xv,yv, file);
 }
 
@@ -2516,7 +2517,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   TFile fil(file,"RECREATE");
   TTree *tracks= new TTree("tracks","tracks");
 
-  EdbTrackP    *track = new EdbTrackP(8);
+  EdbTrackP    *track = new EdbTrackP(8);   // why is this track initialised with 8 segments by default ???
   EdbSegP      *tr = (EdbSegP*)track;
   TClonesArray *segments  = new TClonesArray("EdbSegP");
   TClonesArray *segmentsf = new TClonesArray("EdbSegP");
@@ -2536,16 +2537,16 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   tracks->Branch("sf",&segmentsf);
 
   int ntr = trarr.GetEntriesFast();
+  
   for(int itr=0; itr<ntr; itr++) {
+    
     track = (EdbTrackP*)(trarr.At(itr));
 
     trid = track->ID();
     nseg = track->N();
     npl  = track->Npl();
     n0   = track->N0();
-
-    tr = (EdbSegP*)track;
-
+    
     segments->Clear("C");
     segmentsf->Clear("C");
     nseg = track->N();
@@ -2560,7 +2561,9 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 
     track->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
     tracks->Fill();
-    track->Clear();
+    /// TEST track->Clear(); // if this Clear() is written at this stage, the corresponding track in
+    // the EdbPattern Volume (ali, eTracks) will also be cleared! This behavior is not
+    // wanted, is it? So we do comment this out here ... (Frank, 09 26 2016)
   }
 
   tracks->Write();

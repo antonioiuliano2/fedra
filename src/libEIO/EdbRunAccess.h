@@ -30,6 +30,9 @@ class EdbRunAccess : public TObject {
   Bool_t    eInvertSides;        // 0 -do nothing, 1-invert sides
   Int_t     eWeightAlg;          // 0-puls, 1 - density(former eUseDensityAsW), 2-Likelyhood (eSigmaX)
             //eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW
+            
+  Bool_t   eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW  
+  // re-taken in by FWM 13072016 (otherwithe compilatiion error in libScan EdbRunAccess)
   
   Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
   Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data

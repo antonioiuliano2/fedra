@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
         else if(!strcmp(key,"-w"))    doWritePVR=1;
     }
 
-    printf("recset options:  %d %d %d %d %d %d %d %d %f %d %d %s\n",
+    printf("recset options:  doCCD=%d doLink=%d doAlign=%d doTrack=%d doFine=%d doZ=%d doAngles=%d doRaw=%d doPropagation=%f noUpdate=%d doWritePVR=%d %s\n",
            doCCD, doLink, doAlign, doTrack, doFine, doZ, doAngles, doRaw, doPropagation, noUpdate, doWritePVR, name);
 
     EdbDataProc proc(name);
@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 	 ali->Print();
 	}
 	cout << "recset: Create the EdbPVRec object from the EdbDataProc object. Done." << endl;
-        
+	
         cout << "recset: Write EdbPVRec object into file: ScanVolume_Ali.root." << endl;
         TFile* file = new TFile("ScanVolume_Ali.root","RECREATE");
         ali->Write();

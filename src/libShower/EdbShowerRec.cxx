@@ -3589,6 +3589,7 @@ void EdbShowerRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
     EdbTrackP*  t=0;
 
     TFile * fil = new TFile(eFilename_LinkedTracks);
+    fil->ls();
     TTree* tr= (TTree*)fil->Get("tracks");
     int nentr = 0;
     nentr =int(tr->GetEntries());

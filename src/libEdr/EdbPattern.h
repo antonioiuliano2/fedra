@@ -114,7 +114,7 @@ class EdbTrackP : public EdbSegP {
 
   TSortedList *eS;     // array of segments
   TSortedList *eSF;    // array of fitted segments
-  Int_t        eNpl;   // number of plates passed throw
+  Int_t        eNpl;   // number of plates passed through
   Int_t        eN0;    // number of holes (if any)
   Float_t      eM;     // invariant mass of the particle
   Float_t      eDE;    // total energy loss of the particle between first and last segments
@@ -172,7 +172,6 @@ class EdbTrackP : public EdbSegP {
   //  TList *SF() const { return eSF; }
 
   //int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
-
   Int_t    N()  const  { return (eS) ?  eS->GetSize()  : 0; }
   Int_t    NF() const  { return (eSF)?  eSF->GetSize() : 0; }
 
