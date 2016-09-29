@@ -174,11 +174,13 @@ class EdbTrackP : public EdbSegP {
   //int      N() const  { if(eS)  return eS->GetEntries(); else return 0; } //TODO fast
   Int_t    N()  const  { return (eS) ?  eS->GetSize()  : 0; }
   Int_t    NF() const  { return (eSF)?  eSF->GetSize() : 0; }
+  
+  Double_t  GetBTEfficiency();
 
-  float    Wgrains() const;
-  int	   GetSegmentsFlag( int &nseg ) const;
-  int	   GetSegmentsAid( int &nseg ) const;
-  int	   GetSegmentsMCTrack( int &nseg ) const;
+  Float_t    Wgrains() const;
+  Int_t	   GetSegmentsFlag( int &nseg ) const;
+  Int_t	   GetSegmentsAid( int &nseg ) const;
+  Int_t	   GetSegmentsMCTrack( int &nseg ) const;
 
   EdbSegP *GetSegmentWithClosestZ( float z, float dz);
   

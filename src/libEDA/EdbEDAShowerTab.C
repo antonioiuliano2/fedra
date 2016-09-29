@@ -153,8 +153,8 @@ void EdbEDAShowerTab::MakeGUI() {
     eCheckButtonCheckQualitycut->MoveResize(posx,posy,dx=20,20);
     eCheckButtonCheckQualitycut->Connect("Toggled(bool)","EdbEDAShowerTab", this,"CheckQualitycut()");
 
-		posx+=dx+5;
-		TGTextButton *eButtonQualCutSettings = new TGTextButton(frame,"Quality");
+    posx+=dx+5;
+    TGTextButton *eButtonQualCutSettings = new TGTextButton(frame,"Quality");
     eButtonQualCutSettings->MoveResize(posx,posy,dx=55,20);
     eButtonQualCutSettings->Connect("Clicked()","EdbEDAShowerTab", this,"MakeParameterWindowQualitySettings()");
 
@@ -244,7 +244,7 @@ EdbEDAShowerTab::EdbEDAShowerTab() {
     eUseTSData=kTRUE;
     eDrawShowers=kTRUE;
     eCheckQualitycut=kTRUE;
-		eQualityCutSetting=0;
+    eQualityCutSetting=0;
 
     RecoShowerArray= new TObjArray();
 
@@ -254,10 +254,10 @@ EdbEDAShowerTab::EdbEDAShowerTab() {
     pvrec_generic=0;
 
 
-		// Reset actual shower:
-		eShower=0;
+    // Reset actual shower:
+    eShower=0;
 
-		// Make the tab:
+    // Make the tab:
     MakeGUI();
 
 }
@@ -321,7 +321,7 @@ void EdbEDAShowerTab::CheckPVRec() {
     ///if (PIDallSame) eShowerRec->SetUsePattern_ID(kTRUE);
 
 
-   // Check PVRec with EdbPVRQualityCut:
+    // Check PVRec with EdbPVRQualityCut:
 //   EdbPVRQuality* qual = new EdbPVRQuality(pvrec_generic);
 // cout << "EdbEDAShowerTab::CheckPVRec()   pvrec_generic = " pvrec_generic << endl;
 
@@ -372,15 +372,15 @@ void EdbEDAShowerTab::LoadShowerRecEdbPVRec() {
         if (gEDA->GetTrackSet("TS")->N()==0) {
             cout << "if (gEDA->GetTrackSet(TS)->N()==0) {"<<endl;
             cout << "now try to get pvrec_linkedtracks from the trackset of the selected track" << endl;
-						cout << "gEDA->GetSelectedTrack() = " << gEDA->GetSelectedTrack() << endl;
-						if (NULL == gEDA->GetSelectedTrack()) {
-							cout << "EdbEDAShowerTab::LoadShowerRecEdbPVRec()   ERROR    No Selected Track!!! " << endl;
-							cout << "EdbEDAShowerTab::LoadShowerRecEdbPVRec()   ERROR    Return Now: Check Your TrackSet Data Please!" << endl;
-							pvrec_linkedtracks=0;
-							pvrec_cpfiles=0;
-							pvrec_generic=0;
-							return;
-						}
+            cout << "gEDA->GetSelectedTrack() = " << gEDA->GetSelectedTrack() << endl;
+            if (NULL == gEDA->GetSelectedTrack()) {
+                cout << "EdbEDAShowerTab::LoadShowerRecEdbPVRec()   ERROR    No Selected Track!!! " << endl;
+                cout << "EdbEDAShowerTab::LoadShowerRecEdbPVRec()   ERROR    Return Now: Check Your TrackSet Data Please!" << endl;
+                pvrec_linkedtracks=0;
+                pvrec_cpfiles=0;
+                pvrec_generic=0;
+                return;
+            }
             pvrec_linkedtracks=gEDA->GetTrackSet(gEDA->GetSelectedTrack())->GetPVRec();
             cout << "done:   pvrec_linkedtracks=gEDA->GetTrackSet(gEDA->GetSelectedTrack())->GetPVRec();" << endl;
             //gEDA->GetSelectedTrack()->Print();
@@ -499,9 +499,9 @@ void EdbEDAShowerTab::Reco() {
     cout << " void Reco()   Check For suited BT density cut if needed..." << endl;
     CheckBTDensity(eShowerRec->GetEdbPVRec(),NULL);
 
-		cout << " void Reco()   eShowerRec->SetUseAliSub(0)..." << endl;
-		eShowerRec->SetUseAliSub(0);
-		
+    cout << " void Reco()   eShowerRec->SetUseAliSub(0)..." << endl;
+    eShowerRec->SetUseAliSub(0);
+
     cout << " void Reco()   eShowerRec->Execute()..." << endl;
     eShowerRec->Execute();
 
@@ -600,17 +600,17 @@ void EdbEDAShowerTab::DrawShowerNext() {
 void EdbEDAShowerTab::DrawShower(int iShowerNr,bool eClearShower) {
     cout << "void EdbEDAShowerTab::DrawShower(  " << iShowerNr << endl;
 
-		// Set Actual Shower Array:
+    // Set Actual Shower Array:
     TObjArray *ShowerArray = RecoShowerArray;
 
-		// Set Actual Shower:
-		EdbTrackP* Shower = (EdbTrackP*)ShowerArray->At(iShowerNr);
-		eShower= Shower;
+    // Set Actual Shower:
+    EdbTrackP* Shower = (EdbTrackP*)ShowerArray->At(iShowerNr);
+    eShower= Shower;
 
-		// Print It:
-		PrintActualShower();
+    // Print It:
+    PrintActualShower();
 
-		// Create Segment array for the TrackSet:
+    // Create Segment array for the TrackSet:
     TObjArray *segments = new TObjArray();
     for (int j=0; j<Shower->N(); j++) {
         //cout << "j= " << j << endl;
@@ -659,11 +659,11 @@ void EdbEDAShowerTab::PrintShower() {
 }
 
 void EdbEDAShowerTab::PrintActualShower() {
-	if (NULL == eShower) {
-		cout << "EdbEDAShowerTab::PrintActualShower()    WARNING Actual Shower: eShower == NULLPOINTER. Do nothing.  " << endl;
-		return;
-	}
-	eShower->PrintNice();
+    if (NULL == eShower) {
+        cout << "EdbEDAShowerTab::PrintActualShower()    WARNING Actual Shower: eShower == NULLPOINTER. Do nothing.  " << endl;
+        return;
+    }
+    eShower->PrintNice();
 }
 
 
@@ -793,7 +793,7 @@ void EdbEDAShowerTab::CheckBTDensityCanv(EdbPVRec *pvr, TObjArray *tracks) {
     printf("EdbEDAShowerTab::CheckBTDensityCanv...\n");
     if (!eIsAliLoaded) LoadShowerRecEdbPVRec();
 
-		
+
     // Genergic edbPVrec data (means either cp or lt file, depends on how the user set it:)
     // pvr= eShowerRec->GetEdbPVRec();
     pvr=pvrec_generic;
@@ -801,15 +801,15 @@ void EdbEDAShowerTab::CheckBTDensityCanv(EdbPVRec *pvr, TObjArray *tracks) {
 
     // In Case this is set we directly use pvrec_cleaned of the EdbPVRQuality class.
     if (eQualityCutSetting==1 || eQualityCutSetting==2 ) {
-	cout << "EdbEDAShowerTab::CheckBTDensityCanv   INFO :   eQualityCutSetting==1 || eQualityCutSetting==2    We directly use pvrec_cleaned of the EdbPVRQuality class." << endl;
-	pvr=pvrec_cleaned;
+        cout << "EdbEDAShowerTab::CheckBTDensityCanv   INFO :   eQualityCutSetting==1 || eQualityCutSetting==2    We directly use pvrec_cleaned of the EdbPVRQuality class." << endl;
+        pvr=pvrec_cleaned;
     }
 
-		// Check if exists:
-		if ( NULL == pvr ) {
-			cout << "EdbEDAShowerTab::CheckBTDensityCanv   ERROR :   NULL == pvr    Return now." << endl;
-			return;
-		}
+    // Check if exists:
+    if ( NULL == pvr ) {
+        cout << "EdbEDAShowerTab::CheckBTDensityCanv   ERROR :   NULL == pvr    Return now." << endl;
+        return;
+    }
 
     TCanvas *c1 = CreateCanvas("CheckBTDensity");
     c1->Divide(2,2);
@@ -889,8 +889,8 @@ void EdbEDAShowerTab::CheckBTDensityCanv(EdbPVRec *pvr, TObjArray *tracks) {
     leg->Draw();
     c1->cd(3);
     BTDensityProfile[0]->Draw("profileZ");
-		int xnpat=pvrN+5;
-		BTDensityProfile[0]->GetXaxis()->SetRangeUser(0,xnpat);
+    int xnpat=pvrN+5;
+    BTDensityProfile[0]->GetXaxis()->SetRangeUser(0,xnpat);
     BTDensityProfile[3]->Draw("profileZsame");
     BTDensityProfile[9]->Draw("profileZsame");
     BTDensityProfile[3]->SetLineColor(2);
@@ -904,23 +904,23 @@ void EdbEDAShowerTab::CheckBTDensityCanv(EdbPVRec *pvr, TObjArray *tracks) {
     leg2->SetBorderSize(1);
     leg2->Draw();
 
-		TLegend* leg3= new TLegend(0.7,0.15,0.98,0.75,"","brNDC");
+    TLegend* leg3= new TLegend(0.7,0.15,0.98,0.75,"","brNDC");
     leg3->AddEntry(BTDensityProfile[0],"Chi2<W*0.15-1","LP");
-		leg3->AddEntry(BTDensityProfile[1],"Chi2<W*0.14-1","LP");
-		leg3->AddEntry(BTDensityProfile[2],"Chi2<W*0.13-1","LP");
+    leg3->AddEntry(BTDensityProfile[1],"Chi2<W*0.14-1","LP");
+    leg3->AddEntry(BTDensityProfile[2],"Chi2<W*0.13-1","LP");
     leg3->AddEntry(BTDensityProfile[3],"Chi2<W*0.12-1","LP");
-		leg3->AddEntry(BTDensityProfile[4],"Chi2<W*0.11-1","LP");
-		leg3->AddEntry(BTDensityProfile[5],"Chi2<W*0.10-1","LP");
-		leg3->AddEntry(BTDensityProfile[6],"Chi2<W*0.09-1","LP");
-		leg3->AddEntry(BTDensityProfile[7],"Chi2<W*0.08-1","LP");
-		leg3->AddEntry(BTDensityProfile[8],"Chi2<W*0.07-1","LP");
+    leg3->AddEntry(BTDensityProfile[4],"Chi2<W*0.11-1","LP");
+    leg3->AddEntry(BTDensityProfile[5],"Chi2<W*0.10-1","LP");
+    leg3->AddEntry(BTDensityProfile[6],"Chi2<W*0.09-1","LP");
+    leg3->AddEntry(BTDensityProfile[7],"Chi2<W*0.08-1","LP");
+    leg3->AddEntry(BTDensityProfile[8],"Chi2<W*0.07-1","LP");
     leg3->AddEntry(BTDensityProfile[9],"Chi2<W*0.06-1","LP");
     leg3->SetBorderSize(1);
-    
-		
+
+
     c1->cd(4);
-		BTDensityProfile[0]->Draw("profileZ");
-		BTDensityProfile[0]->GetXaxis()->SetRangeUser(0,xnpat);
+    BTDensityProfile[0]->Draw("profileZ");
+    BTDensityProfile[0]->GetXaxis()->SetRangeUser(0,xnpat);
     BTDensityProfile[0]->DrawCopy("profileZsame");
     for (int l=0; l<10; ++l) {
         BTDensityProfile[l]->DrawCopy("profileZsame");
@@ -1361,9 +1361,9 @@ void EdbEDAShowerTab::CheckCosmicReco() {
 
 void EdbEDAShowerTab::PlotShower() {
 
-		// Decide wheter to plot the histograms for one shower,
-		// or for whole Shower Array:
-		// ....
+    // Decide wheter to plot the histograms for one shower,
+    // or for whole Shower Array:
+    // ....
 
     TH1F* h_nseg= new TH1F("h_nseg","h_nseg",100,0,100);
     TH1F* h_npl= new TH1F("h_npl","h_npl",58,0,58);
@@ -1384,26 +1384,26 @@ void EdbEDAShowerTab::PlotShower() {
 //____________________________________________________________________________________________
 
 
-void EdbEDAShowerTab::MakeParameterWindowQualitySettings(){
+void EdbEDAShowerTab::MakeParameterWindowQualitySettings() {
 
-	// main frame
-   TGMainFrame *fMainFrame = new TGMainFrame(gClient->GetRoot(),10,300,kMainFrame | kVerticalFrame);
-   fMainFrame->SetLayoutBroken(kTRUE);
+    // main frame
+    TGMainFrame *fMainFrame = new TGMainFrame(gClient->GetRoot(),10,300,kMainFrame | kVerticalFrame);
+    fMainFrame->SetLayoutBroken(kTRUE);
 
-		eParamWindow = fMainFrame;
+    eParamWindow = fMainFrame;
 
-	int posy=10;
-	int posx=10;
-	int dx;
+    int posy=10;
+    int posx=10;
+    int dx;
 
-	TGLabel* fLabel = new TGLabel(fMainFrame,"QualitySettings Parameters");
-	fMainFrame->AddFrame(fLabel);
-	fLabel->MoveResize(posx,posy,dx=140,20);
-	posx+=dx+10;
+    TGLabel* fLabel = new TGLabel(fMainFrame,"QualitySettings Parameters");
+    fMainFrame->AddFrame(fLabel);
+    fLabel->MoveResize(posx,posy,dx=140,20);
+    posx+=dx+10;
 
-		//////////////////////////////////////////
-		posy+=20;
-		posx=5;
+    //////////////////////////////////////////
+    posy+=20;
+    posx=5;
 
     eComboBox_ParameterQualitySetting = new TGComboBox(fMainFrame,"eQualitySetting");
     eComboBox_ParameterQualitySetting->AddEntry("No Qual Cut",-1);
@@ -1416,35 +1416,35 @@ void EdbEDAShowerTab::MakeParameterWindowQualitySettings(){
     eComboBox_ParameterQualitySetting->Connect("Selected(const char *)", "EdbEDAShowerTab", this, "ReadComboBoxParameterQualitySetting()");
 
 
-		posx+=dx+5;
-   TGTextButton *eButton = new TGTextButton(fMainFrame,"Check BT density directly");
+    posx+=dx+5;
+    TGTextButton *eButton = new TGTextButton(fMainFrame,"Check BT density directly");
     eButton->MoveResize(posx,posy,dx=120,20);
     eButton->Connect("Clicked()","EdbEDAShowerTab", this,"CheckBTDensityCanv()");
 
-		
 
-		fMainFrame->SetMWMHints(kMWMDecorAll,kMWMFuncAll,kMWMInputModeless);
-   fMainFrame->MapSubwindows();
-   fMainFrame->Resize(fMainFrame->GetDefaultSize());
-   fMainFrame->MapWindow();
-   fMainFrame->Resize(800,280);
 
-   gClient->WaitFor(fMainFrame);
+    fMainFrame->SetMWMHints(kMWMDecorAll,kMWMFuncAll,kMWMInputModeless);
+    fMainFrame->MapSubwindows();
+    fMainFrame->Resize(fMainFrame->GetDefaultSize());
+    fMainFrame->MapWindow();
+    fMainFrame->Resize(800,280);
+
+    gClient->WaitFor(fMainFrame);
 
 }
 
 //____________________________________________________________________________________________
 
 
-void EdbEDAShowerTab::PrintQualityCutSetting(){
-	// Print important information about the QualityCut Setting:
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()" << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting= " << eQualityCutSetting << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   ----- For information: -----" << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==-1 : No Quality Cut" << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==0  : Global Quality Cut by constant BT density." << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==1  : Plate by Plate Cut by constant BT density." << endl;
-	cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==2  : Plate by Plate Cut by constant Quality." << endl;
+void EdbEDAShowerTab::PrintQualityCutSetting() {
+    // Print important information about the QualityCut Setting:
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()" << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting= " << eQualityCutSetting << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   ----- For information: -----" << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==-1 : No Quality Cut" << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==0  : Global Quality Cut by constant BT density." << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==1  : Plate by Plate Cut by constant BT density." << endl;
+    cout << "EdbEDAShowerTab::PrintQualityCutSetting()   eQualityCutSetting==2  : Plate by Plate Cut by constant Quality." << endl;
 }
 
 
@@ -1478,33 +1478,33 @@ void EdbEDAShowerTab::Help() {
     cout << "" << endl;
     cout << "*		Draw: 	If toggled, then reconstructed showers will be stored in EDA TrackSet _BT_ ." << endl;
     cout << "*		Plot: 	Plot interesting quantities for the showers stored in the internal shower array." << endl;
-		cout << "*		Plot: 	For the time being, it plots the quantities for all reconstructed showers at once." << endl;
+    cout << "*		Plot: 	For the time being, it plots the quantities for all reconstructed showers at once." << endl;
     cout << "*		Nr: 	  Draw Shower Number ... ." << endl;
     cout << "*		Prev/All/Next: 	  Draw Shower: Previous, Next, or All again.." << endl;
     cout << "" << endl;
     cout << "*		CheckPVR:	... Check the EdbPVrec Object." << endl;
-		cout << "" << endl;
+    cout << "" << endl;
     cout << "*		CheckBTDens:	Check BaseTrack Density of the generic PVRec object. It is strongly recommended that you" << endl;
-		cout << "*		CheckBTDens:	click this button and watch the density not going to strong over 20-30 BT/mm2." << endl;
-		cout << "" << endl;
-		cout << "*		CheckCosmicReco:	This is used for a analysis wheter the background is acceptable. We start here from" << endl;
-		cout << "*		CheckCosmicReco:	passing through cosmics and then run the reco on them. In the best case, " << endl;
-		cout << "*		CheckCosmicReco:	the shower should contain only out the tracks (since they are cosmics) and therefore N_shower <= N_track."  << endl;
-		cout << "*		CheckCosmicReco:	In the histogram which appears, the difference in number of segments is plotted." << endl;
-		cout << "*		CheckCosmicReco:	If its largely in the negative region this is an indication that there is too much BG." << endl;
-		cout << "" << endl;
+    cout << "*		CheckBTDens:	click this button and watch the density not going to strong over 20-30 BT/mm2." << endl;
+    cout << "" << endl;
+    cout << "*		CheckCosmicReco:	This is used for a analysis wheter the background is acceptable. We start here from" << endl;
+    cout << "*		CheckCosmicReco:	passing through cosmics and then run the reco on them. In the best case, " << endl;
+    cout << "*		CheckCosmicReco:	the shower should contain only out the tracks (since they are cosmics) and therefore N_shower <= N_track."  << endl;
+    cout << "*		CheckCosmicReco:	In the histogram which appears, the difference in number of segments is plotted." << endl;
+    cout << "*		CheckCosmicReco:	If its largely in the negative region this is an indication that there is too much BG." << endl;
+    cout << "" << endl;
     cout << "*		SetPVR:	Set the EdbPVrec Object from a (root)file. ..." << endl;
     cout << "" << endl;
     cout << "*		RecoParams:   This box is expert status, here you can change parameters of the reco algorithm itself." << endl;
-		cout << "*		RecoParams:   Select Parameter, change to your desired value (units are mrad,microns) and click change button." << endl;
-		cout << "*		RecoParams:   Three predefined sets are there: Standard; " << endl;
-		cout << "*		RecoParams:   Three predefined sets are there: HighNBT (large acceptance, only good in case of loooow background.)"<< endl;
-		cout << "*		RecoParams:   Three predefined sets are there: HighPur (tight cuts, good in case of large background.)"<< endl;
+    cout << "*		RecoParams:   Select Parameter, change to your desired value (units are mrad,microns) and click change button." << endl;
+    cout << "*		RecoParams:   Three predefined sets are there: Standard; " << endl;
+    cout << "*		RecoParams:   Three predefined sets are there: HighNBT (large acceptance, only good in case of loooow background.)"<< endl;
+    cout << "*		RecoParams:   Three predefined sets are there: HighPur (tight cuts, good in case of large background.)"<< endl;
     cout << "" << endl;
 
     new TGMsgBox(gClient->GetRoot(), gEve->GetMainWindow(),"EDA", "HELP BOX! Please be so kind and read the shell output. Thank you.");
     cout << "-----------------------------------------" << endl;
-		return;
+    return;
 }
 
 
@@ -1513,45 +1513,45 @@ void EdbEDAShowerTab::ReadComboBoxParameterQualitySetting() {
     // Read Name from the ReadComboBoxParameterQualitySetting and put the corresponging value in value field:
     cout << "eComboBox_Parameter->GetSelectedEntry->EntryId()" << endl;
     Double_t IdVal = eComboBox_ParameterQualitySetting->GetSelectedEntry()->EntryId();
-		eQualityCutSetting=IdVal;
+    eQualityCutSetting=IdVal;
     cout << "eQualityCutSetting = " << eQualityCutSetting << endl;
 }
 
 
 void EdbEDAShowerTab::CheckBTDensityUsingEdbPVRQuality() {
-		EdbPVRQuality* qual = new EdbPVRQuality(pvrec_generic);
-		pvrec_cleaned =  qual->GetEdbPVRec(1);
-		eIspvrec_cleaned=kTRUE;
-		qual->Print();
+    EdbPVRQuality* qual = new EdbPVRQuality(pvrec_generic);
+    pvrec_cleaned =  qual->GetEdbPVRec(1);
+    eIspvrec_cleaned=kTRUE;
+    qual->Print();
 }
 
 
 
 
 
-void EdbEDAShowerTab::CheckAndSetPVRGeneric(){
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()" << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cpfiles=" << pvrec_cpfiles << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_linkedtracks=" << pvrec_linkedtracks << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cleaned_cpfiles=" << pvrec_cleaned_cpfiles << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cleaned_linkedtracks=" << pvrec_cleaned_linkedtracks << endl;
+void EdbEDAShowerTab::CheckAndSetPVRGeneric() {
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()" << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cpfiles=" << pvrec_cpfiles << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_linkedtracks=" << pvrec_linkedtracks << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cleaned_cpfiles=" << pvrec_cleaned_cpfiles << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   pvrec_cleaned_linkedtracks=" << pvrec_cleaned_linkedtracks << endl;
 
-	// Cases: LT/CP (eUseTSData);
-	// Cases: Cleaned/Raw  (eIspvrec_cleaned);
+    // Cases: LT/CP (eUseTSData);
+    // Cases: Cleaned/Raw  (eIspvrec_cleaned);
 
-	
-	if (eUseTSData) {
-		pvrec_generic=pvrec_cpfiles;
-		if (eIspvrec_cleaned && pvrec_cleaned_cpfiles!=NULL) pvrec_generic=pvrec_cleaned_cpfiles;
-	}
-	else {
-		pvrec_generic=pvrec_linkedtracks;
-		if (eIspvrec_cleaned && pvrec_cleaned_linkedtracks!=NULL) pvrec_generic=pvrec_cleaned_linkedtracks;
-	}
-	
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   Since eUseTSData="<< eUseTSData << " and eIspvrec_cleaned=" << eIspvrec_cleaned << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   We set as pvrec_generic = " << pvrec_generic  << endl;
-	cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   ...Done." << endl;
-	
-	return;
+
+    if (eUseTSData) {
+        pvrec_generic=pvrec_cpfiles;
+        if (eIspvrec_cleaned && pvrec_cleaned_cpfiles!=NULL) pvrec_generic=pvrec_cleaned_cpfiles;
+    }
+    else {
+        pvrec_generic=pvrec_linkedtracks;
+        if (eIspvrec_cleaned && pvrec_cleaned_linkedtracks!=NULL) pvrec_generic=pvrec_cleaned_linkedtracks;
+    }
+
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   Since eUseTSData="<< eUseTSData << " and eIspvrec_cleaned=" << eIspvrec_cleaned << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   We set as pvrec_generic = " << pvrec_generic  << endl;
+    cout << "EdbEDAShowerTab::CheckAndSetPVRGeneric()   ...Done." << endl;
+
+    return;
 }

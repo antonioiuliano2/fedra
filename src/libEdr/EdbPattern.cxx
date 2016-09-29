@@ -1112,6 +1112,24 @@ float EdbTrackP::CHI2F()
 }
 
 //______________________________________________________________________________
+Double_t EdbTrackP::GetBTEfficiency()
+{
+  // Returns Basetrack Scanning efficiency, estimated
+  // by BT in the Tracks and the number of holes.
+  // Formula: efficiency_per_BT = ( N()-2 ) / ( Npl()-2 ) 
+  // This makes sense when having a track with 
+  // at least 3 plates crossing.
+  Double_t nseg=(Double_t)N();
+  Double_t npl=(Double_t)Npl();
+  
+  if (nseg==2 && npl==2) return 1;
+  Double_t BTEfficiency=(nseg-2)/(npl-2);
+  
+  return BTEfficiency;
+}
+
+
+//______________________________________________________________________________
 void EdbTrackP::Print() 
 {
   int nseg=0, nsegf=0;
@@ -1126,9 +1144,6 @@ void EdbTrackP::Print()
     for(int i=0; i<nseg; i++)
       ((EdbSegP*)(eS->At(i)))->Print(); 
 
-//    if(nsegf) 
-//      for(int i=0; i<nsegf; i++) 
-//        ((EdbSegP*)(eSF->At(i)))->Print();
 }
 
 //______________________________________________________________________________
@@ -1138,7 +1153,7 @@ void EdbTrackP::PrintNice()
   nseg = N();
   nsegf = NF();
 
-  printf("EdbTrackP with %d segments and %d fitted segments:\n", nseg, nsegf );
+  printf("EdbTrackP with %d segments and %d fitted segments. Estimated BT Scanning efficiency = %.02f \n", nseg, nsegf, GetBTEfficiency() );
   printf("  N  PID     ID          X             Y              Z        TX       TY     W      P      Flag     MC     Track    Chi2    Prob     Mass\n");
   printf("    %3d %8d %13.2f %13.2f %13.2f %7.4f  %7.4f %5.1f  %7.2f %7d %7d %7d  %7.4f  %7.4f  %5.3f\n",
 	   PID(), ID(),X(),Y(),Z(),     TX(),   TY(),  W(),  P(), Flag(), MCEvt(),   Track(), Chi2(), Prob(),   M());

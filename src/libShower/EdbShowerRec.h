@@ -771,6 +771,8 @@ public:
     void Help();
     // Standard Reset Function:
     void Set0();
+    // Standard Init Function:
+    void Init();
 
     ClassDef(EdbShowerRec,3)
 };

@@ -2157,6 +2157,8 @@ void EdbDataProc::FineAlignmentTracks()
 ///______________________________________________________________________________
 int EdbDataProc::InitVolume(EdbPVRec    *ali, int datatype, TIndex2 *trseg)
 {
+  if (!eDataSet) Log(2,"EdbDataProc::InitVolume","Warning. eDataSet is NULL"); 
+  
   EdbScanCond *cond = eDataSet->GetPiece(0)->GetCond(0);
   ali->SetScanCond( cond );
   
@@ -2332,8 +2334,9 @@ void EdbDataProc::LinkTracks( int alg, float p )
   SetPVR(ali);
   if (gEDBDEBUGLEVEL>2) {
     ali->Print();
-    Log(2,"EdbDataProc::LinkTracks","EdbDataProc::LinkTracks...Done.");
   }
+  Log(2,"EdbDataProc::LinkTracks","EdbDataProc::LinkTracks...Done.");
+  return;
 }
 
 ///______________________________________________________________________________
@@ -2532,7 +2535,9 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   tracks->Branch("xv",&xv,"xv/F");
   tracks->Branch("yv",&yv,"yv/F");
   tracks->Branch("w",&w,"w/F");
-  tracks->Branch("t.","EdbSegP",&tr,32000,99);
+//   tracks->Branch("t.","EdbSegP",&tr,32000,99); // track data is not filled when using this Branch method ...
+  // probably has something to do with the casting do a different class
+  tracks->Branch("t.","EdbSegP",&track,32000,99);
   tracks->Branch("s", &segments);
   tracks->Branch("sf",&segmentsf);
 
@@ -2561,7 +2566,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 
     track->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
     tracks->Fill();
-    /// TEST track->Clear(); // if this Clear() is written at this stage, the corresponding track in
+    // track->Clear(); // if this Clear() is written at this stage, the corresponding track in
     // the EdbPattern Volume (ali, eTracks) will also be cleared! This behavior is not
     // wanted, is it? So we do comment this out here ... (Frank, 09 26 2016)
   }

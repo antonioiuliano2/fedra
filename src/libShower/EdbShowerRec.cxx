@@ -34,6 +34,7 @@ ClassImp(EdbShowerRec)
 EdbShowerRec::EdbShowerRec()
 {
     // Default Constructor:
+    Init();
     Set0();
 
 }
@@ -46,6 +47,8 @@ EdbShowerRec::EdbShowerRec(TObjArray* InBTArray, int num,int MAXPLATE,  int DATA
     // Though this is the "original" reconstruction function, it should not be used anymore
     // since it just does everything mixed together and the different steps are not to
     // clear for the user.
+
+    Init();
     Set0();
 
     // Interim arrays, code structure is copied from shower_btr.C :
@@ -133,7 +136,7 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr)
     cout << endl;
     cout << "----------------------------------------------------------" << endl;
 
-
+    Init();
     Set0();
     SetEdbPVRec(pvr);
 
@@ -159,6 +162,7 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType)
     cout << "----------------------------------------------------------" << endl;
 
 
+    Init();
     Set0();
 
     if (OptionType==1) {
@@ -192,7 +196,33 @@ EdbShowerRec::EdbShowerRec(EdbPVRec  *pvr, Int_t OptionType)
 EdbShowerRec::~EdbShowerRec()
 {
     // Default Destructor.
+    delete eInBTArray;
+    delete eRecoShowerArray;
 }
+
+
+
+
+//----------------------------------------------------------------
+void EdbShowerRec::Init()
+{
+    // Create (one time) needed internal objects
+
+    // Check if eInBTArray array exits, otherwise create.
+    if (!eInitiatorBTIsCreated) {
+        eInBTArray=new TObjArray();
+        eInitiatorBTIsCreated=kTRUE;
+        eInBTArrayN=0;
+    }
+
+    // Create Array For storing the reconstructed showers.
+    eRecoShowerArray=new TObjArray();
+    eRecoShowerArrayN=0;
+
+    return;
+}
+
+
 
 //----------------------------------------------------------------
 void EdbShowerRec::Set0()
@@ -691,89 +721,89 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
 
                 //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
                 //{
-                    //Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
-                    //rayon = 800.; // cylinder with 800 microns radius
-                    Delta = 20.+   fabs(eAlgoParameterConeAngle*fabs(Z0-a->GetZ0())); // cone with eAlgoParameterConeAngle mrad
-                    rayon = eAlgoParameterConeRadius; // cylinder with eAlgoParameterConeRadius microns radius
+                //Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
+                //rayon = 800.; // cylinder with 800 microns radius
+                Delta = 20.+   fabs(eAlgoParameterConeAngle*fabs(Z0-a->GetZ0())); // cone with eAlgoParameterConeAngle mrad
+                rayon = eAlgoParameterConeRadius; // cylinder with eAlgoParameterConeRadius microns radius
 
-                    diff = sqrt((X0-Xss)*(X0-Xss)+(Y0-Yss)*(Y0-Yss));
+                diff = sqrt((X0-Xss)*(X0-Xss)+(Y0-Yss)*(Y0-Yss));
 
 //           cout << "diff = " << diff << endl;
 //           ss->PrintNice();
 
-                    if ( diff<rayon&&diff<Delta )
+                if ( diff<rayon&&diff<Delta )
+                {
+                    if (index==1) max = 1;
+                    if (index==2) max = 2;
+                    if (index>2) max = 3;
+
+                    for (int el=0; el<max; el++)
                     {
-                        if (index==1) max = 1;
-                        if (index==2) max = 2;
-                        if (index>2) max = 3;
+                        //extrapolation in previous plate
+                        Xe[el] =  X0 - fabs(Z0-ZZ0[index-el-1])*SX0;
+                        Ye[el] =  Y0 - fabs(Z0-ZZ0[index-el-1])*SY0;
+                        nntr = add[ii];
 
-                        for (int el=0; el<max; el++)
+                        for (int l2=0; l2<nntr; l2++)
                         {
-                            //extrapolation in previous plate
-                            Xe[el] =  X0 - fabs(Z0-ZZ0[index-el-1])*SX0;
-                            Ye[el] =  Y0 - fabs(Z0-ZZ0[index-el-1])*SY0;
-                            nntr = add[ii];
+                            ind = l2 + ii*eNTM;
 
-                            for (int l2=0; l2<nntr; l2++)
+                            if (fabs(a->GetZb(l2)-(Z0-(el+1)*1273))<500)
                             {
-                                ind = l2 + ii*eNTM;
-
-                                if (fabs(a->GetZb(l2)-(Z0-(el+1)*1273))<500)
-                                {
 //                   ss->PrintNice();
 
-                                    rayon2 = sqrt((Xe[el]-a->GetXb(l2))*(Xe[el]-a->GetXb(l2))+((Ye[el]-a->GetYb(l2))*(Ye[el]-a->GetYb(l2))));
-                                    delta = sqrt((SX0-a->GetTXb(l2))*(SX0-a->GetTXb(l2))+((SY0-a->GetTYb(l2))*(SY0-a->GetTYb(l2))));
-                                    if (rayon2<Rcut&&delta<Tcut)
+                                rayon2 = sqrt((Xe[el]-a->GetXb(l2))*(Xe[el]-a->GetXb(l2))+((Ye[el]-a->GetYb(l2))*(Ye[el]-a->GetYb(l2))));
+                                delta = sqrt((SX0-a->GetTXb(l2))*(SX0-a->GetTXb(l2))+((SY0-a->GetTYb(l2))*(SY0-a->GetTYb(l2))));
+                                if (rayon2<Rcut&&delta<Tcut)
+                                {
+
+                                    if (ok==0)
                                     {
+                                        ind = add[ii] + ii*eNTM;
 
-                                        if (ok==0)
-                                        {
-                                            ind = add[ii] + ii*eNTM;
+                                        xbb[ind] =  X0 ;
+                                        ybb[ind] =  Y0 ;
+                                        zbb[ind] =  Z0 ;
+                                        txbb[ind] =  SX0 ;
+                                        tybb[ind] =  SY0 ;
+                                        a->SetIDb(ss->ID(),add[ii]);
+                                        a->SetPlateb(d,add[ii]);
+                                        a->SetXb(X0,add[ii]);
+                                        a->SetYb(Y0,add[ii]);
+                                        a->SetZb(Z0,add[ii]);
+                                        a->SetTXb(SX0,add[ii]);
+                                        a->SetTYb(SY0,add[ii]);
+                                        a->SetDeltarb(rayon2,add[ii]);
+                                        a->SetDelthetab(delta,add[ii]);
+                                        //a->SetNFilmb( index+1,add[ii]);
+                                        rr =  (Z0-a->GetZ0())/1273;
+                                        a->SetNFilmb(int(round(rr)+1),add[ii]);
+                                        if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
+                                        if (ss->MCEvt()<0) sigbb[ind] = 0;
+                                        chi2bb[ind] = ss->Chi2();
+                                        wbb[ind] = int(ss->W());
+                                        Pbb[ind] = ss->P();
+                                        Flagbb[ind] = ss->Flag();
 
-                                            xbb[ind] =  X0 ;
-                                            ybb[ind] =  Y0 ;
-                                            zbb[ind] =  Z0 ;
-                                            txbb[ind] =  SX0 ;
-                                            tybb[ind] =  SY0 ;
-                                            a->SetIDb(ss->ID(),add[ii]);
-                                            a->SetPlateb(d,add[ii]);
-                                            a->SetXb(X0,add[ii]);
-                                            a->SetYb(Y0,add[ii]);
-                                            a->SetZb(Z0,add[ii]);
-                                            a->SetTXb(SX0,add[ii]);
-                                            a->SetTYb(SY0,add[ii]);
-                                            a->SetDeltarb(rayon2,add[ii]);
-                                            a->SetDelthetab(delta,add[ii]);
-                                            //a->SetNFilmb( index+1,add[ii]);
-                                            rr =  (Z0-a->GetZ0())/1273;
-                                            a->SetNFilmb(int(round(rr)+1),add[ii]);
-                                            if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
-                                            if (ss->MCEvt()<0) sigbb[ind] = 0;
-                                            chi2bb[ind] = ss->Chi2();
-                                            wbb[ind] = int(ss->W());
-                                            Pbb[ind] = ss->P();
-                                            Flagbb[ind] = ss->Flag();
-					    
-					    a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
-					    a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
-                                            ok =1;
+                                        a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
+                                        a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
+                                        ok =1;
 
 //                       ss->PrintNice();
 
-                                            add[ii]++;
-                                        }
-                                        else if (ok==1&&rayon2<a->GetDeltarb(add[ii]-1))
-                                        {
-                                            a->SetDeltarb(rayon2,add[ii]-1);
-                                            a->SetDelthetab(delta,add[ii]-1);
+                                        add[ii]++;
+                                    }
+                                    else if (ok==1&&rayon2<a->GetDeltarb(add[ii]-1))
+                                    {
+                                        a->SetDeltarb(rayon2,add[ii]-1);
+                                        a->SetDelthetab(delta,add[ii]-1);
 
-                                        }
                                     }
                                 }
                             }
                         }
                     }
+                }
                 //}
             }
             ii++;
@@ -830,9 +860,9 @@ void EdbShowerRec::recdown(int num,int MAXPLATE,  int DATA, int Ncand, double *x
             deltathetab[j] = a->GetDeltathetab(j);
             nfilmb[j] = a->GetNFilmb(j);
             tagprimary[j] = 0;
-	    
-	    mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
-	    mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
+
+            mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
+            mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
 
             //gEDBDEBUGLEVEL=3;
             if (gEDBDEBUGLEVEL>2) cout <<  xb[j] << "  " << yb[j]  << "  " << zb[j] << "  " << txb[j] << "  " << tyb[j] << "  " << sizeb << endl;
@@ -1219,77 +1249,77 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
 
                 //if ( a->GetTrID() == ss->MCEvt()|| ss->MCEvt()<0)
                 //{
-                    Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
-                    rayon = 800.; // cylinder with 800 microns radius
-                    diff = sqrt((X0-Xss)*(X0-Xss)+(Y0-Yss)*(Y0-Yss));
+                Delta = 20.+   fabs(0.02*fabs(Z0-a->GetZ0())); // cone with 20 mrad
+                rayon = 800.; // cylinder with 800 microns radius
+                diff = sqrt((X0-Xss)*(X0-Xss)+(Y0-Yss)*(Y0-Yss));
 
-                    if ( diff<rayon&&diff<Delta )
+                if ( diff<rayon&&diff<Delta )
+                {
+                    if (index==1) max = 1;
+                    if (index==2) max = 2;
+                    if (index>2) max = 3;
+
+                    for (int el=0; el<max; el++)
                     {
-                        if (index==1) max = 1;
-                        if (index==2) max = 2;
-                        if (index>2) max = 3;
+                        //extrapolation in previous plate
+                        Xe[el] =  X0 - fabs(Z0-ZZ0[index-el-1])*SX0;
+                        Ye[el] =  Y0 - fabs(Z0-ZZ0[index-el-1])*SY0;
+                        nntr = add[ii];
 
-                        for (int el=0; el<max; el++)
+                        for (int l2=0; l2<nntr; l2++)
                         {
-                            //extrapolation in previous plate
-                            Xe[el] =  X0 - fabs(Z0-ZZ0[index-el-1])*SX0;
-                            Ye[el] =  Y0 - fabs(Z0-ZZ0[index-el-1])*SY0;
-                            nntr = add[ii];
-
-                            for (int l2=0; l2<nntr; l2++)
+                            ind = l2 + ii*eNTM;
+                            if (fabs(zbb[ind]-(Z0-(el+1)*1273))<500)
                             {
-                                ind = l2 + ii*eNTM;
-                                if (fabs(zbb[ind]-(Z0-(el+1)*1273))<500)
+                                rayon2 = sqrt((Xe[el]-xbb[ind])*(Xe[el]-xbb[ind])+((Ye[el]-ybb[ind])*(Ye[el]-ybb[ind])));
+                                delta = sqrt((SX0-txbb[ind])*(SX0-txbb[ind])+((SY0-tybb[ind])*(SY0-tybb[ind])));
+                                if (rayon2<Rcut&&delta<Tcut)
                                 {
-                                    rayon2 = sqrt((Xe[el]-xbb[ind])*(Xe[el]-xbb[ind])+((Ye[el]-ybb[ind])*(Ye[el]-ybb[ind])));
-                                    delta = sqrt((SX0-txbb[ind])*(SX0-txbb[ind])+((SY0-tybb[ind])*(SY0-tybb[ind])));
-                                    if (rayon2<Rcut&&delta<Tcut)
+                                    if (ok==0)
                                     {
-                                        if (ok==0)
-                                        {
-                                            ind = add[ii] + ii*eNTM;
+                                        ind = add[ii] + ii*eNTM;
 
-                                            xbb[ind] =  X0 ;
-                                            ybb[ind] =  Y0 ;
-                                            zbb[ind] =  Z0 ;
-                                            txbb[ind] =  SX0 ;
-                                            tybb[ind] =  SY0 ;
+                                        xbb[ind] =  X0 ;
+                                        ybb[ind] =  Y0 ;
+                                        zbb[ind] =  Z0 ;
+                                        txbb[ind] =  SX0 ;
+                                        tybb[ind] =  SY0 ;
 
-                                            a->SetIDb(ss->ID(),add[ii]);
-                                            a->SetPlateb(d,add[ii]);
-                                            a->SetXb(X0,add[ii]);
-                                            a->SetYb(Y0,add[ii]);
-                                            a->SetZb(Z0,add[ii]);
-                                            a->SetTXb(SX0,add[ii]);
-                                            a->SetTYb(SY0,add[ii]);
-                                            a->SetDeltarb(rayon2,add[ii]);
-                                            a->SetDelthetab(delta,add[ii]);
-                                            //a->SetNFilmb( index+1,add[ii]);
-                                            rr =  (Z0-a->GetZ0())/1273;
-                                            a->SetNFilmb(int(round(rr)+1),add[ii]);
+                                        a->SetIDb(ss->ID(),add[ii]);
+                                        a->SetPlateb(d,add[ii]);
+                                        a->SetXb(X0,add[ii]);
+                                        a->SetYb(Y0,add[ii]);
+                                        a->SetZb(Z0,add[ii]);
+                                        a->SetTXb(SX0,add[ii]);
+                                        a->SetTYb(SY0,add[ii]);
+                                        a->SetDeltarb(rayon2,add[ii]);
+                                        a->SetDelthetab(delta,add[ii]);
+                                        //a->SetNFilmb( index+1,add[ii]);
+                                        rr =  (Z0-a->GetZ0())/1273;
+                                        a->SetNFilmb(int(round(rr)+1),add[ii]);
 
-                                            if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
-                                            if (ss->MCEvt()<0) sigbb[ind] = 0;
-                                            chi2bb[ind] = ss->Chi2();
-                                            wbb[ind] = int(ss->W());
-                                            Pbb[ind] = ss->P();
-                                            Flagbb[ind] = ss->Flag();
-					    
-					    a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
-					    a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
-                                            ok =1;
-                                            add[ii]++;
-                                        }
-                                        else if (ok==1&&rayon2<a->GetDeltarb(add[ii]-1))
-                                        {
-                                            a->SetDeltarb(rayon2,add[ii]-1);
-                                            a->SetDelthetab(delta,add[ii]-1);
-                                        }
+                                        if (ss->MCEvt()==a->GetTrID()) sigbb[ind] = 1;
+                                        if (ss->MCEvt()<0) sigbb[ind] = 0;
+                                        chi2bb[ind] = ss->Chi2();
+                                        wbb[ind] = int(ss->W());
+                                        Pbb[ind] = ss->P();
+                                        Flagbb[ind] = ss->Flag();
+
+                                        a->SetmcDigitIndexTop(ss->MCEvt(),add[ii]);
+                                        a->SetmcDigitIndexBottom(ss->MCTrack(),add[ii]);
+                                        ok =1;
+                                        add[ii]++;
+                                    }
+                                    else if (ok==1&&rayon2<a->GetDeltarb(add[ii]-1))
+                                    {
+                                        a->SetDeltarb(rayon2,add[ii]-1);
+                                        a->SetDelthetab(delta,add[ii]-1);
                                     }
                                 }
                             }
                         }
                     }
+                }
                 //}
             }
             ii++;
@@ -1341,9 +1371,9 @@ void EdbShowerRec::recup(int num,int MAXPLATE,  int DATA, int Ncand, double *x0,
             deltathetab[j] = a->GetDeltathetab(j);
             nfilmb[j] = a->GetNFilmb(j);
             tagprimary[j] = 0;
-	    
-	    mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
-	    mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
+
+            mcDigitIndexTop[j] = a->GetmcDigitIndexTop(j);
+            mcDigitIndexBottom[j] = a->GetmcDigitIndexBottom(j);
 
 //      printf("txb[j]  %f\n", a->GetTXb(j));
 
@@ -2515,7 +2545,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     treesaveb3->Branch("purityb",&purityb,"purityb/F");
     treesaveb3->Branch("trackdensb",&trackdensb,"trackdensb/F");
     treesaveb3->Branch("tagprimary",tagprimary,"tagprimary[sizeb]/F");
-    
+
     treesaveb3->Branch("mcDigitIndexTop",mcDigitIndexTop,"mcDigitIndexTop[sizeb]/I");
     treesaveb3->Branch("mcDigitIndexBottom",mcDigitIndexBottom,"mcDigitIndexBottom[sizeb]/I");
 
@@ -4136,8 +4166,9 @@ void EdbShowerRec::Execute()
 
         // Add Shower Object to Shower Reco Array.
         // Not, if its empty or containing only one BT:
-        //if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
-        eRecoShowerArray->Add(RecoShower);
+        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+        // cout << "DEBUG_TEST    eRecoShowerArray->Add(RecoShower);" << endl;
+        // cout << "is eRecoShowerArray existing anyway??? " << eRecoShowerArray << endl;
 
         // Set back loop values:
         StillToLoop=kTRUE;
@@ -4602,8 +4633,8 @@ void EdbShowerRec::TransferTreebranchShowerTreeIntoShowerObjectArray(TTree* tree
     Float_t shower_deltasigmathetab[58];
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower
-    Int_t shower_mcDigitIndexTop[1000]; // 
-    Int_t shower_mcDigitIndexBottom[1000]; // 
+    Int_t shower_mcDigitIndexTop[1000]; //
+    Int_t shower_mcDigitIndexBottom[1000]; //
 
 
     // Set Addresses of treebranch tree:

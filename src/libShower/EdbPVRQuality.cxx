@@ -4190,7 +4190,7 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
 
 //___________________________________________________________________________________
 void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t DoResetHistos, Float_t weightXY) {
-    cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)" << endl;
+    //cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)" << endl;
 
     if (!eIsSource) {
         cout << "WARNING    EdbPVRQuality::FillHistosPattern  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
@@ -4317,7 +4317,7 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
     // dont...eHistTT->Reset();
     // dont...eHistChi2W->Reset();
 
-    cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)...done" << endl;
+    //cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)...done" << endl;
     return;
 }
 
