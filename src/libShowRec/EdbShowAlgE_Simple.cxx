@@ -112,8 +112,8 @@ void EdbShowAlgE_Simple::Set0()
 
     // Reset "eEfficiencyParametrisation" to the "Neuch" eff.
     cout << "EdbShowAlgE_Simple::Set0()   Reset to the Neuch eff." << endl;
-    Double_t xarr[6]={0,0.1,0.2,0.3,0.4,0.5};
-    Double_t yarr[6]={0.95,0.9,0.80,0.75,0.6,0.5};
+    Double_t xarr[6]= {0,0.1,0.2,0.3,0.4,0.5};
+    Double_t yarr[6]= {0.95,0.9,0.80,0.75,0.6,0.5};
     delete eEfficiencyParametrisation;
     eEfficiencyParametrisation = new TSpline3("",xarr,yarr,5,0,0,0.6);
     cout << "EdbShowAlgE_Simple::Set0()   Reset to the Neuch eff. ...done." << endl;
@@ -177,8 +177,8 @@ void EdbShowAlgE_Simple::Init()
     // Standard supposed efficiency of the showers/tracks that are to be evaluated:
     // The correct EffFunc_* is then choosen by taking the closes eff func to that one.
     // Initial parameters are the efficiency parameters for the "Neuch" parametrisation
-    Double_t xarr[7]={0,0.1,0.2,0.3,0.4,0.5,0.6};
-    Double_t yarr[7]={0.95,0.9,0.80,0.75,0.6,0.5,0.4};
+    Double_t xarr[7]= {0,0.1,0.2,0.3,0.4,0.5,0.6};
+    Double_t yarr[7]= {0.95,0.9,0.80,0.75,0.6,0.5,0.4};
     delete eEfficiencyParametrisation;
     eEfficiencyParametrisation = new TSpline3("",xarr,yarr,5,0,0,0.65);
 
@@ -221,6 +221,7 @@ void EdbShowAlgE_Simple::Init()
 
 void EdbShowAlgE_Simple::InitStrings()
 {
+    cout << "EdbShowAlgE_Simple::InitStrings()"<< endl;
     eSpecificationTypeStringArray[0][0]="LT";
     eSpecificationTypeStringArray[0][1]="CP";
     eSpecificationTypeStringArray[1][0]="GAMMA";
@@ -254,7 +255,7 @@ void EdbShowAlgE_Simple::CreateANN()
     // see ePlateBinning[]
 
     for (int k=0; k<15; k++) {
-        //cout << "creatin ANN " << k << endl;
+        //cout << "creating ANN " << k << endl;
         ANN_Layout="";
         ANN_n_InputNeurons_ARRAY[k]=6+ePlateBinning[k];
         ANN_n_InputNeurons=ANN_n_InputNeurons_ARRAY[k];
@@ -338,8 +339,8 @@ void EdbShowAlgE_Simple::DoRun(EdbTrackP* shower)
 
     int EffNr=FindClosestEfficiencyParametrization(eParaShowerAxisAngle,eEfficiencyParametrisation->Eval(eParaShowerAxisAngle));
 
-    // Check If Efficiency is the one we have or if we have to change/reload
-    // the ANN weightfiles:
+    // Check if efficiency is the one we have or
+    // if we have to change/reload the ANN weightfiles:
     if (GetSpecType(2)!=EffNr) {
         cout << "EdbShowAlgE_Simple::DoRun()   Hello! Calulated Efficiency is more compatible with another one: Change Specifiaction! Call SetSpecificationType(2,"<< EffNr <<")." << endl;
         SetSpecificationType(2,EffNr);
@@ -347,8 +348,8 @@ void EdbShowAlgE_Simple::DoRun(EdbTrackP* shower)
 
 
 
-    // This is to select the suited ANN to the shower, i.e. the one that matches closest
-    // the number of plates:
+    // This is to select the suited ANN to the shower, i.e.
+    // the one that matches closest the number of plates:
     int check_Npl_index	=0;
     GetNplIndexNr(shower->Npl(),check_Npl_index,ePlateNumberType);
 
@@ -372,7 +373,7 @@ void EdbShowAlgE_Simple::DoRun(EdbTrackP* shower)
     }
 
 
-    // inANN[0] is ALWAYS Reseverd for the quantity value to be estimated
+    // inANN[0] is ALWAYS reserved for the quantity value to be estimated
     // (E,Id,...)
     // Test with private variables:
     inANN[1]=eParaShowerAxisAngle;
@@ -421,7 +422,7 @@ void EdbShowAlgE_Simple::DoRun(EdbTrackP* shower)
 
 
     // ---------------------------------
-    // Evaluation of the statistical andsystematical errors by lookup tables and splines:
+    // Evaluation of the statistical and systematical errors by lookup tables and splines:
     // For further info and more details, I will report the methology in the thesis, and at
     // some next collaboration meetings.. (As of october 2010,fwm.)
     TSpline3* spline;
@@ -441,15 +442,15 @@ void EdbShowAlgE_Simple::DoRun(EdbTrackP* shower)
     cout << "Float_t val_sigma_tot=...  "  << val_sigma_tot << endl;
 
 
-    cout << "Doing only statistics and one source of systematicsat the moment! " << endl;
+    cout << "Doing only statistics and one source of systematics at the moment! " << endl;
     cout << "Notice also that we dont have storage variable in EdbTrackP for the error of P() ... " << endl;
     // ---------------------------------
 
     // Quick Estimation of the sigma (from ANN_MEGA_ENERGY)
     // This is later to be read from a lookup table....
-    if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! Sigma ONLY FROM STATISTICAL UNCERTATINTY NOWNOT correctly set up to now."<<endl;
-    if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! Sigma will be fully implemented when lookup tables for all"<<endl;
-    if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! systematic uncertainties are availible!"<<endl;
+    if (gEDBDEBUGLEVEL >1) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! Sigma ONLY FROM STATISTICAL UNCERTATINTY NOWNOT correctly set up to now."<<endl;
+    if (gEDBDEBUGLEVEL >1) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! Sigma will be fully implemented when lookup tables for all"<<endl;
+    if (gEDBDEBUGLEVEL >1) cout << "EdbShowAlgE_Simple::DoRun()   ERROR! systematic uncertainties are availible!"<<endl;
     if (gEDBDEBUGLEVEL >1) cout << "EdbShowAlgE_Simple::DoRun()   Estimated Energy = " << val << " +- " << val_sigma_tot  << "..." << endl;
 
 
@@ -638,6 +639,7 @@ void EdbShowAlgE_Simple::GetNplIndexNr(Int_t check_Npl,Int_t &check_Npl_index, I
 
 void EdbShowAlgE_Simple::GetSpecifications() {
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowAlgE_Simple::GetSpecifications" << endl;
+    cout << "EdbShowAlgE_Simple::GetSpecifications ... nothing done here yet ... " << endl;
     return;
 }
 
@@ -1449,8 +1451,8 @@ void EdbShowAlgE_Simple::ReadTables_Energy()
     Int_t   	E_ASCEND[12]  = {0,4,1,5,2,6,3,7,8,9,10,11};
     Int_t npl;
     Float_t energyresolution;
-    Double_t E_Array_Ascending[12]={0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0};
-    Double_t E_Resolution[12]={0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0}; // initialize with 100% resolution...
+    Double_t E_Array_Ascending[12]= {0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0};
+    Double_t E_Resolution[12]= {0.5,0.75,1.0,1.5,2.0,3.0,4.0,6.0, 8.0, 16.0, 32.0 ,64.0}; // initialize with 100% resolution...
 
     // First Create the ObjArray storing the Splines...
     eSplineArray_Energy_Stat_Electron = new TObjArray();

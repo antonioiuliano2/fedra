@@ -154,7 +154,8 @@ void EdbShowAlgID_E_G_Simple::Execute()
         shower->Print();
 
         shower->BuildParametrisation_FJ();
-        EdbShowerP::Para_FJ 			eShowAlgE_Para_FJ=shower->GetPara_FJ();
+        EdbShowerP::Para_FJ eShowAlgE_Para_FJ=shower->GetPara_FJ();
+// 	Para_FJ 			eShowAlgE_Para_FJ=shower->GetPara_FJ();
         shower->PrintParametrisation_FJ();
 
         cout << "shower->Npl()  " << shower->Npl()  << endl;
@@ -198,7 +199,7 @@ void EdbShowAlgID_E_G_Simple::Execute()
         cout << "Using the following layout: " << ANN_MLP->GetStructure() << endl;
         ANN_MLP->Print();
 
-        // inANN[0] is ALWAYS Reseverd for the quantity value to be estimated
+        // inANN[0] is ALWAYS reserved for the quantity value to be estimated
         // (E,Id,...)
 
         inANN[1]=eShowAlgE_Para_FJ.ShowerAxisAngle;

@@ -75,8 +75,8 @@ private:
     Bool_t             eShowAlgArrayLoaded;
     Int_t              eShowAlgArrayMaxSize;
     // TObjArray storing reconstructed showers (objects of EdbShowerP class):
-    TObjArray* 				 eRecoShowerArray;
-    Int_t	    				 eRecoShowerArrayN;
+    TObjArray*	eRecoShowerArray;
+    Int_t	 eRecoShowerArrayN;
 
     // TTree storing reconstructed showers  (objects of "treebranch" TTree, when reading Shower.root file):
     //                                      (backward compability)
@@ -496,7 +496,7 @@ public:
         for (int i=0; i<GetRecoShowerArrayN(); ++i) GetShower(i)->Update();
     }
     inline void UpdateX() {
-        cout << "EdbShowRec::Update ONLY showers!"<< endl;
+        cout << "EdbShowRec::Update all showers and build their parametrisations!"<< endl;
         for (int i=0; i<GetRecoShowerArrayN(); ++i) GetShower(i)->UpdateX();
     }
 
@@ -538,16 +538,24 @@ public:
     void      WriteParametrisation_YY(); //5
     ///void      WriteParametrisation_PP(); //6
     void      WriteParametrisation_AS(); //7
-    void  		WriteParametrisation_SE(); //8
+    void      WriteParametrisation_SE(); //8
 
     void      WriteParametrisation_ExtraInfo();
 
     // Make MCInfo structures for the stored showers in the eRecoShowerArray:
-    void              BuildParametrizationsMCInfo(TString MCInfoFilename, Int_t type);
-    void              BuildParametrizationsMCInfo_PGun(TString MCInfoFilename);
-    void              BuildParametrizationsMCInfo_Event(TString MCInfoFilename);
-    void              WriteParametrisation_MCInfo_PGun();
-    void 	      ExtendParametrisation_ExtraInfo(); // works only if there is a WriteParametrisation_MCInfo_PGun done.
+    void    BuildParametrizationsMCInfo(TString MCInfoFilename, Int_t type);
+    void    BuildParametrizationsMCInfo_PGun(TString MCInfoFilename);
+    void    BuildParametrizationsMCInfo_Event(TString MCInfoFilename);
+    void    WriteParametrisation_MCInfo_PGun();
+    void    ExtendParametrisation_ExtraInfo(); // works only if there is a WriteParametrisation_MCInfo_PGun done.
+
+
+    // Write Reconstructed Showers to File:
+    void    WriteRecoShowerArray(TObjArray* RecoShowerArray);
+    /// NOT WORKLING YET::::  still segmentation faults..../// solved but i dont know why....
+    /// still crashing ...
+    /// Test without writing the TTree:
+    void WriteRecoShowerArrayWithoutTTree(TObjArray* RecoShowerArray );
 
 
     // File Status Functions

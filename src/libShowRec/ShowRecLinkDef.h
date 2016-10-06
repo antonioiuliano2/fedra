@@ -6,6 +6,24 @@
 
 #pragma link C++ class EdbShowRec;
 #pragma link C++ class EdbShowerP;
+#pragma link C++ class EdbShowerP::Para_FJ;
+#pragma link C++ class EdbShowerP::Para_LT;
+#pragma link C++ class EdbShowerP::Para_YC;
+#pragma link C++ class EdbShowerP::Para_JC;
+#pragma link C++ class EdbShowerP::Para_XX;
+#pragma link C++ class EdbShowerP::Para_YY;
+#pragma link C++ class EdbShowerP::Para_PP;
+#pragma link C++ class EdbShowerP::Para_AS;
+#pragma link C++ class EdbShowerP::Para_SE;
+#pragma link C++ class EdbShowerP::Para_ExtraInfo;
+#pragma link C++ class EdbShowerP::MCInfo_PGun;
+#pragma link C++ class EdbShowerP::MCInfo_Event;
+#pragma link C++ class EdbShowerP::Reco_ID;
+#pragma link C++ class EdbShowerP::Reco_E;
+#pragma link C++ class EdbShowerP::Reco_Vtx;
+
+
+
 
 #pragma link C++ class EdbShowAlg;
 #pragma link C++ class EdbShowAlg_SA;

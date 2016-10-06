@@ -18,7 +18,9 @@
 #include "EdbPattern.h"
 
 class EdbShowerP;
+
 using namespace std;
+
 
 
 //______________________________________________________________________________
@@ -33,7 +35,7 @@ private:
     TString      eLongitudinalProfileName;
     TString      eTransversalProfileName;
 
-    // To know which Alg and Parameters were used for this shower o be reconstructed:
+    // To know which Algorithm and Parameters were used for this shower to be reconstructed:
     TString      eAlgName;
     Int_t        eAlgValue;
     Float_t      eParaValue[10];
@@ -93,6 +95,13 @@ private:
     EdbSegP*      eShowerAxisCenterGravityBT;
 
 
+    // Histogram of all segments deviation: TX_showeraxis-TX_segment, and for TY
+    Float_t	eShowerAngularDeviationTXDistribution_mean;
+    Float_t	eShowerAngularDeviationTXDistribution_sigma;
+    Float_t	eShowerAngularDeviationTYDistribution_mean;
+    Float_t	eShowerAngularDeviationTYDistribution_sigma;
+
+
     //-C- shower data (extracted from shower characteristics) here:
     Short_t       eId;
     Short_t       ePDGId;
@@ -140,6 +149,8 @@ public:
         Float_t   BT_deltaT_mean;
         Float_t   BT_deltaT_rms;
         Int_t     longprofile[57]; // not identical to the ProfileLongitudinalBincontent of Para_YY !!
+
+        ClassDef (Para_FJ,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_LT {
         // Variables used for LT ( "L_ongitudinal & T_ransversal" ) parametrisation
@@ -152,6 +163,8 @@ public:
         Float_t   BT_deltaT_rms;
         Int_t   transprofile[8];
         Int_t   longprofile[57]; // not identical to the ProfileLongitudinalBincontent of Para_YY !!
+
+        ClassDef (Para_LT,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_YC {
         // Variables used for YC ( "Y_van C_affari" ) like parametrisation
@@ -161,6 +174,8 @@ public:
         Float_t   a1;
         Float_t   alpha;
         Float_t   nmax;
+
+        ClassDef (Para_YC,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_JC {
         // Variables used for JC ( "J_uget C_affari" ) like parametrisation
@@ -179,6 +194,8 @@ public:
         Float_t   BT_deltaT_mean;
         Float_t   BT_deltaT_rms;
         Int_t     longprofile[57]; // not identical to the ProfileLongitudinalBincontent of Para_YY !!
+
+        ClassDef (Para_JC,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_XX {
         // Variables used for XX parametrisation
@@ -192,6 +209,8 @@ public:
         Float_t   Max_ProfileTransversal;
         Float_t   Last_ProfileLongitudinal;
         Float_t   Last_ProfileTransversal;
+
+        ClassDef (Para_XX,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_YY {
         // Variables used for YY parametrisation
@@ -199,6 +218,8 @@ public:
         Int_t     nseg;  // identical to <<eNBT>>
         Int_t     ProfileLongitudinalBincontent[57];
         Int_t     ProfileTransversalBincontent[8];
+
+        ClassDef (Para_YY,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_PP {
         // Variables used for PP ( "P_hoton P_arametrisation" ) parametrisation
@@ -208,6 +229,8 @@ public:
         Float_t   ePairOpeningDist_dMin;
         Float_t   ePairOpeningDist_dR;
         Float_t   ePairChi2;
+
+        ClassDef (Para_PP,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_AS {
         // Variables used for AS ( "A_ll S_egemts" ) parametrisation
@@ -218,6 +241,8 @@ public:
         Double_t edRTrans[50];
         Double_t edeltarb[50];
         Double_t edeltathetab[50];
+
+        ClassDef (Para_AS,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_SE {
         // Variables used for SE ( "S_imple E_asy" ) like parametrisation
@@ -225,6 +250,8 @@ public:
         Int_t     nseg;  // identical to <<eNBT>>
         Int_t     npl;   // identical to <<eNPl>>
         Float_t   efficiencyAtShowerAxisAngle;
+
+        ClassDef (Para_SE,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct Para_ExtraInfo {
         // Parametrisation Variables to store some extraInfo for the shower, which
@@ -235,8 +262,9 @@ public:
         Int_t   ShowerLength;   // max of Z()max -Z()min over all segments
         Float_t    InBT_IPToVtx; // IP from InBT to generic vertex. Commonly used: Vertex of G4 position vertex.
         Float_t    InBT_DeltaZToVtx; // DeltaZ from InBT to generic vertex. Commonly used: Vertex of G4 position vertex.
-    };
 
+        ClassDef (Para_ExtraInfo,1) // maybe it works, when writing //ClassDef hereafter....?
+    };
     struct MCInfo_PGun {
         // Variables MCInfo_PGun to get MC data from the simulation by MC info.
         // Use this when the simulation was done with G4Particle generator
@@ -260,11 +288,16 @@ public:
         Float_t Z;
         // These are the values for the incident particle! If its a gamma, for example,
         // the do not necessarily coincide with these from the shower! Remember!
+
+        ClassDef (MCInfo_PGun,1) // maybe it works, when writing //ClassDef hereafter....?
     };
     struct MCInfo_Event {
         // Variables MCInfo_PGun to get MC data from the simulation by MC info.
         // Use this when the simulation was done with G4 Dario generator
         // And the corresponding outputfile is in FWM like format.
+        Int_t       eDUMMYVARIABLE; // not yet used.
+
+        ClassDef (MCInfo_Event,1) // maybe it works, when writing //ClassDef hereafter....?
     };
 
 
@@ -280,6 +313,8 @@ public:
         Float_t eReco_ID_Nr;  //=  0;
 
         Int_t    eParaNr; // refers to labelling of Parametrisations (0==FJ,1==YC...)
+
+        ClassDef (Reco_ID,1) // maybe it works, when writing //ClassDef hereafter....?
     };
 
     // General Implementation of the Reco_E structure:
@@ -295,14 +330,21 @@ public:
         Float_t       eEnergyUncorrected;
         Float_t       eEnergyCorrected;
         Int_t    eParaNr; // refers to labelling of Parametrisations (0==FJ,1==YC...)
+
+        ClassDef (Reco_E,1) // maybe it works, when writing //ClassDef hereafter....?
     };
 
     // General Implementation of the Reco_Vtx structure:
     // Dummy structure...to be specified later....
     struct Reco_Vtx {
-        Short_t       eDUMMYVARIABLE; // not yet used.
+        Int_t       eDUMMYVARIABLE; // not yet used.
+
+        ClassDef (Reco_Vtx,1) // maybe it works, when writing //ClassDef hereafter....?
     };
 
+
+    // Object for the shower class description
+    // which contain additional information...
     Para_FJ     ePara_FJ;
     Para_LT     ePara_LT;
     Para_YC     ePara_YC;
@@ -319,10 +361,12 @@ public:
     MCInfo_PGun    eMCInfo_PGun;
     MCInfo_Event   eMCInfo_Event;
 
-    TObjArray*  eReco_ID_Array;
-    TObjArray*  eReco_E_Array;
-    TObjArray*  eReco_Vtx_Array;
+    TObjArray*  eReco_ID_Array; // create crash when not initialized??? yes, so better initialize it
+    TObjArray*  eReco_E_Array; // even when  not yet needed....
+    TObjArray*  eReco_Vtx_Array; // implementation will come later ...
 
+
+    void        Init();
     void        Set0();
     EdbTrackP   *TrackAS() const {
         return eTrackAS;
@@ -420,7 +464,7 @@ public:
     }
 
 
-    // Having EdbShowerP specific functions in it (no EdbTrackP euivalent here)
+    // Having EdbShowerP specific functions in it (no EdbTrackP equivalent here)
 
     // Gravity Center, Axis:
     inline EdbSegP* GetSegmentGravity()  const {
@@ -579,6 +623,8 @@ public:
 
     void  CalcPurity();
     void  CalcSphericity();
+    void  CalcShowerAngularDeviationDistribution();
+
 
     Float_t  CalcOpenAngle(Int_t type);
     Float_t  CalcOpenAngleSimple();
@@ -597,7 +643,7 @@ public:
     void  MergeFromShower(EdbShowerP* show,Int_t MergingType=1);
     void  MergeFromShowerByAddress(EdbShowerP* show);
     void  MergeFromShowerByPosition(EdbShowerP* show);
-    void AddShower(EdbShowerP* show); // calls MergeFromShower...
+    void  AddShower(EdbShowerP* show); // calls MergeFromShower...
     void  Finalize();  /// Delete the histograms only... /// ----   EXPERIMENTAL STATUS ---
     /// ----   EXPERIMENTAL STATUS ---
 
@@ -625,7 +671,8 @@ public:
     //-C- HELP function , in case you dont know anything about it .....
     void Help();
 
-    ClassDef(EdbShowerP,1);         // Root Class Definition for my Objects
+    ClassDef(EdbShowerP,1)         // Root Class Definition for object EdbShowerP
+
 };
 
 #endif /* ROOT_EdbShowerP */

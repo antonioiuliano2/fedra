@@ -106,8 +106,10 @@ void EdbShowAlgE::Set0()
     eDoANNTrain=kFALSE;
     eDoANNRun=kFALSE;
 
+    cout << " Test if Neural Network is loaded: " << endl;
     if (!gROOT->GetClass("TMultiLayerPerceptron")) cout << "NOT"<<endl;
     if (gROOT->GetClass("TMultiLayerPerceptron")) cout << "YES"<<endl;
+    cout << " So now we know if the TMultiLayerPerceptron class is loaded... " << endl;
 
     eMLP_Simple=0;
     eMLP_Layout="";
@@ -155,8 +157,8 @@ void EdbShowAlgE::Set0()
 void EdbShowAlgE::Init()
 {
     cout << "EdbShowAlgE::Init()"<<endl;
-    //  default ShowAlge name is set to "XX" ( cause it is implemented now.)
-    //  later its gonna be "FJ"
+    //  default ShowAlge name is set to "XX" (cause it is implemented now.)
+    //  later its gonna be "FJ".. or the one parametrisation, which performs best.
     eShowAlgEParaName="XX";
     eShowAlgEParaNr=4;
 

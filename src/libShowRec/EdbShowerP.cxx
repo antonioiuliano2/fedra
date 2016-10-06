@@ -10,7 +10,10 @@ using namespace TMath;
 EdbShowerP::EdbShowerP(int nseg)
 {
     if (gEDBDEBUGLEVEL>4) cout << "EdbShowerP::EdbShowerP(int nseg)   CONSTRUCTOR" << endl;
+
+
     // default constructor, empty shower
+    Init();
     SetNpl(-999);
     SetN0(-999);
     Set0();
@@ -49,6 +52,7 @@ EdbShowerP::EdbShowerP(int number1, int number2, int number3, int nseg)
     }
 
     // default constructor, empty shower
+    Init();
     SetNpl(-999);
     SetN0(-999);
     Set0();
@@ -94,7 +98,26 @@ EdbShowerP::~EdbShowerP()
         delete eShowerAxisCenterGravityBT;
         eShowerAxisCenterGravityBT=0;
     }
+
+    delete eReco_ID_Array;
+    delete eReco_E_Array;
+    delete eReco_Vtx_Array;
+
     if (gEDBDEBUGLEVEL>4)  cout<<"EdbShowerP::~EdbShowerP()   DESTRUCTOR...done."<<endl;
+}
+
+
+//______________________________________________________________________________
+
+void EdbShowerP::Init()
+{
+    // Default Init function:
+    // all Objects persistently there, created with a "new" operator,
+    // i.e. objects which are created only once..
+    eReco_ID_Array = new TObjArray; // create crash when not initialized???
+    eReco_E_Array = new TObjArray;
+    eReco_Vtx_Array = new TObjArray;
+
 }
 
 //______________________________________________________________________________
@@ -140,6 +163,10 @@ void EdbShowerP::Set0()
     eProfileLongitudinal=0;
     eProfileTransversal=0;
     eSphericity=0;
+    eShowerAngularDeviationTXDistribution_mean = 0;
+    eShowerAngularDeviationTXDistribution_sigma = 0;
+    eShowerAngularDeviationTYDistribution_mean = 0;
+    eShowerAngularDeviationTYDistribution_sigma = 0;
     //-----
     for (int i=0; i<10; i++) eParametrisationIsDone[i]=kFALSE;
     for (int i=0; i<2; i++) {
@@ -213,18 +240,18 @@ void EdbShowerP::AddSegmentAndUpdate(EdbSegP *s)
 void EdbShowerP::RemoveSegment(EdbSegP *s, Bool_t UpdateAll)
 {
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()" << endl;
-    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()   object s* to  be removed " << s << endl;
-    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()   shower->N()" <<  N() << endl;
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()  Object s* to  be removed " << s << endl;
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()  shower->N() " <<  N() << endl;
     if (!eS) return;
     eS->Remove(s);
     eS->Compress();
     eNBT=N();
     // It is ABSOLUTELY Necessary to run Compress() on the object array. Otherwise the
-    // Removed object will stay as NullPointer. And then any operation on this
+    // removed object will stay as NullPointer. And then any operation on this
     // will lead to a crash! See:
     // http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=10371&p=44643#p44643
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()  Removal done. Adapt eNBT:" << endl;
-    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()   shower->N()" <<   N() << endl;
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::RemoveSegment()  shower->N() " <<   N() << endl;
     if (UpdateAll) Update();
     return;
 }
@@ -284,7 +311,6 @@ void EdbShowerP::BuildNMC()
 }
 
 //______________________________________________________________________________
-
 
 void EdbShowerP::BuildNplN0()
 {
@@ -353,8 +379,8 @@ void EdbShowerP::BuildProfiles()
     // TemporaryAxis=this->GetSegmentFirst();
     // TemporaryAxis->PrintNice();
 
-    // "check if first BT is uncahgned:
-    //cout << "check if first BT is uncahgned:" << endl;
+    // Check if first BT is unchanged:
+    //cout << "check if first BT is unchanged:" << endl;
     //this->GetSegment(0)->PrintNice();
 
     Float_t TransDist=0;
@@ -423,8 +449,8 @@ void EdbShowerP::BuildProfiles()
     //cout << "eProfileLongitudinal->Integral() =  " << eProfileLongitudinal->Integral()  << endl;
     //cout << "eProfileTransversal->Integral() =  " <<  eProfileTransversal->Integral() << endl;
 
-    // "check if first BT is uncahgned:
-    //cout << "check if first BT is uncahgned:" << endl;
+    // "check if first BT is unchanged:
+    //cout << "check if first BT is unchanged:" << endl;
     //this->GetSegment(0)->PrintNice();
 
     Log(3,"EdbShowerP::BuildProfiles()","BuildProfiles()...done.");
@@ -477,11 +503,11 @@ void EdbShowerP::BuildShowerAxis()
     // Code taken from EdbMath::LFIT3 to fit line to a collection of points in spce!
     //int EdbMath::LFIT3( float *X, float *Y, float *Z, float *W, int L,
     //float &X0, float &Y0, float &Z0, float &TX, float &TY, float &EX, float &EY )
-    // Linar fit in 3-d case (microtrack-like)
+    // Linear fit in 3-d case (microtrack-like)
     // Input: X,Y,Z - coords, W -weight - arrays of the lengh >=L
     // Note that X,Y,Z modified by function
     // Output: X0,Y0,Z0 - center of gravity of segment
-    // TX,TY : tangents in respect to Z axis
+    // TX,TY : direction tangents in respect to Z axis
 
     Float_t X0,Y0,Z0;
     Float_t TX,TY;
@@ -491,18 +517,18 @@ void EdbShowerP::BuildShowerAxis()
     // Compiled with -pedantic -Wall -W -Wstrict-prototypes this gives error message: Fehler: ISO-C++ verbietet Feld »x« variabler Länge
     // So we take it as fixed length:
     Float_t x[5000];
-    Float_t z[5000];
     Float_t y[5000];
+    Float_t tx[5000];
+    Float_t ty[5000];
+    Float_t z[5000];
     Float_t W[5000];
     Float_t sumTX=0;
     Float_t sumTY=0;
     Float_t sumW=0;
-    Float_t tx[5000];
-    Float_t ty[5000];
 
     // The weighting of the segments is a crucial point here, since it influences
     // the fitting to the shower axis!
-    // We choose the weighting with distance to Initator BT. so that large scattered BTs far off
+    // We choose the weighting with distance to Initator BT. So that large scattered BTs far off
     // do not contribute too much.
 
     // Attention: If the shower was ordered in such a way that this->GetSegment(0) is NOT the lowest Z in
@@ -534,6 +560,8 @@ void EdbShowerP::BuildShowerAxis()
         x[i]=0;
         y[i]=0;
         z[i]=0;
+        tx[i]=0;
+        ty[i]=0;
     }
 
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowerP::BuildShowerAxis()   Resting of initial values done."<< endl;
@@ -558,7 +586,7 @@ void EdbShowerP::BuildShowerAxis()
         eShowerAxisCenterGravityBT->SetMC(GetSegment(0)->MCEvt(),GetSegment(0)->MCEvt());
         eShowerAxisCenterGravityBT->SetPID(GetSegment(0)->PID());
         eShowerAxisAngle=TMath::Sqrt(TX0*TX0+TY0*TY0);
-        eShowerAxisCenterGravityBT->PrintNice();
+        //eShowerAxisCenterGravityBT->PrintNice();
         return;
     }
 
@@ -579,12 +607,11 @@ void EdbShowerP::BuildShowerAxis()
     eShowerAxisCenterGravityBT->SetZ(Z0);
     eShowerAxisAngle=TMath::Sqrt(TX*TX+TY*TY);
 
-    if (isnan(eShowerAxisAngle)) cout << "eShowerAxisAngle==isnan() " << endl;
-    if (isinf(eShowerAxisAngle)) cout << "eShowerAxisAngle==isinf() " << endl;
-
     // In this case, we take ShowerAxisAngle and eShowerAxisCenterGravityBT to be as the first starting BT:
     if (isnan(eShowerAxisAngle) || isinf(eShowerAxisAngle) )  {
         if (gEDBDEBUGLEVEL>3) {
+            if (isnan(eShowerAxisAngle)) cout << "eShowerAxisAngle==isnan() " << endl;
+            if (isinf(eShowerAxisAngle)) cout << "eShowerAxisAngle==isinf() " << endl;
             cout << "In this case, we take ShowerAxisAngle and eShowerAxisCenterGravityBT to be as the first starting BT"<<endl;
             cout << " Shower->N(): " << N() << endl;
         }
@@ -605,6 +632,40 @@ void EdbShowerP::BuildShowerAxis()
     return;
 }
 
+
+//______________________________________________________________________________
+
+
+void EdbShowerP::CalcShowerAngularDeviationDistribution()
+{
+    Log(3,"EdbShowerP::CalcShowerAngularDeviationDistribution()","CalcShowerAngularDeviationDistribution()");
+
+    // First check if shower axis has been built:
+    if (!eShowerAxisCenterGravityBT) BuildShowerAxis();
+
+    // Loop over all tracks of the shower, for each one calc TX, TY - TXY_gravity center
+    Double_t deltaTX,deltaTY;
+    TH1F histDeltaTX("histDeltaTX","histDeltaTX",100,-0.5,0.5);
+    TH1F histDeltaTY("histDeltaTY","histDeltaTY",100,-0.5,0.5);
+
+    // Loop over all tracks of the shower, for each one calc TX, TY - TXY_gravity center
+    // If eShowerAxisCenterGravityBT is first BT in shower (because fit did not work, or
+    // just two segments on same z) then the first one entry in deltaTXY is always zero
+    for (Int_t i=0; i<eNBT; ++i) {
+        deltaTX=GetSegment(i)->TX()-eShowerAxisCenterGravityBT->TX();
+        deltaTY=GetSegment(i)->TY()-eShowerAxisCenterGravityBT->TY();
+        histDeltaTX.Fill(deltaTX);
+        histDeltaTY.Fill(deltaTY);
+    }
+    // Get mean and sigma of these distributions.
+    eShowerAngularDeviationTXDistribution_mean = histDeltaTX.GetMean();
+    eShowerAngularDeviationTXDistribution_sigma = histDeltaTX.GetRMS();
+    eShowerAngularDeviationTYDistribution_mean = histDeltaTY.GetMean();
+    eShowerAngularDeviationTYDistribution_sigma = histDeltaTY.GetRMS();
+
+    Log(3,"EdbShowerP::CalcShowerAngularDeviationDistribution()","CalcShowerAngularDeviationDistribution()...done");
+    return;
+}
 
 
 //______________________________________________________________________________
@@ -825,6 +886,7 @@ void EdbShowerP::Update()
     this->BuildPlateProfile();
     this->BuildNplN0();
     this->CalcPurity();
+    CalcShowerAngularDeviationDistribution();
     Log(3,"EdbShowerP::Update()","Update()...done.");
 
     // Maybe we should put the BuildParametrisations right now also in here?

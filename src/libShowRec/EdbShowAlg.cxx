@@ -822,12 +822,12 @@ void EdbShowAlg_CA::Execute()
 
 // Create new EdbShowerP Object for storage;
 // See EdbShowerP why I have to call the Constructor as "unique" ideficable value
-        cout << "Create new EdbShowerP Object for storage."<<endl;
-        cout << i << endl;
-        cout << eAlgValue << endl;
-        cout << eActualAlgParametersetNr << endl;
+        // cout << "Create new EdbShowerP Object for storage."<<endl;
+        // cout << i << endl;
+        // cout << eAlgValue << endl;
+        // cout << eActualAlgParametersetNr << endl;
         RecoShower = new EdbShowerP(i,eAlgValue,eActualAlgParametersetNr);
-        cout << "Create new EdbShowerP Object for storage;...done."<<endl;
+        // cout << "Create new EdbShowerP Object for storage;...done."<<endl;
 
 // Get InitiatorBT from eInBTArray
         InBT=(EdbSegP*)eInBTArray->At(i);
@@ -846,8 +846,8 @@ void EdbShowAlg_CA::Execute()
         Transform_eAli(InBT);
         if (gEDBDEBUGLEVEL>3) eAli_Sub->Print();
 
-        cout << "  eAli_Sub->GetPattern(eFirstPlate_eAliPID)->Z()   =  " <<  eAli_Sub->GetPattern(eFirstPlate_eAliPID)->Z()   << endl;
-        cout << "  eAli_Sub->GetPattern(eLastPlate_eAliPID)->Z()   =  " <<  eAli_Sub->GetPattern(eLastPlate_eAliPID)->Z()   << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "  eAli_Sub->GetPattern(eFirstPlate_eAliPID)->Z()   =  " <<  eAli_Sub->GetPattern(eFirstPlate_eAliPID)->Z()   << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "  eAli_Sub->GetPattern(eLastPlate_eAliPID)->Z()   =  " <<  eAli_Sub->GetPattern(eLastPlate_eAliPID)->Z()   << endl;
 
 
 //-----------------------------------
