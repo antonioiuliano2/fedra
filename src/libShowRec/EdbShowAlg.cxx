@@ -52,6 +52,7 @@ EdbShowAlg::~EdbShowAlg()
 void EdbShowAlg::Set0()
 {
 // Reset all internal variables.
+    eParaN =10; // depends on the algorithm, how much parameters it has got. to be set in the constructor of the specific class...
     eAlgName="UNSPECIFIED";
     eAlgValue=-999999;
     for (int i=0; i<10; ++i) {
@@ -241,7 +242,7 @@ Bool_t EdbShowAlg::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegmen
 // by the StartingBaseTrack. In case of starting same Z position, a distance cut of
 // 20microns is assumed....
 // In case of  TestingSegment==StartingSegment this function should correctly return kTRUE also...
-    if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowAlg::IsInConeTube() Test Segment " << TestingSegment << " vs. Starting Segment " << StartingSegment << endl;
+    //if (gEDBDEBUGLEVEL>3) cout << "Bool_t EdbShowAlg::IsInConeTube() Test Segment " << TestingSegment << " vs. Starting Segment " << StartingSegment << endl;
 
 // We reject any TestingSegment segments which have lower Z than the StartingSegment .
     if (StartingSegment->Z()>TestingSegment->Z() ) return kFALSE;
@@ -306,7 +307,6 @@ Bool_t EdbShowAlg::IsInConeTube(EdbSegP* TestingSegment, EdbSegP* StartingSegmen
 
 void EdbShowAlg::Initialize()
 {
-
     return;
 }
 //______________________________________________________________________________
@@ -321,7 +321,6 @@ void EdbShowAlg::Execute()
 
 void EdbShowAlg::Finalize()
 {
-
     return;
 }
 
@@ -329,12 +328,19 @@ void EdbShowAlg::Finalize()
 
 void EdbShowAlg::Print()
 {
-    cout << "EdbShowAlg::Print()" << endl;
-    cout << eAlgName << "  ;  AlgValue=  " <<  eAlgName << "  ." << endl;
-    for (int i=0; i<10; i++) cout << eParaString[i] << "=" << eParaValue[i] << ";  ";
-    cout << eFirstPlate_eAliPID << "  " <<  eLastPlate_eAliPID << "  " << eMiddlePlate_eAliPID << "  " << eNumberPlate_eAliPID << "  " << endl;
-    cout << "UseAliSub=  " <<  eUseAliSub << "  ." << endl;
-    cout << "EdbShowAlg::Print()...done." << endl;
+    Log(2,"EdbShowAlg::Print()","Print relevant settings for shower reconstruction algorithm");
+
+    Log(2,"EdbShowAlg::Print()","Algorithm name abbreviation: %s", eAlgName.Data() );
+    Log(2,"EdbShowAlg::Print()","Algorithm number (internal): %2d", eAlgValue );
+
+    Log(2,"EdbShowAlg::Print()","Algorithm parameters N:      %2d", eParaN );
+    for (int i=0; i<eParaN; i++) Log(2,"EdbShowAlg::Print()","Algorithm parameter: number, name, value:  %d, %40s, %.04f", i, eParaString[i].Data(), eParaValue[i] );
+
+//     cout << "Plates: " << endl;
+//     cout << eFirstPlate_eAliPID << "  " <<  eLastPlate_eAliPID << "  " << eMiddlePlate_eAliPID << "  " << eNumberPlate_eAliPID << "  " << endl;
+//     cout << "UseAliSub=  " <<  eUseAliSub << "  ." << endl;
+//     cout << "EdbShowAlg::Print()...done." << endl;
+    Log(2,"EdbShowAlg::Print()","Print relevant settings for shower reconstruction algorithm...done.");
     return;
 }
 
@@ -342,10 +348,7 @@ void EdbShowAlg::Print()
 
 void EdbShowAlg::PrintParameters()
 {
-    cout << "EdbShowAlg::PrintParameters()" << endl;
-    cout << eAlgName<< " :";
-    for (int i=0; i<5; i++) cout << setw(6) << eParaValue[i];
-    cout <<  "."<<endl;
+    Print();
     return;
 }
 
@@ -476,7 +479,7 @@ void EdbShowAlg::Help()
     cout << endl;
     cout << "  What can we do with this?" << endl;
     cout << "        First of all, you can choose different types of algos:" << endl;
-    cout << "        ShowAlg_OI" << endl;
+    cout << "        ShowAlg_OI (default)" << endl;
     cout << "        ShowAlg_AS" << endl;
     cout << "        ShowAlg_RC" << endl;
     cout << "        ShowAlg_TC" << endl;
@@ -525,13 +528,14 @@ void EdbShowAlg::Help()
 EdbShowAlg_SA::EdbShowAlg_SA()
 {
 // Default Constructor
-    cout << "EdbShowAlg_SA::EdbShowAlg_SA()   Default Constructor"<<endl;
+    cout << "EdbShowAlg_SA::EdbShowAlg_SA()   Default Constructor   SA stands for ?????? To be filled..."<<endl;
 
 // Reset all:
     Set0();
 
     eAlgName="SA";
-    eAlgValue=5; // see default.par_SHOWREC for labeling (lableing identical with ShowRec program)
+    eAlgValue=5; // see default.par_SHOWREC for labeling (labling identical with ShowRec program)
+    eParaN =2; // depends on the algorithm, how much parameters it has got.
 
 // Set the two Cuts and their names:
     Init();
@@ -552,7 +556,7 @@ void EdbShowAlg_SA::Init()
 {
     Log(2,"EdbShowAlg_SA::EdbShowAlg_SA","Init()");
 
-//  Init with values according to NN Alg:
+//  Init with values according to ?? Alg:
 
 // threshold cut on s->P()
     eParaValue[0]=0;
@@ -561,7 +565,6 @@ void EdbShowAlg_SA::Init()
 // size cut on the eAliSub to choose
     eParaValue[1]=1000;
     eParaString[1]="EXTRACTIONSIZE";
-
 
     return;
 }
@@ -671,16 +674,16 @@ void EdbShowAlg_SA::Execute()
 // This if holds in the case of STEP== +1
             if (STEP==1) {
                 if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_SA::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_SA::Execute--- ---Stop Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
             }
 // This if holds in the case of STEP== -1
             if (STEP==-1) {
                 if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_SA::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_SA::Execute--- ---Stop Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
             }
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
-            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_SA::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
+            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_SA::Execute--- ---Stop Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
@@ -747,6 +750,7 @@ EdbShowAlg_CA::EdbShowAlg_CA()
 
     eAlgName="CA";
     eAlgValue=2; // see default.par_SHOWREC for labelling
+    eParaN =4; // depends on the algorithm, how much parameters it has got.
 
     eParaValue[0]=700;
     eParaString[0]="CylinderRadius";  // micrometer
@@ -903,16 +907,16 @@ void EdbShowAlg_CA::Execute()
 // This if holds in the case of STEP== +1
             if (STEP==1) {
                 if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_CA::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_CA::Execute--- ---Stop Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
             }
 // This if holds in the case of STEP== -1
             if (STEP==-1) {
                 if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_CA::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_CA::Execute--- ---Stop Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
             }
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
-            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_CA::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
+            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_CA::Execute--- ---Stop Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
@@ -1119,14 +1123,15 @@ Bool_t EdbShowAlg_CA::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
 
 EdbShowAlg_OI::EdbShowAlg_OI()
 {
-// Default Constructor
-    cout << "EdbShowAlg_OI::EdbShowAlg_OI()   Default Constructor  (OfficialImplementation, as it is in libShower module."<<endl;
+    // Default Constructor
+    Log(2,"EdbShowAlg_OI::EdbShowAlg_OI()","Default Constructor (OfficialImplementation, as it is in libShower module)");
 
 // Reset all:
     Set0();
 
     eAlgName="OI";
-    eAlgValue=4; // see default.par_SHOWREC for labeling (lableing identical with ShowRec program)
+    eAlgValue=4; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+    eParaN =4; // depends on the algorithm, how much parameters it has got.
 
     eParaValue[0]=700.0;
     eParaString[0]="CylinderRadius";  // micrometer
@@ -1138,13 +1143,14 @@ EdbShowAlg_OI::EdbShowAlg_OI()
     eParaString[3]="DeltaThetaComponentwiseToPreceedingBT";  // radiant
 
 // 700  0.025  150  0.13
+    Log(2,"EdbShowAlg_OI::EdbShowAlg_OI()","Default Constructor (OfficialImplementation, as it is in libShower module)...done.");
 }
 
 //______________________________________________________________________________
 
 EdbShowAlg_OI::~EdbShowAlg_OI()
 {
-    cout << "EdbShowAlg_OI::~EdbShowAlg_OI()"<<endl;
+    Log(2,"EdbShowAlg_OI::~EdbShowAlg_OI()","Default Destructor called.");
 // Default Destructor
 }
 
@@ -1159,8 +1165,7 @@ void EdbShowAlg_OI::Initialize()
 
 void EdbShowAlg_OI::Execute()
 {
-    cout << "EdbShowAlg_OI::Execute()" << endl;
-    cout << "EdbShowAlg_OI::Execute   DOING MAIN SHOWER RECONSTRUCTION HERE" << endl;
+    Log(2,"EdbShowAlg_OI::Execute()","DOING MAIN SHOWER RECONSTRUCTION HERE");
 
     EdbSegP* InBT;
     EdbSegP* Segment;
@@ -1171,21 +1176,35 @@ void EdbShowAlg_OI::Execute()
     Int_t     newActualPID;
     Int_t     STEP=-1;
     Int_t     NLoopedPattern=0;
+
+
+    /// WARNING ... Somehow the calculation of "STEP" is not correct,
+    /// when having data ordered patterns, it might go the wrong direction.
+    /// Better use GetPatternNext(..,+1) to be sure to get the next pattern with
+    /// increasing Z positions.
+    /// To be checked: does it work also on Simulated ORFEO data?
+    /// To be checked: does it work also on the testbeam data?
+    ////
     if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
+    cout << "eFirstPlate_eAliPID = " << eFirstPlate_eAliPID << endl;
+    cout << "eLastPlate_eAliPID  = " << eLastPlate_eAliPID << endl;
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- STEP for patternloop direction =  " << STEP << endl;
+
 
 //--- Loop over InBTs:
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowAlg_OI::Execute    Loop over InBTs:" << endl;
 
-
-    cout << "============DEBGU     eUseAliSub =  " << eUseAliSub << endl;
+//     gEDBDEBUGLEVEL=3;
+//     cout << "============DEBGU     eUseAliSub =  " << eUseAliSub << endl;
+//     cout << "============DEBGU     gEDBDEBUGLEVEL =  " << gEDBDEBUGLEVEL << endl;
 //   return;
-
-
 
 // Since eInBTArray is filled in ascending ordering by zpositon
 // We use the descending loop to begin with BT with lowest z first.
-    for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+
+//     for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+    for (Int_t i=eInBTArrayN-1; i>=eInBTArrayN-1; --i) {
+
 
 // CounterOutPut
         if (gEDBDEBUGLEVEL==2) if ((i%100)==0) cout << eInBTArrayN <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
@@ -1238,6 +1257,7 @@ void EdbShowAlg_OI::Execute()
                 if ( !FindPrecedingBTs(Segment, InBT, eAli_Sub, RecoShower)) continue;
 // end of    cut conditions: OI OfficialImplementation Alg  --------------------
 
+
 // If we arrive here, Basetrack  Segment  has passed criteria
 // and is then added to the RecoShower:
 // Check if its not the InBT which is already added:
@@ -1251,30 +1271,64 @@ void EdbShowAlg_OI::Execute()
 
             } // of btloop_cnt
 
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- ActualPID= " << newActualPID << "  done. Reconstructed shower has up to now: " << RecoShower->N()  << " Segments." << endl;
+
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- ActualPID= " << ActualPID << " at Z= " << eAli_Sub->GetPattern(ActualPID)->Z()  << " done. Reconstructed shower has up to now: " << RecoShower->N()  << " Segments." << endl;
+
+// // // // // // // // // // // // // // // // // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// 	    cout << " DETERMINE NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION now: " << endl;
+            EdbPattern* currentPat = eAli_Sub->GetPattern(ActualPID);
+            EdbPattern* newPat_next_ascending_Z = eAli_Sub->GetPatternNext(currentPat->Z(),1);
+            Int_t newZ_next_ascending_Z    = newPat_next_ascending_Z->Z();
+            Int_t newPID_next_ascending_Z  = newPat_next_ascending_Z->PID();
+// 	    cout << " NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION has PID()= " <<  newPID_next_ascending_Z    << "  and a z-Position of Z= " << newZ_next_ascending_Z  <<    endl;
+// // // // // // // // // // // // // // // // // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 //------------
-            newActualPID=ActualPID+STEP;
+            ///  newActualPID=ActualPID+STEP; // old, mixes up downstream and upstream directions
+            newActualPID=newPID_next_ascending_Z;
             ++NLoopedPattern;
 
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- newActualPID= " << newActualPID << endl;
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- NLoopedPattern= " << NLoopedPattern << endl;
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- eNumberPlate_eAliPID= " << eNumberPlate_eAliPID << endl;
-            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- StillToLoop= " << StillToLoop << endl;
+            if (gEDBDEBUGLEVEL>3) {
+                cout << "EdbShowAlg_OI::Execute--- --- newActualPID= " << newActualPID << endl;
+                cout << "EdbShowAlg_OI::Execute--- --- newActualZ= " << eAli_Sub->GetPattern(newActualPID)->Z()  << endl;
+                cout << "EdbShowAlg_OI::Execute--- --- NLoopedPattern= " << NLoopedPattern << endl;
+                cout << "EdbShowAlg_OI::Execute--- --- eNumberPlate_eAliPID= " << eNumberPlate_eAliPID << endl;
+                cout << "EdbShowAlg_OI::Execute--- --- StillToLoop= " << StillToLoop << endl;
+                cout << "EdbShowAlg_OI::Execute--- --- We have to decide, is  eAli_Sub->Npatterns() " << eAli_Sub->Npatterns()  << endl;
+                // eNumberPlate_eAliPID = eAli_Sub->Npatterns()
+                // What is the constraint? 0 <= newActualPID <= Npatterns-1, these patterns are valid....
+            }
 
-// This if holds in the case of STEP== +1
-            if (STEP==1) {
-                if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_OI::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+
+
+            /* NOT NECESSARY ANYMORE SINCE WE DO THE OUT OF BOUNDS CHECK IN ANOTHER WAY .....
+             * TO BE  REMOVED ...
+            // This if holds in the case of STEP== +1
+                if (STEP==1) {
+                    if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
+                    if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+                }
+            // This if holds in the case of STEP== -1
+                if (STEP==-1) {
+                    if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
+                    if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+                }
+                */
+
+            // What is the constraint? 0  <= newActualPID <= Npatterns-1, these patterns are valid....
+            if (newActualPID<0)
+            {   StillToLoop=kFALSE;
+                //cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID<0"<<endl;
             }
-// This if holds in the case of STEP== -1
-            if (STEP==-1) {
-                if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+            if (newActualPID>=eNumberPlate_eAliPID-1) {
+                StillToLoop=kFALSE;
+                //cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID>=eNumberPlate_eAliPID-1   [0 <= newActualPID <= Npatterns-1]"<<endl;
             }
+
+
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
-            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
+            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
@@ -1285,6 +1339,14 @@ void EdbShowAlg_OI::Execute()
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintBasics();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintNice();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintSegments();
+
+
+
+        if (RecoShower->N()>1) {
+            cout << "  DEBUG  Printing schowers with 2 or more segments" << endl;
+            RecoShower ->PrintNice();
+            RecoShower ->PrintSegments();
+        }
 
 //     if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- Before adding to array delete the histograms...by finalize() of shower."<<endl;
 //     RecoShower ->Finalize();
@@ -1307,8 +1369,12 @@ void EdbShowAlg_OI::Execute()
 // Set new value for  eRecoShowerArrayN  (may now be < eInBTArrayN).
     SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
 
+
+
+    gEDBDEBUGLEVEL=2;
+
     cout << "EdbShowAlg_OI::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
-    cout << "EdbShowAlg_OI::Execute()...done." << endl;
+    Log(2,"EdbShowAlg_OI::Execute()","DOING MAIN SHOWER RECONSTRUCTION HERE...done.");
     return;
 }
 
@@ -1333,7 +1399,10 @@ void EdbShowAlg_OI::Finalize()
 
 Bool_t EdbShowAlg_OI::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbShowerP* shower)
 {
-    if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::FindPrecedingBTs   Find BTs to be connected with the Test BT:" << endl;
+    if (gEDBDEBUGLEVEL>3) {
+        cout << "EdbShowAlg_OI::FindPrecedingBTs   Find BTs to be connected with the Test BT:" << endl;
+        cout << "s_TestBT X,Y,Z " << s->X() << " " <<  s->Y() << " " <<  s->Z() << "  versus InBT  X,Y,Z  " << InBT->X() << " " <<  InBT->Y() << " " <<  InBT->Z() << endl;
+    }
 
     EdbSegP* s_TestBT;
     Int_t nentries=shower->N();
@@ -1363,7 +1432,7 @@ Bool_t EdbShowAlg_OI::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
     for (Int_t i=nentries-1; i>=0; --i) {
         s_TestBT = (EdbSegP*)( shower->GetSegment(i) );
 
-        if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowAlg_OI::FindPrecedingBTs(): Do  s_TestBT->ID()  s->ID()  s_TestBT->MCEvt() s_TestBT->Z()  s->Z() "<< s_TestBT->ID() << " " << s->ID() << " " << s_TestBT->MCEvt() <<"  " << s_TestBT->Z() << "  " <<  s->Z()  <<endl;
+        if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowAlg_OI::FindPrecedingBTs(): Do  s_TestBT->ID()  s->ID()  s_TestBT->MCEvt() s_TestBT->Z()  s->Z() "<< s_TestBT->ID() << " " << s->ID() << "    " << s_TestBT->MCEvt() << "     " << s_TestBT->Z() << "  " <<  s->Z()  <<endl;
         if (gEDBDEBUGLEVEL>3) s_TestBT->PrintNice();
         if (gEDBDEBUGLEVEL>3) s->PrintNice();
 
@@ -1437,6 +1506,7 @@ EdbShowAlg_RC::EdbShowAlg_RC()
 
     eAlgName="RC";
     eAlgValue=7; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+    eParaN =4; // depends on the algorithm, how much parameters it has got.
 
     eParaValue[0]=700.0;
     eParaString[0]="CylinderRadius";  // micrometer
@@ -1570,16 +1640,16 @@ void EdbShowAlg_RC::Execute()
 // This if holds in the case of STEP== +1
             if (STEP==1) {
                 if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_RC::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_RC::Execute--- ---Stop Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
             }
 // This if holds in the case of STEP== -1
             if (STEP==-1) {
                 if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
-                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_RC::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+                if (newActualPID<eLastPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_RC::Execute--- ---Stop Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
             }
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
-            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_RC::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
+            if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_RC::Execute--- ---Stop Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
             ActualPID=newActualPID;
         } // of // while (StillToLoop)

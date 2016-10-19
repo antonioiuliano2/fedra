@@ -11,9 +11,11 @@ ClassImp(EdbShowRec)
 EdbShowRec::EdbShowRec()
 {
     // Default Constructor
+    Log(2,"EdbShowRec::EdbShowRec()","Default Constructor");
     Set0();
     Init();
-    if (gEDBDEBUGLEVEL>0) Print();
+    //if (gEDBDEBUGLEVEL>0) Print();
+    Log(2,"EdbShowRec::EdbShowRec()","Default Constructor...done.");
 }
 
 //______________________________________________________________________________
@@ -21,7 +23,10 @@ EdbShowRec::EdbShowRec()
 EdbShowRec::EdbShowRec(EdbPVRec* gAli)
 {
     // Default Constructor using a EdbPVRec object (usually called gAli):
+    // By default, do _not_ do a reconstruction of showers at this stage
+    // Reconstruction() call is to made by hand at the time being
 
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli)","Default Constructor");
     Set0();
 
     eAli=gAli;
@@ -33,6 +38,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli)
     eRecoShowerArray=new TObjArray();
     SetRecoShowerArrayN(0);
 
+    // Set Shower Algorithm Array to zero
     SetShowAlgArrayN(0);
 
     Init();
@@ -44,7 +50,8 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli)
     // for possible InBTs automatically.
     Check_eInBTArray();
 
-    if (gEDBDEBUGLEVEL>0) Print();
+    //if (gEDBDEBUGLEVEL>0) Print();
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli)","Default Constructor...done.");
 }
 
 //______________________________________________________________________________
@@ -54,7 +61,10 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)
     // Default Constructor using
     //  a EdbPVRec object (usually called gAli)
     //  a TObjArray containing segments (basetracks) for the Initiator BTs:
+    // By default, do _not_ do a reconstruction of showers at this stage
+    // Reconstruction() call is to made by hand at the time being
 
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)","Default Constructor");
     Set0();
 
     eAli=gAli;
@@ -62,7 +72,6 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)
     eAliLoaded=kTRUE;
 
     // Preliminary check if array is already existing:
-    //if(!eInBTArray)
     eInBTArray = new TObjArray();
     eInBTArray=InBTArray;
     SetInBTArrayN(eInBTArray->GetEntries());
@@ -70,12 +79,14 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)
     eInBTArrayLoaded=kTRUE;
 
     // Create already the RecoShowerArray at the very beginning.
-    // Recheck if this is good Style please...
+    // Recheck if this is good style please...
     eRecoShowerArray=new TObjArray();
+    SetRecoShowerArrayN(0);
+
+    // Set Shower Algorithm Array to zero
     SetShowAlgArrayN(0);
 
     Init();
-
 
     /// STILL DEBUG STATUS....... IS THIS TRUE???-------------------------------
     // If Initiator BT Array and gAli is given then we can directly proceed to check plate values!!
@@ -89,7 +100,8 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)
     CheckPlateValues();
     /// STILL DEBUG STATUS....... IS THIS TRUE???-------------------------------
 
-    if (gEDBDEBUGLEVEL>0) Print();
+//     if (gEDBDEBUGLEVEL>0) Print();
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)","Default Constructor...done.");
 }
 
 //______________________________________________________________________________
@@ -101,6 +113,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* Standar
     //  a TObjArray containing segments (basetracks) for the Initiator BTs
     //  a EdbShowAlg object (StandardAlg):
 
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* StandardAlg)","Default Constructor");
     Set0();
 
     eAli=gAli;
@@ -108,8 +121,6 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* Standar
     eAliLoaded=kTRUE;
 
     // Preliminary check if array is already existing:
-    //eShowAlgArray=0;
-    //if(!eInBTArray)
     eInBTArray = new TObjArray();
     eInBTArray=InBTArray;
     SetInBTArrayN(eInBTArray->GetEntries());
@@ -140,7 +151,8 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* Standar
     CheckPlateValues();
     /// STILL DEBUG STATUS....... IS THIS TRUE???-------------------------------
 
-    if (gEDBDEBUGLEVEL>0) Print();
+//     if (gEDBDEBUGLEVEL>0) Print();
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* StandardAlg)","Default Constructor...done.");
 }
 
 //______________________________________________________________________________
@@ -153,6 +165,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, TObjArray* ShowAlgA
     //  a TObjArray containing segments (basetracks) for the Initiator BTs
     //  a EdbShowAlg object (StandardAlg):
 
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, TObjArray* ShowAlgArray)","Default Constructor");
     Set0();
 
     eAli=gAli;
@@ -179,11 +192,9 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, TObjArray* ShowAlgA
 
     Init();
 
-    if (gEDBDEBUGLEVEL>0) Print();
+    //if (gEDBDEBUGLEVEL>0) Print();
+    Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, TObjArray* ShowAlgArray)","Default Constructor...done.");
 }
-
-
-
 
 
 //______________________________________________________________________________
@@ -211,6 +222,8 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
     // Converts them to the RecoShowerArray.
     // Mainly used for backward compability!
     //----------------------------------------------------------
+    Log(2,"EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName=treebranch)","Default Constructor");
+
 
     Set0();
     Init();
@@ -251,7 +264,6 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
         ; // do nothing....
     }
 
-
     /*
       cout << "EdbShowRec::EdbShowRec() Get treebranch tree out of it:"<< endl;
       TTree* treebranchTree=(TTree*)file->Get(treebranchName);
@@ -263,8 +275,6 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
     		if (treebranchTree==NULL) cout << "treebranchTree==NULL"<< endl;
     	}
     */
-
-// return;
 
     // Clone it to have it also when closing the file(s):
     eRecoShowerTreetreebranch=(TTree*)treebranchTree->Clone();
@@ -278,7 +288,6 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
 
 
     // Try version with tree as  new  operator, in order not to loose it when closing file
-
     if (gEDBDEBUGLEVEL>2) treebranchTree->Show(0);
 
 
@@ -286,11 +295,9 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
     cout << "EdbShowRec::EdbShowRec() Write Treebranch_To_RecoShowerArray:"<< endl;
     Treebranch_To_RecoShowerArray(eRecoShowerArray, treebranchTree);
 
-
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowRec::EdbShowRec()  eRecoShowerArray->Print();"<< endl;
     if (gEDBDEBUGLEVEL>3) eRecoShowerArray->Print();
     if (gEDBDEBUGLEVEL>3) cout << "EdbShowRec::EdbShowRec()  eRecoShowerArray->Print()...done."<< endl;
-
 
 //    cout << "EdbShowRec::EdbShowRec()  do now: delete file;"<< endl;
 //    delete file; file=0;
@@ -305,6 +312,8 @@ EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName="treeb
     Log(2,"EdbShowRec::EdbShowRec()","EdbShowRec(TString treebranchFileName)... Do  NOT delete file because the Histograms are still connected with");
     Log(2,"EdbShowRec::EdbShowRec()","EdbShowRec(TString treebranchFileName)... the file.... THIS IS TO BE DONE CORRECTLY .... ");
     if (gEDBDEBUGLEVEL>1) Print();
+
+    Log(2,"EdbShowRec::EdbShowRec(TString treebranchFileName, TString treebranchName=treebranch)","Default Constructor...done.");
 }
 
 
@@ -319,21 +328,19 @@ EdbShowRec::EdbShowRec(TString TxtFileName, Int_t TxtFileType)
     // There are different types of listing segments (eda,manual check...)
     // This will be defined....
     //----------------------------------------------------------
-
-    Log(2,"EdbShowRec::EdbShowRec()","EdbShowRec(TString TxtFileName, Int_t TxtFileType)  ...  STILL  EMPTY  CONSTRUCTOR  ...");
-
-
+    Log(2,"EdbShowRec::EdbShowRec(TString TxtFileName, Int_t TxtFileType)","Default Constructor  STILL  EMPTY  CONSTRUCTOR ");
 
     Set0();
     Init();
-
     eRecoShowerArray=new TObjArray();
 
     // Just open given txt file:
     cout << "EdbShowRec::EdbShowRec()   Just open given txt file:  "<< TxtFileName << endl;
 
+    // Convert File To Reco Shower Array ...
     TxtToRecoShowerArray(TxtFileName,TxtFileType);
 
+    Log(2,"EdbShowRec::EdbShowRec(TString TxtFileName, Int_t TxtFileType)","Default Constructor...done.");
 }
 
 
@@ -344,14 +351,14 @@ EdbShowRec::EdbShowRec(TString TxtFileName, Int_t TxtFileType)
 EdbShowRec::~EdbShowRec()
 {
     // Default Destructor
-    Log(2,"EdbShowRec::~EdbShowRec()","~EdbShowRec()   Destructor called.");
-    //Print();
+    Log(2,"EdbShowRec::~EdbShowRec()","Destructor called.");
 }
 
 //______________________________________________________________________________
 
 void EdbShowRec::Set0()
 {
+    Log(2,"EdbShowRec::Set0()","Default reset function");
     // Default reset function
     eDoReconstruction=0;
     eDoParametrization=0;
@@ -400,6 +407,7 @@ void EdbShowRec::Set0()
     eParaNames[6]="PP";
     eInBTTree=0;
 
+    Log(2,"EdbShowRec::Set0()","Default reset function...done.");
     return;
 }
 
@@ -408,6 +416,8 @@ void EdbShowRec::Set0()
 void EdbShowRec::Init()
 {
     // Default Init() Function: Setting Pointers, Variables and so on:
+
+    Log(2,"EdbShowRec::Init()","Default Init function");
 
     eFilename_LinkedTracks    ="linked_tracks.root";
     eFilename_LnkDef          ="lnk_all.def";
@@ -438,6 +448,8 @@ void EdbShowRec::Init()
     eProposedMiddlePlate=-1;
     eProposedNumberPlate=-1;
 
+
+    Log(2,"EdbShowRec::Init()","Default Init function...done.");
     return;
 }
 
@@ -446,10 +458,13 @@ void EdbShowRec::Init()
 
 void EdbShowRec::ResetRecoShowerArray()
 {
+    Log(2,"EdbShowRec::ResetRecoShowerArray()","Clear RecoShowerArray");
     // Clear RecoShowerArray:
     if (!eRecoShowerArray) return;
     eRecoShowerArray->Clear();
     SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
+    Log(2,"EdbShowRec::ResetRecoShowerArray()","Clear RecoShowerArray...done.");
+    return;
 }
 
 
@@ -458,10 +473,13 @@ void EdbShowRec::ResetRecoShowerArray()
 
 void EdbShowRec::ResetInBTArray()
 {
+    Log(2,"EdbShowRec::ResetInBTArray()","Clear eInBTArray");
     // Clear eInBTArray:
     if (!eInBTArray) return;
     eInBTArray->Clear();
     SetInBTArrayN(eInBTArray->GetEntries());
+    Log(2,"EdbShowRec::ResetInBTArray()","Clear eInBTArray...done.");
+    return;
 }
 
 
@@ -471,6 +489,7 @@ void EdbShowRec::CheckFilePresence()
 {
     // Check if relevant files are present in current directory:
     //  file for  linked_tracks, lnk.def, EdbPVR volume.
+    Log(2,"EdbShowRec::CheckFilePresence()","Check if relevant files are present in current directory");
 
     Bool_t eFilename_LinkedTracks_Exists;
     Bool_t eFilename_LnkDef_Exists;
@@ -485,6 +504,8 @@ void EdbShowRec::CheckFilePresence()
     if (!FileExists(std::string(eFilename_EdbPVRecObject))) Log(2,"EdbShowRec::CheckFilePresence()","WARNING: File  eFilename_EdbPVRecObject does not exist ");
 
     Log(2,"EdbShowRec::CheckFilePresence()","No action taken. TO BE IMPLEMENTED THAT IN CASE FILES ARE NOT PRESENT, that PROGRAM IS STOPPED");
+
+    Log(2,"EdbShowRec::CheckFilePresence()","Check if relevant files are present in current directory...done.");
     return;
 }
 
@@ -505,29 +526,21 @@ void EdbShowRec::ReconstructTESTSHORT()
 
 void EdbShowRec::ReconstructTESTSTANDARD()
 {
-
     // Standard reco function using ...
-
     cout << endl << endl;
-
     ReadShowRecPar("default.par");
     // this->SetPlateNumberValues();
     // not necessary now anymore since the ePropoaseNumberPlates are now incorporated
     // in ReadShowRecPar and CheckPlates()
-
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
     Fill_eInBTArray(eUseNr);
-
     cout << "eShowAlgArrayN =  " << eShowAlgArrayN << endl;
     cout << "eShowAlgArray =  " << eShowAlgArray << endl;
-
     if (!eShowAlgArray)   {
         Create_eShowAlgArray();
         Fill_eShowAlgArray();
     }
-
-
 
     cout << "DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG " << endl;
     eUseAliSub=kTRUE;
@@ -537,12 +550,9 @@ void EdbShowRec::ReconstructTESTSTANDARD()
     eUseAliSub=kFALSE;
     cout << "EdbShowRec::SetUseAliSub   eUseAliSub  " <<  eUseAliSub << endl;
 
-
-
     // --------------------- Main Print Function -----------------------
     Print();
     // --------------------- Main Print Function -----------------------
-
 
     cout << eFirstPlate_eAliPID << endl;
     cout << eLastPlate_eAliPID << endl;
@@ -581,7 +591,6 @@ void EdbShowRec::ReconstructTESTSTANDARD()
         RecoAlg->Execute();
         cout<<"--------------------------------------  EXECUTE    done. --------------------------"<<endl;
 
-
         // Important to update the local variable  eRecoShowerArrayN
         // since the instance of  EdbShowAlg  has its own variable filled.
         // If this is not done, we may have crashes because eRecoShowerArrayN is not filled!
@@ -605,15 +614,11 @@ void EdbShowRec::ReconstructTESTSTANDARD()
         cout << endl << endl;
     }  // ShowerRecoAlg Loop.
 
-
-
-
     /// STILL TO DO
     //   EdbShowAlgE* ENERGYMODULE = new EdbShowAlgE(eRecoShowerArray);
     //   ENERGYMODULE->Create_MLP();
     //   ENERGYMODULE->Create_MLPTree();
     //   ENERGYMODULE->TEST();
-
     return;
 }
 
@@ -644,11 +649,9 @@ void EdbShowRec::ReconstructTEST_CA()
         Fill_eShowAlgArray();
     }
 
-
     // --------------------- Main Print Function -----------------------
     Print();
     // --------------------- Main Print Function -----------------------
-
 
     // Casting to the parent object is done to have general properties behaviour.
     // But the Execute() function still calls the function of the inherited class:
@@ -685,30 +688,21 @@ void EdbShowRec::ReconstructTEST_CA()
 
     }  // ShowerRecoAlg Loop.
 
-
-
     return;
-
 
     TH1F* h1= new TH1F("hh","hh",100,0,1);
     for (int i=0; i<eRecoShowerArrayN; i++) {
         EdbShowerP* sh=	(EdbShowerP* ) eRecoShowerArray->At(i);
         h1->Fill(TMath::Abs(sh->GetSegment(0)->TX()-sh->GetSegmentGravity()->TX()));
     }
-
     h1->Draw();
 
-
     /*
-
       EdbShowAlgE* ENERGYMODULE = new EdbShowAlgE(eRecoShowerArray);
-
       ENERGYMODULE->TEST();
       ENERGYMODULE->Create_MLP();
-
       ENERGYMODULE->Create_MLPTree();
     */
-
     return;
 }
 
@@ -732,7 +726,6 @@ void EdbShowRec::ReconstructTEST_OI()
     }
     // --------------------- Main Print Function -----------------------
     Print();
-
     // --------------------- Main Print Function -----------------------
 
     EdbShowAlg_OI*   StandardAlg = new EdbShowAlg_OI();
@@ -826,33 +819,19 @@ void EdbShowRec::ReconstructTEST_NN()
 
 void EdbShowRec::Reconstruct()
 {
-    cout << "EdbShowRec::Reconstruct()" << endl;
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function");
 
-    cout << "EdbShowRec::Reconstruct()   Check if  eAli  is there....";
-    if (eAli)  {
-        cout << "YES." << endl;
-    }
-    else {
-        cout << "NO." << endl;
-    }
+    Int_t isThere=0;
+    if (eAli)  isThere = 1;
+    Log(2,"EdbShowRec::Reconstruct()","Check if  eAli           is there: %d", isThere);
+    isThere=0;
+    if (eInBTArray)  isThere = 1;
+    Log(2,"EdbShowRec::Reconstruct()","Check if  eInBTArray     is there: %d", isThere);
+    isThere=0;
+    if (eShowAlgArray)  isThere = 1;
+    Log(2,"EdbShowRec::Reconstruct()","Check if  eShowAlgArray  is there: %d", isThere);
 
-    cout << "EdbShowRec::Reconstruct()   Check if  eInBTArray  is there....";
-    if (eInBTArray)  {
-        cout << "YES." << endl;
-    }
-    else {
-        cout << "NO." << endl;
-    }
-
-    cout << "EdbShowRec::Reconstruct()   Check if  eShowAlgArray  is there....";
-    if (eShowAlgArray)  {
-        cout << "YES." << endl;
-    }
-    else {
-        cout << "NO." << endl;
-    }
-
-
+// return;
     // To set eAli plate numbers right:
     SetPlateNumberValues();
 
@@ -860,54 +839,50 @@ void EdbShowRec::Reconstruct()
     //-------------------------------------------------------------------
     // Part Filling the Initiator BaseTracks:
 
-    if (!eInBTArray) 	{
-        Create_eInBTArray();
-    }
-    //  If  __NO__  eInBTArray:  create manually: three options:
-    //  0)  (eUseNr==0) getting the BaseTracks out of tracks out of eFilename_LinkedTracks if they are stored
-    //  1)  (eUseNr==1) getting the BaseTracks out of eAli. If they are not stored, invoke track reconstruction
-    //  2)  (eUseNr==2) use only (but all) Basetracks within [eFirstPlate,eMiddlePlate]
-    //  3)  (eUseNr==3) special purpose.
+    if (!eInBTArray) Create_eInBTArray();
 
+    //  If  __NO__  eInBTArray:  create manually: three options:
+    //  0)  (eUseNr==0) getting the BaseTracks out of eAli. If they are not stored, goto next
+    //  1)  (eUseNr==1) getting the BaseTracks out of tracks out of eFilename_LinkedTracks if they are stored
+    //  2)  (eUseNr==2) use only (but all) Basetracks within [eFirstPlate,eMiddlePlate]
+    //  3)  (eUseNr==3) special purpose. (not yet implemented)
     // Default is 0);
 
     if (!eInBTTree) Create_eInBTTree();
 
     /// ----   EXPERIMENTAL STATUS ---
     Fill_eInBTArray(eUseNr);
+
     // TEMPORARY solution:  2).
     //Fill_eInBTArray_ByBaseTracksOf_eAli();
 //   Fill_eInBTArray_ByRecoLinkTracks_eAli();
     /// ----   EXPERIMENTAL STATUS ---
-
-//   0) Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
-//   1) Fill_eInBTArray_ByRecoLinkTracks_eAli();
+//   0) Fill_eInBTArray_ByRecoLinkTracks_eAli();
+//   1) Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
 //   2) Fill_eInBTArray_ByBaseTracksOf_eAli();
-//   3) Fill_eInBTArray_ByBaseTracksOf_eAli_Basic();
+//   3) Fill_eInBTArray_ByBaseTracksOf_eAli_Basic(); ???
     //-------------------------------------------------------------------
-
-
 
 // 	return;
 
-
     //-------------------------------------------------------------------
-    // Part Filling the Shower RecoaAlg Array:
+    // Part Filling the Shower RecoAlg Array:
 
-    if (!eShowAlgArray) 	{
-        Create_eShowAlgArray();
-    }
+    if (!eShowAlgArray) Create_eShowAlgArray();
+
     // If no eShowAlgArray:  create manually one using the
-    // 	ConeAdvanced Algorithm as standard algorithm.
+    // ConeAdvanced Algorithm as standard algorithm.
     Fill_eShowAlgArray();
 
     // Get Reconstruction Algorithm Object from the TObjArray storage:
-    cout << "EdbShowRec::Reconstruct   Get ShowAlg from ObArray storage" << endl;
+    cout << "EdbShowRec::Reconstruct   Get ShowAlg from TObjArray storage" << endl;
     EdbShowAlg_SA*  RecoAlg = (EdbShowAlg_SA*) eShowAlgArray->At(0);
+    cout << "EdbShowAlg_SA*  RecoAlg = (EdbShowAlg_SA*) eShowAlgArray->At(0);" << endl;
+    cout << "TO BE SOLVED: WHY IS HERE A CAST TO THE EdbShowAlg_SA  CLASS ?????" << endl;
+    // ??????? TO BE SOLVED: WHY IS HERE A CAST TO THE EdbShowAlg_SA  CLASS ?????
 
     eActualAlg=RecoAlg;
-    eActualAlgParameterset[2]=0;
-
+    eActualAlgParameterset[2]=0;   // ???  WHAT WAS THAT? I DONT REMEBER...
 
     // Hand over the important objects to the RecoAlg itsself.
     //  eAli
@@ -920,9 +895,13 @@ void EdbShowRec::Reconstruct()
     RecoAlg->SetRecoShowerArray( eRecoShowerArray);
     //-------------------------------------------------------------------
 
+    cout << "eRecoShowerArray = " << eRecoShowerArray << endl;
+    cout << "eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
+
 
     RecoAlg->Print();
 //   return;
+
 
     //-------------------------------------------------------------------
     //	Main Reconstruction Part for the algorithm:
@@ -931,29 +910,36 @@ void EdbShowRec::Reconstruct()
     //
     //-------------------------------------------------------------------
 
-
 //   return;
 
-    cout << "EdbShowRec::Reconstruct   RecoAlg->Execute()   finished" << endl;
-    cout << eRecoShowerArray->GetEntries() << endl;
+    cout << "EdbShowRec::Reconstruct   RecoAlg->Execute()   finished. eRecoShowerArray->GetEntries() = " << eRecoShowerArray->GetEntries() << endl;
 
 
+    cout << "eRecoShowerArray = " << eRecoShowerArray << endl;
+    cout << "eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
+    // Get RecoShowerArray from Reco Alg back!
+//      SetRecoShowerArray( );
+//         eRecoShowerArray = RecoShowerArray;
+//         eRecoShowerArrayN=eRecoShowerArray->GetEntries();
 
-//   SetTreebranchName
 
-    // Sets the names correctly when having more than one alg or parameterset.
+    PrintRecoShowerArray();
+
+
+    // Set the names correctly when having more than one alg or parameterset.
     SetOutNames();
 
-
+    // Convert Array of EdbShowerP objects into old treebranch file format
+    // (backward compability)
     RecoShowerArray_To_Treebranch();
     Write_RecoShowerArray(eRecoShowerArray, "ALL.root");
 
+
+    PrintRecoShowerArray();
     return;
 
 
     ///-----------------------------------
-
-
     //   NEW   ALG:
     // CLEAN    SHowerArray before !!!
 
@@ -1011,12 +997,6 @@ void EdbShowRec::Reconstruct()
     RecoShowerArray_To_Treebranch();
 
 
-
-
-
-
-
-
     return;
 
 
@@ -1030,15 +1010,12 @@ void EdbShowRec::Reconstruct()
         //cout << show->TX() <<"  " <<  show->TY() << endl;
     }
 
-
 //   return;
-
 
     //eAli->Print();
     // debug info ...
 
     /*
-
     cout << "show : " << show << endl;
     cout << "show->IsA() : " << show->IsA() << endl;
     show->Print();
@@ -1048,11 +1025,7 @@ void EdbShowRec::Reconstruct()
     */
 
     Write_RecoShowerArray(eRecoShowerArray, "ALL.root");
-
-
     return;
-
-
 
     /*
       TFile* file= new TFile("TESTFILE.root","RECREATE");
@@ -1061,7 +1034,7 @@ void EdbShowRec::Reconstruct()
 
        */
 
-
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function");
     return;
 }
 
@@ -1071,20 +1044,20 @@ void EdbShowRec::Reconstruct()
 
 void  EdbShowRec::Create_eInBTArray()
 {
-    Log(2,"EdbShowRec::Create_eInBTArray","EdbShowRec::Create_eInBTArray.");
+    Log(2,"EdbShowRec::Create_eInBTArray()","Create the Initiator Basetrack array");
 
     if (eInBTArray) {
-        cout << "EdbShowRec::Create_eInBTArray()   eInBTArray already there. Just Clear it." << endl;
+        cout << "EdbShowRec::Create_eInBTArray   eInBTArray already there. Just Clear it." << endl;
         eInBTArray->Clear();
     }
     else {
         eInBTArray = new TObjArray(eInBTArrayMaxSize);
-        cout << "EdbShowRec::Create_eInBTArray()   New  eInBTArray  created." << endl;
+        cout << "EdbShowRec::Create_eInBTArray   New  eInBTArray  created." << endl;
     }
 
     eInBTArrayLoaded=kTRUE;
 
-    Log(2,"EdbShowRec::Create_eInBTArray","EdbShowRec::Create_eInBTArray...done.");
+    Log(2,"EdbShowRec::Create_eInBTArray()","Create the Initiator Basetrack array...done");
     return;
 }
 
@@ -1093,19 +1066,19 @@ void  EdbShowRec::Create_eInBTArray()
 
 void EdbShowRec::Check_eInBTArray()
 {
-    Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray.");
-    Log(2,"EdbShowRec::Check_eInBTArray","Check if and wheter to set the Array if InBTs");
-    Log(2,"EdbShowRec::Check_eInBTArray","The order is in the way:");
-    Log(2,"EdbShowRec::Check_eInBTArray","   a) if eAli has eTracks, take eTracks.");
-    Log(2,"EdbShowRec::Check_eInBTArray","   b) if a  linked_tracks.root file is existing, take tracks from there-");
-    Log(2,"EdbShowRec::Check_eInBTArray","   c) take all BT from [firstplate..middleplate]");
+    Log(2,"EdbShowRec::Check_eInBTArray()","Check the Initiator Basetrack array");
+    Log(2,"EdbShowRec::Check_eInBTArray()","Check if and wheter to set the Array if InBTs");
+    Log(2,"EdbShowRec::Check_eInBTArray()","The order is in the way:");
+    Log(2,"EdbShowRec::Check_eInBTArray()","   a)  if eAli has eTracks, take eTracks.");
+    Log(2,"EdbShowRec::Check_eInBTArray()","   b)  if a  linked_tracks.root file is existing, take tracks from there-");
+    Log(2,"EdbShowRec::Check_eInBTArray()","   c)  take all BT from [firstplate..middleplate]");
 
     // Check if and wheter to set the Array if InBTs.
     // The order is in the way (if the corresponding stuff is there:
     // (of course the settings in default.par will still be present):
-    // a) if eAli has eTracks, take eTracks.
-    // b) if a  linked_tracks.root file is existing, take tracks from there-
-    // c) take all BT from [firstplate..middleplate]
+    // a)  if eAli has eTracks, take eTracks.
+    // b)  if a  linked_tracks.root file is existing, take tracks from there-
+    // c)  take all BT from [firstplate..middleplate]
     if (!eAli) {
         Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eAli created yet. For now: return;");
         return;
@@ -1143,7 +1116,7 @@ void EdbShowRec::Check_eInBTArray()
     if (eInBTArrayN!=0) return;
     cout << "EdbShowRec::Check_eInBTArray Case a: Fill_eInBTArray_ByRecoLinkTracks_eAli() was NOT successful. Stop here." << endl;
 
-    Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray...done.");
+    Log(2,"EdbShowRec::Check_eInBTArray()","Check the Initiator Basetrack array...done.");
     return;
 }
 
@@ -1152,12 +1125,12 @@ void EdbShowRec::Check_eInBTArray()
 
 void EdbShowRec::Create_eInBTTree()
 {
-    Log(2,"EdbShowRec::Create_eInBTTree","EdbShowRec::Create_eInBTTree.");
+    Log(2,"EdbShowRec::Create_eInBTArray()","Create the Initiator Basetrack tree...done");
 
     if (eInBTTree) {
         delete eInBTTree;
         eInBTTree=0;
-        cout << "deletion done"<<endl;
+        Log(2,"EdbShowRec::Create_eInBTArray()","Deletion of the odl Initiator Basetrack tree done.");
     }
     EdbSegP* seg=0;
 
@@ -1175,16 +1148,14 @@ void EdbShowRec::Create_eInBTTree()
     // will apear many times
 
     TFile* dummyFile = new TFile("dummyFile.root","RECREATE");
-
     if (!eInBTTree) {
         eInBTTree = new TTree("eInBTTree","eInBTTree");
         cout << "EdbShowRec::Create_eInBTTree()   Constructor done"<<endl;
         eInBTTree->Branch("s","EdbSegP",&seg,32000,99);
         cout << "EdbShowRec::Create_eInBTTree()   Branch done"<<endl;
-        //eInBTTree->Print();
     }
 
-    Log(2,"EdbShowRec::Create_eInBTTree","EdbShowRec::Create_eInBTTree...done.");
+    Log(2,"EdbShowRec::Create_eInBTArray()","Create the Initiator Basetrack tree...done");
     return;
 }
 
@@ -1192,9 +1163,7 @@ void EdbShowRec::Create_eInBTTree()
 
 void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
 {
-    Log(2,"EdbShowRec::Fill_eInBTArray","EdbShowRec::Fill_eInBTArraye. FillType= %d",FillType);
-
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::Fill_eInBTArray   FillType= " <<  FillType << endl;
+    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initialtor Basetrack Array. Using FillType= %d",FillType);
 
     switch (FillType)
     {
@@ -1202,10 +1171,10 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
         cout << "EdbShowRec::Fill_eInBTArray   FillType= " <<  FillType << " Nothing done by default....!" << endl;
         break;
     case 0 :
-        Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
+        Fill_eInBTArray_ByRecoLinkTracks_eAli();
         break;
     case 1 :
-        Fill_eInBTArray_ByRecoLinkTracks_eAli();
+        Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
         break;
     case 2 :
         Fill_eInBTArray_ByBaseTracksOf_eAli();
@@ -1215,9 +1184,7 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
         break;
     }
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::Fill_eInBTArray   N= " <<  eInBTArrayN << endl;
-
-    Log(2,"EdbShowRec::Fill_eInBTArray","EdbShowRec::Fill_eInBTArray...done.");
+    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initialtor Basetrack Array...done.");
     return;
 }
 
@@ -1229,12 +1196,11 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
     // ....
     // Make tracks using standard track fitting/propagation routines.
     // ....
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()" << endl;
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli...");
 
-    cout << " check if eAli has eTracks inside" << endl;
     Int_t AliTracksN = eAli->eTracks->GetEntries();
 
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() There are " << eAli->eTracks->GetEntries() << " stored in the eAli object." << endl;
+    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()  There are " << eAli->eTracks->GetEntries() << " stored in the eAli object." << endl;
 
     /*
     // To have the "cut" features available, we still have to pass the source array via the eInBTTree
@@ -1248,10 +1214,9 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
     SetInBTArray( eAli->eTracks );
 
     // Check
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli Check: GetInBTArrayN() = " << GetInBTArrayN() << endl;
+    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() Check: GetInBTArrayN() = " << GetInBTArrayN() << endl;
 
-//     cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() TODO ... NOT YET IMPLEMENTED ..." << endl;
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli...done.()" << endl;
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli...done");
     return;
 }
 
@@ -1259,7 +1224,7 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
 
 void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
 {
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks...");
 
     if (!eInBTTree) {
         cout << "EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()   eInBTTree not yet created...Return." << endl;
@@ -1342,8 +1307,8 @@ void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
         }
     }
 
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks.   After TCut: InBT N=%d", eInBTArrayN );
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks...done.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks.   After TCut: InBT N=%d", eInBTArrayN );
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()","EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks...done.");
     return;
 }
 
@@ -1353,7 +1318,7 @@ void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
 
 void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
 {
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.");
 
     int count=0;
     Bool_t StillToLoop=kTRUE;
@@ -1401,13 +1366,13 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
     // Update Entry numbers.
     SetInBTArrayN(eInBTTree->GetEntries());
 
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   Before TCut: InBT N=%d", eInBTArrayN );
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   Before TCut: InBT N=%d", eInBTArrayN );
 
     // Now do the cut function from all read BTs to those which pass the TCut string given in default.par file.
     Cut_eInBTTree_To_InBTArray();
 
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli   Printing InBTs" << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()   Printing InBTs" << endl;
     EdbSegP* testseg=0;
     for (int i=0; i<eInBTArrayN; i++ ) {
         if (gEDBDEBUGLEVEL>2) {
@@ -1416,8 +1381,8 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
         }
     }
 
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   After TCut: InBT N=%d", eInBTArrayN );
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli...done.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   After TCut: InBT N=%d", eInBTArrayN );
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli...done.");
     return;
 }
 
@@ -1425,9 +1390,9 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
 
 void EdbShowRec::Cut_eInBTTree_To_InBTArray()
 {
-    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray","EdbShowRec::Cut_eInBTTree_To_InBTArray.");
+    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray()","EdbShowRec::Cut_eInBTTree_To_InBTArray.");
 
-    cout << "EdbShowRec::Cut_eInBTTree_To_InBTArray   NEED TO EXPLAIN HERE...WHAT DOES THIS FUNCTION DO ???" << endl;
+    cout << "EdbShowRec::Cut_eInBTTree_To_InBTArray()   NEED TO EXPLAIN HERE...WHAT DOES THIS FUNCTION DO ???" << endl;
 
     EdbSegP* segment=0;
     TBranch*b_s=0;                        // !!!
@@ -1466,8 +1431,8 @@ void EdbShowRec::Cut_eInBTTree_To_InBTArray()
 
     if (gEDBDEBUGLEVEL>3) Print_InBTArray();
 
-    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray","EdbShowRec::Cut_eInBTTree_To_InBTArray.   InBT N=%d", eInBTArrayN );
-    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray","EdbShowRec::Cut_eInBTTree_To_InBTArray...done.");
+    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray()","EdbShowRec::Cut_eInBTTree_To_InBTArray.   InBT N=%d", eInBTArrayN );
+    Log(2,"EdbShowRec::Cut_eInBTTree_To_InBTArray()","EdbShowRec::Cut_eInBTTree_To_InBTArray...done.");
     return;
 }
 
@@ -1476,7 +1441,7 @@ void EdbShowRec::Cut_eInBTTree_To_InBTArray()
 
 void EdbShowRec::SetPlateNumberValues()
 {
-    cout << "EdbShowRec::SetPlateNumberValues()" << endl;
+    Log(2,"EdbShowRec::SetPlateNumberValues()","SetPlateNumberValues");
 
     // Possibly there are four (!!) combinations. But dont know yet. todo...
 
@@ -1495,7 +1460,7 @@ void EdbShowRec::SetPlateNumberValues()
 
     // So we try ko keep this scheme (also in simulation);
 
-    cout << "EdbShowRec::SetPlateNumberValues   eAliNpat  = " << eAliNpat << endl;
+    cout << "EdbShowRec::SetPlateNumberValues()   eAliNpat  = " << eAliNpat << endl;
 
     EdbSegP* seg0;
     EdbSegP* segNPATm1;
@@ -1511,19 +1476,19 @@ void EdbShowRec::SetPlateNumberValues()
 
     if (eAli->GetPattern(0)->N()>0)  {
         seg0=(EdbSegP*)eAli->GetPattern(0)->At(0);
-        cout << "EdbShowRec::SetPlateNumberValues   seg0->PID()= " << seg0->PID() << endl;
+        cout << "EdbShowRec::SetPlateNumberValues()   seg0->PID()= " << seg0->PID() << endl;
     }
 
     if (eAli->GetPattern(eAliNpat-1)->N()>0)  {
         segNPATm1=(EdbSegP*)eAli->GetPattern(eAliNpat-1)->At(0);
-        cout << "EdbShowRec::SetPlateNumberValues   segNPATm1->PID() = " << segNPATm1->PID() << endl;
+        cout << "EdbShowRec::SetPlateNumberValues()   segNPATm1->PID() = " << segNPATm1->PID() << endl;
     }
 
-    cout << "EdbShowRec::SetPlateNumberValues   Z_PatternID_NPATm1 = " << Z_PatternID_NPATm1 << endl;
-    cout << "EdbShowRec::SetPlateNumberValues   Z_PatternID_0 = " << Z_PatternID_0 << endl;
+    cout << "EdbShowRec::SetPlateNumberValues()   Z_PatternID_NPATm1 = " << Z_PatternID_NPATm1 << endl;
+    cout << "EdbShowRec::SetPlateNumberValues()   Z_PatternID_0 = " << Z_PatternID_0 << endl;
 
-    cout << "EdbShowRec::SetPlateNumberValues   PID0 = " << PID0 << endl;
-    cout << "EdbShowRec::SetPlateNumberValues   PIDNPATM1 = " << PIDNPATM1 << endl;
+    cout << "EdbShowRec::SetPlateNumberValues()   PID0 = " << PID0 << endl;
+    cout << "EdbShowRec::SetPlateNumberValues()   PIDNPATM1 = " << PIDNPATM1 << endl;
 
 
     // Usually if nothing else is given, then (and only then!)
@@ -1572,21 +1537,20 @@ void EdbShowRec::SetPlateNumberValues()
     }
 
     if (Z_PatternID_NPATm1==Z_PatternID_0)  {
-        cout << "EdbShowRec::SetPlateNumberValues()   Strange case:   Z_PatternID_NPATm1==Z_PatternID_0  should not happen..."<<endl;
+        cout << "EdbShowRec::SetPlateNumberValues()   Strange case:   Z_PatternID_NPATm1==Z_PatternID_0  should NEVER happen...????"<<endl;
         return;
     }
 
-
-    cout << "EdbShowRec::SetPlateNumberValues()   eAliZMaxPID=  " <<  eAliZMaxPID << "    ---    " <<  "eAliZMinPID=  " <<  eAliZMinPID << endl;
-    cout << "EdbShowRec::SetPlateNumberValues()   eFirstPlate_eAliPID=  " <<  eFirstPlate_eAliPID << "    ---    " <<  "eFirstPlate=  " <<  eFirstPlate << endl;
-    cout << "EdbShowRec::SetPlateNumberValues()   eLastPlate_eAliPID=  " <<  eLastPlate_eAliPID << "    ---    " <<  "eLastPlate=  " <<  eLastPlate << endl;
-    cout << "EdbShowRec::SetPlateNumberValues()   eMiddlePlate_eAliPID=  " <<  eMiddlePlate_eAliPID << "    ---    " <<  "eMiddlePlate=  " <<  eMiddlePlate << endl;
-    cout << "EdbShowRec::SetPlateNumberValues()   eNumberPlate_eAliPID=  " <<  eNumberPlate_eAliPID << "    ---    " <<  "eNumberPlate=  " <<  eNumberPlate << endl;
-    cout << "EdbShowRec::SetPlateNumberValues()   eAliStreamType=  " <<  eAliStreamType << "    ---    " <<  "eAliStreamTypeStep=  " <<  eAliStreamTypeStep << endl;
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eAliZMaxPID = %02d", eAliZMaxPID);
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eFirstPlate_eAliPID = %02d", eFirstPlate_eAliPID);
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eLastPlate_eAliPID = %02d", eLastPlate_eAliPID);
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eMiddlePlate_eAliPID = %02d", eMiddlePlate_eAliPID);
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eNumberPlate_eAliPID = %02d", eNumberPlate_eAliPID);
+    Log(2,"EdbShowRec::SetPlateNumberValues()","eAliStreamTypeStep = %02d", eAliStreamTypeStep);
 
     IsPlateValuesLabel=kTRUE;
 
-    cout << "EdbShowRec::SetPlateNumberValues()...done." << endl;
+    Log(2,"EdbShowRec::SetPlateNumberValues()","SetPlateNumberValues...done.");
     return;
 }
 
@@ -1595,7 +1559,7 @@ void EdbShowRec::SetPlateNumberValues()
 
 void EdbShowRec::Create_eShowAlgArray()
 {
-    cout << "EdbShowRec::Create_eShowAlgArray()" << endl;
+    Log(2,"EdbShowRec::SetPlateNumberValues()","Create_eShowAlgArray");
     if (eShowAlgArray) {
         cout << "EdbShowRec::Create_eShowAlgArray()   eShowAlgArray already there. Just Clear it." << endl;
         eShowAlgArray->Clear();
@@ -1606,7 +1570,7 @@ void EdbShowRec::Create_eShowAlgArray()
     }
 
     eShowAlgArrayLoaded=kTRUE;
-    cout << "EdbShowRec::Create_eShowAlgArray()...done." << endl;
+    Log(2,"EdbShowRec::SetPlateNumberValues()","Create_eShowAlgArray...done.");
     return;
 }
 
@@ -1614,11 +1578,12 @@ void EdbShowRec::Create_eShowAlgArray()
 
 void EdbShowRec::Fill_eShowAlgArray()
 {
-    cout << "EdbShowRec::Fill_eShowAlgArray()" << endl;
-    cout << "eShowAlgArray  "   <<  eShowAlgArray << endl;
+    Log(2,"EdbShowRec::Fill_eShowAlgArray()","Fill_eShowAlgArray");
+
     if (!eShowAlgArray) return;
 
-    EdbShowAlg_CA*   StandardAlg = new EdbShowAlg_CA();
+    //EdbShowAlg_CA*   StandardAlg = new EdbShowAlg_CA();
+    EdbShowAlg_OI*   StandardAlg = new EdbShowAlg_OI();
 
     eShowAlgArray->Add(StandardAlg);
     SetShowAlgArrayN(eShowAlgArray->GetEntries());
@@ -1628,7 +1593,7 @@ void EdbShowRec::Fill_eShowAlgArray()
     eActualAlg=StandardAlg;
     eActualAlgParameterset[2]=0;
 
-    cout << "EdbShowRec::Fill_eShowAlgArray()...done." << endl;
+    Log(2,"EdbShowRec::Fill_eShowAlgArray()","Fill_eShowAlgArray...done.");
     return;
 }
 
@@ -1637,7 +1602,8 @@ void EdbShowRec::Fill_eShowAlgArray()
 
 void EdbShowRec::WriteRecoShowerArray(TObjArray* RecoShowerArray )
 {
-    cout << "EdbShowRec::WriteRecoShowerArray()." << endl;
+    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree");
+
     TFile* file= new TFile("testArrayEdbShowerP.root","RECREATE");
     TTree* tree= new TTree("tree","tree");
     EdbShowerP* show=0;
@@ -1673,7 +1639,7 @@ void EdbShowRec::WriteRecoShowerArray(TObjArray* RecoShowerArray )
     delete file;
     file=0;
 
-    cout << "EdbShowRec::WriteRecoShowerArray()...done." << endl;
+    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree...done.");
     return;
 }
 
@@ -1683,7 +1649,8 @@ void EdbShowRec::WriteRecoShowerArray(TObjArray* RecoShowerArray )
 // Private Function... Why did I set it like this ???
 void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP )
 {
-    cout << "EdbShowRec::Write_RecoShowerArray()" << endl;
+
+    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree");
     if (!eWriteFileShower) {
         cout << "EdbShowRec::Write_RecoShowerArray()   WARNING: eWriteFileShower == "<< eWriteFileShower <<". Will not write. Return" << endl;
         return;
@@ -1728,7 +1695,7 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
     delete file;
     file=0;
 
-    cout << "EdbShowRec::Write_RecoShowerArray()...done." << endl;
+    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree...done.");
     return;
 }
 
@@ -1736,8 +1703,7 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
 
 void EdbShowRec::Reset()
 {
-    cout << "EdbShowRec::Reset()" << endl;
-    cout << "EdbShowRec::Reset()   Delete all internal objects and create standard empy ones." << endl;
+    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to Null pointer.");
 
     cout << "EdbShowRec::Reset()   Delete eAli." << endl;
     if (eAli)                             {
@@ -1757,7 +1723,7 @@ void EdbShowRec::Reset()
         delete eShowAlgArray;
         eShowAlgArray=0;
     }
-
+    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to Null pointer...done.");
     return;
 }
 
@@ -1765,12 +1731,12 @@ void EdbShowRec::Reset()
 
 void EdbShowRec::Initialize()
 {
-    cout << "EdbShowRec::Initialize()" << endl;
+    Log(2,"EdbShowRec::Initialize()","Initialize ... NOTHING YET HERE");
 
     // Here is gonna set up all neccessary variables which are needed
     // to run the algorithm later on the  eAli  object.
 
-    cout << "EdbShowRec::Initialize()...done." << endl;
+    Log(2,"EdbShowRec::Initialize()","Initialize ... NOTHING YET HERE...done.");
     return;
 }
 
@@ -1778,14 +1744,12 @@ void EdbShowRec::Initialize()
 
 void EdbShowRec::Execute()
 {
-    cout << "EdbShowRec::Execute()" << endl;
-
+    Log(2,"EdbShowRec::Execute()","Execute ... NOTHING YET HERE");
     // Here the algorithm(s) are doing the reconstruction
     // of showers on the  eAli  object.
     // Later after reconstruction other things like gamma-reconstruction
     // can be done also here.
-
-    cout << "EdbShowRec::Execute()...done." << endl;
+    Log(2,"EdbShowRec::Execute()","Execute ... NOTHING YET HERE...done.");
     return;
 }
 
@@ -1794,8 +1758,8 @@ void EdbShowRec::Execute()
 
 void EdbShowRec::Finalize()
 {
-    cout << "EdbShowRec::Finalize()" << endl;
-    cout << "EdbShowRec::Finalize()...done." << endl;
+    Log(2,"EdbShowRec::Finalize()","Execute ... NOTHING YET HERE");
+    Log(2,"EdbShowRec::Finalize()","Execute ... NOTHING YET HERE...done.");
     return;
 }
 
@@ -1803,6 +1767,7 @@ void EdbShowRec::Finalize()
 
 void EdbShowRec::Print()
 {
+    Log(2,"EdbShowRec::Print()","Print important stuff...");
     for (int i=0; i<100; ++i) cout << "-";
     cout << endl;
     cout << "-";
@@ -1875,21 +1840,15 @@ void EdbShowRec::Print()
     }
     cout << "-";
     cout << endl;
-
-
     cout << "EdbShowRec::Print() --- SETTINGS: Energy:" << endl;
     cout << "-";
     cout << endl;
-
-
-
-
-
     cout << "-";
     cout << endl;
     cout << "EdbShowRec::Print()....done." << endl;
     for (int i=0; i<100; ++i) cout << "-";
     cout << endl;
+    Log(2,"EdbShowRec::Print()","Print important stuff...done.");
     return;
 }
 
@@ -1898,14 +1857,14 @@ void EdbShowRec::Print()
 
 void EdbShowRec::Print_InBTArray()
 {
-    cout << "EdbShowRec::Print_InBTArray()" << endl;
+    Log(2,"EdbShowRec::Print_InBTArray()","Print the information on the Initiator Basetrack array");
     if (!eInBTArray) return;
     EdbSegP* s=0;
     for (int i=0; i<eInBTArrayN; ++i) {
         s=(EdbSegP*) eInBTArray->At(i);
         s->PrintNice();
     }
-    cout << "EdbShowRec::Print_InBTArray()...done." << endl;
+    Log(2,"EdbShowRec::Print_InBTArray()","Print the information on the Initiator Basetrack array...done.");
     return;
 }
 
@@ -1925,10 +1884,10 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
 
     FILE *fp = fopen(file,"r");
     if (!fp) {
-        Log(1,"ReadShowRecPar","ERROR open file: %s", file);
+        Log(1,"EdbShowRec::ReadShowRecPar","ERROR open file: %s", file);
         return -1;
     }
-    else Log(2,"ReadShowRecPar","Read shower parameters from file: %s", file );
+    else Log(2,"EdbShowRec::ReadShowRecPar","Read shower parameters from file: %s", file );
 
     Int_t id;
     Int_t int_eUse;
@@ -1950,7 +1909,6 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
             sscanf(buf+strlen(key),"%s",name);
             ReadShowRecPar(name);
         }
-
 
 
         /// Main class instance step settings:
@@ -2085,8 +2043,6 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
             SetWriteFileShower(dospec_bool);
         }
 
-
-
         else if ( !strcmp(key,"SHOW_FILE_TREEBRANCH")   )
         {
             sscanf(buf+strlen(key),"%s",tmpchar);
@@ -2144,9 +2100,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
         /// INDICATION The latest string here to be written is in developement status.
         /// all others above should work....
 
-
         /// THE PARASETS STILL NEED CONFIRMATION if THE NUMBERS_ for labelling are correctly filled!!!
-
 
         /// Main settings preparating the reconstruction algorithm settings:
         else if ( !strcmp(key,"SHOW_ADDPARASET")  )
@@ -2208,10 +2162,6 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
         }
 
 
-
-
-
-
     }
     fclose(fp);
 
@@ -2224,7 +2174,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
     CheckPlateValues();
 
 
-    Log(2,"ReadShowRecPar","Read shower parameters...done.");
+    Log(2,"EdbShowRec::ReadShowRecPar","Read shower parameters...done.");
     return 0;
 }
 
@@ -2232,14 +2182,14 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
 
 void EdbShowRec::ResetUse_InBTType()
 {
-    cout << "EdbShowRec::ResetUse_InBTType()"<<endl;
+    Log(2,"EdbShowRec::ResetUse_InBTType()","ResetUse_InBTType");
     // Use no type to fill InBT Array at all(!) (i.e. reconstruct 0 showers).
     eUse_LT=kFALSE;
     eUse_PVREC=kFALSE;
     eUse_AliBT=kFALSE;
     eUse_AliLT=kFALSE;
     eUseNr=-1;
-    cout << "EdbShowRec::ResetUse_InBTType()...done."<<endl;
+    Log(2,"EdbShowRec::ResetUse_InBTType()","ResetUse_InBTType...done.");
     return;
 }
 
@@ -3344,18 +3294,15 @@ void EdbShowRec::PrintRecoShowerArray()
     Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray");
 
     EdbShowerP* show=0;
-
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         show->PrintNice();
     }
     cout << "Printed all " <<  GetRecoShowerArrayN()  << " showers of the eRecoShowerArray" << endl;
 
+    Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray...done.");
     return;
 }
-
-
-
 
 
 //______________________________________________________________________________
@@ -3408,52 +3355,57 @@ void EdbShowRec::AddAlg(Int_t AlgType, Float_t* par)
         return;
     }; // CL
     if (AlgType==2) {
+        // C_one A_dvanced  algorithm
         EdbShowAlg_CA* StandardAlg = new EdbShowAlg_CA();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
     if (AlgType==3) {
+        // N_eural N_et  algorithm
         cout << "= = = = = NN not yet implemented = = = = = "<<endl;
         return;
     }; // NN
     if (AlgType==4) {
+        // O_fficial I_mplementation  algorithm
         EdbShowAlg_OI* StandardAlg = new EdbShowAlg_OI();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
     if (AlgType==5) {
+        // S_??? A_???  algorithm
         EdbShowAlg_SA* StandardAlg = new EdbShowAlg_SA();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
     if (AlgType==6) {
+        // T_rack C_one algorithm
         cout << "= = = = = TC not yet implemented = = = = = "<<endl;
         return;
     }; // TC
     if (AlgType==7) {
+        // R_ecursive C_one algorithm
         EdbShowAlg_RC* StandardAlg = new EdbShowAlg_RC();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
     if (AlgType==8) {
+        // B_ack W_ard algorithm
         EdbShowAlg_BW* StandardAlg = new EdbShowAlg_BW();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
     if (AlgType==10) {
+        // G_amma S_earch algorithm
         EdbShowAlg_GS* StandardAlg = new EdbShowAlg_GS();
         eShowAlgArray->Add(StandardAlg);
         StandardAlg->SetParameters(par);
         StandardAlg->Print();
     };
-
-
-
 
     cout << "==================  AFTER ADDING there is eShowAlgArray->GetEntries() =  " <<  eShowAlgArray->GetEntries() << endl;
 
@@ -3475,7 +3427,6 @@ void EdbShowRec::AddAlg(Int_t AlgType, Float_t* par)
 
 void EdbShowRec::ResetShowAlgArray()
 {
-
     Log(2,"EdbShowRec::ResetShowAlgArray","EdbShowRec::ResetShowAlgArray");
     if (!eShowAlgArray)  {
         Create_eShowAlgArray();
@@ -3493,7 +3444,7 @@ void EdbShowRec::ResetShowAlgArray()
 
 void EdbShowRec::CheckPlateValues() {
 
-    cout << "void EdbShowRec::CheckPlateValues(){ " << endl;
+    Log(2,"EdbShowRec::CheckPlateValues()","CheckPlateValues()");
 
     // Restore from default values to logical ones:
     if (eProposedNumberPlate==-1) eProposedNumberPlate=eAliNpat;
@@ -3501,8 +3452,8 @@ void EdbShowRec::CheckPlateValues() {
     if (eProposedMiddlePlate==-1) eProposedMiddlePlate=eAliNpat-3;
     if (eProposedLastPlate==-1) eProposedLastPlate=eAliNpat;
 
-    eAli->Print();
-
+    // eAli->Print();
+    /*
     cout << "eFirstPlate= "  << eFirstPlate << endl;
     cout << "eProposedFirstPlate= "  << eProposedFirstPlate << endl;
     cout << "eFirstPlate_eAliPID= "  << eFirstPlate_eAliPID << endl;
@@ -3516,72 +3467,59 @@ void EdbShowRec::CheckPlateValues() {
     cout << "eMiddlePlate_eAliPID= "  << eMiddlePlate_eAliPID << endl;
     cout<<endl;
     cout << "eAliNpat= "  << eAliNpat << endl;
-
-// 	return;
-
+    */
 
     if (eProposedFirstPlate<1 || eProposedFirstPlate>eAliNpat-2 || eProposedFirstPlate==eFirstPlate) {
         // Do nothing!
-        cout << "EdbShowRec::CheckPlateValues   Do nothing for  eProposedFirstPlate" << endl;
+        Log(2,"EdbShowRec::CheckPlateValues()","Do nothing for  eProposedFirstPlate.");
     }
     else {
         SetFirstPlate(eProposedFirstPlate);
         Log(2,"EdbShowRec::CheckPlateValues","SetFirstPlate() = %d", eProposedFirstPlate);
     }
 
-
     if (eProposedMiddlePlate<eFirstPlate || eProposedMiddlePlate>eAliNpat-2 || eProposedMiddlePlate==eMiddlePlate) {
         // Do nothing!
-        cout << "EdbShowRec::CheckPlateValues   Do nothing for  eProposedMiddlePlate" << endl;
+        Log(2,"EdbShowRec::CheckPlateValues()","Do nothing for  eProposedMiddlePlate.");
     }
     else {
         SetMiddlePlate(eProposedMiddlePlate);
         Log(2,"EdbShowRec::CheckPlateValues","SetMiddlePlate() = %d", eProposedMiddlePlate);
     }
 
-
     if (eProposedLastPlate<=2 || eProposedLastPlate>=eAliNpat || eProposedLastPlate==eLastPlate ) {
         // Do nothing!
-        cout << "EdbShowRec::CheckPlateValues   Do nothing for  eProposedLastPlate" << endl;
+        Log(2,"EdbShowRec::CheckPlateValues()","Do nothing for  eProposedLastPlate.");
     }
     else {
         SetLastPlate(eProposedLastPlate);
         Log(2,"EdbShowRec::CheckPlateValues","SetLastPlate() = %d", eProposedLastPlate);
     }
 
-
-
     if (eProposedNumberPlate>eAliNpat || eProposedNumberPlate<=1 || eProposedNumberPlate==eNumberPlate )  {
         // Do nothing!
-        cout << "EdbShowRec::CheckPlateValues   Do nothing for  eProposedNumberPlate" << endl;
+        Log(2,"EdbShowRec::CheckPlateValues()","Do nothing for  eProposedNumberPlate.");
     }
     else {
         SetNumberPlate(eProposedNumberPlate);
         Log(2,"EdbShowRec::CheckPlateValues","SetNumberPlate() = %d", eProposedNumberPlate);
     }
 
-
     SetFirstPlate_eAliPID(eFirstPlate, eAliStreamTypeStep);
     SetLastPlate_eAliPID(eLastPlate, eAliStreamTypeStep);
     SetMiddlePlate_eAliPID(eMiddlePlate, eAliStreamTypeStep);
     SetNumberPlate_eAliPID(eNumberPlate, eAliStreamTypeStep);
 
-    if (gEDBDEBUGLEVEL>2) {
-        cout << "eFirstPlate= "  << eFirstPlate << endl;
-        cout << "eFirstPlate_eAliPID= "  << eFirstPlate_eAliPID << endl;
-        cout<<endl;
-        cout << "eLastPlate= "  << eLastPlate << endl;
-        cout << "eLastPlate_eAliPID= "  << eLastPlate_eAliPID << endl;
-        cout<<endl;
-        cout << "eMiddlePlate= "  << eMiddlePlate << endl;
-        cout << "eMiddlePlate_eAliPID= "  << eMiddlePlate_eAliPID << endl;
-        cout<<endl;
-        cout << "eNumberPlate= "  << eNumberPlate << endl;
-        cout << "eNumberPlate_eAliPID= "  << eNumberPlate_eAliPID << endl;
-        cout<<endl;
-    }
+    Log(2,"EdbShowRec::CheckPlateValues()","eFirstPlate           =  %02d ",eFirstPlate);
+    Log(2,"EdbShowRec::CheckPlateValues()","eFirstPlate_eAliPID   =  %02d ",eFirstPlate_eAliPID);
+    Log(2,"EdbShowRec::CheckPlateValues()","eLastPlate            =  %02d ",eLastPlate);
+    Log(2,"EdbShowRec::CheckPlateValues()","eLastPlate_eAliPID    =  %02d ",eLastPlate_eAliPID);
+    Log(2,"EdbShowRec::CheckPlateValues()","eMiddlePlate          =  %02d ",eMiddlePlate);
+    Log(2,"EdbShowRec::CheckPlateValues()","eMiddlePlate_eAliPID  =  %02d ",eMiddlePlate_eAliPID);
+    Log(2,"EdbShowRec::CheckPlateValues()","eNumberPlate          =  %02d ",eNumberPlate);
+    Log(2,"EdbShowRec::CheckPlateValues()","eNumberPlate_eAliPID  =  %02d ",eNumberPlate_eAliPID);
 
-    cout << "void EdbShowRec::CheckPlateValues()   ...done." << endl;
+    Log(2,"EdbShowRec::CheckPlateValues()","CheckPlateValues()...done.");
     return;
 }
 
@@ -3602,6 +3540,8 @@ void EdbShowRec::PrintAll()
 
 void EdbShowRec::BuildParametrizations()
 {
+    Log(2,"EdbShowRec::BuildParametrizations()","BuildParametrizations");
+
     if (eRecoShowerArrayN==0) {
         cout << "EdbShowRec::BuildParametrizations   WARNING ::  eRecoShowerArrayN = 0.    Return!" << endl;
         return;
@@ -3618,6 +3558,9 @@ void EdbShowRec::BuildParametrizations()
             if (eParaTypes[j]==1) show->BuildParametrisation(j);
         }
     }
+
+    Log(2,"EdbShowRec::BuildParametrizations()","BuildParametrizations...done.");
+    return;
 }
 
 //______________________________________________________________________________
@@ -3640,8 +3583,6 @@ void EdbShowRec::SetFirstPlate_eAliPID(Int_t FP, Int_t StreamTypeStep)
     if (StreamTypeStep==-1) {
         eFirstPlate_eAliPID = FP-1;
     }
-
-    cout << "FP=  " << FP << "   StreamTypeStep = " << StreamTypeStep << "  eFirstPlate_PID =  " << eFirstPlate_eAliPID << endl;
     return;
 }
 
@@ -3655,8 +3596,6 @@ void EdbShowRec::SetMiddlePlate_eAliPID(Int_t Plate, Int_t StreamTypeStep)
     if (StreamTypeStep==-1) {
         eMiddlePlate_eAliPID = Plate-1;
     }
-
-    cout << "Plate=  " << Plate << "   StreamTypeStep = " << StreamTypeStep << "  eMiddlePlate_eAliPID =  " << eMiddlePlate_eAliPID << endl;
     return;
 }
 
@@ -3670,8 +3609,6 @@ void EdbShowRec::SetLastPlate_eAliPID(Int_t Plate, Int_t StreamTypeStep)
     if (StreamTypeStep==-1) {
         eLastPlate_eAliPID = Plate-1;
     }
-
-    cout << "Plate=  " << Plate << "   StreamTypeStep = " << StreamTypeStep << "  eLastPlate_eAliPID =  " << eLastPlate_eAliPID << endl;
     return;
 }
 
@@ -3681,7 +3618,6 @@ void EdbShowRec::SetLastPlate_eAliPID(Int_t Plate, Int_t StreamTypeStep)
 void EdbShowRec::SetNumberPlate_eAliPID(Int_t Plate, Int_t StreamTypeStep)
 {
     eNumberPlate_eAliPID = eAliNpat;
-    cout << "Plate=  " << Plate << "   StreamTypeStep = " << StreamTypeStep << "  eNumberPlate_eAliPID =  " << eNumberPlate_eAliPID << endl;
     return;
 }
 
@@ -3689,13 +3625,14 @@ void EdbShowRec::SetNumberPlate_eAliPID(Int_t Plate, Int_t StreamTypeStep)
 
 void EdbShowRec::SetSimpleFileName(Int_t type, Int_t dotype)
 {
+    Log(2,"EdbShowRec::SetSimpleFileName()","SetSimpleFileName");
     //type = 0: treebranch
     //type = 1: showers
     if (type==0) if (dotype==1) eFilename_Out_treebranch="treebranch.root";
     if (type==1) if (dotype==1) eFilename_Out_shower="Showers.root";
 
-
     cout << "eFilename_Out_treebranch=  " << eFilename_Out_treebranch << "   eFilename_Out_shower = " << eFilename_Out_shower <<  endl;
+    Log(2,"EdbShowRec::SetSimpleFileName()","SetSimpleFileName...done.");
     return;
 }
 
@@ -3704,6 +3641,7 @@ void EdbShowRec::SetSimpleFileName(Int_t type, Int_t dotype)
 
 void EdbShowRec::SetDoParaType(Int_t type)
 {
+    Log(2,"EdbShowRec::SetDoParaType()","SetDoParaType");
     // Set internal array values for which parametrisation shall be calculated:
     //type = 0: FJ
     //type = 1: LT
@@ -3711,11 +3649,9 @@ void EdbShowRec::SetDoParaType(Int_t type)
     //type = 3: JC
     //type = 4: XX
     //type = 5: YY
-    int maxParametrizationType=6; // max parametrizations availible
-
+    int maxParametrizationType=6; // max parametrizations available
     if (type>=0 && type<maxParametrizationType) eParaTypes[type]=1;
-
-    cout << "EdbShowRec::SetDoParaType   type = " << type << " set to 1." <<  endl;
+    Log(2,"EdbShowRec::SetDoParaType()","SetDoParaType...done.");
     return;
 }
 
@@ -3761,10 +3697,6 @@ bool EdbShowRec::FileExists(string strFilename) {
     /// Therefore I skipped it.
     return 1;
 }
-
-
-
-
 
 //______________________________________________________________________________
 

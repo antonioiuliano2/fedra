@@ -48,6 +48,7 @@ protected:
 // will have to use TObjArray implementations.
     TString      eAlgName;
     Int_t        eAlgValue;
+    Int_t        eParaN;
     Float_t      eParaValue[10];
     TString      eParaString[10];
     Int_t     eActualAlgParametersetNr; // Used when more sets of same algorithm
