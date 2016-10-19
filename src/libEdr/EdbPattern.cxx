@@ -1872,9 +1872,9 @@ EdbPattern* EdbPatternsVolume::GetPatternByPID(int pid) const
 }
 
 //______________________________________________________________________________
-EdbPattern* EdbPatternsVolume::GetPatternByZ(float z) const
+EdbPattern* EdbPatternsVolume::GetPatternByZ(float z, float tolerance) const
 {
-  // Return pattern having Z()  == z +- 5(microns) due to roundings.
+  // Return pattern having Z()  == z +- tolerance(microns) due to roundings.
   // If there is no such pattern, return a NULL pattern.
   //
   // This is important because some codings (libShower for example).
@@ -1883,7 +1883,7 @@ EdbPattern* EdbPatternsVolume::GetPatternByZ(float z) const
   EdbPattern *pat=0;
 	for(int i=0; i<Npatterns(); i++) {
 		pat = GetPattern(i);
-    if ( TMath::Abs(GetPattern(i)->Z() - z)<5 ) return pat;
+    if ( TMath::Abs(GetPattern(i)->Z() - z)<tolerance ) return pat;
 	}
 	
   if (gEDBDEBUGLEVEL>2) 

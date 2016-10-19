@@ -378,7 +378,8 @@ class EdbPatternsVolume : public TObject {
 	EdbPattern* NextPattern(float z, int dir) const;
   EdbPattern* GetPatternNext(float z, int dir) const;
 	EdbPattern* GetPatternByPID(int pid) const;
-	EdbPattern* GetPatternByZ(float z) const;
+// 	EdbPattern* GetPatternByZ(float z) const;
+	EdbPattern* GetPatternByZ(float z, float tolerance=5) const;
 
   void   DropCell();
 
