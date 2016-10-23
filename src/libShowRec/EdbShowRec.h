@@ -33,13 +33,6 @@ using namespace std;
 
 
 
-
-
-
-
-
-
-
 //______________________________________________________________________________
 
 class EdbShowRec : public TObject {
@@ -171,11 +164,12 @@ private:
     // a) from a linked_tracks.root file (LT)
     // b) from a gAli.root file (PVREC)
     // c) from the BaseTracks of the  eAli  object (AliBT)
-    // d) from the linked tracks of the  eAli  object (AliLT)
+    // d) from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
     Bool_t            eUse_LT;
     Bool_t            eUse_PVREC;
     Bool_t            eUse_AliBT;
     Bool_t            eUse_AliLT;
+    Bool_t            eUse_ROOTInBT;
     Int_t             eUseNr;
 
     TCut*             eInBTCuts[3];       //! root-style text cuts
@@ -240,6 +234,8 @@ private:
     void              Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
     void              Fill_eInBTArray_ByRecoLinkTracks_eAli();
     void              Fill_eInBTArray_ByBaseTracksOf_eAli();
+    void              Fill_eInBTArray_ByBaseTracksOf_RootFile();
+
 
     // Function to add InBT cut, which is used to select the initiator basetracks:
     void              Add_INBTCut(Int_t layer, TCut &cut);
@@ -259,7 +255,7 @@ private:
 
 
     /// Write Reconstructed Showers to File:
-    void							Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP );
+    void 		Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP );
     /// NOT WORKLING YET::::  still segmentation faults..../// solved but i dont know why....
 
 
@@ -342,6 +338,9 @@ public:
     inline void         SetInBTArray( TObjArray* InBTArray ) {
         eInBTArray = InBTArray;
         eInBTArrayN=eInBTArray->GetEntries();
+    }
+    inline void         SetInBTUseNr( Int_t UseNr ) {
+        eUseNr = UseNr;
     }
     inline void         SetShowAlgArray( TObjArray* ShowAlgArray ) {
         eShowAlgArray = ShowAlgArray;

@@ -183,6 +183,7 @@ public:
     EdbPVRQuality();
     EdbPVRQuality(EdbPVRec* ali);
     EdbPVRQuality(EdbPVRec* ali, Float_t BTDensityTargetLevel);
+    EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel, Int_t BG_CutMethod);
 
     void SetCutMethod(Int_t CutMethod);
     inline void SetCutMethodIsDone(Int_t  CutMethod) {

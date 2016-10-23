@@ -55,10 +55,8 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     // Set ali as eAli_orig
     SetEdbPVRec(ali);
 
-
     // Check EdbPVRec object for defects:
     CheckEdbPVRec();
-
 
 
     /// TO BE COMMENTET OUT WHEN ALL BG-Reduction-Algorithms are fully implemented:
@@ -86,8 +84,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
 {
     // Default Constructor with a EdbPVRec object and the desired basetrack density target level.
     // Does same as constructor EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali) but now with adjustable
-    // background level.
-    // If general basetrack density is lower than BTDensityTargetLevel BT/mm2 then no cleaning is done.
+    // background target level.
 
     Log(2,"EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)","Default Constructor with EdbPVRec object and given BT density level");
 
@@ -102,15 +99,56 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)
     // Set ali as eAli_orig
     SetEdbPVRec(ali);
 
-
     // Set BTDensityTargetLevel
     SetBTDensityLevel(BTDensityTargetLevel);
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  Set BTDensityTargetLevel to (1/mm^2)= " << GetBTDensityLevel() << endl;
 
-
     // Check EdbPVRec object for defects:
     CheckEdbPVRec();
 
+
+    /// TO BE COMMENTET OUT WHEN ALL BG-Reduction-Algorithms are fully implemented:
+//     Remove_Passing(eAli_orig);
+//     Remove_DoubleBT(eAli_orig);
+    /// TO BE CHECKED WHICH METHOD SHOULD BE THE DEFAULT ONE...
+//     Execute_ConstantBTDensity();
+//     CreateEdbPVRec();
+//     Print();
+}
+
+
+//______________________________________________________________________________
+
+EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel, Int_t BG_CutMethod)
+{
+    // Default Constructor with a EdbPVRec object and the desired basetrack density target level,
+    // and already fixed BG_CutMethod.
+    // Does same as constructor EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali) but now with adjustable
+    // background target level and direct setting of the background reduction algorithm.
+
+    Log(2,"EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)","Default Constructor with EdbPVRec object and given BT density level");
+
+    Init();
+    Set0();
+
+    if (NULL == ali || ali->Npatterns()<1) {
+        cout << "WARNING   EdbPVRQuality(EdbPVRec* ali)   ali is no good EdbPVRec object! Check!" << endl;
+        return;
+    }
+
+    // Set ali as eAli_orig
+    SetEdbPVRec(ali);
+
+    // Set BTDensityTargetLevel
+    SetBTDensityLevel(BTDensityTargetLevel);
+    cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  Set BTDensityTargetLevel to (1/mm^2)= " << GetBTDensityLevel() << endl;
+    
+    // Set BG reduction cut method
+    SetCutMethod(BG_CutMethod);
+    cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  Set CutMethod to = " << GetCutMethod() << endl;
+
+    // Check EdbPVRec object for defects:
+    CheckEdbPVRec();
 
     /// TO BE COMMENTET OUT WHEN ALL BG-Reduction-Algorithms are fully implemented:
 //     Remove_Passing(eAli_orig);
@@ -2519,6 +2557,7 @@ TObjArray* EdbPVRQuality::FindFakeDoubleBTs(EdbPVRec* aliSource)
     EdbSegP* seg=0;
     EdbSegP* seg1=0;
     Int_t NdoubleFoundSeg=0;
+    Int_t NSegTotal=aliSource->NSeg();
     TObjArray* DoubleBTArray = new TObjArray();
 
     // Bool variables for the different "regions" of the FakeBT Doublets
@@ -2629,14 +2668,17 @@ TObjArray* EdbPVRQuality::FindFakeDoubleBTs(EdbPVRec* aliSource)
         } // of for (int j = 0; j < nPat-1; j++ )
     } // for (int i = 0; i <aliSource->Npatterns(); i++ )
 
+    
+    Double_t ratioFakeDoubleBTsNSegTotal = (Double_t)DoubleBTArray->GetEntries()/NSegTotal;
+    
     cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: " << endl;
-    cout << "EdbPVRQuality::FindFakeDoubleBTs() We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different basetracks." << endl;
-
+    cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different basetracks." << endl;
+    cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: Out of in total a ratio of: " << ratioFakeDoubleBTsNSegTotal << endl;
 
     // Set the found array as Exclusion List:
     // Array at 0 is reserved for the FakeDoubleBTs
     // Nota bene: this array is filled with BTs over all paterns of the volume!
-    cout << "EdbPVRQuality::FindFakeDoubleBTs()  Set the found array as Exclusion List: Array at 0 is reserved for the FakeDoubleBTs." << endl;
+    cout << "EdbPVRQuality::FindFakeDoubleBTs() Set the found array as Exclusion List: Array at 0 is reserved for the FakeDoubleBTs." << endl;
     eArrayPatternAllExcluded[0]=DoubleBTArray;
 
     cout << "EdbPVRQuality::FindFakeDoubleBTs()...done." << endl;
@@ -4425,9 +4467,6 @@ void EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) {
     FillTanThetaTArrays(patNR);
     ////////////////////////////
 
-
-
-
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) This function will determine the TT Cut reduction factors. According" << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) to the given formula (explained in the manual)..." << endl;
     cout << "EdbPVRQuality::DetermineCutTTReductionFactor(Int_t patNR) ... TO BE DONE ... GIVE FORMULA HERE !!! ... " << endl;
@@ -4634,7 +4673,7 @@ void EdbPVRQuality::Cut() {
     cout << "EdbPVRQuality::Cut() The cutfactor tells us the fraction." << endl;
 
     // Cut routine different for each TT bin.
-    // Main Cut is then executed in this soubroutine
+    // Main Cut is then executed in this subroutine
     Int_t nbinsX=10;
     for (int i = 0; i <nbinsX+2; i++ ) {
         Cut_TTBin(i);
@@ -4998,7 +5037,7 @@ void EdbPVRQuality::MergeHighDensBTsLists() {
     cout << "EdbPVRQuality::MergeHighDensBTsLists()" << endl;
 
     // Merge all arrays per patter together as array for the volume
-    cout << "EdbPVRQuality::MergeHighDensBTsLists() Merge all arrays per patter together as array for the volume" << endl;
+    cout << "EdbPVRQuality::MergeHighDensBTsLists() Merge all arrays per pattern together as array for the volume" << endl;
 
     EdbSegP* seg;
     TObjArray* sourceArraySegments=eArrayPatternAllTTRejected;

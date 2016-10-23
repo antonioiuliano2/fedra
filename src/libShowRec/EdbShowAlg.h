@@ -119,6 +119,10 @@ public:
     inline void         SetRecoShowerArrayN(Int_t RecoShowerArrayN) {
         eRecoShowerArrayN=RecoShowerArrayN;
     }
+    inline void         AddRecoShowerArray(EdbShowerP* shower) {
+        eRecoShowerArray->Add(shower);
+        ++eRecoShowerArrayN;
+    }
 
 
     inline void     SetActualAlgParameterset(Int_t ActualAlgParametersetNr) {
@@ -188,16 +192,14 @@ public:
 
 class EdbShowAlg_SA : public EdbShowAlg {
 
-// Simple Alg, just collecting every BT which belongs to same MC Event as InBT
+// S_imple A_lg, just collecting every BT which belongs to same MC Event as InBT
 
 public:
 
     EdbShowAlg_SA();
     virtual ~EdbShowAlg_SA();          // virtual constructor due to inherited class
 
-
     void Init();
-
 
 // Main functions for using this ShowerAlgorithm Object.
 // Structure is made similar to OpRelease, where
@@ -216,7 +218,7 @@ public:
 
 class EdbShowAlg_CA : public EdbShowAlg {
 
-// Cone Advanced Alg
+// C_one A_dvanced Alg
 
 private:
 
@@ -227,7 +229,6 @@ public:
 
     EdbShowAlg_CA();
     virtual ~EdbShowAlg_CA();          // virtual constructor due to inherited class
-
 
 // Main functions for using this ShowerAlgorithm Object.
 // Structure is made similar to OpRelease, where
@@ -247,7 +248,7 @@ public:
 
 class EdbShowAlg_OI : public EdbShowAlg {
 
-// Official implementation try of the "libShower recdown" algorithm to keep backward compability.
+// O_fficial I_mplementation Alg. Try of the "libShower recdown" algorithm to keep backward compability.
 
 private:
 
@@ -274,7 +275,8 @@ public:
 
 class EdbShowAlg_RC : public EdbShowAlg {
 
-// Implementation of the "Recursive Cone" algorithm.
+// R_ecursive C_one algorithm.
+
 private:
     Bool_t    FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbShowerP* shower);
 
@@ -295,7 +297,8 @@ public:
 
 class EdbShowAlg_BW : public EdbShowAlg {
 
-// Implementation of the "BackWard" algorithm.
+    // B_ack_W_ard algorithm.
+
 private:
 
 public:
@@ -311,7 +314,20 @@ public:
 
 //______________________________________________________________________________
 
-
+/*
+TO BE IMPLEMENTED ALGORITHMS IF TIME (and needed, if not availibale from "showrec" standalone program):
+0 	CT
+1 	CL
+2 	CA
+3 	NN
+4 	OI
+5 	SA
+6 	TC
+7 	RC
+8 	BW
+9 	AG
+10 	GS
+*/
 //______________________________________________________________________________
 
 

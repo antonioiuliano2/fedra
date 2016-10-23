@@ -1186,9 +1186,9 @@ void EdbShowAlg_OI::Execute()
     /// To be checked: does it work also on the testbeam data?
     ////
     if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
-    cout << "eFirstPlate_eAliPID = " << eFirstPlate_eAliPID << endl;
-    cout << "eLastPlate_eAliPID  = " << eLastPlate_eAliPID << endl;
-    if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- STEP for patternloop direction =  " << STEP << endl;
+//     cout << "eFirstPlate_eAliPID = " << eFirstPlate_eAliPID << endl;
+//     cout << "eLastPlate_eAliPID  = " << eLastPlate_eAliPID << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "EdbShowAlg_OI::Execute--- STEP for patternloop direction =  " << STEP << endl;
 
 
 //--- Loop over InBTs:
@@ -1202,8 +1202,8 @@ void EdbShowAlg_OI::Execute()
 // Since eInBTArray is filled in ascending ordering by zpositon
 // We use the descending loop to begin with BT with lowest z first.
 
-//     for (Int_t i=eInBTArrayN-1; i>=0; --i) {
-    for (Int_t i=eInBTArrayN-1; i>=eInBTArrayN-1; --i) {
+    for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+//     for (Int_t i=eInBTArrayN-1; i>=eInBTArrayN-1; --i) {
 
 
 // CounterOutPut
@@ -1261,7 +1261,13 @@ void EdbShowAlg_OI::Execute()
 // If we arrive here, Basetrack  Segment  has passed criteria
 // and is then added to the RecoShower:
 // Check if its not the InBT which is already added:
-                if (Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()) {
+// Use compare function of EdbSegP:
+//                 if (Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()) {
+                if ( Segment->Compare(InBT) == 0) {
+// 		  cout << "Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()  segments have same coord, so dont add" << endl;
+// 		  cout << "check the compare-function" << endl;
+// 		  cout << "Segment->Compare(InBT) = " <<  Segment->Compare(InBT)     << endl;
+// 		  int EdbSegP::Compare( const TObject *obj ) const
                     ;    // is InBT, do nothing;
                 }
                 else {
@@ -1299,8 +1305,6 @@ void EdbShowAlg_OI::Execute()
                 // What is the constraint? 0 <= newActualPID <= Npatterns-1, these patterns are valid....
             }
 
-
-
             /* NOT NECESSARY ANYMORE SINCE WE DO THE OUT OF BOUNDS CHECK IN ANOTHER WAY .....
              * TO BE  REMOVED ...
             // This if holds in the case of STEP== +1
@@ -1325,13 +1329,13 @@ void EdbShowAlg_OI::Execute()
                 //cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID>=eNumberPlate_eAliPID-1   [0 <= newActualPID <= Npatterns-1]"<<endl;
             }
 
-
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
             if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
             if (NLoopedPattern>eNumberPlate_eAliPID && gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
 
             ActualPID=newActualPID;
         } // of // while (StillToLoop)
+
 
 // Obligatory when Shower Reconstruction is finished:
         RecoShower ->Update();
@@ -1340,13 +1344,13 @@ void EdbShowAlg_OI::Execute()
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintNice();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintSegments();
 
-
-
-        if (RecoShower->N()>1) {
-            cout << "  DEBUG  Printing schowers with 2 or more segments" << endl;
-            RecoShower ->PrintNice();
-            RecoShower ->PrintSegments();
-        }
+        /*
+                if (RecoShower->N()>=20) {
+                    cout << "  DEBUG  Printing schowers with 20 or more segments" << endl;
+                    RecoShower ->PrintNice();
+                    RecoShower ->PrintSegments();
+                }
+        */
 
 //     if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- Before adding to array delete the histograms...by finalize() of shower."<<endl;
 //     RecoShower ->Finalize();
@@ -1355,9 +1359,8 @@ void EdbShowAlg_OI::Execute()
 
 // Add Shower Object to Shower Reco Array.
 // Not, if its empty or containing only one BT:
-        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
-
-//cout << " eRecoShowerArray->GetEntries()  " <<  eRecoShowerArray->GetEntries()   << endl;
+// Note, this function add also eRecoShowerArrayN directly.
+        if (RecoShower->N()>1) AddRecoShowerArray(RecoShower);
 
 
 // Set back loop values:
@@ -1366,14 +1369,12 @@ void EdbShowAlg_OI::Execute()
     } // of  //   for (Int_t i=eInBTArrayN-1; i>=0; --i) {
 
 
-// Set new value for  eRecoShowerArrayN  (may now be < eInBTArrayN).
-    SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
-
-
-
-    gEDBDEBUGLEVEL=2;
+//     gEDBDEBUGLEVEL=2;
 
     cout << "EdbShowAlg_OI::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
+    cout << "EdbShowAlg_OI::eRecoShowerArray = " << eRecoShowerArray << endl;
+    cout << "EdbShowAlg_OI::eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
+
     Log(2,"EdbShowAlg_OI::Execute()","DOING MAIN SHOWER RECONSTRUCTION HERE...done.");
     return;
 }

@@ -198,7 +198,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, TObjArray* ShowAlgA
 
 
 //______________________________________________________________________________
-/// Strangely this constructor doenst work... If I use like this:
+/// Strangely this constructor does not work... If I use like this:
 /// EdbShowRec* ee = new EdbShowRec("Shower.root") then at the end
 /// The object ee  calls its contructor and the objects isnt there anymore....
 /// Some c++ tutorials say calling constructor from constructor inst possible so easy...
@@ -378,6 +378,8 @@ void EdbShowRec::Set0()
     eFirstPlate_eAliPID=-1;
     eMiddlePlate_eAliPID=-1;
     eLastPlate_eAliPID=-1;
+    eNumberPlate_eAliPID=-1;
+    IsPlateValuesLabel=kFALSE;
 
     eInBTArray=0;
     eInBTArrayN=0;
@@ -717,7 +719,12 @@ void EdbShowRec::ReconstructTEST_OI()
 
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
+
     if (eInBTArrayN==0) Fill_eInBTArray(eUseNr);
+
+    // test
+    Fill_eInBTArray_ByBaseTracksOf_RootFile();
+
 //   return;
 
     if (!eShowAlgArray)   {
@@ -832,8 +839,11 @@ void EdbShowRec::Reconstruct()
     Log(2,"EdbShowRec::Reconstruct()","Check if  eShowAlgArray  is there: %d", isThere);
 
 // return;
+
+    // CHECK IF WE DO HAVE TO DO IT AGAIN, WHEN IT WAS ALREADY CHECKED IN THE
+    // CONSTRUCTOR OF  EdbShowRec ...
     // To set eAli plate numbers right:
-    SetPlateNumberValues();
+    if (!IsPlateValuesLabel) SetPlateNumberValues();
 
 
     //-------------------------------------------------------------------
@@ -845,41 +855,36 @@ void EdbShowRec::Reconstruct()
     //  0)  (eUseNr==0) getting the BaseTracks out of eAli. If they are not stored, goto next
     //  1)  (eUseNr==1) getting the BaseTracks out of tracks out of eFilename_LinkedTracks if they are stored
     //  2)  (eUseNr==2) use only (but all) Basetracks within [eFirstPlate,eMiddlePlate]
-    //  3)  (eUseNr==3) special purpose. (not yet implemented)
-    // Default is 0);
+    //  3)  (eUseNr==3) from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
+    // Default is 0)
 
+    // If it is not filled, then fill it now...
+    if (eInBTArrayN==0) Fill_eInBTArray(eUseNr);
+
+    // Create the Initiator Basetrack Tree... Whats the difference to Create_eInBTArray?
+    // Maybe Cutstrings that can be written in the default.par file ....
     if (!eInBTTree) Create_eInBTTree();
 
-    /// ----   EXPERIMENTAL STATUS ---
-    Fill_eInBTArray(eUseNr);
-
-    // TEMPORARY solution:  2).
-    //Fill_eInBTArray_ByBaseTracksOf_eAli();
-//   Fill_eInBTArray_ByRecoLinkTracks_eAli();
-    /// ----   EXPERIMENTAL STATUS ---
-//   0) Fill_eInBTArray_ByRecoLinkTracks_eAli();
-//   1) Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
-//   2) Fill_eInBTArray_ByBaseTracksOf_eAli();
-//   3) Fill_eInBTArray_ByBaseTracksOf_eAli_Basic(); ???
-    //-------------------------------------------------------------------
-
-// 	return;
+    // 	return;
 
     //-------------------------------------------------------------------
     // Part Filling the Shower RecoAlg Array:
-
     if (!eShowAlgArray) Create_eShowAlgArray();
 
     // If no eShowAlgArray:  create manually one using the
     // ConeAdvanced Algorithm as standard algorithm.
-    Fill_eShowAlgArray();
+    if (eShowAlgArrayN==0) Fill_eShowAlgArray();
+
 
     // Get Reconstruction Algorithm Object from the TObjArray storage:
-    cout << "EdbShowRec::Reconstruct   Get ShowAlg from TObjArray storage" << endl;
-    EdbShowAlg_SA*  RecoAlg = (EdbShowAlg_SA*) eShowAlgArray->At(0);
-    cout << "EdbShowAlg_SA*  RecoAlg = (EdbShowAlg_SA*) eShowAlgArray->At(0);" << endl;
-    cout << "TO BE SOLVED: WHY IS HERE A CAST TO THE EdbShowAlg_SA  CLASS ?????" << endl;
-    // ??????? TO BE SOLVED: WHY IS HERE A CAST TO THE EdbShowAlg_SA  CLASS ?????
+    Log(2,"EdbShowRec::Reconstruct()","Get ShowAlg from TObjArray storage");
+
+    // CAN IT ALSO BE DONE WITH A CAST TO THE PARENT CLASS ???
+    // Seem so
+    // EdbShowAlg*  RecoAlg = (EdbShowAlg*) eShowAlgArray->At(0);
+    // But I rather check it correctly, just to be safe....
+    EdbShowAlg_OI*  RecoAlg = (EdbShowAlg_OI*) eShowAlgArray->At(0);
+
 
     eActualAlg=RecoAlg;
     eActualAlgParameterset[2]=0;   // ???  WHAT WAS THAT? I DONT REMEBER...
@@ -890,41 +895,33 @@ void EdbShowRec::Reconstruct()
     //  eAli  numbers
     RecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID);
     //  InBTArray, now correctly filled.
-    RecoAlg->SetInBTArray( eInBTArray );
+    RecoAlg->SetInBTArray(eInBTArray);
     //  RecoShowerArray, to be filled by the algorithm:
-    RecoAlg->SetRecoShowerArray( eRecoShowerArray);
+    RecoAlg->SetRecoShowerArray(eRecoShowerArray);
     //-------------------------------------------------------------------
 
     cout << "eRecoShowerArray = " << eRecoShowerArray << endl;
     cout << "eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
 
-
     RecoAlg->Print();
+
 //   return;
-
-
     //-------------------------------------------------------------------
     //	Main Reconstruction Part for the algorithm:
     //
     RecoAlg->Execute();
     //
     //-------------------------------------------------------------------
-
 //   return;
 
-    cout << "EdbShowRec::Reconstruct   RecoAlg->Execute()   finished. eRecoShowerArray->GetEntries() = " << eRecoShowerArray->GetEntries() << endl;
-
-
-    cout << "eRecoShowerArray = " << eRecoShowerArray << endl;
-    cout << "eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
     // Get RecoShowerArray from Reco Alg back!
-//      SetRecoShowerArray( );
-//         eRecoShowerArray = RecoShowerArray;
-//         eRecoShowerArrayN=eRecoShowerArray->GetEntries();
+    // This has to be done, because EdbShowAlg and EdbShowRec class have each
+    // a RecoShowerArray on its own. (It is so...).
+    // The storage for the arrays is therefore the same.
+    SetRecoShowerArray(RecoAlg->GetRecoShowerArray());
 
-
-    PrintRecoShowerArray();
-
+    Log(2,"EdbShowRec::Reconstruct()", "RecoAlg->Execute() finished. Reconstructed %d showers.", eRecoShowerArrayN);
+    if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
 
     // Set the names correctly when having more than one alg or parameterset.
     SetOutNames();
@@ -935,18 +932,20 @@ void EdbShowRec::Reconstruct()
     Write_RecoShowerArray(eRecoShowerArray, "ALL.root");
 
 
-    PrintRecoShowerArray();
+    //PrintRecoShowerArray();
+
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
     return;
 
 
     ///-----------------------------------
     //   NEW   ALG:
     // CLEAN    SHowerArray before !!!
+    // ?????????????
 
     cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
     eRecoShowerArray->Clear();
     cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
-
     ///-----------------------------------
 
 //   delete RecoAlg;
@@ -983,13 +982,6 @@ void EdbShowRec::Reconstruct()
     //-------------------------------------------------------------------
 
 
-    cout << "EdbShowRec::Reconstruct   NewRecoAlg->Execute()   finished" << endl;
-    cout << eRecoShowerArray->GetEntries() << endl;
-
-
-
-//   SetTreebranchName
-
     // Sets the names correctly when having more than one alg or parameterset.
     SetOutNames();
 
@@ -1000,41 +992,8 @@ void EdbShowRec::Reconstruct()
     return;
 
 
-    // debug info ...
-    EdbShowerP* show=0;
-    for (int i=0; i<eInBTArrayN; i++) {
-        show =  (EdbShowerP*) eRecoShowerArray->At(i);
-        show->PrintNice();
-        show->PrintSegments();
-        //cout << show->GetNBT() <<"  " <<  show->GetNBTMC() << endl;
-        //cout << show->TX() <<"  " <<  show->TY() << endl;
-    }
 
-//   return;
-
-    //eAli->Print();
-    // debug info ...
-
-    /*
-    cout << "show : " << show << endl;
-    cout << "show->IsA() : " << show->IsA() << endl;
-    show->Print();
-    cout << "eRecoShowerArray : " << eRecoShowerArray << endl;
-    cout << "eRecoShowerArray->IsA() : " << eRecoShowerArray->IsA() << endl;
-    cout << "eRecoShowerArray->GetEntries() : " << eRecoShowerArray->GetEntries() << endl;
-    */
-
-    Write_RecoShowerArray(eRecoShowerArray, "ALL.root");
-    return;
-
-    /*
-      TFile* file= new TFile("TESTFILE.root","RECREATE");
-      show->Write();
-      file->Close();
-
-       */
-
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function");
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
     return;
 }
 
@@ -1072,6 +1031,7 @@ void EdbShowRec::Check_eInBTArray()
     Log(2,"EdbShowRec::Check_eInBTArray()","   a)  if eAli has eTracks, take eTracks.");
     Log(2,"EdbShowRec::Check_eInBTArray()","   b)  if a  linked_tracks.root file is existing, take tracks from there-");
     Log(2,"EdbShowRec::Check_eInBTArray()","   c)  take all BT from [firstplate..middleplate]");
+    Log(2,"EdbShowRec::Check_eInBTArray()","   d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)");
 
     // Check if and wheter to set the Array if InBTs.
     // The order is in the way (if the corresponding stuff is there:
@@ -1079,6 +1039,7 @@ void EdbShowRec::Check_eInBTArray()
     // a)  if eAli has eTracks, take eTracks.
     // b)  if a  linked_tracks.root file is existing, take tracks from there-
     // c)  take all BT from [firstplate..middleplate]
+    // d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
     if (!eAli) {
         Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eAli created yet. For now: return;");
         return;
@@ -1098,6 +1059,15 @@ void EdbShowRec::Check_eInBTArray()
 
     // -------------------------------------------------
 
+    // TO BE PRECISE, THE FOLLOWING CODE IS __NOT__ PART OF A CHECK FUNTION,
+    // SINCE IT DOES ALSO FILLING AT ONCE.
+    // SO FOR FURTHER PURPOSES, IT SHOULD BE TAKEN OUT.... (???)
+    // AN BE PLACED IN A SEPERATE FUNCTION ....
+
+    // -------------------------------------------------
+
+    /*
+
     // Case a:
     cout << "EdbShowRec::Check_eInBTArray Case a:  if eAli has eTracks, take eTracks." << endl;
     Fill_eInBTArray_ByRecoLinkTracks_eAli();
@@ -1114,7 +1084,15 @@ void EdbShowRec::Check_eInBTArray()
     cout << "EdbShowRec::Check_eInBTArray Case c:  " << endl;
     Fill_eInBTArray_ByBaseTracksOf_eAli();
     if (eInBTArrayN!=0) return;
-    cout << "EdbShowRec::Check_eInBTArray Case a: Fill_eInBTArray_ByRecoLinkTracks_eAli() was NOT successful. Stop here." << endl;
+    cout << "EdbShowRec::Check_eInBTArray Case c: Fill_eInBTArray_ByRecoLinkTracks_eAli() was NOT successful. Go on with method c." << endl;
+
+    // Case d:
+    cout << "EdbShowRec::Check_eInBTArray Case d:  " << endl;
+    Fill_eInBTArray_ByBaseTracksOf_RootFile();
+    if (eInBTArrayN!=0) return;
+    cout << "EdbShowRec::Check_eInBTArray Case d: Fill_eInBTArray_ByBaseTracksOf_RootFile() was NOT successful. Stop here." << endl;
+
+    */
 
     Log(2,"EdbShowRec::Check_eInBTArray()","Check the Initiator Basetrack array...done.");
     return;
@@ -1163,7 +1141,7 @@ void EdbShowRec::Create_eInBTTree()
 
 void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
 {
-    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initialtor Basetrack Array. Using FillType= %d",FillType);
+    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initiator Basetrack Array. Using FillType= %d",FillType);
 
     switch (FillType)
     {
@@ -1179,12 +1157,15 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
     case 2 :
         Fill_eInBTArray_ByBaseTracksOf_eAli();
         break;
+    case 3 :
+        Fill_eInBTArray_ByBaseTracksOf_RootFile();
+        break;
     default :
         Fill_eInBTArray_ByRecoLinkTracks_eAli();
         break;
     }
 
-    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initialtor Basetrack Array...done.");
+    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initiator Basetrack Array...done.");
     return;
 }
 
@@ -1200,7 +1181,7 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
 
     Int_t AliTracksN = eAli->eTracks->GetEntries();
 
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()  There are " << eAli->eTracks->GetEntries() << " stored in the eAli object." << endl;
+    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()  There are " << eAli->eTracks->GetEntries() << " tracks stored in the eAli object." << endl;
 
     /*
     // To have the "cut" features available, we still have to pass the source array via the eInBTTree
@@ -1211,7 +1192,18 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
 
 //     OR DONT PASS THEM OVER AND FILL THE ARRAY DIRECTLY ???
 //     SEEMS MUCH MORE EASIER AT THE MOMENT !!!
-    SetInBTArray( eAli->eTracks );
+
+    // Attention: eTracks is an array of Tracks, but the InBT array has to be filled with segments, i.e.
+    // the first segment (EdbSegP) of a track (EdbTrackP). Therefore some conversion is necessary:
+    TObjArray* trackArray =  eAli->eTracks;
+    EdbTrackP* track;
+    TObjArray* segmentArray = new TObjArray();
+    for (Int_t i=0; i<AliTracksN; ++i) {
+        track= (EdbTrackP*) trackArray->At(i);
+        EdbSegP* segment = track->GetSegmentFirst();
+        segmentArray->Add(segment);
+    }
+    SetInBTArray( segmentArray );
 
     // Check
     cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() Check: GetInBTArrayN() = " << GetInBTArrayN() << endl;
@@ -1387,6 +1379,58 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
 }
 
 //______________________________________________________________________________
+
+void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()
+{
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()","Special Method to read manually selected Initiator BaseTracks.");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()","Read root file <<InBT.root>>");
+
+
+    int count=0;
+    Bool_t StillToLoop=kTRUE;
+    Int_t nr=eMiddlePlate_eAliPID;
+
+    if (!eInBTTree) {
+        cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()   eInBTTree not yet created...Return." << endl;
+        return;
+    }
+
+    TFile* file = new TFile("InBT.root");
+    TObjArray* InBTArray = (TObjArray* )file->Get("TObjArray");
+    for (int i=0; i<InBTArray->GetEntries(); ++i) {
+        EdbSegP* s = (EdbSegP*)InBTArray->At(i);
+        s->PrintNice();
+    }
+
+    // Update Entry numbers.
+    SetInBTArray(InBTArray);
+    SetInBTArrayN(InBTArray->GetEntries());
+
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   Before TCut: InBT N=%d", eInBTArrayN );
+
+    // Now do the cut function from all read BTs to those which pass the TCut string given in default.par file.
+    // Cut_eInBTTree_To_InBTArray();
+
+
+
+
+    if (gEDBDEBUGLEVEL>1) cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()   Printing InBTs" << endl;
+    EdbSegP* testseg=0;
+    for (int i=0; i<eInBTArrayN; i++ ) {
+        if (gEDBDEBUGLEVEL>2) {
+            testseg=(EdbSegP*)eInBTArray->At(i);
+            testseg->PrintNice();
+        }
+    }
+
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli.   After TCut: InBT N=%d", eInBTArrayN );
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()","EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli...done.");
+    return;
+}
+
+//______________________________________________________________________________
+
 
 void EdbShowRec::Cut_eInBTTree_To_InBTArray()
 {
@@ -1650,9 +1694,9 @@ void EdbShowRec::WriteRecoShowerArray(TObjArray* RecoShowerArray )
 void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP )
 {
 
-    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree");
+    Log(2,"EdbShowRec::Write_RecoShowerArray()","Write the array of reconstructed showers to a TTree");
     if (!eWriteFileShower) {
-        cout << "EdbShowRec::Write_RecoShowerArray()   WARNING: eWriteFileShower == "<< eWriteFileShower <<". Will not write. Return" << endl;
+        Log(2,"EdbShowRec::Write_RecoShowerArray()","WARNING: eWriteFileShower = %d. Will not write. Return.", eWriteFileShower );
         return;
     }
 
@@ -1665,28 +1709,24 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
 //   tree->Branch("shower","EdbShowerP",&show);
     tree->Branch("shower","EdbShowerP",&show,128000);
 
-    cout << " RecoShowerArray->GetEntries() " <<   RecoShowerArray->GetEntries()  << endl;
+    //cout << " RecoShowerArray->GetEntries() " <<   RecoShowerArray->GetEntries()  << endl;
 
     int nbyte;
     for (int itr=0; itr<RecoShowerArray->GetEntries(); itr++) {
-//     gDebug=2;
-        cout << " Doing entry  " <<  itr  << endl;
+        Log(3,"EdbShowRec::Write_RecoShowerArray()","Doing entry %d.", itr );
         show=(EdbShowerP*)RecoShowerArray->At(itr);
-        cout << "show->TX() "  <<  show->TX() << endl;
-        show->PrintNice();
-
-        cout << " Do tree->Fill " << endl;
+        //show->PrintNice();
+        Log(3,"EdbShowRec::Write_RecoShowerArray()","Do tree->Fill.");
         nbyte=tree->Fill();
-        cout <<  nbyte << " byte written... " << endl;
     }
 
-    cout << " tree->Fill loop done" << endl;
+    Log(2,"EdbShowRec::Write_RecoShowerArray()","tree->Fill loop done.");
 
 //   CRASH HERE ???  WHY???
+// i think i solved this, but am not sure anymore.
 
     tree->Print();
     cout << " tree->GetEntries() " <<   tree->GetEntries()  << endl;
-
     tree->Write();
     cout << " tree->Write()   done." << endl;
     file->Close();
@@ -1695,7 +1735,7 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
     delete file;
     file=0;
 
-    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree...done.");
+    Log(2,"EdbShowRec::Write_RecoShowerArray()","Write the array of reconstructed showers to a TTree...done.");
     return;
 }
 
@@ -1956,6 +1996,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
                 eUse_PVREC=kFALSE;
                 eUse_AliBT=kFALSE;
                 eUse_AliLT=kFALSE;
+                eUse_ROOTInBT=kFALSE;
                 eUseNr=0;
             }
             else {
@@ -1973,6 +2014,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
                 eUse_PVREC=kFALSE;
                 eUse_AliBT=kTRUE;
                 eUse_AliLT=kFALSE;
+                eUse_ROOTInBT=kFALSE;
                 eUseNr=2;
             }
             else {
@@ -1982,7 +2024,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
         }
 
 
-        else if ( !strcmp(key,"SHOW_USE_ALILT")   )
+        else if ( !strcmp(key,"SHOW_USE_ROOTInBT")   )
         {
             sscanf(buf+strlen(key),"%d",&int_eUse);
             ResetUse_InBTType();
@@ -1991,6 +2033,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
                 eUse_PVREC=kFALSE;
                 eUse_AliBT=kFALSE;
                 eUse_AliLT=kTRUE;
+                eUse_ROOTInBT=kFALSE;
                 eUseNr=3;
             }
             else {
@@ -2009,6 +2052,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
                 eUse_PVREC=kTRUE;
                 eUse_AliBT=kFALSE;
                 eUse_AliLT=kFALSE;
+                eUse_ROOTInBT=kFALSE;
                 eUseNr=1;
             }
             else {
@@ -2188,6 +2232,7 @@ void EdbShowRec::ResetUse_InBTType()
     eUse_PVREC=kFALSE;
     eUse_AliBT=kFALSE;
     eUse_AliLT=kFALSE;
+    eUse_ROOTInBT=kFALSE;
     eUseNr=-1;
     Log(2,"EdbShowRec::ResetUse_InBTType()","ResetUse_InBTType...done.");
     return;
@@ -2204,6 +2249,7 @@ void EdbShowRec::Print_UseInBTType()
         cout << "EdbShowRec::PrintUse_InBTType   eUse_PVREC= " << eUse_PVREC<< endl;
         cout << "EdbShowRec::PrintUse_InBTType   eUse_AliBT= " << eUse_AliBT<< endl;
         cout << "EdbShowRec::PrintUse_InBTType   eUse_AliLT= " << eUse_AliLT<< endl;
+        cout << "EdbShowRec::PrintUse_InBTType   eUse_ROOTInBT= " << eUse_ROOTInBT<< endl;
         cout << "EdbShowRec::PrintUse_InBTType   eUseNr= " << eUseNr<< endl;
     }
     Log(2,"EdbShowRec::PrintUse_InBTType","EdbShowRec::PrintUse_InBTType...done.");
@@ -2325,7 +2371,8 @@ void EdbShowRec::TxtToRecoShowerArray(TString TxtFileName, Int_t TxtFileType)
 
 void EdbShowRec::TxtToRecoShowerArray_FeedBack(TString TxtFileName)
 {
-    Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","EdbShowRec::TxtToRecoShowerArray_FeedBack");
+    Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","TxtToRecoShowerArray_FeedBack");
+    Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","TxtToRecoShowerArray_FeedBack...done");
     // Copied the skeleton from Ariga-San code from EdbEDAIO class,
     // and took out some unnnecessary stuff...
     // Read feedback file format (ver 2009 Oct).
@@ -2338,15 +2385,21 @@ void EdbShowRec::TxtToRecoShowerArray_FeedBack(TString TxtFileName)
 
     const char *filename = TxtFileName.Data();
 
-    filename = "ds.feedback";
+    Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","File to be opened = %s",filename);
+//     filename = "ds.feedback";
 
-    if (NULL==filename) return;
+    if (NULL==filename) {
+        Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","EdbShowRec::File open error. Filename wrong. Return.");
+        return;
+    }
 
     FILE *fp = fopen(filename,"rt");
     if (fp==NULL) {
-        Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","EdbShowRec::File open error.");
+        Log(2,"EdbShowRec::TxtToRecoShowerArray_FeedBack","EdbShowRec::File open error. File not there (?). Return.");
         return;
     }
+
+
 
     EdbPVRec *pvr = new EdbPVRec;
     EdbScanCond cond;
@@ -2430,7 +2483,7 @@ void EdbShowRec::TxtToRecoShowerArray_FeedBack(TString TxtFileName)
             int ipl, type, irec, ph;
             float x,y,z,ax,ay;
             sscanf(line.Data(),"%d %f %f %f %f %f %d %d %d", &ipl, &x, &y, &z, &ax, &ay, &type, &irec, &ph);
-
+// 	    552 1 -1  10206.1  70129.5 -38891.2 -0.0610  0.1518   7.76 -1.0   1.54  1.09      2.7 0 0 0 0
             EdbSegP *s = new EdbSegP(t->ID(),x,y,ax,ay,0,0);
             s->SetZ(z);
             s->SetPID(ipl);
@@ -2773,16 +2826,16 @@ void EdbShowRec::TxtToRecoShowerArray_SimpleListNagoya(TString TxtFileName)
 
 void EdbShowRec::RecoShowerArray_To_Treebranch()
 {
-    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","EdbShowRec::RecoShowerArray_To_Treebranch");
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Convert the RecoShowerArray into <<treebranch>> style tree entries (backward compability).");
 
-    cout << "WHAT DOES THIS FUNCTION DO ??? NEED TO EXPLAIN IT HERE ... !!! " << endl;
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Reminder: a shower may have maxium of 5000 segments. - Limitation, my be discarded later, when necessary.");
 
     // Declaring ObjArray which are needed. Use out of private member variables of this class.
-    TObjArray* showarray;
-    showarray=eRecoShowerArray;
+    TObjArray* showarray =eRecoShowerArray;
+    Int_t      showarrayN=eRecoShowerArrayN;
     EdbShowerP* show=0;
 
-    //-			VARIABLES: shower_  "treebranch"  reconstruction
+    // VARIABLES: shower_  "treebranch"  reconstruction
     Int_t shower_number_eventb, shower_sizeb, shower_isizeb,shower_showerID;
     Int_t shower_sizeb15, shower_sizeb20, shower_sizeb30;
     Float_t shower_energy_shot_particle;
@@ -2857,17 +2910,15 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
     Int_t max_diff_pid=0;
     Float_t extrapol_x,extrapol_y, extrapo_diffz;
 
-    cout << "EdbShowRec::RecoShowerArray_To_Treebranch showarray->GetEntries() "<<showarray->GetEntries() << endl;
-    //Int_t percentage=showarray->GetEntries()/10;
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","showarray->GetEntries()  = %d" , showarrayN);
 
 
-
-    for (int i_shower=0; i_shower<showarray->GetEntries(); i_shower++) {
+    for (int i_shower=0; i_shower<showarrayN; i_shower++) {
         // START OVER LOOP of   ONE SHOWER:
         show=(EdbShowerP*)showarray->At(i_shower);
 
-        if (i_shower%100==0) cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   Doing:   "  << i_shower << "     with  eNBT=  " << show->N() << endl;
-// 		cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   Address of shower: " << show << endl;
+        if (i_shower%100==0) Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Converting shower  %05d with %03d basetracks." , i_shower,show->N());
+        // cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   Address of shower: " << show << endl;
         //cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   UpdateX() of shower: " << endl;
         //show->UpdateX();
 
@@ -2912,10 +2963,10 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
             shower_deltasigmathetab[i]=0;
         }
 
-        // cout << "EdbShowRec::RecoShowerArray_To_Treebranch   Arrays reseted."<<endl;
+        Log(3,"EdbShowRec::RecoShowerArray_To_Treebranch","Arrays reseted");
 
 
-        // Part To calculate the TransfereedVariables....
+        // Part to calculate the TransfereedVariables....
         shower_sizeb=show->N();
         shower_numberofholes=show->N0();
         shower_numberofholesconseq=show->N00();
@@ -2924,8 +2975,6 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
         shower_energy_shot_particle=Inseg->P();
         shower_purb=show->GetPurity();
 
-//     cout << "Inseg->PrintNice();"<< endl;
-//     Inseg->PrintNice();
         if (gEDBDEBUGLEVEL>3) cout << "---   ---   ---------------------"<<endl;
 
         //-------------------------------------
@@ -2937,7 +2986,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
             }
             seg=(EdbSegP*)show->GetSegment(ii);
             if (gEDBDEBUGLEVEL>3) {
-                cout << "====== --- DOING   "  << ii << endl;
+                cout << "====== --- DOING  segment "  << ii << endl;
                 seg->PrintNice();
             }
 
@@ -2987,7 +3036,6 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
                 // PUT HERE:  calculation routine for shower_deltasigmathetab
                 // see referenc in thesis of Luillo Esposito, page 109.
                 shower_deltasigmathetab[diff_pid]=shower_deltasigmathetab[diff_pid]+(TMath::Power(shower_txb[ii]-shower_txb[0],2)+TMath::Power(shower_tyb[ii]-shower_tyb[0],2));
-
 
                 // PUT HERE:  calculation routine for shower_deltathetab, shower_deltarb
                 // Exrapolate the BT [ii] to the position [jj] and then calc the
@@ -3083,8 +3131,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
 
     } //  end of    for (int i_shower=0; i_shower<showarray->GetEntries(); i_shower++)
 
-    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","EdbShowRec::RecoShowerArray_To_Treebranch.Loop finished.");
-
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Loop over showerArray finished.");
 
     // write this  treebranch  to the specified file, use UPDATE option to store all in case there are more treebranches
     // dirty solution, but for now it may work (encapsulated in if statements)..
@@ -3102,7 +3149,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
     delete eFile_Out_treebranch;
     eFile_Out_treebranch=0;
 
-    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","EdbShowRec::RecoShowerArray_To_Treebranch...done.");
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","RecoShowerArray_To_Treebranch...done.");
     return;
 }
 

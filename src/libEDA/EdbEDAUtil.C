@@ -1031,6 +1031,9 @@ EdbPVRec * EdbEDAUtil::ReadFeedbackPVR(char *filename){
 			EdbSegP *s_in_pattern = pvr->AddSegment(*s);
 			t->AddSegment( s_in_pattern);
 		}
+		else {
+		    cout << "EdbEDAUtil::ReadFeedbackPVR Warning: Reading feedback file: items = " << ntokens << ". This is NOT specified!" << endl;
+		}
 	}
 	
 	for(int i=0;i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetPID(i);
