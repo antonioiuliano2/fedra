@@ -3336,16 +3336,26 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
 //______________________________________________________________________________
 
 
-void EdbShowRec::PrintRecoShowerArray()
+void EdbShowRec::PrintRecoShowerArray(Int_t entry)
 {
-    Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray");
+    Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d from the reco shower array",entry);
 
+    if (entry<0) {
+      Log(2,"EdbShowRec::PrintRecoShowerArray","Print full array.",entry);
+    }
+    if (entry>= GetRecoShowerArrayN()) {
+      Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d is greater than entries in the array. Print full array.",entry);
+      entry=-1;
+    }
+    
     EdbShowerP* show=0;
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
         show=(EdbShowerP*)eRecoShowerArray->At(i);
-        show->PrintNice();
+        if (i==entry && entry>=0) {
+	  show->PrintNice();
+	  show->PrintSegments();
+	}
     }
-    cout << "Printed all " <<  GetRecoShowerArrayN()  << " showers of the eRecoShowerArray" << endl;
 
     Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray...done.");
     return;

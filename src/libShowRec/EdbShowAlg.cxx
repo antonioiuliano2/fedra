@@ -1076,7 +1076,10 @@ Bool_t EdbShowAlg_CA::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
 
         dZ=TMath::Abs(s_TestBT->Z()-s->Z());
         if (dZ<30) continue;                  // Exclude the case of same Zpositions...
-        if (dZ>(3*1300.0)+30.0) continue;     // Exclude the case of more than 4 plates before...
+        ////TEST if (dZ>(3*1300.0)+30.0) continue;     // Exclude the case of more than 3 plates before...
+        if (dZ>(3.5*(1300.0+30.0))) continue;     // Exclude the case of more than 3 plates before...  // modified
+        // often, experimentally observed, dZ approx 1350 ... so the upper cut really does not
+        // look for 3 plates, but only for two ...: seems to work now. (24.Oct.2016)
 
         if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowAlg_CA::FindPrecedingBTs(): Checking dT,dR and dZ for i:  " << i << "  " << DeltaTheta(s, s_TestBT)  << "  " << DeltaR_WithPropagation(s, s_TestBT) << "  "<<dZ << endl;
 
@@ -1418,13 +1421,12 @@ Bool_t EdbShowAlg_OI::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
         return kFALSE;
     }
 
-// For the very first Z position we do not test
-// if testBT has Preceeders, only if it it has a BT around (case for e+e- coming from gammma):
+// For the very first Z position we do not test.
+// If testBT has Preceeders, only if it it has a BT around (case for e+e- coming from gammma):
 // Take 50microns and 80mrad in (dR/dT) around.
 // This does not affect the normal results, but helps for
 // events which may have a second BT close to InBT (like in e+e-)
     if (s->Z()==InBT->Z()) {
-//cout << DeltaThetaComponentwise(s, InBT) << "  " << DeltaR_WithPropagation(s, InBT) << endl;
         if (DeltaThetaComponentwise(s, InBT) < 0.08 && DeltaR_WithoutPropagation(s, InBT) < 50.0 ) return kTRUE;
     }
 
@@ -1440,7 +1442,11 @@ Bool_t EdbShowAlg_OI::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
 
         dZ=TMath::Abs(s_TestBT->Z()-s->Z());
         if (dZ<30) continue;                  // Exclude the case of same Zpositions...
-        if (dZ>(3*1300.0)+30.0) continue;     // Exclude the case of more than 3 plates before...
+        ////TEST if (dZ>(3*1300.0)+30.0) continue;     // Exclude the case of more than 3 plates before...
+        if (dZ>(3.5*(1300.0+30.0))) continue;     // Exclude the case of more than 3 plates before...  // modified
+        // often, experimentally observed, dZ approx 1350 ... so the upper cut really does not
+        // look for 3 plates, but only for two ...: seems to work now. (24.Oct.2016)
+
 
         if (gEDBDEBUGLEVEL>3) cout << "--- --- EdbShowAlg_OI::FindPrecedingBTs(): Checking dT,dR and dZ for i:  " << i << "  " << DeltaThetaComponentwise(s, s_TestBT)  << "  " << DeltaR_WithPropagation(s, s_TestBT) << "  "<<dZ << endl;
 

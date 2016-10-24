@@ -562,14 +562,14 @@ public:
     bool FileExists(string strFilename);
 
     // Read parameters out of default.par file
-    int               ReadShowRecPar(const char *file);
+    int ReadShowRecPar(const char *file);
 
 
     // Many Print Functions:
     void Print();
     void PrintMore();
     void PrintAll();
-    void PrintRecoShowerArray();
+    void PrintRecoShowerArray(Int_t entry=-1);
     void PrintParametrisation(Int_t ParaNr);
 
     // Print functions (mainly for debug mode)
