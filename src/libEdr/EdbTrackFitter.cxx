@@ -547,7 +547,7 @@ int EdbTrackFitter::RMSprojXY( EdbTrackP &tr, float &ex, float &ey )
 {
   // fit track by straight line using coordinates only and return RMS's
   int nseg=tr.N();
-  float x[nseg], y[nseg], z[nseg], w[nseg];
+  float x[100], y[100], z[100], w[100];
   float x0,y0,z0,tx,ty;
   for(int i=0; i<nseg; i++) {
     EdbSegP *s = tr.GetSegment(i);
