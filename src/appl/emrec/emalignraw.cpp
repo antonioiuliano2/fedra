@@ -41,6 +41,8 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.alignRaw.AFID2"     , 1);
   cenv.SetValue("fedra.alignRaw.side1"     , 1);
   cenv.SetValue("fedra.alignRaw.side2"     , 1);
+  cenv.SetValue("fedra.alignRaw.HeaderCut1" , "1"  );
+  cenv.SetValue("fedra.alignRaw.HeaderCut2" , "1"  );
   cenv.SetValue("fedra.alignRaw.Z1"        , 0);
   cenv.SetValue("fedra.alignRaw.Z2"        , 0);
   cenv.SetValue("fedra.alignRaw.sigmaR"    , 2.5 );
@@ -180,28 +182,43 @@ int AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
 
   EdbID idset1 =id1; idset1.ePlate =0;
   EdbID idset2 =id2; idset2.ePlate =0;
-  EdbRunAccess r1;  if(!sproc.InitRunAccessNew(r1,idset1,id1.ePlate)) return 0;
-  EdbRunAccess r2;  if(!sproc.InitRunAccessNew(r2,idset2,id2.ePlate)) return 0;
+  EdbRunAccess r1;
+  EdbRunAccess r2;
   r1.eAFID = cenv.GetValue("fedra.alignRaw.AFID1"   , 1);
   r2.eAFID = cenv.GetValue("fedra.alignRaw.AFID2"   , 1);
+  r1.eHeaderCut = cenv.GetValue("fedra.alignRaw.HeaderCut1"      , "1");
+  r2.eHeaderCut = cenv.GetValue("fedra.alignRaw.HeaderCut2"      , "1");
+
+  if(!sproc.InitRunAccessNew(r1,idset1,id1.ePlate)) return 0;
+  if(!sproc.InitRunAccessNew(r2,idset2,id2.ePlate)) return 0;
 
   r1.AddSegmentCut(1,cenv.GetValue("fedra.alignRaw.ICUT1"      , "-1") );
   r2.AddSegmentCut(1,cenv.GetValue("fedra.alignRaw.ICUT2"      , "-1") );
 
   EdbPattern p1, p2;
-  //r1.Print();
+  
   r1.GetPatternDataForPrediction( path1, side1, p1 );
+  r2.GetPatternDataForPrediction( path2, side2, p2 );
   
-  
+  /*
   EdbScanSet *set1  = sproc.ReadScanSet(idset1);
   if(set1) {
-    EdbPlateP *p = set1->GetPlate(id1.ePlate);
-    p->GetAffineXY()->Print();
-    if(p)       p1.Transform( p->GetAffineXY() );
+    EdbPlateP *plate1 = set1->GetPlate(id1.ePlate);
+    plate1->GetAffineXY()->Print();
+    if(plate1)       p1.Transform( plate1->GetAffineXY() );
   }
-
   if(applyAff) p1.Transform(applyAff);
   
+  EdbScanSet *set2  = sproc.ReadScanSet(idset2);
+  if(set2) {
+    EdbPlateP *plate2 = set2->GetPlate(id2.ePlate);
+    plate2->GetAffineXY()->Print();
+    if(plate2)       p2.Transform( plate2->GetAffineXY() );
+  }
+  if(applyAff) p2.Transform(applyAff);
+  */
+  
+  /*
   //r2.Print();
   if(path2>=0)  r2.GetPatternDataForPrediction( path2, side2, p2 );
   else  {
@@ -213,7 +230,7 @@ int AlignRaw(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *applyAff)
     if(applyAff) s.Transform(applyAff);
     r2.GetPatternXY(s, side2, p2, size);
   }
-
+  */
   EdbPlateAlignment av;
   av.SetSigma(sigmaR,sigmaT);
   av.eOffsetMax = offsetMax;
