@@ -7,6 +7,7 @@
 #include "EdbSegCouple.h"
 #include "EdbAffine.h"
 #include "EdbMask.h"
+#include "EdbBrick.h"
 
 class TIndex2;
 class EdbPattern;
@@ -43,6 +44,7 @@ public:
   bool   WriteTree();
   int    GetEntry(int i);
   void   ApplyCorrections();
+  int    PutCPData( TObjArray &cparr );
   int    GetCPData( EdbPattern *pat, EdbPattern *p1=0, EdbPattern *p2=0, TIndex2 *trseg=0 );
   int    GetCPData( TObjArray &cparr );
   int    GetCPDataAcceptedMask( EdbPattern *pat );

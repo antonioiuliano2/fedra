@@ -197,7 +197,7 @@ void   EdbCouplesTree::ApplyCorrections()
 ///______________________________________________________________________________
 int EdbCouplesTree::GetCPData( TObjArray &cparr )
 {
-  //read segments into array of EdbSegCouple objects
+ //read segments into array of EdbSegCouple objects
   TEventList *lst = InitCutList();
   int nlst =lst->GetN();
   int nseg = 0, nerase=0;
@@ -237,6 +237,23 @@ TEventList *EdbCouplesTree::InitCutList()
   TEventList *lst = (TEventList*)(gDirectory->GetList()->FindObject("lst"));
   if(!lst) {Log(1,"EdbCouplesTree::GetCPData","ERROR!: events list (lst) did not found! In couples tree %d entries",nentr); return 0;}
   return lst;
+}
+
+///______________________________________________________________________________
+int EdbCouplesTree::PutCPData( TObjArray &cparr)
+{
+  int n = cparr.GetEntries();
+  for(int i=0; i<n; i++)
+  {
+    EdbSegCouple *cp = (EdbSegCouple *)cparr.UncheckedAt(i);
+    if(cp) {
+      eCP = cp;
+      eS  = cp->eS;
+      eS1 = cp->eS1;
+      eS2 = cp->eS2;
+      Fill();
+    }
+  }
 }
 
 ///______________________________________________________________________________
