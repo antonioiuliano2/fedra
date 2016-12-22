@@ -50,7 +50,9 @@ private:
 
 public:
   TFile *eOutputFile;
-  bool   eDumpGr;                 // 
+  bool   eDumpGr;                     // if(1) dump grains tree
+  float  eAreaMin, eAreaMax;          // clusters Area limints
+  float  eVolumeMin, eVolumeMax;      // clusters Volume limints
 
 public:
   EdbViewMatch();
@@ -67,7 +69,8 @@ public:
   void GenerateCorrectionMatrix(const char *addfile);
   void SetPar(TEnv &env);
   void SetPixelSize(float xpix, float ypix) { eXpix=xpix; eYpix=ypix; }
-
+  void CutGrRef();
+  
   TNtuple *DumpGr(const char *name);
 
   void MakeDistortionMap(const char *fname, TEnv &env, const char *addfile=0);

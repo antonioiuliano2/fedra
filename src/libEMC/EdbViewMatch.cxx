@@ -42,6 +42,9 @@ EdbViewMatch::EdbViewMatch()
   
   eCorrectionMatrixStepX = 10.; //microns - will be tuned in setpar
   eCorrectionMatrixStepY = 10.; //microns - will be tuned in setpar
+  
+  eAreaMin  =0;  eAreaMax  =90000000;
+  eVolumeMin=0;  eVolumeMax=90000000;
 
 }
 
@@ -58,6 +61,20 @@ void EdbViewMatch::SetPar(TEnv &env)
   eNYpix = env.GetValue("viewdist.NYpix", 1024);
   
   eDumpGr = env.GetValue("viewdist.DumpGr", 0);
+  
+  sscanf( env.GetValue("viewdist.ClusterAreaLimits", "0 90000000"), "%f %f", &eAreaMin, &eAreaMax);
+  sscanf( env.GetValue("viewdist.ClusterVolumeLimits", "0 90000000"), "%f %f", &eVolumeMin, &eVolumeMax);
+  
+  printf("\n----------------------- Processing Parameters ---------------------------\n");
+  printf("eNClMin\t %d\n",eNClMin);
+  printf("eR2CenterMax\t %6.2f\n",eR2CenterMax);
+  printf("eRmax\t %f6.2\n",eRmax);
+  printf("Pixel:  %9.7f x %9.7f \n", eXpix, eYpix );
+  printf("Matrix: %d x %d pixels, \t  %15.7f x %15.7f microns", eNXpix, eNYpix, eXpix*eNXpix, eYpix*eNYpix);
+  printf("Clusters Area limits: %7.0f  %7.0f \n",  eAreaMin, eAreaMax );
+  printf("Clusters Volume limits: %7.0f  %7.0f \n",  eVolumeMin, eVolumeMax );
+  printf("-------------------------------------------------------------------------\n\n");
+  
 }
 
 //____________________________________________________________________________________
@@ -88,18 +105,17 @@ void EdbViewMatch::InitCorrMap()
 void EdbViewMatch::InitGMap()
 {
   ////float mi[2] = {-200,-160}, ma[2]={600,500}; 
-  float mi[2] = {-500,-400}, ma[2]={1200,900}; 
+  float mi[2] = {-500,-400}, ma[2]={1500,1100}; 
   int    n[2] = { int((ma[0]-mi[0])/10), int((ma[1]-mi[1])/10) };
-  eGMap.InitCell(50, n, mi, ma);
+  eGMap.InitCell(250, n, mi, ma);
 }
 
 //____________________________________________________________________________________
 void EdbViewMatch::AddCluster( float x,float y,float z, float xv,float yv, int view, int frame )
 {
   int ind = eCl.GetEntriesFast();
-  //printf("%d\n",ind);
   EdbClMatch *c = new(eCl[ind]) EdbClMatch(x,y,z, xv,yv, view,frame );
-  
+
   float v[2]={ x+xv,  y+yv };
   int  ir[2]={1,1};
   TObjArray arr;
@@ -120,7 +136,6 @@ void EdbViewMatch::AddCluster( float x,float y,float z, float xv,float yv, int v
     s->AddElement(c);
     eGMap.AddObject(v, s);
   }
-  
 }
 
 //____________________________________________________________________________________
@@ -132,28 +147,41 @@ void EdbViewMatch::CalculateGrRef()
   for(int i=0; i<ngr; i++) {
     EdbSegment *s = ((EdbSegment*)eGr.UncheckedAt(i));
     int nc = s->GetNelements();
-    if(nc<eNClMin)        { s->GetElements()->Clear(); continue; }
+    //if(nc<eNClMin)        { s->GetElements()->Clear(); continue; }
     float rmin=10000., r;
     for( int ic=0; ic<nc; ic++ ) {
       EdbClMatch *c = (EdbClMatch *)(s->GetElements()->UncheckedAt(ic));
       r = Sqrt( c->eX*c->eX + c->eY*c->eY );                                     // distance to view center
-      if(r<rmin) { rmin=r; s->SetX0(c->eXv+c->eX); s->SetY0(c->eYv+c->eY); }
+      if(r<rmin) { rmin=r; s->SetX0(c->eXv+c->eX); s->SetY0(c->eYv+c->eY); s->SetDz(r); }
     }
-    if(rmin>eR2CenterMax) s->GetElements()->Clear();
+    //if(rmin>eR2CenterMax) s->GetElements()->Clear();
  }
+}
+
+//____________________________________________________________________________________
+void EdbViewMatch::CutGrRef()
+{
+  // remove marginal grains from calculation
+  int ngr = eGr.GetEntries();
+  for(int i=0; i<ngr; i++) {
+    EdbSegment *s = ((EdbSegment*)eGr.UncheckedAt(i));
+    int nc = s->GetNelements();
+    if     (nc<eNClMin)              s->GetElements()->Clear();
+    else if(s->GetDz()>eR2CenterMax) s->GetElements()->Clear();
+  }
 }
 
 //____________________________________________________________________________________
 TNtuple *EdbViewMatch::DumpGr(const char *name)
 {
-  TNtuple *nt = new TNtuple( name,"grains dump","ig:n:xg:yg:ic:xc:yc:xcv:ycv");
+  TNtuple *nt = new TNtuple( name,"grains dump","ig:n:xg:yg:rmin:nc:ic:xc:yc:xcv:ycv");
   int ngr = eGr.GetEntries();
   for(int ig=0; ig<ngr; ig++) {
     EdbSegment *s = ((EdbSegment*)eGr.UncheckedAt(ig));
     int nc = s->GetNelements();                                  if(!nc) continue;
     for( int ic=0; ic<nc; ic++ ) {
       EdbClMatch *c = (EdbClMatch *)(s->GetElements()->UncheckedAt(ic));
-      nt->Fill( ig, s->GetNelements(), s->GetX0(), s->GetY0(), ic, c->eX, c->eY, c->eXv, c->eYv );
+      nt->Fill( ig, s->GetNelements(), s->GetX0(), s->GetY0(), s->GetDz(), nc, ic, c->eX, c->eY, c->eXv, c->eYv );
     }
   }
   return nt;
@@ -249,10 +277,6 @@ void EdbViewMatch::DrawCorrMap()
 
   eGMap.DrawH2("eGMap","entries/bin")->Write();
   eCorrMap.DrawH2("eCorrMap","entries/bin")->Write();
-  if(eDumpGr) {
-    TNtuple *ntgr = DumpGr("gr");
-    ntgr->Write();
-  }
   cc->Write("corr_map");
   gROOT->SetBatch(batch);
 }
@@ -375,8 +399,10 @@ void EdbViewMatch::MakeDistortionMap( const char *fname, TEnv &cenv, const char 
 
   EdbView *v = run.GetView();
   run.GetEntry(0,1);
-  float X0 = v->GetXview();
-  float Y0 = v->GetYview();
+  //float X0 = v->GetXview();
+  //float Y0 = v->GetYview();
+  float X0 = 0;
+  float Y0 = 0;
 
   for(int i=0; i<n; i++) {
     run.GetEntry(i,1,1);
@@ -385,16 +411,22 @@ void EdbViewMatch::MakeDistortionMap( const char *fname, TEnv &cenv, const char 
 
     for(int ic=0; ic<ncl; ic++) {
       EdbCluster *c = v->GetCluster(ic);
-      AddCluster( c->eX, c->eY, c->eZ, v->GetXview()-X0, v->GetYview()-Y0, v->GetViewID(), c->GetFrame() );
+      if(c->GetArea()>eAreaMin&&c->GetArea()<eAreaMax) {
+        AddCluster( c->eX, c->eY, c->eZ, v->GetXview()-X0, v->GetYview()-Y0, v->GetViewID(), c->GetFrame() );
+      }
     }
   }
   printf("\n");
 
   CalculateGrRef();
-  CalculateCorr();
+  
   eOutputFile = new TFile("map.root","RECREATE");
+  if(eDumpGr) { TNtuple *ntgr = DumpGr("gr"); ntgr->Write(); }
+  CutGrRef();
+  CalculateCorr();
   DrawCorrMap();
   GenerateCorrectionMatrix(addfile);
+  if(eDumpGr) { TNtuple *ntgr = DumpGr("grcut"); ntgr->Write(); }
   eOutputFile->Close();
   Print();
 }
