@@ -67,6 +67,8 @@ void set_default(TEnv &cenv)
   cenv.SetValue("trackan.MomEst.DTy","0.0021 0 0");
   cenv.SetValue("trackan.MomEst.X0", 5600);
   cenv.SetValue("trackan.MomEst.M", 0.13957);
+  cenv.SetValue("trackan.global.trFlag", 0);
+  cenv.SetValue("trackan.global.noScale", 0);
 }
 
 bool      do_set      = false;
@@ -143,6 +145,8 @@ int main(int argc, char* argv[])
   if(do_momentum)     CheckMom(ali,cenv);
   else if(do_global)  DoGlobalCorr(ali,cenv);
   else                MakeCorrectionMap(ali,cenv);
+
+  EdbDataProc::MakeTracksTree( *(ali.eTracks), 0., 0., "al.trk.root" );
 
   return 0;
 }
@@ -316,7 +320,9 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   bool doXYcorr   = cenv.GetValue("trackan.global.doXYcorr"        , 1);
   bool doTXTYcorr = cenv.GetValue("trackan.global.doTXTYcorr"      , 1);
   bool doZcorr    = cenv.GetValue("trackan.global.doZcorr"         , 1);
-  
+  bool trFlag     = cenv.GetValue("trackan.global.trFlag"           , 0);
+  bool noScale    = cenv.GetValue("trackan.global.noScale"           , 0);
+
 
   GlobalDiff(ali,"before_fit");
   CheckGap(ali,"before_fit");
@@ -335,6 +341,7 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
 
   for(int i=0; i<ntr; i++) {
     EdbTrackP *t = ali.GetTrack(i);
+    if(trFlag!=0) if( trFlag!=t->Flag() )  continue;
     int nseg = t->N();
     for(int j=0; j<nseg; j++) {
       EdbSegP *s  = t->GetSegment(j);
@@ -345,7 +352,9 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   
   if(doXYcorr) {
     for(int i=0; i<npat; i++) {
-      int n = cm[i].eAl.CalculateAffXY( *(cm[i].eAl.eCorrL[0].GetAffineXY()) );
+      int n=0;
+      if(noScale) n = cm[i].eAl.CalculateAffXYTurn( *(cm[i].eAl.eCorrL[0].GetAffineXY()) );
+      else        n = cm[i].eAl.CalculateAffXY( *(cm[i].eAl.eCorrL[0].GetAffineXY()) );
       Log(2,"CalculateAffXY","%6d  %s", n, cm[i].eAl.eCorrL[0].GetAffineXY()->AsString() );
     }
   
