@@ -254,6 +254,7 @@ int EdbCouplesTree::PutCPData( TObjArray &cparr)
       Fill();
     }
   }
+  return n;
 }
 
 ///______________________________________________________________________________
