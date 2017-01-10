@@ -15,19 +15,19 @@ class TOracleServerE2WFB : public TOracleServerE2 {
 
   public:
 
-    Bool_t     eDebug;     // true - do not execute queries (default false)
-    TString    eLab;   //! as "NAPOLI"
-    TString    eLa;    //! as "NA"
+    Bool_t     eDoCommit;  // true - commit current transaction (default is false)
+    TString    eLab;       //! as "NAPOLI"
+    TString    eLa;        //! as "NA"
 
   public:
     TOracleServerE2WFB(const char *db, const char *uid, const char *pw):TOracleServerE2(db, uid, pw) {Set0();}
   ~TOracleServerE2WFB(){}
 
   void Set0();
-  Int_t MyQuery(const char *sqlquery); // to be moved into parent class
+  Int_t MyQuery(const char *sqlquery); // to be moved into parent class?
   Int_t SetTransactionRW() {return MyQuery("SET TRANSACTION READ WRITE");}
-  Bool_t Rollback() {return MyQuery("ROLLBACK");}
-  Bool_t Commit() {return MyQuery("COMMIT");}
+  Bool_t FinishTransaction();
+  
   const char *Timestamp();
     
   ULong64_t  IfEventRec( ULong64_t id_eventbrick );
@@ -45,12 +45,9 @@ class TOracleServerE2WFB : public TOracleServerE2 {
   const char *starttime, 
   const char *notes);
   
-  ULong64_t  AddFeedbackReconstruction
-      (
-      ULong64_t id_eventbrick,
-      ULong64_t id_processoperation
-      );
-  
+  ULong64_t  AddFeedbackReconstruction(ULong64_t id_eventbrick, ULong64_t id_processoperation);
+  ULong64_t  AddFeedbackReconstructionTest(ULong64_t id_eventbrick, ULong64_t id_processoperation);
+
   Int_t AddFeedbackVertex
       (
       ULong64_t   id_eventbrick,
@@ -194,6 +191,7 @@ class EdbFeedback : public TObject {
   ULong64_t eProcOp;
   ULong64_t eRecID;
   
+  Int_t eERROR;   // 0 by default, 1 if error happened
   int eNvtxLim;   // limit for vtx array size
   int eNvtx;      // number of vertices
   int eNtrLim;    // limit for tracks array size

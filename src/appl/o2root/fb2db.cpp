@@ -11,7 +11,7 @@
 #include "EdbLog.h"
 
 using namespace std;
-bool InitDB( EdbFeedback &fb, TEnv &cenv, int test);
+bool InitDB( EdbFeedback &fb, TEnv &cenv, int do_commit);
 int  AddBrick( EdbFeedback &fb, int BRICK, const char *dir, TEnv &cenv );
 int  AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
 int ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event );
@@ -40,7 +40,7 @@ void print_help_message()
   cout<< "\t\t check for a leested feedbacks if the brick structure and reconstruction are in DB (use -v=1 for compact output)";
   
   cout<< "\n\n\t-----------------------------------------------------------------------------------------";
-  cout<< "\n\t By default the application is started in test mode and do not change the database content";
+  cout<< "\n\t By default the application is started in test mode and does not commit transactions";
   cout<< "\n\t TO LOAD DATA USE -commit OPTION";
   cout<< "\n\t-------------------------------------------------------------------------------------------";
  
@@ -114,8 +114,7 @@ int main(int argc, char* argv[])
   char *listfile=0;
   int do_addlist=0;
   int do_checklist=0;
-
-  int do_testdb=1;
+  int do_commit=0;
   
   for(int i=1; i<argc; i++ ) {
     
@@ -160,7 +159,7 @@ int main(int argc, char* argv[])
     }
     else if(!strncmp(key,"-commit",7))
     {
-      do_testdb=0;
+      do_commit=1;
     }
     else if(!strncmp(key,"-lab=",5))
     {
@@ -182,7 +181,7 @@ int main(int argc, char* argv[])
   EdbFeedback fb;
   if(do_feedback || do_addbrick || do_addlist || do_checkbrick || do_checklist )
   {   
-    if( !InitDB( fb, cenv, do_testdb)) return 0;
+    if( !InitDB( fb, cenv, do_commit)) return 0;
   }
   
   if(do_feedback) 
@@ -200,7 +199,6 @@ int main(int argc, char* argv[])
   } 
   else if(do_checkbrick)
   {
-    fb.eDB->eDebug=0;
     const char *BS_ID = cenv.GetValue("fb2db.BS_ID"  , "'OPERA NA SET  04'");
     int id = brick>1000000? brick: 1000000+brick;
     fb.eDB->IfEventBrick(id,BS_ID);
@@ -208,7 +206,6 @@ int main(int argc, char* argv[])
   }
   else if(do_checklist)
   {
-    fb.eDB->eDebug=0;
     CheckList(fb, listfile, cenv);
   }
 
@@ -216,7 +213,7 @@ int main(int argc, char* argv[])
 }
 
 //-------------------------------------------------------------------------------------
-bool InitDB( EdbFeedback &fb, TEnv &cenv, int test)
+bool InitDB( EdbFeedback &fb, TEnv &cenv, int do_commit)
 {
   const char *dbname   = cenv.GetValue("fb2db.dbname"   , "connection_string");
   const char *username = cenv.GetValue("fb2db.username" , "username");
@@ -227,11 +224,11 @@ bool InitDB( EdbFeedback &fb, TEnv &cenv, int test)
   if( fb.InitDB( dbname, username, password) ) {
     fb.eDB->eLab =  cenv.GetValue("fb2db.labName" , "NAPOLI");
     fb.eDB->eLa  =  cenv.GetValue("fb2db.labN"    , "NA");
-    fb.eDB->eDebug=test;
     fb.eDB->SetTransactionRW();
     sscanf( cenv.GetValue("fb2db.id_machine"         , "6000000000010002"),  "%lld", &(fb.eIdMachine) );
     sscanf( cenv.GetValue("fb2db.id_programsettings" , "81000100000000087"), "%lld", &(fb.eIdProgramsettings) );
     sscanf( cenv.GetValue("fb2db.id_requester"       , "6000000000100375"),  "%lld", &(fb.eIdRequester) );
+    fb.eDB->eDoCommit = do_commit;
     fb.Print();
     return 1;
   }
@@ -337,10 +334,11 @@ int AddFeedback( EdbFeedback &fb, const char *fname, TEnv &cenv )
   fb.eEventBrick=brickid;
   fb.eEvent=eventid;
   fb.ReadFBFile(fname);
+  if(fb.eERROR!=0) fb.eDB->eDoCommit=0;
   if(gEDBDEBUGLEVEL>2) fb.PrintFB();
     
   fb.LoadFBintoDB();
-  fb.eDB->Commit();
+  fb.eDB->FinishTransaction();
   return 1;
 }
 
@@ -404,7 +402,7 @@ int AddBrick( EdbFeedback &db, int BRICK, const char *dir, TEnv &cenv )
     sprintf(dataplate,"%d, %f",iplate, z);
     db.eDB->AddPlate( id_eventbrick, dataplate);
   }
-  db.eDB->Commit();
+  db.eDB->FinishTransaction();
 
   time_t tf = time(NULL);
   fprintf(stderr,"AddBrick completed\n");

@@ -13,49 +13,59 @@ ClassImp(EdbFeedback)
 //------------------------------------------------------------------------------------
 void TOracleServerE2WFB::Set0()
 {
-  eDebug=0;
+  eDoCommit=0;
 }
  
 //------------------------------------------------------------------------------------
 void TOracleServerE2WFB::Print()
 {
   TOracleServerE2::Print();
-  printf( " eDebug = %d  \n eLab = %s   \n eLa = %s\n", eDebug, eLab.Data(), eLa.Data() );
+  printf( " eDoCommit = %d  \n eLab = %s   \n eLa = %s\n", eDoCommit, eLab.Data(), eLa.Data() );
 }
  
 //------------------------------------------------------------------------------------
 const char *TOracleServerE2WFB::Timestamp()
-  {
-    TTimeStamp timestamp;
-    return Form("timestamp'%s'",timestamp.AsString("s"));
-  }
+{
+  TTimeStamp timestamp;
+  return Form("timestamp'%s'",timestamp.AsString("s"));
+}
 //------------------------------------------------------------------------------------
-  const char *TOracleServerE2WFB::Ostr(ULong64_t num)
-  {
+const char *TOracleServerE2WFB::Ostr(ULong64_t num)
+{
     // return "null" if arg<=0;
-    return num>0 ? Form("%lld",num) : Form("null");
-  }
+  return num>0 ? Form("%lld",num) : Form("null");
+}
 //------------------------------------------------------------------------------------
-  const char *TOracleServerE2WFB::Ostr(Int_t num)
-  {
+const char *TOracleServerE2WFB::Ostr(Int_t num)
+{
     // return "null" if arg<=0;
-    return num>0 ? Form("%d",num) : Form("null");
+  return num>0 ? Form("%d",num) : Form("null");
+}
+
+//------------------------------------------------------------------------------------
+Bool_t TOracleServerE2WFB::FinishTransaction()
+{
+  try{
+    if(eDoCommit) return MyQuery("COMMIT"); 
+    else          return MyQuery("ROLLBACK");
+  } catch (SQLException &oraex) {
+    Log(1,"TOracleServerE2WFB::FinishTransaction","failed: (error: %s)",(oraex.getMessage()).c_str());
+    return 0;
   }
- 
+  return 1;
+}
+
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2WFB::MyQuery(const char *query)
 {
   try{
-    if(!eDebug) {
-      if (!fStmt)   fStmt = fConn->createStatement();
-      fStmt->setSQL(query);
-      Log(2,"TOracleServerE2WFB::MyQuery","execute sql query: %s ...",query);
-      fStmt->execute();
-    } else {
-      Log(2,"TOracleServerE2WFB::MyQuery","debug sql query: %s ...",query);
-    }
+    if (!fStmt)   fStmt = fConn->createStatement();
+    fStmt->setSQL(query);
+    Log(2,"TOracleServerE2WFB::MyQuery","execute sql query: %s ...",query);
+    fStmt->execute();
   } catch (SQLException &oraex) {
     Log(1,"TOracleServerE2WFB::MyQuery","failed: (error: %s)",(oraex.getMessage()).c_str());
+    eDoCommit=0;
     return 0;
   }
   return 1;
@@ -179,21 +189,53 @@ ULong64_t  TOracleServerE2WFB::AddProcessOperationBrick(
            );
     
     printf("%s\n",s.Data() );
-    if(!eDebug) { 
-      if (!fStmt)  fStmt = fConn->createStatement();
-      fStmt->setSQL( s.Data() );
-      fStmt->registerOutParam(1, OCCISTRING,64);
-      fStmt->execute();
-      if(!(fStmt->getString(1)).c_str()) {
-        Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","ERROR! empty operation returned!");
-        return 0;
-      }
-      Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","returned string is: %s",(fStmt->getString(1)).c_str());
-      sscanf( (fStmt->getString(1)).c_str(),"%lld",&id);
-      Log(2,"TOracleServerE2WFB::AddProcessOperation","output: %lld",id);
+    if (!fStmt)  fStmt = fConn->createStatement();
+    fStmt->setSQL( s.Data() );
+    fStmt->registerOutParam(1, OCCISTRING,64);
+    fStmt->execute();
+    if(!(fStmt->getString(1)).c_str()) {
+      Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","ERROR! empty operation returned!");
+      return 0;    eDoCommit=0;
     }
+    Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","returned string is: %s",(fStmt->getString(1)).c_str());
+    sscanf( (fStmt->getString(1)).c_str(),"%lld",&id);
+    Log(2,"TOracleServerE2WFB::AddProcessOperation","output: %lld",id);
   } catch (SQLException &oraex) {
     Error("TOracleServerE2WFB", "AddProcessOperation failed: (error: %s)", (oraex.getMessage()).c_str());
+    eDoCommit=0;
+  }
+  return id;
+}
+
+//------------------------------------------------------------------------------------
+ULong64_t  TOracleServerE2WFB::AddFeedbackReconstructionTest // do not work due to some triggers
+    (
+    ULong64_t id_eventbrick,
+    ULong64_t id_processoperation
+    )
+{
+  ULong64_t id=0;
+  try{
+    TString s=Form(
+        "BEGIN INSERT INTO %s.VW_FEEDBACK_RECONSTRUCTIONS_J(id_eventbrick,id_processoperation) values(%s,%s) returning id_reconstruction into :1; END;",
+    eLab.Data(),
+    Ostr(id_eventbrick),
+    Ostr(id_processoperation)
+                  );
+    Log(2,"","%s",s.Data() );
+    fStmt->setSQL( s.Data() );
+    fStmt->registerOutParam(1, OCCISTRING,64);
+    fStmt->executeUpdate();
+    if(!(fStmt->getString(1)).c_str()) {
+      Log(2,"TOracleServerE2WFB::AddProcessOperationBrick","ERROR! empty operation returned!");
+      eDoCommit=0;
+      return 0;
+    }
+    Log(2,"","%s", (fStmt->getString(1)).c_str() );
+    sscanf( (fStmt->getString(1)).c_str(),"%lld",&id);
+  } catch (SQLException &oraex) {
+    Error("TOracleServerE2WFB::AddFeedbackReconstruction", "failed: (error: %s)", (oraex.getMessage()).c_str());
+    eDoCommit=0;
   }
   return id;
 }
@@ -223,7 +265,7 @@ ULong64_t  TOracleServerE2WFB::AddFeedbackReconstruction
       if(rs) 
         if(rs->next()) {
           sscanf( (rs->getString(1)).c_str(),"%lld",&id);
-          Log(2,"TOracleServerE2WFB::AddFeedbackReconstruction","added, id = %lld",id);
+          Log(2,"TOracleServerE2WFB::AddFeedbackReconstructionOld","added, id = %lld",id);
         }
     }
     return id;
@@ -367,12 +409,11 @@ Int_t  TOracleServerE2WFB::CloseFeedbackDataset(
                        )
                  );
     printf("%s\n",fStmt->getSQL().c_str() );
-    if(!eDebug) {
-      fStmt->execute();
-    }
+    fStmt->execute();
     return 1;
   } catch (SQLException &oraex) {
     Error("TOracleServerE2WFB", "CloseFeedbackDataset failed: (error: %s)", (oraex.getMessage()).c_str());
+    eDoCommit=0;
   }
   return 0;
 }
@@ -392,6 +433,7 @@ EdbFeedback::EdbFeedback()
   eIdMachine=0;
   eIdProgramsettings=0;
   eIdRequester=0;
+  eERROR=0;
 }
 
 //------------------------------------------------------------------------------------
@@ -453,6 +495,7 @@ int EdbFeedback::LoadFBintoDB()
     fbtrack *t = eT[it];
     if(!t) { 
       Log(1,"EdbFeedback::LoadFBintoDB","ERROR: track %d is missing!", it);
+      eERROR=1;
       return 0; 
     }
  
@@ -479,6 +522,7 @@ int EdbFeedback::LoadFBintoDB()
       fbsegment *s = t->segments[is];
       if(!s) { 
         Log(1,"EdbFeedback::LoadFBintoDB","ERROR: segment %d of track %d is missing!", is, it);
+        eERROR=1;
         return 0; 
       }
       if(s->id_plate!=44)
@@ -559,6 +603,7 @@ int EdbFeedback::ReadFBFile( const char *file )
 {
   FILE *f = fopen(file,"r");  if(!f) {
     Log(1,"EdbFeedback::ReadFBFile","ERROR! open file %s", file); 
+    eERROR=1;
     return 0;
   }
   Log(2,"EdbFeedback::ReadFBFile","%s", file);
@@ -577,11 +622,13 @@ int EdbFeedback::ReadFBFile( const char *file )
       if( v->idvtx<0 && v->idvtx>=eNvtxLim )
       {
         Log(1,"EdbFeedback::ReadFBFile","ERROR: vertex id %d is out of range (0-%d)!",v->idvtx,eNvtxLim); 
+        eERROR=1;
         break;
       }
       if( eV[v->idvtx]!=0 ) 
       {
         Log(1,"EdbFeedback::ReadFBFile","ERROR: vertex id (%d) is duplicated!",v->idvtx);
+        eERROR=1;
         break;
       }
 
@@ -593,6 +640,7 @@ int EdbFeedback::ReadFBFile( const char *file )
       if( eNtr>=eNtrLim )
       {
         Log(1,"EdbFeedback::ReadFBFile","ERROR: tracks out of limit %d!",eNtrLim);
+        eERROR=1;
         break;
       }
 
@@ -608,6 +656,7 @@ int EdbFeedback::ReadFBFile( const char *file )
     else 
     {
       Log(1,"EdbFeedback::ReadFBFile","ERROR! bad line: %s", str); 
+      eERROR=1;
     }
   }
   Log(2,"EdbFeedback::ReadFBFile","%d vertices and %d tracks read from %s", eNvtx,eNtr,file );
@@ -641,6 +690,7 @@ fbtrack   *EdbFeedback::ReadTrack( const char *str )
                   ))
   {
     Log(1,"EdbFeedback::ReadTrack","ERROR! bad trk line: %s", str); 
+    eERROR=1;
     SafeDelete(t);
     return 0; 
   }
@@ -659,6 +709,7 @@ fbsegment   *EdbFeedback::ReadSegment( FILE *f )
                   ))
   {
     Log(1,"EdbFeedback::ReadSegment","ERROR! bad seg line: %s", str); 
+    eERROR=1;
     delete s;
     return 0; 
   }
