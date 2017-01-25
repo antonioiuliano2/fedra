@@ -19,7 +19,9 @@ public:
     TOracleServer(db, uid, pw){}
   ~TOracleServerE2(){}
 
-   bool        ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
+  const char *Ostr(ULong64_t num);
+  const char *Ostr(Int_t num);
+  bool        ReadZplate(int id_plate, int id_eventbrick, EdbPattern &pat);
    bool        ReadZplate_nominal(int id_plate, int id_eventbrick, EdbPattern &pat);
    Int_t       ReadBasetracksPattern(char *selection, EdbPattern &pat);
    Int_t       ReadMicrotracksPattern(int id_eventbrick, char *selection, EdbPattern &pat);
@@ -40,7 +42,8 @@ public:
    Int_t       DumpProcessOperations(char *id_eventbrick, Int_t driverlevel);
    Int_t       GetId_EventBrick (const char *id_brick, const char*id_set, char *id);
    Int_t       GetId_Zone(char *id_eventbrick,char *id_plate, char *id_process_operation, char *series, char* id);
-   Int_t       GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id);
+   ULong64_t GetId_ScanbackPath(ULong64_t id_eventbrick, ULong64_t id_process_operation, int path);
+       Int_t       GetId_ScanbackPath(char *id_eventbrick, char *id_process_operation, int path, char *id);
    Int_t       GetId_Volume(char *id_eventbrick, char *id_process_operation, int ivolume, char *id);
    Int_t       GetProcessType(char *IDPROCESS);
 
@@ -64,7 +67,8 @@ public:
    Int_t       ReadCSPredictions_remote_v2(Int_t id_brick, EdbPattern &pred, int csid);
    Int_t       ReadVetoTracks(Int_t id_brick, EdbPattern &pred);
    void        Print();
-
+   
+   ULong64_t GetProcessOperationID( ULong64_t id_eventbrick, ULong64_t id_parent_operation, ULong64_t id_programsettings, int id_plate );
    ClassDef(TOracleServerE2,1)  // read-only access to the OPERA scanning db (2-d version of the db)
 };
 

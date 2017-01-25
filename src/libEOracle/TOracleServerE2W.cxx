@@ -385,9 +385,8 @@ Int_t  TOracleServerE2W::AddBaseTrack(char *database)
  VALUES (%s)", database);
 
     fStmt->setSQL(query);
-    Log(3,"AddBaseTrack","execute sql query: %s ...",query);
+    Log(2,"AddBaseTrack","%s",query);
     fStmt->execute();
-    Query(commit);
     Log(3,"AddBaseTrack","BaseTrack added");
     
   } catch (SQLException &oraex) {

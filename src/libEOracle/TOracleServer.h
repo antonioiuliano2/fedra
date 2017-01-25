@@ -40,6 +40,7 @@ class TOracleServer : public TSQLServer {
   friend class TOracleServerE;
   friend class TOracleServerE2;
   friend class TOracleServerE2W;
+  friend class TOracleServerE2WX;
   friend class TOracleServerE2WFB;
 
 private:
