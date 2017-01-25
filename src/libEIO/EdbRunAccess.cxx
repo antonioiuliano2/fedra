@@ -72,6 +72,7 @@ void EdbRunAccess::Set0()
   eFirstArea = 9999999;
   eLastArea  = 0;
   eNareas=0;
+  eNviewsPerArea=0;
   eXmin=eXmax=eYmin=eYmax=0;
   eUseExternalSurface=false;
   eDoViewAnalysis=true;
@@ -149,15 +150,49 @@ bool EdbRunAccess::InitRun(const char *runfile, bool do_update)
   eYmin = eVP[1]->Ymin();
   eYmax = eVP[1]->Ymax();
 
-  eNareas=eRun->GetHeader()->GetNareas();
-  //Log(2,"EdbRunAccess::InitRun","%s with %d views\n",eRunFileName.Data(), eRun->GetEntries());
+  GuessNviewsPerArea();
   if(gEDBDEBUGLEVEL>2) PrintStat();
-
   for(int i=0; i<3; i++) { eXstep[i]=400;   eYstep[i]=400; }
   
-  Log(1,"EdbRunAccess::InitRun","eAFID=%d",eAFID);
-
+  Log(2,"EdbRunAccess::InitRun","%s AFID=%d",runfile, eAFID);
   return true;
+}
+
+///_________________________________________________________________________
+void EdbRunAccess::GuessNviewsPerArea()
+{
+  eNviewsPerArea = 0;
+  int nviews=eRun->GetEntries();
+  if(!nviews) return;
+  
+  int nareas=0;
+  int idmin = kMaxInt;
+  int idmax = kMinInt;
+  for(int iview=0; iview<nviews; iview++) {
+    int aid = eRun->GetEntry(iview,1,0,0,0,0)->GetAreaID();
+    if(aid>idmax) 
+    {
+      idmax=aid;
+      nareas++;
+    }
+    if(aid<idmin) idmin=aid;
+  }
+  eNareas=nareas;
+  eFirstArea=idmin;
+  eLastArea=idmax;
+  eNviewsPerArea=nviews/eNareas/2;
+  if( eNviewsPerArea*eNareas*2 != nviews ) 
+  {                                           // try if value in run header is correct
+    int nva=0;
+    if( eRun->GetHeader() && eRun->GetHeader()->GetArea() )
+    {
+      nva = eRun->GetHeader()->GetArea()->GetN();
+      if( nva>0 && nva*eNareas*2==nviews )    eNviewsPerArea=nva;
+    }
+  }
+  if(eNviewsPerArea*eNareas*2 != nviews)
+    Log(1,"EdbRunAccess::GuessNviewsPerArea","WARNING: eNviewsPerArea*eNareas*2 != nviews: %d*%d*2 != %d",
+      eNviewsPerArea, eNareas, nviews );
 }
 
 ///_________________________________________________________________________

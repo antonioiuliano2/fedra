@@ -290,7 +290,7 @@ int EdbDataPiece::ReadPiecePar(const char *file)
 
   FILE *fp = fopen(file,"r");
   if (!fp) {
-    Log(1,"ReadPiecePar","ERROR open file: %s", file);
+    Log(2,"ReadPiecePar","ERROR open file: %s", file);
     return -1;
   }
   else Log(3,"ReadPiecePar","Read piece parameters from file: %s", file );
@@ -471,7 +471,7 @@ int EdbDataPiece::UpdateShrPar(int layer)
 
   FILE *fp=fopen(file,"a");
   if (fp==NULL)   {
-    Log(1,"EdbDataPiece::UpdateShrPar","ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateShrPar","ERROR open file: %s", file);
     return -1;
   }else Log(2,"EdbDataPiece::UpdateShrPar","Update parameters file with SHRINK %d: %s", layer, file );
 
@@ -490,7 +490,7 @@ int EdbDataPiece::UpdateAffPar(int layer, EdbAffine2D &aff)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    Log(1,"EdbDataPiece::UpdateAffPar","ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateAffPar","ERROR open file: %s", file);
     return -1;
   } else Log(2,"EdbDataPiece::UpdateAffPar","Update parameters file with AFFXY: %s", file );
 
@@ -510,7 +510,7 @@ int EdbDataPiece::UpdateZPar(int layer, float z)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    Log(1,"EdbDataPiece::UpdateZPar", "ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateZPar", "ERROR open file: %s", file);
     return -1;
   }
   else Log(2,"EdbDataPiece::UpdateZPar", "Update parameters file with ZLAYER: %s", file );
@@ -535,7 +535,7 @@ int EdbDataPiece::UpdateAffTPar(int layer, EdbAffine2D &aff)
 
   FILE *fp=fopen(file,"a");
   if (!fp) {
-    Log(1,"EdbDataPiece::UpdateAffTPar","ERROR open file: %s \n", file);
+    Log(1,"EdbDataPiece::UpdateAffTPar","ERROR open file: %s", file);
     return -1;
   }
   else Log(2,"EdbDataPiece::UpdateAffTPar","\nUpdate parameters file with AFFTXTY: %s\n\n", file );
@@ -556,7 +556,7 @@ void EdbDataPiece::WriteCuts()
 
   FILE *fp=fopen(file,"w");
   if (!fp) {
-    Log(1," EdbDataPiece::WriteCuts","ERROR open file: %s \n", file.Data());
+    Log(1," EdbDataPiece::WriteCuts","ERROR open file: %s", file.Data());
     return;
   }
   else Log(2,"EdbDataPiece::WriteCuts","Put Cuts to file: %s", file.Data() );
@@ -877,7 +877,7 @@ int EdbDataPiece::CorrectAngles()
   TTree *cptree=0;
   cptree=EdbDataPiece::InitCouplesTree(GetNameCP(),"READ");
   if( cptree )  n = CorrectAngles(cptree);
-  Log(2,"CorrectAngles","in piece: %s  using %d basetracks\n",GetNameCP(),n);
+  Log(2,"CorrectAngles","in piece: %s  using %d basetracks",GetNameCP(),n);
   return n;
 }
 
@@ -904,7 +904,7 @@ int EdbDataPiece::CorrectAngles(TTree *tree)
   TArrayF y2(nentr);
 
   int nseg = 0;
-  Log(2,"EdbDataPiece::CorrectAngles","nentr = %d\n",nentr);
+  Log(2,"EdbDataPiece::CorrectAngles","nentr = %d",nentr);
   for(int i=0; i<nentr; i++ ) {
     tree->GetEntry(i);
 
@@ -958,7 +958,7 @@ int EdbDataPiece::CheckCCD(int maxentr)
 
   int ncheck=0;
   int nentr = TMath::Min(maxentr,eRun->GetEntries());
-  Log(2,"EdbDataPiece::CheckCCD","nentr=%d\n",nentr);
+  Log(2,"EdbDataPiece::CheckCCD","nentr=%d",nentr);
   for (i=0; i<nentr; i++) {
     view = eRun->GetEntry(i);
     int nseg=view->Nsegments();
@@ -1004,7 +1004,7 @@ int EdbDataPiece::RemoveCCDPeak(TMatrix &matr)
       }
     }
   mean/=filled;
-  Log(2,"EdbDataPiece::RemoveCCDPeak","mean = %f \t max[%d,%d]=%d\n",mean,ix,iy,(int)max);
+  Log(2,"EdbDataPiece::RemoveCCDPeak","mean = %f \t max[%d,%d]=%d",mean,ix,iy,(int)max);
 
   float vmin[5],vmax[5];
   EdbSegmentCut cut;
@@ -1170,7 +1170,7 @@ int EdbDataPiece::GetAreaData(EdbPVRec *ali, int aid, int side)
     }
   }
 
-  Log(2,"EdbDataPiece::GetAreaData","Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d\n", 
+  Log(2,"EdbDataPiece::GetAreaData","Area: %d ( %d%%)  %d \t views: %d \t nseg: %d \t rejected: %d", 
 	   aid,100*aid/eAreas[side]->N(1),side,niu,nseg, nrej );
   pat->SetSegmentsZ();
   ali->AddPattern(pat);
@@ -1190,7 +1190,7 @@ int EdbDataPiece::MakeLinkListArea(int irun)
   }
 
   int nentr = eRun->GetEntries();
-  Log(2,"EdbDataPiece::MakeLinkListArea","Make views entry map,  nentr = %d\n",nentr);
+  Log(2,"EdbDataPiece::MakeLinkListArea","Make views entry map,  nentr = %d",nentr);
 
   Long_t v[2];   // areaID,entry
   EdbViewHeader *head=0;
@@ -1498,7 +1498,7 @@ void EdbDataSet::PrintRunList()
 void EdbDataSet::Print()
 {
   EdbDataPiece *p=0;
-  printf("EdbDataSet with %d pieces:\n",N());
+  printf("EdbDataSet with %d pieces:",N());
   for(int i=0; i<N(); i++){
     p = ((EdbDataPiece*)ePieces.At(i));
     printf("%s %s\n",p->GetName(), p->GetRunFile(0));
@@ -1567,7 +1567,7 @@ int EdbDataSet::GetRunList(const char *file)
       if(piece->TakePiecePar()>=0)
 	ePieces.Add(piece);
       else {
-	Log(1,"EdbDataSet::GetRunList","Missing par file for piece!!!\n");
+	Log(1,"EdbDataSet::GetRunList","Missing par file for piece!!!");
 	if(fp) fclose(fp);
 	return -1;
       }
@@ -1722,8 +1722,8 @@ int EdbDataProc::Link(EdbDataPiece &piece)
     if(nshrtot>3) {
       shrtot1 = shrtot1/nshrtot;
       shrtot2 = shrtot2/nshrtot;
-      if(nshrtot<20) Log(1,"EdbDataProc::Link","WARNING: unreliable shrinkage correction - low statistics\n");
-      Log(2,"EdbDataProc::Link","Shrinkage correction(%d): %f %f\n", nshrtot, (float)shrtot1,(float)shrtot2);
+      if(nshrtot<20) Log(1,"EdbDataProc::Link","WARNING: unreliable shrinkage correction - low statistics");
+      Log(2,"EdbDataProc::Link","Shrinkage correction(%d): %f %f", nshrtot, (float)shrtot1,(float)shrtot2);
       piece.CorrectShrinkage( 1, (float)shrtot1 );
       piece.CorrectShrinkage( 2, (float)shrtot2 );
       if(!NoUpdate())   piece.UpdateShrPar(1);
@@ -1862,7 +1862,7 @@ void EdbDataProc::CorrectAngles()
 {
   EdbDataPiece *piece;
   int npieces = eDataSet->N();
-  Log(2,"EdbDataProc::CorrectAngles","npieces = %d\n",npieces);
+  Log(2,"EdbDataProc::CorrectAngles","npieces = %d",npieces);
   if(!npieces) return;
 
   for(int i=0; i<npieces; i++ ) {
@@ -1924,7 +1924,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbSegP &seg, int plmin, int plmax,
 
   EdbPVRec *ali = new EdbPVRec();
 
-  Log(2,"EdbDataProc::ExtractDataVolume","Select Data %d in EdbPVRec with %d patterns:\n",
+  Log(2,"EdbDataProc::ExtractDataVolume","Select Data %d in EdbPVRec with %d patterns:",
 	 datatype, npat);
 
   float dz, min[5],  max[5];
@@ -1959,7 +1959,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolumeF( EdbTrackP &tr, float binx, float bint
   if(!ePVR)               return 0;
   int npat = ePVR->Npatterns();
   EdbPVRec *ali = new EdbPVRec();
-  Log(2,"EdbDataProc::ExtractDataVolumeF","Select Data %d in EdbPVRec with %d patterns:\n",
+  Log(2,"EdbDataProc::ExtractDataVolumeF","Select Data %d in EdbPVRec with %d patterns:",
 	 datatype, npat);
 
   EdbSegP ss; // the "selector" segment 
@@ -2028,7 +2028,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
   float tx  = (tr.GetSegment(tr.N()-1)->X() - tr.GetSegment(0)->X())/dz;
   float ty  = (tr.GetSegment(tr.N()-1)->Y() - tr.GetSegment(0)->Y())/dz;
 
-  Log(2,"EdbDataProc::ExtractDataVolume","select segments with acceptance: %f %f [microns]   %f %f [mrad]\n",
+  Log(2,"EdbDataProc::ExtractDataVolume","select segments with acceptance: %f %f [microns]   %f %f [mrad]",
 	 dx,dy,dtx*1000,dty*1000);
 
   EdbPattern *pat  = 0;
@@ -2057,7 +2057,7 @@ EdbPVRec *EdbDataProc::ExtractDataVolume( EdbTrackP &tr, float binx, float bint,
     nseg += spat->N();
     ali->AddPattern( spat );
   }
-  Log(2,"EdbDataProc::ExtractDataVolume","%d segments are selected\n",nseg);
+  Log(2,"EdbDataProc::ExtractDataVolume","%d segments are selected",nseg);
   return ali;
 }
 
@@ -2141,7 +2141,7 @@ void EdbDataProc::FineAlignmentTracks()
   for( int i=0; i<ali->Npatterns(); i++ ) {
     fctr = ali->FineCorrF(i,aff,afft);
     if(fctr<fctr0) fctr0=fctr;
-    Log(2,"EdbDataProc::FineAlignmentTracks","fctr = %d\n",fctr);
+    Log(2,"EdbDataProc::FineAlignmentTracks","fctr = %d",fctr);
   }
 
   if(fctr0>fcMin) {
@@ -2373,7 +2373,7 @@ void EdbDataProc::LinkRawTracks( int alg )
   EdbPVRec    *ali  = new EdbPVRec();
   InitVolumeRaw(ali);
   ali->Link();
-  Log(2,"EdbDataProc::LinkRawTracks","link ok\n");
+  Log(2,"EdbDataProc::LinkRawTracks","link ok");
 
 //    if(alg==1) {
 //      ali->MakeHoles();
@@ -2396,7 +2396,7 @@ void EdbDataProc::FineAlignment(int doFine)
   EdbPVRec    ali;
   InitVolume(&ali);
   ali.Link();
-  Log(2,"EdbDataProc::FineAlignment","link ok\n");
+  Log(2,"EdbDataProc::FineAlignment","link ok");
   ali.FillTracksCell();
 
   EdbAffine2D aff;
@@ -2432,7 +2432,7 @@ void EdbDataProc::FineAlignment(int doFine)
     fctr = ali.FineCorrZ(i,dz);
     if(fctr<=fcMin) break;
     z -= dz;
-    Log(2,"EdbDataProc::FineAlignment","dz = %f  z = %f\n",dz,z);
+    Log(2,"EdbDataProc::FineAlignment","dz = %f  z = %f",dz,z);
     if(!NoUpdate())   eDataSet->GetPiece(i)->UpdateZPar(0,z);
   }
 
@@ -2484,7 +2484,7 @@ void EdbDataProc::AlignLinkTracks(int alg, int doAlign)
   }
 
   ali->Link();
-  Log(2,"EdbDataProc::AlignLinkTracks","link ok\n");
+  Log(2,"EdbDataProc::AlignLinkTracks","link ok");
 
 //    if(alg==1) {
 //      ali->MakeHoles();
@@ -2573,7 +2573,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
 
   tracks->Write();
   fil.Close();
-  Log(2,"EdbDataProc::MakeTracksTree","%d tracks are written \n",ntr);
+  Log(2,"EdbDataProc::MakeTracksTree","%d tracks are written",ntr);
   return ntr; 
 }
 

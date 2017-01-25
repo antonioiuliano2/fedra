@@ -50,6 +50,7 @@ class EdbRunAccess : public TObject {
   Int_t eFirstArea;
   Int_t eLastArea;
   Int_t eNareas;
+  Int_t eNviewsPerArea;
 
   EdbLayer    *eLayers[3]; // base(0),up(1),down(2)  layers
   EdbScanCond *eCond[3];   //
@@ -88,6 +89,10 @@ class EdbRunAccess : public TObject {
   bool AddRWDToRun(char *rwdname, const char* options="");
   void Print();
   void PrintStat();
+  void GuessNviewsPerArea();
+
+  Int_t GetNareas()        { return eNareas;        }
+  Int_t GetNviewsPerArea() { return eNviewsPerArea; }
   
   void  CheckRunLine();
   int   Check0Views(EdbPattern &pat, int thres=1);
