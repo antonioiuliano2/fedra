@@ -179,6 +179,7 @@ public:
 
   int     WriteScanSet(EdbID id, EdbScanSet &ss);
   EdbScanSet  *ReadScanSet(EdbID id);
+  EdbScanSet  *ReadScanSetGlobal(EdbID id, bool x_marks);
 
   int     WriteSBTrack(EdbTrackP &t, int path, EdbID id);  //to remove?
   int     WriteSBTracks(TObjArray &tracks, EdbID id);
@@ -223,6 +224,8 @@ public:
 
   void SetServerRunName(const char* fname_);
   const char* GetServerRunName()const;
+  
+  void ReadUncorrectedBTforFoundTracks( EdbPVRec &ali );
 
   void    LogPrint(int brick, int level, const char *rout, const char *msgfmt, ...);
   void    Print();

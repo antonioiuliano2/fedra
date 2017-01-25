@@ -560,13 +560,18 @@ int EdbScanProc::AlignSet(EdbScanSet &sc, int npre, int nfull, const char *opt )
 int EdbScanProc::TrackSetBT(EdbScanSet &sc, TEnv &cenv)
 {
   EdbScanCond cond;
-  TCut  c        = cenv.GetValue("fedra.readCPcut"     , "eCHI2P<2.5&&s.eW>13&&eN1==1&&eN2==1&&s1.eFlag>=0&&s2.eFlag>=0");
-  int   nsegmin  = cenv.GetValue("fedra.track.nsegmin"  , 2 );
-  int   ngapmax  = cenv.GetValue("fedra.track.ngapmax"  , 4 );
-  float probmin  = cenv.GetValue("fedra.track.probmin"  , 0.01 );
-  float momentum = cenv.GetValue("fedra.track.momentum" , 2 );
-  float mass     = cenv.GetValue("fedra.track.mass"     , 0.14 );
-  bool  do_erase = cenv.GetValue("fedra.track.erase"    , false );
+  TCut  c        =    cenv.GetValue("fedra.readCPcut"     , "eCHI2P<2.5&&s.eW>13&&eN1==1&&eN2==1&&s1.eFlag>=0&&s2.eFlag>=0");
+  int   nsegmin  =    cenv.GetValue("fedra.track.nsegmin"  , 2 );
+  int   ngapmax  =    cenv.GetValue("fedra.track.ngapmax"  , 4 );
+  float probmin  =    cenv.GetValue("fedra.track.probmin"  , 0.01 );
+  float momentum =    cenv.GetValue("fedra.track.momentum" , 2 );
+  float mass     =    cenv.GetValue("fedra.track.mass"     , 0.14 );
+  bool  do_erase =    cenv.GetValue("fedra.track.erase"    , false );
+  cond.SetSigma0(     cenv.GetValue("fedra.track.Sigma0"         , "3 3 0.005 0.005") );
+  cond.SetPulsRamp0(  cenv.GetValue("fedra.track.PulsRamp0"      , "15 20") );
+  cond.SetPulsRamp04( cenv.GetValue("fedra.track.PulsRamp04"     , "15 20") );
+  cond.SetDegrad(     cenv.GetValue("fedra.track.Degrad"         , 4) );
+  cond.SetRadX0(      cenv.GetValue("fedra.track.RadX0"          , 5810.) );
 
   if(sc.eIDS.GetEntries()<2) return 0;
   int n=0;
@@ -1307,14 +1312,14 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
 {
   Log(2,"EdbScanProc::TestAl","align patterns %d and %d", p1.N(), p2.N());
   EdbTestAl ta;
-  //TFile ftree("testal.root","RECREATE");
-  //ta.eBinTree = new TNtuple("bintree","bin tree","dz:phi:dx:dy:bin");
+  TFile ftree("testal.root","RECREATE");
+  ta.eBinTree = new TNtuple("bintree","bin tree","dz:phi:dx:dy:bin");
   ta.eITMAX=50;  // default value
   ta.HDistance(p1,p2);
 
-  float bin[4]={20,20, 25,0.001};                  // default values for normal alignment (expected dz=1300)
-  ta.eDmin[0]=-5000; ta.eDmin[1]=-5000; ta.eDmin[2]=  -1500; ta.eDmin[3]=-0.015;
-  ta.eDmax[0]= 5000; ta.eDmax[1]= 5000; ta.eDmax[2]=  1500; ta.eDmax[3]= 0.015;
+  float bin[4]={250,250, 250,0.001};                  // default values for normal alignment (expected dz=1300)
+  ta.eDmin[0]=-25000; ta.eDmin[1]=-25000; ta.eDmin[2]=  -25; ta.eDmin[3]=-0.015;
+  ta.eDmax[0]= 25000; ta.eDmax[1]= 25000; ta.eDmax[2]=   25; ta.eDmax[3]= 0.015;
 
   FILE *f = fopen("testal.par","r");
   if(f) {
@@ -1336,13 +1341,13 @@ int EdbScanProc::TestAl(EdbPattern &p1, EdbPattern &p2)
   aff.Rotate(-ta.eD0[3]);
   aff.ShiftX(ta.eD0[0]);
   aff.ShiftY(ta.eD0[1]);
-  if(gEDBDEBUGLEVEL>1) {
-    aff.Print();
-    ta.FillTree(-ta.eD0[2]);
-  }
+  //if(gEDBDEBUGLEVEL>1) {
+    //aff.Print();
+    //ta.FillTree(-ta.eD0[2]);
+  //}
 
-  //ta.eBinTree->Write("bintree");
-  //ftree.Close();
+  ta.eBinTree->Write("bintree");
+  ftree.Close();
 
   return 0;
 }
@@ -1429,6 +1434,47 @@ int EdbScanProc::WriteScanSet(EdbID id, EdbScanSet &ss)
   ss.Write("set");
   f.Purge(3);  f.Close();
   return 1;
+}
+
+//----------------------------------------------------------------
+EdbScanSet *EdbScanProc::ReadScanSetGlobal( EdbID id, bool x_marks )
+{
+  // read scan set and use map.OL and map.XG files to obtain transformations in global OPERA RS
+  EdbScanSet *ss = ReadScanSet(id);
+  if(ss) {
+    if(gEDBDEBUGLEVEL>2) ss->Print();
+    EdbMarksSet msOL;
+    if (x_marks) ReadMarksSet(msOL,id.eBrick,"map.LL",'_','L');
+    else ReadMarksSet(msOL,id.eBrick,"map.OL",'_','S');
+    if(gEDBDEBUGLEVEL>2) msOL.Print();
+    float MINX = msOL.eXmin;
+    float MAXX = msOL.eXmax;
+    float MINY = msOL.eYmin;
+    float MAXY = msOL.eYmax;
+    EdbMarksSet msXG;
+    ReadMarksSet(msXG,id.eBrick,"map.XG",'_');
+    float ZEROX = msXG.eXmin;
+    float ZEROY = msXG.eYmin;
+    if(gEDBDEBUGLEVEL>2) msXG.Print();
+   
+    int n = ss->eIDS.GetEntries();
+    for(int i=0; i<n; i++) {
+      EdbID *pid  = ss->GetID(i);
+      EdbPlateP *plate = ss->GetPlate(pid->ePlate);
+      float RX = 0.5*(MINX+MAXX) - ZEROX;
+      float RY = 0.5*(MINY+MAXY) - ZEROY;
+      EdbAffine2D *aff = plate->GetAffineXY();
+      float MAPXX = aff->A11();
+      float MAPXY = aff->A12();
+      float MAPYX = aff->A21();
+      float MAPYY = aff->A22();
+      float MAPDX = aff->B1() - RX + aff->A11() * RX + aff->A12() * RY;
+      float MAPDY = aff->B2() - RY + aff->A21() * RX + aff->A22() * RY;
+      aff->Set(MAPXX,MAPXY,MAPYX,MAPYY,MAPDX,MAPDY);
+    }
+    if(gEDBDEBUGLEVEL>2) ss->Print();
+  }
+  return ss;
 }
 
 //----------------------------------------------------------------
@@ -3095,9 +3141,10 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   r.eInvertSides=cenv.GetValue("fedra.link.read.InvertSides"      , 0);
   r.eHeaderCut = cenv.GetValue("fedra.link.read.HeaderCut"      , "1");
   r.eHeaderCut.Print();
-  InitRunAccessNew(r,id,plate);
   r.eAFID           =  cenv.GetValue("fedra.link.AFID"      , 1);
-  r.eUseDensityAsW  =  cenv.GetValue("fedra.link.read.UseDensityAsW"      , false  );
+  printf("EdbScanProc::LinkRunTest ** AFID=%d\n", r.eAFID);
+  InitRunAccessNew(r,id,plate);
+  r.eWeightAlg  =  cenv.GetValue("fedra.link.read.WeightAlg"      , 0  );
   r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
   r.SetPixelCorrection( cenv.GetValue("fedra.link.PixelCorr"      , "0 1. 1.") );
   r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);
@@ -3350,9 +3397,47 @@ void EdbScanProc::ExtractRawVolume(EdbScanSet &ss, EdbScanSet &ssnew, EdbSegP &p
 
 }
 
+//----------------------------------------------------------------
 void EdbScanProc::SetServerRunName(const char* fname_){
 	eServerCreatedRunName = fname_;
 };
 const char* EdbScanProc::GetServerRunName()const{
 	return eServerCreatedRunName.Data();
 };
+
+//----------------------------------------------------------------
+void EdbScanProc::ReadUncorrectedBTforFoundTracks( EdbPVRec &ali )
+{
+  // get from couples trees and set in the ali the uncorrected basetracks
+  ali.SetSegmentsTracks();
+  int npat = ali.Npatterns();
+  for(int i=0; i<npat; i++)
+  {
+    EdbPattern *pat = ali.GetPattern(i);
+    int nseg = pat->N();    if(nseg<1) return;
+    EdbID idpl((pat->GetSegment(0)->ScanID()));
+    TString cpfile;
+    MakeFileName(cpfile,idpl,"cp.root");
+    EdbCouplesTree ect;
+    if(!ect.InitCouplesTree("couples",cpfile,"READ")) continue;
+    ect.eAcceptMask = new EdbMask(ect.eTree->GetEntries());
+    EdbSegP **segments = new EdbSegP*[ect.eTree->GetEntries()];
+    for(int j=0; j<nseg; j++)       ect.eAcceptMask->SetAt( pat->GetSegment(j)->Vid(1), 1);
+    EdbPattern newpat;
+    int nnew= ect.GetCPDataAcceptedMask(&newpat);
+    for(int j=0; j<nnew; j++)  segments[newpat.GetSegment(j)->Vid(1)] = newpat.GetSegment(j);
+    for(int j=0; j<nseg; j++) {
+      EdbSegP *sc = pat->GetSegment(j);
+      EdbSegP *sn = segments[sc->Vid(1)];
+      //sc->PrintNice();
+      //sn->PrintNice();
+      sc->SetX(sn->X());
+      sc->SetY(sn->Y());
+      sc->SetTX(sn->TX());
+      sc->SetTY(sn->TY());
+    }
+    Log(2,"EdbScanProc::ReadUncorrectedBTforFoundTracks","%d -> %d segments for %s", 
+        pat->N(), newpat.N(), idpl.AsString() );
+  }
+
+}
