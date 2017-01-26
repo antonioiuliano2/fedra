@@ -600,7 +600,52 @@ Int_t TOracleServerE2WX::AddBaseTracks(TTree *tree, ULong64_t id_eventbrick, ULo
   return nentr;
 }
 
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id_header_operation, int id_path, int id_start_plate, int skipCSconnection)
+{
+  // Adds a scanback path into the DB and connects it with the CS prediction
+  // Table involved: TB_SCANBACK_PATHS, TB_B_CSCANDS_SBPATHS
+  
+  MyQuery( Form("\
+      INSERT INTO OPERA.TB_SCANBACK_PATHS (ID_EVENTBRICK, ID_PROCESSOPERATION, PATH, ID_START_PLATE, ID_FORK_PATH, ID_CANCEL_PLATE) VALUES (%s, %s, %d, %d, NULL, NULL)",
+  Ostr(id_eventbrick), 
+  Ostr(id_header_operation), 
+  id_path, 
+  id_start_plate
+               ));
 
+  if (!skipCSconnection) {
+    ULong64_t id_cs_eventbrick = 3000000 + id_eventbrick%1000000;
+    if(MyQuery( Form(
+       "SELECT ID FROM OPERA.TB_CS_CANDIDATES WHERE ID_EVENTBRICK=%s and CANDIDATE=%d",
+    Ostr(id_cs_eventbrick),
+    id_path%10000
+                    )))
+    {
+      ResultSet *rs = fStmt->getResultSet();
+      ULong64_t id_candidate=0;
+      int icopy=0;
+      while (rs->next()){
+        sscanf(rs->getString(1).c_str(),"%lld",&id_candidate);
+        icopy++;
+      }
+      delete rs;
+      MyQuery(Form("\
+          INSERT INTO OPERA.TB_B_CSCANDS_SBPATHS \
+          (ID_CS_EVENTBRICK, ID_CANDIDATE, ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH) VALUES (%s, %s, %s, %s, %d)",
+      Ostr(id_cs_eventbrick),
+      Ostr(id_candidate), 
+      Ostr(id_eventbrick), 
+      Ostr(id_header_operation), 
+      id_path
+             ));
+    }
+  } // end !skipCSconnection
+
+  return 0;
+}
+
+/*
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id_header_operation, int id_path, int id_start_plate, int skipCSconnection)
 {
@@ -620,7 +665,7 @@ Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id
     try{
       if (!fStmt) fStmt = fConn->createStatement();
         
-      sprintf(query,"select id_cs_eventbrick,idcand from vw_local_cs_candidates where id_cs_eventbrick in (select id from tb_eventbricks where id_brick in (select id_brick from tb_eventbricks where id=%s)) and cand=%d",
+      sprintf(query,"select id_eventbrick,idcand from opera.tb_cs_candidates where id_cs_eventbrick in (select id from opera.tb_eventbricks where id_brick in (select id_brick from opera.tb_eventbricks where id=%s)) and candidate=%d",
               Ostr(id_eventbrick), id_path%10000);
       
       int id_path_copy = id_path/10000;
@@ -656,7 +701,7 @@ Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id
 
   return 0;
 }
-
+*/
 /*
 //------------------------------------------------------------------------------------
 void  TOracleServerE2WX::AddZone(char *data)

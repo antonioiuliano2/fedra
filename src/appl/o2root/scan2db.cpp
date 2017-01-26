@@ -24,7 +24,7 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback);
 //-------------------------------------------------------------------------------------
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  scan2db -file=feedback_file [-commit -v=V -lab=LA]\n";
+  cout<< "\nUsage: \n\t  scan2db -file=bXXX_eYYY.scan2db.rootrc [-commit -v=V -lab=LA]\n";
   cout<< "\t\t Assumed that feedbackfile name is like bBBBB_eEEEE.feedback as b010234_e11293015645.feedback\n";
   cout<< "\t\t brick id and event id extracted from the file name are used for data insertion into db\n";
   
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 }
 
 //-------------------------------------------------------------------------------------
-bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback)
+bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
 {
   time_t ti = time(NULL);
   EdbScan2DB s2d;
@@ -206,17 +206,16 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback)
   ULong64_t br=0;
   ULong64_t ev=0;
   TString   dir;
-  ParseFileName( feedback, br, ev , dir );
-  TString cardfile = Form("%s/b%6.6d/eventbrick.scan2db.rootrc",dir.Data(),br);
+  ParseFileName( fname, br, ev , dir );
   TEnv cardenv("eventscan2db");
-  if( cardenv.ReadFile( cardfile.Data() ,kEnvLocal) <0 ) 
+  if( cardenv.ReadFile( fname ,kEnvLocal) <0 ) 
   {
-    Log(1,"LoadEventBrick","card file %s not found! exit", cardfile.Data());
+    Log(1,"LoadEventBrick","card file %s not found! exit", fname);
     return false;
   }
   printf("\n--------------------------------------------------------------------\n");
   printf(  "----------------------- scan2db ------------------------------------\n");
-  printf(  "Process file: %s\n",cardfile.Data());
+  printf(  "Process file: %s\n",fname);
   printf(  "--------------------------------------------------------------------\n");
   cardenv.Print();
   printf(  "--------------------------------------------------------------------\n");
@@ -252,7 +251,7 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback)
      printf(  "scan2db CALIBRATION ......\n");
      time_t ti_c = time(NULL);
      EdbID idcal           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
-     s2d.eWriteRawCalibrationData = 1;
+     s2d.eWriteRawCalibrationData = cardenv.GetValue("scan2db.CALIBRATION.raw", 0);
      s2d.LoadCalibration(sproc, idcal);
      time_t tf_c = time(NULL);
      printf(  "scan2db CALIBRATION finished, Elapsed time = %ld s\n", tf_c-ti_c);
@@ -263,7 +262,7 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback)
      EdbID idpred           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
      s2d.LoadPrediction(sproc, idpred);
      time_t tf_p = time(NULL);
-     printf(  "scan2db PREDICTION finished, Elapsed time = %ld\n", tf_p-ti_p);
+     printf(  "scan2db PREDICTION finished, Elapsed time = %ld s\n", tf_p-ti_p);
    }
    if(cardenv.Lookup("scan2db.VOLUME")) {
      printf(  "scan2db VOLUME ......\n");
@@ -271,10 +270,14 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback)
      EdbID idvol           = cardenv.GetValue("scan2db.VOLUME", "0.0.0.0");
      s2d.LoadVolume(sproc, idvol);
      time_t tf_v = time(NULL);
-     printf(  "scan2db VOLUME finished, Elapsed time = %ld\n", tf_v-ti_v);
+     printf(  "scan2db VOLUME finished, Elapsed time = %ld s\n", tf_v-ti_v);
    }
 
-   s2d.eDB->ROLLBACK();
+   //s2d.eDB->ROLLBACK();
+   time_t ti_ft = time(NULL);
+   s2d.eDB->FinishTransaction();
+   time_t tf_ft = time(NULL);
+   printf(  "scan2db Transaction finished, Elapsed time = %ld s\n", tf_ft-ti_ft);
 
   time_t tf = time(NULL);
   fprintf(stdout,"LoadEventBrick completed\n");
@@ -308,8 +311,8 @@ int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid )
     Log(1,"fb2db::ParseFileName","ERROR: can not access file: %s", fname);
     return 0;
   }
-  if(2 != sscanf(gSystem->BaseName(fname),"b%lld_e%lld.feedback",&brickid,&eventid)) {
-    Log(1,"Error parsing feedback filename (expected bXXXX_eXXXXX.feedback): %s", fname);
+  if(2 != sscanf(gSystem->BaseName(fname),"b%lld_e%lld.scan2db.rootrc",&brickid,&eventid)) {
+    Log(1,"Error parsing filename (expected bXXXX_eXXXXX.scan2db.rootrc): %s", fname);
     return 0;
   }
   return 1;
