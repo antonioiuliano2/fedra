@@ -19,7 +19,6 @@ void TOracleServerE2WX::Set0()
 {
   eTestLoad=kMaxInt;
   eDoCommit=0;
-  //eNviewsPerArea=0;
 }
  
 //------------------------------------------------------------------------------------
@@ -41,7 +40,6 @@ const char *TOracleServerE2WX::Timestamp()
 //------------------------------------------------------------------------------------
 void TOracleServerE2WX::FinishTransaction()
 {
-  if(eTestLoad) return; // do nothing!
   try{
     if(eDoCommit) MyQuery("COMMIT"); 
     else          MyQuery("ROLLBACK");
@@ -174,7 +172,7 @@ Int_t  TOracleServerE2WX::AddEventBrick(const char *databrick)
       INSERT INTO OPERA.TB_EVENTBRICKS \
       (ID, MINX, MAXX, MINY, MAXY, MINZ, MAXZ, ID_SET, ID_BRICK, ZEROX, ZEROY, ZEROZ) VALUES (%s)", 
   databrick
-          )   );
+          ));
 }
 
 //------------------------------------------------------------------------------------
@@ -239,29 +237,6 @@ Int_t  TOracleServerE2WX::AddPlate(ULong64_t id_eventbrick, const char *dataplat
   return MyQuery(Form( "\
       INSERT INTO OPERA.TB_PLATES (ID_EVENTBRICK, ID, Z) \
       VALUES (%s, %s)",  Ostr(id_eventbrick),  dataplate));
-}
-
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddPlateCalibration( ULong64_t id_eventbrick, ULong64_t id_process_operation, EdbPlateP *plate)
-{
-  // Adds a plate calibration into the DB
-  // Table involved: TB_PLATE_CALIBRATIONS
-  EdbAffine2D *a = plate->GetAffineXY();
-  if(a) 
-  {
-    if(!MyQuery(Form( "\
-        INSERT INTO OPERA.TB_PLATE_CALIBRATIONS \
-        (ID_EVENTBRICK, ID_PROCESSOPERATION, ID_PLATE, Z, MAPXX, MAPXY, MAPYX, MAPYY, MAPDX, MAPDY) \
-        VALUES (%s, %s, %d, %.2f, %f, %f, %f, %f, %f, %f)", 
-    Ostr(id_eventbrick),
-    Ostr(id_process_operation),
-    plate->ID(), plate->Z(),
-    a->A11(), a->A12(), a->A21(), a->A22(), a->B1(), a->B2() )))    return 0;
-  
-    Log(3,"TOracleServerE2WX:AddPlateCalibration","ok");
-    return 1;
-  }
-  return 0;
 }
 
 //------------------------------------------------------------------------------------
@@ -645,74 +620,6 @@ Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id
   return 0;
 }
 
-/*
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddScanbackPath( ULong64_t id_eventbrick, ULong64_t id_header_operation, int id_path, int id_start_plate, int skipCSconnection)
-{
-  // Adds a scanback path into the DB and connects it with the CS prediction
-  // Table involved: TB_SCANBACK_PATHS, TB_B_CSCANDS_SBPATHS
-  
-  MyQuery( Form("\
-      INSERT INTO OPERA.TB_SCANBACK_PATHS (ID_EVENTBRICK, ID_PROCESSOPERATION, PATH, ID_START_PLATE, ID_FORK_PATH, ID_CANCEL_PLATE) VALUES (%s, %s, %d, %d, NULL, NULL)",
-  Ostr(id_eventbrick), 
-  Ostr(id_header_operation), 
-  id_path, 
-  id_start_plate
-               ));
-
-  if (!skipCSconnection) {
-    char query[2048];
-    try{
-      if (!fStmt) fStmt = fConn->createStatement();
-        
-      sprintf(query,"select id_eventbrick,idcand from opera.tb_cs_candidates where id_cs_eventbrick in (select id from opera.tb_eventbricks where id_brick in (select id_brick from opera.tb_eventbricks where id=%s)) and candidate=%d",
-              Ostr(id_eventbrick), id_path%10000);
-      
-      int id_path_copy = id_path/10000;
-      int icopy=0;
-
-      fStmt->setSQL(query);
-      Log(2,"AddScanbackPath","execute sql query: %s ...",query);
-      fStmt->execute();
-      ResultSet *rs = fStmt->getResultSet();
-      char id_cs_eventbrick[20],id_candidate[20];
-      while (rs->next()&&icopy<=id_path_copy){
-        strcpy(id_cs_eventbrick,rs->getString(1).c_str());
-        strcpy(id_candidate,rs->getString(2).c_str());
-        icopy++;
-      }
-      delete rs;
-      
-      
-      sprintf(query,"\
-          INSERT INTO OPERA.TB_B_CSCANDS_SBPATHS (ID_CS_EVENTBRICK, ID_CANDIDATE, ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH) VALUES (%s, %s, %s, %s, %d)",
-          id_cs_eventbrick, id_candidate, Ostr(id_eventbrick), Ostr(id_header_operation), id_path);
-      
-      fStmt->setSQL(query);
-      Log(2,"AddScanbackPath","execute sql query: %s ...",query);
-      fStmt->execute();
-
-      Log(2,"AddScanbackPath","TB_B_CSCANDS_SBPATHS added");
-    
-    } catch (SQLException &oraex) {
-      Error("TOracleServerE2WX", "AddScanbackPath; failed: (error: %s)", (oraex.getMessage()).c_str());
-    }
-  } // end !skipCSconnection
-
-  return 0;
-}
-*/
-/*
-//------------------------------------------------------------------------------------
-void  TOracleServerE2WX::AddZone(char *data)
-{
-    MyQuery(Form("\
-        INSERT INTO OPERA.TB_ZONES (ID_EVENTBRICK, ID_PLATE, ID_PROCESSOPERATION, MINX, MAXX, MINY, MAXY, RAWDATAPATH, STARTTIME, ENDTIME, SERIES,\
-            TXX, TXY, TYX, TYY, TDX, TDY)VALUES (%s)",data);
-}
-
-*/
-
 //------------------------------------------------------------------------------------
 ULong64_t  TOracleServerE2WX::AddVolume( ULong64_t id_eventbrick,
                                          ULong64_t id_process_operation,
@@ -726,6 +633,53 @@ ULong64_t  TOracleServerE2WX::AddVolume( ULong64_t id_eventbrick,
   Ostr(id_process_operation),
   ivolume
           ), "ID" );
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2WX::AddTemplateMarkSets(char *datamarks)
+{
+  return MyQuery( Form(
+      "INSERT INTO OPERA.TB_TEMPLATEMARKSETS\
+      (ID_EVENTBRICK, ID_MARK, POSX, POSY, MARKROW, MARKCOL, SHAPE, SIDE)\
+      VALUES (%s)", datamarks
+                      ));
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2WX::AddBSBpathsVolumes(char *databsbpathsvolumes)
+{
+  // Adds a connection between brick, sbpath and volume into the DB
+  // Table involved: TB_B_SBPATHS_VOLUMES
+
+  return MyQuery( Form(
+      "INSERT INTO OPERA.TB_B_SBPATHS_VOLUMES \
+       (ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH, ID_VOLUMESCAN_PROCOPID, VOLUME, ID_PLATE) \
+        VALUES (%s)", 
+       databsbpathsvolumes
+                      ));
+}
+
+//------------------------------------------------------------------------------------
+Int_t  TOracleServerE2WX::AddPlateCalibration( ULong64_t id_eventbrick, ULong64_t id_process_operation, EdbPlateP *plate)
+{
+  // Adds a plate calibration into the DB
+  // Table involved: TB_PLATE_CALIBRATIONS
+  EdbAffine2D *a = plate->GetAffineXY();
+  if(a) 
+  {
+    if(!MyQuery(Form( "\
+        INSERT INTO OPERA.TB_PLATE_CALIBRATIONS \
+        (ID_EVENTBRICK, ID_PROCESSOPERATION, ID_PLATE, Z, MAPXX, MAPXY, MAPYX, MAPYY, MAPDX, MAPDY) \
+        VALUES (%s, %s, %d, %.2f, %f, %f, %f, %f, %f, %f)", 
+    Ostr(id_eventbrick),
+    Ostr(id_process_operation),
+    plate->ID(), plate->Z(),
+    a->A11(), a->A12(), a->A21(), a->A22(), a->B1(), a->B2() )))    return 0;
+  
+    Log(3,"TOracleServerE2WX:AddPlateCalibration","ok");
+    return 1;
+  }
+  return 0;
 }
 
 
@@ -840,134 +794,6 @@ Int_t  TOracleServerE2WX::AddBrick_Space(
 
   return 1;
 }
-
-
-
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddPlateCalibration(char *id_eventbrick,
-					    char *id_process_operation,
-					    char *datacalibration)	    
-
-{
-  // Adds a plate calibration into the DB
-  // Table involved: TB_PLATE_CALIBRATIONS
-
-  char query[2048];
-
-  try{
-    if (!fStmt)
-      fStmt = fConn->createStatement();
-    
-    sprintf(query,"\
- INSERT INTO OPERA.TB_PLATE_CALIBRATIONS (ID_EVENTBRICK, ID_PROCESSOPERATION, ID_PLATE, Z, MAPXX, MAPXY, MAPYX, MAPYY, MAPDX, MAPDY) \
- VALUES (%s, %s, %s)", id_eventbrick, id_process_operation, datacalibration);
-
-    fStmt->setSQL(query);
-    Log(2,"AddPlateCalibration","execute sql query: %s ...",query);
-    fStmt->execute();
-    Log(2,"AddPlateCalibration","PlateCalibration added");
-    
-  } catch (SQLException &oraex) {
-    Error("TOracleServerE2WX", "AddPlateCalibration; failed: (error: %s)", (oraex.getMessage()).c_str());
-  }
-
-  return 0;
-}
-
-
-
-
-
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddTemplateMarkSets(char *datamarks)
-{
-  // Adds a mark into the DB
-  // Table involved: TB_TEMPLATEMARKSETS
-
-  char query[2048];
-
-  try{
-    if (!fStmt)
-      fStmt = fConn->createStatement();
-    
-    sprintf(query,"\
-    INSERT INTO OPERA.TB_TEMPLATEMARKSETS\
-    (ID_EVENTBRICK, ID_MARK, POSX, POSY, MARKROW, MARKCOL, SHAPE, SIDE)\
-    VALUES (%s)", datamarks);
-
-    fStmt->setSQL(query);
-    Log(2,"AddTemplateMarkSets","execute sql query: %s ...",query);
-    fStmt->execute();
-    Log(2,"AddTemplateMarkSets","TemplateMarkSets added");
-    
-  } catch (SQLException &oraex) {
-    Error("TOracleServerE2WX", "AddTemplateMarkSets; failed: (error: %s)", (oraex.getMessage()).c_str());
-  }
-
-  return 0;
-}
-
-
-
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddVolumeSlice(char *datavolumeslice)
-{
-  // Adds a volume slice into the DB
-  // Table involved: TB_VOLUME_SLICES
-
-  char query[2048];
-
-  try{
-    if (!fStmt)
-      fStmt = fConn->createStatement();
-    
-    sprintf(query,"\
- INSERT INTO OPERA.TB_VOLUME_SLICES \
- (ID_EVENTBRICK, ID_VOLUME, ID_PLATE, MINX, MINY, MAXX, MAXY, ID_ZONE, DAMAGED) \
- VALUES (%s)", datavolumeslice);
-
-    fStmt->setSQL(query);
-    Log(2,"AddVolumeSlice","execute sql query: %s ...",query);
-    fStmt->execute();
-    Log(2,"AddVolumeSlice","Volume slice added");
-    
-  } catch (SQLException &oraex) {
-    Error("TOracleServerE2WX", "AddVolumeSlice; failed: (error: %s)", (oraex.getMessage()).c_str());
-  }
-
-  return 0;
-}
-
-
-//------------------------------------------------------------------------------------
-Int_t  TOracleServerE2WX::AddBSBpathsVolumes(char *databsbpathsvolumes)
-{
-  // Adds a connection between brick, sbpath and volume into the DB
-  // Table involved: TB_B_SBPATHS_VOLUMES
-
-  char query[2048];
-
-  try{
-    if (!fStmt)
-      fStmt = fConn->createStatement();
-    
-    sprintf(query,"\
- INSERT INTO OPERA.TB_B_SBPATHS_VOLUMES \
- (ID_EVENTBRICK, ID_SCANBACK_PROCOPID, PATH, ID_VOLUMESCAN_PROCOPID, VOLUME, ID_PLATE) \
- VALUES (%s)", databsbpathsvolumes);
-
-    fStmt->setSQL(query);
-    Log(2,"AddBSBpathsVolumes","execute sql query: %s ...",query);
-    fStmt->execute();
-    Log(2,"AddBSBpathsVolumes","BSBpathsVolumes added");
-    
-  } catch (SQLException &oraex) {
-    Error("TOracleServerE2WX", "AddBSBpathsVolumes; failed: (error: %s)", (oraex.getMessage()).c_str());
-  }
-
-  return 0;
-}
-
 
 //------------------------------------------------------------------------------------
 Int_t  TOracleServerE2WX::DeleteBrick(char *id_eventbrick)
@@ -1129,23 +955,24 @@ Int_t  TOracleServerE2WX::DeletePlateOperation(char *id_brick, char *id_process_
 //------------------------------------------------------------------------------------
 EdbScan2DB::EdbScan2DB()
 {
+  eX_marks=0;
+  eWriteRawCalibrationData=0;
   eDB=0;
   eBrick=0;
   eEvent=0;
   eEventBrick=0;
   eIsBlackCS=0;
+  eIDPATH=-1;
   eIdMachine=0;
   eIdRequester=0;
-  eHeaderOperation=0;
-  eCalibrationOperation=0;
-  ePredictionOperation=0;
-  eVolumeOperation=0;
   eHeaderProgramsettings=0;
   eCalibrationProgramsettings=0;
   ePredictionProgramsettings=0;
   eVolumeProgramsettings=0;
-  eX_marks=0;
-  eWriteRawCalibrationData = 0;
+  eFeedbackProgramsettings=0;
+  ePredictionHeaderOperation=0;
+  eCalibrationHeaderOperation=0;
+  eVolumeHeaderOperation=0;
   eERROR=0;
 }
 
@@ -1153,21 +980,21 @@ EdbScan2DB::EdbScan2DB()
 void EdbScan2DB::Print()
 {
   printf("\n=============== EdbScan2DB settings ================\n");
+  printf("eID_SET                     = %s\n"  ,eID_SET.Data());
   printf("eBrick                      = %lld\n", eBrick);
   printf("eEvent                      = %lld\n", eEvent);
   printf("eEventBrick                 = %lld\n",eEventBrick);
-  printf("eID_SET                     = %s\n",eID_SET.Data());
-  printf("eIdMachine                  = %lld\n", eIdMachine);
+  printf("eIdMachine                  = %lld\n",eIdMachine);
   printf("eIdRequester                = %lld\n",eIdRequester );
-  printf("eHeaderProgramsettings      = %lld\n", eHeaderProgramsettings);
+  printf("eHeaderProgramsettings      = %lld\n",eHeaderProgramsettings);
   printf("eCalibrationProgramsettings = %lld\n",eCalibrationProgramsettings );
   printf("ePredictionProgramsettings  = %lld\n",ePredictionProgramsettings );
   printf("eVolumeProgramsettings      = %lld\n",eVolumeProgramsettings );
-  printf("eHeaderOperation            = %lld\n",eHeaderOperation );
-  printf("eCalibrationOperation       = %lld\n",eCalibrationOperation );
-  printf("ePredictionOperation        = %lld\n",ePredictionOperation );
-  printf("eVolumeOperation            = %lld\n",eVolumeOperation );
-  printf("eIsBlackCS                  = %d\n", eIsBlackCS);
+  printf("eFeedbackProgramsettings    = %lld\n",eFeedbackProgramsettings );
+  printf("eCalibrationHeaderOperation = %lld\n",eCalibrationHeaderOperation );
+  printf("ePredictionHeaderOperation  = %lld\n",ePredictionHeaderOperation );
+  printf("eVolumeHeaderOperation      = %lld\n",eVolumeHeaderOperation );
+  printf("eIsBlackCS                  = %d\n"  , eIsBlackCS);
   if(eDB) {
     printf("=========== Database settings ================\n");
     eDB->Print();
@@ -1185,9 +1012,9 @@ int EdbScan2DB::InitDB( const char *conn, const char *user, const char *pwd )
 }
 
 //------------------------------------------------------------------------------------
-void EdbScan2DB::AddHeaderOperation()
+ULong64_t EdbScan2DB::AddHeaderOperation( const char *notes="" )
 {
-  eHeaderOperation =  eDB->AddProcessOperation(
+  return  eDB->AddProcessOperation(
       eIdMachine,
   eHeaderProgramsettings,
   eIdRequester,
@@ -1196,15 +1023,15 @@ void EdbScan2DB::AddHeaderOperation()
   0,                       // id_plate
   2,                       // driverlevel
   0,                       // Id_plate_calibrations : Null on Header Operation
-  eDB->Timestamp(),    // starttime
-  eDB->Timestamp(),    // finishtime
+  eDB->Timestamp(),        // starttime
+  eDB->Timestamp(),        // finishtime
   "'Y'",
-  0                        // notes
+  notes                    // notes
                                               );
 }
 
 //------------------------------------------------------------------------------------
-ULong64_t EdbScan2DB::LoadCalibrationZone( EdbScanProc &sproc, EdbID id )
+ULong64_t EdbScan2DB::LoadCalibrationZone( EdbScanProc &sproc, EdbID id, ULong64_t operation )
 {
   EdbPattern pred;
   sproc.ReadPred(pred,id,-1);
@@ -1218,7 +1045,7 @@ ULong64_t EdbScan2DB::LoadCalibrationZone( EdbScanProc &sproc, EdbID id )
       (%s, %s, %s, %.2f, %.2f, %.2f, %.2f, %s, %s, %s, %s, 1, 0, 0, 1, 0, 0)",
           eDB->Ostr(eEventBrick),
           eDB->Ostr(id.ePlate),
-          eDB->Ostr(eCalibrationOperation),
+          eDB->Ostr(operation),
           spred->X() - spred->SX(),
           spred->X() + spred->SX(),
           spred->Y() - spred->SY(),
@@ -1256,6 +1083,7 @@ ULong64_t EdbScan2DB::LoadZone( EdbSegP &s, int plate, ULong64_t operation, ULon
 void EdbScan2DB::LoadPrediction( EdbScanProc &sproc, EdbID edbid )
 {
   Log( 1,"EdbScan2DB::LoadPrediction","Load dataset: %s",edbid.AsString() );
+  ePredictionHeaderOperation = AddHeaderOperation("Prediction");
   EdbScanSet *ss = sproc.ReadScanSet(edbid);
 
   EdbID *idstart = ss->GetID(0);
@@ -1268,7 +1096,7 @@ void EdbScan2DB::LoadPrediction( EdbScanProc &sproc, EdbID edbid )
   int nsbt = (int) t->GetEntries();
   for (int ipath=0;ipath<nsbt;ipath++) {                             // scanback paths of most downstream plate  (could be connected to CS
     rtpath.GetSBtreeEntry(ipath, *t);
-    eDB->AddScanbackPath( eEventBrick, eHeaderOperation,
+    eDB->AddScanbackPath( eEventBrick, ePredictionHeaderOperation,
                           rtpath.ePred.ID(),idstart->ePlate,eIsBlackCS );
   }
   rtpath.CloseSBtree(t);
@@ -1279,19 +1107,17 @@ void EdbScan2DB::LoadPrediction( EdbScanProc &sproc, EdbID edbid )
     EdbID *id = ss->GetID(ip);
     EdbPlateP *plate = ss->GetPlate(id->ePlate);
 
-    ULong64_t id_calibration_operation = 
-        eDB->GetProcessOperationID (
+    ULong64_t id_calibration_operation = eDB->GetProcessOperationID (
         eEventBrick,
-    eHeaderOperation,
-    eCalibrationProgramsettings, 
-    id->ePlate
+        eCalibrationHeaderOperation,
+        eCalibrationProgramsettings,
+        id->ePlate
                                    );
-
-    ePredictionOperation =  eDB->AddProcessOperation(  // Adding prediction operation
+    ULong64_t platePredictionOperation =  eDB->AddProcessOperation(  // Adding prediction operation
         eIdMachine,
     ePredictionProgramsettings,
     eIdRequester,
-    eHeaderOperation,       // id_parent_operation
+    ePredictionHeaderOperation,       // id_parent_operation
     eEventBrick,
     plate->ID(),            // id_plate
     1,                      // driverlevel
@@ -1301,12 +1127,12 @@ void EdbScan2DB::LoadPrediction( EdbScanProc &sproc, EdbID edbid )
     "'Y'",
     "Prediction area"          // notes
                                                      );
-    LoadSBData(sproc,*id);
+    LoadSBData(sproc,*id, platePredictionOperation);
   }
 }
 
 //------------------------------------------------------------------------------------
-void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id )
+void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
 {
   //======== load scamback data for one plate ==============//
   
@@ -1321,10 +1147,10 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id )
   {
     //=================== For each path ================//
     rtsb.GetSBtreeEntry( ipath, *tsbt);
-    ULong64_t id_path = eDB->GetId_ScanbackPath( eEventBrick, eHeaderOperation, rtsb.ePred.ID() );
+    ULong64_t id_path = eDB->GetId_ScanbackPath( eEventBrick, ePredictionHeaderOperation, rtsb.ePred.ID() );
     if(!id_path) { 
-      eDB->AddScanbackPath( eEventBrick, eHeaderOperation,rtsb.ePred.ID(),id.ePlate, 1 );
-      id_path = eDB->GetId_ScanbackPath( eEventBrick, eHeaderOperation, rtsb.ePred.ID() );
+      eDB->AddScanbackPath( eEventBrick, operation, rtsb.ePred.ID(), id.ePlate, 1 );
+      id_path = eDB->GetId_ScanbackPath( eEventBrick, operation, rtsb.ePred.ID() );
     }
     //char *SERIES = id_path;
     // SERIES = 101,102 or 103 (intercalibration with 3 zones)
@@ -1332,7 +1158,7 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id )
     // SERIES = PATH_ID        (zone coming from a scan-back)
     // SERIES = ???            (zone coming from a total-scan)
     /*********** Adding one path-predicition zone ***********/
-    ULong64_t id_pred_zone = LoadZone( rtsb.ePred, id.ePlate, ePredictionOperation, 
+    ULong64_t id_pred_zone = LoadZone( rtsb.ePred, id.ePlate, operation,
                                        id_path, "'Local RawdataPath'");
     
     //========= Adding views and their microtracks ==========//
@@ -1426,7 +1252,6 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id )
       id_basetrack,
       0
                                       ));
-      
       id_basetrack++;
     }
   }
@@ -1439,6 +1264,8 @@ void EdbScan2DB::LoadCalibration( EdbScanProc &sproc, EdbID edbid )
   Log( 2,"EdbScan2DB::LoadCalibration","Load dataset: %s",edbid.AsString() );
   if(!eDB)    return;
   
+  eCalibrationHeaderOperation = AddHeaderOperation("Calibration");
+
   EdbScanSet *ss = sproc.ReadScanSetGlobal(edbid, eX_marks);
   if(ss) 
   {
@@ -1449,11 +1276,11 @@ void EdbScan2DB::LoadCalibration( EdbScanProc &sproc, EdbID edbid )
       EdbPlateP *plate = ss->GetPlate(id->ePlate);
       if(plate) 
       {
-        eCalibrationOperation =  eDB->AddProcessOperation(  // Adding calibration operation
+        ULong64_t plateCalibrationOperation =  eDB->AddProcessOperation(
             eIdMachine,
         eCalibrationProgramsettings,
         eIdRequester,
-        eHeaderOperation,    // id_parent_operation
+        eCalibrationHeaderOperation, // id_parent_operation
         eEventBrick,
         id->ePlate,          // id_plate
         1,                   // driverlevel
@@ -1463,10 +1290,10 @@ void EdbScan2DB::LoadCalibration( EdbScanProc &sproc, EdbID edbid )
         "'Y'",
         "Calibration area"          // notes
                                                      );
-        eDB->AddPlateCalibration(eEventBrick, eCalibrationOperation, plate);  // load Aff
+        eDB->AddPlateCalibration(eEventBrick, plateCalibrationOperation, plate);  // load Aff
 
         if(eWriteRawCalibrationData)  {
-          ULong64_t id_calib_zone = LoadCalibrationZone( sproc, *id );
+          ULong64_t id_calib_zone = LoadCalibrationZone( sproc, *id, plateCalibrationOperation );
           //
           //========== Adding views and their microtracks ==========//
           EdbRunTracking rt;
@@ -1488,28 +1315,30 @@ void EdbScan2DB::LoadCalibration( EdbScanProc &sproc, EdbID edbid )
 }
 
 //------------------------------------------------------------------------------------
-void EdbScan2DB::LoadVolume( EdbScanProc &sproc, EdbID edbid )
+void EdbScan2DB::LoadVolume( EdbScanProc &sproc, EdbID idvol, EdbID idstop)
 {
-  Log( 2,"EdbScan2DB::LoadVolume","Load dataset: %s",edbid.AsString() );
+  Log( 2,"EdbScan2DB::LoadVolume","Load dataset: %s",idvol.AsString() );
   if(!eDB)    return;
   
-  EdbScanSet *ss = sproc.ReadScanSet(edbid);
+  eVolumeHeaderOperation = AddHeaderOperation("Volume");
+  
+  EdbScanSet *ss = sproc.ReadScanSet(idvol);
   if(ss) 
   {
-    ULong64_t id_volume = eDB->AddVolume(eEventBrick, eHeaderOperation, edbid.eMajor );
-    
+    ULong64_t id_volume = eDB->AddVolume(eEventBrick, eVolumeHeaderOperation, idvol.eMajor );
+
     int n = ss->eIDS.GetEntries();
     for(int i=0; i<n; i++) {
       EdbID *id  = ss->GetID(i);
       EdbPlateP *plate = ss->GetPlate(id->ePlate);
-    
+
       if(plate) {
  
-        eVolumeOperation =  eDB->AddProcessOperation(  // Adding volume operation
+        ULong64_t plateVolumeOperation =  eDB->AddProcessOperation(  // Adding volume operation
             eIdMachine,
         eVolumeProgramsettings,
         eIdRequester,
-        eHeaderOperation,    // id_parent_operation
+        eVolumeHeaderOperation,    // id_parent_operation
         eEventBrick,
         id->ePlate,          // id_plate
         1,                   // driverlevel
@@ -1522,7 +1351,7 @@ void EdbScan2DB::LoadVolume( EdbScanProc &sproc, EdbID edbid )
         EdbPattern pred;
         sproc.ReadPred( pred, *id, -1 );
         EdbSegP *spred = pred.GetSegment(0);
-        ULong64_t id_volume_zone = LoadZone( *spred, id->ePlate, eVolumeOperation, id_volume, "'Local RawdataPath'");
+        ULong64_t id_volume_zone = LoadZone( *spred, id->ePlate, plateVolumeOperation, id_volume, "'Local RawdataPath'");
 
         //============= Loading views and their microtracks ==========//
         EdbRunTracking rt;
@@ -1556,6 +1385,37 @@ void EdbScan2DB::LoadVolume( EdbScanProc &sproc, EdbID edbid )
 
       }
     }
+    if (eIDPATH>=0) {
+      //====== Read path informations ======//
+      TString filename;
+      sproc.MakeFileName(filename,idstop,"stopping_points.txt",false);
+      EdbPattern pat;
+      sproc.ReadPatTXT(filename, pat);
+      int id_stopping_plate=0;
+      for (int ip=0;ip<pat.N();ip++)
+      {
+        EdbSegP *s = pat.GetSegment(ip);
+        s->SetPID(s->Flag());
+        s->SetFlag(0);
+        if (s->ID()==eIDPATH) id_stopping_plate=s->PID();
+      }
+      if (!id_stopping_plate) {
+        Log(1,"EdbScan2DB::LoadVolume", "ERROR: informations about the path %d not found in %s\n",eIDPATH,filename);
+      }
+      else
+      {
+        //========= Adding in TB_B_SBPATHS_VOLUMES ==========//
+        eDB->AddBSBpathsVolumes(Form(
+            "%lld, %s, %d, %s, %d, %d",
+        eEventBrick, 
+        eDB->Ostr(ePredictionHeaderOperation),
+        eIDPATH,
+        eDB->Ostr(eVolumeHeaderOperation),
+        id_volume,
+        id_stopping_plate
+                                   ));
+      }
+    }
   }
 }
 
@@ -1566,7 +1426,7 @@ void EdbScan2DB::AddBrick( EdbScanProc &sproc )
   if(eDB->IfEventBrick( eEventBrick, eID_SET.Data()))
   {
     Log(2,"EdbScan2DB::AddBrick","%d is already in DB, do nothing",eEventBrick);
-    return;
+    if(!eDB->TestLoad()) return;
   }
 
   //========== Loading X ray mark sets in global RS to get ZEROX,ZEROY ===========//
@@ -1576,10 +1436,8 @@ void EdbScan2DB::AddBrick( EdbScanProc &sproc )
   float ZEROY = msXG.eYmin;
 
   //========== Loading Optical ray mark sets in local (and corrected) RS to get brick dimension ==========//
-  int X_MARKS = eX_marks;
-
   EdbMarksSet msOL;
-  if (X_MARKS) sproc.ReadMarksSet(msOL,eBrick,"map.LL",'_','L');
+  if (eX_marks) sproc.ReadMarksSet(msOL,eBrick,"map.LL",'_','L');
   else sproc.ReadMarksSet(msOL,eBrick,"map.OL",'_','S');
   float MINX = msOL.eXmin + ZEROX;
   float MAXX = msOL.eXmax + ZEROX;
@@ -1590,12 +1448,29 @@ void EdbScan2DB::AddBrick( EdbScanProc &sproc )
   float ZEROZ = MAXZ;
   const char *BS_ID = eID_SET.Data();
 
-  char databrick[500];
-  sprintf(databrick,"%d, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %s, %d, %12.2f, %12.2f, %12.2f",
-          eEventBrick, MINX, MAXX, MINY, MAXY, MINZ, MAXZ, BS_ID, eBrick, ZEROX, ZEROY, ZEROZ);
-  if( eDB->AddEventBrick(databrick) )
+  if( eDB->AddEventBrick(Form(
+      "%d, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %12.2f, %s, %d, %12.2f, %12.2f, %12.2f",
+      eEventBrick, MINX, MAXX, MINY, MAXY, MINZ, MAXZ, BS_ID, eBrick, ZEROX, ZEROY, ZEROZ
+                             )) )
   {
-    //========= Adding plates =========//
+    //========== Adding template mark sets ==========//
+    EdbMarksBox *mbOL = msOL.GetAbsolute();
+    for (int imarks=0;imarks<mbOL->GetN();imarks++)
+    {
+      EdbMark *mark = mbOL->GetMark(imarks);
+      const char *shape = eX_marks? "'L'" : "'S'";
+      eDB->AddTemplateMarkSets(Form(
+          "%lld, %d, %f, %f, %d, %d, %s, %d",
+      eEventBrick,
+      mark->GetID(),
+      mark->GetX(),
+      mark->GetY(),
+      1,2,                          //markrow, markcol (boh...)
+      shape,
+      mark->Flag()
+                                   ));
+    }
+    //========== Adding plates ======================//
     TString filename=Form("%s/b%06d/b%06d.geometry",sproc.eProcDirClient.Data(),eBrick,eBrick);
     FILE *fp=0;
     if ((fp=fopen( filename.Data(), "r" ))==NULL) {
@@ -1612,4 +1487,21 @@ void EdbScan2DB::AddBrick( EdbScanProc &sproc )
     }
   }
   else eERROR++;
+}
+
+//------------------------------------------------------------------------------------
+void EdbScan2DB::DumpListOfHeaderOperations()
+{
+  eDB->MyQuery( Form(
+      "select ID,to_char(starttime),to_char(notes) from opera.tb_proc_operations where \
+      id_eventbrick=%lld and id_programsettings=%s",
+      eEventBrick, 
+      eDB->Ostr(eHeaderProgramsettings)
+              ));
+  eDB->MyQuery( Form(
+      "select ID,to_char(starttime),to_char(notes) from opera.tb_proc_operations where \
+      id_eventbrick=%lld and id_programsettings=%s",
+      eEventBrick,
+      eDB->Ostr(eFeedbackProgramsettings)
+                    ));
 }

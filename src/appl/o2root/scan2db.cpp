@@ -245,39 +245,36 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
   sproc.eProcDirClient=dir;
 
   s2d.AddBrick( sproc );
-  s2d.AddHeaderOperation();
+ 
+  if(cardenv.Lookup("scan2db.CALIBRATION")) {
+    printf(  "scan2db CALIBRATION ......\n");
+    time_t ti_c = time(NULL);
+    EdbID idcal           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
+    s2d.eWriteRawCalibrationData = cardenv.GetValue("scan2db.CALIBRATION.raw", 0);
+    s2d.LoadCalibration(sproc, idcal);
+    time_t tf_c = time(NULL);
+    printf(  "scan2db CALIBRATION finished, Elapsed time = %ld s\n", tf_c-ti_c);
+  }
+  if(cardenv.Lookup("scan2db.PREDICTION")) {
+    printf(  "scan2db PREDICTION ......\n");
+    time_t ti_p = time(NULL);
+    EdbID idpred           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
+    s2d.LoadPrediction(sproc, idpred);
+    time_t tf_p = time(NULL);
+    printf(  "scan2db PREDICTION finished, Elapsed time = %ld s\n", tf_p-ti_p);
+  }
+  if(cardenv.Lookup("scan2db.VOLUME")) {
+    printf(  "scan2db VOLUME ......\n");
+    time_t ti_v = time(NULL);
+    EdbID idvol           = cardenv.GetValue("scan2db.VOLUME"    , "0.0.0.0");
+    EdbID idpred          = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
+    s2d.eIDPATH           = cardenv.GetValue("scan2db.IDPATH"   , -1);
+    s2d.LoadVolume(sproc, idvol, idpred);
+    time_t tf_v = time(NULL);
+    printf(  "scan2db VOLUME finished, Elapsed time = %ld s\n", tf_v-ti_v);
+  }
 
-   if(cardenv.Lookup("scan2db.CALIBRATION")) {
-     printf(  "scan2db CALIBRATION ......\n");
-     time_t ti_c = time(NULL);
-     EdbID idcal           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
-     s2d.eWriteRawCalibrationData = cardenv.GetValue("scan2db.CALIBRATION.raw", 0);
-     s2d.LoadCalibration(sproc, idcal);
-     time_t tf_c = time(NULL);
-     printf(  "scan2db CALIBRATION finished, Elapsed time = %ld s\n", tf_c-ti_c);
-   }
-   if(cardenv.Lookup("scan2db.PREDICTION")) {
-     printf(  "scan2db PREDICTION ......\n");
-     time_t ti_p = time(NULL);
-     EdbID idpred           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
-     s2d.LoadPrediction(sproc, idpred);
-     time_t tf_p = time(NULL);
-     printf(  "scan2db PREDICTION finished, Elapsed time = %ld s\n", tf_p-ti_p);
-   }
-   if(cardenv.Lookup("scan2db.VOLUME")) {
-     printf(  "scan2db VOLUME ......\n");
-     time_t ti_v = time(NULL);
-     EdbID idvol           = cardenv.GetValue("scan2db.VOLUME", "0.0.0.0");
-     s2d.LoadVolume(sproc, idvol);
-     time_t tf_v = time(NULL);
-     printf(  "scan2db VOLUME finished, Elapsed time = %ld s\n", tf_v-ti_v);
-   }
-
-   //s2d.eDB->ROLLBACK();
-   time_t ti_ft = time(NULL);
-   s2d.eDB->FinishTransaction();
-   time_t tf_ft = time(NULL);
-   printf(  "scan2db Transaction finished, Elapsed time = %ld s\n", tf_ft-ti_ft);
+  s2d.eDB->FinishTransaction();
 
   time_t tf = time(NULL);
   fprintf(stdout,"LoadEventBrick completed\n");
