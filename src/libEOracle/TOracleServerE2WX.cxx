@@ -1227,7 +1227,26 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
                               ));
       Log(2,"EdbScan2DB::LoadSBData","Fake MT top added (and BT with MT bottom real and MT top fake)");
     }
-    if(rtsb.eStatus==0||rtsb.eStatus==1||rtsb.eStatus==2)
+    /*   
+    else // no any candidates (stat=-1)
+    {
+      id_view_up=0;
+      id_view_down=0;
+      id_down = 10000*1 + id_basetrack;
+      id_up   = 10000*2 + id_basetrack;
+      float dz = 200;
+      eDB->AddMicroTrack( Form(
+          "%s, %s ,%d, %d, %d, %2f, %2f, %2f, %2f, %2f, %2f, %2f",
+      eDB->Ostr(eEventBrick),
+      eDB->Ostr(id_pred_zone),
+      2, id_up, id_view_up,
+      rtsb.eS1.X() - dz*rtsb.eS1.TX(), rtsb.eS1.Y() - dz*rtsb.eS1.TY(),
+      rtsb.eS1.TX(), rtsb.eS1.TY(), 
+      0, 0, -1
+                              ));
+    }
+    */
+    if(rtsb.eStatus==0||rtsb.eStatus==1||rtsb.eStatus==2) // exist some candidate
     {
       eDB->AddBaseTrack( Form(
           "%s, %s ,%d, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %d, %d, %d, %d",
@@ -1240,7 +1259,7 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
       1, id_down, 2, id_up
                              ));
       eDB->AddScanbackPrediction( Form(
-          "%s, %s ,%d, %f, %f, %f, %f, NULL, NULL, NULL, NULL, NULL, %s, %d,'N', %d",
+          "%s, %s ,%d, %f, %f, %f, %f, NULL, NULL, NULL, NULL, NULL, %s, %s,'N', %d",
       eDB->Ostr(eEventBrick),
       eDB->Ostr(id_path),
       id.ePlate,
@@ -1249,10 +1268,26 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
       rtsb.ePred.TX(), 
       rtsb.ePred.TY(),
       eDB->Ostr(id_pred_zone),
-      id_basetrack,
+      eDB->Ostr(id_basetrack),
       0
                                       ));
       id_basetrack++;
+    }
+    else   // no any candidates
+    {
+      eDB->AddScanbackPrediction( Form(
+          "%s, %s ,%d, %f, %f, %f, %f, NULL, NULL, NULL, NULL, NULL, %s, %s,'N', %d",
+      eDB->Ostr(eEventBrick),
+      eDB->Ostr(id_path),
+      id.ePlate,
+      rtsb.ePred.X(), 
+      rtsb.ePred.Y(), 
+      rtsb.ePred.TX(), 
+      rtsb.ePred.TY(),
+      eDB->Ostr(id_pred_zone),
+      eDB->Ostr(0),
+      0
+                                      ));
     }
   }
   rtsb.CloseSBtree(tsbt);
@@ -1411,7 +1446,7 @@ void EdbScan2DB::LoadVolume( EdbScanProc &sproc, EdbID idvol, EdbID idstop)
         eDB->Ostr(ePredictionHeaderOperation),
         eIDPATH,
         eDB->Ostr(eVolumeHeaderOperation),
-        id_volume,
+        idvol.eMajor,
         id_stopping_plate
                                    ));
       }

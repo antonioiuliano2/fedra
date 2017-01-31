@@ -17,9 +17,7 @@ int  AddBrick( EdbScan2DB &s2d, int BRICK, const char *dir, TEnv &cenv );
 int  ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event );
 int  ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event , TString &dir );
 bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback);
-
-//int  AddList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
-//int CheckList( EdbFeedback &fb, const char *listfile, TEnv &cenv);
+void CheckBrick(TEnv &cenv, int brick);
 
 //-------------------------------------------------------------------------------------
 void print_help_message()
@@ -34,20 +32,13 @@ void print_help_message()
   cout<< "\n\t scan2db -checkbrick=BRICK \n";
   cout<< "\t\t check if the brick structure was already loaded";
   
-  cout<< "\n\t scan2db -addlist=listfile \n";
-  cout<< "\t\t add all feedbacks from the listfile formated like that:\n";
-  cout<< "\t\t /full_path_to_a_valid_brick_directory/bBBBBBBB_eEEEEEEEEE.feedback \n\t\t ...";
-  
-  cout<< "\n\t scan2db -checklist=listfile -v=1\n";
-  cout<< "\t\t check for a leested feedbacks if the brick structure and reconstruction are in DB (use -v=1 for compact output)";
-  
   cout<< "\n\n\t-----------------------------------------------------------------------------------------";
   cout<< "\n\t By default the application is started in test mode and does not commit transactions";
   cout<< "\n\t TO LOAD DATA USE -commit OPTION";
   cout<< "\n\t-------------------------------------------------------------------------------------------";
  
   cout<< "\n\n\t If the input parameters file (scan2db.rootrc) is not present in the current dir - the default";
-  cout<< "\n\t parameters are used. After the execution them are saved into scan2db.save.rootrc file\n";
+  cout<< "\n\t parameters used. After the execution them are saved into scan2db.save.rootrc file\n";
   
   cout<< "\n\t Options: \n";
   cout<< "\t\t -lab=LA default settings for a given lab (now defined for NA,BE) \n";
@@ -58,21 +49,21 @@ void print_help_message()
 //-------------------------------------------------------------------------------------
 void set_default(TEnv &cenv)
 {
-  cenv.SetValue("scan2db.dbname"             , "oracle://mysrv/MYDB");
-  cenv.SetValue("scan2db.username"           , "username");
-  cenv.SetValue("scan2db.password"           , "password");
-  cenv.SetValue("scan2db.rdb"                , "");
-  cenv.SetValue("scan2db.X_MARKS"            , 1);
-  cenv.SetValue("scan2db.labName"            , "LAB");
-  cenv.SetValue("scan2db.labN"               , "LA");
-  cenv.SetValue("scan2db.BS_ID"              , "'OPERA LA SET  XX'");
-  cenv.SetValue("scan2db.IdMachine"                  ,  "0000000000000000");
-  cenv.SetValue("scan2db.IdRequester"                ,  "0000000000000000");
-  cenv.SetValue("scan2db.HeaderProgramsettings"      ,  "0000000000000000");
-  cenv.SetValue("scan2db.CalibrationProgramsettings" ,  "0000000000000000");
-  cenv.SetValue("scan2db.PredictionProgramsettings"  ,  "0000000000000000");
-  cenv.SetValue("scan2db.VolumeProgramsettings"      ,  "0000000000000000");
-  cenv.SetValue("scan2db.EdbDebugLevel"      , 1);
+  cenv.SetValue("scan2db.dbname"                     , "oracle://mysrv/MYDB");
+  cenv.SetValue("scan2db.username"                   , "username");
+  cenv.SetValue("scan2db.password"                   , "password");
+  cenv.SetValue("scan2db.rdb"                        , "");
+  cenv.SetValue("scan2db.X_MARKS"                    , 1);
+  cenv.SetValue("scan2db.labName"                    , "LAB");
+  cenv.SetValue("scan2db.labN"                       , "LA");
+  cenv.SetValue("scan2db.BS_ID"                      , "'OPERA LA SET  XX'");
+  cenv.SetValue("scan2db.IdMachine"                  , "0000000000000000");
+  cenv.SetValue("scan2db.IdRequester"                , "0000000000000000");
+  cenv.SetValue("scan2db.HeaderProgramsettings"      , "0000000000000000");
+  cenv.SetValue("scan2db.CalibrationProgramsettings" , "0000000000000000");
+  cenv.SetValue("scan2db.PredictionProgramsettings"  , "0000000000000000");
+  cenv.SetValue("scan2db.VolumeProgramsettings"      , "0000000000000000");
+  cenv.SetValue("scan2db.EdbDebugLevel"              , 1);
 }
 
 //-------------------------------------------------------------------------------------
@@ -81,12 +72,12 @@ void set_default_NA(TEnv &cenv)
   cenv.SetValue("scan2db.labName"                    , "NAPOLI");
   cenv.SetValue("scan2db.labN"                       , "NA");
   cenv.SetValue("scan2db.BS_ID"                      , "'OPERA NA SET  01'");
-  cenv.SetValue("scan2db.IdMachine"                  ,  "6000000000010002");
-  cenv.SetValue("scan2db.IdRequester"                ,  "6000000000100379");
-  cenv.SetValue("scan2db.HeaderProgramsettings"      ,  "6000000000700006");
-  cenv.SetValue("scan2db.CalibrationProgramsettings" ,  "6000000000700004");
-  cenv.SetValue("scan2db.PredictionProgramsettings"  ,  "6000000000700005");
-  cenv.SetValue("scan2db.VolumeProgramsettings"      ,  "6000000000100374");
+  cenv.SetValue("scan2db.IdMachine"                  , "6000000000010002");
+  cenv.SetValue("scan2db.IdRequester"                , "6000000000100379");
+  cenv.SetValue("scan2db.HeaderProgramsettings"      , "6000000000700006");
+  cenv.SetValue("scan2db.CalibrationProgramsettings" , "6000000000700004");
+  cenv.SetValue("scan2db.PredictionProgramsettings"  , "6000000000700005");
+  cenv.SetValue("scan2db.VolumeProgramsettings"      , "6000000000100374");
 }
 
 //-------------------------------------------------------------------------------------
@@ -109,8 +100,6 @@ int main(int argc, char* argv[])
   char *fname=0;
   
   char *listfile=0;
-  int do_addlist=0;
-  int do_checklist=0;
   int do_commit=0;
 
   for(int i=1; i<argc; i++ ) {
@@ -121,20 +110,6 @@ int main(int argc, char* argv[])
     {
       do_addeventbrick=1;
       if(strlen(key)>6) fname=key+6;
-    }
-    else if(!strncmp(key,"-addlist=",9))
-    {
-      if(strlen(key)>9) {
-        listfile = key+9;
-        do_addlist=1;
-      }
-    }
-    else if(!strncmp(key,"-checklist=",11))
-    {
-      if(strlen(key)>11) {
-        listfile = key+11;
-        do_checklist=1;
-      }
     }
     else if(!strncmp(key,"-checkbrick=",12))
     {
@@ -159,35 +134,22 @@ int main(int argc, char* argv[])
   {
     LoadEventBrick( cenv, do_commit, fname );
   }
-   
-  /*
-  
-  if(do_feedback) 
+  if(do_checkbrick)
   {
-    if(!fname)   { print_help_message(); return 0; }
-    AddFeedback( fb, fname, cenv );
+    CheckBrick(cenv, brick );
   }
-  else if(do_addbrick) 
-  {
-    AddBrick( fb, brick, dir, cenv);
-  }
-  else if( do_addlist ) 
-  {
-    AddList(fb, listfile, cenv);
-  } 
-  else if(do_checkbrick)
-  {
-    const char *BS_ID = cenv.GetValue("scan2db.BS_ID"  , "'OPERA NA SET  01'");
-    int id = brick>1000000? brick: 1000000+brick;
-    fb.eDB->IfEventBrick(id,BS_ID);
-    fb.eDB->IfEventRec(id);
-  }
-  else if(do_checklist)
-  {
-    CheckList(fb, listfile, cenv);
-  }
-  */
   return 1;
+}
+
+//-------------------------------------------------------------------------------------
+void CheckBrick(TEnv &cenv, int brick )
+{
+  time_t ti = time(NULL);
+  EdbScan2DB s2d;
+  if( InitDB( s2d, cenv, 0))
+  {
+    s2d.eDB->PrintBrickInfoFull(brick,0);
+  }
 }
 
 //-------------------------------------------------------------------------------------
@@ -266,9 +228,9 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
   if(cardenv.Lookup("scan2db.VOLUME")) {
     printf(  "scan2db VOLUME ......\n");
     time_t ti_v = time(NULL);
-    EdbID idvol           = cardenv.GetValue("scan2db.VOLUME"    , "0.0.0.0");
-    EdbID idpred          = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
-    s2d.eIDPATH           = cardenv.GetValue("scan2db.IDPATH"   , -1);
+    EdbID idvol           = cardenv.GetValue("scan2db.VOLUME"       , "0.0.0.0");
+    EdbID idpred          = cardenv.GetValue("scan2db.PREDICTION"   , "0.0.0.0");
+    s2d.eIDPATH           = cardenv.GetValue("scan2db.VOLUME.IDPATH", -1);
     s2d.LoadVolume(sproc, idvol, idpred);
     time_t tf_v = time(NULL);
     printf(  "scan2db VOLUME finished, Elapsed time = %ld s\n", tf_v-ti_v);
@@ -329,5 +291,3 @@ int ParseFileName( const char *fname, ULong64_t &brickid, ULong64_t &eventid , T
   }
   return 0;
 }
-
-
