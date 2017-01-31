@@ -1,0 +1,80 @@
+scan2db - scan data loader into databse
+
+can be started from any directory where the parameter file scan2db.rootrc with 
+database connection information and laboratory dependent parameters is present.
+It looks as following (in this example Napoli settings used - must be changed for other labs!):
+
+Example of scan2db.rootrc file:
+#--------------------------------------------------------------------------------------
+scan2db.dbname:                            oracle://mysrv/DB
+scan2db.username:                          user
+scan2db.password:                          password
+scan2db.rdb:                               
+scan2db.labName:                           NAPOLI
+scan2db.labN:                              NA
+scan2db.BS_ID:                             'OPERA NA SET  01'
+scan2db.IdMachine:                         6000000000010002
+scan2db.IdRequester:                       6000000000100379
+scan2db.HeaderProgramsettings:             6000000000700006
+scan2db.CalibrationProgramsettings:        6000000000700004
+scan2db.PredictionProgramsettings:         6000000000700005
+scan2db.VolumeProgramsettings:             6000000000100374
+scan2db.FeedbackProgramsettings:           6000000001371016
+scan2db.TestLoad:                          0
+scan2db.NTestLoad:                         10
+#---------------------------------------------------------------------------------
+
+All parameters should be correctly defined depending on your laboratory and database connection. For database connection definitions check also tnsnames.ora file if present on your system.
+
+By default the program started in ROLLBACK mode and do not modify the database - it's useful
+to check the files compatibility and db connection.To modify the database use -commit option.
+
+Note that full data loading for one event is long (30-60 min), that's why for the fast test the
+TestLoad mode is foreceen. If set to 1 - only a few vews and tracks are loaded for each operation, 
+some error messages about missing microtracks are normal in this mode, but if thare are other 
+type of oracle errors - it's should be fixed before loading.
+
+Normal loading operation:
+   scan2db -file=/opera/scan/mic3/ONLINE/b102089/b102089_e11184031419.scan2db.rootrc -v=2 -commit > stdout.log
+   
+   after loading always check stdout.log for error messaged (oracle errors started from ORA).
+
+*.scan2db.rootrc file contains the steering cards for this brick. 
+
+Example of *.scan2db.rootrc file:
+##-------------------------------------------------------------
+## - EventBrick operations and datasets definitions
+## - Used by scan2db as the input cards
+## - To be placed into the brick folder as
+##    "bXXXXXX_eYYYYYYYYYYY.scan2db.rootrc" (b102143_e12186044883.scan2db.rootrc)
+## - All datasets should be correctly assembled using
+##   the "makescanset" application before scan2db starts (*.set.root)
+##
+## scan2db.X_MARKS:
+##   2=in case lateral X-rays marks, followed by a calibration scan;
+##   1=in case lateral X-rays marks only;
+##   0=calibration scan only
+##
+## scan2db.BlackCS:
+##    1 - fill TB_SCANBACK_PATHS only
+##    0 - try to fill also TB_B_CSCANDS_SBPATHS
+##
+## scan2db.VOLUME.IDPATH:
+##     <0 - (default) do not connect path and volume (table TB_B_SBPATHS_VOLUMES). This is useful when volume was scanned because of a vertex hunting  and not because it's related to a SB track
+##    >=0 - is prediction path id to be connected
+##
+##-------------------------------------------------------------
+scan2db.X_MARKS:                           1
+scan2db.BlackCS:                           1
+scan2db.CALIBRATION:                       76735.0.1.1000
+scan2db.CALIBRATION.raw:                   0
+scan2db.PREDICTION:                        76735.0.1.100
+scan2db.VOLUME:                            76735.0.1.1000
+scan2db.VOLUME.IDPATH:                     1
+
+Additional options:
+   - checkbrick=brickid   - print all operations stored in db for this brick
+
+--------------
+VT: 31/01/2017
+--------------

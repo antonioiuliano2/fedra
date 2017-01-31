@@ -26,9 +26,6 @@ void print_help_message()
   cout<< "\t\t Assumed that feedbackfile name is like bBBBB_eEEEE.feedback as b010234_e11293015645.feedback\n";
   cout<< "\t\t brick id and event id extracted from the file name are used for data insertion into db\n";
   
-  cout<< "\n\t scan2db -addbrick=BRICK -online=onlinedir\n";
-  cout<< "\t\t assumed that in onlinedir/bBRICK there are all necessary files";
-  
   cout<< "\n\t scan2db -checkbrick=BRICK \n";
   cout<< "\t\t check if the brick structure was already loaded";
   
@@ -41,8 +38,41 @@ void print_help_message()
   cout<< "\n\t parameters used. After the execution them are saved into scan2db.save.rootrc file\n";
   
   cout<< "\n\t Options: \n";
-  cout<< "\t\t -lab=LA default settings for a given lab (now defined for NA,BE) \n";
   cout<< "\t\t -v=V verbosity level (0-4) \n";
+  
+  cout <<"\nExample of b010234_e11293015645.feedback file:\n";
+  cout <<"\
+##-------------------------------------------------------------\n\
+## - EventBrick operations and datasets definitions\n\
+## - Used by scan2db as the input cards\n\
+## - To be placed into the brick folder as\n\
+##    \"bXXXXXX_eYYYYYYYYYYY.scan2db.rootrc\" (b102143_e12186044883.scan2db.rootrc)\n\
+## - All datasets should be correctly assembled using\n\
+##   the \"makescanset\" application before scan2db starts (*.set.root)\n\
+##\n\
+## scan2db.X_MARKS:\n\
+##   2=in case lateral X-rays marks, followed by a calibration scan;\n\
+##   1=in case lateral X-rays marks only;\n\
+##   0=calibration scan only\n\
+##\n\
+## scan2db.BlackCS:\n\
+##    1 - fill TB_SCANBACK_PATHS only\n\
+##    0 - try to fill also TB_B_CSCANDS_SBPATHS\n\
+##\n\
+## scan2db.VOLUME.IDPATH:\n\
+##     <0 - (default) do not connect path and volume (table TB_B_SBPATHS_VOLUMES). This is useful when volume\n\
+##      was scanned because of a vertex hunting  and not because it's related to a SB track\n\
+##    >=0 - is prediction path id to be connected\n\
+##\n\
+##-------------------------------------------------------------\n\
+scan2db.X_MARKS:                           1\n\
+scan2db.BlackCS:                           1\n\
+scan2db.CALIBRATION:                       76735.0.1.1000\n\
+scan2db.CALIBRATION.raw:                   0\n\
+scan2db.PREDICTION:                        76735.0.1.100\n\
+scan2db.VOLUME:                            76735.0.1.1000\n\
+scan2db.VOLUME.IDPATH:                     1\n";
+
   cout<<endl;
 }
 
@@ -63,6 +93,9 @@ void set_default(TEnv &cenv)
   cenv.SetValue("scan2db.CalibrationProgramsettings" , "0000000000000000");
   cenv.SetValue("scan2db.PredictionProgramsettings"  , "0000000000000000");
   cenv.SetValue("scan2db.VolumeProgramsettings"      , "0000000000000000");
+  cenv.SetValue("scan2db.FeedbackProgramsettings"    , "0000000000000000");
+  cenv.SetValue("scan2db.TestLoad"                   , 0);
+  cenv.SetValue("scan2db.TestLoadN"                  , 10);
   cenv.SetValue("scan2db.EdbDebugLevel"              , 1);
 }
 
