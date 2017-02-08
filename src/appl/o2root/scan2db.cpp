@@ -16,18 +16,23 @@ bool InitDB(   EdbScan2DB &s2d, TEnv &cenv, int do_commit);
 int  AddBrick( EdbScan2DB &s2d, int BRICK, const char *dir, TEnv &cenv );
 int  ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event );
 int  ParseFileName( const char *filename, ULong64_t &brick, ULong64_t &event , TString &dir );
-bool LoadEventBrick( TEnv &cenv, int do_commit, const char *feedback);
+bool LoadEventBrick( TEnv &cenv, int do_commit, const char *file);
 void CheckBrick(TEnv &cenv, int brick);
+void MakeSets(TEnv &cenv, const char *file);
+void PublicateBrick( TEnv &cenv, Int_t brick );
 
 //-------------------------------------------------------------------------------------
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  scan2db -file=bXXX_eYYY.scan2db.rootrc [-commit -v=V -lab=LA]\n";
+  cout<< "\nUsage: \n\t  scan2db -file=bXXX_eYYY.scan2db.rootrc [-commit -publicate -v=V -lab=LA]\n";
   cout<< "\t\t Assumed that feedbackfile name is like bBBBB_eEEEE.feedback as b010234_e11293015645.feedback\n";
   cout<< "\t\t brick id and event id extracted from the file name are used for data insertion into db\n";
   
   cout<< "\n\t scan2db -checkbrick=BRICK \n";
   cout<< "\t\t check if the brick structure was already loaded";
+  
+  cout<< "\n\t scan2db -publicate=BRICK \n";
+  cout<< "\t\t replicate brick in opfra";
   
   cout<< "\n\n\t-----------------------------------------------------------------------------------------";
   cout<< "\n\t By default the application is started in test mode and does not commit transactions";
@@ -134,6 +139,8 @@ int main(int argc, char* argv[])
   
   char *listfile=0;
   int do_commit=0;
+  int do_makesets=0;
+  int do_publicate=0;
 
   for(int i=1; i<argc; i++ ) {
 
@@ -155,6 +162,17 @@ int main(int argc, char* argv[])
     {
       do_commit=1;
     }
+    else if(!strncmp(key,"-publicate=",11))
+    {
+      if(strlen(key)>11) {
+        brick = atoi(key+11);
+        do_publicate=1;
+      }
+    }
+    else if(!strncmp(key,"-makesets",9))
+    {
+      do_makesets=1;
+    }
     else if(!strncmp(key,"-v=",3))
     {
       gEDBDEBUGLEVEL = atoi(key+3);
@@ -163,13 +181,24 @@ int main(int argc, char* argv[])
 
   cenv.WriteFile("scan2db.save.rootrc");
 
-  if(do_addeventbrick)
+  if(do_makesets)
   {
-    LoadEventBrick( cenv, do_commit, fname );
+    MakeSets(cenv, fname);
   }
-  if(do_checkbrick)
+  else 
   {
-    CheckBrick(cenv, brick );
+    if(do_addeventbrick)
+    {
+      LoadEventBrick( cenv, do_commit, fname );
+    }
+    if(do_checkbrick)
+    {
+      CheckBrick(cenv, brick );
+    }
+    if(do_publicate)
+    {
+      PublicateBrick(cenv, brick );
+    }
   }
   return 1;
 }
@@ -177,11 +206,69 @@ int main(int argc, char* argv[])
 //-------------------------------------------------------------------------------------
 void CheckBrick(TEnv &cenv, int brick )
 {
-  time_t ti = time(NULL);
   EdbScan2DB s2d;
   if( InitDB( s2d, cenv, 0))
   {
     s2d.eDB->PrintBrickInfoFull(brick,0);
+  }
+}
+
+//-------------------------------------------------------------------------------------
+void PublicateBrick(TEnv &cenv, int brick )
+{
+  Int_t eventbrick = brick>1000000? brick: 1000000+brick;
+  EdbScan2DB s2d;
+  if( InitDB( s2d, cenv, 1) )
+  {
+    s2d.eDB->MyQuery(
+        Form("call operapub.xp_replicate_NA(0,%d)",eventbrick)
+                    );
+  }
+}
+
+//-------------------------------------------------------------------------------------
+void MakeSets( TEnv &cenv, const char *fname)
+{
+  TEnv cardenv("eventscan2db");
+  if( cardenv.ReadFile( fname ,kEnvLocal) <0 )
+  {
+    Log(1,"MakeSets","card file %s not found! exit", fname);
+    return;
+  }
+  ULong64_t br=0, ev=0;
+  TString   dir;
+  ParseFileName( fname, br, ev , dir );
+  EdbScanProc sproc;
+  sproc.eProcDirClient=dir;
+  int         from_plate  = 57;
+  int         to_plate    =  1;
+  float       z0          =  0;
+  float       dz          = -1300;
+  float       dzbase      = 210;
+
+  if(cardenv.Lookup("scan2db.CALIBRATION")) 
+  {
+    EdbID id           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
+    EdbScanSet sc(id);
+    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
+    sproc.WriteScanSet(id,sc);
+  }
+  if(cardenv.Lookup("scan2db.PREDICTION")) 
+  {
+    EdbID id           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
+    EdbScanSet sc(id);
+    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "sbt.root");
+    sproc.WriteScanSet(id,sc);
+  }
+  if(cardenv.Lookup("scan2db.VOLUME"))
+  {
+    EdbID id           = cardenv.GetValue("scan2db.VOLUME", "0.0.0.0");
+    EdbScanSet sc(id);
+    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
+    sproc.WriteScanSet(id,sc);
   }
 }
 
@@ -198,12 +285,11 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
         cenv.GetValue("scan2db.NTestLoad",0) );
   }
 
-  ULong64_t br=0;
-  ULong64_t ev=0;
+  ULong64_t br=0, ev=0;
   TString   dir;
   ParseFileName( fname, br, ev , dir );
   TEnv cardenv("eventscan2db");
-  if( cardenv.ReadFile( fname ,kEnvLocal) <0 ) 
+  if( cardenv.ReadFile( fname ,kEnvLocal) <0 )
   {
     Log(1,"LoadEventBrick","card file %s not found! exit", fname);
     return false;
@@ -276,6 +362,7 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
   fprintf(stdout,"Elapsed time = %ld seconds\n",tf-ti);
   return 1;
 }
+
 
 //-------------------------------------------------------------------------------------
 bool InitDB( EdbScan2DB &s2d, TEnv &cenv, int do_commit)

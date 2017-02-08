@@ -29,12 +29,13 @@ class TOracleServerE2WX : public TOracleServerE2 {
 
     void       SetTestLoad(int n) {eTestLoad=true; eDoCommit=0; eNTestLoad=n;}
     void       SetCommit(bool i) {eTestLoad=false; eDoCommit=i; eNTestLoad=kMaxInt;}
-    Bool_t      TestLoad() {return eTestLoad;}
-    Int_t       AddBrick_Set(char *id, char *idrange_min, char *idrange_max, char *id_partition);
-    Int_t       AddBrick_Space(char *id_brick, char *id_set);
-    Int_t       AddMicroTrack(char *datamicro);
-    Int_t       AddScanbackPrediction(char *dataprediciton);
-    Int_t       AddTemplateMarkSets(char *datamarks);
+    Bool_t     TestLoad() {return eTestLoad;}
+    Int_t      AddBrick_Set(char *id, char *idrange_min, char *idrange_max, char *id_partition);
+    Int_t      AddBrick_Space(char *id_brick, char *id_set);
+    Int_t      AddMicroTrack(char *datamicro);
+    Int_t      AddMicroTrack(ULong64_t eventbrick, ULong64_t zone, int side, int id_view, EdbSegP &s);
+    Int_t      AddScanbackPrediction(char *dataprediciton);
+    Int_t      AddTemplateMarkSets(char *datamarks);
  
     Int_t       AddBSBpathsVolumes(char *databsbpathsvolumes);
     
@@ -135,6 +136,7 @@ class EdbScan2DB : public TObject {
     void      LoadVolume( EdbScanProc &sproc, EdbID edbid, EdbID idstop );
     ULong64_t LoadCalibrationZone( EdbScanProc &sproc, EdbID edbid, ULong64_t operation);
     void      LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation);
+    void      LoadSBDataOld( EdbScanProc &sproc, EdbID id, ULong64_t operation);
     ULong64_t LoadZone( EdbSegP &s, int plate, ULong64_t operation, ULong64_t series, const char *cmt );
     void      AddBrick( EdbScanProc &sproc );
     ULong64_t AddHeaderOperation(const char *note);

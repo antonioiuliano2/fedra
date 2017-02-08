@@ -100,9 +100,9 @@ class EdbRunTracking : public EdbRunAccess {
   static TTree *InitSBtree(const char *file_name="sbt.root", const char *mode="RECREATE");
   bool   UpdateSBtree( TTree &tsbt, int idp[4], int idf[4]);
   bool   GetSBtreeEntry( int entry, TTree &tsbt);
-    // int stat, 
-    //	       EdbSegP &ps, EdbSegP &fndbt, EdbSegP &fnds1, EdbSegP &fnds2, EdbSegP &nextpred, 
-    //	       EdbPattern *scnd=0, EdbPattern *s1cnd=0, EdbPattern *s2cnd=0 );
+  
+  int    GetSegmentsForDB( EdbSegP &s, EdbSegP &s1, EdbSegP &s2 );
+  void   CheckZ( float &z1, float &z2 );
 
   ClassDef(EdbRunTracking,1)  // helper class for access to the run data
 };

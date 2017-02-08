@@ -666,3 +666,56 @@ void EdbRunTracking::TransformFromPlateRS(EdbPlateP &plate)
   for(int i=0; i<eS1pre.N(); i++) eS1pre.GetSegment(i)->SetDZ( plate.GetLayer(1)->DZ() );
   for(int i=0; i<eS2pre.N(); i++) eS2pre.GetSegment(i)->SetDZ( plate.GetLayer(2)->DZ() );
 }
+
+//______________________________________________________________________________
+void EdbRunTracking::CheckZ( float &z1, float &z2 )
+{
+  EdbSegP *s1 = (EdbSegP*)(eS1pre.At(0));
+  EdbSegP *s2 = (EdbSegP*)(eS2pre.At(0));
+  if(s1&&s2)
+  {
+    z1=s1->Z();
+    z2=s2->Z();
+  }
+  else
+  {
+    z1 = 214;
+    z2 = 0;
+  }
+}
+
+//______________________________________________________________________________
+int EdbRunTracking::GetSegmentsForDB( EdbSegP &s, EdbSegP &s1, EdbSegP &s2 )
+{
+  // return s,s1,s2 if status >=0, create fake microtracks if necessary
+  // for fakes:        seg->GetPuls(), seg->GetVolume(), seg->GetSigmaX()            //0, 0, -1
+  float z1=0,z2=0;
+  CheckZ(z1,z2);
+  s.Copy(eNext);  //has z in the center of base (107)
+  if (eStatus==0) // both microtracks and basetrack found
+  {
+    s1.Copy(eS1);
+    s2.Copy(eS2);
+  }
+  else if (eStatus==1) // s1 found
+  {
+    s1.Copy(eS1);
+    s2.Copy(eNext);
+    s2.PropagateTo(z1);
+    s2.SetW(0); s2.SetChi2(0);
+   }
+  else if (eStatus==2) // s1 found
+  {
+    s2.Copy(eS2);
+    s1.Copy(eNext);
+    s1.PropagateTo(z2);
+    s1.SetW(0); s1.SetChi2(0);
+  }
+  else 
+  {
+    s1.Copy(eNext);
+    s2.Copy(eNext);
+  }
+  Log(2,"EdbRunTracking::GetSegmentsForDB","status = %d, z1=%f  z2= %f",eStatus,s1.Z(),s2.Z());
+  return eStatus;
+}

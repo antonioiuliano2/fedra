@@ -110,6 +110,19 @@ Int_t  TOracleServerE2WX::AddMicroTrack(char *datamicro)
 }
 
 //------------------------------------------------------------------------------------
+Int_t  TOracleServerE2WX::AddMicroTrack(ULong64_t eventbrick, ULong64_t zone, int side, int id_view, EdbSegP &s)
+{
+  return AddMicroTrack( Form(
+      "%s, %s ,%d, %d, %d, %2f, %2f, %2f, %2f, %2f, %2f, %2f",
+  Ostr(eventbrick),
+  Ostr(zone),
+  side,
+  s.ID(), id_view,
+  s.X(), s.Y(), s.TX(), s.TY(), s.W(), s.Volume(), s.Chi2()
+                            ) );
+}
+
+//------------------------------------------------------------------------------------
 Int_t  TOracleServerE2WX::AddScanbackPrediction(char *dataprediction)
 {
   return MyQuery( Form( "\
@@ -1134,7 +1147,108 @@ void EdbScan2DB::LoadPrediction( EdbScanProc &sproc, EdbID edbid )
 //------------------------------------------------------------------------------------
 void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
 {
+  // Do not load all microtracks but only one's assigned to path
+  //======== load scanback data for one plate ==============//
+
+  TString rstr;
+  sproc.MakeFileName( rstr, id, "sbt.root" );
+  EdbRunTracking rtsb;
+  rtsb.ePredictionScan=true;
+  Log(1,"EdbScan2DB::LoadSBData","open %s",rstr.Data());
+  TTree *tsbt = rtsb.InitSBtree(rstr.Data(),"READ");
+  if(tsbt)
+  {
+    int nsbt = (int) tsbt->GetEntries();
+
+    int id_basetrack=1;
+    for (int ipath=0;ipath<nsbt;ipath++)
+    {
+      rtsb.GetSBtreeEntry( ipath, *tsbt);
+      ULong64_t id_path = eDB->GetId_ScanbackPath(
+          eEventBrick, 
+          ePredictionHeaderOperation, 
+          rtsb.ePred.ID() 
+                                                 );
+      if(!id_path) {
+        eDB->AddScanbackPath( eEventBrick, operation, rtsb.ePred.ID(), id.ePlate, 1 );
+        id_path = eDB->GetId_ScanbackPath( eEventBrick, operation, rtsb.ePred.ID() );
+      }
+      ULong64_t id_pred_zone = LoadZone( rtsb.ePred, id.ePlate, operation,
+                                         id_path, "'Local RawdataPath'");
+
+      //========= Adding views and their microtracks ==========//
+      int   id_view = id_path;
+      int   side[2]={1,2};
+      float zd[2]={214+45,0}, zu[2]={214,-45};
+      for(int iside=0; iside<2; iside++)           // add up/down views
+      {
+        eDB->MyQuery( Form(
+            "INSERT INTO OPERA.TB_VIEWS (ID_EVENTBRICK, ID_ZONE, SIDE, ID, DOWNZ, UPZ, POSX, POSY)\
+            VALUES (%s, %s, %d, %d, %.2f, %.2f, %.2f, %.2f)",
+        eDB->Ostr(eEventBrick),
+        eDB->Ostr(id_pred_zone),
+        side[iside],
+        id_view,
+        zd[iside],
+        zu[iside],
+        rtsb.ePred.X(),
+        rtsb.ePred.Y()
+                          ));
+      }
+      EdbSegP s,s1,s2;
+      if( rtsb.GetSegmentsForDB(s,s1,s2) >=0 )
+      {
+        int id_down=1;
+        int id_up=1;
+        s1.SetID(id_up);
+        s2.SetID(id_down);
+        eDB->AddMicroTrack( eEventBrick, id_pred_zone, 2, id_view, s1 );
+        printf("z = %f\n",s1.Z());
+        eDB->AddMicroTrack( eEventBrick, id_pred_zone, 1, id_view, s2 );
+        printf("z = %f\n",s2.Z());
+        eDB->AddBaseTrack( Form(
+            "%s, %s ,%d, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %d, %ld, %d, %ld",
+        eDB->Ostr(eEventBrick),
+        eDB->Ostr(id_pred_zone),
+        id_basetrack,
+        rtsb.eNext.X(), rtsb.eNext.Y(),
+        rtsb.eNext.TX(),rtsb.eNext.TY(),
+        rtsb.eNext.W(), rtsb.eNext.Volume(), rtsb.eNext.Chi2(),
+        1, id_down, 2, id_up
+                               ));
+      }
+      else   // no any candidates
+      {
+        id_basetrack=0;
+      }
+      eDB->AddScanbackPrediction( Form(
+          "%s, %s ,%d, %f, %f, %f, %f, NULL, NULL, NULL, NULL, NULL, %s, %s,'N', %d",
+      eDB->Ostr(eEventBrick),
+      eDB->Ostr(id_path),
+      id.ePlate,
+      rtsb.ePred.X(), 
+      rtsb.ePred.Y(), 
+      rtsb.ePred.TX(), 
+      rtsb.ePred.TY(),
+      eDB->Ostr(id_pred_zone),
+      eDB->Ostr(id_basetrack),
+      0
+                                      ));
+    }
+    rtsb.CloseSBtree(tsbt);
+  }
+  else
+  {
+    Log(1,"EdbScan2DB::LoadSBData","ERROR! can not open %s!",rstr.Data());
+  }
+}
+
+
+//------------------------------------------------------------------------------------
+void EdbScan2DB::LoadSBDataOld( EdbScanProc &sproc, EdbID id, ULong64_t operation )
+{
   //======== load scamback data for one plate ==============//
+  //!! Deprecated due to a problem of duplication of all raw data for each prediction - useless and time consuming =VT:2/08/2017
   
   TString rstr;
   sproc.MakeFileName( rstr, id, "sbt.root" );
@@ -1160,7 +1274,7 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
     /*********** Adding one path-predicition zone ***********/
     ULong64_t id_pred_zone = LoadZone( rtsb.ePred, id.ePlate, operation,
                                        id_path, "'Local RawdataPath'");
-    
+
     //========= Adding views and their microtracks ==========//
     EdbRunTracking rt;
     rt.ePredictionScan=true;
@@ -1168,18 +1282,18 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
     eDB->AddViews(rt, eEventBrick, id_pred_zone, true);
     int nvpa = rt.GetNviewsPerArea();
     EdbRun  *run  = rt.GetRun();
-        
-    int id_view_up   = 0;
-    int id_view_down = 0;
-    int id_up        = 0;
-    int id_down      = 0;
+
+    Long_t id_view_up   = 0;
+    Long_t id_view_down = 0;
+    Long_t id_up        = 0;
+    Long_t id_down      = 0;
     if (rtsb.eStatus==0) // in case of basetrack found
     {
       id_view_down = (rtsb.eS1.Aid(0))*nvpa+rtsb.eS1.Aid(1);
       id_view_up   = (rtsb.eS2.Aid(0))*nvpa+rtsb.eS2.Aid(1);
       id_down = id_view_down*100000 + 10000*1 + rtsb.eS1.Vid(1)%100000;
       id_up   = id_view_up  *100000 + 10000*2 + rtsb.eS2.Vid(1)%100000;
-      Log(2,"EdbScan2DB::LoadSBData","Add BT (with top mt and bottom mt)");
+      Log(2,"EdbScan2DB::LoadSBData","Add BT (with top mt and bottom mt, nvpa=%d) id_down=%ld id_up=%ld",nvpa,id_down,id_up);
     }
     else if (rtsb.eStatus==1) // in case of microtrack bottom found
     {
@@ -1200,8 +1314,8 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
       rtsb.eS1.X() - dz*rtsb.eS1.TX(), rtsb.eS1.Y() - dz*rtsb.eS1.TY(),
       rtsb.eS1.TX(), rtsb.eS1.TY(), 
       0, 0, -1
-                             ));
-      Log(2,"EdbScan2DB::LoadSBData","Fake MT top added (and BT with MT bottom real and MT top fake)");
+                              ));
+      Log(2,"EdbScan2DB::LoadSBData","Fake MT bottom added (and BT with MT top real and MT bottom fake)");
     }
     else if (rtsb.eStatus==2) // in case of microtrack top found
     {
@@ -1230,26 +1344,26 @@ void EdbScan2DB::LoadSBData( EdbScanProc &sproc, EdbID id, ULong64_t operation )
     /*   
     else // no any candidates (stat=-1)
     {
-      id_view_up=0;
-      id_view_down=0;
-      id_down = 10000*1 + id_basetrack;
-      id_up   = 10000*2 + id_basetrack;
-      float dz = 200;
-      eDB->AddMicroTrack( Form(
-          "%s, %s ,%d, %d, %d, %2f, %2f, %2f, %2f, %2f, %2f, %2f",
-      eDB->Ostr(eEventBrick),
-      eDB->Ostr(id_pred_zone),
-      2, id_up, id_view_up,
-      rtsb.eS1.X() - dz*rtsb.eS1.TX(), rtsb.eS1.Y() - dz*rtsb.eS1.TY(),
-      rtsb.eS1.TX(), rtsb.eS1.TY(), 
-      0, 0, -1
+    id_view_up=0;
+    id_view_down=0;
+    id_down = 10000*1 + id_basetrack;
+    id_up   = 10000*2 + id_basetrack;
+    float dz = 200;
+    eDB->AddMicroTrack( Form(
+    "%s, %s ,%d, %d, %d, %2f, %2f, %2f, %2f, %2f, %2f, %2f",
+    eDB->Ostr(eEventBrick),
+    eDB->Ostr(id_pred_zone),
+    2, id_up, id_view_up,
+    rtsb.eS1.X() - dz*rtsb.eS1.TX(), rtsb.eS1.Y() - dz*rtsb.eS1.TY(),
+    rtsb.eS1.TX(), rtsb.eS1.TY(), 
+    0, 0, -1
                               ));
-    }
+  }
     */
     if(rtsb.eStatus==0||rtsb.eStatus==1||rtsb.eStatus==2) // exist some candidate
     {
       eDB->AddBaseTrack( Form(
-          "%s, %s ,%d, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %d, %d, %d, %d",
+          "%s, %s ,%d, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %d, %ld, %d, %ld",
       eDB->Ostr(eEventBrick),
       eDB->Ostr(id_pred_zone),
       id_basetrack,
