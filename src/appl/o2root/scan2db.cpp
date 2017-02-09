@@ -24,9 +24,12 @@ void PublicateBrick( TEnv &cenv, Int_t brick );
 //-------------------------------------------------------------------------------------
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  scan2db -file=bXXX_eYYY.scan2db.rootrc [-commit -publicate -v=V -lab=LA]\n";
+  cout<< "\nUsage: \n\t  scan2db -file=bXXX_eYYY.scan2db.rootrc [-commit -v=V]\n";
   cout<< "\t\t Assumed that feedbackfile name is like bBBBB_eEEEE.feedback as b010234_e11293015645.feedback\n";
   cout<< "\t\t brick id and event id extracted from the file name are used for data insertion into db\n";
+  
+  cout<< "\n\t scan2db -file=bXXX_eYYY.scan2db.rootrc -makesets \n";
+  cout<< "\t\t make *.set.root files for the involved datasets (use default OPERA geometry settings)\n";
   
   cout<< "\n\t scan2db -checkbrick=BRICK \n";
   cout<< "\t\t check if the brick structure was already loaded";
@@ -253,6 +256,12 @@ void MakeSets( TEnv &cenv, const char *fname)
     sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
     sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
     sproc.WriteScanSet(id,sc);
+    sproc.UpdateSetWithPlatePar(id);
+    sproc.UpdateSetWithAff(id,id);
+    if(gEDBDEBUGLEVEL>1) {
+      EdbScanSet *ss = sproc.ReadScanSet(id);
+      ss->Print();
+    }
   }
   if(cardenv.Lookup("scan2db.PREDICTION")) 
   {
@@ -261,6 +270,12 @@ void MakeSets( TEnv &cenv, const char *fname)
     sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
     sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "sbt.root");
     sproc.WriteScanSet(id,sc);
+    sproc.UpdateSetWithPlatePar(id);
+    sproc.UpdateSetWithAff(id,id);
+    if(gEDBDEBUGLEVEL>1) {
+      EdbScanSet *ss = sproc.ReadScanSet(id);
+      ss->Print();
+    }
   }
   if(cardenv.Lookup("scan2db.VOLUME"))
   {
@@ -269,6 +284,12 @@ void MakeSets( TEnv &cenv, const char *fname)
     sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
     sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
     sproc.WriteScanSet(id,sc);
+    sproc.UpdateSetWithPlatePar(id);
+    sproc.UpdateSetWithAff(id,id);
+    if(gEDBDEBUGLEVEL>1) {
+      EdbScanSet *ss = sproc.ReadScanSet(id);
+      ss->Print();
+    }
   }
 }
 

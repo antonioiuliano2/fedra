@@ -332,7 +332,14 @@ void EdbScanSet::Print()
 	   p->ID(), p->Z(), a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
   }
   printf("for this brick %d identifiers are defined:\n", eIDS.GetEntries());
-  for(Int_t i=0; i<eIDS.GetEntries(); i++)  ((EdbID*)eIDS.At(i))->Print();
+  for(Int_t i=0; i<eIDS.GetEntries(); i++)  
+  {
+    EdbID *id = (EdbID*)eIDS.At(i);
+    TString str = id->AsString();
+    EdbPlateP *p = GetPlate(id->ePlate);
+    if(p) str += Form("  shr1/base/shr2 = %.3f / %.1f / %.3f", p->GetLayer(1)->Shr(),p->GetLayer(0)->DZ(), p->GetLayer(2)->Shr());
+    printf("%s\n",str.Data() );
+  }
 }
 
 //----------------------------------------------------------------
