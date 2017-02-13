@@ -13,12 +13,14 @@ void toLower(std::string &inputString)
 
 
 // Value-Defintions of the different String values
-enum StringValue { evStringInputFile = 1,
-                          evStringOutputFile = 2,
-						  evStringClustersOption = 3,
-						  evStringUsage = 4,
-						  evStringFilterTracks = 5
-                        };
+enum StringValue { 
+  evStringInputFile = 1,
+  evStringOutputFile = 2,
+  evStringClustersOption = 3,
+  evStringUsage = 4,
+  evStringFilterTracks = 5,
+  evStringSkipCatalog = 6
+};
 
 // Map to associate the strings with the enum values
 static std::map<std::string, StringValue> s_mapStringValues;
@@ -30,6 +32,7 @@ void Initialize()
   s_mapStringValues["/clusters"] = evStringClustersOption;
   s_mapStringValues["/help"] = evStringUsage;
   s_mapStringValues["/filtertracks"] = evStringFilterTracks;
+  s_mapStringValues["/skipcatalog"] = evStringSkipCatalog;
   
   //std::cout << "s_mapStringValues contains " << s_mapStringValues.size() << " entries." << std::endl;
 }
@@ -45,7 +48,8 @@ int main(int argc, char **argv)
 	bool filterTracks = false;
 	bool inputRWD = false;
 	bool inputRWC = false;
-	std::string inputFile;
+  bool skipCatalog = false;
+  std::string inputFile;
 	std::string outputFile;
 
 	try
@@ -105,7 +109,17 @@ int main(int argc, char **argv)
 					argnum++;
 					break;
 				}
-			case evStringUsage:
+        case evStringSkipCatalog:
+        {
+          if (argnum + 1 >= argc)
+            throw "Missing Parameters to switch \"" + value + "\"";
+          std::string opt = argv[argnum +1];
+          if (opt == "on")
+            skipCatalog = true;
+          argnum++;
+          break;
+        }
+        case evStringUsage:
 				exception = "";
 				throw exception;
 				break;
@@ -140,35 +154,41 @@ int main(int argc, char **argv)
 			inputRWD = true;
 		}
 
-		if (inputRWC)
-		{
-			process.setCatalogName(inputFile);
-			process.setRootName(outputFile);
-			process.setClOption(convertClusters);
-			process.setFilterTrackOption(filterTracks);
-
-			process.readCatalog();
-			process.dumpCatalogInEdbStructure();
-			unsigned int nFragments = process.getFragmentsNumberFromCatalog();
-			
-			char rwdname[256], temp[256];
-			for (unsigned int f = 1; f < nFragments+1; f++)
-			{
-			  sprintf(temp, "%s", process.getCatalogName());
-			  sprintf(temp+strlen(temp)-1, "d");
-			  sprintf(rwdname, "%s.%08X", temp, f);
-			  cout <<"(tot. fragm.:"<<nFragments<<")  "; 
-			  process.setFragmentName(rwdname);
-			  if (process.readFragment())
-			  {
-				  process.dumpFragmentInEdbStructure();
-				  if (process.getFilterTracksOption())     process.makeTracksPlot("outputPlots.root");
-			  }
-
-
-			}
-		}
-		else if (inputRWD)
+    if (inputRWC)
+    {
+      process.setCatalogName(inputFile);
+      process.setRootName(outputFile);
+      process.setClOption(convertClusters);
+      process.setFilterTrackOption(filterTracks);
+      unsigned int nFragments =0;
+      unsigned int failedFragments =0;
+      if(!skipCatalog)
+      {
+        process.readCatalog();
+        process.dumpCatalogInEdbStructure();
+        nFragments = process.getFragmentsNumberFromCatalog();
+      }
+      else {
+        nFragments=20000;
+      }
+      char rwdname[256], temp[256];
+      for (unsigned int f = 1; f < nFragments+1; f++)
+      {
+        sprintf(temp, "%s", process.getCatalogName());
+        sprintf(temp+strlen(temp)-1, "d");
+        sprintf(rwdname, "%s.%08X", temp, f);
+        cout <<"(tot. fragm.:"<<nFragments<<")  "; 
+        process.setFragmentName(rwdname);
+        if (process.readFragment())
+        {
+          process.dumpFragmentInEdbStructure();
+          if (process.getFilterTracksOption())     process.makeTracksPlot("outputPlots.root");
+        }
+        else failedFragments++;
+        if(failedFragments>5) break;
+      }
+    }
+    else if (inputRWD)
 		{
 			process.setFragmentName(inputFile);
 			process.setRootName(outputFile);
@@ -207,7 +227,8 @@ int main(int argc, char **argv)
 		std::cout << "/outputfile    <p> - .root output file." << std::endl;
 		std::cout << "/clusters      <p> - optional: on." << std::endl;
 		std::cout << "/filterTracks  <p> - optional: on." << std::endl;
-		std::cout << "/help              - display the usage." << std::endl;
+    std::cout << "/skipcatalog   <p> - optional: on." << std::endl;
+    std::cout << "/help              - display the usage." << std::endl;
 		delete []tab;
 		return -1;
 		
