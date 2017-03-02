@@ -219,12 +219,13 @@ void CheckBrick(TEnv &cenv, int brick )
 //-------------------------------------------------------------------------------------
 void PublicateBrick(TEnv &cenv, int brick )
 {
+  const char *labN = cenv.GetValue("scan2db.labN"                       , "  ");
   Int_t eventbrick = brick>1000000? brick: 1000000+brick;
   EdbScan2DB s2d;
   if( InitDB( s2d, cenv, 1) )
   {
     s2d.eDB->MyQuery(
-        Form("call operapub.xp_replicate_NA(0,%d)",eventbrick)
+        Form("call operapub.xp_replicate_%s(0,%d)",labN,eventbrick)
                     );
   }
 }
@@ -252,43 +253,58 @@ void MakeSets( TEnv &cenv, const char *fname)
   if(cardenv.Lookup("scan2db.CALIBRATION")) 
   {
     EdbID id           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
-    EdbScanSet sc(id);
-    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
-    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
-    sproc.WriteScanSet(id,sc);
-    sproc.UpdateSetWithPlatePar(id);
-    sproc.UpdateSetWithAff(id,id);
-    if(gEDBDEBUGLEVEL>1) {
-      EdbScanSet *ss = sproc.ReadScanSet(id);
-      ss->Print();
+    if(id.eBrick != br) 
+      Log(1,"MakeSets","ERROR! Calibration set id: %s is not consistent with path %s", id.AsString(), fname);
+    else 
+    {
+      EdbScanSet sc(id);
+      sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+      sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
+      sproc.WriteScanSet(id,sc);
+      sproc.UpdateSetWithPlatePar(id);
+      sproc.UpdateSetWithAff(id,id);
+      if(gEDBDEBUGLEVEL>1) {
+        EdbScanSet *ss = sproc.ReadScanSet(id);
+        ss->Print();
+      }
     }
   }
   if(cardenv.Lookup("scan2db.PREDICTION")) 
   {
     EdbID id           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
-    EdbScanSet sc(id);
-    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
-    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "sbt.root");
-    sproc.WriteScanSet(id,sc);
-    sproc.UpdateSetWithPlatePar(id);
-    sproc.UpdateSetWithAff(id,id);
-    if(gEDBDEBUGLEVEL>1) {
-      EdbScanSet *ss = sproc.ReadScanSet(id);
-      ss->Print();
+    if(id.eBrick != br)
+      Log(1,"MakeSets","ERROR! Prediction set id: %s is not consistent with path %s", id.AsString(), fname);
+    else
+    {
+      EdbScanSet sc(id);
+      sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+      sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "sbt.root");
+      sproc.WriteScanSet(id,sc);
+      sproc.UpdateSetWithPlatePar(id);
+      sproc.UpdateSetWithAff(id,id);
+      if(gEDBDEBUGLEVEL>1) {
+        EdbScanSet *ss = sproc.ReadScanSet(id);
+        ss->Print();
+      }
     }
   }
   if(cardenv.Lookup("scan2db.VOLUME"))
   {
     EdbID id           = cardenv.GetValue("scan2db.VOLUME", "0.0.0.0");
-    EdbScanSet sc(id);
-    sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
-    sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
-    sproc.WriteScanSet(id,sc);
-    sproc.UpdateSetWithPlatePar(id);
-    sproc.UpdateSetWithAff(id,id);
-    if(gEDBDEBUGLEVEL>1) {
-      EdbScanSet *ss = sproc.ReadScanSet(id);
-      ss->Print();
+    if(id.eBrick != br) 
+      Log(1,"MakeSets","ERROR! Volume set id: %s is not consistent with path %s", id.AsString(), fname);
+    else 
+    {
+      EdbScanSet sc(id);
+      sc.MakeNominalSet(id,from_plate, to_plate, z0, dz, 1, dzbase);
+      sproc.MakeScannedIDList( id, sc, from_plate, to_plate, "raw.root");
+      sproc.WriteScanSet(id,sc);
+      sproc.UpdateSetWithPlatePar(id);
+      sproc.UpdateSetWithAff(id,id);
+      if(gEDBDEBUGLEVEL>1) {
+        EdbScanSet *ss = sproc.ReadScanSet(id);
+        ss->Print();
+      }
     }
   }
 }

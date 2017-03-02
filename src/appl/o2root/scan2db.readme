@@ -29,8 +29,8 @@ All parameters should be correctly defined depending on your laboratory and data
 By default the program started in ROLLBACK mode and do not modify the database - it's useful
 to check the files compatibility and db connection.To modify the database use -commit option.
 
-Note that full data loading for one event is long (30-60 min), that's why for the fast test the
-TestLoad mode is foreceen. If set to 1 - only a few vews and tracks are loaded for each operation, 
+Note that full data loading for one event is slow (30-60 min), that's why for the fast test the
+TestLoad mode is foreceen. If set to 1 - only a few vews and few track/views are loaded for each operation, 
 some error messages about missing microtracks are normal in this mode, but if thare are other 
 type of oracle errors - it's should be fixed before loading.
 
@@ -39,7 +39,7 @@ Normal loading operation:
    
    after loading always check stdout.log for error messaged (oracle errors started from ORA).
 
-*.scan2db.rootrc file contains the steering cards for this brick. 
+*.scan2db.rootrc file contains the steering cards for the particular brick. 
 
 Example of *.scan2db.rootrc file:
 ##-------------------------------------------------------------
