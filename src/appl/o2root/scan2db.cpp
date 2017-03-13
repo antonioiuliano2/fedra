@@ -364,7 +364,8 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
 
   s2d.AddBrick( sproc );
  
-  if(cardenv.Lookup("scan2db.CALIBRATION")) {
+  if(cardenv.Lookup("scan2db.CALIBRATION") && (s2d.eDB->GetDBErrors()==0 || s2d.eDB->TestLoad()))
+  {
     printf(  "scan2db CALIBRATION ......\n");
     time_t ti_c = time(NULL);
     EdbID idcal           = cardenv.GetValue("scan2db.CALIBRATION", "0.0.0.0");
@@ -373,7 +374,8 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
     time_t tf_c = time(NULL);
     printf(  "scan2db CALIBRATION finished, Elapsed time = %ld s\n", tf_c-ti_c);
   }
-  if(cardenv.Lookup("scan2db.PREDICTION")) {
+  if(cardenv.Lookup("scan2db.PREDICTION") && (s2d.eDB->GetDBErrors()==0 || s2d.eDB->TestLoad())) 
+  {
     printf(  "scan2db PREDICTION ......\n");
     time_t ti_p = time(NULL);
     EdbID idpred           = cardenv.GetValue("scan2db.PREDICTION", "0.0.0.0");
@@ -381,7 +383,8 @@ bool LoadEventBrick( TEnv &cenv, int do_commit, const char *fname)
     time_t tf_p = time(NULL);
     printf(  "scan2db PREDICTION finished, Elapsed time = %ld s\n", tf_p-ti_p);
   }
-  if(cardenv.Lookup("scan2db.VOLUME")) {
+  if(cardenv.Lookup("scan2db.VOLUME") && (s2d.eDB->GetDBErrors()==0 || s2d.eDB->TestLoad())) 
+  {
     printf(  "scan2db VOLUME ......\n");
     time_t ti_v = time(NULL);
     EdbID idvol           = cardenv.GetValue("scan2db.VOLUME"       , "0.0.0.0");

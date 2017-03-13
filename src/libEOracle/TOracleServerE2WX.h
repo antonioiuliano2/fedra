@@ -17,6 +17,7 @@ class TOracleServerE2WX : public TOracleServerE2 {
     Int_t      eNTestLoad;
     Bool_t     eTestLoad;   // if test load do not perform intermediate transactions
     Bool_t     eDoCommit;   // true - commit current transaction (default is false)
+    Int_t      eERROR;      // DB errors counter
   public:
     Int_t      eNviewsPerArea;
     TString    eLab;       //! as "NAPOLI"
@@ -27,6 +28,7 @@ class TOracleServerE2WX : public TOracleServerE2 {
     TOracleServerE2(db, uid, pw){eNviewsPerArea=0;}
     ~TOracleServerE2WX(){}
 
+    int        GetDBErrors() {return eERROR;}
     void       SetTestLoad(int n) {eTestLoad=true; eDoCommit=0; eNTestLoad=n;}
     void       SetCommit(bool i) {eTestLoad=false; eDoCommit=i; eNTestLoad=kMaxInt;}
     Bool_t     TestLoad() {return eTestLoad;}

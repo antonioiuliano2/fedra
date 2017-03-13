@@ -17,8 +17,10 @@ ClassImp(TOracleServerE2WX)
 //------------------------------------------------------------------------------------
 void TOracleServerE2WX::Set0()
 {
+  eNTestLoad=0;
   eTestLoad=kMaxInt;
   eDoCommit=0;
+  eERROR=0;
 }
  
 //------------------------------------------------------------------------------------
@@ -26,10 +28,12 @@ void TOracleServerE2WX::Print()
 {
   TOracleServerE2::Print();
   printf( " eDoCommit  = %d  \n", eDoCommit );
+  printf( " eERROR     = %d  \n", eERROR );
   printf( " eTestLoad  = %d  \n", eTestLoad );
+  printf( " eNTestLoad = %d  \n", eNTestLoad );
   if(eTestLoad) printf( " eNTestLoad = %d  \n", eNTestLoad );
 }
- 
+
 //------------------------------------------------------------------------------------
 const char *TOracleServerE2WX::Timestamp()
 {
@@ -59,7 +63,7 @@ Int_t  TOracleServerE2WX::MyQuery(const char *query)
     fStmt->execute();
   } catch (SQLException &oraex) {
     Log(1,"TOracleServerE2WX::MyQuery","failed: (error: %s)",(oraex.getMessage()).c_str());
-    eDoCommit=0;
+    eDoCommit=0; eERROR++;
     return 0;
   }
   return 1;
@@ -78,14 +82,14 @@ ULong64_t  TOracleServerE2WX::MyQueryInsertReturning( const char *query, const c
     fStmt->executeUpdate();
     if(!(fStmt->getString(1)).c_str()) {
       Log(2,"TOracleServerE2WX::MyQueryInsertReturning","ERROR! empty operation returned!");
-      eDoCommit=0;
+      eDoCommit=0; eERROR++;
       return 0;
     }
     Log(2,"","%s", (fStmt->getString(1)).c_str() );
     sscanf( (fStmt->getString(1)).c_str(),"%lld",&id);
   } catch (SQLException &oraex) {
     Log(1,"TOracleServerE2WX::MyQuery","failed: (error: %s)",(oraex.getMessage()).c_str());
-    eDoCommit=0;
+    eDoCommit=0; eERROR++;
     return 0;
   }
   return id;
@@ -289,9 +293,9 @@ Int_t  TOracleServerE2WX::AddView(EdbView *view, int id_view, ULong64_t id_event
   // Tables involved: TB_VIEWS through AddView(...) and TB_MIPMICROTRACKS through AddMicroTrack(...)
   // Details: no queries directly executed
 
+  time_t ti_v = time(NULL);
+  
   int side;
-//   if(view->GetNframesTop()==0) side=1;  // 1 - bottom
-//   else side=2;                          // 2 - top
 // Warning! inverted definition to make it compatible with the DB
   if(view->GetNframesTop()==0) side=2;
   else side=1;
@@ -346,8 +350,9 @@ Int_t  TOracleServerE2WX::AddView(EdbView *view, int id_view, ULong64_t id_event
       seg->GetTx(), seg->GetTy(), seg->GetPuls(), seg->GetVolume(), seg->GetSigmaX()
                    ));
     }
-
-    Log(2,"TOracleServerE2WX::AddView","View added (without buffering): %d microtracks added",nsegV);
+    
+    time_t tf_v = time(NULL);
+    Log(2,"TOracleServerE2WX::AddView","View added (without buffering): %d microtracks added in %ld s",nsegV, tf_v-ti_v );
 
   } else {
 
@@ -413,7 +418,8 @@ Int_t  TOracleServerE2WX::AddView(EdbView *view, int id_view, ULong64_t id_event
     } catch (SQLException &oraex) {
       Error("TOracleServerE2WX", "AddView; failed: (error: %s)", (oraex.getMessage()).c_str());
     }
-    Log(2,"AddView","View added (with buffering): %d microtracks added",nsegV);
+    time_t tf_v = time(NULL);
+    Log(2,"AddView","View added (with buffering): %d microtracks added in %ld s",nsegV, tf_v-ti_v );
   }
 
   return 0;
