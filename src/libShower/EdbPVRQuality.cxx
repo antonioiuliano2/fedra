@@ -4359,6 +4359,12 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
     // dont...eHistTT->Reset();
     // dont...eHistChi2W->Reset();
 
+    
+    
+    // Memory Management: delete the cloned histogram   ! ? ! ? !
+//     cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)    Memory Management: delete the cloned histogram   ! ? ! ?" << endl;
+    delete eHistYXClone;
+    
     //cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)...done" << endl;
     return;
 }
