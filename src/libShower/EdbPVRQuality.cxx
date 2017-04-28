@@ -3,11 +3,12 @@ using namespace std;
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// EdbPVRQuality                                                        //
-//
-// Base class for checks of the scanned data, especially for shower reconstruction.
-// The observed basetrack density can vary from brick to brick with a large
-// fluctuation.
+// 			EdbPVRQuality                                   //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+// Base class for checks of the scanned data, for shower reconstruction.
+// The observed basetrack density can vary from brick to brick
+// with a large fluctuation.
 // The shower algorithm in its standard implementation is sensitive to the
 // level of tracks per unit area. In case there are too many of them, the purity
 // of shower reconstruction goes down and does not give reliable results anymore.
@@ -43,7 +44,6 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)
     // If general basetrack density is lower than 20 BT/mm2 then no cleaning is done.
 
     Log(2,"EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)","Default Constructor with EdbPVRec object");
-
     Init();
     Set0();
 
@@ -127,7 +127,6 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel, Int_t
     // background target level and direct setting of the background reduction algorithm.
 
     Log(2,"EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel)","Default Constructor with EdbPVRec object and given BT density level");
-
     Init();
     Set0();
 
@@ -142,7 +141,7 @@ EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali,  Float_t BTDensityTargetLevel, Int_t
     // Set BTDensityTargetLevel
     SetBTDensityLevel(BTDensityTargetLevel);
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  Set BTDensityTargetLevel to (1/mm^2)= " << GetBTDensityLevel() << endl;
-    
+
     // Set BG reduction cut method
     SetCutMethod(BG_CutMethod);
     cout << "EdbPVRQuality::EdbPVRQuality(EdbPVRec* ali)  Set CutMethod to = " << GetCutMethod() << endl;
@@ -166,14 +165,51 @@ EdbPVRQuality::~EdbPVRQuality()
     // Default Destructor
     Log(2,"EdbPVRQuality::~EdbPVRQuality()","Default Destructor");
 
-    delete 		eHistChi2W;
-    delete 		eHistYX;
-    delete 		eHistTYTX;
+    delete 		eHistWChi2;
+    delete 		eHistXY;
+    delete 		eHistTXTY;
     delete 		eHistTT;
     delete		eHistTTFillcheck;
     delete		eHistBTDensityPattern;
     delete		eHistBTDensityVolume;
     delete 		eProfileBTdens_vs_PID_source;
+}
+
+
+//______________________________________________________________________________
+
+void EdbPVRQuality::ResetHistos()
+{
+    // Reset Default Histograms
+    Log(2,"EdbPVRQuality::ResetHistos","ResetHistos");
+
+    ResetHistosSinglePattern();
+
+    eHistBTDensityVolume->Reset();
+    // Reset also Profile Histograms here???
+    eProfileBTdens_vs_PID_source->Reset();
+    eProfileBTdens_vs_PID_target->Reset();
+
+
+    Log(2,"EdbPVRQuality::ResetHistos","ResetHistos...done.");
+}
+
+//______________________________________________________________________________
+
+void EdbPVRQuality::ResetHistosSinglePattern()
+{
+    // Reset Histograms which are filled for one pattern
+    Log(2,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern");
+    eHistXY->Reset();
+    eHistTXTY->Reset();
+    eHistWChi2->Reset();
+    eHistTT->Reset();
+    eHistChi2->Reset();
+    eHistW->Reset();
+    eHistWTilde->Reset();
+    eHistTTFillcheck->Reset();
+    eHistBTDensityPattern->Reset();
+    Log(2,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern...done.");
 }
 
 //______________________________________________________________________________
@@ -212,17 +248,8 @@ void EdbPVRQuality::Set0()
     // Reset Default Geometry: 0 OperaGeometry, 1: MC Geometry
     eHistGeometry=0;
 
-    // Reset Default Histograms
-    eHistYX->Reset();
-    eHistTYTX->Reset();
-    eHistChi2W->Reset();
-    eHistTT->Reset();
-    eHistChi2->Reset();
-    eHistW->Reset();
-    eHistWTilde->Reset();
-    eHistTTFillcheck->Reset();
-    eHistBTDensityPattern->Reset();
-    eHistBTDensityVolume->Reset();
+    //Reset Default Histograms
+    ResetHistos();
 
     for (int i=0; i<114; i++) {
         ePatternBTDensity_orig[i]=0;
@@ -296,27 +323,27 @@ void EdbPVRQuality::Init()
     eProfileBTdens_vs_PID_source = new TProfile("eProfileBTdens_vs_PID_source","eProfileBTdens_vs_PID_source",114,-0.5,113.5,0,200);
     eProfileBTdens_vs_PID_target = new TProfile("eProfileBTdens_vs_PID_target","eProfileBTdens_vs_PID_target",114,-0.5,113.5,0,200);
 
-    // Filled with EdbSegP::Chi2(),W() value
-    eHistChi2W = new TH2F("eHistChi2W","eHistChi2W",26,5.5,31.5,100,0,2);
-    // Filled with EdbSegP::Chi2() and W() value
+    // Filled with EdbSegP::W(),Chi2() value
+    eHistWChi2 = new TH2F("eHistWChi2","eHistWChi2",21,10.5,31.5,100,0,2);
+    // Filled with EdbSegP::Chi2(),  W(); WTilde(=1/W) value
     eHistChi2 = new TH1F("eHistChi2","eHistChi2",100,0,2);
-    eHistW = new TH1F("eHistW","eHistW",26,5.5,31.5);
+    eHistW = new TH1F("eHistW","eHistW",21,10.5,31.5);
     eHistWTilde = new TH1F("h_WTilde","h_WTilde",50,0,0.1);
 
-    // Filled with EdbSegP::Y(),X() value
-    eHistYX = new TH2F("eHistYX","eHistYX",200,0,1,200,0,1);
-    // eHistYX->SetMinimum(1);  WHY THIS ???? Because of log scale???
-    // eHistYX->SetMaximum(150);  WHY THIS ????
-    // Filled with EdbSegP::TY(),TX() value
-    eHistTYTX = new TH2F("eHistTYTX","eHistTYTX",100,-0.7,0.7,100,-0.7,0.7);
+    // Filled with EdbSegP::X(),Y() value
+    // Boundaries will be set in the SetHistGeometry... Function.
+    eHistXY = new TH2F("eHistXY","eHistXY",200,0,1,200,0,1);
+
+    // Filled with EdbSegP::TX(),TY() value
+    eHistTXTY = new TH2F("eHistTXTY","eHistTXTY",100,-0.7,0.7,100,-0.7,0.7);
 
     // If tangens theta binning histogram is too fine grained,
     // there is the danger of being to few entries in the histogram.
-    eHistTT = new TH1F("eHistTT","eHistTT",10,0,1);  	 // Filled with EdbSegP::TT() value
+    eHistTT = new TH1F("eHistTT","eHistTT",10,0,1);
+    // Filled with EdbSegP::TT() value
     // eHistTTFillcheck is only used for determing the TT bin of the segment,
     // also when rebinning this histogram
-    eHistTTFillcheck = (TH1F*)eHistTT->Clone();
-    eHistTTFillcheck->SetLineStyle(2);
+    eHistTTFillcheck = new TH1F("eHistTTFillcheck","eHistTTFillcheck",10,0,1);
 
     eHistBTDensityPattern = new TH1F("eHistBTDensityPattern","eHistBTDensityPattern",200,0,200);
     eHistBTDensityVolume = new TH1F("eHistBTDensityVolume","eHistBTDensityVolume",200,0,200);
@@ -339,6 +366,7 @@ void EdbPVRQuality::Init()
     // x-y ranges. This takes slightly more memory but it shouldnt matter.
     //if (eHistGeometry==0) SetHistGeometry_OPERA();
     SetHistGeometry_OPERAandMC();
+//     SetHistGeometry_OPERAandMCBinArea625();
 
     Log(2,"EdbPVRQuality::Init","Init...done.");
     return;
@@ -352,16 +380,12 @@ void EdbPVRQuality::SetCutMethod(Int_t CutMethod)
 
     // 0: (option ): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b
     // 1: (default): Do cut based on the linear relation: seg.Chi2()<seg.eW*a-b  In Angular Bins
-
     // 2: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics.
     // 3: (testing): Do cut based on a chi2-variable that compares with passing tracks (if available), i.e. cosmics.  In Angular Bins
-
     // 4: (testing): Do cut based Xi2Hat relation.
     // 5: (testing): Do cut based Xi2Hat relation. In Angular Bins
-
     // 6: (testing): Do random cut based relation --> Just for quick test purposes and crosschecks
     // 7: (option) : Do random cut based relation In Angular Bins --> Just for quick test purposes and crosschecks
-
 
     Log(2,"EdbPVRQuality::SetCutMethod","SetCutMethod");
 
@@ -439,13 +463,14 @@ void EdbPVRQuality::CheckEdbPVRec()
         return;
     }
 
+    // Fill the histos. From the filled histos, the bg-densities are then calculated.
     FillHistosVolume(eAli_orig);
 
     // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
     // This will be done in one of the two Execute_/Cut_ functions.
 
     cout << "TO BE DONE HERE: REPORT IF BACKGROUND IS TO HIGH, AND WHAT IS THE CLASS DOING THEN! " << endl;
-    cout << " INFORMATION ON THE SOURCE VOLUME. Average basetrack density is " << eProfileBTdens_vs_PID_source_meanY << " which means ..." << endl;
+    cout << "INFORMATION ON THE SOURCE VOLUME. Average basetrack density is " << eProfileBTdens_vs_PID_source_meanY << " which means ..." << endl;
 
 
     Log(2,"EdbPVRQuality::CheckEdbPVRec","CheckEdbPVRec...done");
@@ -454,7 +479,67 @@ void EdbPVRQuality::CheckEdbPVRec()
 
 
 //______________________________________________________________________________
-TCanvas* EdbPVRQuality::GetQualityPlots(Int_t aliSourceType)
+TCanvas* EdbPVRQuality::GetQualityPlots(Int_t CountNr, Int_t aliSourceType)
+{
+
+    if (!eIsSource) {
+        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
+        return NULL;
+    }
+
+    if (aliSourceType==1 && !eIsTarget) {
+        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsTarget = " << eIsTarget << ". This means no target set. Return!" << endl;
+        return NULL;
+    }
+
+    if (aliSourceType==1) {
+        FillHistosVolume(eAli_modified);
+    }
+    else {
+        FillHistosVolume(eAli_orig);
+    }
+
+    TCanvas* c1 = new TCanvas(Form("CanvasQualityPlots_%d_%d",CountNr,aliSourceType),Form("CanvasQualityPlots_%d_%d",CountNr,aliSourceType),1600,1000);
+    c1->Divide(3,2);
+    c1->cd(1);
+    eHistXY->Draw("colz");
+    eHistXY->GetXaxis()->SetRangeUser(eHistXY->GetMean(1)-eHistXY->GetRMS(1)*3,eHistXY->GetMean(1)+eHistXY->GetRMS(1)*3);
+    eHistXY->GetYaxis()->SetRangeUser(eHistXY->GetMean(2)-eHistXY->GetRMS(2)*3,eHistXY->GetMean(2)+eHistXY->GetRMS(2)*3);
+    eHistXY->GetXaxis()->SetTitle("X /#mum");
+    eHistXY->GetYaxis()->SetTitle("Y /#mum");
+    eHistXY->GetYaxis()->SetLabelSize(0.03);
+    eHistXY->GetXaxis()->SetLabelSize(0.03);
+    eHistXY->DrawCopy("colzSAME");
+    c1->cd(2);
+    eHistWChi2->GetXaxis()->SetTitle("W");
+    eHistWChi2->GetYaxis()->SetTitle("#chi^{2}");
+    eHistWChi2->DrawCopy("colz");
+    c1->cd(3);
+    eHistTXTY->GetXaxis()->SetTitle("tan #theta_{X}");
+    eHistTXTY->GetYaxis()->SetTitle("tan #theta_{Y}");
+    eHistTXTY->DrawCopy("colz");
+    c1->cd(4);
+    eHistBTDensityVolume->GetXaxis()->SetTitle("basetrack density /mm^{-2}");
+    eHistBTDensityVolume->GetYaxis()->SetTitle("entries");
+    eHistBTDensityVolume->GetXaxis()->SetRangeUser(0,eHistBTDensityVolume->GetMean()+eHistBTDensityVolume->GetRMS()*3);
+    eHistBTDensityVolume->DrawCopy("");
+    c1->cd(5);
+    eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("plate");
+    eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("basetrack density /mm^{-2}");
+    eProfileBTdens_vs_PID_generic->Draw("profileZ");
+    eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    c1->cd(6);
+    eHistTT->GetXaxis()->SetTitle("tan #theta");
+    eHistTT->GetYaxis()->SetTitle("entries");
+    eHistTT->DrawCopy("");
+    c1->cd();
+    //---------------------------------------------------
+
+    return c1;
+}
+
+//______________________________________________________________________________
+TCanvas* EdbPVRQuality::GetQualityPlotsSingle(Int_t aliSourceType, Int_t Plottype, Int_t CountNr)
 {
 
     if (!eIsSource) {
@@ -473,42 +558,148 @@ TCanvas* EdbPVRQuality::GetQualityPlots(Int_t aliSourceType)
         FillHistosVolume(eAli_orig);
     }
 
-    TCanvas* c1 = new TCanvas(Form("CanvasQualityPlots_%d",aliSourceType),Form("CanvasQualityPlots_%d",aliSourceType),1600,1000);
-    c1->Divide(3,2);
-    c1->cd(1);
-    eHistYX->Draw("colz");
-    eHistYX->GetXaxis()->SetRangeUser(eHistYX->GetMean(1)-eHistYX->GetRMS(1)*3,eHistYX->GetMean(1)+eHistYX->GetRMS(1)*3);
-    eHistYX->GetYaxis()->SetRangeUser(eHistYX->GetMean(2)-eHistYX->GetRMS(2)*3,eHistYX->GetMean(2)+eHistYX->GetRMS(2)*3);
-    eHistYX->GetXaxis()->SetTitle("X (#mum)");
-    eHistYX->GetYaxis()->SetTitle("Y (#mum)");
-    eHistYX->DrawCopy("colzSAME");
-    c1->cd(2);
-    eHistChi2W->GetXaxis()->SetTitle("W");
-    eHistChi2W->GetYaxis()->SetTitle("#chi^{2}");
-    eHistChi2W->DrawCopy("colz");
-    c1->cd(3);
-    eHistTYTX->GetXaxis()->SetTitle("tan #theta_{X}");
-    eHistTYTX->GetYaxis()->SetTitle("tan #theta_{Y}");
-    eHistTYTX->DrawCopy("colz");
-    c1->cd(4);
-    eHistBTDensityVolume->GetXaxis()->SetTitle("Basetrack density (1/mm^{2})");
-    eHistBTDensityVolume->GetYaxis()->SetTitle("entries (arb. u.)");
-    eHistBTDensityVolume->DrawCopy("");
-    c1->cd(5);
-    eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("Plate");
-    eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("Basetrack density (1/mm^{2})");
-    eProfileBTdens_vs_PID_generic->Draw("profileZ");
-    eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
-    c1->cd(6);
-    eHistTT->GetXaxis()->SetTitle("tan #theta");
-    eHistTT->GetYaxis()->SetTitle("entries (arb. u.)");
-    //eHistTTFillcheck->DrawCopy("");
-    eHistTT->DrawCopy("");
-    c1->cd();
-    //---------------------------------------------------
 
-    return c1;
+    TCanvas* canvas = new TCanvas(Form("CanvasQualityPlots_%d",aliSourceType,Plottype,CountNr),Form("CanvasQualityPlots_%d",aliSourceType,Plottype,CountNr));
+
+    switch(Plottype) {
+    case 0: {
+        eHistXY->Draw("colz");
+        eHistXY->GetXaxis()->SetRangeUser(eHistXY->GetMean(1)-eHistXY->GetRMS(1)*3,eHistXY->GetMean(1)+eHistXY->GetRMS(1)*3);
+        eHistXY->GetYaxis()->SetRangeUser(eHistXY->GetMean(2)-eHistXY->GetRMS(2)*3,eHistXY->GetMean(2)+eHistXY->GetRMS(2)*3);
+        eHistXY->GetXaxis()->SetTitle("X /#mum");
+        eHistXY->GetYaxis()->SetTitle("Y /#mum");
+        eHistXY->GetYaxis()->SetLabelSize(0.03);
+        eHistXY->GetXaxis()->SetLabelSize(0.03);
+        eHistXY->DrawCopy("colzSAME");
+    }
+    case 1: {
+        eHistWChi2->GetXaxis()->SetTitle("W");
+        eHistWChi2->GetYaxis()->SetTitle("#chi^{2}");
+        eHistWChi2->DrawCopy("colz");
+    }
+    case 2: {
+        eHistTXTY->GetXaxis()->SetTitle("tan #theta_{X}");
+        eHistTXTY->GetYaxis()->SetTitle("tan #theta_{Y}");
+        eHistTXTY->DrawCopy("colz");
+    }
+    case 3: {
+        eHistBTDensityVolume->GetXaxis()->SetTitle("basetrack density /mm^{-2}");
+        eHistBTDensityVolume->GetYaxis()->SetTitle("entries");
+        eHistBTDensityVolume->GetXaxis()->SetRangeUser(0,eHistBTDensityVolume->GetMean()+eHistBTDensityVolume->GetRMS()*3);
+        eHistBTDensityVolume->DrawCopy("");
+    }
+    case 4: {
+        eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("plate");
+        eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("basetrack density /mm^{-2}");
+        eProfileBTdens_vs_PID_generic->Draw("profileZ");
+        eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+    }
+    case 5: {
+        eHistTT->GetXaxis()->SetTitle("tan #theta");
+        eHistTT->GetYaxis()->SetTitle("entries");
+        eHistTT->DrawCopy("");
+    }
+    default:
+        cout << "NOT YET IMPLEMENTED ...   TODO ...." << endl;
+        break;
+    }
+
+    return canvas;
 }
+
+
+
+///______________________________________________________________________________
+EdbPVRec *EdbPVRQuality::ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t tolerance[4])
+{
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Fill new pattern volume...");
+
+    // Note: there is a similar implementation of this function already in the EdbDataProc class:
+    // EdbPVRec *EdbDataProc::ExtractDataVolume()
+    // But then we would have to link in this class again and create a new proc object...
+    // so it is easier to reimplement it here again.
+    //
+    //   To Test a method which returns a modified EdbPVRec Volume.
+    //   Either in Angular Space (default), or in coordinate space.
+    //   (Or both?)
+    //   Input:  EdbSegP (EdbTrackP?), Delta TanTheta max, EdbPVRec, Tolerances
+    //   Output: EdbPVRec reduced in (angular,coordinate) space.
+
+    if(!pvr) return 0;
+    int npat = pvr->Npatterns();
+    EdbPVRec *ali = new EdbPVRec();
+
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Select Data in EdbPVRec with %d patterns:", npat);
+
+    if (NULL==tolerance) {
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: No tolerance values given.");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put now standard ones (5000,5000,1,1)");
+        tolerance[0]=5000;
+        tolerance[1]=5000;
+        tolerance[2]=1;
+        tolerance[3]=1;
+    }
+    // But be aware: if one forgets to set the tolerance values by hand,
+    // then uninitialised values may screw up everything!
+    if (tolerance[0]>2e+06||tolerance[1]>2e+06||tolerance[2]>2e+06||tolerance[3]>2e+06) {
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Tolerance values strange!");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Have you forgotten initializing them?");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put now standard ones (5000,5000,1,1)");
+        tolerance[0]=5000;
+        tolerance[1]=5000;
+        tolerance[2]=1;
+        tolerance[3]=1;
+    }
+
+    Float_t dz, min[5],  max[5];
+    EdbPattern *pat=0;
+
+    for(int i=0; i<npat; i++) {
+
+        pat = pvr->GetPattern(i);
+        if(!pat) continue;
+        Log(3,"EdbPVRQuality::ExtractDataVolume","Got pattern  with %d segments in it.",pat->N());
+
+        // Difference z-values of segment and current pattern.
+        dz = pat->Z() - seg->Z();
+
+        // Maximum Difference in Delta X and Delta Y,
+        // projected along segment axis!
+        min[0] = seg->X() + dz*seg->TX() - tolerance[0];
+        min[1] = seg->Y() + dz*seg->TY() - tolerance[1];
+        max[0] = seg->X() + dz*seg->TX() + tolerance[0];
+        max[1] = seg->Y() + dz*seg->TY() + tolerance[1];
+
+        // Maximum Difference in Delta Tan ThetaX and Delta Tan ThetaY.
+        // Needs to calculated to a Delta Tan Theta ...
+        min[2] = seg->TX()-tolerance[2];
+        max[2] = seg->TX()+tolerance[2];
+        min[3] = seg->TY()-tolerance[3];
+        max[3] = seg->TY()+tolerance[3];
+
+        // W. No cut on W is done in this routine.
+        min[4] =  0.;
+        max[4] = 100.;
+
+        Log(3,"EdbPVRQuality::ExtractDataVolume","Cut values for pattern %d:", i);
+        Log(3,"EdbPVRQuality::ExtractDataVolume"," X: %.01f .. %.01f", min[0],max[0]);
+        Log(3,"EdbPVRQuality::ExtractDataVolume"," Y: %.01f .. %.01f", min[1],max[1]);
+        Log(3,"EdbPVRQuality::ExtractDataVolume","TX: %.01f .. %.01f", min[2],max[2]);
+        Log(3,"EdbPVRQuality::ExtractDataVolume","TY: %.01f .. %.01f", min[3],max[3]);
+
+        EdbPattern* patNew = pat->ExtractSubPattern(min,max);
+        Int_t patNewN= patNew->N();
+        ali->AddPattern( patNew );
+        Log(3,"EdbPVRQuality::ExtractDataVolume","Added pattern with %d segments:", patNewN);
+    }
+
+    //ali->Print();
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Fill new pattern volume...done.");
+    return ali;
+}
+
+
+
 
 
 
@@ -591,8 +782,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
         if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace    Doing Pattern " << i << endl;
 
 
-        eHistYX->Reset(); // important to clean the histogram
-        eHistChi2W->Reset(); // important to clean the histogram
+        eHistXY->Reset(); // important to clean the histogram
+        eHistWChi2->Reset(); // important to clean the histogram
         histPatternBTDensityTanTheta->Reset(); // important to clean the histogram
 
 
@@ -634,8 +825,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
             Float_t sy=0.3;
 
             // For the check, fill the histograms in any case:
-            eHistYX->Fill(seg->Y(),seg->X());
-            eHistChi2W->Fill(seg->W(),seg->Chi2());
+            eHistXY->Fill(seg->X(),seg->Y());
+            eHistWChi2->Fill(seg->W(),seg->Chi2());
 
             // New: Fill also histPatternBTDensityTanTheta
             histPatternBTDensityTanTheta->Fill(seg->Theta());
@@ -653,22 +844,22 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
         }
 
-        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+        if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::CheckEdbPVRecThetaSpace   I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
         // Important to reset histogram before it is filled.
         histPatternBTDensity->Reset();
 
         // Search for empty bins, because they can spoil the overall calulation
         // of the mean value.
-        Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+        Int_t nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
         Int_t nemptybinsXY=0;
         Int_t bincontentXY=0;
         for (int k=1; k<nbins-1; k++) {
-            if (eHistYX->GetBinContent(k)==0) {
+            if (eHistXY->GetBinContent(k)==0) {
                 ++nemptybinsXY;
                 continue;
             }
-            bincontentXY=eHistYX->GetBinContent(k);
+            bincontentXY=eHistXY->GetBinContent(k);
             histPatternBTDensity->Fill(bincontentXY);
             eProfileBTdens_vs_PID_source->Fill(i,bincontentXY);
         }
@@ -678,7 +869,10 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
         // failsafe warning in case that there are many bins with zero content.
         // for now we print a error message: TODO  REBIN THE YX HISTOGRA WITH 2.5x2.5 mm!!!!
-        CheckFilledXYSize();
+        CheckFilledXYSize(eHistXY);
+/// TODO   SHOULDNT BE HERE THE CLONE eHistXYClone histogram be
+        ///        IN THERE (eHistXY is not resetted plate by plate ...).
+
 
         // Save the density in the variable.
         ePatternBTDensity_orig[i]=histPatternBTDensity->GetMean();
@@ -700,9 +894,9 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     // ...
     TFile* file = new TFile(TString(Form("Histograms_CheckEdbPVRecThetaSpace_aliType_%d.root",AliType)),"RECREATE");
     // Write the Histograms into root file:
-    eHistYX->Write();
-    eHistChi2W->Write();
-    eHistChi2W->Write();
+    eHistXY->Write();
+    eHistWChi2->Write();
+    eHistWChi2->Write();
     histPatternBTDensity->Write();
     eProfileBTdens_vs_PID_source->Write();
     histPatternBTDensityTanTheta->Write();
@@ -714,9 +908,9 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     TCanvas* c1 = new TCanvas();
     c1->Divide(2,2);
     c1->cd(1);
-    eHistYX->DrawCopy("colz");
+    eHistXY->DrawCopy("colz");
     c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
+    eHistWChi2->DrawCopy("colz");
     c1->cd(3);
     histPatternBTDensity->DrawCopy("");
     c1->cd(4);
@@ -724,8 +918,8 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
     eProfileBTdens_vs_PID_source->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
     c1->cd();
 
-    eHistYX->Reset();
-    eHistChi2W->Reset();
+    eHistXY->Reset();
+    eHistWChi2->Reset();
 
     TCanvas* c3 = new TCanvas();
     histPatternBTDensityTanTheta->Draw("");
@@ -776,8 +970,9 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
     // European Scanning System size conventions: x=0..125000;y=0..100000).
     // BinArea is 1mmx1mm.
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","SetHistGeometry_OPERA");
-    eHistYX->Reset();
-    eHistYX->SetBins(100,0,100000,120,0,120000);
+    eHistXY->Reset();
+    eHistXY->SetBins(100,0,120000,120,0,100000);
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","SetHistGeometry_OPERA...done");
     return;
 }
@@ -789,8 +984,9 @@ void EdbPVRQuality::SetHistGeometry_MC()
     // MC ORFEO size conventions: x=-xmax..0..+xmax;y=-ymax..0..ymax).
     // BinArea is 1mmx1mm
     Log(3,"EdbPVRQuality::SetHistGeometry_MC","SetHistGeometry_MC");
-    eHistYX->Reset();
-    eHistYX->SetBins(100,-50000,50000,100,-50000,50000);
+    eHistXY->Reset();
+    eHistXY->SetBins(100,-50000,50000,100,-50000,50000);
+    Log(3,"EdbPVRQuality::SetHistGeometry_MC","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_MC","SetHistGeometry_MC...done");
     return;
 }
@@ -803,9 +999,9 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMC()
     // BinArea is 1mmx1mm
 
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","SetHistGeometry_OPERAandMC");
-    eHistYX->Reset();
-    eHistYX->SetBins(250,-125000,125000,250,-125000,125000);
-    if (gEDBDEBUGLEVEL>2) cout << "SetHistGeometry_OPERAandMC::binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    eHistXY->Reset();
+    eHistXY->SetBins(250,-125000,125000,250,-125000,125000);
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMC","SetHistGeometry_OPERAandMC...done");
     return;
 }
@@ -818,9 +1014,9 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625()
     // BinArea is 2.5mmx2.5mm
 
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625","SetHistGeometry_OPERAandMCBinArea625");
-    eHistYX->Reset();
-    eHistYX->SetBins(100,-125000,125000,100,-125000,125000);
-    if (gEDBDEBUGLEVEL>2) cout << "SetHistGeometry_OPERAandMC::binwidth (micron)= " << eHistYX->GetBinWidth(1) << endl;
+    eHistXY->Reset();
+    eHistXY->SetBins(100,-125000,125000,100,-125000,125000);
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625","SetHistGeometry_OPERAandMCBinArea625...done");
     return;
 }
@@ -1193,11 +1389,9 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
         // Now the condition loop:
         // Loop over 20 steps a 0.15,0.145,0.14 ...  down to 0.07
         for (int l=0; l<20; l++) {
-            eHistYX->Reset(); // important to clean the histogram
-            eHistChi2W->Reset(); // important to clean the histogram
-            histPatternBTDensity->Reset(); // important to clean the histogram
-            eHistTYTX->Reset(); // important to clean the histogram
-            eHistTT->Reset();          // important to clean the histogram
+
+            ResetHistosSinglePattern();
+
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
             Int_t npat=pat->N();
@@ -1231,19 +1425,19 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
                 // Constant BT density cut:
                 if (seg->Chi2() >= seg->W()* eCutp1[i] - eCutp0[i]) continue;
 
-                eHistYX->Fill(seg->Y(),seg->X());
-                eHistChi2W->Fill(seg->W(),seg->Chi2());
-                eHistTYTX->Fill(seg->TY(),seg->TX());
+                eHistXY->Fill(seg->X(),seg->Y());
+                eHistWChi2->Fill(seg->W(),seg->Chi2());
+                eHistTXTY->Fill(seg->TX(),seg->TY());
                 eHistTT->Fill(seg->Theta());
                 eHistTTFillcheck->Fill(seg->Theta());
             }
 
-            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
-            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
             for (int k=1; k<nbins-1; k++) {
-                if (eHistYX->GetBinContent(k)==0) continue;
-                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+                if (eHistXY->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistXY->GetBinContent(k));
             }
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -1282,11 +1476,11 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
     TCanvas* c1 = new TCanvas();
     c1->Divide(3,2);
     c1->cd(1);
-    eHistYX->DrawCopy("colz");
+    eHistXY->DrawCopy("colz");
     c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
+    eHistWChi2->DrawCopy("colz");
     c1->cd(3);
-    eHistTYTX->DrawCopy("colz");
+    eHistTXTY->DrawCopy("colz");
     c1->cd(4);
     histPatternBTDensity->DrawCopy("");
     c1->cd(5);
@@ -1300,8 +1494,8 @@ void EdbPVRQuality::Execute_ConstantBTDensity()
 
 
     histPatternBTDensity->Reset();
-    eHistYX->Reset();
-    eHistChi2W->Reset();
+    eHistXY->Reset();
+    eHistWChi2->Reset();
 
     eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
     eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
@@ -1462,8 +1656,8 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
 
             if (gEDBDEBUGLEVEL>2) cout << "Execute_ConstantBTQuality   Doing condition loop = " << l << endl;
 
-            eHistYX->Reset(); // important to clean the histogram
-            eHistChi2W->Reset(); // important to clean the histogram
+            eHistXY->Reset(); // important to clean the histogram
+            eHistWChi2->Reset(); // important to clean the histogram
             histPatternBTDensity->Reset(); // important to clean the histogram
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
@@ -1508,25 +1702,27 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
                 // Constant BT quality cut:
                 if (agreementChi2>eAgreementChi2WDistCut[i]) continue;
 
-                eHistYX->Fill(seg->Y(),seg->X());
-                eHistChi2W->Fill(seg->W(),seg->Chi2());
+                eHistXY->Fill(seg->X(),seg->Y());
+                eHistWChi2->Fill(seg->W(),seg->Chi2());
             }
 
-            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
-            Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            Int_t nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
             Int_t nemptybinsXY=0;
             for (int k=1; k<nbins-1; k++) {
-                if (eHistYX->GetBinContent(k)==0) {
+                if (eHistXY->GetBinContent(k)==0) {
                     ++nemptybinsXY;
                     continue;
                 }
-                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+                histPatternBTDensity->Fill(eHistXY->GetBinContent(k));
             }
 
             // failsafe warning in case that there are many bins with zero content.
             // for now we print a error message: TODO  REBIN THE YX HISTOGRA WITH 2.5x2.5 mm!!!!
-            CheckFilledXYSize();
+            CheckFilledXYSize(eHistXY);
+            /// TODO   SHOULDNT BE HERE THE CLONE eHistXYClone histogram be
+            ///        IN THERE (eHistXY is not resetted plate by plate ...).
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
 
@@ -1573,9 +1769,9 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
     TCanvas* c1 = new TCanvas();
     c1->Divide(2,2);
     c1->cd(1);
-    eHistYX->DrawCopy("colz");
+    eHistXY->DrawCopy("colz");
     c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
+    eHistWChi2->DrawCopy("colz");
     c1->cd(3);
     histPatternBTDensity->DrawCopy("");
     c1->cd(4);
@@ -1596,8 +1792,8 @@ void EdbPVRQuality::Execute_ConstantBTQuality()
     eProfileBTdens_vs_PID_target_rmsY=eProfileBTdens_vs_PID_target->GetRMS(2);
 
     histPatternBTDensity->Reset();
-    eHistYX->Reset();
-    eHistChi2W->Reset();
+    eHistXY->Reset();
+    eHistWChi2->Reset();
     delete histPatternBTDensity;
 
     TCanvas* c2 = new TCanvas();
@@ -1687,11 +1883,8 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
         // Now the condition loop:
         // Loop over 20 steps for the eX2HatCut value:
         for (int l=0; l<20; l++) {
-            eHistYX->Reset(); // important to clean the histogram
-            eHistChi2W->Reset(); // important to clean the histogram
-            histPatternBTDensity->Reset(); // important to clean the histogram
-            eHistTYTX->Reset(); // important to clean the histogram
-            eHistTT->Reset();          // important to clean the histogram
+
+            ResetHistosSinglePattern();
 
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
@@ -1796,20 +1989,20 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
                 // Constant ConstantBTX2Hat density cut:
                 if (X2Hat>eX2HatCut[i]) continue;
 
-                eHistYX->Fill(seg->Y(),seg->X());
-                eHistChi2W->Fill(seg->W(),seg->Chi2());
-                eHistTYTX->Fill(seg->TY(),seg->TX());
+                eHistXY->Fill(seg->X(),seg->Y());
+                eHistWChi2->Fill(seg->W(),seg->Chi2());
+                eHistTXTY->Fill(seg->TX(),seg->TY());
                 eHistTT->Fill(seg->Theta());
                 eHistTTFillcheck->Fill(seg->Theta());
             }
 
 
-            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
-            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
             for (int k=1; k<nbins-1; k++) {
-                if (eHistYX->GetBinContent(k)==0) continue;
-                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+                if (eHistXY->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistXY->GetBinContent(k));
             }
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -1849,11 +2042,11 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
     TCanvas* c1 = new TCanvas();
     c1->Divide(3,2);
     c1->cd(1);
-    eHistYX->DrawCopy("colz");
+    eHistXY->DrawCopy("colz");
     c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
+    eHistWChi2->DrawCopy("colz");
     c1->cd(3);
-    eHistTYTX->DrawCopy("colz");
+    eHistTXTY->DrawCopy("colz");
     c1->cd(4);
     histPatternBTDensity->DrawCopy("");
     c1->cd(5);
@@ -1867,8 +2060,8 @@ void EdbPVRQuality::Execute_ConstantBTX2Hat()
 
 
     histPatternBTDensity->Reset();
-    eHistYX->Reset();
-    eHistChi2W->Reset();
+    eHistXY->Reset();
+    eHistWChi2->Reset();
 
     TCanvas* c2 = new TCanvas();
     c2->Divide(3,1);
@@ -1986,11 +2179,8 @@ void EdbPVRQuality::Execute_RandomCut()
         // Now the condition loop:
         // Loop over 50 steps to determine new BG rate....
         for (int l=0; l<50; l++) {
-            eHistYX->Reset(); // important to clean the histogram
-            eHistChi2W->Reset(); // important to clean the histogram
-            histPatternBTDensity->Reset(); // important to clean the histogram
-            eHistTYTX->Reset(); // important to clean the histogram
-            eHistTT->Reset(); // important to clean the histogram
+
+            ResetHistosSinglePattern();
 
             EdbPattern* pat = (EdbPattern*)eAli_orig->GetPattern(i);
             Int_t npat=pat->N();
@@ -2025,19 +2215,19 @@ void EdbPVRQuality::Execute_RandomCut()
                 if (RandomGenerator->Uniform()>eCutp1[i]) continue;
 
                 // For the check, fill the histograms in any case:
-                eHistYX->Fill(seg->Y(),seg->X());
-                eHistTYTX->Fill(seg->TY(),seg->TX());
+                eHistXY->Fill(seg->X(),seg->Y());
+                eHistTXTY->Fill(seg->TX(),seg->TY());
                 eHistTT->Fill(seg->Theta());
                 eHistTTFillcheck->Fill(seg->Theta());
-                eHistChi2W->Fill(seg->W(),seg->Chi2());
+                eHistWChi2->Fill(seg->W(),seg->Chi2());
             }
 
-            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+            if (gEDBDEBUGLEVEL>2) cout << "I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
-            int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+            int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
             for (int k=1; k<nbins-1; k++) {
-                if (eHistYX->GetBinContent(k)==0) continue;
-                histPatternBTDensity->Fill(eHistYX->GetBinContent(k));
+                if (eHistXY->GetBinContent(k)==0) continue;
+                histPatternBTDensity->Fill(eHistXY->GetBinContent(k));
             }
 
             ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -2075,11 +2265,11 @@ void EdbPVRQuality::Execute_RandomCut()
     TCanvas* c1 = new TCanvas();
     c1->Divide(3,2);
     c1->cd(1);
-    eHistYX->DrawCopy("colz");
+    eHistXY->DrawCopy("colz");
     c1->cd(2);
-    eHistChi2W->DrawCopy("colz");
+    eHistWChi2->DrawCopy("colz");
     c1->cd(3);
-    eHistTYTX->DrawCopy("colz");
+    eHistTXTY->DrawCopy("colz");
     c1->cd(4);
     histPatternBTDensity->DrawCopy("");
     c1->cd(5);
@@ -2089,10 +2279,10 @@ void EdbPVRQuality::Execute_RandomCut()
     eHistTT->DrawCopy("");
     c1->cd();
 
-    eHistYX->Reset();
-    eHistTYTX->Reset();
+    eHistXY->Reset();
+    eHistTXTY->Reset();
     eHistTT->Reset();
-    eHistChi2W->Reset();
+    eHistWChi2->Reset();
 
     eProfileBTdens_vs_PID_source_meanX=eProfileBTdens_vs_PID_source->GetMean(1);
     eProfileBTdens_vs_PID_source_meanY=eProfileBTdens_vs_PID_source->GetMean(2);
@@ -2418,7 +2608,7 @@ EdbPVRec* EdbPVRQuality::CreateEdbPVRec()
 //___________________________________________________________________________________
 
 
-Int_t EdbPVRQuality::CheckFilledXYSize()
+Int_t EdbPVRQuality::CheckFilledXYSize(TH2F* HistXY)
 {
     // ...............................................
     // Check the bins filled in the actual pattern.
@@ -2432,19 +2622,18 @@ Int_t EdbPVRQuality::CheckFilledXYSize()
     // i.e. switch to larger bin areas (for example 1mm^2 to 2.5x2.5)
     // ...............................................
 
-    if (gEDBDEBUGLEVEL>3)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize() return maximum/minimum entries of  eHistYX    -----" << endl;
-    Int_t nbx,nby=0;
-    nbx=eHistYX->GetNbinsX();
-    nby=eHistYX->GetNbinsY();
+    if (gEDBDEBUGLEVEL>3)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize(TH2F* h2) return maximum/minimum entries of histogram  HistXY   -----" << endl;
+    Int_t nbx=HistXY->GetNbinsX();
+    Int_t nby=HistXY->GetNbinsY();
 
-    Int_t n1x= FindFirstBinAbove(eHistYX,0,1);
-    Int_t n1y= FindFirstBinAbove(eHistYX,0,2);
-    Int_t n2x= FindLastBinAbove(eHistYX,0,1);
-    Int_t n2y= FindLastBinAbove(eHistYX,0,2);
+    Int_t n1x= FindFirstBinAbove(HistXY,0,1);
+    Int_t n1y= FindFirstBinAbove(HistXY,0,2);
+    Int_t n2x= FindLastBinAbove(HistXY,0,1);
+    Int_t n2y= FindLastBinAbove(HistXY,0,2);
     Int_t width_x=0;
     Int_t width_y=0;
-    width_x=TMath::Abs(eHistYX->GetXaxis()->GetBinCenter(n1x)-eHistYX->GetXaxis()->GetBinCenter(n2x));
-    width_y=TMath::Abs(eHistYX->GetYaxis()->GetBinCenter(n1y)-eHistYX->GetYaxis()->GetBinCenter(n2y));
+    width_x=TMath::Abs(HistXY->GetXaxis()->GetBinCenter(n1x)-HistXY->GetXaxis()->GetBinCenter(n2x));
+    width_y=TMath::Abs(HistXY->GetYaxis()->GetBinCenter(n1y)-HistXY->GetYaxis()->GetBinCenter(n2y));
 
     // Now check the number of empty bins between! the filled area
     // within (FindFirstBinAbove,FindLastBinAbove)
@@ -2454,12 +2643,12 @@ Int_t EdbPVRQuality::CheckFilledXYSize()
     for (Int_t i=n1x; i<n2x; ++i) {
         for (Int_t j=n1y; j<n2y; ++j) {
             ++nBins;
-            if (eHistYX->GetBinContent(i,j)==0) continue;
-            if (eHistYX->GetBinContent(i,j)==0) continue;
+            if (HistXY->GetBinContent(i,j)==0) continue;
             ++NonEmptyBins;
         }
     }
     Float_t FractionOfEmptyBins=1-(Float_t(NonEmptyBins)/Float_t(nBins));
+    //cout << "INFO void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
 
     if (FractionOfEmptyBins>0.1) {
         cout << "WARNING: void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
@@ -2469,15 +2658,15 @@ Int_t EdbPVRQuality::CheckFilledXYSize()
     if (gEDBDEBUGLEVEL>3) {
         cout << "----      NonEmptyBins bins in covered area:  = " << NonEmptyBins << endl;
         cout << "----      nBins totale bins in covered area:  = " << nBins << endl;
-        cout << "----      Extrem Center Endpoints of eHistYX --- " << endl;
+        cout << "----      Extrem Center Endpoints of eHistXY --- " << endl;
         cout << "----      nbxMin= " << n1x << endl;
         cout << "----      nbxMax= " << n1y << endl;
         cout << "----      nbyMin= " << n2x << endl;
         cout << "----      nbyMax= " << n2y << endl;
-        cout << "----      nbxMin= " << eHistYX->GetXaxis()->GetBinCenter(n1x) << endl;
-        cout << "----      nbxMax= " << eHistYX->GetYaxis()->GetBinCenter(n1y) << endl;
-        cout << "----      nbxMin= " << eHistYX->GetXaxis()->GetBinCenter(n2x) << endl;
-        cout << "----      nbxMax= " << eHistYX->GetYaxis()->GetBinCenter(n2y) << endl;
+        cout << "----      nbxMin= " << eHistXY->GetXaxis()->GetBinCenter(n1x) << endl;
+        cout << "----      nbxMax= " << eHistXY->GetYaxis()->GetBinCenter(n1y) << endl;
+        cout << "----      nbxMin= " << eHistXY->GetXaxis()->GetBinCenter(n2x) << endl;
+        cout << "----      nbxMax= " << eHistXY->GetYaxis()->GetBinCenter(n2y) << endl;
         cout << "-----     void EdbPVRQuality::CheckFilledXYSize() ... done. " << endl;
     }
     return 0;
@@ -2668,9 +2857,9 @@ TObjArray* EdbPVRQuality::FindFakeDoubleBTs(EdbPVRec* aliSource)
         } // of for (int j = 0; j < nPat-1; j++ )
     } // for (int i = 0; i <aliSource->Npatterns(); i++ )
 
-    
+
     Double_t ratioFakeDoubleBTsNSegTotal = (Double_t)DoubleBTArray->GetEntries()/NSegTotal;
-    
+
     cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: " << endl;
     cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: We found " << DoubleBTArray->GetEntries()  << " double segments too close to each other to be different basetracks." << endl;
     cout << "EdbPVRQuality::FindFakeDoubleBTs() Statistics: Out of in total a ratio of: " << ratioFakeDoubleBTsNSegTotal << endl;
@@ -3089,7 +3278,9 @@ EdbPVRec* EdbPVRQuality::Remove_Passing(EdbPVRec* aliSource)
 
     cout << "EdbPVRQuality::Remove_Passing() Totally removed segments= " << totallyRemovedSegments << endl;
     cout << "EdbPVRQuality::Remove_Passing()...done." << endl;
-    return aliTarget;
+    return aliTarget;  // Warning, cppcheck says here:
+    // [EdbPVRQuality.cxx:3281]: (error) Memory leak: Track
+    // Dont know why yet ...
 }
 
 //___________________________________________________________________________________
@@ -3418,10 +3609,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTDensity()
                 cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTDensity   Doing now the condition loop:  l = " << l << ", the cut condition reads:  seg->Chi2() >= seg->W()* " << Cutp1 << " - " << Cutp0 << endl;
 
                 // Important to clean the histograms:
-                eHistYX->Reset(); // important to clean the histogram
-                eHistYX->SetMinimum(1);
-                // eHistYX->SetMaximum(250); /// to be calculated accordingly !! ???ß WHY WHY WHY
-                eHistChi2W->Reset(); // important to clean the histogram
+                eHistXY->Reset(); // important to clean the histogram
+                eHistXY->SetMinimum(1);
+                // eHistXY->SetMaximum(250); /// to be calculated accordingly !! ???ß WHY WHY WHY
+                eHistWChi2->Reset(); // important to clean the histogram
                 histPatternBTDensity->Reset(); // important to clean the histogram
                 eHistTT->Reset();  // important to clean the histogram
                 eHistTTClone->Reset();  // important to clean the histogram
@@ -3466,10 +3657,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTDensity()
                     // Increase counter for number of taken segments in tan theta bin:
                     ni[angspacecounter] += 1;
                     // Fill other histograms anyway
-                    eHistYX->Fill(seg->Y(),seg->X());
-                    eHistTYTX->Fill(seg->TY(),seg->TX());
+                    eHistXY->Fill(seg->X(),seg->Y());
+                    eHistTXTY->Fill(seg->TX(),seg->TY());
                     eHistTT->Fill(tt);
-                    eHistChi2W->Fill(seg->W(),seg->Chi2());
+                    eHistWChi2->Fill(seg->W(),seg->Chi2());
                 } // Loop over the segments.
 
                 // Do the quadratic fit for the minimumTTBin only at the first time.
@@ -3489,17 +3680,17 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTDensity()
                     cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTDensity   BTNumberLevelAngularSpace[angspacecounter] = " << BTNumberLevelAngularSpace[angspacecounter] << endl;
                 } // if (l==0)
 
-                int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+                int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
                 int NemptyBins=0;
                 int NFilledBins=0;
                 for (int k=1; k<nbins-1; k++) {
-                    if (eHistYX->GetBinContent(k)==0) {
+                    if (eHistXY->GetBinContent(k)==0) {
                         ++NemptyBins;
                         continue;
                     }
-                    // due to the changed areasize in eHistYX, adapt the fill weight
-                    histPatternBTDensity->Fill(Double_t(eHistYX->GetBinContent(k))/ 6.25 );
-                    histPatternBTDensities[angspacecounter]->Fill(eHistYX->GetBinContent(k)/ 6.25);
+                    // due to the changed areasize in eHistXY, adapt the fill weight
+                    histPatternBTDensity->Fill(Double_t(eHistXY->GetBinContent(k))/ 6.25 );
+                    histPatternBTDensities[angspacecounter]->Fill(eHistXY->GetBinContent(k)/ 6.25);
                     ++NFilledBins;
                 }
                 ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -3702,10 +3893,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTX2Hat() {
                 cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTX2Hat   Doing now the condition loop:  l = " << l << ", the cut condition reads:  Xi2Hat < " << Cutp1 << endl;
 
                 // Important to clean the histograms:
-                eHistYX->Reset(); // important to clean the histogram
-                eHistYX->SetMinimum(1);
-                ///eHistYX->SetMaximum(250); /// to be calculated accordingly !!  WHY ???
-                eHistChi2W->Reset(); // important to clean the histogram
+                eHistXY->Reset(); // important to clean the histogram
+                eHistXY->SetMinimum(1);
+                ///eHistXY->SetMaximum(250); /// to be calculated accordingly !!  WHY ???
+                eHistWChi2->Reset(); // important to clean the histogram
                 histPatternBTDensity->Reset(); // important to clean the histogram
                 eHistTT->Reset();  // important to clean the histogram
                 eHistTTClone->Reset();  // important to clean the histogram
@@ -3824,10 +4015,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTX2Hat() {
                     // Increase counter for number of taken segments in tan theta bin:
                     ni[angspacecounter] += 1;
                     // Fill other histograms anyway
-                    eHistYX->Fill(seg->Y(),seg->X());
-                    eHistTYTX->Fill(seg->TY(),seg->TX());
+                    eHistXY->Fill(seg->X(),seg->Y());
+                    eHistTXTY->Fill(seg->TX(),seg->TY());
                     eHistTT->Fill(tt);
-                    eHistChi2W->Fill(seg->W(),seg->Chi2());
+                    eHistWChi2->Fill(seg->W(),seg->Chi2());
                 } // Loop over the segments. For the second time. Done.
 
 
@@ -3853,17 +4044,17 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTX2Hat() {
                     cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_ConstantBTX2Hat   BTNumberLevelAngularSpace[angspacecounter] = " << BTNumberLevelAngularSpace[angspacecounter] << endl;
                 } // if (l==0)
 
-                int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+                int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
                 int NemptyBins=0;
                 int NFilledBins=0;
                 for (int k=1; k<nbins-1; k++) {
-                    if (eHistYX->GetBinContent(k)==0) {
+                    if (eHistXY->GetBinContent(k)==0) {
                         ++NemptyBins;
                         continue;
                     }
-                    // due to the changed areasize in eHistYX, adapt the fill weight
-                    histPatternBTDensity->Fill(Double_t(eHistYX->GetBinContent(k))/ 6.25 );
-                    histPatternBTDensities[angspacecounter]->Fill(eHistYX->GetBinContent(k)/ 6.25);
+                    // due to the changed areasize in eHistXY, adapt the fill weight
+                    histPatternBTDensity->Fill(Double_t(eHistXY->GetBinContent(k))/ 6.25 );
+                    histPatternBTDensities[angspacecounter]->Fill(eHistXY->GetBinContent(k)/ 6.25);
                     ++NFilledBins;
                 }
                 ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -4019,10 +4210,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut() {
                 cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut   Doing now the condition loop:  l = " << l << ", the cut condition reads:  RandomGenerator->Uniform() > " << Cutp1 <<  endl;
 
                 // Important to clean the histograms:
-                eHistYX->Reset(); // important to clean the histogram
-                eHistYX->SetMinimum(1);
-                /// eHistYX->SetMaximum(250); /// to be calculated accordingly !!  WHY ???
-                eHistChi2W->Reset(); // important to clean the histogram
+                eHistXY->Reset(); // important to clean the histogram
+                eHistXY->SetMinimum(1);
+                /// eHistXY->SetMaximum(250); /// to be calculated accordingly !!  WHY ???
+                eHistWChi2->Reset(); // important to clean the histogram
                 histPatternBTDensity->Reset(); // important to clean the histogram
                 eHistTT->Reset();  // important to clean the histogram
                 eHistTTClone->Reset();  // important to clean the histogram
@@ -4069,10 +4260,10 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut() {
                     // Increase counter for number of taken segments in tan theta bin:
                     ni[angspacecounter] += 1;
                     // Fill other histograms anyway
-                    eHistYX->Fill(seg->Y(),seg->X());
-                    eHistTYTX->Fill(seg->TY(),seg->TX());
+                    eHistXY->Fill(seg->X(),seg->Y());
+                    eHistTXTY->Fill(seg->TX(),seg->TY());
                     eHistTT->Fill(tt);
-                    eHistChi2W->Fill(seg->W(),seg->Chi2());
+                    eHistWChi2->Fill(seg->W(),seg->Chi2());
                 } // Loop over the segments.
 
                 // Do the quadratic fit for the minimumTTBin only at the first time.
@@ -4092,17 +4283,17 @@ void EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut() {
                     cout << "EdbPVRQuality::Execute_EqualizeTanThetaSpace_RandomCut   BTNumberLevelAngularSpace[angspacecounter] = " << BTNumberLevelAngularSpace[angspacecounter] << endl;
                 } // if (l==0)
 
-                int nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+                int nbins=eHistXY->GetNbinsX()*eHistXY->GetNbinsY();
                 int NemptyBins=0;
                 int NFilledBins=0;
                 for (int k=1; k<nbins-1; k++) {
-                    if (eHistYX->GetBinContent(k)==0) {
+                    if (eHistXY->GetBinContent(k)==0) {
                         ++NemptyBins;
                         continue;
                     }
-                    // due to the changed areasize in eHistYX, adapt the fill weight
-                    histPatternBTDensity->Fill(Double_t(eHistYX->GetBinContent(k))/ 6.25 );
-                    histPatternBTDensities[angspacecounter]->Fill(eHistYX->GetBinContent(k)/ 6.25);
+                    // due to the changed areasize in eHistXY, adapt the fill weight
+                    histPatternBTDensity->Fill(Double_t(eHistXY->GetBinContent(k))/ 6.25 );
+                    histPatternBTDensities[angspacecounter]->Fill(eHistXY->GetBinContent(k)/ 6.25);
                     ++NFilledBins;
                 }
                 ePatternBTDensity_modified[i]=histPatternBTDensity->GetMean();
@@ -4183,7 +4374,7 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
     cout << "EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource)" << endl;
 
     cout << "EdbPVRQuality::FillHistosVolume()  Call FillHistosPattern for all patterns" << endl;
-    cout << "EdbPVRQuality::FillHistosVolume()  Histograms eHistYX, eHistChi2W, eHistTYTX, eHistTT and profile histo " << endl;
+    cout << "EdbPVRQuality::FillHistosVolume()  Histograms eHistXY, eHistWChi2, eHistTXTY, eHistTT and profile histo " << endl;
     cout << "EdbPVRQuality::FillHistosVolume()  are then filled with all segments from the volume." << endl;
     cout << "EdbPVRQuality::FillHistosVolume()  Routine can be called with source or target volume" << endl;
 
@@ -4191,16 +4382,19 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
         cout << "EdbPVRQuality::FillHistosVolume()  aliSource==NULL. Nothing to fill. Return." << endl;
     }
 
+
+    // Reset Histograms:
+    ResetHistos();
+
+    /*
     if (aliSource == eAli_modified) {
         eProfileBTdens_vs_PID_target->Reset();
     }
     if (aliSource == eAli_orig) {
         eProfileBTdens_vs_PID_source->Reset();
     }
+    */
 
-    // Reset the Pattern and volume density histograms
-    eHistBTDensityPattern->Reset();
-    eHistBTDensityVolume->Reset();
 
     //-------------------------------------------------------------------
     Float_t weight=1;
@@ -4256,23 +4450,15 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
 
     // Better work with a clone, otherwise reset and addition stuff
     // is not working well
-    TH2F* eHistYXClone = (TH2F*)eHistYX->Clone();
+    TH2F* eHistXYClone = (TH2F*)eHistXY->Clone();
+
+    // Clone is always reseted, since it is responsible for the BT density calculation,
+    // which is pattern by pattern based
+    eHistXYClone->Reset();
 
     // kTRUE is default, since the cut-algorithms work per pattern,
     // instead per volume...
-    if (DoResetHistos==kTRUE) {
-        eHistYX->Reset(); // important to clean the histogram
-        eHistChi2W->Reset(); // important to clean the histogram
-        eHistTT->Reset(); // important to clean the histogram
-        eHistTTFillcheck->Reset(); // important to clean the histogram
-        eHistChi2->Reset();
-        eHistW->Reset();
-        eHistWTilde->Reset();
-    }
-    // Clone is always reseted, since it is responsible for the BT density calculation,
-    // which is pattern by pattern based
-    eHistYXClone->Reset();
-
+    if (DoResetHistos==kTRUE) ResetHistosSinglePattern();
 
     EdbPattern* pat = (EdbPattern*)aliSource->GetPattern(patNR);
     Int_t npat=pat->N();
@@ -4288,7 +4474,7 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
         // We take it ONLY and ONLY into account if it is especially wished
         // by the user!
         // Therefore (s)he needs to know how many Gauge Coupling Parameters
-        // in the Standard Model exist (at least)...
+        // in the Standard Model exist (at least)... (Hardcoded).
         Bool_t result=kTRUE;
         if (seg->MCEvt()>0) {
             if (eBTDensityLevelCalcMethodMCConfirmationNumber==18 && eBTDensityLevelCalcMethodMC==kTRUE) {
@@ -4305,12 +4491,13 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
         if ( kFALSE == result ) continue;
 
         // For the check, fill the histograms in any case:
-        eHistYXClone->Fill(seg->Y(),seg->X());
-        eHistYX->Fill(seg->Y(),seg->X());
-        eHistTYTX->Fill(seg->TY(),seg->TX());
+        eHistXYClone->Fill(seg->Y(),seg->X());
+
+        eHistXY->Fill(seg->X(),seg->Y());
+        eHistTXTY->Fill(seg->TX(),seg->TY());
         eHistTT->Fill(seg->Theta());
         eHistTTFillcheck->Fill(seg->Theta());
-        eHistChi2W->Fill(seg->W(),seg->Chi2());
+        eHistWChi2->Fill(seg->W(),seg->Chi2());
 
         eHistChi2->Fill(seg->Chi2());
         eHistW->Fill(seg->W());
@@ -4318,31 +4505,43 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
 
     } // for (Int_t j=0; j<npat; j++)
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::FillHistosPattern  I have filled the eHistYX Histogram. Entries = " << eHistYX->GetEntries() << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::FillHistosPattern  I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
     // Important to reset (pattern) histogram before it is filled.
     eHistBTDensityPattern->Reset();
 
     // Search for empty bins, because they can spoil the overall calulation
     // of the mean value.
-    Int_t nbins=eHistYX->GetNbinsX()*eHistYX->GetNbinsY();
+    // Important: work on the clone, because the original is not resetted.
+    Int_t nbins=eHistXYClone->GetNbinsX()*eHistXYClone->GetNbinsY();
+//     cout << "eHistXYClone->GetNbinsX() = " << eHistXYClone->GetNbinsX() << endl;
+//     cout << "eHistXYClone->GetNbinsY() = " << eHistXYClone->GetNbinsY() << endl;
     Int_t nemptybinsXY=0;
     Int_t bincontentXY=0;
     for (int k=1; k<nbins-1; k++) {
-        if (eHistYXClone->GetBinContent(k)==0) {
-            ++nemptybinsXY;
+        if (eHistXYClone->GetBinContent(k)==0) {
+            ++nemptybinsXY; // do I need this variable at all ???
+            // not anymore, since check is done in function down there...
             continue;
         }
-        bincontentXY=eHistYXClone->GetBinContent(k);
+        bincontentXY=eHistXYClone->GetBinContent(k);
 
         eHistBTDensityPattern->Fill(bincontentXY);
         eHistBTDensityVolume->Fill(bincontentXY);
         histProfileBTdens_vs_PID->Fill(patNR,bincontentXY);
     }
+//     cout << "For the eHistXYClone histogram for this pattern, nemptybinsXY = " << nemptybinsXY << endl;
+//     cout << "For the eHistXYClone histogram for this pattern, nbins = " << nbins << endl;
+
+    // KOMMENTAR
+//     new TCanvas();
+//     eHistXYClone->DrawClone("colz");
+    // KOMMENTAR ENDE
+
 
     // failsafe warning in case that there are many bins with zero content.
     // for now we print a error message: tODO  REBIN THE YX HISTOGRA WITH 2.5x2.5 mm!!!!
-    CheckFilledXYSize();
+    CheckFilledXYSize(eHistXYClone);
 
     // Save the density in the corresponding variable
     if (aliSource == eAli_modified) {
@@ -4354,17 +4553,14 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
 
     // Do not reset the histograms, since the filled histos will be needed in
     // the DetermineCutTTReductionFactor function.
-    // dont...eHistYX->Reset();
-    // dont...eHistTYTX->Reset();
+    // dont...eHistXY->Reset();
+    // dont...eHistTXTY->Reset();
     // dont...eHistTT->Reset();
-    // dont...eHistChi2W->Reset();
+    // dont...eHistWChi2->Reset();
 
-    
-    
-    // Memory Management: delete the cloned histogram   ! ? ! ? !
-//     cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)    Memory Management: delete the cloned histogram   ! ? ! ?" << endl;
-    delete eHistYXClone;
-    
+    // Memory Management: delete the cloned histogram.
+    delete eHistXYClone;
+
     //cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)...done" << endl;
     return;
 }

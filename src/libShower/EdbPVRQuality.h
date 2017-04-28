@@ -42,6 +42,8 @@ private:
     // The source and target EdbPVRec objects:
     EdbPVRec* eAli_orig;
     EdbPVRec* eAli_modified;
+    EdbPVRec* eAli_pointer; // to be implermented: pointer to the
+    // desired eAli object: orig or modified  TOODOO....
     Bool_t    eNeedModified;
     Bool_t    eIsSource;
     Bool_t    eIsTarget;
@@ -65,9 +67,9 @@ private:
     // Histograms for calculations and crosscheck drawings
     // Are either filled per plate (FillHistosPattern)
     // for the whole pattern (CheckEdbPVRec)
-    TH2F*		eHistChi2W;
-    TH2F*		eHistYX;
-    TH2F*		eHistTYTX;
+    TH2F*		eHistWChi2;
+    TH2F*		eHistXY;
+    TH2F*		eHistTXTY;
     TH1F*		eHistTT;
     TH1F*		eHistChi2;
     TH1F*		eHistW;
@@ -177,6 +179,8 @@ protected:
 
     void Set0();
     void Init();
+    void ResetHistos();
+    void ResetHistosSinglePattern();
 
 public:
 
@@ -265,7 +269,7 @@ public:
     }
 
     inline   TH2F* GetHistChi2W() {
-        return eHistChi2W;
+        return eHistWChi2;
     }
 
 
@@ -280,26 +284,28 @@ public:
     }
 
     inline   TH2F* GetHistYX() {
-        return eHistYX;
+        return eHistXY;
     }
     inline   TH1F* GetHistTT() {
         return eHistTT;
     }
     inline   TH2F* GetHistTYTX() {
-        return eHistTYTX;
+        return eHistTXTY;
     }
     inline   TH1F* GetHistTTFillcheck() {
         return eHistTTFillcheck;
     }
 
 
-    inline Float_t     GetBTDensity(Int_t patNR) {
+    inline Float_t     GetBTDensity(Int_t patNR=-1) {
         return GetBTDensity_orig(patNR);
     }
-    inline Float_t     GetBTDensity_orig(Int_t patNR) {
+    inline Float_t     GetBTDensity_orig(Int_t patNR=-1) {
+        if (patNR==-1) return  eProfileBTdens_vs_PID_source_meanY;
         return ePatternBTDensity_orig[patNR];
     }
-    inline Float_t     GetBTDensity_modified(Int_t patNR) {
+    inline Float_t     GetBTDensity_modified(Int_t patNR=-1) {
+        if (patNR==-1) return  eProfileBTdens_vs_PID_target_meanY;
         return ePatternBTDensity_modified[patNR];
     }
 
@@ -400,12 +406,14 @@ public:
     EdbPVRec* CreatePVRWithExcludedSegmentList(EdbPVRec* aliSource, TObjArray *SegmentArray);
     EdbPVRec* CreateEdbPVRec();
 
-    TCanvas* GetQualityPlots(Int_t aliSourceType=0);
+    TCanvas* GetQualityPlots(Int_t CountNr=0, Int_t aliSourceType=0);
+    TCanvas* GetQualityPlotsSingle(Int_t aliSourceType=0, Int_t Plottype=-1, Int_t CountNr=0);
+
+    EdbPVRec* ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t tolerance[4]);
 
 
+    Int_t CheckFilledXYSize(TH2F* HistXY);
 
-
-    Int_t CheckFilledXYSize();
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
