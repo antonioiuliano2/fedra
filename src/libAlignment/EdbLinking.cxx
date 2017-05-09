@@ -632,7 +632,7 @@ void EdbLinking::DumpDoubletsTree(EdbAlignmentV &adup, const char *name)
   {
     EdbSegP *s0 = (EdbSegP*)(adup.eS[0].At(i));
     EdbSegP *s1 = (EdbSegP*)(adup.eS[1].At(i));
-    if( s0->Flag() !=-10)
+    if( s0->Flag() ==-10)
       dup.Fill( s0, s1);
   }
   dup.WriteTree();

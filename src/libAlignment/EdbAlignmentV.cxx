@@ -72,10 +72,9 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
   
   int nout=0;
   int n = CheckEqualArr(eS[0], eS[1]);
-  EdbSegP *s1,*s2;
   for(int i=0; i<n; i++) {
-    s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-    s2 = (EdbSegP*)eS[1].UncheckedAt(i);
+    EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
+    EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
     if( s1->Flag()==-10 && s2->Flag()==-10) continue;
     if(checkview>0) if( s2->Aid(0)==s1->Aid(0) && s2->Aid(1)==s1->Aid(1) && s2->Side()==s1->Side() )    continue;
     if( !IsInsideDVsame(*s1,*s2) )                                                                      continue;
@@ -95,8 +94,8 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
   //check 
   int miss=0, wrong=0;
   for(int i=0; i<n; i++) {
-    s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-    s2 = (EdbSegP*)eS[1].UncheckedAt(i);
+    EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
+    EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
     if( s1->Flag()==-10 && s2->Flag()==-10 )                  continue;
     if( s1->Flag()!=-10 && s2->Flag()!=-10 )        { miss++; continue;}
     if( s1->Flag()==-10 && (s1->W() > s2->W()) )    {
