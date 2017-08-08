@@ -15,6 +15,10 @@ using namespace std;
 // The EdbPVRQuality class basically equals the number of basetracks per unit area
 // to a maximum upper value (if necessary) by adapting the quality cut for a single
 // basetrack.
+//
+// The newer version of this class checks for density per area
+// and per angular space, this might be more appropriate for reconstruction
+// of some cases.
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -183,13 +187,13 @@ void EdbPVRQuality::ResetHistos()
     // Reset Default Histograms
     Log(2,"EdbPVRQuality::ResetHistos","ResetHistos");
 
+    // Reset histos for all patterns:
     ResetHistosSinglePattern();
-
+    
+    // Reset other histos for volume
     eHistBTDensityVolume->Reset();
-    // Reset also Profile Histograms here???
     eProfileBTdens_vs_PID_source->Reset();
     eProfileBTdens_vs_PID_target->Reset();
-
 
     Log(2,"EdbPVRQuality::ResetHistos","ResetHistos...done.");
 }
@@ -199,7 +203,7 @@ void EdbPVRQuality::ResetHistos()
 void EdbPVRQuality::ResetHistosSinglePattern()
 {
     // Reset Histograms which are filled for one pattern
-    Log(2,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern");
+    Log(3,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern");
     eHistXY->Reset();
     eHistTXTY->Reset();
     eHistWChi2->Reset();
@@ -209,7 +213,7 @@ void EdbPVRQuality::ResetHistosSinglePattern()
     eHistWTilde->Reset();
     eHistTTFillcheck->Reset();
     eHistBTDensityPattern->Reset();
-    Log(2,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern...done.");
+    Log(3,"EdbPVRQuality::ResetHistosSinglePattern","ResetHistosSinglePattern...done.");
 }
 
 //______________________________________________________________________________
@@ -229,7 +233,6 @@ void EdbPVRQuality::Set0()
     eCutMethod=1;
     eCutMethodString="ConstantBTDensityInAngularBins";
 
-
     // Default BT density level for which the standard cutroutine
     // will be put. This is for all tangens theta values integrated.
     eBTDensityLevel=20; // #BT/mm2
@@ -238,7 +241,6 @@ void EdbPVRQuality::Set0()
     // soon to be deprecated... in favour of ... (???)
     eCutTTSqueezeFactor = 0.5;
     for (int i=0; i<12; i++) eCutTTReductionFactor[i] = 0.5;
-
 
     // Default BT density level will use only Data-segments for
     // data calculation and segments of the same MC-event number.
@@ -319,7 +321,8 @@ void EdbPVRQuality::Init()
     // to be created only ONE time per class instance.
 
     Log(2,"EdbPVRQuality::Init","Init");
-
+    
+    // Create all the needed histograms:
     eProfileBTdens_vs_PID_source = new TProfile("eProfileBTdens_vs_PID_source","eProfileBTdens_vs_PID_source",114,-0.5,113.5,0,200);
     eProfileBTdens_vs_PID_target = new TProfile("eProfileBTdens_vs_PID_target","eProfileBTdens_vs_PID_target",114,-0.5,113.5,0,200);
 
@@ -348,6 +351,8 @@ void EdbPVRQuality::Init()
     eHistBTDensityPattern = new TH1F("eHistBTDensityPattern","eHistBTDensityPattern",200,0,200);
     eHistBTDensityVolume = new TH1F("eHistBTDensityVolume","eHistBTDensityVolume",200,0,200);
 
+    // Create arrays for tracks/segments which are to be 
+    // removed after cleaning/ are to be kept:
     // Arrays for stored BTs in TT space
     for (int i = 0; i <12; i++ ) {
         eArrayPatternTTSource[i] = new TObjArray();
@@ -367,6 +372,7 @@ void EdbPVRQuality::Init()
     //if (eHistGeometry==0) SetHistGeometry_OPERA();
     SetHistGeometry_OPERAandMC();
 //     SetHistGeometry_OPERAandMCBinArea625();
+//     SetHistGeometry_OPERAandMCBinArea4mm2();
 
     Log(2,"EdbPVRQuality::Init","Init...done.");
     return;
@@ -447,9 +453,9 @@ void EdbPVRQuality::CheckEdbPVRec()
 {
     // Main function to check if the EdbPVRec object of the scanned data is of low/high background.
     // Following steps are carried out:
-    //  Get plate, count number of basetracks in the unit area (1x1mm^2).
-    //  Fill (draw if desired (like in EDA display)) histogram with the entries of the unit area.
-    //  Get mean of the histogram, compare this value with the reference value.
+    //  * Get plate, count number of basetracks in the unit area (1x1mm^2).
+    //  * Fill (draw if desired (like in EDA display)) histogram with the entries of the unit area.
+    //  * Get mean of the histogram, compare this value with the reference value.
     // The histogram covers all the area of one emulsion. (for the record: the old ORFEO MC
     // simulation gives not the same position as data does. The area of the histogramm was largely
     // increased to cover both cases).
@@ -469,9 +475,12 @@ void EdbPVRQuality::CheckEdbPVRec()
     // No assignment for the  eProfileBTdens_vs_PID_target  histogram yet.
     // This will be done in one of the two Execute_/Cut_ functions.
 
-    cout << "TO BE DONE HERE: REPORT IF BACKGROUND IS TO HIGH, AND WHAT IS THE CLASS DOING THEN! " << endl;
-    cout << "INFORMATION ON THE SOURCE VOLUME. Average basetrack density is " << eProfileBTdens_vs_PID_source_meanY << " which means ..." << endl;
+    // TO BE DONE HERE ...
+    
+    cout << "EdbPVRQuality::CheckEdbPVRec TO BE DONE HERE: REPORT IF BACKGROUND IS TO HIGH, AND WHAT IS THE CLASS DOING THEN! " << endl;
+    cout << "EdbPVRQuality::CheckEdbPVRec INFORMATION ON THE SOURCE VOLUME. Average basetrack density is " << eProfileBTdens_vs_PID_source_meanY << " which means ..." << endl;
 
+    // TO BE DONE HERE ...
 
     Log(2,"EdbPVRQuality::CheckEdbPVRec","CheckEdbPVRec...done");
     return;
@@ -481,14 +490,15 @@ void EdbPVRQuality::CheckEdbPVRec()
 //______________________________________________________________________________
 TCanvas* EdbPVRQuality::GetQualityPlots(Int_t CountNr, Int_t aliSourceType)
 {
+    // Get a canvas containing basetrack information about the given volume.
+    cout << "EdbPVRQuality::GetQualityPlots  CountNr=" << CountNr << " aliSourceType=" << aliSourceType << endl;
 
     if (!eIsSource) {
-        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
+        cout << "WARNING    EdbPVRQuality::GetQualityPlots  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
         return NULL;
     }
-
     if (aliSourceType==1 && !eIsTarget) {
-        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsTarget = " << eIsTarget << ". This means no target set. Return!" << endl;
+        cout << "WARNING    EdbPVRQuality::GetQualityPlots  eIsTarget = " << eIsTarget << ". This means no target set. Return!" << endl;
         return NULL;
     }
 
@@ -501,110 +511,80 @@ TCanvas* EdbPVRQuality::GetQualityPlots(Int_t CountNr, Int_t aliSourceType)
 
     TCanvas* c1 = new TCanvas(Form("CanvasQualityPlots_%d_%d",CountNr,aliSourceType),Form("CanvasQualityPlots_%d_%d",CountNr,aliSourceType),1600,1000);
     c1->Divide(3,2);
-    c1->cd(1);
-    eHistXY->Draw("colz");
-    eHistXY->GetXaxis()->SetRangeUser(eHistXY->GetMean(1)-eHistXY->GetRMS(1)*3,eHistXY->GetMean(1)+eHistXY->GetRMS(1)*3);
-    eHistXY->GetYaxis()->SetRangeUser(eHistXY->GetMean(2)-eHistXY->GetRMS(2)*3,eHistXY->GetMean(2)+eHistXY->GetRMS(2)*3);
-    eHistXY->GetXaxis()->SetTitle("X /#mum");
-    eHistXY->GetYaxis()->SetTitle("Y /#mum");
-    eHistXY->GetYaxis()->SetLabelSize(0.03);
-    eHistXY->GetXaxis()->SetLabelSize(0.03);
-    eHistXY->DrawCopy("colzSAME");
-    c1->cd(2);
-    eHistWChi2->GetXaxis()->SetTitle("W");
-    eHistWChi2->GetYaxis()->SetTitle("#chi^{2}");
-    eHistWChi2->DrawCopy("colz");
-    c1->cd(3);
-    eHistTXTY->GetXaxis()->SetTitle("tan #theta_{X}");
-    eHistTXTY->GetYaxis()->SetTitle("tan #theta_{Y}");
-    eHistTXTY->DrawCopy("colz");
-    c1->cd(4);
-    eHistBTDensityVolume->GetXaxis()->SetTitle("basetrack density /mm^{-2}");
-    eHistBTDensityVolume->GetYaxis()->SetTitle("entries");
-    eHistBTDensityVolume->GetXaxis()->SetRangeUser(0,eHistBTDensityVolume->GetMean()+eHistBTDensityVolume->GetRMS()*3);
-    eHistBTDensityVolume->DrawCopy("");
-    c1->cd(5);
-    eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("plate");
-    eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("basetrack density /mm^{-2}");
-    eProfileBTdens_vs_PID_generic->Draw("profileZ");
-    eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
-    c1->cd(6);
-    eHistTT->GetXaxis()->SetTitle("tan #theta");
-    eHistTT->GetYaxis()->SetTitle("entries");
-    eHistTT->DrawCopy("");
+    
+    for (int i=0; i<6; ++i) {
+      c1->cd(i+1); GetQualityPlotsSingle(CountNr,aliSourceType,i);
+    }
     c1->cd();
-    //---------------------------------------------------
 
+    cout << "EdbPVRQuality::GetQualityPlots...done." << endl;
     return c1;
 }
 
 //______________________________________________________________________________
-TCanvas* EdbPVRQuality::GetQualityPlotsSingle(Int_t aliSourceType, Int_t Plottype, Int_t CountNr)
+TPad* EdbPVRQuality::GetQualityPlotsSingle(Int_t CountNr, Int_t aliSourceType, Int_t Plottype)
 {
+    // Get a pad containing basetrack information about the given volume.
+    // One of the six specific plots from GetQualityPlots is returned (plot 0..5)
+    // Usually this pad is then integrated in the canvas from GetQualityPlots() function.
+    // cout << "EdbPVRQuality::GetQualityPlotsSingle  CountNr=" << CountNr << " aliSourceType=" << aliSourceType << " Plottype= " <<  Plottype << endl;
+  
+    TPad* pad = new TPad();
 
-    if (!eIsSource) {
-        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
-        return NULL;
-    }
-    if (aliSourceType==1 && !eIsTarget) {
-        cout << "WARNING    EdbPVRQuality::CheckEdbPVRec  eIsTarget = " << eIsTarget << ". This means no target set. Return!" << endl;
-        return NULL;
-    }
-
-    if (aliSourceType==1) {
-        FillHistosVolume(eAli_modified);
-    }
-    else {
-        FillHistosVolume(eAli_orig);
-    }
-
-
-    TCanvas* canvas = new TCanvas(Form("CanvasQualityPlots_%d",aliSourceType,Plottype,CountNr),Form("CanvasQualityPlots_%d",aliSourceType,Plottype,CountNr));
-
+    // remember: switch statements need a "break" at the end of each "case"
+    // remember: need to use "DrawCopy" here, otherwise, when histo is reseted,
+    // no graph will appear
     switch(Plottype) {
     case 0: {
-        eHistXY->Draw("colz");
+        eHistXY->Draw("colz"); // first draw due to resizing
         eHistXY->GetXaxis()->SetRangeUser(eHistXY->GetMean(1)-eHistXY->GetRMS(1)*3,eHistXY->GetMean(1)+eHistXY->GetRMS(1)*3);
         eHistXY->GetYaxis()->SetRangeUser(eHistXY->GetMean(2)-eHistXY->GetRMS(2)*3,eHistXY->GetMean(2)+eHistXY->GetRMS(2)*3);
         eHistXY->GetXaxis()->SetTitle("X /#mum");
         eHistXY->GetYaxis()->SetTitle("Y /#mum");
         eHistXY->GetYaxis()->SetLabelSize(0.03);
         eHistXY->GetXaxis()->SetLabelSize(0.03);
-        eHistXY->DrawCopy("colzSAME");
+	eHistXY->DrawCopy("colz"); // then redraw with different boundaries
+	break;
     }
     case 1: {
         eHistWChi2->GetXaxis()->SetTitle("W");
         eHistWChi2->GetYaxis()->SetTitle("#chi^{2}");
         eHistWChi2->DrawCopy("colz");
+	break;
     }
     case 2: {
         eHistTXTY->GetXaxis()->SetTitle("tan #theta_{X}");
         eHistTXTY->GetYaxis()->SetTitle("tan #theta_{Y}");
         eHistTXTY->DrawCopy("colz");
+	break;
     }
     case 3: {
         eHistBTDensityVolume->GetXaxis()->SetTitle("basetrack density /mm^{-2}");
         eHistBTDensityVolume->GetYaxis()->SetTitle("entries");
         eHistBTDensityVolume->GetXaxis()->SetRangeUser(0,eHistBTDensityVolume->GetMean()+eHistBTDensityVolume->GetRMS()*3);
         eHistBTDensityVolume->DrawCopy("");
+	break;
     }
     case 4: {
         eProfileBTdens_vs_PID_generic->GetXaxis()->SetTitle("plate");
         eProfileBTdens_vs_PID_generic->GetYaxis()->SetTitle("basetrack density /mm^{-2}");
-        eProfileBTdens_vs_PID_generic->Draw("profileZ");
         eProfileBTdens_vs_PID_generic->GetXaxis()->SetRangeUser(0,eAli_maxNpatterns+2);
+	eProfileBTdens_vs_PID_generic->DrawCopy("profileZ");
+	break;
     }
     case 5: {
         eHistTT->GetXaxis()->SetTitle("tan #theta");
         eHistTT->GetYaxis()->SetTitle("entries");
         eHistTT->DrawCopy("");
+	break;
     }
     default:
-        cout << "NOT YET IMPLEMENTED ...   TODO ...." << endl;
+        cout << "WARNING    EdbPVRQuality::GetQualityPlotsSingle  Plottype is out of range. Return empty pad." << endl;
         break;
     }
 
-    return canvas;
+//     return canvas;
+    return pad;
 }
 
 
@@ -622,37 +602,54 @@ EdbPVRec *EdbPVRQuality::ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t 
     //   To Test a method which returns a modified EdbPVRec Volume.
     //   Either in Angular Space (default), or in coordinate space.
     //   (Or both?)
-    //   Input:  EdbSegP (EdbTrackP?), Delta TanTheta max, EdbPVRec, Tolerances
+    //   Input:  EdbSegP, Delta TanTheta max, EdbPVRec, Tolerances
     //   Output: EdbPVRec reduced in (angular,coordinate) space.
+
+    //   The returned EdbPVRec volume is propagated along the given input segment
+    //   (yes, it is true....) for the given segment angle.
 
     if(!pvr) return 0;
     int npat = pvr->Npatterns();
     EdbPVRec *ali = new EdbPVRec();
 
     Log(2,"EdbPVRQuality::ExtractDataVolume","Select Data in EdbPVRec with %d patterns:", npat);
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Print tolerance values (+-X,+-Y, +-TX, +-TY)");
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Print tolerance values: +-X  = %.01f",tolerance[0]);
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Print tolerance values: +-Y  = %.01f",tolerance[1]);
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Print tolerance values: +-TX = %.02f",tolerance[2]);
+    Log(2,"EdbPVRQuality::ExtractDataVolume","Print tolerance values: +-TY = %.02f",tolerance[3]);
 
     if (NULL==tolerance) {
-        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: No tolerance values given.");
-        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put now standard ones (5000,5000,1,1)");
-        tolerance[0]=5000;
-        tolerance[1]=5000;
-        tolerance[2]=1;
-        tolerance[3]=1;
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: No tolerance values given. Dont cut.");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Tolerance values (+-X, +-Y, +-TX, +-TY)");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put (2e18,2e18,2,2),i.e. no cut is done.");
+        tolerance[0]=2e18;
+        tolerance[1]=2e18;
+        tolerance[2]=2;
+        tolerance[3]=2;
     }
     // But be aware: if one forgets to set the tolerance values by hand,
     // then uninitialised values may screw up everything!
-    if (tolerance[0]>2e+06||tolerance[1]>2e+06||tolerance[2]>2e+06||tolerance[3]>2e+06) {
-        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Tolerance values strange!");
+    // Test for undeterminate behaviour of the Float_t tolerance array
+    // (in case of being forgotten initializing)
+    Bool_t IsInderterminated=kFALSE;
+    for (Int_t i=0; i<4; ++i) if (tolerance[i]<2e-5) IsInderterminated=kTRUE;
+    if (IsInderterminated) {
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Tolerance values strange! (%.06f, %.06f,%.06f,%.06f)",tolerance[0],tolerance[1],tolerance[2],tolerance[3]);
         Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Have you forgotten initializing them?");
-        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put now standard ones (5000,5000,1,1)");
-        tolerance[0]=5000;
-        tolerance[1]=5000;
-        tolerance[2]=1;
-        tolerance[3]=1;
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Tolerance values (+-X, +-Y, +-TX, +-TY)");
+        Log(1,"EdbPVRQuality::ExtractDataVolume","Warning: Will put (2e18,2e18,2,2),i.e. no cut is done.");
+        tolerance[0]=2e18;
+        tolerance[1]=2e18;
+        tolerance[2]=2;
+        tolerance[3]=2;
     }
 
     Float_t dz, min[5],  max[5];
     EdbPattern *pat=0;
+    Float_t xmean,ymean,zmean;
+    xmean=ymean=zmean=0;
+
 
     for(int i=0; i<npat; i++) {
 
@@ -688,10 +685,26 @@ EdbPVRec *EdbPVRQuality::ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t 
         Log(3,"EdbPVRQuality::ExtractDataVolume","TY: %.01f .. %.01f", min[3],max[3]);
 
         EdbPattern* patNew = pat->ExtractSubPattern(min,max);
-        Int_t patNewN= patNew->N();
+        // When X() and Y() values for pattern are not set initially,
+        // then they cannot be set ab initio. So we have to set them afterwards from
+        // the segments data.
+        patNew->SetX(pat->Xmean());
+        patNew->SetY(pat->Ymean());
+
+        Int_t patNewN = patNew->N();
         ali->AddPattern( patNew );
+
+        // For calulation of X() and Z() of the PVR volume:
+        xmean+=patNew->Xmean();
+        ymean+=patNew->Ymean();
+        zmean+=patNew->Z();
+
         Log(3,"EdbPVRQuality::ExtractDataVolume","Added pattern with %d segments:", patNewN);
     }
+
+    // Add X and Y mean values of the patterns to the Patterns Volume Reconstructed Object
+    // (not perfect, since an integer division is made)
+    ali->SetXYZ(xmean/npat,ymean/npat,zmean/npat);
 
     //ali->Print();
     Log(2,"EdbPVRQuality::ExtractDataVolume","Fill new pattern volume...done.");
@@ -971,7 +984,7 @@ void EdbPVRQuality::SetHistGeometry_OPERA()
     // BinArea is 1mmx1mm.
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","SetHistGeometry_OPERA");
     eHistXY->Reset();
-    eHistXY->SetBins(100,0,120000,120,0,100000);
+    eHistXY->SetBins(120,0,120000,100,0,100000);
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERA","SetHistGeometry_OPERA...done");
     return;
@@ -1018,6 +1031,21 @@ void EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625()
     eHistXY->SetBins(100,-125000,125000,100,-125000,125000);
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
     Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea625","SetHistGeometry_OPERAandMCBinArea625...done");
+    return;
+}
+
+//______________________________________________________________________________
+void EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea4mm2()
+{
+    // Set the geometry of the basetrack density evaluation covering MC and DATA case,
+    // size conventions: x=-125000..0..+125000;y=-125000..0..125000).
+    // BinArea is 2 mm x 2 mm
+
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea4mm2","SetHistGeometry_OPERAandMCBinArea4mm2");
+    eHistXY->Reset();
+    eHistXY->SetBins(125,-125000,125000,125,-125000,125000);
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea4mm2","Binwidth (micron)= %.01f.", eHistXY->GetXaxis()->GetBinWidth(1));
+    Log(3,"EdbPVRQuality::SetHistGeometry_OPERAandMCBinArea4mm2","SetHistGeometry_OPERAandMCBinArea4mm2...done");
     return;
 }
 
@@ -1090,6 +1118,19 @@ void EdbPVRQuality::Print()
     cout << endl;
 
     Log(2,"EdbPVRQuality::Print","Print...done.");
+    return;
+}
+
+//______________________________________________________________________________
+void EdbPVRQuality::PrintBTDensities()
+{
+    //     Prints BT densities for all patterns in the source.
+    Log(2,"EdbPVRQuality::PrintBTDensities","PrintBTDensities");
+    if (!eIsSource) return;
+    cout << "PrintBTDensities for object EdbPVRec at " << eAli_orig  << endl;
+    for (int i=0; i<eAli_orig->Npatterns(); ++i) cout << "BT density for pattern " << i << " = " << GetBTDensity(i) << endl;
+    cout << "BT density averaged = " << GetBTDensity(-1) << endl;
+    Log(2,"EdbPVRQuality::PrintBTDensities","PrintBTDensities...done.");
     return;
 }
 
@@ -2619,36 +2660,80 @@ Int_t EdbPVRQuality::CheckFilledXYSize(TH2F* HistXY)
     // In this case one should look closer at the specific
     // plate distribution, or ...
     // rebin the XY histogram to get a better statistics,
-    // i.e. switch to larger bin areas (for example 1mm^2 to 2.5x2.5)
+    // i.e. switch to larger bin areas
+    // (for example 1 mm^2 to 2x2 mm^2 or so...)
+    // ... Checked, but then problems with bin entries
+    // at the edges spoil the average cacluation (because
+    // the edges get a larger fraction of the total XY-area.
+    // So skipped this bin-resizing. Stick to 1x1 mm^2 binsize.
+    // Also comparison whit the simpla approach (number of
+    // tracks / rectangular area) shows, that both mehthods
+    // give roughly the same density.
     // ...............................................
 
-    if (gEDBDEBUGLEVEL>3)   cout << "-----     void EdbPVRQuality::CheckFilledXYSize(TH2F* h2) return maximum/minimum entries of histogram  HistXY   -----" << endl;
     Int_t nbx=HistXY->GetNbinsX();
     Int_t nby=HistXY->GetNbinsY();
+    Int_t nEntries=HistXY->GetEntries();
 
-    Int_t n1x= FindFirstBinAbove(HistXY,0,1);
-    Int_t n1y= FindFirstBinAbove(HistXY,0,2);
-    Int_t n2x= FindLastBinAbove(HistXY,0,1);
-    Int_t n2y= FindLastBinAbove(HistXY,0,2);
-    Int_t width_x=0;
-    Int_t width_y=0;
+    // Return bins with content >= 0.1 in the bins for the each axes:
+    // (0.1 to make sure that it is really greater 0)
+    Int_t n1x= FindFirstBinAboveTH2(HistXY,0.1,1);
+    Int_t n1y= FindFirstBinAboveTH2(HistXY,0.1,2);
+    Int_t n2x= FindLastBinAboveTH2(HistXY,0.1,1);
+    Int_t n2y= FindLastBinAboveTH2(HistXY,0.1,2);
+
+    /*
+    cout << "EdbPVRQuality::CheckFilledXYSize() return maximum/minimum entries of histogram  HistXY   -----" << endl;
+    printf("EdbPVRQuality::CheckFilledXYSize() BinsX() = %d, BinsY() = %d\n", nbx,nby);
+    printf("EdbPVRQuality::CheckFilledXYSize() EntriesX() = %d\n", nEntries);
+    cout << "EdbPVRQuality::CheckFilledXYSize() The First Bin Above 0 in x-Axis is bin nr " <<  n1x << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() The Last  Bin Above 0 in x-Axis is bin nr " <<  n2x << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() The First Bin Above 0 in y-Axis is bin nr " <<  n1y << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() The Last  Bin Above 0 in y-Axis is bin nr " <<  n2y << endl;
+    */
+
+    Double_t width_x=0;
+    Double_t width_y=0;
     width_x=TMath::Abs(HistXY->GetXaxis()->GetBinCenter(n1x)-HistXY->GetXaxis()->GetBinCenter(n2x));
     width_y=TMath::Abs(HistXY->GetYaxis()->GetBinCenter(n1y)-HistXY->GetYaxis()->GetBinCenter(n2y));
+    Double_t area_xy=width_x*width_y;
+
+    // printf("EdbPVRQuality::CheckFilledXYSize() Filled bins span X (microns) = %.1f, Filled bins span Y (microns) = %.1f, covered area (microns^2) = %.1f\n", width_x,width_y,area_xy);
 
     // Now check the number of empty bins between! the filled area
     // within (FindFirstBinAbove,FindLastBinAbove)
     // This function is NOT optimized for speed :-)
-    Int_t NonEmptyBins=1;
-    Int_t nBins=1;
-    for (Int_t i=n1x; i<n2x; ++i) {
-        for (Int_t j=n1y; j<n2y; ++j) {
+    // Attention: FindLastBinAbove is including last bin of the histogram
+    // so the double loop has to be modified (<=) accordingly to take it
+    // also!
+    Int_t NonEmptyBins=0;
+    Int_t nBins=0;
+    Int_t SumBinContent=0;
+
+    Double_t eHistXYBinArea = HistXY->GetXaxis()->GetBinWidth(1)*HistXY->GetYaxis()->GetBinWidth(1);
+    Double_t eHistXYBinAreamm2 = eHistXYBinArea/1000/1000;
+
+    for (Int_t i=n1x; i<=n2x; ++i) {
+        for (Int_t j=n1y; j<=n2y; ++j) {
             ++nBins;
+            //cout << "EdbPVRQuality::CheckFilledXYSize() GetBinContent(" << i << "," << j <<") = " << HistXY->GetBinContent(i,j) << endl;
+
+            SumBinContent+=HistXY->GetBinContent(i,j);
+
             if (HistXY->GetBinContent(i,j)==0) continue;
             ++NonEmptyBins;
         }
     }
     Float_t FractionOfEmptyBins=1-(Float_t(NonEmptyBins)/Float_t(nBins));
-    //cout << "INFO void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
+    Float_t BGdensSimple = Float_t(SumBinContent)/Float_t(NonEmptyBins)/eHistXYBinAreamm2;
+
+    /*
+    cout << "EdbPVRQuality::CheckFilledXYSize() SumBinContent       = " << SumBinContent << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() BGdensSimple        = " << BGdensSimple << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() NonEmptyBins = " << NonEmptyBins << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() nBins        = " << nBins << endl;
+    cout << "EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
+    */
 
     if (FractionOfEmptyBins>0.1) {
         cout << "WARNING: void EdbPVRQuality::CheckFilledXYSize() FractionOfEmptyBins = " << FractionOfEmptyBins << endl;
@@ -2669,6 +2754,7 @@ Int_t EdbPVRQuality::CheckFilledXYSize(TH2F* HistXY)
         cout << "----      nbxMax= " << eHistXY->GetYaxis()->GetBinCenter(n2y) << endl;
         cout << "-----     void EdbPVRQuality::CheckFilledXYSize() ... done. " << endl;
     }
+
     return 0;
 }
 
@@ -2682,7 +2768,7 @@ void EdbPVRQuality::Help()
     cout << "----------------------------------------------" << endl;
     cout << "-----     void EdbPVRQuality::Help()     -----" << endl;
     cout << "-----" << endl;
-    cout << "-----     This Class helps you to determine the Quality Cut Plate by Plate" << endl;
+    cout << "-----     This class helps you to determine the Quality Cut Plate by Plate" << endl;
     cout << "-----     for suited BG level for shower reco." << endl;
     cout << "-----     You use it like this:" << endl;
     cout << "-----        EdbPVRQuality* QualityClass = new EdbPVRQuality(gAli)" << endl;
@@ -3400,12 +3486,16 @@ Int_t EdbPVRQuality::FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis
     // memberfunction of EdbPVRQuality
     // Code taken from
     // http://root.cern.ch/root/html/src/TH1.cxx.html#biA7FC
+    //
+    // Correction, June, 2nd 2017:
+    // This was the code for the OneDimensional Histogram!
+    // In Our Case (histXY) we need the have the code for the TwoDimensional Histogram!
     TAxis* ax=0;
     if (axis==1) ax = hist->GetXaxis();
     if (axis==2) ax = hist->GetYaxis();
     if (axis==3) ax = hist->GetZaxis();
     int nb = ax->GetNbins();
-    for (Int_t i=0; i<=nb; i++) {
+    for (Int_t i=1; i<=nb; i++) {
         if (hist->GetBinContent(i)>threshold) return i;
     }
     return 0;
@@ -3429,6 +3519,95 @@ Int_t EdbPVRQuality::FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis)
         if (hist->GetBinContent(i)>threshold) return i;
     }
     return 0;
+}
+
+
+
+//___________________________________________________________________________________
+
+Int_t EdbPVRQuality::FindFirstBinAboveTH2(TH2* hist, Double_t threshold, Int_t axis) {
+    // June, 2nd 2017:
+    // The TH2 function  FindFirstBinAbove  is only implemented in
+    // root version >= 5.24. But since many scanning labs use old root
+    // versions persistently, I had to copy the TH1 function as a
+    // memberfunction of EdbPVRQuality
+    // Code taken from
+    // https://root.cern.ch/root/html526/src/TH2.cxx.html#LmA7FC
+    //find first bin with content > threshold for axis (1=x, 2=y, 3=z)
+    //if no bins with content > threshold is found the function returns -1.
+    if (axis < 1 || axis > 2) {
+        printf("EdbPVRQuality::FindFirstBinAboveTH2   Invalid axis number : %d, axis x assumed\n",axis);
+        axis = 1;
+    }
+    TAxis* ax=0;
+    TAxis* axX=hist->GetXaxis();
+    TAxis* axY=hist->GetYaxis();
+    if (axis==1) ax = hist->GetXaxis();
+    if (axis==2) ax = hist->GetYaxis();
+    if (axis==3) ax = hist->GetZaxis();
+    int nb = ax->GetNbins();
+
+    Int_t nbinsx = axX->GetNbins();
+    Int_t nbinsy = axY->GetNbins();
+    Int_t binx, biny;
+    if (axis == 1) {
+        for (binx=1; binx<=nbinsx; binx++) {
+            for (biny=1; biny<=nbinsy; biny++) {
+                if (hist->GetBinContent(binx,biny) > threshold) return binx;
+            }
+        }
+    } else {
+        for (biny=1; biny<=nbinsy; biny++) {
+            for (binx=1; binx<=nbinsx; binx++) {
+                if (hist->GetBinContent(binx,biny) > threshold) return biny;
+            }
+        }
+    }
+    return -1;
+}
+
+//___________________________________________________________________________________
+
+Int_t EdbPVRQuality::FindLastBinAboveTH2(TH2* hist, Double_t threshold, Int_t axis) {
+    // June, 2nd 2017:
+    // The TH2 function  FindLastBinAbove  is only implemented in
+    // root version >= 5.24. But since many scanning labs use old root
+    // versions persistently, I had to copy the TH1 function as a
+    // memberfunction of EdbPVRQuality
+    // Code taken from
+    // https://root.cern.ch/root/html526/src/TH2.cxx.html#dq5cSC
+    //find last bin with content > threshold for axis (1=x, 2=y, 3=z)
+    //if no bins with content > threshold is found the function returns -1.
+    if (axis < 1 || axis > 2) {
+        printf("EdbPVRQuality::FindFirstBinAboveTH2   Invalid axis number : %d, axis x assumed\n",axis);
+        axis = 1;
+    }
+    TAxis* ax=0;
+    TAxis* axX=hist->GetXaxis();
+    TAxis* axY=hist->GetYaxis();
+    if (axis==1) ax = hist->GetXaxis();
+    if (axis==2) ax = hist->GetYaxis();
+    if (axis==3) ax = hist->GetZaxis();
+    int nb = ax->GetNbins();
+
+    Int_t nbinsx = axX->GetNbins();
+    Int_t nbinsy = axY->GetNbins();
+    Int_t binx, biny;
+
+    if (axis == 1) {
+        for (binx=nbinsx; binx>=1; binx--) {
+            for (biny=1; biny<=nbinsy; biny++) {
+                if (hist->GetBinContent(binx,biny) > threshold) return binx;
+            }
+        }
+    } else {
+        for (biny=nbinsy; biny>=1; biny--) {
+            for (binx=1; binx<=nbinsx; binx++) {
+                if (hist->GetBinContent(binx,biny) > threshold) return biny;
+            }
+        }
+    }
+    return -1;
 }
 
 //___________________________________________________________________________________
@@ -4382,19 +4561,8 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
         cout << "EdbPVRQuality::FillHistosVolume()  aliSource==NULL. Nothing to fill. Return." << endl;
     }
 
-
     // Reset Histograms:
     ResetHistos();
-
-    /*
-    if (aliSource == eAli_modified) {
-        eProfileBTdens_vs_PID_target->Reset();
-    }
-    if (aliSource == eAli_orig) {
-        eProfileBTdens_vs_PID_source->Reset();
-    }
-    */
-
 
     //-------------------------------------------------------------------
     Float_t weight=1;
@@ -4426,14 +4594,13 @@ void EdbPVRQuality::FillHistosVolume(EdbPVRec* aliSource) {
 
 //___________________________________________________________________________________
 void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t DoResetHistos, Float_t weightXY) {
-    //cout << "EdbPVRQuality::FillHistosPattern(Int_t patNR)" << endl;
 
     if (!eIsSource) {
         cout << "WARNING    EdbPVRQuality::FillHistosPattern  eIsSource = " << eIsSource << ". This means no source set. Return!" << endl;
         return;
     }
     if (NULL==aliSource) {
-        cout << "WARNING    EdbPVRQuality::FillHistosVolume()  aliSource==NULL. Nothing to fill. Return." << endl;
+        cout << "WARNING    EdbPVRQuality::FillHistosPattern  aliSource==NULL. Nothing to fill. Return." << endl;
     }
 
     TProfile* histProfileBTdens_vs_PID=eProfileBTdens_vs_PID_source;
@@ -4462,6 +4629,10 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
 
     EdbPattern* pat = (EdbPattern*)aliSource->GetPattern(patNR);
     Int_t npat=pat->N();
+
+    // cout << "EdbPVRQuality::FillHistosPattern()" << endl;
+    // cout << "patNR= " << patNR << " pat->GetSize(0) = " << pat->GetSize(0) << " pat->GetSize(1) = " << pat->GetSize(0) << "   npat= " << npat << endl;
+
 
     EdbSegP* seg=0;
     // Loop over the segments of the pattern
@@ -4505,42 +4676,74 @@ void EdbPVRQuality::FillHistosPattern(EdbPVRec* aliSource, Int_t patNR, Bool_t D
 
     } // for (Int_t j=0; j<npat; j++)
 
-    if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::FillHistosPattern  I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
+    if (gEDBDEBUGLEVEL>2) cout << "EdbPVRQuality::FillHistosPattern I have filled the eHistXY Histogram. Entries = " << eHistXY->GetEntries() << endl;
 
     // Important to reset (pattern) histogram before it is filled.
     eHistBTDensityPattern->Reset();
 
     // Search for empty bins, because they can spoil the overall calulation
     // of the mean value.
-    // Important: work on the clone, because the original is not resetted.
+    // Important: work on the clone, because the original is not reseted.
+    // Then conversion into area of millimeter squared
     Int_t nbins=eHistXYClone->GetNbinsX()*eHistXYClone->GetNbinsY();
-//     cout << "eHistXYClone->GetNbinsX() = " << eHistXYClone->GetNbinsX() << endl;
-//     cout << "eHistXYClone->GetNbinsY() = " << eHistXYClone->GetNbinsY() << endl;
-    Int_t nemptybinsXY=0;
-    Int_t bincontentXY=0;
-    for (int k=1; k<nbins-1; k++) {
-        if (eHistXYClone->GetBinContent(k)==0) {
-            ++nemptybinsXY; // do I need this variable at all ???
-            // not anymore, since check is done in function down there...
-            continue;
-        }
-        bincontentXY=eHistXYClone->GetBinContent(k);
+    Double_t eHistXYBinArea = eHistXYClone->GetXaxis()->GetBinWidth(1)*eHistXYClone->GetYaxis()->GetBinWidth(1);
+    Double_t eHistXYBinAreamm2 = eHistXYBinArea/1000/1000;
 
-        eHistBTDensityPattern->Fill(bincontentXY);
-        eHistBTDensityVolume->Fill(bincontentXY);
-        histProfileBTdens_vs_PID->Fill(patNR,bincontentXY);
+    /*
+    cout << "EdbPVRQuality::FillHistosPattern eHistXYClone->GetNbinsX() = " << eHistXYClone->GetNbinsX() << endl;
+    cout << "EdbPVRQuality::FillHistosPattern eHistXYClone->GetNbinsY() = " << eHistXYClone->GetNbinsY() << endl;
+    cout << "EdbPVRQuality::FillHistosPattern eHistXYBinArea = "  << eHistXYBinArea << endl;
+    cout << "EdbPVRQuality::FillHistosPattern eHistXYBinAreamm2 = "  << eHistXYBinAreamm2 << endl;
+    */
+
+    Double_t bincontentXY=0;
+    Double_t bincontentXYNormalizedMillimeterSquared=0;
+
+    // Loop over all bins of the eHistXYClone histogram and fill
+    // the density histograms with nonempty entries of eHistXYClone:
+
+    for (int k=1; k<nbins-1; k++) {
+
+        // Take only filled bins into account for the
+        // track density calculation.
+        if (eHistXYClone->GetBinContent(k)==0) continue;
+
+        bincontentXY=eHistXYClone->GetBinContent(k);
+// 	cout << "Bin k= " << k << "   Bincontent            = " << bincontentXY << endl;
+
+        // Important here! Filling the BT density histograms, binsize
+        // must be normalized to 1x1 mm2
+        bincontentXYNormalizedMillimeterSquared = bincontentXY/eHistXYBinAreamm2;
+
+// 	cout << "Bin k= " << k << "   Bincontent Normalized = " << bincontentXY << endl;
+
+        eHistBTDensityPattern->Fill(bincontentXYNormalizedMillimeterSquared);
+        eHistBTDensityVolume->Fill(bincontentXYNormalizedMillimeterSquared);
+        histProfileBTdens_vs_PID->Fill(patNR,bincontentXYNormalizedMillimeterSquared);
     }
+
+
+    // KOMMENTAR  // FOR TESTING PURPOSES
 //     cout << "For the eHistXYClone histogram for this pattern, nemptybinsXY = " << nemptybinsXY << endl;
 //     cout << "For the eHistXYClone histogram for this pattern, nbins = " << nbins << endl;
-
-    // KOMMENTAR
+// if (patNR<1) {
+//   cout << "EdbPVRQuality::FillHistosPattern Draw eHistXYClone in new Canvas" << endl;
 //     new TCanvas();
-//     eHistXYClone->DrawClone("colz");
+//    eHistXYClone->DrawClone("colz");
+//  }
+// cout << "EdbPVRQuality::FillHistosPattern patNR= " << patNR << "  eHistBTDensityPattern->GetMean() = " << eHistBTDensityPattern->GetMean() << endl;
+// cout << "EdbPVRQuality::FillHistosPattern patNR= " << patNR << "  eHistBTDensityPattern->GetRMS() = " << eHistBTDensityPattern->GetRMS() << endl;
     // KOMMENTAR ENDE
 
 
     // failsafe warning in case that there are many bins with zero content.
     // for now we print a error message: tODO  REBIN THE YX HISTOGRA WITH 2.5x2.5 mm!!!!
+    // switch to default histogram with 2x2 mm2 bin size, see if its better (june2,17)
+    // well, the distribution of entries in the 2x2 mm2 histogram is still largely
+    // spreading, especially when looked at specific angular space, but that is all we
+    // can do for now (july17)
+    // and we have more bins at the edges, which are populated less dense, which spoils
+    // overall calculation, so we actually dont take the rebinning into account anymore.
     CheckFilledXYSize(eHistXYClone);
 
     // Save the density in the corresponding variable

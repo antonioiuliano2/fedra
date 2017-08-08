@@ -365,6 +365,7 @@ public:
     void SetHistGeometry_MC();
     void SetHistGeometry_OPERAandMC();
     void SetHistGeometry_OPERAandMCBinArea625();
+    void SetHistGeometry_OPERAandMCBinArea4mm2();
 
     void CheckEdbPVRec();
     void CheckEdbPVRecThetaSpace(Int_t AliType);
@@ -407,7 +408,8 @@ public:
     EdbPVRec* CreateEdbPVRec();
 
     TCanvas* GetQualityPlots(Int_t CountNr=0, Int_t aliSourceType=0);
-    TCanvas* GetQualityPlotsSingle(Int_t aliSourceType=0, Int_t Plottype=-1, Int_t CountNr=0);
+//     TCanvas* GetQualityPlotsSingle(Int_t aliSourceType=0, Int_t Plottype=-1, Int_t CountNr=0);
+    TPad* GetQualityPlotsSingle(Int_t CountNr=0, Int_t aliSourceType=0, Int_t Plottype=-1);
 
     EdbPVRec* ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t tolerance[4]);
 
@@ -417,12 +419,15 @@ public:
     Int_t GetAngularSpaceBin(EdbSegP* seg);
     Int_t FindFirstBinAbove(TH1* hist, Double_t threshold, Int_t axis);
     Int_t FindLastBinAbove(TH1* hist, Double_t threshold, Int_t axis);
+    Int_t FindFirstBinAboveTH2(TH2* hist, Double_t threshold, Int_t axis);
+    Int_t FindLastBinAboveTH2(TH2* hist, Double_t threshold, Int_t axis);
+
     TObjArray* GetTracksFromLinkedTracksRootFile();
 
     Bool_t CheckSegmentQualityInPattern_ConstBTDens(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
     Bool_t CheckSegmentQualityInPattern_ConstQual(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
 //     Bool_t CheckSegmentQualityInPattern_ConstBTDensInAngularBins(EdbPVRec* ali, Int_t PatternAtNr, EdbSegP* seg);
-    /// HERE ANOTERH FUNCTION ???
+    /// HERE ANOTHER FUNCTION ???  WHICH ONE ???
 
 
     Bool_t Chi2WRelation(EdbSegP* seg, Float_t Cutp0, Float_t Cutp1, Int_t qualitycuttype);
@@ -455,6 +460,7 @@ public:
     virtual ~EdbPVRQuality();          // virtual constructor due to inherited class
 
     void Print();
+    void PrintBTDensities();	// Print BT densities for each pattern
     void PrintCutType();
     void PrintCutType0(); // Constant BT density
     void PrintCutType1(); // Constant BT density in Angular Bins
