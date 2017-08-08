@@ -217,6 +217,24 @@ float EdbSegmentsBox::GetSizeXY()
 {
   return (GetSize(0)*GetSize(1));
 }
+
+//______________________________________________________________________________
+float EdbSegmentsBox::GetTrackDensity()
+{
+  // Returns number of tracks per area (in microns usually)
+  int nseg = N();
+  if(nseg<2) return 0;
+  float size=GetSizeXY();
+  return float(nseg)/size;
+}
+
+//______________________________________________________________________________
+float EdbSegmentsBox::GetTrackDensitymm2()
+{
+  // Returns number of tracks per area in millimeter squared
+  // Original area is in microns x microns
+  return GetTrackDensity()*1e6;
+}
  
 //______________________________________________________________________________
 void EdbSegmentsBox::SetSegmentsPlate(int plate)

@@ -103,6 +103,8 @@ class EdbSegmentsBox : public TObject, public EdbPointsBox2D {
   Float_t GetSizeX() { return GetSize(0); }
   Float_t GetSizeY() { return GetSize(1); }
   Float_t GetSizeXY();
+  Float_t GetTrackDensity();
+  Float_t GetTrackDensitymm2();
 
   ClassDef(EdbSegmentsBox,1)  // collection of segments
 };
@@ -197,7 +199,7 @@ class EdbTrackP : public EdbSegP {
   EdbSegP *TrackZmax(bool usesegpar=false) const { if(usesegpar || (!eSF)) return GetSegmentLast();  else return GetSegmentFLast(); }
 
   EdbSegP *TrackExtremity(bool zpos, bool usesegpar=false) 
-    const { return zpos? TrackZmin(usesegpar) : TrackZmax(usesegpar); } // 0-end, 1-strart (as in vertex class)
+    const { return zpos? TrackZmin(usesegpar) : TrackZmax(usesegpar); } // 0-end, 1-start (as in vertex class)
 
   const EdbSegP *TrackStart() const;
   const EdbSegP *TrackEnd()   const;

@@ -143,7 +143,7 @@ void EdbEDAPlotTab::CheckEff(EdbPVRec *pvr, TObjArray *tracks){
 	}
 	
 	
-	hentry->SetStats(0);
+	//hentry->SetStats(0);
 	hentry->SetMinimum(0);
 	hentry->Draw();
 	hentry->SetXTitle("Plate number");
