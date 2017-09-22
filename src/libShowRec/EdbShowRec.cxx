@@ -47,7 +47,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli)
     CheckPlateValues();
 
     // In this constructor no InBT Array is given by default, but we search
-    // for possible InBTs automatically.
+    // for possible InBTs automatically<f.
     Check_eInBTArray();
 
     //if (gEDBDEBUGLEVEL>0) Print();
@@ -1899,6 +1899,7 @@ void EdbShowRec::Print_InBTArray()
 {
     Log(2,"EdbShowRec::Print_InBTArray()","Print the information on the Initiator Basetrack array");
     if (!eInBTArray) return;
+    Log(2,"EdbShowRec::Print_InBTArray()","N=%d",eInBTArrayN);
     EdbSegP* s=0;
     for (int i=0; i<eInBTArrayN; ++i) {
         s=(EdbSegP*) eInBTArray->At(i);
@@ -3341,20 +3342,20 @@ void EdbShowRec::PrintRecoShowerArray(Int_t entry)
     Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d from the reco shower array",entry);
 
     if (entry<0) {
-      Log(2,"EdbShowRec::PrintRecoShowerArray","Print full array.",entry);
+        Log(2,"EdbShowRec::PrintRecoShowerArray","Print full array.",entry);
     }
     if (entry>= GetRecoShowerArrayN()) {
-      Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d is greater than entries in the array. Print full array.",entry);
-      entry=-1;
+        Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d is greater than entries in the array. Print full array.",entry);
+        entry=-1;
     }
-    
+
     EdbShowerP* show=0;
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         if (i==entry && entry>=0) {
-	  show->PrintNice();
-	  show->PrintSegments();
-	}
+            show->PrintNice();
+            show->PrintSegments();
+        }
     }
 
     Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray...done.");
@@ -5137,15 +5138,67 @@ void EdbShowRec::PrintParametrisation(Int_t ParaNr)
 //______________________________________________________________________________
 void EdbShowRec::AddEdbPVRec( EdbPVRec* Ali )
 {
-    cout << " AddEdbPVRec(): More than ONE EdbPVRec is NOT supported! Do nothing. " <<endl;
+    cout << "WARNING: AddEdbPVRec(): More than ONE EdbPVRec is NOT supported! Do nothing. " <<endl;
     return;
 }
+
+//______________________________________________________________________________
+void EdbShowRec::AddInBT( EdbSegP* seg )
+{
+    cout << " AddInBT(EdbSegP* seg): Add Segment  to eInBTArray:" <<endl;
+    if (NULL==eInBTArray) {
+        cout << " AddRecoShowerArray(): NULL==eInBTArray. Create it first!" <<endl;
+        eInBTArray=new TObjArray();
+        SetInBTArrayN(0);
+    }
+    // Now add it:
+    eInBTArray->Add(seg);
+    ++eInBTArrayN;
+    return;
+}
+
+//______________________________________________________________________________
+void EdbShowRec::AddInBTArray( EdbSegP* seg )
+{
+    AddInBT( seg );
+    return;
+}
+
+//______________________________________________________________________________
+void EdbShowRec::AddInBTArray( EdbPattern* pattern )
+{
+    cout << "EdbShowRec::AddInBTArray( EdbPattern* pattern )" << endl;
+    cout << "Loop over all segments of the pattern, and add its segments" << endl;
+    Int_t patN = pattern->N();
+    //patN=1;
+    //cout << "DEBUG DEBUG DEBUG    Add only first segment!" << endl;
+    for (Int_t i=0; i<patN; ++i) {
+        EdbSegP* seg = pattern->GetSegment(i);
+        AddInBT(seg);
+    }
+    return;
+}
+
+//______________________________________________________________________________
+void EdbShowRec::AddInBTArray( EdbPVRec* volume )
+{
+    cout << "EdbShowRec::AddInBTArray( EdbPVRec* volume )" << endl;
+    cout << "Loop over all the patterns, and add all their segments" << endl;
+    Int_t volumeN = volume->Npatterns();
+    for (Int_t i=0; i<volumeN; ++i) {
+        EdbPattern* pat = volume->GetPattern(i);
+        AddInBTArray(pat);
+    }
+    return;
+}
+
+
 //______________________________________________________________________________
 void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
 {
     cout << " AddInBTArray(): Add InBTArray Array to eInBTArray:" <<endl;
     if (NULL==eInBTArray) {
-        cout << " AddRecoShowerArray(): NULL==eInBTArray. Create it forst!" <<endl;
+        cout << " AddRecoShowerArray(): NULL==eInBTArray. Create it first!" <<endl;
         eInBTArray=new TObjArray();
         SetInBTArrayN(0);
     }

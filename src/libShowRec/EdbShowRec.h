@@ -160,16 +160,18 @@ private:
 
 
 
-    // variables, to tell wheter to take Initiabtor BT from:
+    // variables, to tell wheter to take Initiator BT from:
     // a) from a linked_tracks.root file (LT)
     // b) from a gAli.root file (PVREC)
     // c) from the BaseTracks of the  eAli  object (AliBT)
     // d) from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
+    // e) from else ( either seg, track, pattern, pvr given by SetInBTArray ... )
     Bool_t            eUse_LT;
     Bool_t            eUse_PVREC;
     Bool_t            eUse_AliBT;
     Bool_t            eUse_AliLT;
     Bool_t            eUse_ROOTInBT;
+    Bool_t            eUse_InBTelse;
     Int_t             eUseNr;
 
     TCut*             eInBTCuts[3];       //! root-style text cuts
@@ -335,6 +337,27 @@ public:
         eAli = Ali;
         eAliNpat=eAli->Npatterns();
     }
+    inline void         ResetINBTArray() {
+        eInBTArray->Clear();
+        eInBTArrayN=0;
+    }
+    inline void         SetInBTArray( EdbPVRec* Ali ) {
+        ResetINBTArray();
+        AddInBTArray(Ali);
+    }
+    inline void         SetInBTArray( EdbPattern* pattern ) {
+        ResetINBTArray();
+        AddInBTArray(pattern);
+    }
+    inline void         SetInBTArray( EdbTrackP* track ) {
+        cout << " TO BE  IMPLEMENTED !!!  13. 09. 2017  !!!   Set InBTArray from a  EdbTrackP  object " << endl;
+        ResetINBTArray();
+        AddInBTArray(track);
+    }
+    inline void         SetInBTArray( EdbSegP* seg ) {
+        ResetINBTArray();
+        AddInBT(seg);
+    }
     inline void         SetInBTArray( TObjArray* InBTArray ) {
         eInBTArray = InBTArray;
         eInBTArrayN=eInBTArray->GetEntries();
@@ -413,9 +436,17 @@ public:
 
 
     // Add Functions:
+    // Add Volume
     void         AddEdbPVRec( EdbPVRec* Ali );
+    // Add Initiator Basetracks Array
     void         AddInBTArray( TObjArray* InBTArray );
+    void         AddInBT(EdbSegP* segment);
+    void         AddInBTArray(EdbSegP* segment);
+    void         AddInBTArray(EdbPattern* pattern);
+    void         AddInBTArray(EdbPVRec* volume);
+    // Add Shower Algorithm Reconstruction  Array
     void         AddShowAlgArray( TObjArray* ShowAlgArray );
+    // Add Array For Stored Showers
     void         AddRecoShowerArray( TObjArray* RecoShowerArray);
 
 
