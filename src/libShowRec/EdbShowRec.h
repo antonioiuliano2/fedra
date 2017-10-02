@@ -165,7 +165,7 @@ private:
     // b) from a gAli.root file (PVREC)
     // c) from the BaseTracks of the  eAli  object (AliBT)
     // d) from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
-    // e) from else ( either seg, track, pattern, pvr given by SetInBTArray ... )
+    // e) from else ( either seg, track, pattern or volume, given by SetInBTArray ... )
     Bool_t            eUse_LT;
     Bool_t            eUse_PVREC;
     Bool_t            eUse_AliBT;
@@ -174,9 +174,10 @@ private:
     Bool_t            eUse_InBTelse;
     Int_t             eUseNr;
 
+    // Used to apply TCut on segments:
     TCut*             eInBTCuts[3];       //! root-style text cuts
     TTree*            eInBTTree;          // Tree for interim storing InBTs
-    // Used to apply TCut on segments.
+    
 
     // Use the small eAli object (from ExtractSubpattern) or the whole
     // eAli object for reconstruction:
@@ -601,6 +602,7 @@ public:
     void PrintMore();
     void PrintAll();
     void PrintRecoShowerArray(Int_t entry=-1);
+    void PrintRecoShowerArrayFast(Int_t entry=-1);
     void PrintParametrisation(Int_t ParaNr);
 
     // Print functions (mainly for debug mode)

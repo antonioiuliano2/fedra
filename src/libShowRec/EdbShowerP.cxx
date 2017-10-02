@@ -2220,7 +2220,7 @@ void EdbShowerP::Print()
 //______________________________________________________________________________
 void EdbShowerP::PrintNice()
 {
-    cout << "EdbShowerP::PrintNice():" << endl;
+    //cout << "EdbShowerP::PrintNice():" << endl;
     printf( "EdbShowerP: ID= %6d, N=%6d, NMC=%6d, N0=%6d, NPl=%6d, x= %14.3f, y= %14.3f, z= %14.3f, tx= %7.4f, ty= %7.4f, MCEvt= %6d: \n", ID(), N(), eNBTMC, N0(), Npl(), X(),Y(),Z(),TX(),TY(),eMC );
     return;
 }
@@ -2243,12 +2243,13 @@ void EdbShowerP::PrintMetaData()
 void EdbShowerP::PrintBasics()
 {
     cout << "EdbShowerP::PrintBasics()" << endl;
-    cout << setw(12) << "eNBT= " << setw(18) << N() << endl;
-    cout << setw(12) << "eNpl= " << setw(18) << Npl() << endl;
-    cout << setw(12) << "eN0= " << setw(18) << N0() << endl;
-    cout << setw(12) << "eN00= " << setw(18) << N00() << endl;
-    cout << setw(12) << "eNBTMC= " << setw(18) << GetNBTMC() << endl;
-    cout << setw(12) << "ePurity= " << setw(18) << GetPurity() << endl;
+    printf( "EdbShowerP: ID= %6d, N=%6d, NMC=%6d, N0=%6d, NPl=%6d, MCEvt= %6d: \n", ID(), N(), eNBTMC, N0(), Npl(),eMC );
+//     cout << setw(12) << "eNBT= " << setw(18) << N() << endl;
+//     cout << setw(12) << "eNpl= " << setw(18) << Npl() << endl;
+//     cout << setw(12) << "eN0= " << setw(18) << N0() << endl;
+//     cout << setw(12) << "eN00= " << setw(18) << N00() << endl;
+//     cout << setw(12) << "eNBTMC= " << setw(18) << GetNBTMC() << endl;
+//     cout << setw(12) << "ePurity= " << setw(18) << GetPurity() << endl;
     return;
 }
 //______________________________________________________________________________

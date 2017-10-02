@@ -1180,6 +1180,9 @@ void EdbShowAlg_OI::Execute()
     Int_t     STEP=-1;
     Int_t     NLoopedPattern=0;
 
+    Int_t newZ_next_ascending_Z=0;
+    Int_t newPID_next_ascending_Z=0;
+
 
     /// WARNING ... Somehow the calculation of "STEP" is not correct,
     /// when having data ordered patterns, it might go the wrong direction.
@@ -1210,7 +1213,7 @@ void EdbShowAlg_OI::Execute()
 
 
 // CounterOutPut
-        if (gEDBDEBUGLEVEL==2) if ((i%100)==0) cout << eInBTArrayN <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
+        if (gEDBDEBUGLEVEL==2) if ((i%100)==0 && i>0) cout << eInBTArrayN <<" Initiator Basetracks (InBT) in total, still to do: " << Form("%06d",i) << "\r\r\r\r\r\r" << flush;
 
 //-----------------------------------
 // 1) Make local_gAli with cut parameters:
@@ -1253,7 +1256,7 @@ void EdbShowAlg_OI::Execute()
 
 
 // Now apply cut conditions: OI OfficialImplementation Alg  --------------------
-                if (Segment->MCEvt() > 0 ) if ( Segment->MCEvt()!=InBT->MCEvt() ) continue; // MCEvtNr (>0) or BgMCNr (-999)
+                if ( Segment->MCEvt() > 0 ) if ( Segment->MCEvt()!=InBT->MCEvt() ) continue; // MCEvtNr (>0) or BgMCNr (-999)
                 if ( Abs(Segment->X()-X0) > 7000 ) continue;
                 if ( Abs(Segment->Y()-Y0) > 7000 ) continue;
                 if ( !IsInConeTube(Segment, InBT, eParaValue[0], eParaValue[1]) ) continue;
@@ -1264,8 +1267,8 @@ void EdbShowAlg_OI::Execute()
 // If we arrive here, Basetrack  Segment  has passed criteria
 // and is then added to the RecoShower:
 // Check if its not the InBT which is already added:
-// Use compare function of EdbSegP:
-//                 if (Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()) {
+// Use compare function of EdbSegP, which is safer instead of comparison of adresses
+                // (in eAli_Sub, Adresses can be new and then it doesnt work)
                 if ( Segment->Compare(InBT) == 0) {
 // 		  cout << "Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()  segments have same coord, so dont add" << endl;
 // 		  cout << "check the compare-function" << endl;
@@ -1284,12 +1287,28 @@ void EdbShowAlg_OI::Execute()
             if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- --- ActualPID= " << ActualPID << " at Z= " << eAli_Sub->GetPattern(ActualPID)->Z()  << " done. Reconstructed shower has up to now: " << RecoShower->N()  << " Segments." << endl;
 
 // // // // // // // // // // // // // // // // // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// 	    cout << " DETERMINE NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION now: " << endl;
+            // cout << " DETERMINE NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION now: " << endl;
             EdbPattern* currentPat = eAli_Sub->GetPattern(ActualPID);
-            EdbPattern* newPat_next_ascending_Z = eAli_Sub->GetPatternNext(currentPat->Z(),1);
-            Int_t newZ_next_ascending_Z    = newPat_next_ascending_Z->Z();
-            Int_t newPID_next_ascending_Z  = newPat_next_ascending_Z->PID();
-// 	    cout << " NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION has PID()= " <<  newPID_next_ascending_Z    << "  and a z-Position of Z= " << newZ_next_ascending_Z  <<    endl;
+            EdbPattern* newPat_next_ascending_Z = eAli_Sub->GetPatternNext(currentPat->Z(),1);  // in ascending Z
+
+            // cout << "What if there is no next ascending Z pattern? Check it here...... " << endl;
+            // cout << "newPat_next_ascending_Z = " << newPat_next_ascending_Z << endl;
+
+            if ( NULL == newPat_next_ascending_Z ) {
+		if (gEDBDEBUGLEVEL>2) {
+                  cout << "newPat_next_ascending_Z   is NULL pointer !  So it is nonexisting! (possibly last plate); " << endl;
+                  cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newPat_next_ascending_Z   is NULL pointer "<<endl;
+		}
+                StillToLoop=kFALSE;
+            }
+            else {
+                newZ_next_ascending_Z    = newPat_next_ascending_Z->Z();
+                newPID_next_ascending_Z  = newPat_next_ascending_Z->PID();
+            }
+
+            // cout  << "Set new values for the next ascending pattern:   newZ_next_ascending_Z    = " <<   newZ_next_ascending_Z << endl;
+            // cout  << "Set new values for the next ascending pattern:   newPID_next_ascending_Z  = " <<   newPID_next_ascending_Z << endl;
+            // cout << " NEXT PATTERN in ASCENDING (INCREASING) Z  DIRECTION has PID()= " <<  newPID_next_ascending_Z    << "  and a z-Position of Z= " << newZ_next_ascending_Z  <<    endl;
 // // // // // // // // // // // // // // // // // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 //------------
@@ -1303,9 +1322,7 @@ void EdbShowAlg_OI::Execute()
                 cout << "EdbShowAlg_OI::Execute--- --- NLoopedPattern= " << NLoopedPattern << endl;
                 cout << "EdbShowAlg_OI::Execute--- --- eNumberPlate_eAliPID= " << eNumberPlate_eAliPID << endl;
                 cout << "EdbShowAlg_OI::Execute--- --- StillToLoop= " << StillToLoop << endl;
-                cout << "EdbShowAlg_OI::Execute--- --- We have to decide, is  eAli_Sub->Npatterns() " << eAli_Sub->Npatterns()  << endl;
-                // eNumberPlate_eAliPID = eAli_Sub->Npatterns()
-                // What is the constraint? 0 <= newActualPID <= Npatterns-1, these patterns are valid....
+                cout << "EdbShowAlg_OI::Execute--- --- We have to decide, if to loop on for the next pattern... (out of the " << eAli_Sub->Npatterns()  << " patterns)." << endl;
             }
 
             /* NOT NECESSARY ANYMORE SINCE WE DO THE OUT OF BOUNDS CHECK IN ANOTHER WAY .....
@@ -1325,11 +1342,11 @@ void EdbShowAlg_OI::Execute()
             // What is the constraint? 0  <= newActualPID <= Npatterns-1, these patterns are valid....
             if (newActualPID<0)
             {   StillToLoop=kFALSE;
-                //cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID<0"<<endl;
+                // cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID<0"<<endl;
             }
             if (newActualPID>=eNumberPlate_eAliPID-1) {
                 StillToLoop=kFALSE;
-                //cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID>=eNumberPlate_eAliPID-1   [0 <= newActualPID <= Npatterns-1]"<<endl;
+                // cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID>=eNumberPlate_eAliPID-1   [0 <= newActualPID <= Npatterns-1]"<<endl;
             }
 
 // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
@@ -1341,19 +1358,15 @@ void EdbShowAlg_OI::Execute()
 
 
 // Obligatory when Shower Reconstruction is finished:
+// Set Numbers, plates etc. correct
         RecoShower ->Update();
 
-        if (gEDBDEBUGLEVEL>3) RecoShower ->PrintBasics();
+	
+	// Debung Print Information:
+        if (gEDBDEBUGLEVEL>2) RecoShower ->PrintBasics();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintNice();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintSegments();
 
-        /*
-                if (RecoShower->N()>=20) {
-                    cout << "  DEBUG  Printing schowers with 20 or more segments" << endl;
-                    RecoShower ->PrintNice();
-                    RecoShower ->PrintSegments();
-                }
-        */
 
 //     if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_OI::Execute--- Before adding to array delete the histograms...by finalize() of shower."<<endl;
 //     RecoShower ->Finalize();
@@ -1374,9 +1387,9 @@ void EdbShowAlg_OI::Execute()
 
 //     gEDBDEBUGLEVEL=2;
 
-    cout << "EdbShowAlg_OI::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
-    cout << "EdbShowAlg_OI::eRecoShowerArray = " << eRecoShowerArray << endl;
-    cout << "EdbShowAlg_OI::eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
+    cout << "EdbShowAlg_OI::eRecoShowerArray Entries = " << eRecoShowerArray->GetEntries() << endl;
+    cout << "EdbShowAlg_OI::eRecoShowerArray         = " << eRecoShowerArray << endl;
+    cout << "EdbShowAlg_OI::eRecoShowerArrayN        = " << eRecoShowerArrayN << endl;
 
     Log(2,"EdbShowAlg_OI::Execute()","DOING MAIN SHOWER RECONSTRUCTION HERE...done.");
     return;

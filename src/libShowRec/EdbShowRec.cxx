@@ -826,7 +826,7 @@ void EdbShowRec::ReconstructTEST_NN()
 
 void EdbShowRec::Reconstruct()
 {
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function");
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction  function");
 
     Int_t isThere=0;
     if (eAli)  isThere = 1;
@@ -848,9 +848,7 @@ void EdbShowRec::Reconstruct()
 
     //-------------------------------------------------------------------
     // Part Filling the Initiator BaseTracks:
-
     if (!eInBTArray) Create_eInBTArray();
-
     //  If  __NO__  eInBTArray:  create manually: three options:
     //  0)  (eUseNr==0) getting the BaseTracks out of eAli. If they are not stored, goto next
     //  1)  (eUseNr==1) getting the BaseTracks out of tracks out of eFilename_LinkedTracks if they are stored
@@ -868,12 +866,15 @@ void EdbShowRec::Reconstruct()
     // 	return;
 
     //-------------------------------------------------------------------
-    // Part Filling the Shower RecoAlg Array:
+    // Part Filling the Shower RecoAlg Array: first create the array:
     if (!eShowAlgArray) Create_eShowAlgArray();
 
     // If no eShowAlgArray:  create manually one using the
     // ConeAdvanced Algorithm as standard algorithm.
     if (eShowAlgArrayN==0) Fill_eShowAlgArray();
+
+    cout << "eShowAlgArray = " << eShowAlgArray << endl;
+    cout << "eShowAlgArrayN = " << eShowAlgArrayN << endl;
 
 
     // Get Reconstruction Algorithm Object from the TObjArray storage:
@@ -893,7 +894,7 @@ void EdbShowRec::Reconstruct()
     //  eAli
     RecoAlg->SetEdbPVRec(eAli);
     //  eAli  numbers
-    RecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID);
+    RecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID );
     //  InBTArray, now correctly filled.
     RecoAlg->SetInBTArray(eInBTArray);
     //  RecoShowerArray, to be filled by the algorithm:
@@ -905,23 +906,29 @@ void EdbShowRec::Reconstruct()
 
     RecoAlg->Print();
 
-//   return;
+
+    
+// return;
     //-------------------------------------------------------------------
     //	Main Reconstruction Part for the algorithm:
     //
     RecoAlg->Execute();
     //
     //-------------------------------------------------------------------
-//   return;
+//     return;
 
     // Get RecoShowerArray from Reco Alg back!
-    // This has to be done, because EdbShowAlg and EdbShowRec class have each
-    // a RecoShowerArray on its own. (It is so...).
+    // This has to be done, because EdbShowAlg and EdbShowRec class have 
+    // each a RecoShowerArray on their own. (It is by construction so...).
     // The storage for the arrays is therefore the same.
     SetRecoShowerArray(RecoAlg->GetRecoShowerArray());
 
     Log(2,"EdbShowRec::Reconstruct()", "RecoAlg->Execute() finished. Reconstructed %d showers.", eRecoShowerArrayN);
     if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
+    
+return;    
+    
+    
 
     // Set the names correctly when having more than one alg or parameterset.
     SetOutNames();
@@ -3334,6 +3341,34 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
 }
 
 
+
+
+//______________________________________________________________________________
+
+
+void EdbShowRec::PrintRecoShowerArrayFast(Int_t entry)
+{
+    Log(2,"EdbShowRec::PrintRecoShowerArrayFast","Printing overview for all entries from the reco shower array");
+
+    if (entry<0) {
+        Log(2,"EdbShowRec::PrintRecoShowerArray","Print full array.",entry);
+    }
+    if (entry>= GetRecoShowerArrayN()) {
+        Log(2,"EdbShowRec::PrintRecoShowerArray","Requested entry %d is greater than entries in the array. Print full array.",entry);
+        entry=-1;
+    }
+
+    EdbShowerP* show=0;
+    for (int i=0; i<GetRecoShowerArrayN(); ++i) {
+        if (entry!=i && entry>=0) continue;
+        show=(EdbShowerP*)eRecoShowerArray->At(i);
+        show->PrintBasics();
+    }
+
+    Log(2,"EdbShowRec::PrintRecoShowerArrayFast","EdbShowRec::PrintRecoShowerArrayFast...done.");
+    return;
+}
+
 //______________________________________________________________________________
 
 
@@ -3345,17 +3380,16 @@ void EdbShowRec::PrintRecoShowerArray(Int_t entry)
         Log(2,"EdbShowRec::PrintRecoShowerArray","Print full array.",entry);
     }
     if (entry>= GetRecoShowerArrayN()) {
-        Log(2,"EdbShowRec::PrintRecoShowerArray","Printing entry %d is greater than entries in the array. Print full array.",entry);
+        Log(2,"EdbShowRec::PrintRecoShowerArray","Requested entry %d is greater than entries in the array. Print full array.",entry);
         entry=-1;
     }
 
     EdbShowerP* show=0;
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
+      if (entry!=i && entry>=0) continue;
         show=(EdbShowerP*)eRecoShowerArray->At(i);
-        if (i==entry && entry>=0) {
             show->PrintNice();
             show->PrintSegments();
-        }
     }
 
     Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray...done.");
@@ -5138,14 +5172,14 @@ void EdbShowRec::PrintParametrisation(Int_t ParaNr)
 //______________________________________________________________________________
 void EdbShowRec::AddEdbPVRec( EdbPVRec* Ali )
 {
-    cout << "WARNING: AddEdbPVRec(): More than ONE EdbPVRec is NOT supported! Do nothing. " <<endl;
+    Log(2,"EdbShowRec::AddEdbPVRec( EdbPVRec* Ali )","WARNING    More than ONE EdbPVRec is NOT supported! Do nothing.");
     return;
 }
 
 //______________________________________________________________________________
 void EdbShowRec::AddInBT( EdbSegP* seg )
 {
-    cout << " AddInBT(EdbSegP* seg): Add Segment  to eInBTArray:" <<endl;
+    // cout << " AddInBT(EdbSegP* seg): Add Segment (" <<  seg  << ") to eInBTArray:" <<endl;
     if (NULL==eInBTArray) {
         cout << " AddRecoShowerArray(): NULL==eInBTArray. Create it first!" <<endl;
         eInBTArray=new TObjArray();
@@ -5167,28 +5201,52 @@ void EdbShowRec::AddInBTArray( EdbSegP* seg )
 //______________________________________________________________________________
 void EdbShowRec::AddInBTArray( EdbPattern* pattern )
 {
-    cout << "EdbShowRec::AddInBTArray( EdbPattern* pattern )" << endl;
-    cout << "Loop over all segments of the pattern, and add its segments" << endl;
+    // Loop over all segments of the pattern, and add its segments
+    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","AddInBTArray()...");
+    cout << "EdbShowRec::AddInBTArray( EdbPattern* pattern ): Add pattern (" <<  pattern  << ") to eInBTArray:" <<endl;
+    
+    // check if pattern is not NULL object
+    if (NULL == pattern) {
+      Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","WARNING! Requested pattern is NULL object. Dont add. Return.");
+      return;
+    }
+    
+//     cout << "Loop over all segments of the pattern, and add its segments" << endl;
     Int_t patN = pattern->N();
-    //patN=1;
-    //cout << "DEBUG DEBUG DEBUG    Add only first segment!" << endl;
+
+//     patN=1;
+//     cout << "DEBUG DEBUG DEBUG    Add only first segment!" << endl;
+
     for (Int_t i=0; i<patN; ++i) {
         EdbSegP* seg = pattern->GetSegment(i);
         AddInBT(seg);
     }
+
+    cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
+    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","AddInBTArray()...done.");
     return;
 }
 
 //______________________________________________________________________________
 void EdbShowRec::AddInBTArray( EdbPVRec* volume )
 {
-    cout << "EdbShowRec::AddInBTArray( EdbPVRec* volume )" << endl;
-    cout << "Loop over all the patterns, and add all their segments" << endl;
+    // Loop over all patterns of the volume, and add its segments
+    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","AddInBTArray()...");
+    
+    // check if volume is not NULL object
+    if (NULL == volume) {
+      Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","WARNING! Requested volume is NULL object. Dont add. Return.");
+      return;
+    }
+    
+    
     Int_t volumeN = volume->Npatterns();
     for (Int_t i=0; i<volumeN; ++i) {
         EdbPattern* pat = volume->GetPattern(i);
         AddInBTArray(pat);
     }
+    cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
+    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","AddInBTArray()...done.");
     return;
 }
 
@@ -5196,14 +5254,23 @@ void EdbShowRec::AddInBTArray( EdbPVRec* volume )
 //______________________________________________________________________________
 void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
 {
-    cout << " AddInBTArray(): Add InBTArray Array to eInBTArray:" <<endl;
+    Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","AddInBTArray()...");
+
     if (NULL==eInBTArray) {
         cout << " AddRecoShowerArray(): NULL==eInBTArray. Create it first!" <<endl;
         eInBTArray=new TObjArray();
         SetInBTArrayN(0);
     }
+    
+    // check if volume is not NULL object
+    if (NULL == InBTArray) {
+      Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","WARNING! Requested TObjArray is NULL object. Dont add. Return.");
+      return;
+    }
+    
+    
     // Now add it:
-    // There is NO check yet if the InBTArray has segments in it!
+    // There is NO check yet if the InBTArray has segments in it, or if they are from the type "EdbSegP"
     // To be done a check....
     for (int i=0; i<InBTArray->GetEntries(); i++) {
         EdbSegP* seg=(EdbSegP*)InBTArray->At(i);
@@ -5211,8 +5278,9 @@ void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
         eInBTArray->Add(seg);
     }
     SetInBTArrayN(eInBTArray->GetEntries());
-    cout << " AddRecoShowerArray(): After adding, we have now " << GetInBTArrayN() << "entries (i.e. showers)" << endl;
+    cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
     eInBTArray->Print();
+    Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","AddInBTArray()...done");
     return;
 }
 //______________________________________________________________________________
@@ -5232,8 +5300,8 @@ void EdbShowRec::AddShowAlgArray( TObjArray* ShowAlgArray ) {
         eShowAlgArray->Add(alg);
     }
     SetShowAlgArrayN(eShowAlgArray->GetEntries());
-    cout << " AddRecoShowerArray(): After adding, we have now " << GetShowAlgArrayN() << "entries (i.e. showers)" << endl;
-    eRecoShowerArray->Print();
+    cout << " AddShowAlgArray(): After adding, we have now " << GetShowAlgArrayN() << " entries." << endl;
+    eShowAlgArray->Print();
     return;
 }
 //______________________________________________________________________________
@@ -5253,7 +5321,7 @@ void EdbShowRec::AddRecoShowerArray( TObjArray* RecoShowerArray)      {
         eRecoShowerArray->Add(shower);
     }
     SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
-    cout << " AddRecoShowerArray(): After adding, we have now " << GetRecoShowerArrayN() << "entries (i.e. showers)" << endl;
+    cout << " AddRecoShowerArray(): After adding, we have now " << GetRecoShowerArrayN() << "entries." << endl;
     eRecoShowerArray->Print();
     return;
 }
