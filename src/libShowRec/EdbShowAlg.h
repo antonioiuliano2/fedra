@@ -78,8 +78,6 @@ protected:
     Int_t               eUseAliSub;
 
 
-
-
 // In constructor this is created on heap...
     EdbShowerP*         eRecoShower;
 
@@ -141,6 +139,10 @@ public:
     inline TObjArray*   GetRecoShowerArray()     const       {
         return eRecoShowerArray;
     }
+    inline EdbShowerP*  GetShower(Int_t i)       const       {
+        EdbShowerP* shower = (EdbShowerP*)eRecoShowerArray->At(i);
+        return shower;
+    }
 
     inline void         SetUseAliSub(Bool_t UseAliSub) {
         eUseAliSub=UseAliSub;
@@ -163,7 +165,7 @@ public:
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
 
-
+    void 		UpdateShowerIDs();
 
     void Print();
     void PrintParameters();

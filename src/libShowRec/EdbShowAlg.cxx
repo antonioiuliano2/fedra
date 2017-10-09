@@ -467,11 +467,25 @@ Double_t EdbShowAlg::GetSpatialDist(EdbSegP* s1,EdbSegP* s2)
 }
 //______________________________________________________________________________
 
+void EdbShowAlg::UpdateShowerIDs()
+{
+    // Shower IDs are numbered in the ordering in the RecoShowerArray
+    if ( NULL == eRecoShowerArray ) return;
+    Int_t idNumber=0;
+    for (int i=0; i<eRecoShowerArrayN; ++i) {
+        EdbShowerP* shower = GetShower(i);
+        shower->SetID(i);
+    }
+    return;
+}
+//______________________________________________________________________________
+
+
+
 
 void EdbShowAlg::Help()
 {
-    cout << "---------------------------------------------------------" <<
-         endl;
+    cout << "---------------------------------------------------------" << endl;
     cout << "EdbShowAlg::Help()" << endl << endl;
     cout << "  What is this?" << endl;
     cout << "        Primary Reconstruction Class for the Showers" << endl;
@@ -500,8 +514,7 @@ void EdbShowAlg::Help()
     cout << "        ...." << endl;
     cout << "        ...." << endl;
     cout << endl;
-    cout << "---------------------------------------------------------" <<
-         endl;
+    cout << "---------------------------------------------------------" << endl;
     return;
 }
 //______________________________________________________________________________
@@ -1213,7 +1226,7 @@ void EdbShowAlg_OI::Execute()
 
 
 // CounterOutPut
-        if (gEDBDEBUGLEVEL==2) if ((i%100)==0 && i>0) cout << eInBTArrayN <<" Initiator Basetracks (InBT) in total, still to do: " << Form("%06d",i) << "\r\r\r\r\r\r" << flush;
+        if (gEDBDEBUGLEVEL==2) if ((i%100)==0) cout << eInBTArrayN <<" Initiator Basetracks (InBT) in total, still to do: " << Form("%06d",i) << "\r\r\r\r\r\r" << flush;
 
 //-----------------------------------
 // 1) Make local_gAli with cut parameters:
@@ -1295,10 +1308,10 @@ void EdbShowAlg_OI::Execute()
             // cout << "newPat_next_ascending_Z = " << newPat_next_ascending_Z << endl;
 
             if ( NULL == newPat_next_ascending_Z ) {
-		if (gEDBDEBUGLEVEL>2) {
-                  cout << "newPat_next_ascending_Z   is NULL pointer !  So it is nonexisting! (possibly last plate); " << endl;
-                  cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newPat_next_ascending_Z   is NULL pointer "<<endl;
-		}
+                if (gEDBDEBUGLEVEL>2) {
+                    cout << "newPat_next_ascending_Z   is NULL pointer !  So it is nonexisting! (possibly last plate); " << endl;
+                    cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newPat_next_ascending_Z   is NULL pointer "<<endl;
+                }
                 StillToLoop=kFALSE;
             }
             else {
@@ -1361,8 +1374,7 @@ void EdbShowAlg_OI::Execute()
 // Set Numbers, plates etc. correct
         RecoShower ->Update();
 
-	
-	// Debung Print Information:
+        // Debung Print Information:
         if (gEDBDEBUGLEVEL>2) RecoShower ->PrintBasics();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintNice();
         if (gEDBDEBUGLEVEL>3) RecoShower ->PrintSegments();
@@ -1382,12 +1394,17 @@ void EdbShowAlg_OI::Execute()
 // Set back loop values:
         StillToLoop=kTRUE;
         NLoopedPattern=0;
-    } // of  //   for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+    } // of  //   for (Int_t i=eInBTArrayN-1; i>=0; --i)
+    // Finished Loop over all InBTs here.
 
 
-//     gEDBDEBUGLEVEL=2;
 
-    cout << "EdbShowAlg_OI::eRecoShowerArray Entries = " << eRecoShowerArray->GetEntries() << endl;
+    // Set ID of the shower, otherwise all reco showers have ID=0:
+    // TO BE DONE: auch in den anderen reco-Algorithmen die ID() nachträglich setzen!
+    UpdateShowerIDs();
+
+
+    if (gEDBDEBUGLEVEL==2) cout << endl << "Done reco!" << endl;
     cout << "EdbShowAlg_OI::eRecoShowerArray         = " << eRecoShowerArray << endl;
     cout << "EdbShowAlg_OI::eRecoShowerArrayN        = " << eRecoShowerArrayN << endl;
 

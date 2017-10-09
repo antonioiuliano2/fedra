@@ -11,7 +11,6 @@ EdbShowerP::EdbShowerP(int nseg)
 {
     if (gEDBDEBUGLEVEL>4) cout << "EdbShowerP::EdbShowerP(int nseg)   CONSTRUCTOR" << endl;
 
-
     // default constructor, empty shower
     Init();
     SetNpl(-999);
@@ -348,7 +347,7 @@ void EdbShowerP::BuildProfiles()
     if (gEDBDEBUGLEVEL>3) {
         cout << "EdbShowerP::BuildProfiles()" << endl;
         cout << "EdbShowerP::Building Transversal Profile:" << endl;
-        cout << "EdbShowerP::Loop over BTs and calculate their distance w.r.t to the InBT axis" << endl;
+        cout << "EdbShowerP::Loop over BTs and calculate their distance w.r.t. to the InBT axis" << endl;
     }
     if (eNBT<=0) {
         cout << "EdbShowerP::BuildProfiles()   Empty shower. Return." << endl;
@@ -1219,6 +1218,9 @@ void EdbShowerP::BuildParametrisation_FJ()
 
                 extrapo_diffz=shower_zb[ii]-shower_zb[jj];
                 if (TMath::Abs(extrapo_diffz)>4*1300+1.0) continue;
+                //if (TMath::Abs(extrapo_diffz)>4*1350+1.0) continue;  // experimental data shows that
+                // average delta Z is about 1350 microns, instead of 1300, please check the
+                // compability with simulated data !!! TO BE DONE !!!
                 if (TMath::Abs(extrapo_diffz)<1.0) continue; // remove same positions.
 
                 extrapol_x=shower_xb[ii]-shower_txb[ii]*extrapo_diffz; // minus, because its ii after jj.
@@ -1402,7 +1404,10 @@ void EdbShowerP::BuildParametrisation_FJ()
     }
     //=C= =====================================================================
     //=C= loop over the basetracks in the shower (boucle sur les btk)
+    // cout << "DEBUG  EdbShowerP BuildParametrisation_FJ .........     //=C= loop over the basetracks in the shower (boucle sur les btk) " << endl;
     for (Int_t ibtke = 0; ibtke < N(); ibtke++) {
+        // cout << " DEBUG  EdbShowerP BuildParametrisation_FJ ......... ibtke = "  << ibtke << " nfilmb[ibtke] = " << nfilmb[ibtke] <<  "  nbfilm= "  <<  nbfilm <<  endl;
+
         dist = sqrt((xb[ibtke]- X0[nfilmb[ibtke]-1])*(xb[ibtke]- X0[nfilmb[ibtke]-1])+(yb[ibtke]- Y0[nfilmb[ibtke]-1])*(yb[ibtke]- Y0[nfilmb[ibtke]-1]));
 
         // inside the cone
@@ -1422,19 +1427,27 @@ void EdbShowerP::BuildParametrisation_FJ()
                 cout << "           You might want to check this shower again manualy to make sure everything is correct....." << endl;
             }
         }
+
+        // DEBUG:
+        Int_t binOfhisto_transprofile=-1;
+        // cout << "DEBUG  EdbShowerP BuildParametrisation_FJ .........    histo_transprofile ->GetEntries() = " <<  histo_transprofile ->GetEntries() << endl;
+
         if (nfilmb[ibtke]<=nbfilm) {
-            //cout << "DEBUG CUTCONDITION WITHOUT THE (?_?_? WRONG ?_?_?) CONE DIST CONDITION....." << endl;
+            // cout << "DEBUG CUTCONDITION WITHOUT THE (?_?_? WRONG ?_?_?) CONE DIST CONDITION....." << endl;
             // cout << yes, this additional cut is not necessary anymore, see above....
 
             histo_longprofile        ->Fill(nfilmb[ibtke]);
             histo_longprofile_av     ->Fill(nfilmb[ibtke]);
 
-            Double_t DR=0;  //Extrapolate the old stlye way:
+            Double_t DR=0;  //Extrapolate the old style way:
             Double_t Dx=xb[ibtke]-(xb[0]+(zb[ibtke]-zb[0])*txb[0]);
             Double_t Dy=yb[ibtke]-(yb[0]+(zb[ibtke]-zb[0])*tyb[0]);
             DR=TMath::Sqrt(Dx*Dx+Dy*Dy);
+
             histo_transprofile_av->Fill(DR);
-            histo_transprofile->Fill(DR);
+            binOfhisto_transprofile= histo_transprofile->Fill(DR);
+
+            // cout << "DEBUG  EdbShowerP BuildParametrisation_FJ .........     Histotransprofile:  Filled the bin " <<  binOfhisto_transprofile  << " with the value DR= " << DR << endl;
 
             theta[nfilmb[ibtke]]+= (TX0-txb[ibtke])*(TX0-txb[ibtke])+(TY0-tyb[ibtke])*(TY0-tyb[ibtke]);
             if (ibtke>0&&nfilmb[ibtke]<=nbfilm) {
@@ -1520,7 +1533,7 @@ void EdbShowerP::BuildParametrisation_FJ()
     }
     ePara_AS.nseg=N();
 
-    // First Segment we dont need to calculate by definition (all vals are zero anyway).
+    // First Segment we dont need to calculate by definition (all values are zero anyway).
     for (Int_t j=1; j<Nmax; ++j) {
         // 		  cout << "j= " << j << endl;
         EdbSegP* seg=GetSegment(j);
@@ -1594,9 +1607,14 @@ void EdbShowerP::BuildParametrisation_FJ()
     ePara_LT.BT_deltaR_rms  = histo_deltaR->GetRMS();
     ePara_LT.BT_deltaT_mean = histo_deltaT->GetMean();
     ePara_LT.BT_deltaT_rms  = histo_deltaT->GetRMS();
-    // 0 bin is overflow bin...
-    for (int ii=0; ii<8; ii++) ePara_LT.transprofile[ii]=histo_transprofile->GetBinContent(ii+1);
+    // Reminder Root Histograms: Bin "0" is the underflow bin, so start with bin 0+1:
+    for (int ii=0; ii<8; ii++) {
+        // cout << " ii = " << ii << " histo_transprofile->GetBinContent(ii+1) = " <<  histo_transprofile->GetBinContent(ii+1)   << endl;
+        ePara_LT.transprofile[ii]=histo_transprofile->GetBinContent(ii+1);
+    }
     for (int ii=0; ii<57; ii++) ePara_LT.longprofile[ii]=longprofile[ii];
+
+
 
     // Now set parametrisation values (This routine calculates also the
     // values for ePara_JC since it is composed of FJ and JC)
@@ -2074,7 +2092,7 @@ void EdbShowerP::BuildParametrisation_SE()
     Log(3,"EdbShowerP::BuildParametrisation_SE()","EdbShowerP::BuildParametrisation_SE()");
 
     // This parametrisation consists of these variables:
-    //	0)	Axis TanTheta
+    //  0)  Axis TanTheta
     //  1)  NBT
     //  2)  NPL
     //  3)  Efficiency At  Axis TanTheta  (if given anyway. since it can not be measured from
@@ -2177,9 +2195,10 @@ Float_t EdbShowerP::GetParaVariable(Int_t ParaVariable, Int_t ParaNr)
         return 0;
     }
     else {
-        cout << "Other parametrisations are not yet supported...." << endl;
+        Log(3,"EdbShowerP::GetParaVariable()","Other parametrisations are not yet supported!");
     }
 
+    Log(3,"EdbShowerP::GetParaVariable()","EdbShowerP::GetParaVariable()...done.");
     return 0;
 }
 
@@ -2213,9 +2232,6 @@ void EdbShowerP::Print()
 {
     PrintNice();
     return;
-    cout << "EdbShowerP::Print()" << endl;
-    cout << "EdbShowerP::Print()...done." << endl;
-    return;
 }
 //______________________________________________________________________________
 void EdbShowerP::PrintNice()
@@ -2244,12 +2260,6 @@ void EdbShowerP::PrintBasics()
 {
     cout << "EdbShowerP::PrintBasics()" << endl;
     printf( "EdbShowerP: ID= %6d, N=%6d, NMC=%6d, N0=%6d, NPl=%6d, MCEvt= %6d: \n", ID(), N(), eNBTMC, N0(), Npl(),eMC );
-//     cout << setw(12) << "eNBT= " << setw(18) << N() << endl;
-//     cout << setw(12) << "eNpl= " << setw(18) << Npl() << endl;
-//     cout << setw(12) << "eN0= " << setw(18) << N0() << endl;
-//     cout << setw(12) << "eN00= " << setw(18) << N00() << endl;
-//     cout << setw(12) << "eNBTMC= " << setw(18) << GetNBTMC() << endl;
-//     cout << setw(12) << "ePurity= " << setw(18) << GetPurity() << endl;
     return;
 }
 //______________________________________________________________________________
@@ -2320,11 +2330,11 @@ void EdbShowerP::PrintParametrisation_LT()
     cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.BT_deltaT_rms= " << ePara_LT.BT_deltaT_rms << endl;
 
     cout << "EdbShowerP::PrintParametrisation_LT()    ePara_LT.transprofile= " << endl;
-    for (int i=0; i<9; i++) {
+    for (int i=0; i<8; i++) {
         cout << setw(3) << i;
     }
     cout << endl;
-    for (int i=0; i<9; i++) {
+    for (int i=0; i<8; i++) {
         cout << setw(3) << ePara_LT.transprofile[i];
     }
     cout << endl;
@@ -2427,7 +2437,7 @@ void EdbShowerP::PrintParametrisation_YY()
         return;
     }
     cout << "EdbShowerP::PrintParametrisation_YY()    ePara_YY.ShowerAxisAngle= " << ePara_YY.ShowerAxisAngle << endl;
-    cout << "EdbShowerP::PrintParametrisation_YY()   Longitudinal Profile (not plates!, but dist w.r.t to shower axis!)"<<endl;
+    cout << "EdbShowerP::PrintParametrisation_YY()   Longitudinal Profile (not plates!, but dist w.r.t. to shower axis!)"<<endl;
     cout << "EdbShowerP::PrintParametrisation_YY()   (take Plate Profile instead if you want have this):"<<endl;
 
     for (int i=1; i<57; i++) {
@@ -2438,7 +2448,7 @@ void EdbShowerP::PrintParametrisation_YY()
         cout << setw(3) << ePara_YY.ProfileLongitudinalBincontent[i];
     }
     cout << endl;
-    cout << "EdbShowerP::PrintParametrisation_YY()   TransVersal Profile (not plates!, but dist w.r.t to shower axis!)"<<endl;
+    cout << "EdbShowerP::PrintParametrisation_YY()   Transversal Profile (not plates!, but dist w.r.t. to shower axis!)"<<endl;
     for (int i=1; i<8; i++) {
         cout << setw(3) << ePara_YY.ProfileTransversalBincontent[i];
     }
@@ -2454,7 +2464,7 @@ void EdbShowerP::PrintParametrisation_PP()
         cout << "EdbShowerP::PrintParametrisation()     PARA NOT YET BUILD ! "<< endl;
         return;
     }
-    cout << "EdbShowerP::PrintParametrisation_PP()    ePara_PP.ShowerAxisAngle= " << ePara_PP.ShowerAxisAngle << endl;
+    cout << "EdbShowerP::PrintParametrisation_PP()   ePara_PP.ShowerAxisAngle= " << ePara_PP.ShowerAxisAngle << endl;
     cout << "EdbShowerP::PrintParametrisation_PP()   ePara_PP.nseg= " << ePara_PP.nseg << endl;
     cout << "EdbShowerP::PrintParametrisation_PP()   ePara_PP.ePairOpeningAngle= " << ePara_PP.ePairOpeningAngle << endl;
     cout << "EdbShowerP::PrintParametrisation_PP()   ePara_PP.ePairOpeningDist_dR= " << ePara_PP.ePairOpeningDist_dR << endl;
@@ -2466,6 +2476,7 @@ void EdbShowerP::PrintParametrisation_PP()
 void EdbShowerP::PrintParametrisation_AS()
 {
     cout << "EdbShowerP::PrintParametrisation_AS"<< endl;
+    cout << "EdbShowerP::PrintParametrisation_AS  REMINDER: AS stands for ALL SEGMENTS, but only the first 50 segs will be used !"<< endl;
     if (!eParametrisationIsDone[7]) {
         cout << "EdbShowerP::PrintParametrisation()     PARA NOT YET BUILD ! "<< endl;
         return;
@@ -2567,9 +2578,9 @@ void EdbShowerP::Help()
     cout << "     Two profiles exist: The Longitudinal and the Transversal Profile:" << endl;
     cout << "     The Longitudinal Profile:" << endl;
     cout << "     You can get the longitudinal profile with a ROOT histogram:" << endl;
-    cout << "   ->GetHistogramProfileLongitudinal() . It uses Z postion values w.r.t the starting point of the shower." << endl;
-    cout << "   ->GetHistogramProfileLongitudinalPlate() . It uses plate postion values w.r.t the starting plate of the shower." << endl;
-    cout << "   ->GetHistogramProfileTransversal() . It uses Z postion values w.r.t the starting point of the shower." << endl;
+    cout << "   ->GetHistogramProfileLongitudinal() . It uses Z postion values w.r.t. the starting point of the shower." << endl;
+    cout << "   ->GetHistogramProfileLongitudinalPlate() . It uses plate postion values w.r.t. the starting plate of the shower." << endl;
+    cout << "   ->GetHistogramProfileTransversal() . It uses Z postion values w.r.t. the starting point of the shower." << endl;
     cout << "   The shower parametrisations:" << endl;
     cout << "   ->GetPara_..() Get the corresponding parametrisation structure:" << endl;
     cout << "   ->GetPara_..() Possible Options: _FJ _YC _XX _YY _PP _AS _SE  _ExtraInfo" << endl;
@@ -2585,8 +2596,7 @@ void EdbShowerP::Help()
     cout << "   ->Update()  Partial update (no   rebuild of parametrisations)" << endl;
     cout << "   ->UpdateX() Full    update (with rebuild of parametrisations." << endl;
     cout << endl;
-    cout << "---------------------------------------------------------" <<
-         endl;
+    cout << "---------------------------------------------------------" << endl;
     return;
 }
 

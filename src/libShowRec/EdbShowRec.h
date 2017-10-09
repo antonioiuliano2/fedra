@@ -68,8 +68,8 @@ private:
     Bool_t             eShowAlgArrayLoaded;
     Int_t              eShowAlgArrayMaxSize;
     // TObjArray storing reconstructed showers (objects of EdbShowerP class):
-    TObjArray*	eRecoShowerArray;
-    Int_t	 eRecoShowerArrayN;
+    TObjArray* eRecoShowerArray;
+    Int_t  eRecoShowerArrayN;
 
     // TTree storing reconstructed showers  (objects of "treebranch" TTree, when reading Shower.root file):
     //                                      (backward compability)
@@ -129,7 +129,7 @@ private:
 
     // Variables used for naming the files to read/write the specified
     // data structures or specified objects.
-    //	Read:
+    // Read:
     TString           eFilename_LnkDef;
     TString           eFilename_LinkedTracks;
     TString           eFilename_EdbPVRecObject;
@@ -140,13 +140,13 @@ private:
     TFile*            eFile_In_shower;            // File containing showers in "EdbShowerP" format
     TFile*            eFile_In_treebranch;        // File containing showers in "treebranch" format
 
-    //	Write:
+    // Write:
     TString           eFilename_Out_shower;       // File containing showers in "EdbShowerP" format
     TString           eFilename_Out_treebranch;   // File containing showers in "treebranch" format
     Bool_t            eWriteFileShower;
     Bool_t            eWriteFileTreebranch;
-    TFile*     	      eFile_Out_shower;           // File containing showers in "EdbShowerP" format
-    TFile*	          eFile_Out_treebranch;       // File containing showers in "treebranch" format
+    TFile*            eFile_Out_shower;           // File containing showers in "EdbShowerP" format
+    TFile*           eFile_Out_treebranch;       // File containing showers in "treebranch" format
 
 
 
@@ -177,7 +177,10 @@ private:
     // Used to apply TCut on segments:
     TCut*             eInBTCuts[3];       //! root-style text cuts
     TTree*            eInBTTree;          // Tree for interim storing InBTs
-    
+
+    // Fraction of InBTs to be taken (in case of setting volume or pattern as Input)
+    Double_t   eInBTArrayFraction;
+
 
     // Use the small eAli object (from ExtractSubpattern) or the whole
     // eAli object for reconstruction:
@@ -214,7 +217,7 @@ private:
     // Function to reset all added  algorithm instances to  the  eShowAlgArray
     void              ResetShowAlgArray();
 
-// 		AddAlg(Int_t AlgType, Float* par)
+//   AddAlg(Int_t AlgType, Float* par)
 
 
     // Function to reset the kind of filling  the  eInBTArray:
@@ -258,7 +261,7 @@ private:
 
 
     /// Write Reconstructed Showers to File:
-    void 		Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP );
+    void   Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP );
     /// NOT WORKLING YET::::  still segmentation faults..../// solved but i dont know why....
 
 
@@ -298,7 +301,7 @@ public:
 
     // Reconstruct showers: invoke all methods availible for all reconstruction things.
     void              Reconstruct();
-    void 							ReconstructTEST();
+    void              ReconstructTEST();
     void              ReconstructTESTSHORT();
     void              ReconstructTESTSTANDARD();
     void              ReconstructTEST_CA();
@@ -310,8 +313,8 @@ public:
 
     // reset all values to the standard ones.
     void              Reset();
-    void 							ResetRecoShowerArray();
-    void 							ResetInBTArray();
+    void              ResetRecoShowerArray();
+    void              ResetInBTArray();
 
 
     // Set Functions:
@@ -363,6 +366,16 @@ public:
         eInBTArray = InBTArray;
         eInBTArrayN=eInBTArray->GetEntries();
     }
+    inline void         SetInBTArrayFraction( Double_t InBTArrayFraction ) {
+        if (InBTArrayFraction>1) {
+            cout << "WARNUNG ..... InBTArrayFraction > 1. Set to 1." << endl;
+            eInBTArrayFraction=1;
+        }
+        else {
+            eInBTArrayFraction=InBTArrayFraction;
+        }
+    }
+
     inline void         SetInBTUseNr( Int_t UseNr ) {
         eUseNr = UseNr;
     }
@@ -431,10 +444,6 @@ public:
     void                SetDoParaType(TString typestring);
     void                SetUseAliSub(Int_t type);
 
-    inline Int_t        SetDoParaType( Int_t type )      const       {
-        return   eParaTypes[type];
-    }
-
 
     // Add Functions:
     // Add Volume
@@ -498,10 +507,10 @@ public:
         return eNumberPlate;
     }
 
-    inline Int_t        GetProposedFirstPlate( )      const       	{
+    inline Int_t        GetProposedFirstPlate( )      const        {
         return eProposedFirstPlate;
     }
-    inline Int_t        GetProposedLastPlate( )     	 const       {
+    inline Int_t        GetProposedLastPlate( )       const       {
         return eProposedLastPlate;
     }
     inline Int_t        GetProposedMiddlePlate( )      const       {
@@ -517,11 +526,14 @@ public:
     inline TString      GetTreebranchName( )      const       {
         return eName_Out_treebranch;
     }
+    inline Int_t        GetDoParaType(Int_t type)      const       {
+        return   eParaTypes[type];
+    }
 
 
 
 
-    // Get Functions:
+    // Update Functions:
     inline void Update() {
         cout << "EdbShowRec::Update ONLY showers!"<< endl;
         for (int i=0; i<GetRecoShowerArrayN(); ++i) GetShower(i)->Update();
@@ -551,16 +563,16 @@ public:
     void              Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebranch);
 
     // Function to convert a txtfile with segments lists  into an  eRecoShowerArray
-    void 		TxtToRecoShowerArray();
-    void		TxtToRecoShowerArray(TString TxtFileName, Int_t TxtFileType);
-    void 		TxtToRecoShowerArray_FeedBack(TString TxtFileName);
-    void 		TxtToRecoShowerArray_SimpleList(TString TxtFileName);
-    void 		TxtToRecoShowerArray_SimpleListNagoya(TString TxtFileName);
-    void 		TxtToRecoShowerArray_EDAList(TString TxtFileName);
+    void   TxtToRecoShowerArray();
+    void  TxtToRecoShowerArray(TString TxtFileName, Int_t TxtFileType);
+    void   TxtToRecoShowerArray_FeedBack(TString TxtFileName);
+    void   TxtToRecoShowerArray_SimpleList(TString TxtFileName);
+    void   TxtToRecoShowerArray_SimpleListNagoya(TString TxtFileName);
+    void   TxtToRecoShowerArray_EDAList(TString TxtFileName);
 
 
     // test:  Write the Parametrisation from the eRecoShowerArray into a tree.
-    //        (Satisfies Backward compability).
+    //        (satisfies Backward compability).
     void      WriteParametrisation_FJ(); //0
     void      WriteParametrisation_LT(); //1
     void      WriteParametrisation_YC(); //2
@@ -583,7 +595,7 @@ public:
 
     // Write Reconstructed Showers to File:
     void    WriteRecoShowerArray(TObjArray* RecoShowerArray);
-    /// NOT WORKLING YET::::  still segmentation faults..../// solved but i dont know why....
+    /// NOT WORKING YET::::  still segmentation faults..../// solved, but I dont know why....
     /// still crashing ...
     /// Test without writing the TTree:
     void WriteRecoShowerArrayWithoutTTree(TObjArray* RecoShowerArray );

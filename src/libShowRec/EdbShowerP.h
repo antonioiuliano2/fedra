@@ -234,6 +234,7 @@ public:
     };
     struct Para_AS {
         // Variables used for AS ( "A_ll S_egemts" ) parametrisation
+        // (But only the first 50 segments will be used. Isnt that a contradiction ???)
         Int_t     nseg;  // identical to <<eNBT>>
         Double_t edIP[50];
         Double_t edMin[50];
@@ -654,7 +655,7 @@ public:
     void  PrintBasics();
     void  PrintMetaData();
     void  PrintSegments();
-    void  PrintParametrisation(Int_t ParaNr);
+    void  PrintParametrisation(Int_t ParaNr=0);
     void  PrintParametrisation_FJ();
     void  PrintParametrisation_LT();
     void  PrintParametrisation_YC();

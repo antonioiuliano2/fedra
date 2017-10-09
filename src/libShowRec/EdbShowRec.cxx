@@ -370,6 +370,8 @@ void EdbShowRec::Set0()
     eAliNpat=0;
     eAliLoaded=kFALSE;
 
+    eInBTArrayFraction=1;
+
     eUseAliSub=0;
 
     eAliZMax=0;
@@ -439,6 +441,8 @@ void EdbShowRec::Init()
     eUse_AliBT=kFALSE;
     eUse_AliLT=kFALSE;
     eUse_PVREC=kFALSE;
+
+    eInBTArrayFraction=1;
 
     eActualAlg=0;
     for (int k=0; k<10; k++) {
@@ -630,6 +634,64 @@ void EdbShowRec::ReconstructTESTSTANDARD()
 
 void EdbShowRec::ReconstructTEST()
 {
+    // Was part of reconstruct() before ... not used at the moment
+    /*
+
+      ///-----------------------------------
+      //   NEW   ALG:
+      // CLEAN    SHowerArray before !!!
+      // ?????????????
+
+      cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
+      eRecoShowerArray->Clear();
+      cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
+      ///-----------------------------------
+
+    //   delete RecoAlg;
+      EdbShowAlg_SA*   NewRecoAlg = new EdbShowAlg_SA();
+
+      //StandardAlg->Print();
+
+      cout << "-----------PRINT done" << endl;
+      //eShowAlgArray->Print();
+      cout << "eShowAlgArray->GetEntries() " <<eShowAlgArray->GetEntries() << endl;
+      cout << "-----------PRINT done2" << endl;
+      eShowAlgArray->Add(NewRecoAlg);
+      cout << "eShowAlgArray->GetEntries() " <<eShowAlgArray->GetEntries() << endl;
+
+      SetShowAlgArrayN(eShowAlgArray->GetEntries());
+
+      eActualAlg=NewRecoAlg;
+      eActualAlgParameterset[4]=1;
+
+      //  eAli
+      NewRecoAlg->SetEdbPVRec(eAli);
+      //  eAli  numbers
+      NewRecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID);
+      //  InBTArray, now correctly filled.
+      NewRecoAlg->SetInBTArray( eInBTArray );
+      //  RecoShowerArray, to be filled by the algorithm:
+      NewRecoAlg->SetRecoShowerArray( eRecoShowerArray);
+
+      NewRecoAlg->Print();
+
+      //
+      NewRecoAlg->Execute();
+      //
+      //-------------------------------------------------------------------
+
+
+      // Sets the names correctly when having more than one alg or parameterset.
+      SetOutNames();
+
+      RecoShowerArray_To_Treebranch();
+      return;
+
+
+
+      Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
+      return;
+     * */
     return;
 }
 
@@ -826,8 +888,10 @@ void EdbShowRec::ReconstructTEST_NN()
 
 void EdbShowRec::Reconstruct()
 {
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction  function");
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction function");
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction using only one shower algorithm (default: OI) with default values.");
 
+    // Check on different things to have:
     Int_t isThere=0;
     if (eAli)  isThere = 1;
     Log(2,"EdbShowRec::Reconstruct()","Check if  eAli           is there: %d", isThere);
@@ -885,13 +949,12 @@ void EdbShowRec::Reconstruct()
     // EdbShowAlg*  RecoAlg = (EdbShowAlg*) eShowAlgArray->At(0);
     // But I rather check it correctly, just to be safe....
     EdbShowAlg_OI*  RecoAlg = (EdbShowAlg_OI*) eShowAlgArray->At(0);
-
-
     eActualAlg=RecoAlg;
-    eActualAlgParameterset[2]=0;   // ???  WHAT WAS THAT? I DONT REMEBER...
+
+
 
     // Hand over the important objects to the RecoAlg itsself.
-    //  eAli
+    //  eAli  (the volume)
     RecoAlg->SetEdbPVRec(eAli);
     //  eAli  numbers
     RecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID );
@@ -901,14 +964,9 @@ void EdbShowRec::Reconstruct()
     RecoAlg->SetRecoShowerArray(eRecoShowerArray);
     //-------------------------------------------------------------------
 
-    cout << "eRecoShowerArray = " << eRecoShowerArray << endl;
-    cout << "eRecoShowerArrayN = " << eRecoShowerArrayN << endl;
-
     RecoAlg->Print();
 
 
-    
-// return;
     //-------------------------------------------------------------------
     //	Main Reconstruction Part for the algorithm:
     //
@@ -918,91 +976,54 @@ void EdbShowRec::Reconstruct()
 //     return;
 
     // Get RecoShowerArray from Reco Alg back!
-    // This has to be done, because EdbShowAlg and EdbShowRec class have 
+    // This has to be done, because EdbShowAlg and EdbShowRec class have
     // each a RecoShowerArray on their own. (It is by construction so...).
     // The storage for the arrays is therefore the same.
+    // (Calls automatically SetRecoShowerArrayN)
     SetRecoShowerArray(RecoAlg->GetRecoShowerArray());
 
     Log(2,"EdbShowRec::Reconstruct()", "RecoAlg->Execute() finished. Reconstructed %d showers.", eRecoShowerArrayN);
     if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
-    
-return;    
-    
-    
+
+
+    // Parametrize Showers now, according to the set parametrizations:
+    Log(2,"EdbShowRec::Reconstruct()", "Parametrize Showers now, according to the set parametrizations");
+    SetDoParaType(1);
+    BuildParametrizations();
+
 
     // Set the names correctly when having more than one alg or parameterset.
+    Log(2,"EdbShowRec::Reconstruct()", "Set Output names correctly");
     SetOutNames();
+
 
     // Convert Array of EdbShowerP objects into old treebranch file format
     // (backward compability)
-    RecoShowerArray_To_Treebranch();
-    Write_RecoShowerArray(eRecoShowerArray, "ALL.root");
-
-
-    //PrintRecoShowerArray();
-
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
-    return;
-
-
-    ///-----------------------------------
-    //   NEW   ALG:
-    // CLEAN    SHowerArray before !!!
-    // ?????????????
-
-    cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
-    eRecoShowerArray->Clear();
-    cout <<"  NEW   ALG:  CLEAN    SHowerArray before !!!" << endl;
-    ///-----------------------------------
-
-//   delete RecoAlg;
-    EdbShowAlg_SA*   NewRecoAlg = new EdbShowAlg_SA();
-
-    //StandardAlg->Print();
-
-    cout << "-----------PRINT done" << endl;
-    //eShowAlgArray->Print();
-    cout << "eShowAlgArray->GetEntries() " <<eShowAlgArray->GetEntries() << endl;
-    cout << "-----------PRINT done2" << endl;
-    eShowAlgArray->Add(NewRecoAlg);
-    cout << "eShowAlgArray->GetEntries() " <<eShowAlgArray->GetEntries() << endl;
-
-    SetShowAlgArrayN(eShowAlgArray->GetEntries());
-
-    eActualAlg=NewRecoAlg;
-    eActualAlgParameterset[4]=1;
-
-    //  eAli
-    NewRecoAlg->SetEdbPVRec(eAli);
-    //  eAli  numbers
-    NewRecoAlg->SetEdbPVRecPIDNumbers( eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID);
-    //  InBTArray, now correctly filled.
-    NewRecoAlg->SetInBTArray( eInBTArray );
-    //  RecoShowerArray, to be filled by the algorithm:
-    NewRecoAlg->SetRecoShowerArray( eRecoShowerArray);
-
-    NewRecoAlg->Print();
-
-    //
-    NewRecoAlg->Execute();
-    //
-    //-------------------------------------------------------------------
-
-
-    // Sets the names correctly when having more than one alg or parameterset.
-    SetOutNames();
-
-
+    Log(2,"EdbShowRec::Reconstruct()", "Convert Array of EdbShowerP objects into old treebranch file format");
     RecoShowerArray_To_Treebranch();
 
 
-    return;
+    // Write Shower in the new EdbShowerP format file
+    Log(2,"EdbShowRec::Reconstruct()", "Write Shower in the new EdbShowerP format file");
+    Write_RecoShowerArray(eRecoShowerArray, "ReconstructedShowers.root");
 
 
 
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
+    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction function...done.");
     return;
 }
+
+
+//______________________________________________________________________________
+
+
+
+
+
+
+
+
+
 
 
 //______________________________________________________________________________
@@ -3061,7 +3082,8 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
                     if (shower_zb[ii]<shower_zb[jj]) continue; // ok, since we calculate deltarb and deltathetab backwards (in Z)
 
                     extrapo_diffz=shower_zb[ii]-shower_zb[jj];
-                    if (TMath::Abs(extrapo_diffz)>4*1300+1.0) continue; // max 4 plates backpropagation
+                    //if (TMath::Abs(extrapo_diffz)>4*1300+1.0) continue; // max 4 plates backpropagation  // change to an average delat z of 1350.
+                    if (TMath::Abs(extrapo_diffz)>4*1350+1.0) continue; // max 4 plates backpropagation
 // 					if (TMath::Abs(extrapo_diffz)>7*1300+1.0) continue; // max 7 plates backpropagation
 // 					if (TMath::Abs(extrapo_diffz)>9*1300+1.0) continue; // max 9 plates backpropagation
                     if (TMath::Abs(extrapo_diffz)<1.0) continue; // remove same positions.
@@ -3386,10 +3408,10 @@ void EdbShowRec::PrintRecoShowerArray(Int_t entry)
 
     EdbShowerP* show=0;
     for (int i=0; i<GetRecoShowerArrayN(); ++i) {
-      if (entry!=i && entry>=0) continue;
+        if (entry!=i && entry>=0) continue;
         show=(EdbShowerP*)eRecoShowerArray->At(i);
-            show->PrintNice();
-            show->PrintSegments();
+        show->PrintNice();
+        show->PrintSegments();
     }
 
     Log(2,"EdbShowRec::PrintRecoShowerArray","EdbShowRec::PrintRecoShowerArray...done.");
@@ -3641,6 +3663,21 @@ void EdbShowRec::BuildParametrizations()
 
     EdbShowerP* show=0;
     int maxParametrizationType=6;
+    Bool_t doMakePara=kFALSE;
+
+    Log(2,"EdbShowRec::BuildParametrizations()","Will build the following parametrizations:");
+    for ( int j=0; j<maxParametrizationType; j++ ) {
+        if (eParaTypes[j]==1) {
+            doMakePara=kTRUE;
+            cout << "Shower parametrization j = " << eParaTypes[j] << " name: " << eParaNames[j].Data() << endl;
+        }
+    }
+
+    if (doMakePara==kFALSE) {
+        Log(2,"EdbShowRec::BuildParametrizations()","No parametrization set to be done!");
+        Log(2,"EdbShowRec::BuildParametrizations()","BuildParametrizations...done.");
+        return;
+    }
 
     for (int i=0; i<eRecoShowerArrayN; i++ ) {
         if (gEDBDEBUGLEVEL>3) cout << "EdbShowRec::BuildParametrizations   i= " << i <<  " of (" << eRecoShowerArrayN << ")"<< endl;
@@ -3722,8 +3759,10 @@ void EdbShowRec::SetSimpleFileName(Int_t type, Int_t dotype)
     //type = 1: showers
     if (type==0) if (dotype==1) eFilename_Out_treebranch="treebranch.root";
     if (type==1) if (dotype==1) eFilename_Out_shower="Showers.root";
+    // "Showers.root" was chosen not to conflict with the output file
+    // of the old libShower library, which gave "Shower.root" as output.
 
-    cout << "eFilename_Out_treebranch=  " << eFilename_Out_treebranch << "   eFilename_Out_shower = " << eFilename_Out_shower <<  endl;
+    cout << "EdbShowRec::SetSimpleFileName()  eFilename_Out_treebranch=  " << eFilename_Out_treebranch << "   eFilename_Out_shower = " << eFilename_Out_shower <<  endl;
     Log(2,"EdbShowRec::SetSimpleFileName()","SetSimpleFileName...done.");
     return;
 }
@@ -3741,6 +3780,10 @@ void EdbShowRec::SetDoParaType(Int_t type)
     //type = 3: JC
     //type = 4: XX
     //type = 5: YY
+    //type = 6: PP  // to be implemented ???  !!!!!!  ???
+    //type = 7: AS  // to be implemented ???  !!!!!!  ???
+    //type = 8: SE  // to be implemented ???  !!!!!!  ???
+
     int maxParametrizationType=6; // max parametrizations available
     if (type>=0 && type<maxParametrizationType) eParaTypes[type]=1;
     Log(2,"EdbShowRec::SetDoParaType()","SetDoParaType...done.");
@@ -3758,6 +3801,9 @@ void EdbShowRec::SetDoParaType(TString typestring)
     if (typestring=="JC") SetDoParaType(3);
     if (typestring=="XX") SetDoParaType(4);
     if (typestring=="YY") SetDoParaType(5);
+    if (typestring=="PP") SetDoParaType(6); // To be implemented ???
+    if (typestring=="AS") SetDoParaType(7); // To be implemented ???
+    if (typestring=="SE") SetDoParaType(8); // To be implemented ???
     return;
 }
 
@@ -3768,7 +3814,17 @@ void EdbShowRec::SetUseAliSub(Int_t type)
     if (type==0) eUseAliSub=kFALSE;
     if (type==1) eUseAliSub=kTRUE;
     cout << "EdbShowRec::SetUseAliSub   eUseAliSub = " << type << " set to " <<  eUseAliSub << endl;
-    cout << "EdbShowRec::SetUseAliSub   NOT YET IMPLEMTNED IN SHOWERALGO !!"<<endl;
+    cout << "EdbShowRec::SetUseAliSub   WARNING! The use of the eAliSub volume is only recommended "<<endl;
+    cout << "EdbShowRec::SetUseAliSub   for _FEW_ Initiator Basetracks, since the usage of  eAliSub volume "<<endl;
+    cout << "EdbShowRec::SetUseAliSub   is not memory safe. "<<endl;
+    cout << "SEE THE COMMMENT IN THE CODE OF THE FUNCTIOn " << endl;
+    cout <<  "void EdbShowAlg::Transform_eAli(EdbSegP* InitiatorBT, Float_t ExtractSize=1500)  " << endl;
+    cout << "FOR THE REASON............  TO  BE  FIXED   " << endl;
+    cout << "For the moment, we will just set back to use full volume in reco:" << endl;
+
+    // for the moment, we will just set back to use full volume in reco:
+    eUseAliSub=kFALSE;
+    cout << "EdbShowRec::SetUseAliSub   eUseAliSub = " << type << " set to " <<  eUseAliSub << endl;
     return;
 }
 
@@ -3804,7 +3860,7 @@ void EdbShowRec::WriteParametrisation_FJ() {
 
     // Steps for creating the file:
     // Because in root we have error messagens "Failed filling branch" we have to:
-    // First stepp into the file and then create the Tree:
+    // First step into the file and then create the Tree:
 
     Log(2,"EdbShowRec::WriteParametrisation_FJ()","Writing Tree in  eFilename_Out_treebranch  = ");
     cout << "eFile_Out_treebranch = " << eFile_Out_treebranch << endl;
@@ -5202,15 +5258,14 @@ void EdbShowRec::AddInBTArray( EdbSegP* seg )
 void EdbShowRec::AddInBTArray( EdbPattern* pattern )
 {
     // Loop over all segments of the pattern, and add its segments
-    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","AddInBTArray()...");
-    cout << "EdbShowRec::AddInBTArray( EdbPattern* pattern ): Add pattern (" <<  pattern  << ") to eInBTArray:" <<endl;
-    
+    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","Add pattern", pattern);
+
     // check if pattern is not NULL object
     if (NULL == pattern) {
-      Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","WARNING! Requested pattern is NULL object. Dont add. Return.");
-      return;
+        Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","WARNING! Requested pattern is NULL object. Dont add. Return.");
+        return;
     }
-    
+
 //     cout << "Loop over all segments of the pattern, and add its segments" << endl;
     Int_t patN = pattern->N();
 
@@ -5219,10 +5274,12 @@ void EdbShowRec::AddInBTArray( EdbPattern* pattern )
 
     for (Int_t i=0; i<patN; ++i) {
         EdbSegP* seg = pattern->GetSegment(i);
+        // And if not every seg is whished to be added: check for
+        if (gRandom->Uniform()>eInBTArrayFraction) continue;
         AddInBT(seg);
     }
 
-    cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
+    //cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
     Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","AddInBTArray()...done.");
     return;
 }
@@ -5231,22 +5288,21 @@ void EdbShowRec::AddInBTArray( EdbPattern* pattern )
 void EdbShowRec::AddInBTArray( EdbPVRec* volume )
 {
     // Loop over all patterns of the volume, and add its segments
-    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","AddInBTArray()...");
-    
+    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","Add all patterns of the volume...");
+
     // check if volume is not NULL object
     if (NULL == volume) {
-      Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","WARNING! Requested volume is NULL object. Dont add. Return.");
-      return;
+        Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","WARNING! Requested volume is NULL object. Dont add. Return.");
+        return;
     }
-    
-    
+
     Int_t volumeN = volume->Npatterns();
     for (Int_t i=0; i<volumeN; ++i) {
         EdbPattern* pat = volume->GetPattern(i);
         AddInBTArray(pat);
     }
-    cout << " AddInBTArray(): After adding, we have now " << GetInBTArrayN() << " entries." << endl;
-    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","AddInBTArray()...done.");
+    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","After adding all patterns, we have now total InBTs:", GetInBTArrayN() );
+    Log(2,"EdbShowRec::AddInBTArray( EdbPVRec* volume )","Add all patterns of the volume...done.");
     return;
 }
 
@@ -5261,20 +5317,22 @@ void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
         eInBTArray=new TObjArray();
         SetInBTArrayN(0);
     }
-    
+
     // check if volume is not NULL object
     if (NULL == InBTArray) {
-      Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","WARNING! Requested TObjArray is NULL object. Dont add. Return.");
-      return;
+        Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","WARNING! Requested TObjArray is NULL object. Dont add. Return.");
+        return;
     }
-    
-    
+
+
     // Now add it:
     // There is NO check yet if the InBTArray has segments in it, or if they are from the type "EdbSegP"
     // To be done a check....
     for (int i=0; i<InBTArray->GetEntries(); i++) {
         EdbSegP* seg=(EdbSegP*)InBTArray->At(i);
         // Here it needs to check if that object is really a EdbSegP object...
+        // And if not every seg is whished to be added: check for
+        if (gRandom->Uniform()>eInBTArrayFraction) continue;
         eInBTArray->Add(seg);
     }
     SetInBTArrayN(eInBTArray->GetEntries());
@@ -5283,6 +5341,8 @@ void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
     Log(2,"EdbShowRec::AddInBTArray( TObjArray* InBTArray )","AddInBTArray()...done");
     return;
 }
+
+
 //______________________________________________________________________________
 void EdbShowRec::AddShowAlgArray( TObjArray* ShowAlgArray ) {
     cout << " AddShowAlgArray(): Add ShowAlgArray Array to eShowAlgArray:" <<endl;
