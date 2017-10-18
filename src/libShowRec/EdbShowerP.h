@@ -320,7 +320,7 @@ public:
 
     // General Implementation of the Reco_E structure:
     // Instances are use for estimating the shower energy.
-    // Instances are dependent on the type of Parametriasation with which the shower
+    // Instances are dependent on the type of parametrisation with which the shower
     // was parametrized, so the eParaNr is saved.
     // Instances may also be dependent on the type of the shower, if its a
     // gammaShower or a electronShower.
@@ -361,6 +361,9 @@ public:
     Para_ExtraInfo     ePara_ExtraInfo;
     MCInfo_PGun    eMCInfo_PGun;
     MCInfo_Event   eMCInfo_Event;
+    
+    Reco_E	eReco_E;
+    Reco_Vtx	eReco_Vtx;
 
     TObjArray*  eReco_ID_Array; // create crash when not initialized??? yes, so better initialize it
     TObjArray*  eReco_E_Array; // even when  not yet needed....
@@ -369,6 +372,8 @@ public:
 
     void        Init();
     void        Set0();
+    void        Set0Parametrizations();
+    
     EdbTrackP   *TrackAS() const {
         return eTrackAS;
     }

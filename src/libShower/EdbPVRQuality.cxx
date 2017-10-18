@@ -338,15 +338,15 @@ void EdbPVRQuality::Init()
     eHistXY = new TH2F("eHistXY","eHistXY",200,0,1,200,0,1);
 
     // Filled with EdbSegP::TX(),TY() value
-    eHistTXTY = new TH2F("eHistTXTY","eHistTXTY",100,-0.7,0.7,100,-0.7,0.7);
+    eHistTXTY = new TH2F("eHistTXTY","eHistTXTY",70,-0.7,0.7,70,-0.7,0.7);
 
     // If tangens theta binning histogram is too fine grained,
     // there is the danger of being to few entries in the histogram.
-    eHistTT = new TH1F("eHistTT","eHistTT",10,0,1);
+    eHistTT = new TH1F("eHistTT","eHistTT",14,0,0.7);
     // Filled with EdbSegP::TT() value
     // eHistTTFillcheck is only used for determing the TT bin of the segment,
     // also when rebinning this histogram
-    eHistTTFillcheck = new TH1F("eHistTTFillcheck","eHistTTFillcheck",10,0,1);
+    eHistTTFillcheck = new TH1F("eHistTTFillcheck","eHistTTFillcheck",14,0,0.7);
 
     eHistBTDensityPattern = new TH1F("eHistBTDensityPattern","eHistBTDensityPattern",200,0,200);
     eHistBTDensityVolume = new TH1F("eHistBTDensityVolume","eHistBTDensityVolume",200,0,200);

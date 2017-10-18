@@ -399,8 +399,8 @@ void EdbShowRec::Set0()
     eRecoShowerTreetreebranch=0;
 
 
-    for (int i=0; i<3; i++) eInBTCuts[i]=0;
-    for (int i=0; i<7; i++) eParaTypes[i]=0;
+    for (Int_t i=0; i<3; ++i) eInBTCuts[i]=0;
+    for (Int_t i=0; i<7; ++i) eParaTypes[i]=0;
 
     eParaNames[0]="FJ";
     eParaNames[1]="LT";
@@ -755,7 +755,7 @@ void EdbShowRec::ReconstructTEST_CA()
     return;
 
     TH1F* h1= new TH1F("hh","hh",100,0,1);
-    for (int i=0; i<eRecoShowerArrayN; i++) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i) {
         EdbShowerP* sh=	(EdbShowerP* ) eRecoShowerArray->At(i);
         h1->Fill(TMath::Abs(sh->GetSegment(0)->TX()-sh->GetSegmentGravity()->TX()));
     }
@@ -1005,7 +1005,7 @@ void EdbShowRec::Reconstruct()
 
     // Write Shower in the new EdbShowerP format file
     Log(2,"EdbShowRec::Reconstruct()", "Write Shower in the new EdbShowerP format file");
-    Write_RecoShowerArray(eRecoShowerArray, "ReconstructedShowers.root");
+    Write_RecoShowerArray(eRecoShowerArray);
 
 
 
@@ -1286,7 +1286,7 @@ void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
     tr->SetBranchAddress("n0"  , &n0  );
     tr->SetBranchAddress("npl"  , &npl  );
 
-    for (int i=0; i<nentr; i++ ) {
+    for (Int_t i=0; i<nentr; ++i ) {
         tr->GetEntry(i);
         // Take only Basetracks from tracks which pass 3 or more plates:
         // WHY 3 plates? This would exclude all initiator tracks with two consecutive segments anyway...???
@@ -1321,7 +1321,7 @@ void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
     if (gEDBDEBUGLEVEL>2) {
         cout << "EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks   Printing InBTs" << endl;
         EdbSegP* testseg=0;
-        for (int i=0; i<eInBTArrayN; i++ ) {
+        for (Int_t i=0; i<eInBTArrayN; ++i ) {
             testseg=(EdbSegP*)eInBTArray->At(i);
             testseg->PrintNice();
         }
@@ -1394,7 +1394,7 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()
 
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()   Printing InBTs" << endl;
     EdbSegP* testseg=0;
-    for (int i=0; i<eInBTArrayN; i++ ) {
+    for (Int_t i=0; i<eInBTArrayN; ++i ) {
         if (gEDBDEBUGLEVEL>2) {
             testseg=(EdbSegP*)eInBTArray->At(i);
             testseg->PrintNice();
@@ -1426,7 +1426,7 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()
 
     TFile* file = new TFile("InBT.root");
     TObjArray* InBTArray = (TObjArray* )file->Get("TObjArray");
-    for (int i=0; i<InBTArray->GetEntries(); ++i) {
+    for (Int_t i=0; i<InBTArray->GetEntries(); ++i) {
         EdbSegP* s = (EdbSegP*)InBTArray->At(i);
         s->PrintNice();
     }
@@ -1445,7 +1445,7 @@ void EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_RootFile()
 
     if (gEDBDEBUGLEVEL>1) cout << "EdbShowRec::Fill_eInBTArray_ByBaseTracksOf_eAli()   Printing InBTs" << endl;
     EdbSegP* testseg=0;
-    for (int i=0; i<eInBTArrayN; i++ ) {
+    for (Int_t i=0; i<eInBTArrayN; ++i ) {
         if (gEDBDEBUGLEVEL>2) {
             testseg=(EdbSegP*)eInBTArray->At(i);
             testseg->PrintNice();
@@ -1484,7 +1484,7 @@ void EdbShowRec::Cut_eInBTTree_To_InBTArray()
     int nlst =lst->GetN();
 
     int entr=0;
-    for (int i=0; i<nlst; i++ ) {
+    for (Int_t i=0; i<nlst; ++i ) {
         entr = lst->GetEntry(i);
 
         // CounterOutPut
@@ -1670,56 +1670,10 @@ void EdbShowRec::Fill_eShowAlgArray()
 }
 
 
-//______________________________________________________________________________
-
-void EdbShowRec::WriteRecoShowerArray(TObjArray* RecoShowerArray )
-{
-    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree");
-
-    TFile* file= new TFile("testArrayEdbShowerP.root","RECREATE");
-    TTree* tree= new TTree("tree","tree");
-    EdbShowerP* show=0;
-//   tree->Branch("shower","EdbShowerP",&show,32000,99);
-    //tree->Branch("shower","EdbShowerP",&show,64000,99);
-    tree->Branch("shower","EdbShowerP",&show);
-//     tree->Branch("shower","EdbShowerP",&show,128000);
-
-    cout << " RecoShowerArray->GetEntries() " <<   RecoShowerArray->GetEntries()  << endl;
-    int nbyte;
-    for (int itr=0; itr<RecoShowerArray->GetEntries(); itr++) {
-//         cout << " Doing entry  " <<  itr  << endl;
-        show=(EdbShowerP*)RecoShowerArray->At(itr);
-        //show->PrintNice();
-//         cout << " Do tree->Fill " << endl;
-//         cout << " CRASH HERE ???  WHY??? " << endl; // solved...
-        nbyte=tree->Fill();
-//         cout <<  nbyte << " byte written... " << endl;
-    }
-
-    cout << " tree->Fill loop done" << endl;
-
-//   CRASH HERE ???  WHY???
-
-    tree->Print();
-    cout << " tree->GetEntries() " <<   tree->GetEntries()  << endl;
-
-    tree->Write();
-    cout << " tree->Write()   done." << endl;
-    file->Close();
-    cout << " file->Close();     done."    << endl;
-
-    delete file;
-    file=0;
-
-    Log(2,"EdbShowRec::WriteRecoShowerArray()","Write the array of reconstructed showers to a TTree...done.");
-    return;
-}
-
-
 
 //______________________________________________________________________________
-// Private Function... Why did I set it like this ???
-void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP )
+
+void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray)
 {
 
     Log(2,"EdbShowRec::Write_RecoShowerArray()","Write the array of reconstructed showers to a TTree");
@@ -1728,37 +1682,29 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
         return;
     }
 
-    TFile* file= new TFile(Filename_Out_EdbShowerP,"RECREATE");
-    TTree* tree= new TTree("tree","tree");
+    TFile* file= new TFile(eFilename_Out_shower,"RECREATE");
+    TTree* tree= new TTree("treeArrayEdbShowerP","treeArrayEdbShowerP");
 
-    EdbShowerP* show=0;
-//   tree->Branch("shower","EdbShowerP",&show,32000,99);
-    //tree->Branch("shower","EdbShowerP",&show,64000,99);
-//   tree->Branch("shower","EdbShowerP",&show);
-    tree->Branch("shower","EdbShowerP",&show,128000);
-
-    //cout << " RecoShowerArray->GetEntries() " <<   RecoShowerArray->GetEntries()  << endl;
+    EdbShowerP* shower=0;
+    tree->Branch("shower","EdbShowerP",&shower,128000);
 
     int nbyte;
     for (int itr=0; itr<RecoShowerArray->GetEntries(); itr++) {
         Log(3,"EdbShowRec::Write_RecoShowerArray()","Doing entry %d.", itr );
-        show=(EdbShowerP*)RecoShowerArray->At(itr);
-        //show->PrintNice();
+        shower=(EdbShowerP*)RecoShowerArray->At(itr);
+        //shower->PrintNice();
         Log(3,"EdbShowRec::Write_RecoShowerArray()","Do tree->Fill.");
         nbyte=tree->Fill();
     }
 
     Log(2,"EdbShowRec::Write_RecoShowerArray()","tree->Fill loop done.");
 
-//   CRASH HERE ???  WHY???
-// i think i solved this, but am not sure anymore.
-
     tree->Print();
     cout << " tree->GetEntries() " <<   tree->GetEntries()  << endl;
     tree->Write();
     cout << " tree->Write()   done." << endl;
     file->Close();
-    cout << " file->Close();     done."    << endl;
+    cout << " file->Close()   done."    << endl;
 
     delete file;
     file=0;
@@ -1771,7 +1717,7 @@ void EdbShowRec::Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filen
 
 void EdbShowRec::Reset()
 {
-    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to Null pointer.");
+    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to NULL pointer.");
 
     cout << "EdbShowRec::Reset()   Delete eAli." << endl;
     if (eAli)                             {
@@ -1791,7 +1737,7 @@ void EdbShowRec::Reset()
         delete eShowAlgArray;
         eShowAlgArray=0;
     }
-    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to Null pointer...done.");
+    Log(2,"EdbShowRec::Reset()","Delete all internal objects and set them to NULL pointer...done.");
     return;
 }
 
@@ -1836,14 +1782,14 @@ void EdbShowRec::Finalize()
 void EdbShowRec::Print()
 {
     Log(2,"EdbShowRec::Print()","Print important stuff...");
-    for (int i=0; i<100; ++i) cout << "-";
+    for (Int_t i=0; i<100; ++i) cout << "-";
     cout << endl;
     cout << "-";
     cout << endl;
     cout << "EdbShowRec::Print()" << endl;
     cout << "-";
     cout << endl;
-    for (int i=0; i<100; ++i) cout << "-";
+    for (Int_t i=0; i<100; ++i) cout << "-";
     cout << endl;
     cout << "EdbShowRec::Print() --- GENERAL SETTINGS: ---" << endl;
     cout << "EdbShowRec::Print() --- eDoReconstruction = " <<       eDoReconstruction << endl;
@@ -1890,7 +1836,7 @@ void EdbShowRec::Print()
     cout << "EdbShowRec::Print() --- SETTINGS: Reconstruction:" << endl;
     cout << "EdbShowRec::Print() --- " << setw(20) << "Reconstruction Use gAliSub:" << eUseAliSub << endl;
     cout << "EdbShowRec::Print() --- " << setw(20) << "Reconstruction Algs: N:" << eShowAlgArrayN << endl;
-    for (int i=0; i<eShowAlgArrayN; ++i)  {
+    for (Int_t i=0; i<eShowAlgArrayN; ++i)  {
         cout << "EdbShowRec::Print() --- " << setw(20) << "Reconstruction Algs: ";
         EdbShowAlg* RecoAlg = (EdbShowAlg*) eShowAlgArray->At(i);
         RecoAlg->PrintParametersShort();
@@ -1903,7 +1849,7 @@ void EdbShowRec::Print()
     cout << endl;
 
     cout << "EdbShowRec::Print() --- SETTINGS: Parametrisation:" << endl;
-    for (int i=0; i<6; ++i)  {
+    for (Int_t i=0; i<6; ++i)  {
         cout << "EdbShowRec::Print() --- " << setw(20) << "Parametrisation Do " <<  eParaNames[i] <<": "<< eParaTypes[i] << endl;
     }
     cout << "-";
@@ -1914,7 +1860,7 @@ void EdbShowRec::Print()
     cout << "-";
     cout << endl;
     cout << "EdbShowRec::Print()....done." << endl;
-    for (int i=0; i<100; ++i) cout << "-";
+    for (Int_t i=0; i<100; ++i) cout << "-";
     cout << endl;
     Log(2,"EdbShowRec::Print()","Print important stuff...done.");
     return;
@@ -1929,7 +1875,7 @@ void EdbShowRec::Print_InBTArray()
     if (!eInBTArray) return;
     Log(2,"EdbShowRec::Print_InBTArray()","N=%d",eInBTArrayN);
     EdbSegP* s=0;
-    for (int i=0; i<eInBTArrayN; ++i) {
+    for (Int_t i=0; i<eInBTArrayN; ++i) {
         s=(EdbSegP*) eInBTArray->At(i);
         s->PrintNice();
     }
@@ -1965,7 +1911,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
     char tmpchar[256];
 
     while (fgets(buf, sizeof(buf), fp)) {
-        for (Int_t i = 0; i < (Int_t)strlen(buf); i++)
+        for (Int_t i = 0; i < (Int_t)strlen(buf); ++i)
             if (buf[i]=='#')  {
                 buf[i]='\0';                       // cut out comments starting from #
                 break;
@@ -2179,7 +2125,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
         else if ( !strcmp(key,"SHOW_ADDPARASET")  )
         {
             float par[10];
-            for (int i=0; i<10; ++i) {
+            for (Int_t i=0; i<10; ++i) {
                 par[i]=-9999.0;
             }
             int type;
@@ -2197,7 +2143,7 @@ int EdbShowRec::ReadShowRecPar(const char *file="default.par")
         else if ( !strcmp(key,"SHOW_SETPARASET")  )
         {
             float par[10];
-            for (int i=0; i<10; ++i) {
+            for (Int_t i=0; i<10; ++i) {
                 par[i]=-9999.0;
             }
             int type;
@@ -2527,8 +2473,8 @@ void EdbShowRec::TxtToRecoShowerArray_FeedBack(TString TxtFileName)
         }
     }
 
-    for (int i=0; i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetPID(i);
-    for (int i=0; i<pvr->Npatterns(); i++) pvr->GetPattern(i)->SetSegmentsPID();
+    for (Int_t i=0; i<pvr->Npatterns(); ++i) pvr->GetPattern(i)->SetPID(i);
+    for (Int_t i=0; i<pvr->Npatterns(); ++i) pvr->GetPattern(i)->SetSegmentsPID();
 
     printf("\nEdbPVRec summary. %d vertices, %d tracks.\n", pvr->Nvtx(), pvr->Ntracks());
     pvr->Print();
@@ -2856,7 +2802,6 @@ void EdbShowRec::TxtToRecoShowerArray_SimpleListNagoya(TString TxtFileName)
 void EdbShowRec::RecoShowerArray_To_Treebranch()
 {
     Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Convert the RecoShowerArray into <<treebranch>> style tree entries (backward compability).");
-
     Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Reminder: a shower may have maxium of 5000 segments. - Limitation, my be discarded later, when necessary.");
 
     // Declaring ObjArray which are needed. Use out of private member variables of this class.
@@ -2890,43 +2835,57 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
     Int_t   shower_numberofilms;
     Float_t shower_purb; // purity of shower
     Int_t   shower_numberofholes;
-    Int_t		shower_numberofholesconseq;
+    Int_t   shower_numberofholesconseq;
+
+
+    // Creating the file at this position, that the eShowerTree
+    // will be connected to this file (otherwise flushing issues...)
+    if (eWriteFileTreebranch==kTRUE) {
+        if (!eFile_Out_treebranch) eFile_Out_treebranch = new TFile(eFilename_Out_treebranch,"UPDATE");
+    }
+    eFile_Out_treebranch->cd();
+
+    // Now create the tree. The tree is not made persistent, since at the end
+    // of this routine, it will be destructed anyway.
 
     TString treename=GetTreebranchName();
     TTree* eShowerTree = new TTree(treename,treename);
 
-    eShowerTree->Branch("number_eventb",&shower_number_eventb,"number_eventb/I",128000);
-    eShowerTree->Branch("sizeb",&shower_sizeb,"sizeb/I",128000);
-    eShowerTree->Branch("sizeb15",&shower_sizeb15,"sizeb15/I",128000);
-    eShowerTree->Branch("sizeb20",&shower_sizeb20,"sizeb20/I",128000);
-    eShowerTree->Branch("sizeb30",&shower_sizeb30,"sizeb30/I",128000);
-    eShowerTree->Branch("isizeb",&shower_isizeb,"isizeb/I",128000);
-    eShowerTree->Branch("xb",shower_xb,"xb[sizeb]/F",128000);
-    eShowerTree->Branch("yb",shower_yb,"yb[sizeb]/F",128000);
-    eShowerTree->Branch("zb",shower_zb,"zb[sizeb]/F",128000);
-    eShowerTree->Branch("txb",shower_txb,"txb[sizeb]/F",128000);
-    eShowerTree->Branch("tyb",shower_tyb,"tyb[sizeb]/F",128000);
-    eShowerTree->Branch("nfilmb",shower_nfilmb,"nfilmb[sizeb]/I",128000);
-    eShowerTree->Branch("ntrace1simub",shower_ntrace1simub,"ntrace1simu[sizeb]/I",128000);  // s.eMCEvt
-    eShowerTree->Branch("ntrace2simub",shower_ntrace2simub,"ntrace2simu[sizeb]/I",128000); // s.eW
-    eShowerTree->Branch("ntrace3simub",shower_ntrace3simub,"ntrace3simu[sizeb]/F",128000); // s.eP
-    eShowerTree->Branch("ntrace4simub",shower_ntrace4simub,"ntrace4simu[sizeb]/I",128000); // s.eFlag
-    eShowerTree->Branch("chi2btkb",shower_chi2btkb,"chi2btkb[sizeb]/F",128000);
-    eShowerTree->Branch("deltarb",shower_deltarb,"deltarb[sizeb]/F",128000);
-    eShowerTree->Branch("deltathetab",shower_deltathetab,"deltathetab[sizeb]/F",128000);
-    eShowerTree->Branch("deltaxb",shower_deltaxb,"deltaxb[sizeb]/F",128000);
-    eShowerTree->Branch("deltayb",shower_deltayb,"deltayb[sizeb]/F",128000);
-    eShowerTree->Branch("tagprimary",shower_tagprimary,"tagprimary[sizeb]/F",128000);
-    eShowerTree->Branch("energy_shot_particle",&shower_energy_shot_particle,"energy_shot_particle/F",128000);
-    eShowerTree->Branch("E_MC",&shower_energy_shot_particle,"E_MC/F",128000);
-    eShowerTree->Branch("showerID",&shower_showerID,"showerID/I",128000);
-    eShowerTree->Branch("idb",shower_idb,"idb/I",128000);
-    eShowerTree->Branch("plateb",shower_plateb,"plateb[sizeb]/I",128000);
-    eShowerTree->Branch("deltasigmathetab",shower_deltasigmathetab,"deltasigmathetab[59]/F",128000);
-    eShowerTree->Branch("lenghtfilmb",&shower_numberofilms,"lenghtfilmb/I",128000);
-    eShowerTree->Branch("purb",&shower_purb,"purb/F",128000); // shower purity
-    eShowerTree->Branch("nholesb",&shower_numberofholes,"nholesb/I",128000); // #of (single) empty plates
-    eShowerTree->Branch("nholesmaxb",&shower_numberofholesconseq,"nholesmaxb/I",128000); // #of (consecutive) empty plates
+    // Is the basket size of the branches relevant? I dont know ...
+    // To be safe, I chose a "Basket Size" bigger than the
+    // actual "Total Size", i.e. Compression = 1.00
+    eShowerTree->Branch("number_eventb",&shower_number_eventb,"number_eventb/I");
+    eShowerTree->Branch("sizeb",&shower_sizeb,"sizeb/I");
+    eShowerTree->Branch("sizeb15",&shower_sizeb15,"sizeb15/I");
+    eShowerTree->Branch("sizeb20",&shower_sizeb20,"sizeb20/I");
+    eShowerTree->Branch("sizeb30",&shower_sizeb30,"sizeb30/I");
+    eShowerTree->Branch("isizeb",&shower_isizeb,"isizeb/I");
+    eShowerTree->Branch("xb",shower_xb,"xb[sizeb]/F",256000);
+    eShowerTree->Branch("yb",shower_yb,"yb[sizeb]/F",256000);
+    eShowerTree->Branch("zb",shower_zb,"zb[sizeb]/F",256000);
+    eShowerTree->Branch("txb",shower_txb,"txb[sizeb]/F",256000);
+    eShowerTree->Branch("tyb",shower_tyb,"tyb[sizeb]/F",256000);
+    eShowerTree->Branch("nfilmb",shower_nfilmb,"nfilmb[sizeb]/I",256000);
+    eShowerTree->Branch("ntrace1simub",shower_ntrace1simub,"ntrace1simu[sizeb]/I",256000);  // s.eMCEvt
+    eShowerTree->Branch("ntrace2simub",shower_ntrace2simub,"ntrace2simu[sizeb]/I",256000); // s.eW
+    eShowerTree->Branch("ntrace3simub",shower_ntrace3simub,"ntrace3simu[sizeb]/F",256000); // s.eP
+    eShowerTree->Branch("ntrace4simub",shower_ntrace4simub,"ntrace4simu[sizeb]/I",256000); // s.eFlag
+    eShowerTree->Branch("chi2btkb",shower_chi2btkb,"chi2btkb[sizeb]/F",256000);
+    eShowerTree->Branch("deltarb",shower_deltarb,"deltarb[sizeb]/F",256000);
+    eShowerTree->Branch("deltathetab",shower_deltathetab,"deltathetab[sizeb]/F",256000);
+    eShowerTree->Branch("deltaxb",shower_deltaxb,"deltaxb[sizeb]/F",256000);
+    eShowerTree->Branch("deltayb",shower_deltayb,"deltayb[sizeb]/F",256000);
+    eShowerTree->Branch("tagprimary",shower_tagprimary,"tagprimary[sizeb]/F",256000);
+    eShowerTree->Branch("energy_shot_particle",&shower_energy_shot_particle,"energy_shot_particle/F");
+    eShowerTree->Branch("E_MC",&shower_energy_shot_particle,"E_MC/F");
+    eShowerTree->Branch("showerID",&shower_showerID,"showerID/I");
+    eShowerTree->Branch("idb",shower_idb,"idb/I");
+    eShowerTree->Branch("plateb",shower_plateb,"plateb[sizeb]/I",256000);
+    eShowerTree->Branch("deltasigmathetab",shower_deltasigmathetab,"deltasigmathetab[59]/F",256000);
+    eShowerTree->Branch("lenghtfilmb",&shower_numberofilms,"lenghtfilmb/I");
+    eShowerTree->Branch("purb",&shower_purb,"purb/F"); // shower purity
+    eShowerTree->Branch("nholesb",&shower_numberofholes,"nholesb/I"); // #of (single) empty plates
+    eShowerTree->Branch("nholesmaxb",&shower_numberofholesconseq,"nholesmaxb/I"); // #of (consecutive) empty plates
 
     EdbSegP* seg;
     EdbSegP* Inseg;
@@ -2988,7 +2947,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
             shower_idb[ii]=0;
             shower_plateb[ii]=0;
         }
-        for (int i=1; i<59; ++i) {
+        for (Int_t i=1; i<59; ++i) {
             shower_deltasigmathetab[i]=0;
         }
 
@@ -3141,7 +3100,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
         //-------------------------------------
 
         //-------------------------------------
-        for (int i=1; i<59; ++i) {
+        for (Int_t i=1; i<59; ++i) {
             shower_deltasigmathetab[i]=TMath::Sqrt(shower_deltasigmathetab[i]);
         }
         shower_numberofilms=shower_nfilmb[shower_sizeb-1]; // there we assume (this is correct always?) when
@@ -3163,19 +3122,79 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
 
     Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Loop over showerArray finished.");
 
-    // write this  treebranch  to the specified file, use UPDATE option to store all in case there are more treebranches
-    // dirty solution, but for now it may work (encapsulated in if statements)..
+
+
+
+    /*
+        // Directly write the file here. No special function is made for this:
+        // this specific function makes only sense when used here in this specific
+        // context:
+        // Write this  treebranch  to the specified file, use UPDATE option to store all in case there are more treebranches
+        // dirty solution, but for now it may work (encapsulated in if statements)..
+        // Update: OR IT MAY NOT WORK .....
+
+        ERROR MESSAGE: OCTOBER: 9th 2017
+        Attaching file ShowerTreebranch.root as _file0...
+    root [1] treebranch->Show(0)
+    Error in <TBasket::Streamer>: The value of fNbytes is incorrect (-1091633152) ; trying to recover by setting it to zero
+    Error in <TBranch::GetBasket>: File: ShowerTreebranch.root at byte:262144, branch:number_eventb, entry:0, badread=1, nerrors=1, basketnumber=0
+    Error in <TTree::Show()>: Cannot read entry 0 (I/O error)
+    maybe size of tbranch is wrong ??? t byte:262144,
+
+        // POSSIBLE ? solutiuon:
+        https://root-forum.cern.ch/t/read-ttree-from-tfile-fill-it-again-and-save-to-new-tfile/17899
+        OR:
+        pcanal@fnal.govNo presence information
+    > it could be that part of the tree gets "improperly" written because ROOT gets
+    > confused when to write to the file. By cd-ing before creating the tree,
+    > the "confusion" is resolved somehow.
+    Yes, this is the right solution.   Beyond a certain size, it starts flushing
+    the basket to the file the TTree is attached to.   Without the explicit cd
+    the TTree gets associated to which ever file was the current file at the
+    time.
+    Cheers,
+    Philippe.
+    */
+
+    /*
+    cout << "eShowerTree          has entries     :  " <<  eShowerTree->GetEntries() << endl;
+    cout << "eShowerTree->GetCurrentFile()" << endl;
+    cout << eShowerTree->GetCurrentFile() << endl;
+    cout << "eShowerTree->GetCurrentFile()->GetName()" << endl;
+    cout << eShowerTree->GetCurrentFile()->GetName() << endl;
+    cout << "-------------------------------------------------------------------_" << endl;
+    */
+
+    eShowerTree->Dump();
+
+
     if (eWriteFileTreebranch==kTRUE) {
-        if (!eFile_Out_treebranch) eFile_Out_treebranch = new TFile(eFilename_Out_treebranch,"UPDATE");
-        if (gEDBDEBUGLEVEL>2) eFile_Out_treebranch->Print();
-        if (gEDBDEBUGLEVEL>2) eShowerTree->Print();
+        eFile_Out_treebranch->Print();
+        if (gEDBDEBUGLEVEL>2)  eShowerTree->Print();
         eFile_Out_treebranch->cd();
+        // Why the option "kWriteDelete"? I had had a reason for this, but I dont know anymore ...
         eShowerTree->Write("",TObject::kWriteDelete);
-        eFile_Out_treebranch->Close();
+        cout << "DONE:  ---------------------------------  eShowerTree->Write("",TObject::kWriteDelete);    ----------------------------------_" << endl;
+        // Strange, when I close the file directly here, it crashes ....
+        // Probably, because the Tree is still connected to the file ....
+        // eFile_Out_treebranch->Close();
     }
+
+    /*
+    cout << "eShowerTree          has entries     :  " <<  eShowerTree->GetEntries() << endl;
+    cout << "eFile_Out_treebranch          ->ls() :  " << endl;
+    eFile_Out_treebranch    ->ls() ;
+    cout << "eFile_Out_treebranch->IsOpen()? :  " << eFile_Out_treebranch->IsOpen() << endl;
+    cout << "eShowerTree          is object at memory:  " <<  eShowerTree << endl;
+    cout << "eFile_Out_treebranch is object at memory:  " <<  eFile_Out_treebranch << endl;
+    */
 
     delete eShowerTree;
     eShowerTree=0;
+
+    eFile_Out_treebranch->Close();
+    //cout << "eFile_Out_treebranch->IsOpen()? :  " << eFile_Out_treebranch->IsOpen() << endl;
+
     delete eFile_Out_treebranch;
     eFile_Out_treebranch=0;
 
@@ -3270,7 +3289,7 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
     if (QUICK_READ) nent=1; // read only first shower... (mainly for debug purposes).
 
     // Loop over Tree Entries (==different showers):
-    for (int i=0; i<nent; ++i) {
+    for (Int_t i=0; i<nent; ++i) {
         eShowerTree->GetEntry(i);
         //cout << "i = " << i << endl;
         //cout << "shower_tagprimary[0] = " << shower_tagprimary[0] << endl;
@@ -3283,7 +3302,7 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
         show = new EdbShowerP(shower_sizeb);
 
         // For Frederics algorithm, shower_number_eventb gives NOT -999 as for a BG track,
-        // but "0". So we need to disticnct also for "0" cases:
+        // but "0". So we need to distinguish also for "0" cases:
         show ->SetMC(shower_number_eventb,shower_number_eventb);
         if (shower_number_eventb==0) show ->SetMC(-999,999);
 
@@ -3310,7 +3329,7 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
             showseg->SetFlag(shower_ntrace4simub[j]);
             showseg->SetMC(shower_ntrace1simub[j],shower_ntrace1simub[j]);
             // For Frederics algorithm, ntrace1simub gives NOT -999 as for a BG track,
-            // but "0". So we need to disticnct also for "0" cases:
+            // but "0". So we need to distinguish also for "0" cases:
             if (shower_ntrace1simub[j]==0) showseg->SetMC(-999,-999);
 
             showseg->SetPID(shower_plateb[j]);
@@ -3356,7 +3375,7 @@ void EdbShowRec::Treebranch_To_RecoShowerArray(TObjArray* showarr, TTree* treebr
 
 
     Log(2,"EdbShowRec::Treebranch_To_RecoShowerArray","EdbShowRec::Do now Write_RecoShowerArray....");
-    Write_RecoShowerArray(showarray, "Filename_Out_EdbShowerP.root" );
+    Write_RecoShowerArray(showarray);
 
     Log(2,"EdbShowRec::Treebranch_To_RecoShowerArray","EdbShowRec::Treebranch_To_RecoShowerArray...done.");
     return;
@@ -3381,7 +3400,7 @@ void EdbShowRec::PrintRecoShowerArrayFast(Int_t entry)
     }
 
     EdbShowerP* show=0;
-    for (int i=0; i<GetRecoShowerArrayN(); ++i) {
+    for (Int_t i=0; i<GetRecoShowerArrayN(); ++i) {
         if (entry!=i && entry>=0) continue;
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         show->PrintBasics();
@@ -3407,7 +3426,7 @@ void EdbShowRec::PrintRecoShowerArray(Int_t entry)
     }
 
     EdbShowerP* show=0;
-    for (int i=0; i<GetRecoShowerArrayN(); ++i) {
+    for (Int_t i=0; i<GetRecoShowerArrayN(); ++i) {
         if (entry!=i && entry>=0) continue;
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         show->PrintNice();
@@ -3529,7 +3548,7 @@ void EdbShowRec::AddAlg(Int_t AlgType, Float_t* par)
     cout << "GetShowAlgArrayN()"<< GetShowAlgArrayN()<< endl;
 
     if (gEDBDEBUGLEVEL>2) {
-        for (int i=0; i<8; ++i) cout << "EdbShowRec::AddAlg   eShowAlgArraySingleN("<<i<<" =eShowAlgArraySingleN["<<i<<"]"<< endl;
+        for (Int_t i=0; i<8; ++i) cout << "EdbShowRec::AddAlg   eShowAlgArraySingleN("<<i<<" =eShowAlgArraySingleN["<<i<<"]"<< endl;
     }
 
     Log(2,"EdbShowRec::AddAlg","EdbShowRec::AddAlg...done.");
@@ -3548,7 +3567,7 @@ void EdbShowRec::ResetShowAlgArray()
 
     eShowAlgArray->Clear();
     SetShowAlgArrayN(eShowAlgArray->GetEntries());
-    for (int i=0; i<10; ++i) eShowAlgArraySingleN[i]=0;
+    for (Int_t i=0; i<10; ++i) eShowAlgArraySingleN[i]=0;
 
     Log(2,"EdbShowRec::ResetShowAlgArray","EdbShowRec::ResetShowAlgArray...done.");
 }
@@ -3679,7 +3698,7 @@ void EdbShowRec::BuildParametrizations()
         return;
     }
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (gEDBDEBUGLEVEL>3) cout << "EdbShowRec::BuildParametrizations   i= " << i <<  " of (" << eRecoShowerArrayN << ")"<< endl;
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         if (gEDBDEBUGLEVEL>3) show->PrintNice();
@@ -3912,7 +3931,7 @@ void EdbShowRec::WriteParametrisation_FJ() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         // Get Shower:
@@ -3942,7 +3961,7 @@ void EdbShowRec::WriteParametrisation_FJ() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4024,7 +4043,7 @@ void EdbShowRec::WriteParametrisation_YC() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4049,7 +4068,7 @@ void EdbShowRec::WriteParametrisation_YC() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4146,7 +4165,7 @@ void EdbShowRec::WriteParametrisation_JC() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4179,7 +4198,7 @@ void EdbShowRec::WriteParametrisation_JC() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4263,7 +4282,7 @@ void EdbShowRec::WriteParametrisation_LT() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4291,7 +4310,7 @@ void EdbShowRec::WriteParametrisation_LT() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
     if (gEDBDEBUGLEVEL>3) {
         treevar->Print();
@@ -4381,7 +4400,7 @@ void EdbShowRec::WriteParametrisation_XX() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4410,7 +4429,7 @@ void EdbShowRec::WriteParametrisation_XX() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4512,7 +4531,7 @@ void EdbShowRec::WriteParametrisation_YY() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4539,7 +4558,7 @@ void EdbShowRec::WriteParametrisation_YY() {
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
 
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4637,7 +4656,7 @@ void EdbShowRec::WriteParametrisation_AS() {
 //
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4668,7 +4687,7 @@ void EdbShowRec::WriteParametrisation_AS() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4746,7 +4765,7 @@ void EdbShowRec::WriteParametrisation_SE() {
 
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4769,7 +4788,7 @@ void EdbShowRec::WriteParametrisation_SE() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -4848,7 +4867,7 @@ void EdbShowRec::WriteParametrisation_ExtraInfo() {
     Bool_t ToDoPara= kFALSE;
     Int_t statuscounter=eRecoShowerArrayN/10;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
         if (i%statuscounter==0) cout << "EdbShowRec::WriteParametrizations   10% more done." << endl;
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
@@ -4873,7 +4892,7 @@ void EdbShowRec::WriteParametrisation_ExtraInfo() {
 
         treevar->Fill();
         if (gEDBDEBUGLEVEL>3) treevar->Show(treevar->GetEntries()-1);
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -5131,7 +5150,7 @@ void EdbShowRec::WriteParametrisation_MCInfo_PGun()
     EdbShowerP* show=0;
     EdbShowerP::MCInfo_PGun fMCInfo_PGun;
 
-    for (int i=0; i<eRecoShowerArrayN; i++ ) {
+    for (Int_t i=0; i<eRecoShowerArrayN; ++i ) {
 
         show=(EdbShowerP*)eRecoShowerArray->At(i);
         if (gEDBDEBUGLEVEL>2) cout << "EdbShowRec::WriteParametrizations   i= " << i <<  " of (" << eRecoShowerArrayN << ")." << endl;
@@ -5157,7 +5176,7 @@ void EdbShowRec::WriteParametrisation_MCInfo_PGun()
         TY=fMCInfo_PGun.TY;
 
         treevar->Fill();
-    } //for(int i=0; i<eRecoShowerArrayN; i++ )
+    } //for(Int_t i=0; i<eRecoShowerArrayN; ++i )
 
 
     if (gEDBDEBUGLEVEL>3) {
@@ -5258,7 +5277,7 @@ void EdbShowRec::AddInBTArray( EdbSegP* seg )
 void EdbShowRec::AddInBTArray( EdbPattern* pattern )
 {
     // Loop over all segments of the pattern, and add its segments
-    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","Add pattern", pattern);
+    Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","Add pattern (ID=%d)", pattern->ID());
 
     // check if pattern is not NULL object
     if (NULL == pattern) {
@@ -5328,7 +5347,7 @@ void EdbShowRec::AddInBTArray( TObjArray* InBTArray )
     // Now add it:
     // There is NO check yet if the InBTArray has segments in it, or if they are from the type "EdbSegP"
     // To be done a check....
-    for (int i=0; i<InBTArray->GetEntries(); i++) {
+    for (Int_t i=0; i<InBTArray->GetEntries(); ++i) {
         EdbSegP* seg=(EdbSegP*)InBTArray->At(i);
         // Here it needs to check if that object is really a EdbSegP object...
         // And if not every seg is whished to be added: check for
@@ -5354,7 +5373,7 @@ void EdbShowRec::AddShowAlgArray( TObjArray* ShowAlgArray ) {
     // Now add it:
     // There is NO check yet if the ShowAlgArray has algs in it!
     // To be done a check....
-    for (int i=0; i<ShowAlgArray->GetEntries(); i++) {
+    for (Int_t i=0; i<ShowAlgArray->GetEntries(); ++i) {
         EdbShowAlg* alg=(EdbShowAlg*)ShowAlgArray->At(i);
         // Here it needs to check if that object is really a EdbShowAlg object...
         eShowAlgArray->Add(alg);
@@ -5375,7 +5394,7 @@ void EdbShowRec::AddRecoShowerArray( TObjArray* RecoShowerArray)      {
     // Now add it:
     // There is NO check yet if the RecoShowerArray has showers in it!
     // To be done a check....
-    for (int i=0; i<RecoShowerArray->GetEntries(); i++) {
+    for (Int_t i=0; i<RecoShowerArray->GetEntries(); ++i) {
         EdbShowerP* shower=(EdbShowerP*)RecoShowerArray->At(i);
         // Here it needs to check if that object is really a EdbShowerP object...
         eRecoShowerArray->Add(shower);

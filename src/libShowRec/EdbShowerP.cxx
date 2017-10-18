@@ -172,9 +172,112 @@ void EdbShowerP::Set0()
         eMCInfoIsDone[i]=kFALSE;
         eExtraInfoIsDone[i]=kFALSE;
     }
+    
+    // Set0 for the Parametrizations as well:
+    Set0Parametrizations();
     return;
 }
 
+//______________________________________________________________________________
+
+void EdbShowerP::Set0Parametrizations()
+{
+    // Initialize parametrization values with zeroes.
+    // Otherwise, values may be uninitialized and 
+    // cause confution:
+  
+    // Para structure: ePara_FJ
+     ePara_FJ.ShowerAxisAngle =0;
+     ePara_FJ.nseg =0;
+     ePara_FJ.BT_deltaR_mean =0;
+     ePara_FJ.BT_deltaR_rms =0;
+     ePara_FJ.BT_deltaT_rms =0;
+     ePara_FJ.BT_deltaT_rms =0;
+     for (int i=0; i<57; ++i) ePara_FJ.longprofile[i]=-1;
+  
+     // Para structure: ePara_LT
+     ePara_LT.ShowerAxisAngle =0;
+     ePara_LT.nseg =0;
+     ePara_LT.BT_deltaR_mean =0;
+     ePara_LT.BT_deltaR_rms =0;
+     ePara_LT.BT_deltaT_rms =0;
+     ePara_LT.BT_deltaT_rms =0;
+     for (int i=0; i<8; ++i) ePara_LT.transprofile[i]=-1;
+     for (int i=0; i<57; ++i) ePara_LT.longprofile[i]=-1;
+     
+     // Para structure: ePara_YC  ... TO BE DONE ...
+     // Para structure: ePara_JC  ... TO BE DONE ...
+     
+     // Para structure: ePara_XX
+     ePara_XX.ShowerAxisAngle=0;
+     ePara_XX.nseg=0;
+     ePara_XX.Mean_ProfileLongitudinal=0;
+     ePara_XX.RMS_ProfileLongitudinal=0;
+     ePara_XX.Max_ProfileLongitudinal=0;
+     ePara_XX.Mean_ProfileTransversal=0;
+     ePara_XX.RMS_ProfileTransversal=0;
+     ePara_XX.Max_ProfileTransversal=0;
+     ePara_XX.Last_ProfileLongitudinal=0;
+     ePara_XX.Last_ProfileTransversal=0;
+     
+     // Para structure: ePara_YY
+     ePara_YY.ShowerAxisAngle=0;
+     ePara_YY.ShowerAxisAngle=0;
+     for (int i=0; i<8; ++i) ePara_YY.ProfileTransversalBincontent[i]=-1;
+     for (int i=0; i<57; ++i) ePara_YY.ProfileLongitudinalBincontent[i]=-1;
+     
+     
+     // Para structure: ePara_PP
+     ePara_PP.ShowerAxisAngle=0;
+     ePara_PP.nseg=0;
+     ePara_PP.ePairOpeningAngle=0;
+     ePara_PP.ePairOpeningDist_dMin=0;
+     ePara_PP.ePairOpeningDist_dR=0;
+     ePara_PP.ePairChi2=0;
+     
+     // Para structure: ePara_AS
+     ePara_AS.nseg=0;
+     for (int i=0; i<50; ++i) {  // only 50 segments are used, remember ...
+       ePara_AS.edIP[i]=0;ePara_AS.edMin[i]=0;
+       ePara_AS.edRLong[i]=0;ePara_AS.edRTrans[i]=0;
+       ePara_AS.edeltarb[i]=0;ePara_AS.edeltathetab[i]=0;
+     }
+     
+     // Para structure: ePara_SE
+     ePara_SE.ShowerAxisAngle=0;
+     ePara_SE.nseg=0;
+     ePara_SE.npl=0;
+     ePara_SE.efficiencyAtShowerAxisAngle=0;
+
+     // Para structure: Para_ExtraInfo  ... TO BE DONE ...
+     ePara_ExtraInfo.InBT_E=0;
+     ePara_ExtraInfo.InBT_Flag=0;
+     ePara_ExtraInfo.InPairBT_E=0;
+     ePara_ExtraInfo.ShowerLength=0;
+     ePara_ExtraInfo.InBT_IPToVtx=0;
+     ePara_ExtraInfo.InBT_DeltaZToVtx=0;
+          
+     // Para structure: MCInfo_PGun  ... TO BE DONE ...
+     eMCInfo_PGun.MCEvt=0;
+     eMCInfo_PGun.PDGId=0;
+     eMCInfo_PGun.energy=0;
+     eMCInfo_PGun.tantheta=0;
+     eMCInfo_PGun.dirx=0;
+     eMCInfo_PGun.diry=0;
+     eMCInfo_PGun.dirz=0;
+     eMCInfo_PGun.vtxposx=0;
+     eMCInfo_PGun.vtxposy=0;
+     eMCInfo_PGun.vtxposz=0;
+     eMCInfo_PGun.TX=0;
+     eMCInfo_PGun.TY=0;
+     eMCInfo_PGun.X=0;
+     eMCInfo_PGun.Y=0;
+     eMCInfo_PGun.Z=0;
+
+     // other aras as in the header file listed:  ... TO BE DONE ...     
+    return;
+}
+  
 
 //______________________________________________________________________________
 

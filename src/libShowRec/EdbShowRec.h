@@ -146,7 +146,7 @@ private:
     Bool_t            eWriteFileShower;
     Bool_t            eWriteFileTreebranch;
     TFile*            eFile_Out_shower;           // File containing showers in "EdbShowerP" format
-    TFile*           eFile_Out_treebranch;       // File containing showers in "treebranch" format
+    TFile*            eFile_Out_treebranch;       // File containing showers in "treebranch" format
 
 
 
@@ -256,17 +256,8 @@ private:
     void              BuildParametrizationsAll();
 
 
-
-
-
-
     /// Write Reconstructed Showers to File:
-    void   Write_RecoShowerArray(TObjArray* RecoShowerArray, TString Filename_Out_EdbShowerP );
-    /// NOT WORKLING YET::::  still segmentation faults..../// solved but i dont know why....
-
-
-
-
+    void   Write_RecoShowerArray(TObjArray* RecoShowerArray);
 
 
 
@@ -572,7 +563,7 @@ public:
 
 
     // test:  Write the Parametrisation from the eRecoShowerArray into a tree.
-    //        (satisfies Backward compability).
+    //        (satisfies backward compability).
     void      WriteParametrisation_FJ(); //0
     void      WriteParametrisation_LT(); //1
     void      WriteParametrisation_YC(); //2
@@ -594,7 +585,7 @@ public:
 
 
     // Write Reconstructed Showers to File:
-    void    WriteRecoShowerArray(TObjArray* RecoShowerArray);
+    void WriteRecoShowerArray(TObjArray* RecoShowerArray);
     /// NOT WORKING YET::::  still segmentation faults..../// solved, but I dont know why....
     /// still crashing ...
     /// Test without writing the TTree:
