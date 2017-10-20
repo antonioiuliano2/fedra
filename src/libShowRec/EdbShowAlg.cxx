@@ -714,7 +714,16 @@ void EdbShowAlg_SA::Execute()
 // Add Shower Object to Shower Reco Array.
 // Not, if its empty:
 // Not, if its containing only one BT:
-        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+	if (RecoShower->N()>1) {
+	  AddRecoShowerArray(RecoShower);
+	}
+	else {
+	  // Delete the created shower object. Saves _lots_ of memory and speeds up reconstruction for large #InBTs!
+	  // TODO Also Include this in the other RecoAlgs ...
+	  Log(3,"EdbShowAlg_SA::Execute()","InBT # %d RecoShower->N()<=1: Dont add shower to RecoShowerArray. Delete this shower for memory safing.");
+	  delete RecoShower;
+	  RecoShower=NULL;
+	}
 
 // Set back loop values:
         StillToLoop=kTRUE;
@@ -949,7 +958,16 @@ void EdbShowAlg_CA::Execute()
 
 // Add Shower Object to Shower Reco Array.
 // Not, if its empty or containing only one BT:
-        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+        if (RecoShower->N()>1) {
+	  AddRecoShowerArray(RecoShower);
+	}
+	else {
+	  // Delete the created shower object. Saves _lots_ of memory and speeds up reconstruction for large #InBTs!
+	  // TODO Also Include this in the other RecoAlgs ...
+	  Log(3,"EdbShowAlg_CA::Execute()","InBT # %d RecoShower->N()<=1: Dont add shower to RecoShowerArray. Delete this shower for memory safing.");
+	  delete RecoShower;
+	  RecoShower=NULL;
+	}
 
 //cout << " eRecoShowerArray->GetEntries()  " <<  eRecoShowerArray->GetEntries()   << endl;
 
@@ -962,18 +980,6 @@ void EdbShowAlg_CA::Execute()
 
 // Set new value for  eRecoShowerArrayN  (may now be < eInBTArrayN).
     SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
-
-
-    /*
-    /// DDEBUG  HOW TO GED ADRESSES OF EALI_SU WHICH WAS DELETED???
-    RecoShower=(EdbShowerP*)eRecoShowerArray->At(0);
-    Segment=(EdbSegP*)RecoShower->GetSegment(0);
-    cout << "segment  " << Segment << " is tested " << &Segment  <<  endl;
-    Segment->PrintNice();
-    Segment=(EdbSegP*)RecoShower->GetSegment(1);
-    cout << "segment  " << Segment << " is tested " << &Segment  <<  endl;
-    Segment->PrintNice();
-    */
 
 
     cout << "EdbShowAlg_CA::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
@@ -1213,19 +1219,13 @@ void EdbShowAlg_OI::Execute()
 //--- Loop over InBTs:
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowAlg_OI::Execute    Loop over InBTs:" << endl;
 
-//     gEDBDEBUGLEVEL=3;
-//     cout << "============DEBGU     eUseAliSub =  " << eUseAliSub << endl;
-//     cout << "============DEBGU     gEDBDEBUGLEVEL =  " << gEDBDEBUGLEVEL << endl;
-//   return;
 
 // Since eInBTArray is filled in ascending ordering by zpositon
 // We use the descending loop to begin with BT with lowest z first.
 
     for (Int_t i=eInBTArrayN-1; i>=0; --i) {
-//     for (Int_t i=eInBTArrayN-1; i>=eInBTArrayN-1; --i) {
 
-
-// CounterOutPut
+// CounterOutPut, only at gEDBDEBUGLEVEL==2
         if (gEDBDEBUGLEVEL==2) if ((i%100)==0) cout << eInBTArrayN <<" Initiator Basetracks (InBT) in total, still to do: " << Form("%06d",i) << "\r\r\r\r\r\r" << flush;
 
 //-----------------------------------
@@ -1267,14 +1267,14 @@ void EdbShowAlg_OI::Execute()
                 Segment = (EdbSegP*)eAli_Sub->GetPattern(ActualPID)->GetSegment(btloop_cnt);
                 if (gEDBDEBUGLEVEL>4) Segment->PrintNice();
 
-
-// Now apply cut conditions: OI OfficialImplementation Alg  --------------------
+		// Quick Continue Statements:
                 if ( Segment->MCEvt() > 0 ) if ( Segment->MCEvt()!=InBT->MCEvt() ) continue; // MCEvtNr (>0) or BgMCNr (-999)
                 if ( Abs(Segment->X()-X0) > 7000 ) continue;
                 if ( Abs(Segment->Y()-Y0) > 7000 ) continue;
+		// Now apply cut conditions: OI OfficialImplementation Alg  --------------------
                 if ( !IsInConeTube(Segment, InBT, eParaValue[0], eParaValue[1]) ) continue;
                 if ( !FindPrecedingBTs(Segment, InBT, eAli_Sub, RecoShower)) continue;
-// end of    cut conditions: OI OfficialImplementation Alg  --------------------
+		// end of    cut conditions: OI OfficialImplementation Alg  --------------------
 
 
 // If we arrive here, Basetrack  Segment  has passed criteria
@@ -1355,7 +1355,7 @@ void EdbShowAlg_OI::Execute()
             // What is the constraint? 0  <= newActualPID <= Npatterns-1, these patterns are valid....
             if (newActualPID<0)
             {   StillToLoop=kFALSE;
-                // cout << "EdbShowAlg_OI::Execute--- ---Stop Loop since: newActualPID<0"<<endl;
+                // cout << CStop Loop since: newActualPID<0"<<endl;
             }
             if (newActualPID>=eNumberPlate_eAliPID-1) {
                 StillToLoop=kFALSE;
@@ -1388,8 +1388,18 @@ void EdbShowAlg_OI::Execute()
 // Add Shower Object to Shower Reco Array.
 // Not, if its empty or containing only one BT:
 // Note, this function add also eRecoShowerArrayN directly.
-        if (RecoShower->N()>1) AddRecoShowerArray(RecoShower);
+        if (RecoShower->N()>1) {
+	  AddRecoShowerArray(RecoShower);
+	}
+	else {
+	  // Delete the created shower object. Saves _lots_ of memory and speeds up reconstruction for large #InBTs!
+	  // TODO Also Include this in the other RecoAlgs ...
+	  Log(3,"EdbShowAlg_OI::Execute()","InBT # %d RecoShower->N()<=1: Dont add shower to RecoShowerArray. Delete this shower for memory safing.");
+	  delete RecoShower;
+	  RecoShower=NULL;
+	}
 
+	
 
 // Set back loop values:
         StillToLoop=kTRUE;
@@ -1706,8 +1716,16 @@ void EdbShowAlg_RC::Execute()
 // Add Shower Object to Shower Reco Array.
 // Not, if its empty or containing only one BT:
         if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
-
-//cout << " eRecoShowerArray->GetEntries()  " <<  eRecoShowerArray->GetEntries()   << endl;
+	if (RecoShower->N()>1) {
+	  AddRecoShowerArray(RecoShower);
+	}
+	else {
+	  // Delete the created shower object. Saves _lots_ of memory and speeds up reconstruction for large #InBTs!
+	  // TODO Also Include this in the other RecoAlgs ...
+	  Log(3,"EdbShowAlg_RC::Execute()","InBT # %d RecoShower->N()<=1: Dont add shower to RecoShowerArray. Delete this shower for memory safing.");
+	  delete RecoShower;
+	  RecoShower=NULL;
+	}
 
 
 // Set back loop values:

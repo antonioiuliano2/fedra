@@ -698,6 +698,9 @@ EdbPVRec *EdbPVRQuality::ExtractDataVolume(EdbPVRec* pvr, EdbSegP* seg, Float_t 
         xmean+=patNew->Xmean();
         ymean+=patNew->Ymean();
         zmean+=patNew->Z();
+	
+	// Set ID() and PID() of the new pattern...
+	// done in ExtractSubPattern function.
 
         Log(3,"EdbPVRQuality::ExtractDataVolume","Added pattern with %d segments:", patNewN);
     }

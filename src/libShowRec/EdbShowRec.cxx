@@ -973,7 +973,6 @@ void EdbShowRec::Reconstruct()
     RecoAlg->Execute();
     //
     //-------------------------------------------------------------------
-//     return;
 
     // Get RecoShowerArray from Reco Alg back!
     // This has to be done, because EdbShowAlg and EdbShowRec class have
@@ -986,6 +985,9 @@ void EdbShowRec::Reconstruct()
     if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
 
 
+cout << "Return now!    EdbShowRec.cxx    l 988 " << endl;
+return;    
+    
     // Parametrize Showers now, according to the set parametrizations:
     Log(2,"EdbShowRec::Reconstruct()", "Parametrize Showers now, according to the set parametrizations");
     SetDoParaType(1);
@@ -2840,9 +2842,7 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
 
     // Creating the file at this position, that the eShowerTree
     // will be connected to this file (otherwise flushing issues...)
-    if (eWriteFileTreebranch==kTRUE) {
-        if (!eFile_Out_treebranch) eFile_Out_treebranch = new TFile(eFilename_Out_treebranch,"UPDATE");
-    }
+    if (!eFile_Out_treebranch) eFile_Out_treebranch = new TFile(eFilename_Out_treebranch,"UPDATE");
     eFile_Out_treebranch->cd();
 
     // Now create the tree. The tree is not made persistent, since at the end
@@ -5279,6 +5279,7 @@ void EdbShowRec::AddInBTArray( EdbPattern* pattern )
     // Loop over all segments of the pattern, and add its segments
     Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","Add pattern (ID=%d)", pattern->ID());
 
+     cout << " pattern->ID() = " <<  pattern->ID() << "     pattern->Z() = " <<  pattern->Z() << endl;
     // check if pattern is not NULL object
     if (NULL == pattern) {
         Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","WARNING! Requested pattern is NULL object. Dont add. Return.");

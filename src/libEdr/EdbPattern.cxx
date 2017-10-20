@@ -1496,7 +1496,11 @@ EdbPattern *EdbPattern::ExtractSubPattern(float min[5], float max[5], int MCEvt)
 
     pat->AddSegment(*s);
   }
-
+  
+  // Set ID() and PID() to have consistent values of this pattern:
+  pat->SetID(this->ID());
+  pat->SetPID(this->PID());
+  
   return pat;
 }
 

@@ -98,6 +98,9 @@ EdbShowerP::~EdbShowerP()
         eShowerAxisCenterGravityBT=0;
     }
 
+    // Deletes internal histograms
+    Finalize();
+    
     delete eReco_ID_Array;
     delete eReco_E_Array;
     delete eReco_Vtx_Array;
@@ -1026,7 +1029,7 @@ void EdbShowerP::UpdateX()
 
 void EdbShowerP::Finalize()
 {
-    Log(2,"EdbShowerP::Finalize()","Finalize() Deleting Profile Histograms.");
+    Log(3,"EdbShowerP::Finalize()","Finalize() Deleting Profile Histograms.");
     if (eProfileLongitudinal)     {
         delete eProfileLongitudinal;
         eProfileLongitudinal=0;
@@ -1035,7 +1038,7 @@ void EdbShowerP::Finalize()
         delete eProfileTransversal;
         eProfileTransversal=0;
     }
-    Log(2,"EdbShowerP::Finalize()","Finalize()...done.");
+    Log(3,"EdbShowerP::Finalize()","Finalize()...done.");
     return;
 }
 
