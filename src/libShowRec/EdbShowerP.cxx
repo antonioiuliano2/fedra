@@ -25,8 +25,6 @@ EdbShowerP::EdbShowerP(int nseg)
     if (!eProfileLongitudinal) {
         eProfileLongitudinal = new TH1F("ProfileLongitudinal","ProfileLongitudinal",56,0,56.0*1300.0);
         if (gEDBDEBUGLEVEL>3) cout << "CONSTRUCTOR: eProfileLongitudinal created..." << eProfileLongitudinal << endl;
-        //cout << eProfileLongitudinal->GetBinWidth(1) << " =    eProfileLongitudinal->GetBinWidth(1) " << endl;
-        //cout << eProfileLongitudinal->GetBinCenter(1) << " =    eProfileLongitudinal->GetBinCenter(1) " << endl;
     }
     if (!eProfileTransversal) {
         eProfileTransversal = new TH1F("ProfileTransversal","ProfileTransversal",8,0,800);
@@ -49,7 +47,7 @@ EdbShowerP::EdbShowerP(int number1, int number2, int number3, int nseg)
         cout << "EdbShowerP::EdbShowerP   number 2 = " << number2 << endl;
         cout << "EdbShowerP::EdbShowerP   number 3 = " << number3 << endl;
     }
-
+    
     // default constructor, empty shower
     Init();
     SetNpl(-999);
@@ -63,6 +61,8 @@ EdbShowerP::EdbShowerP(int number1, int number2, int number3, int nseg)
     // But otherwise the single histograms will be overwritten and root will give warnings...
     // But be careful! In this mode you will get rid of the warnings, but you will
     // __NOT__ be able to access the histograms by their names anymore..:
+    // convention (->see in "Execute()" function of the algorithm)
+    // // number1 = #InBT // // number2 = eAlgValue, // number3 = eActualAlgParametersetNr 
 
     char hname[40];
     sprintf(hname,"ProfileLongitudinal_%d_%d_%d",number1,number2,number3);
@@ -2342,8 +2342,7 @@ void EdbShowerP::Print()
 //______________________________________________________________________________
 void EdbShowerP::PrintNice()
 {
-    //cout << "EdbShowerP::PrintNice():" << endl;
-    printf( "EdbShowerP: ID= %6d, N=%6d, NMC=%6d, N0=%6d, NPl=%6d, x= %14.3f, y= %14.3f, z= %14.3f, tx= %7.4f, ty= %7.4f, MCEvt= %6d: \n", ID(), N(), eNBTMC, N0(), Npl(), X(),Y(),Z(),TX(),TY(),eMC );
+    printf( "EdbShowerP::PrintNice(): ID= %6d, N=%6d, NMC=%6d, N0=%6d, NPl=%6d, x= %14.3f, y= %14.3f, z= %14.3f, tx= %7.4f, ty= %7.4f, MCEvt= %6d: \n", ID(), N(), eNBTMC, N0(), Npl(), X(),Y(),Z(),TX(),TY(),eMC );
     return;
 }
 //______________________________________________________________________________

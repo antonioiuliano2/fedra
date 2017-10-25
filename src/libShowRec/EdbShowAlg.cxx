@@ -480,7 +480,25 @@ void EdbShowAlg::UpdateShowerIDs()
 }
 //______________________________________________________________________________
 
-
+void EdbShowAlg::UpdateShowerMetaData()
+{
+    // To know which Algorithm and Parameters were used 
+    // for this shower to be reconstructed.
+    if ( NULL == eRecoShowerArray ) return;
+    Int_t idNumber=0;
+    for (int i=0; i<eRecoShowerArrayN; ++i) {
+        EdbShowerP* shower = GetShower(i);
+        shower->SetAlgName(eAlgName);
+	shower->SetAlgValue(eAlgValue);
+	for (Int_t j=0; j<10; ++j) {
+	  shower->SetAlgParaValue(j, eParaValue[j]);
+	  shower->SetAlgParaString(j, eParaString[j]);
+	}
+    }
+    return;
+}
+//______________________________________________________________________________
+    
 
 
 void EdbShowAlg::Help()
@@ -1413,6 +1431,13 @@ void EdbShowAlg_OI::Execute()
     // TO BE DONE: auch in den anderen reco-Algorithmen die ID() nachträglich setzen!
     UpdateShowerIDs();
 
+    // Write the MetaData of the Algorithm Values into the showers, that
+    // information on reconstruction parameters can be retrieved 
+    // (usefull when more parametersets are reconstructed)
+    // TO BE DONE::: Also put this in the other Execute Functions TODO
+    cout << "================================================================================="<<endl;
+    UpdateShowerMetaData();
+    cout << "================================================================================="<<endl;
 
     if (gEDBDEBUGLEVEL==2) cout << endl << "Done reco!" << endl;
     cout << "EdbShowAlg_OI::eRecoShowerArray         = " << eRecoShowerArray << endl;

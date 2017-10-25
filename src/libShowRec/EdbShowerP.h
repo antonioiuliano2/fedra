@@ -113,7 +113,7 @@ private:
     Double_t       GetdR(EdbSegP* seg1,EdbSegP* seg2);
     Double_t       GetdMin(EdbSegP* seg1,EdbSegP* seg2);
     Double_t       GetdT(EdbSegP* seg1,EdbSegP* seg2);
-    Int_t         GetLastFilledBin(TH1* hist);
+    Int_t          GetLastFilledBin(TH1* hist);
 
 
 public:
@@ -608,6 +608,29 @@ public:
     inline void          SetMCInfo_Event(MCInfo_Event fMCInfo_Event) {
         eMCInfo_Event=fMCInfo_Event;
     }
+    
+    inline void          SetAlgName(TString AlgName) {
+        eAlgName=AlgName;
+    }
+    inline void          SetAlgValue(Int_t AlgValue) {
+        eAlgValue=AlgValue;
+    }
+    
+    inline void          SetAlgParaValue(Int_t ParaValueNr, Float_t ParaValue) {
+        if (ParaValueNr>=10) return;
+	 eParaValue[ParaValueNr]=ParaValue;
+    }
+    inline void          SetAlgParaString(Int_t ParaStringNr, TString ParaString) {
+        if (ParaStringNr>=10) return;
+	 eParaString[ParaStringNr]=ParaString;
+    }
+    
+//         Float_t /* */    eParaValue[10];
+//     TString      eParaString[10];
+    
+    //             shower->SetAlgName(eAlgName);
+// 	shower->SetAlgValue(eAlgValue);
+//     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
 
     //-C- Functions that calculate shower properties
     void  BuildNplN0();

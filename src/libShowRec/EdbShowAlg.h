@@ -166,6 +166,7 @@ public:
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
 
     void 		UpdateShowerIDs();
+    void		UpdateShowerMetaData();
 
     void Print();
     void PrintParameters();

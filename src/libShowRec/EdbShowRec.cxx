@@ -985,8 +985,8 @@ void EdbShowRec::Reconstruct()
     if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
 
 
-cout << "Return now!    EdbShowRec.cxx    l 988 " << endl;
-return;    
+// cout << "Return now!    EdbShowRec.cxx    l 988 " << endl;
+// return;    
     
     // Parametrize Showers now, according to the set parametrizations:
     Log(2,"EdbShowRec::Reconstruct()", "Parametrize Showers now, according to the set parametrizations");
