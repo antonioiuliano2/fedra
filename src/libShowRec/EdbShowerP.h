@@ -625,12 +625,6 @@ public:
 	 eParaString[ParaStringNr]=ParaString;
     }
     
-//         Float_t /* */    eParaValue[10];
-//     TString      eParaString[10];
-    
-    //             shower->SetAlgName(eAlgName);
-// 	shower->SetAlgValue(eAlgValue);
-//     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
 
     //-C- Functions that calculate shower properties
     void  BuildNplN0();
@@ -662,8 +656,10 @@ public:
     Double_t CalcDistLongitudinal(EdbSegP*, EdbSegP*);
     Double_t CalcDistTransversal(EdbSegP*, EdbSegP*);
 
-    void  Update();  // Update all shower properties. Can be called each time after BT is added or
+    // Update all shower properties. 
+    // Can be called each time after BT is added or
     // when last BT was added.
+    void  Update();
     void  UpdateX(); // Update all shower properties _AND_ build all parametrisations.
 
 
@@ -697,7 +693,7 @@ public:
     void  PrintMCInfo_PGun();
     void  PrintAll();
 
-    //-C- HELP function , in case you dont know anything about it .....
+    //-C- HELP function , in case you dont know anything about it ...
     void Help();
 
     ClassDef(EdbShowerP,1)         // Root Class Definition for object EdbShowerP

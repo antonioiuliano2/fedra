@@ -121,14 +121,20 @@ void EdbShowAlgE::Set0()
 
 
     // Reset All  eInANN  Values to Zero:
-    eInANN = new Float_t[70];
-    eInfoANN = new Float_t[70];
+    
     for (Int_t j=0; j<70; j++) {
         eInANN[j]=0;
         eInfoANN[j]=0;
         eInANN_Hist[j]=0;
     }
     eOutANN=0;
+    
+    // WHEN COMPILING  THE LIBRARY, AN ERROR APPEARS HERE:
+// Error: *** Datamember EdbShowAlgE::eInANN: no size indication!
+// Error: *** Datamember EdbShowAlgE::eInANN: pointer to fundamental type (need manual intervention)
+// Error: *** Datamember EdbShowAlgE::eInfoANN: no size indication!
+// Error: *** Datamember EdbShowAlgE::eInfoANN: pointer to fundamental type (need manual intervention)
+
 
 
     eMLP_InputNeurons=0;
@@ -162,6 +168,11 @@ void EdbShowAlgE::Init()
     eShowAlgEParaName="XX";
     eShowAlgEParaNr=4;
 
+    // Create the Arrays
+    eInANN = new Float_t[70];
+    eInfoANN = new Float_t[70];
+    
+    
     // Init to set Paraname and ParaNr
     Init(eShowAlgEParaName);
 

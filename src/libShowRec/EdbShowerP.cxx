@@ -9,9 +9,9 @@ using namespace TMath;
 
 EdbShowerP::EdbShowerP(int nseg)
 {
+    // Default constructor, empty shower
     if (gEDBDEBUGLEVEL>4) cout << "EdbShowerP::EdbShowerP(int nseg)   CONSTRUCTOR" << endl;
 
-    // default constructor, empty shower
     Init();
     SetNpl(-999);
     SetN0(-999);
@@ -19,8 +19,6 @@ EdbShowerP::EdbShowerP(int nseg)
 
     // Create ObjArray for the Segments:
     if (nseg>0) eS = new TObjArray(9999);
-
-    //cout << "CONSTRUCTOR: eProfileLongitudinal " << eProfileLongitudinal << endl;
 
     if (!eProfileLongitudinal) {
         eProfileLongitudinal = new TH1F("ProfileLongitudinal","ProfileLongitudinal",56,0,56.0*1300.0);
@@ -41,6 +39,8 @@ EdbShowerP::EdbShowerP(int nseg)
 
 EdbShowerP::EdbShowerP(int number1, int number2, int number3, int nseg)
 {
+    // Constructor with numbers to make the histograms have a unique name
+    
     if (gEDBDEBUGLEVEL>4) {
         cout << "EdbShowerP::EdbShowerP(int number1, int number2, int number3, int nseg)   CONSTRUCTOR" << endl;
         cout << "EdbShowerP::EdbShowerP   number 1 = " << number1 << endl;
@@ -114,9 +114,9 @@ EdbShowerP::~EdbShowerP()
 void EdbShowerP::Init()
 {
     // Default Init function:
-    // all Objects persistently there, created with a "new" operator,
+    // all objects persistently there, created with a "new" operator,
     // i.e. objects which are created only once..
-    eReco_ID_Array = new TObjArray; // create crash when not initialized???
+    eReco_ID_Array = new TObjArray;
     eReco_E_Array = new TObjArray;
     eReco_Vtx_Array = new TObjArray;
 
@@ -293,10 +293,6 @@ void EdbShowerP::ClearAll()
     Set0();
     cout<<"EdbShowerP::ClearAll()   done."<<endl;
 }
-//     inline void  Clear()                     { if(eS)  eS->Clear(); }
-//     inline void  ClearProfileLongitudinalHisto() { if(eProfileLongitudinal)  eProfileLongitudinal->Reset(); }
-//     inline void  ClearProfileTransversalHisto() { if(eProfileTransversal)  eProfileTransversal->Reset(); }
-
 
 //______________________________________________________________________________
 
@@ -368,7 +364,7 @@ void EdbShowerP::Sort()
     // Sort Shower Segments in Ascending Z position:
     // Makes use of the TSortedList.
     // EdbTrackP the segment array is already in TSortedList.
-    // In EdbShowerP its used as a TObjArray thats why we have to make this
+    // In EdbShowerP it is used as a TObjArray thats why we have to make this
     // turnaround here....
     TObjArray* array=new TObjArray();
     TSortedList* f = new TSortedList() ;

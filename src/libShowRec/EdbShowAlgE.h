@@ -70,6 +70,8 @@ private:
     // Variables as arrays for the In/Outut of the ANN.
     // They have to be given in Float_t* array, to root specifications of
     // the implementation...
+
+    // TODO CHECK THIS !!!!!
 //     Float_t             eInANN[70];
     Float_t*             eInANN;
     Float_t             eOutANN;
@@ -87,7 +89,7 @@ private:
     TTree*                      eMLP_SimpleTree;
 
     TString                     eMLP_Layout;
-    TObjArray*									eMLP_LayoutArray;
+    TObjArray*			eMLP_LayoutArray;
     Bool_t                      eMLP_LayoutArrayIsDone;
 
 
@@ -98,16 +100,12 @@ private:
     Int_t                       eMLP_TrainEpochs;
 
     Int_t                       eMLP_InputNeurons;
-    TArrayI*										eMLP_InputNeuronsArray;
-    Int_t												eMLP_InputNeuronsArrayN;
+    TArrayI*			eMLP_InputNeuronsArray;
+    Int_t			eMLP_InputNeuronsArrayN;
 
     TString                     eMLP_InputFileName;
     Bool_t                      eMLP_WriteMLPInputFile;
     Bool_t                      eMLP_ReadMLPInputFile;
-
-
-
-
 
 
 
@@ -118,20 +116,14 @@ private:
     void                Init();
     void                Init(TString ParaName);
 
-
-
     // Create Input Histos
     void                CreateInputHistos();
-
-
-
 
     // Fill Input Histos with Entries by eMLP_SimpleTree:
     void                FillInputHistosPara_XX();
 
-
     // Simple Layout Creation function:  n:n+1:n:inputtype
-    TString 						CreateMLPLayout(Int_t NrOfANNInputNeurons);
+    TString 		CreateMLPLayout(Int_t NrOfANNInputNeurons);
 
 
 
@@ -190,7 +182,6 @@ public:
     }
 
 
-
     void                SetDoTrain(Int_t type);
     void                SetDoRun(Int_t type);
 
@@ -198,18 +189,11 @@ public:
     void                SetInputHistosPara_FJ();
     void                SetInputHistosPara_YC();
     void                SetInputHistosPara_XX();
-    void								SetInputHistosPara_YY();
-
-
-
-
-
+    void		SetInputHistosPara_YY();
 
     void                 SetWriteMLPWeightFile(Int_t type);
     void                 SetWriteMLPInputFile(Int_t type);
     void                 SetReadMLPInputFile(Int_t type);
-
-
 
     void                ReadMLPInputFile();
     void                WriteMLPInputFile();
@@ -243,8 +227,6 @@ public:
 
 
 
-
-
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where
     //  Initialize, Execute, Finalize
@@ -274,7 +256,7 @@ public:
 
 
     // CreateStandardWeightFileStrings
-    void 								CreateStandardWeightFileStrings();
+    void 		CreateStandardWeightFileStrings();
     void                 CreateStandardMLPArrayN();
     void                 PrintWeightFileStrings();
     void                 ResetPlateBinning();
@@ -331,8 +313,6 @@ public:
     void                 Train();
     void                 Run();
     void                 DumpWeights();
-
-
 
 
     int 			            GetMLPArrayNr(Int_t NPlToCheck);
