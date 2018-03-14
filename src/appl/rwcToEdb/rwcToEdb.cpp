@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 #include "ProcessRawData.h"
-
+using namespace std;
 
 void toLower(std::string &inputString)
 {

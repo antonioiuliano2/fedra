@@ -7,7 +7,7 @@
 // Virtual algorithms                                                   //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include <TBuffer.h>
 #include "TH2.h"
 #include "TGraph.h"
 #include "TCanvas.h"

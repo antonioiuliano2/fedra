@@ -7,7 +7,7 @@
 // Implementation of Frame class                                        //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include <TBuffer.h>
 #include <TH2.h>
 #include <TClass.h>
 #include "EdbFrame.h"

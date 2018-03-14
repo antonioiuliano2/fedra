@@ -26,7 +26,7 @@
 #include <string.h> // for memcpy
 #include "vt++/VtSqMatrix.hh"
 #include "vt++/VtVector.hh"
-
+using  namespace std;
 
 void Dfactir1(int *n, double *a, int *idim, int *ir, int *ifail, double *det, int *jfail)
 {

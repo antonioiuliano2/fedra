@@ -8,6 +8,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#include <TBuffer.h>
 #include <TPolyMarker3D.h>
 #include <TClass.h>
 #include "EdbCluster.h"

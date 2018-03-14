@@ -14,16 +14,16 @@ TARGET	=	$(BIN_DIR)/emlink$(ExeSuf)      \
 		$(BIN_DIR)/emvtx$(ExeSuf)      \
 		$(BIN_DIR)/emcheck$(ExeSuf)    \
 		$(BIN_DIR)/empred$(ExeSuf)    \
-		$(BIN_DIR)/emtrackan$(ExeSuf) \
-		$(BIN_DIR)/emcpan$(ExeSuf) \
-		$(BIN_DIR)/emtraceback$(ExeSuf) \
-		$(BIN_DIR)/emtrfind$(ExeSuf)
+		$(BIN_DIR)/emtrackan$(ExeSuf)
+#		$(BIN_DIR)/emtraceback$(ExeSuf) \
+#		$(BIN_DIR)/emtrfind$(ExeSuf)
+#		$(BIN_DIR)/emcpan$(ExeSuf)
 
 
 
 ROOTLIBS      += -lMLP
 ##PROJECT_LIBS += -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lShower -lTreePlayer
-PROJECT_LIBS += $(GLIBS) -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lEdd -lTreePlayer
+PROJECT_LIBS += $(GLIBS) -L$(FEDRA_ROOT)/lib -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lEdd -lTreePlayer -lScan -lEdb -lEbase -lEmath -lEphys -lvt -lEdr -lScan -lEdr -lEIO -lEMC -lAlignment -lDataConversion -lEdd -lTreePlayer $(ROOTLIBS) $(GLIBS)
 
 #------------------------------------------------------------------------------
 include ../../config/TargetsDef.mk

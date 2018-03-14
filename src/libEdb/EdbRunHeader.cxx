@@ -7,6 +7,7 @@
 // Implementation of Scanning Run class                                 //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
+#include <TBuffer.h>
 #include <TSystem.h>
 #include <TClass.h>
 #include "EdbRunHeader.h"

@@ -7,11 +7,14 @@
 // Implementation of Image class                                        //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include <TBuffer.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <Riostream.h>
 #include <TClass.h>
+//#include <iostream>
+//#include <fstream>
+using namespace std;
 
 #include "EdbImage.h"
  
@@ -331,7 +334,7 @@ INFOHEADER ihdr;
  
 //printf("hdr: %d    ihdr: %d\n",sizeof(hdr), sizeof(ihdr));
  char* ptr;
- fstream raw(file,ios::in | ios::binary);       // ios::binary added! 24.11.2003 (Stas)
+ifstream raw(file,ios::in | ios::binary);       // ios::binary added! 24.11.2003 (Stas)
  ptr=(char*)&hdr;
  raw.read(ptr,14);
  ptr=(char*)&ihdr;

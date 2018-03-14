@@ -29,6 +29,8 @@
 #include "EdbView.h"
 #include "EdbCluster.h"
 #include "EdbSegment.h"
+using namespace std;
+
 #endif
 
 EdbRun* run ;

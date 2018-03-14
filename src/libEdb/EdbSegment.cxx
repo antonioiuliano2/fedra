@@ -7,7 +7,7 @@
 // Implementation of Segment class                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-
+#include <TBuffer.h>
 #include <TClass.h>
 #include "EdbSegment.h"
 #include "EdbAffine.h"

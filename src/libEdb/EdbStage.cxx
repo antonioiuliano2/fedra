@@ -7,7 +7,7 @@
 // Implementation of Stage class                                        //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
- 
+ #include <TBuffer.h>
 #include <TClass.h>
 #include "EdbStage.h"
 

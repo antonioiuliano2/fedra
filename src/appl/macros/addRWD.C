@@ -4,6 +4,7 @@
 #include "EdbRunAccess.h"
 #include "TSystem.h"
 #include "Riostream.h"
+using namespace std;
 
 #endif
 

@@ -27,6 +27,8 @@
 #include "TF1.h"
 #include "Riostream.h"
 #include "EdbPVRec.h"
+using namespace std;
+
 #endif
 
 TCut csignal("1");
