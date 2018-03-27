@@ -37,7 +37,7 @@
 // *****************************************************************************
 #include "Riostream.h"
 #include <iomanip>
-#include <cmath>
+//#include <cmath>
 
 #include "vt++/VtTrack.hh"
 #include "vt++/VtKalman.hh"
@@ -49,6 +49,7 @@
 
 ClassImp(VERTEX::Track);
 
+using namespace std;
 using namespace MATRIX;
 
 namespace VERTEX {

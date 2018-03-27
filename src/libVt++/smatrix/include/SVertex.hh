@@ -55,6 +55,7 @@
 // 16 Jan 2002 (TG) added operator=(SVertex<NTR>)
 //
 // ********************************************************************
+#include <cmath>
 #include <iosfwd>
 #include "vt++/VtVertex.hh"
 #include "vt++/VtTrack.hh"

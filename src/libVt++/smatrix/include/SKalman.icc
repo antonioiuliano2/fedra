@@ -35,7 +35,6 @@
 // ********************************************************************
 #include "Riostream.h"
 #include <iomanip>
-#include <cmath>
 
 #include "SVertex.hh"
 

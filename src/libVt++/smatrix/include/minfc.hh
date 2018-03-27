@@ -24,7 +24,7 @@
 // 26 Jul 2001 (TG) creation from CERNLIB minfc.F file (f2c + handoptimization)
 //
 // **********************************************************************
-#include <cmath>
+//#include <cmath>
 #include "Functions.hh"
 
 /** Rminfc. 

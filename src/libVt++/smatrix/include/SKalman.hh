@@ -32,6 +32,7 @@
 // 09 Jan 2002 (TG) changed return type of propagate() to bool
 //
 // ********************************************************************
+#include <cmath>
 #include <iosfwd>
 #include "vt++/VtTrack.hh"
 

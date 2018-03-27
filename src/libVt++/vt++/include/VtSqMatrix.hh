@@ -27,7 +27,7 @@
 
 #include <iosfwd>
 #include <assert.h>
-#include <math.h>
+//#include <math.h>
 #include "VtMatrix.hh"
 
 #ifdef WIN32

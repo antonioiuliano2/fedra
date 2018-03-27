@@ -25,7 +25,7 @@
 // 09 Mar 2001 (TG) unit(), operator*(double) added
 //
 // *****************************************************************************
-
+//#include <math.h>
 #include "Riostream.h"
 #include <assert.h>
 #include <string.h> // for memcpy
