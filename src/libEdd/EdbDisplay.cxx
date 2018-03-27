@@ -231,10 +231,9 @@ void EdbDisplay::Set0()
 //________________________________________________________________________
 EdbDisplay *EdbDisplay::EdbDisplayExist(const char *title)
 {
-  EdbDisplay *ds=0;
   TSeqCollection *l = gROOT->GetListOfSpecials();
-  if (!l) return false;
-  ds = (EdbDisplay*)(l->FindObject(title));
+  if (!l) return 0;
+  EdbDisplay *ds = (EdbDisplay*)(l->FindObject(title));
   return ds;
 }
 //________________________________________________________________________
