@@ -72,6 +72,13 @@ scan2db.PREDICTION:                        76735.0.1.100
 scan2db.VOLUME:                            76735.0.1.1000
 scan2db.VOLUME.IDPATH:                     1
 
+BEFORE the loading and once *.scan2db.rootrc file is prepared in data directry the folloing operation 
+should be performed to create all necesary *.set.root files if them do not exist yet:
+  scan2db -file=/opera/scan/mic3/ONLINE/b102089/b102089_e11184031419.scan2db.rootrc -makesets -v=2
+This will create set.root file for all datasets mentioned in scan2db.rootrc.
+you can check if files *.set.root for all requested datasets are created correctly
+
+
 Additional options:
    - checkbrick=brickid   - print all operations stored in db for this brick
 
