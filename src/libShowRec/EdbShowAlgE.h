@@ -69,13 +69,24 @@ private:
 
     // Variables as arrays for the In/Outut of the ANN.
     // They have to be given in Float_t* array, to root specifications of
-    // the implementation...
+    // the implementation...  (?? where to read this ??)
 
     // TODO CHECK THIS !!!!!
+    // With the new gcc --version 7.30 (shipped with Ubuntu 18.04)
+    // compilation does stop here with an error (as of 2018/03/28).
+    // Why?
+
+    // It seems like (found in an old root post) when putting 
+    // the ! behind the commend behind the variable, then 
+    // somehow it ist made transient and the cint (now cling) can handle
+    // this.
+
 //     Float_t             eInANN[70];
-    Float_t*             eInANN;
+ Float_t* eInANN = new Float_t[70]; //!
+  //  Float_t*             eInANN;  // worked with gcc 4.4, but with gcc 7.3
     Float_t             eOutANN;
-    Float_t*             eInfoANN;
+  //  Float_t*             eInfoANN; // worked with gcc 4.4, but with gcc 7.3
+    Float_t*       eInfoANN = new Float_t[70]; //!
 
     // Histograms storing the  eInANN  distributions:
     TH1F*               eInANN_Hist[70];

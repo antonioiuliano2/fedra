@@ -169,8 +169,8 @@ void EdbShowAlgE::Init()
     eShowAlgEParaNr=4;
 
     // Create the Arrays
-    eInANN = new Float_t[70];
-    eInfoANN = new Float_t[70];
+    /// eInANN = new Float_t[70];
+    /// eInfoANN = new Float_t[70];
     
     
     // Init to set Paraname and ParaNr

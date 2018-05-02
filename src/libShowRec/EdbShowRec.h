@@ -12,7 +12,7 @@
 #include "TSystem.h"
 
 #include "TMLPAnalyzer.h"
-
+#include "TMultiLayerPerceptron.h"
 
 #include "EdbVertex.h"
 #include "EdbPVRec.h"

@@ -9,6 +9,7 @@ R__LOAD_LIBRARY(libPhysics.so);
 R__LOAD_LIBRARY(libEve.so);
 R__LOAD_LIBRARY(libGeom.so);
 R__LOAD_LIBRARY(libEve.so);
+R__LOAD_LIBRARY(libMLP.so); // necessary for root neural network library
 
 R__LOAD_LIBRARY(libvt.so);
 R__LOAD_LIBRARY(libEphys.so);
@@ -26,6 +27,7 @@ R__LOAD_LIBRARY(libEGA.so);
 R__LOAD_LIBRARY(libEdd.so);
 R__LOAD_LIBRARY(libEMC.so);
 R__LOAD_LIBRARY(libShower.so);
+R__LOAD_LIBRARY(libShowRec.so); // developement version
 R__LOAD_LIBRARY(libEmr.so);
 R__LOAD_LIBRARY(libEDA.so);
 
