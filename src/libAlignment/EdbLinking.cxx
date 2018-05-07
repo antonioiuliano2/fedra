@@ -116,12 +116,10 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
   TH1F *hTall1 = seq1.ThetaPlot(p1   , "hTall1","Theta plot all, side 1 "); hTall1->Write();
   TH1F *hTall2 = seq2.ThetaPlot(p2   , "hTall2","Theta plot all, side 2 "); hTall2->Write();
 
-  TObjArray  p1pre(p1.N());
-  seq1.PreSelection(p1,p1pre);
-  TObjArray p2pre(p2.N());
-  seq2.PreSelection(p2,p2pre);
+  TObjArray  p1pre(p1.N());  seq1.PreSelection(p1,p1pre);
+  TObjArray  p2pre(p2.N());  seq2.PreSelection(p2,p2pre);
   Log(2,"EdbLinking::Link","after preselection: n1pre = %d  n2pre = %d", p1pre.GetEntries(),p2pre.GetEntries() );
-
+  DoubletsFilterOut(p1pre,p2pre);
   
   TObjArray  p1shr,p2shr;
   
@@ -134,7 +132,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
     TH1F *hTshr2 = seq2.ThetaPlot(p2shr, "hTshr2","Theta plot shr, side 2 "); hTshr2->Write();
     seq2.eHEq.DrawH1("eHEq2","eHEq2")->Write();
     
-    DoubletsFilterOut(p1shr,p2shr);
+    //    DoubletsFilterOut(p1shr,p2shr);
     FillCombinationsAtMeanZ(p1shr,p2shr);
     Log(2,"EdbLinking::Link","A n1shr = %d  n2shr = %d", p1shr.GetEntries(),p2shr.GetEntries() );
   }
@@ -181,7 +179,7 @@ void EdbLinking::Link(EdbPattern &p1, EdbPattern &p2, EdbLayer &l1, EdbLayer &l2
       p1lnk=p1pre;
       p2lnk=p2pre;
     }
-    DoubletsFilterOut(p1lnk,p2lnk, 1);
+    //    DoubletsFilterOut(p1lnk,p2lnk, 1);
     
     TH1F *hTlnk1 = seq1.ThetaPlot(p1lnk, "hTlnk1","Theta plot lnk, side 1 "); hTlnk1->Write();
     TH1F *hTlnk2 = seq2.ThetaPlot(p2lnk, "hTlnk2","Theta plot lnk, side 2 "); hTlnk2->Write();
@@ -606,13 +604,11 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
-//  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
   if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
 
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
-//  if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments
   if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
   

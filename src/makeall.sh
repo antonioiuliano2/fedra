@@ -16,11 +16,11 @@ for lib in ${LIBS} ; do
 	echo 
 	echo "make $1 in ${lib} ............."
 	cd ${lib}
-	make -j1 $1
+	make -j5 $1
 	cd ..
     else
 	cd ${lib}
-	make -j1 $1
+	make -j5 $1
 	cd ..
     fi
 done
