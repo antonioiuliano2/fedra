@@ -12,6 +12,8 @@ LIBS += -lMLP
 #PROJECT_LIBS  = $(PROJECT_LIBS) -lEmath -lEdb -lvt -lEdr -lEIO  # old... but still working
 PROJECT_LIBS  = $(PROJECT_LIBS) -lEmath -lEdb -lEbase -lvt -lEdr -lEIO -lAlignment  # new fedra ...
 
+CXXFLAGS += -pedantic -Wall -Werror
+
 #------------------------------------------------------------------------------
 include ../config/TargetsDef.mk
 #------------------------------------------------------------------------------
