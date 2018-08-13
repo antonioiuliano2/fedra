@@ -176,6 +176,11 @@ int main(int argc, char *argv[])
     for (int i=1; i<argc; ++i ) {
         char *key  = argv[i];
 
+        // ------------------------------
+        // Option Types "HELP" and "-LIST-PRESET" 
+        // automatically stop program after displaying 
+        // information
+        
         if      (!strncmp(key,"-HELP",5)) {
             if (strlen(key)>5) {
                 sscanf(key+5,"%d",&cmd_HELP);
@@ -190,6 +195,25 @@ int main(int argc, char *argv[])
             PrintPresetList();
             return 0;
         }
+        // ------------------------------
+        // These three value options have to be read in any case,
+        // independently from any other option key.
+        else if (!strncmp(key,"-DEBUG",6)) {
+            if (strlen(key)>6) {
+                sscanf(key+6,"%d",&cmd_gEDBDEBUGLEVEL);
+            }
+        }
+        else if (!strncmp(key,"-OUT",4)) {
+            if (strlen(key)>4) {
+                sscanf(key+4,"%d",&cmd_OUTPUTLEVEL);
+            }
+        }
+        else if (!strncmp(key,"-STOP",5)) {
+            if (strlen(key)>5) {
+                sscanf(key+5,"%d",&cmd_STOPLEVEL);
+            }
+        }
+        // ------------------------------
         
         if      (!strncmp(key,"-PRESET",7)) {
             if (strlen(key)>7) {
@@ -307,21 +331,7 @@ int main(int argc, char *argv[])
                 sscanf(key+4,"%d",&cmd_vtx);
             }
         }
-        else if (!strncmp(key,"-DEBUG",6)) {
-            if (strlen(key)>6) {
-                sscanf(key+6,"%d",&cmd_gEDBDEBUGLEVEL);
-            }
-        }
-        else if (!strncmp(key,"-OUT",4)) {
-            if (strlen(key)>4) {
-                sscanf(key+4,"%d",&cmd_OUTPUTLEVEL);
-            }
-        }
-        else if (!strncmp(key,"-STOP",5)) {
-            if (strlen(key)>5) {
-                sscanf(key+5,"%d",&cmd_STOPLEVEL);
-            }
-        }
+
         else if (!strncmp(key,"-FILETP",7)) {
             if (strlen(key)>7) {
                 sscanf(key+7,"%d",&cmd_FILETP);

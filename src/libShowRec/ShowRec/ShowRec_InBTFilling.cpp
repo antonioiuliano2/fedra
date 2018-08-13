@@ -215,7 +215,7 @@ void FillGlobalInBTArrayNEW()
 
     //--------------------------------------------------------
     /*
-        3) criterion PDG-value
+    3) criterion PDG-value
                 -> All (cmd_MCFL = 0)
                 -> specific PDG-number (only one at the moment)
     */
@@ -246,7 +246,7 @@ void FillGlobalInBTArrayNEW()
                 -> HPLZ=0 All
                 -> HPLZ=1 Take highest P() value for each MCEvt
                 -> HPLZ=2 Take first (i.e. lowest) z occurence for each MCEvt
-                        (if more BT have same minimal Z() value, than take all)
+                        (if more BT have same minimal Z() value, then take highest P())
     */
     //--------------------------------------------------------
     TObjArray* arrayIntermediate4 = new TObjArray();
@@ -272,72 +272,99 @@ void FillGlobalInBTArrayNEW()
         Int_t NarrayIntermediateMC=arrayIntermediateMC->GetEntries();
         Bool_t OtherSegGreaterPSameMC=kFALSE;
         Bool_t OtherSegLowerZSameMC=kFALSE;
-
-        // Take highest P() semgment per each MCEvt
-        if (cmd_HPLZ == 1) {
-
-            for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
+        Int_t segMC=-1;
+        Float_t segZ=-1;
+        Int_t segCompMC=-1;
+        
+        // Find minimum and maximum Eventnumber and Z position 
+        // in the arrayIntermediateMC array:
+        Int_t segMCmin=NarrayIntermediateMC;
+        Int_t segMCmax=-1;
+        
+        for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
                 seg=(EdbSegP*) arrayIntermediateMC->At(n);
-                OtherSegGreaterPSameMC=kFALSE;
-                Int_t segMC = seg->MCEvt();
-                //printf("Check segment n = %d, segMC=%d, P = %f,  \n", n, segMC,  seg->P());
+                segMC = seg->MCEvt();
+                segZ = seg->Z();
+                if (segMC>segMCmax) segMCmax = segMC;
+                if (segMC<segMCmin) segMCmin = segMC;
+        }
 
-                for (Int_t m=0; m<NarrayIntermediateMC; ++m) {
-                    if (OtherSegGreaterPSameMC) continue;
-                    // if (n==m) continue; // What about the last segment?
-                    // Thats why the double loop has to go twice here...
-                    segComp=(EdbSegP*) arrayIntermediateMC->At(m);
-                    Int_t segCompMC = segComp->MCEvt();
-                    //printf("m = %d, segMC=%d, P = %f, OtherSegGreaterPSameMC=%d \n", m , segMC,  segComp->P(), OtherSegGreaterPSameMC );
-                    if (segMC!=segCompMC) continue;
-                    if (segComp->P() > seg->P()) OtherSegGreaterPSameMC=kTRUE;
-                }
-                // Now have found the maximum P() for MCEvt for segment n
-                if (OtherSegGreaterPSameMC==kFALSE) {
-                    arrayIntermediateFHZP->Add(seg);
-                    printf("Added segment n = %d, segMC=%d, P = %f  \n", n, segMC,  seg->P());
-                }
-                else {
-                    // printf("Found some segment with higher P. Do not add segment n = %d, segMC=%d, P = %f  \n", n, segMC,  seg->P());
-                }
-            } // for (Int_t n=0; n<NarrayIntermediateMC; ++n)
-
+        // cmd_HPLZ == 1 Take highest P() segment per each MCEvt.
+        // cmd_HPLZ == 2 Take first (lowest) Z() semgment per each MCEvt
+        // In case two (or more) BTs have same lowest Z() 
+        // then take the highest P() BT.
+        
+        if (cmd_HPLZ == 1 || cmd_HPLZ == 2) {
+            if (cmd_HPLZ == 1) cout << "Take highest P() segment per each MCEvt." << endl;
+            if (cmd_HPLZ == 2) cout << "Take lowest  Z() segment per each MCEvt." << endl;
+            // Try search with arrays instead of double loops! Yes, works much faster!
+            // After MCEvt range is set, start to look for highest P() value for each MCEvt:
+            Float_t segP, segZ;
+            Float_t segPmax[segMCmax+1];
+            Int_t   segn[segMCmax+1];
+            Float_t segZmin[segMCmax+1];
+            Int_t   segm[segMCmax+1];
+            
+            // Reset all array values
+            for (Int_t nrMC=segMCmin; nrMC<=segMCmax; ++nrMC) {
+                segPmax[nrMC]=0;
+                segn[nrMC]=-1;
+                segZmin[nrMC]=9999999999;
+                segm[nrMC]=-1;
+            }
+            
+            EdbSegP* seg2;
+            for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
+                    seg=(EdbSegP*) arrayIntermediateMC->At(n);
+                    segMC = seg->MCEvt();
+                    segP = seg->P();
+                    segZ = seg->Z();
+                    if (segP>segPmax[segMC]) {
+                        segPmax[segMC] = segP;
+                        segn[segMC] = n;
+                    }
+                    if (segZ<segZmin[segMC]) {
+                            segZmin[segMC] = segZ;
+                            segm[segMC] = n;
+                    }
+                    // Safe method agains rounding errors:
+                    if (TMath::Abs(segZ-segZmin[segMC])<0.1) {
+                        // Compare P() with the existing lowest Z segment
+                        seg2=(EdbSegP*) arrayIntermediateMC->At(segm[segMC]);
+                        //cout << "segP= " << segP <<   " and   seg2->P()= " << seg2->P() << endl;
+                        if (  segP > seg2->P() ) {
+                            segZmin[segMC] = segZ;
+                            segm[segMC] = n;
+                        }
+                    }
+            }
+            
+            Int_t SegHPLZNumberInArray=0;
+            for (Int_t nrMC=segMCmin; nrMC<=segMCmax; ++nrMC) {
+                if (segn[nrMC]==-1) continue;
+                if (cmd_HPLZ == 1) SegHPLZNumberInArray = segn[nrMC];
+                if (cmd_HPLZ == 2) SegHPLZNumberInArray = segm[nrMC];
+                cout << "--- For MCEvt " <<  nrMC << " P() maximal is =  " <<  segPmax[nrMC] << endl;
+                cout << "--- For MCEvt " <<  nrMC << " Z() minimal is =  " <<  segZmin[nrMC] << endl;
+                seg=(EdbSegP*) arrayIntermediateMC->At(segn[nrMC]);
+                cout << "Highest P() segment:" << endl;
+                seg->PrintNice();
+                seg=(EdbSegP*) arrayIntermediateMC->At(segm[nrMC]);
+                cout << "Lowest  Z() segment:" << endl;
+                seg->PrintNice();
+                //---------------
+                // Add now the corresponding segment
+                seg=(EdbSegP*) arrayIntermediateMC->At(SegHPLZNumberInArray);
+                arrayIntermediateFHZP->Add(seg);
+            }
+            
+            cout << " Added all FHZP segments. Number of entries = " <<  arrayIntermediateFHZP->GetEntries()  << endl;
+            
         } // of if (cmd_HPLZ == 1)
-
-        // Take first (lowest) Z() semgment per each MCEvt
-        else if (cmd_HPLZ == 2) {
-
-            for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
-                seg=(EdbSegP*) arrayIntermediateMC->At(n);
-                OtherSegLowerZSameMC=kFALSE;
-                Int_t segMC = seg->MCEvt();
-                //printf("Check segment n = %d, segMC=%d, Z = %f,  \n", n, segMC,  seg->Z());
-
-                for (Int_t m=0; m<NarrayIntermediateMC; ++m) {
-                    if (OtherSegLowerZSameMC) continue;
-                    // if (n==m) continue; // What about the last segment?
-                    // Thats why the double loop has to go twice here...
-                    segComp=(EdbSegP*) arrayIntermediateMC->At(m);
-                    Int_t segCompMC = segComp->MCEvt();
-                    //printf("m = %d, segMC=%d, Z = %f, OtherSegLowerZSameMC=%d \n", m , segMC,  segComp->Z(), OtherSegLowerZSameMC );
-                    if (segMC!=segCompMC) continue;
-                    if (segComp->Z() < seg->Z()) OtherSegLowerZSameMC=kTRUE;
-                }
-                // Now have found the maximum P() for MCEvt for segment n
-                if (OtherSegLowerZSameMC==kFALSE) {
-                    arrayIntermediateFHZP->Add(seg);
-                    printf("Added segment n = %d, segMC=%d, Z = %f  \n", n, segMC,  seg->Z());
-                }
-                else {
-                    // printf("Found some segment with lower Z. Do not add segment n = %d, segMC=%d, P = %f  \n", n, segMC,  seg->Z());
-                }
-            } // for (Int_t n=0; n<NarrayIntermediateMC; ++n)
-
-        } // of else if (cmd_HPLZ == 2)
         // unsupported cmd_HPLZ value: copy array before.
         else {
             cout << "Warning: unsupported cmd_HPLZ value. Do no cut." << endl;
-            arrayIntermediate4 = arrayIntermediate3 ;
+            arrayIntermediateFHZP = arrayIntermediate3 ;
         }
 
         // Now merge arrays
