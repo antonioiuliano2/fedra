@@ -1366,8 +1366,8 @@ int EdbPattern::FindCompliments(EdbSegP &s, TObjArray &arr, float nsigx, float n
   float sty = s.STY();
   if (sty <= 0.) sty = 1.;
 
-  //printf("Step: %f %f %f %f\n",StepX(),StepY(),StepTX(),StepTY());
-  //printf("Sigm: %f %f %f %f\n",sx,sy,TMath::Sqrt(stx),TMath::Sqrt(sty));
+//   printf("Step: %f %f %f %f\n",StepX(),StepY(),StepTX(),StepTY());
+//   printf("Sigm: %f %f %f %f\n",sx,sy,TMath::Sqrt(stx),TMath::Sqrt(sty));
 
 
   long vcent[4] = { (long)(x/StepX()),
@@ -1901,6 +1901,7 @@ EdbPattern* EdbPatternsVolume::GetPatternByZ(float z, float tolerance) const
   //
   // This is important because some codings (libShower for example).
   // rely on getting Patterns by the Z.
+  // Warning: If tolerance is to big, there is not a unique solution anymore
   
   EdbPattern *pat=0;
 	for(int i=0; i<Npatterns(); i++) {

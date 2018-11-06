@@ -224,7 +224,6 @@ class EdbShowAlg_CA : public EdbShowAlg {
 // C_one A_dvanced Alg
 
 private:
-
     Bool_t    GetConeTubeDistanceToInBT(EdbSegP* sa, EdbSegP* s, Double_t CylinderRadius, Double_t ConeAngle);
     Bool_t    FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbShowerP* shower);
 
@@ -254,7 +253,6 @@ class EdbShowAlg_OI : public EdbShowAlg {
 // O_fficial I_mplementation Alg. Try of the "libShower recdown" algorithm to keep backward compability.
 
 private:
-
     Bool_t    FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli, EdbShowerP* shower);
 
 public:
@@ -296,6 +294,7 @@ public:
     ClassDef(EdbShowAlg_RC,1);         // Root Class Definition for my Objects
 };
 
+
 //______________________________________________________________________________
 
 class EdbShowAlg_BW : public EdbShowAlg {
@@ -303,6 +302,7 @@ class EdbShowAlg_BW : public EdbShowAlg {
     // B_ack_W_ard algorithm.
 
 private:
+    Bool_t    DummyBWFunction();
 
 public:
     EdbShowAlg_BW();
@@ -318,7 +318,7 @@ public:
 //______________________________________________________________________________
 
 /*
-TO BE IMPLEMENTED ALGORITHMS IF TIME (and needed, if not availibale from "showrec" standalone program):
+TO BE IMPLEMENTED ALGORITHMS IF TIME (and needed, if not available from "showrec" standalone program):
 0 	CT
 1 	CL
 2 	CA
@@ -330,6 +330,7 @@ TO BE IMPLEMENTED ALGORITHMS IF TIME (and needed, if not availibale from "showre
 8 	BW
 9 	AG
 10 	GS
+11	N3 (NewNeuralNet)
 */
 //______________________________________________________________________________
 

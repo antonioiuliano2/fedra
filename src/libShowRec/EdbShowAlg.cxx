@@ -8,6 +8,7 @@ ClassImp(EdbShowAlg)
 ClassImp(EdbShowAlg_SA)
 ClassImp(EdbShowAlg_CA)
 ClassImp(EdbShowAlg_OI)
+ClassImp(EdbShowAlg_BW)
 
 //______________________________________________________________________________
 
@@ -605,6 +606,7 @@ void EdbShowAlg_SA::Init()
 
 void EdbShowAlg_SA::Initialize()
 {
+    cout << "EdbShowAlg_SA::Initialize()" << endl;
     return;
 }
 //______________________________________________________________________________
@@ -762,7 +764,7 @@ void EdbShowAlg_SA::Execute()
 
 void EdbShowAlg_SA::Finalize()
 {
-
+    cout << "EdbShowAlg_SA::Finalize()" << endl;
     return;
 }
 
@@ -1539,33 +1541,6 @@ Bool_t EdbShowAlg_OI::FindPrecedingBTs(EdbSegP* s, EdbSegP* InBT, EdbPVRec *gAli
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //______________________________________________________________________________
 
 EdbShowAlg_RC::EdbShowAlg_RC()
@@ -1884,6 +1859,77 @@ Bool_t EdbShowAlg_RC::GetConeOrTubeDistanceToBTOfShowerArray(EdbSegP* sa, EdbSeg
 }
 
 
+
+
+
+//______________________________________________________________________________
+
+EdbShowAlg_BW::EdbShowAlg_BW()
+{
+// Default Constructor
+    cout << "EdbShowAlg_BW::EdbShowAlg_BW()   Default Constructor  B_ackW_ard."<<endl;
+
+// Reset all:
+    Set0();
+
+    eAlgName="BW";
+    eAlgValue=8; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+    eParaN =4; // depends on the algorithm, how much parameters it has got.
+
+    eParaValue[0]=0.0;
+    eParaString[0]="TOBEFILLED"; 
+    eParaValue[1]=0.0;
+    eParaString[1]="TOBEFILLED"; 
+    eParaValue[2]=0.0;
+    eParaString[2]="TOBEFILLED"; 
+    eParaValue[3]=0.0;
+    eParaString[3]="TOBEFILLED"; 
+}
+//______________________________________________________________________________
+EdbShowAlg_BW::~EdbShowAlg_BW()
+{
+    // Default Destructor
+    cout << "EdbShowAlg_BW::~EdbShowAlg_BW()"<<endl;
+}
+//______________________________________________________________________________
+void EdbShowAlg_BW::Initialize()
+{
+    cout << "EdbShowAlg_BW::Initialize()" << endl;
+    return;
+}
+//______________________________________________________________________________
+void EdbShowAlg_BW::Execute()
+{
+    cout << "EdbShowAlg_BW::Execute()" << endl;
+    return;
+}
+//______________________________________________________________________________
+void EdbShowAlg_BW::Finalize()
+{
+    cout << "EdbShowAlg_BW::Finalize()" << endl;
+    return;
+}
+//______________________________________________________________________________
+Bool_t EdbShowAlg_BW::DummyBWFunction()
+{
+    cout << "EdbShowAlg_BW::DummyBWFunction()" << endl;
+    return kTRUE;
+}
+//______________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+//______________________________________________________________________________
+// Here follow general functions...
 //______________________________________________________________________________
 
 Double_t EdbShowAlg::GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2)

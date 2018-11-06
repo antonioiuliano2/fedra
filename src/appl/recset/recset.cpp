@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
         cout<< "\t\t  -nu   - suppress the update of par files\n";
         cout<< "\t\t  -w    - write the EdbPVRec object into a root file (useful for batch processing)\n";
         cout<< "\t\t  -s    - do shower-reconstruction (To Be Implemented)\n";
-	cout<< "\t\t  -D[n] - Set FEDRA DebugLevel (0..4)\n";
+        cout<< "\t\t  -D[n] - Set FEDRA DebugLevel (0..4)\n";
         cout<<endl;
         return 0;
     };
@@ -149,6 +149,7 @@ int main(int argc, char* argv[])
 	 ali->Print();
 	}
 	cout << "recset: Create the EdbPVRec object from the EdbDataProc object. Done." << endl;
+    ali->Print();
 	
         cout << "recset: Write EdbPVRec object into file: ScanVolume_Ali.root." << endl;
         TFile* file = new TFile("ScanVolume_Ali.root","RECREATE");

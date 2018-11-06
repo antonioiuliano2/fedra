@@ -31,6 +31,7 @@
 #pragma link C++ class EdbShowAlg_OI;
 #pragma link C++ class EdbShowAlg_NN;
 #pragma link C++ class EdbShowAlg_RC;
+#pragma link C++ class EdbShowAlg_BW;
 
 #pragma link C++ class EdbShowAlg_GS;
 
