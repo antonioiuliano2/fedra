@@ -41,8 +41,9 @@ using namespace std;
 
 class EdbShowAlg_NN : public EdbShowAlg {
 
-    // Neural Network algorithm distinguishing MC from BG BaseTracks
-    // by topological variables
+    // Neural Network algorithm distinguishing 
+    // Signal from Backgroundbasetracks of a shower 
+    // using topological variables
 
 
 private:
@@ -101,7 +102,6 @@ public:
     void    CreateANNTree();
 
 
-
     Int_t   GetNSegBeforeAndAfter(EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
     Int_t   GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
     Int_t   GetMinsBeforeAndAfter(Float_t& min_dT, Float_t& min_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
@@ -126,7 +126,6 @@ public:
     }
 
 
-
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where
     //  Initialize, Execute, Finalize
@@ -138,5 +137,76 @@ public:
     ClassDef(EdbShowAlg_NN,1);         // Root Class Definition for my Objects
 };
 
+
+
+
+//______________________________________________________________________________
+
+class EdbShowAlg_N3 : public EdbShowAlg {
+
+    // New Neural Network (3N) algorithm distinguishing 
+    // Signal from Backgroundbasetracks of a shower 
+    // using topological variables
+
+private:
+    TString eWeightFileString;
+    TString eWeightFileLayoutString;
+    TTree*  eANNTree;
+    TMultiLayerPerceptron*    eTMlpANN;
+
+    // Variables for the eANN Branches:
+    Bool_t      N3_DoTrain=kTRUE;
+    Double_t    N3_Inputvar[29]; // 29 maximal input neurons
+    Int_t       N3_Type;  // 0: BG, 1: SG
+    Int_t       N3_ANN_NInput; // number of Inputvariables in total
+    Double_t    N3_OutputValue=0;
+    // Values valid for ShowerReco Algorithm 11 = N3 ALG: NeWNeuralNetwork
+    // Brick data related inputs
+    Int_t        N3_ANN_PLATE_DELTANMAX; // 0,1,2,3
+    // Algorithm method related inputs
+    Int_t        N3_ANN_NTRAINEPOCHS; // 1,2,3,4 = 50,100,150,200 
+    Int_t        N3_ANN_NHIDDENLAYER; // 1,2,3,4 = 2,3,5,7
+    Double_t     N3_ANN_OUTPUTTHRESHOLD; // 0..10 = 0.5, 0.55, 0.6 ...
+    // This is dependent by the other variables, thus it
+    // is explicitely calculated for ease of view
+    Int_t        N3_ANN_INPUTNEURONS;
+
+
+public:
+
+    EdbShowAlg_N3();
+    virtual ~EdbShowAlg_N3();          // virtual constructor due to inherited class
+
+    void    Init();
+    void    CreateANNTree();
+
+
+    TMultiLayerPerceptron*    Create_NN_ALG_MLP(TTree* inputtree, Int_t inputneurons);
+
+    void    LoadANNWeights();
+    void    LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString WeightFileString);
+
+    void    SetANNWeightString();
+
+
+    inline  void SetWeightFileString(TString WeightFileString) {
+        eWeightFileString=WeightFileString;
+        return;
+    }
+
+    inline  TString GetWeightFileString() {
+        return eWeightFileString;
+    }
+
+    // Main functions for using this ShowerAlgorithm Object.
+    // Structure is made similar to OpRelease, where
+    //  Initialize, Execute, Finalize
+    // give the three columns of the whole thing.
+    void Initialize();
+    void Execute();
+    void Finalize();
+
+    ClassDef(EdbShowAlg_N3,1);         // Root Class Definition for my Objects
+};
 
 #endif /* ROOT_EdbShowAlg_NN */

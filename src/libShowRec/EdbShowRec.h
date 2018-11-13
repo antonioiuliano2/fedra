@@ -21,6 +21,8 @@
 #include "EdbMomentumEstimator.h"
 #include "EdbLog.h"
 #include "EdbPattern.h"
+// Needed for vtx-IP calculation
+#include "EdbEDAUtil.h"
 
 #include "EdbShowAlg.h"
 #include "EdbShowAlg_GS.h"

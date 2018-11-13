@@ -5,6 +5,7 @@
 using namespace std;
 
 ClassImp(EdbShowAlg_NN)
+ClassImp(EdbShowAlg_N3)
 
 //______________________________________________________________________________
 
@@ -515,7 +516,7 @@ void EdbShowAlg_NN::Execute()
 
 void EdbShowAlg_NN::Finalize()
 {
-    // do nothing yet.
+    Log(2,"EdbShowAlg_NN::Finalize","Finalize()");
     return;
 }
 
@@ -735,10 +736,229 @@ Int_t EdbShowAlg_NN::GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, 
     if (n_return>0) mean_dT=mean_dT/(Double_t)n_return;
     if (n_return>0) mean_dR=mean_dR/(Double_t)n_return;
 
-//   cout << " mean_dT  = " <<  mean_dT  << endl;
-//   cout << " mean_dR  = " <<  mean_dR  << endl;
-
-    // „Hab ich mich aus einfachsten Verhältnissen emporgequält, um dann zu bitten?“
     return n_return;
 }
 //______________________________________________________________________________
+
+
+
+
+//______________________________________________________________________________
+
+EdbShowAlg_N3::EdbShowAlg_N3()
+{
+    // Default Constructor
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor");
+
+    // Reset all:
+    Set0();
+
+    eAlgName="N3";
+    eAlgValue=11; // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+
+    //  Init with values according to NN Alg:
+    Init();
+
+}
+
+//______________________________________________________________________________
+
+EdbShowAlg_N3::~EdbShowAlg_N3()
+{
+    // Default Destructor
+    Log(2,"EdbShowAlg_N3::~EdbShowAlg_N3","EdbShowAlg_N3:: Default Destructor");
+    if (eANNTree) {
+        delete eANNTree;
+        eANNTree=0;
+    }
+}
+
+//______________________________________________________________________________
+
+void EdbShowAlg_N3::Init()
+{
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Init()");
+
+    //  Init with values according to N3 Alg:
+    // TO BE CHECKED !!
+    eParaValue[0]=5;
+    eParaString[0]="INPUTNEURONS";
+    eParaValue[1]=0.75;
+    eParaString[1]="OUTPUT";       // NN output value
+
+    eWeightFileString="weightsN3.txt";
+    eWeightFileLayoutString="layoutN3";
+
+    CreateANNTree();
+    //cout << " eANNTree->Show(0)  " <<endl; eANNTree->Show(0);
+    eTMlpANN = Create_NN_ALG_MLP(eANNTree, eParaValue[0]);
+
+    // Standard Weights:
+    SetANNWeightString();
+    LoadANNWeights();
+
+    return;
+}
+
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::Initialize()
+{
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Initialize()");
+    return;
+}
+
+//______________________________________________________________________________
+
+void EdbShowAlg_N3::CreateANNTree()
+{
+    Log(2,"EdbShowAlg_N3::CreateANNTree","CreateANNTree()");
+
+    if (!eANNTree) eANNTree = new TTree("EdbShowAlg_N3_eANNTree", "EdbShowAlg_N3_eANNTree");
+
+    // Variables and things important for neural Network:
+    
+    // TODO TAKE OVER BRANCH CREATIONS HERE
+    
+    //---------
+    Log(2,"EdbShowAlg_N3::CreateANNTree","CreateANNTree()...done.");
+    return;
+}
+
+
+//______________________________________________________________________________
+
+TMultiLayerPerceptron* EdbShowAlg_N3::Create_NN_ALG_MLP(TTree* simu, Int_t inputneurons)
+{
+    Log(2,"EdbShowAlg_N3::Create_NN_ALG_MLP","Create_NN_ALG_MLP().");
+
+    if (gEDBDEBUGLEVEL>2) cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   inputneurons= " << inputneurons << endl;
+    
+    if ( NULL == simu ) {
+        cout << "EdbShowAlg_N3::Create_NN_ALG_MLP() WARNING simu tree is NULL pointer. Return NULL."<< endl;
+        return NULL;
+    }
+
+//     const char* layout="";
+    TString layout="";
+    
+    
+    cout << "TEST " << endl;
+    N3_ANN_NHIDDENLAYER=8;
+    N3_ANN_INPUTNEURONS=4;
+
+    // TO DO HERE.... TAKE OVER THE CORRECT LAYOUT.
+    // only knowlegde about number of input neurons  and hidden layers is needed.
+    cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   N3_ANN_INPUTNEURONS =  " <<  N3_ANN_INPUTNEURONS  << endl;
+    cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   N3_ANN_NHIDDENLAYER =  " <<  N3_ANN_NHIDDENLAYER  << endl;
+    
+    // Create the layout here:
+    TString newstring="";
+    // ANN Input Layer
+    for (Int_t loop=0; loop<N3_ANN_INPUTNEURONS-1; ++loop) {
+        newstring=Form("N3_Inputvar[%d],",loop);
+        layout += newstring; // "+" works only with TStrings!
+    }
+    newstring=Form("N3_Inputvar[%d]:",N3_ANN_INPUTNEURONS-1);
+    ///
+    layout += newstring;
+    // Hidden Layers
+    for (Int_t loop=0; loop<N3_ANN_NHIDDENLAYER; ++loop) {
+        newstring=Form("%d:",N3_ANN_INPUTNEURONS);
+        //// 
+        layout += newstring;
+    }
+    // Output Layer, one output neuron
+    newstring="N3_Type";
+    layout += newstring;
+    
+    cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   layout:    " << layout << endl;
+
+    // Create the network:
+    cout << "simu = "  << simu << endl; 
+    TMultiLayerPerceptron* TMlpANN = new TMultiLayerPerceptron(layout,simu);
+    cout << "Still Crashes, when simu is NULL pointer" << endl;
+
+    if (gEDBDEBUGLEVEL>2) {
+        cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   GetStructure:    " << endl;
+        cout << TMlpANN->GetStructure() << endl;
+    }
+    Log(2,"EdbShowAlg_N3::Create_NN_ALG_MLP","Create_NN_ALG_MLP()...done.");
+    return TMlpANN;
+}
+
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::SetANNWeightString()
+{
+    Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString().");
+    int inputneurons=eParaValue[0];
+    if (inputneurons==5)  eWeightFileString="WEIGHTFiLEStRING.txt";
+    // TO DO HERE.... TAKE OVER THE CORRECT WEIGHTFILE STRING.
+    cout << "EdbShowAlg_N3::SetANNWeightString()   TO DO HERE.... TAKE OVER THE CORRECT WEIGHTFILE STRING. " << endl;
+
+    if (gEDBDEBUGLEVEL>2) cout <<  "EdbShowAlg_N3::SetANNWeightString   "  << eWeightFileString << endl;
+    Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString()...done.");
+    return;
+}
+
+
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::LoadANNWeights()
+{
+    eTMlpANN->LoadWeights(eWeightFileString);
+    return;
+}
+
+
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString WeightFileString)
+{
+    TMlpANN->LoadWeights(WeightFileString);
+    if (gEDBDEBUGLEVEL>2) cout <<  "EdbShowAlg_N3::LoadANNWeights   "  << WeightFileString << endl;
+    return;
+}
+
+
+
+
+
+
+//______________________________________________________________________________
+
+void EdbShowAlg_N3::Execute()
+{
+    Log(2,"EdbShowAlg_N3::Execute","Execute()");
+    cout << "EdbShowAlg_N3::Execute()" << endl;
+    Log(2,"EdbShowAlg_N3::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
+
+    // TO BE DONE HERE:
+    // FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM
+    cout << "EdbShowAlg_N3::Execute()...FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM." << endl;
+    
+    cout << "EdbShowAlg_N3::Execute()...done." << endl;
+    return;
+}
+
+//______________________________________________________________________________
+
+
+
+
+
+
+
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::Finalize()
+{
+    Log(2,"EdbShowAlg_N3::Finalize","Finalize()");
+    return;
+}

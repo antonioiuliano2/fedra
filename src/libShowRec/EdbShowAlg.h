@@ -319,17 +319,17 @@ public:
 
 /*
 TO BE IMPLEMENTED ALGORITHMS IF TIME (and needed, if not available from "showrec" standalone program):
-0 	CT
-1 	CL
-2 	CA
-3 	NN
-4 	OI
-5 	SA
-6 	TC
-7 	RC
-8 	BW
-9 	AG
-10 	GS
+0 	CT (ConeTube)
+1 	CL (CLuster)
+2 	CA (ConetubeAdvanced)
+3 	NN (NeuralNet)
+4 	OI (OfficialImplementation)
+5 	SA (?? SA ??)
+6 	TC (TrackCone)
+7 	RC (RecursiveCone)
+8 	BW (BackWard)
+9 	AG (AdvancedGamma)
+10 	GS (GammaSearch)
 11	N3 (NewNeuralNet)
 */
 //______________________________________________________________________________
