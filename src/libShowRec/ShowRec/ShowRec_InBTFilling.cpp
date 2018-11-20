@@ -265,8 +265,8 @@ void FillGlobalInBTArrayNEW()
             if ( segment->MCEvt()<0) arrayIntermediateBG->Add(segment);
             else  arrayIntermediateMC->Add(segment);
         }
-        cout << "--- arrayIntermediateBG->GetEntries() =  " <<  arrayIntermediateBG->GetEntries() << endl;
-        cout << "--- arrayIntermediateMC->GetEntries() =  " <<  arrayIntermediateMC->GetEntries() << endl;
+        //cout << "--- arrayIntermediateBG->GetEntries() =  " <<  arrayIntermediateBG->GetEntries() << endl;
+        //cout << "--- arrayIntermediateMC->GetEntries() =  " <<  arrayIntermediateMC->GetEntries() << endl;
         EdbSegP* seg;
         EdbSegP* segComp;
         Int_t NarrayIntermediateMC=arrayIntermediateMC->GetEntries();
@@ -344,14 +344,14 @@ void FillGlobalInBTArrayNEW()
                 if (segn[nrMC]==-1) continue;
                 if (cmd_HPLZ == 1) SegHPLZNumberInArray = segn[nrMC];
                 if (cmd_HPLZ == 2) SegHPLZNumberInArray = segm[nrMC];
-                cout << "--- For MCEvt " <<  nrMC << " P() maximal is =  " <<  segPmax[nrMC] << endl;
-                cout << "--- For MCEvt " <<  nrMC << " Z() minimal is =  " <<  segZmin[nrMC] << endl;
+                // cout << "--- For MCEvt " <<  nrMC << " P() maximal is =  " <<  segPmax[nrMC] << endl;
+                // cout << "--- For MCEvt " <<  nrMC << " Z() minimal is =  " <<  segZmin[nrMC] << endl;
                 seg=(EdbSegP*) arrayIntermediateMC->At(segn[nrMC]);
-                cout << "Highest P() segment:" << endl;
-                seg->PrintNice();
+                // cout << "Highest P() segment:" << endl;
+                // seg->PrintNice();
                 seg=(EdbSegP*) arrayIntermediateMC->At(segm[nrMC]);
-                cout << "Lowest  Z() segment:" << endl;
-                seg->PrintNice();
+                // cout << "Lowest  Z() segment:" << endl;
+                // seg->PrintNice();
                 //---------------
                 // Add now the corresponding segment
                 seg=(EdbSegP*) arrayIntermediateMC->At(SegHPLZNumberInArray);

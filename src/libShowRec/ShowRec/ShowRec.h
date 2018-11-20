@@ -142,6 +142,7 @@ void ReconstructShowers_AG(); // ALTP=9 Advanced Gamm Algorithm
 void ReconstructShowers_GS(); // ALTP=10 Gamma Search Algorithm (equal to the one in libShowRec)
 void ReconstructShowers_OPENMP();  /// DEBUG OPENMP TEST!!!!!!! // DEPRECATED !!!! 
 void ReconstructShowers_OPENMP_TEST(EdbSegP* InBT, TObjArray array);  /// DEBUG OPENMP TEST!!!!!!!// DEPRECATED !!!!
+void ReconstructShowers_N3(); // ALTP=100
 // -------------------------------
 EdbPVRec* TransformEdbPVRec(EdbPVRec* gAli, EdbSegP* InitiatorBT);
 EdbPVRec* TransformEdbPVRec_SA(EdbPVRec* gAli, EdbSegP* InitiatorBT);

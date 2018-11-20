@@ -95,8 +95,9 @@ void CheckInputParameters()
         cout << "CheckInputParameters: WHAT TO DO HERE ???"<<endl;
     }
     if (cmd_ALTP>8) {
-        cout << "CheckInputParameters: cmd_ALTP>8 not supported. Please check your input!"<<endl;
-        cout << "CheckInputParameters: WHAT TO DO HERE ???"<<endl;
+        cout << "CheckInputParameters:WARNING : cmd_ALTP>8 " << endl;
+//         cout << "CheckInputParameters: cmd_ALTP>8 not supported. Please check your input!"<<endl;
+//         cout << "CheckInputParameters: WHAT TO DO HERE ???"<<endl;
     }
 
     if (cmd_FP<1) {
