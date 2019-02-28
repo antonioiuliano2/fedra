@@ -8,7 +8,7 @@ void PrintHelp() {
 
 //-------------------------------------------------------------------------------------------
 
-void PrintPresetList(){
+void PrintPresetList() {
     cout << "void PrintPresetList() " << endl;
     cout << "   -PRESET0 " << endl;
     cout << "   -PRESET1 " << endl;
@@ -139,10 +139,10 @@ void CheckInputParametersNEW()
 {
     Log(2, "ShowRec.cpp", "--- void CheckInputParametersNEW() ---");
     Log(2, "ShowRec.cpp", "--- Assuming data object has been now read in ---");
-    
+
     cout << "GLOBAL_gAli    at memory " << GLOBAL_gAli << endl;
     cout << "GLOBAL_gAli->Npatterns() " << GLOBAL_gAli->Npatterns() << endl;
-    
+
     Int_t NPatterns = GLOBAL_gAli->Npatterns();
 
     if (cmd_FP<1) {
@@ -168,7 +168,7 @@ void CheckInputParametersNEW()
         cmd_MP=cmd_LP;
         cout << "CheckInputParameters: New value: cmd_MP = "<< cmd_MP << endl;
     }
-    
+
     if (cmd_NP>NPatterns) {
         cout << "CheckInputParameters: cmd_NP>NPatterns. Set cmd_NP to "<< NPatterns << endl;
         cmd_NP=NPatterns;

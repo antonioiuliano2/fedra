@@ -8,10 +8,18 @@ EdbVertex* CalcVertex(TObjArray *segments) {
     // VTA is currently not set.
     // in case of Single-stop. make a vertex 650 micron upstream ob base.
     double xx,yy,zz,Det,Ax,Ay,Az,Bx,By,Bz,Cx,Cy,Cz,Dx,Dy,Dz;
-    Ax=0.;    Ay=0.;    Az=0.;
-    Bx=0.;    By=0.;    Bz=0.;
-    Cx=0.;    Cy=0.;    Cz=0.;
-    Dx=0.;    Dy=0.;    Dz=0.;
+    Ax=0.;
+    Ay=0.;
+    Az=0.;
+    Bx=0.;
+    By=0.;
+    Bz=0.;
+    Cx=0.;
+    Cy=0.;
+    Cz=0.;
+    Dx=0.;
+    Dy=0.;
+    Dz=0.;
 
     if (segments->GetEntries()==1) {
         // in case of Single-stop. make a vertex 650 micron upstream ob base.
@@ -170,4 +178,49 @@ Double_t GetMinimumDist(EdbSegP* seg1,EdbSegP* seg2) {
     p1p2=sqrt( (p1x-p2x)*(p1x-p2x)+(p1y-p2y)*(p1y-p2y)+(p1z-p2z)*(p1z-p2z) );
 
     return p1p2;
+}
+
+//______________________________________________________________________________
+
+Double_t GetDistToAxis(EdbSegP* segAxis,EdbSegP* segTest) {
+
+//     cout << "GetDistToAxis(EdbSegP* segAxis,EdbSegP* segTest)" << endl;
+    // Calculates distance of the segTest to the Axis defined by the segAxis segment.
+    // Uses code from EdbMath, thats why it cannot simply be put in the EdbSegP class code.
+    float Point[3];
+    float LineStart[3];
+    float LineEnd[3];
+
+//     cout << "segTest->PrintNice();"  << endl;
+// segTest->PrintNice();
+
+    Point[0]=segTest->X();
+    Point[1]=segTest->Y();
+    Point[2]=segTest->Z();
+
+    LineStart[0]=segAxis->X();
+    LineStart[1]=segAxis->Y();
+    LineStart[2]=segAxis->Z();
+
+// cout << "segAxis->PrintNice();"  << endl;
+// segAxis->PrintNice();
+
+// cout << "Propagate segment Z + 10000" << endl;
+    segAxis->PropagateTo(segAxis->Z()+10000);
+// segAxis->PrintNice();
+    LineEnd[0]=segAxis->X();
+    LineEnd[1]=segAxis->Y();
+    LineEnd[2]=segAxis->Z();
+
+// cout << "Propagate segment Z - 10000" << endl;
+    segAxis->PropagateTo(segAxis->Z()-10000);
+// segAxis->PrintNice();
+
+    double dist = EdbMath::DistancePointLine3(Point, LineStart, LineEnd, 1);
+// cout << dist << endl;
+
+// segAxis->PrintNice();
+
+// cout << "TO CHECK  .... IF SEG IS PROPAGATET, IS IT THEN MODIFIED ? IF SO  PROPAGATE IT BACK AGAIN, OR COPY THE SEGMENT FIRST ...." << endl;
+    return dist;
 }

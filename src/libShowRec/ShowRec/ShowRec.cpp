@@ -87,8 +87,11 @@ int main(int argc, char *argv[])
         cout << "--- \t\t\t :  9:  ReconstructShowers_AG  (EXPERIMENTAL, BEST PARAMETERS STILL TO BE SEARCHED)\n";
         cout << "--- \t\t\t :  10:  ReconstructShowers_GS  (same Implementation as in libShowRec----- BEST PARAMETERS STILL TO BE SEARCHED)\n";
         cout << "--- \t\t\t :  11:  ReconstructShowers_N3  REWRITING OF THE IMPLEMENTATION OF NN ALG - with some modifications.\n";
-        
+        cout << "--- \t\t\t\t :  -ALN3TRAIN1    Do Training of the Neural Net (default: 0, run)\n";
+        //cout << "--- \t\t\t\t :  -ALN3EQUALIZE1 Try to have same number of SG/BG tracks for training (default: 1, yes)\n";
+
         cout << "--- \t\t\t :  -default 4\n";
+
 
         cout << "--- \t\t :  -PASTART ParametersetStart  \n";
         cout << "--- \t\t :  -PAEND  ParameterSetEnd  \n";
@@ -127,10 +130,10 @@ int main(int argc, char *argv[])
         cout << "--- \t\t\t :  4: Run until Reconstruct showers is done.\n";
         cout << "--- \t\t\t :  5: Run until Fill output structures.\n";
         cout << "--- \t\t\t :  -default 0\n";
-        
+
         cout << "--- \t\t :  -LIST-PRESET  \n";
         cout << "--- \t\t\t :  List built-in preset options. Most usage cases will be covered here. \n";
-        
+
         cout << "--- \t\t :  -PRESET  Number  \t (0,1,2,3)\n";
         cout << "--- \t\t\t :  Details of switches: see option -LIST-PRESET \n";
         cout << "--- \t\t\t :  0: Use all BTs of volume for InBT. Loooooong running time! (data driven reco)\n";
@@ -138,19 +141,19 @@ int main(int argc, char *argv[])
         cout << "--- \t\t\t :  2: Use all BTs linked_tracks.root file for InBT. (data driven reco) \n";
         cout << "--- \t\t\t :  3: Use all BTs with IP to list of vertices for InBT. Possibly shortest running time. \n";
         cout << "--- \t\t\t :  -default 0\n";
-        
-        
+
+
 
 
         cout << "---      Example usages:  " << endl;
-        
+
         cout << "---      Reconstruct all possible showers for all possible Initiator Basetracks in the whole volume -- looooong runnning time!:  ShowRec lnk_all.def" << endl<< endl;
-        
+
         cout << "---      Reconstruct all possible showers for the highest P()- MC Initiator Basetrack, given a ready ali.root file: ShowRec  -HPLZ1 -MC1 -ALI2 " << endl<< endl;
-        
-        
+
+
         cout << "---      Reconstruct all possible showers for the highest P()- MC Initiator Basetrack, given a linked tracks file for starting basetracks: ShowRec  -LT1 -MC1 lnk_all.def " << endl<< endl;
-        
+
         cout << "---      Usage:  ShowRec  -FP1 -LP31 -MP1 -NP30 -HPLZ1 -MC1 -ALTP4  -PASTART0 -PAEND0  lnk.def ---" << endl<< endl;
         cout << "---      Usage:  ShowRec  -FP1 -LP31 -MP30 -NP30 -HPLZ1 -MC1 -ALTP4 lnk_all.def ---" << endl<< endl;
         cout << "---      Usage:  ShowRec  -HPLZ1 -MC1 lnk_all.def ---" << endl<< endl;
@@ -170,22 +173,22 @@ int main(int argc, char *argv[])
     // TWO OPTIONS ARE NOT ALLOWED TO HAVE THE SAME CHARACTER CODE, otherwise complications
     // will appear: so -MC and -MCMIX  WILL NOT WORK!! use -MC and -MIXMC
     //-C- wARNING !!!
-    //-C- ATTENTION FIXME  
-    //-C- If the volume has not 57 plates than WE HAVE TO READAPT THE DEFAULT VALUES !!!  
+    //-C- ATTENTION FIXME
+    //-C- If the volume has not 57 plates than WE HAVE TO READAPT THE DEFAULT VALUES !!!
     //-C- wARNING !!!
     //----------------------------------------------------------------------------------
 
     Bool_t IsSet_cmd_PRESET=kFALSE;
-    
+
     char *name = argv[argc];
     for (int i=1; i<argc; ++i ) {
         char *key  = argv[i];
 
         // ------------------------------
-        // Option Types "HELP" and "-LIST-PRESET" 
-        // automatically stop program after displaying 
+        // Option Types "HELP" and "-LIST-PRESET"
+        // automatically stop program after displaying
         // information
-        
+
         if      (!strncmp(key,"-HELP",5)) {
             if (strlen(key)>5) {
                 sscanf(key+5,"%d",&cmd_HELP);
@@ -219,7 +222,7 @@ int main(int argc, char *argv[])
             }
         }
         // ------------------------------
-        
+
         if      (!strncmp(key,"-PRESET",7)) {
             if (strlen(key)>7) {
                 sscanf(key+7,"%d",&cmd_PRESET);
@@ -232,10 +235,10 @@ int main(int argc, char *argv[])
             SetPresetParameters(cmd_PRESET);
             IsSet_cmd_PRESET=kTRUE;
         }
-        
+
         if (IsSet_cmd_PRESET == kTRUE ) continue;
-        
-        
+
+
         if      (!strncmp(key,"-FP",3)) {
             if (strlen(key)>3) {
                 sscanf(key+3,"%d",&cmd_FP);
@@ -274,6 +277,16 @@ int main(int argc, char *argv[])
         else if (!strncmp(key,"-ALTP",5)) {
             if (strlen(key)>5) {
                 sscanf(key+5,"%d",&cmd_ALTP);
+            }
+        }
+        else if (!strncmp(key,"-ALN3TRAIN",10)) {
+            if (strlen(key)>10) {
+                sscanf(key+10,"%d",&cmd_ALN3TRAIN);
+            }
+        }
+        else if (!strncmp(key,"-ALN3EQUALIZE",13)) {
+            if (strlen(key)>13) {
+                sscanf(key+13,"%d",&cmd_ALN3EQUALIZE);
             }
         }
         else if (!strncmp(key,"-PASTART",8)) {
@@ -363,7 +376,7 @@ int main(int argc, char *argv[])
     CheckInputParameters();
     //----------------------------------------------------------------------------------
 
-    
+
     //----------------------------------------------------------------------------------
     // Read the data Objects
     // This step needs to come at the very beginning, since the data object
@@ -378,8 +391,8 @@ int main(int argc, char *argv[])
     // are correctly set. If not, set them to the default values of that GLOBAL_gAli.
     CheckInputParametersNEW();
     //----------------------------------------------------------------------------------
-    
-    
+
+
 
     //----------------------------------------------------------------------------------
     PrintValues_CommandLine();
@@ -404,8 +417,8 @@ int main(int argc, char *argv[])
 
 
 
-    
-    
+
+
     //----------------------------------------------------------------------------------
     // Do Background Data Cleaning with the Clean algorithms..
     // ATTENTION: This is yet to be modified, depending on the cleaning algorithm!
@@ -467,9 +480,9 @@ int main(int argc, char *argv[])
     if (cmd_STOPLEVEL==5) return 1;
     //----------------------------------------------------------------------------------
 
-    
-    
-    
+
+
+
     //----------------------------------------------------------------------------------
     cout << "Closing files, destructing elements and cleaning up orphaned stuff:" << endl;
     Finalize();
@@ -764,12 +777,12 @@ void Read_ParasetDefinitionTree()
     Double_t cut_back_dmin,cut_for_dmin,cut_back_dtheta,cut_for_dtheta,cut_back_dr,cut_for_dr,cut_back_dz,cut_for_dz;
 
     // ALTP 11   N3_ALG
-    Double_t     ANN_OUTPUT; 
+    Double_t     ANN_OUTPUT;
     Int_t        ANN_PLATEN;
     Int_t        ANN_PLATEDIRECTION;
     Int_t        ANN_HIDDENLAYER;
     Int_t        ANN_INPUTNEURONS;
-    
+
     // ALTP 10:  GS from libShowRec
     Double_t cut_gs_cut_dip=150;
     Double_t cut_gs_cut_dmin=40;
@@ -884,18 +897,20 @@ void Read_ParasetDefinitionTree()
 
     if (TREE_ParaSetDefinitions==0 && cmd_ALTP==11) {
         TREE_ParaSetDefinitions = new TTree("ParaSet_Variables","ParaSet_Variables");
-    TREE_ParaSetDefinitions->Branch("ANN_PLATE_DELTANMAX",&N3_ANN_PLATE_DELTANMAX,"ANN_PLATE_DELTANMAX/I");
-    TREE_ParaSetDefinitions->Branch("ANN_NTRAINEPOCHS",&N3_ANN_NTRAINEPOCHS,"ANN_NTRAINEPOCHS/I");
-    TREE_ParaSetDefinitions->Branch("ANN_NHIDDENLAYER",&N3_ANN_NHIDDENLAYER,"ANN_NHIDDENLAYER/I");
-    TREE_ParaSetDefinitions->Branch("ANN_OUTPUTTHRESHOLD",&N3_ANN_OUTPUTTHRESHOLD,"ANN_OUTPUTTHRESHOLD/D");
-    TREE_ParaSetDefinitions->Branch("ANN_INPUTNEURONS",&N3_ANN_INPUTNEURONS,"ANN_INPUTNEURONS/I");
-    
+        TREE_ParaSetDefinitions->Branch("ANN_PLATE_DELTANMAX",&N3_ANN_PLATE_DELTANMAX,"ANN_PLATE_DELTANMAX/I");
+        TREE_ParaSetDefinitions->Branch("ANN_NTRAINEPOCHS",&N3_ANN_NTRAINEPOCHS,"ANN_NTRAINEPOCHS/I");
+        TREE_ParaSetDefinitions->Branch("ANN_NHIDDENLAYER",&N3_ANN_NHIDDENLAYER,"ANN_NHIDDENLAYER/I");
+        TREE_ParaSetDefinitions->Branch("ANN_EQUALIZESGBG",&N3_ANN_EQUALIZESGBG,"ANN_ANN_EQUALIZESGBG/I");
+        TREE_ParaSetDefinitions->Branch("ANN_OUTPUTTHRESHOLD",&N3_ANN_OUTPUTTHRESHOLD,"ANN_OUTPUTTHRESHOLD/D");
+        TREE_ParaSetDefinitions->Branch("ANN_INPUTNEURONS",&N3_ANN_INPUTNEURONS,"ANN_INPUTNEURONS/I");
+
         // Default, maximal settings. Same plate, Two plates up- downstream connections looking,
         // that for 5 inputvariables there
-        // plus 4 fixed input varibles for BT(i) to InBT connections: 4+5*5 = 29 
+        // plus 4 fixed input varibles for BT(i) to InBT connections: 4+5*5 = 29
         N3_ANN_PLATE_DELTANMAX=5;
         N3_ANN_NHIDDENLAYER=5;
         N3_ANN_NTRAINEPOCHS=100;
+        N3_ANN_EQUALIZESGBG=0;
         N3_ANN_INPUTNEURONS=29;
         N3_ANN_OUTPUTTHRESHOLD=0.85;
         TREE_ParaSetDefinitions -> Fill();
@@ -1066,9 +1081,10 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_PLATE_DELTANMAX",&N3_ANN_PLATE_DELTANMAX);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_NTRAINEPOCHS",&N3_ANN_NTRAINEPOCHS);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_NHIDDENLAYER",&N3_ANN_NHIDDENLAYER);
+        TREE_ParaSetDefinitions -> SetBranchAddress("ANN_EQUALIZESGBG",&N3_ANN_EQUALIZESGBG);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_INPUTNEURONS",&N3_ANN_INPUTNEURONS);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_OUTPUTTHRESHOLD",&N3_ANN_OUTPUTTHRESHOLD);
-    }    
+    }
 
     // Check: if PASTART is given (a number),  but PAEND is default, then set
     // PAEND to PASTART
@@ -1089,11 +1105,11 @@ void Read_ParasetDefinitionTree()
 void GetEvent_ParasetDefinitionTree(Int_t nr)
 {
     Log(2, "ShowRec.cpp", "--- void GetEvent_ParasetDefinitionTree( Int_t %d) ---", nr);
-    
+
     // Get the Parameter set definition variables for all the possible algorithms.
-    // We need to distinguish the parameter values from the TreeDefinition file 
+    // We need to distinguish the parameter values from the TreeDefinition file
     // for each algorithm.
-    
+
     // ALTP 1..9: diverse algorithm cut parameter values.
     Double_t dr_max,dt_max,coneangle,tubedist;
     Int_t nholes_max;
@@ -1103,7 +1119,7 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
     Int_t tracksegs_max;
     Double_t distMin_dt_max;
     Double_t cut_back_dmin,cut_for_dmin,cut_back_dtheta,cut_for_dtheta,cut_back_dr,cut_for_dr,cut_back_dz,cut_for_dz;
-    
+
     // ALTP 10:  GS from libShowRec
     Double_t cut_gs_cut_dip=150;
     Double_t cut_gs_cut_dmin=40;
@@ -1112,22 +1128,22 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
     Double_t cut_gs_cut_dtheta=0.06;
     Double_t cut_gs_cut_piddiff=1;
     Int_t cut_gs_cut_oppositeflag=0;
-    
+
     // ALTP 11:  N3 Alg
-    	Double_t     ANN_OUTPUT; 
-	Int_t        ANN_INPUTLEVEL;
+    Double_t     ANN_OUTPUT;
+    Int_t        ANN_INPUTLEVEL;
     Int_t        ANN_PLATEN;
     Int_t        ANN_PLATEDIRECTION;
     Int_t        ANN_HIDDENLAYER;
     Int_t        ANN_INPUTNEURONS;
 
-        
+
     // Reset Cut Paramters, just for safety reasons,
     // not to leave them uninitialized!
     for (int i=0; i<10; i++ ) {
         CUT_PARAMETER[i]=0.0;
     }
-    
+
     // If the "nr" equals -1, then there is no given TREE_ParaSetDefinitions
     // That means, the default set of values is taken, i.e. entry zero.
     // So nr is set to 0:
@@ -1136,9 +1152,9 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
 //         TREE_ParaSetDefinitions->GetEntry(nr);
         cout << "--- Got TREE_ParaSetDefinitions->GetEntry(0) instead of -1 due to no given PARAMETERSET_DEFINITIONFILE.root file."<<endl;
 //         TREE_ParaSetDefinitions->Show(nr);
-        
+
     }
-    
+
     //TREE_ParaSetDefinitions->Print();
 
     // Switches Statements would be nicer, but anyway.
@@ -1163,9 +1179,9 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_ANGLE_MAX",&coneangle);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DR_MAX",&dr_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DTAN_MAX",&dt_max);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
-        
+
         CUT_PARAMETER[0]=tubedist;
         CUT_PARAMETER[1]=coneangle;
         CUT_PARAMETER[2]=dr_max;
@@ -1174,15 +1190,15 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
     else if  (cmd_ALTP==3) {
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ANN_OUTPUT",&ann_output);
         TREE_ParaSetDefinitions -> SetBranchAddress("CUT_ANN_INPUTNEURONS",&ann_inputneurons);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
-        
+
         CUT_PARAMETER[0]=ann_output;
         CUT_PARAMETER[1]=ann_inputneurons;
-        
+
         cout << "TODO"<<endl;
         // I DONT KNOW WHY I HAVE THAT WRITTEN, BUT AT SOME POINT MUST HAVE MADE SOME SENSE .....
-        
+
     }
     else if  (cmd_ALTP==4) {
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_R_MAX",&tubedist);
@@ -1190,9 +1206,9 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DR_MAX",&dr_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DTAN_MAX",&dt_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_NHOLES_MAX",&nholes_max);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
-        
+
         CUT_PARAMETER[0]=tubedist;
         CUT_PARAMETER[1]=coneangle;
         CUT_PARAMETER[2]=dr_max;
@@ -1203,12 +1219,12 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
     else if  (cmd_ALTP==5) {
         Double_t  CUT_P;                        // s->P()
         Double_t  CUT_ALISUBSIZE;               // eAli_local_half_size
-        
+
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_P",&CUT_P);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ALISUBSIZE",&CUT_ALISUBSIZE);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
-        
+
         CUT_PARAMETER[0]=CUT_P;
         CUT_PARAMETER[1]=CUT_ALISUBSIZE;
     }
@@ -1220,9 +1236,9 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_TRACKATTACH_DISTMIN",&distMin_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_TRACKATTACH_DTAN_MAX",&distMin_dt_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_TRACKATTACH_NTRACKSEG",&tracksegs_max);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
-        
+
         CUT_PARAMETER[0]=tubedist;
         CUT_PARAMETER[1]=coneangle;
         CUT_PARAMETER[2]=dr_max;
@@ -1236,7 +1252,7 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_ANGLE_MAX",&coneangle);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DR_MAX",&dr_max);
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_SHOWERFOLLOWERBT_DTAN_MAX",&dt_max);
-        
+
         TREE_ParaSetDefinitions->GetEntry(nr);
 
         CUT_PARAMETER[0]=tubedist;
@@ -1284,10 +1300,11 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         CUT_PARAMETER[5]=cut_gs_cut_piddiff;
         CUT_PARAMETER[6]=cut_gs_cut_oppositeflag;
     }
-     else if   (cmd_ALTP==11) {
+    else if   (cmd_ALTP==11) {
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_PLATE_DELTANMAX",&N3_ANN_PLATE_DELTANMAX);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_NTRAINEPOCHS",&N3_ANN_NTRAINEPOCHS);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_NHIDDENLAYER",&N3_ANN_NHIDDENLAYER);
+        TREE_ParaSetDefinitions -> SetBranchAddress("ANN_EQUALIZESGBG",&N3_ANN_EQUALIZESGBG);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_INPUTNEURONS",&N3_ANN_INPUTNEURONS);
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_OUTPUTTHRESHOLD",&N3_ANN_OUTPUTTHRESHOLD);
 
@@ -1298,11 +1315,12 @@ void GetEvent_ParasetDefinitionTree(Int_t nr)
         CUT_PARAMETER[2]=N3_ANN_NHIDDENLAYER;
         CUT_PARAMETER[3]=N3_ANN_INPUTNEURONS; // not used in input, but anywy set here.
         CUT_PARAMETER[4]=N3_ANN_OUTPUTTHRESHOLD;
+        CUT_PARAMETER[5]=N3_ANN_EQUALIZESGBG;
     }
 
 
     if (TREE_ParaSetDefinitions) TREE_ParaSetDefinitions->Show(nr);
-    
+
     cout << "--- CUT_PARAMETER 0 1 2 3: " << CUT_PARAMETER[0] <<"  "<<CUT_PARAMETER[1]<<"  "<< CUT_PARAMETER[2] <<"  "<< CUT_PARAMETER[3] <<endl;
     cout << "--- CUT_PARAMETER 4 5 6 7: " << CUT_PARAMETER[4] <<"  "<<CUT_PARAMETER[5]<<"  "<< CUT_PARAMETER[6]<< "  "<< CUT_PARAMETER[7]<<"  "<<endl;
     return;
@@ -1393,7 +1411,7 @@ void ReconstructShowers(Int_t nr)
     cout << "TREE_ShowShower->GetEntries() = " << TREE_ShowShower->GetEntries()<< endl;
     //-----------------------------------
 
-    
+
     //-----------------------------------
     // MakeShowerTree:
     // Writing showers in treebranch style
@@ -6301,10 +6319,10 @@ void FillOutPutStructures()
 
     ShowRecEffPlots->Write();
     ShowRecEffPlots2->Write();
-    
+
     STREAM_ShowRecEff.close();
     FILE_ShowRecEff->Close();
-    
+
     delete ShowRecEffPlots;
     delete ShowRecEffPlots2;
     return;
@@ -7064,35 +7082,35 @@ void SortShowerZ(TObjArray* showerarray) {
 //______________________________________________________________________________
 
 void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
-    
+
     Log(2, "ShowRec.cpp", "--- void BuildParametrizationsMCInfo_PGun() ---");
-    
-    // Monte-Carlo Information on the event, take from the 
+
+    // Monte-Carlo Information on the event, take from the
     // pre-prepared root-file MCInfoFilename
-    
+
     //Declare Tree Variables
     Int_t MCEvt, PDGId;
     Float_t energy, tantheta,dirx,diry,dirz,vtxposx,vtxposy,vtxposz;
     Float_t TX,TY,Y,X,Z;
-    
-    // Assume 
+
+    // Assume
     GLOBAL_IsBrickTreePGunInfo=kFALSE;
-    
+
     // Read Tree with File:
     TTree* PGunTree = new TTree();
     Int_t ReadSuccess = PGunTree->ReadFile(MCInfoFilename,"MCEvt/I:energy/F:tantheta/F:dirx/F:diry/F:dirz/F:vtxposx/F:vtxposy/F:vtxposz/F:TX/F:TY/F:X/F:Y/F:Z/F:PDGId/I");
-    
+
     // Check if File exists:
     cout << "BuildParametrizationsMCInfo_PGun ReadSuccess = PGunTree->ReadFile(MCInfoFilename) " <<  ReadSuccess  << endl;
     cout << "BuildParametrizationsMCInfo_PGun 0: File / Tree Reading was not successful " << endl;
     cout << "BuildParametrizationsMCInfo_PGun 1: File / Tree Reading was     successful " << endl;
-    
+
     // If tree reading was not successful, we must return here.
     if (ReadSuccess==0) {
         cout << "BuildParametrizationsMCInfo_PGun() ReadSuccess==0. return. " << endl;
         return;
     }
-    
+
     PGunTree->SetBranchAddress("MCEvt",&MCEvt);
     PGunTree->SetBranchAddress("PDGId",&PDGId);
     PGunTree->SetBranchAddress("energy",&energy);
@@ -7108,7 +7126,7 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
     PGunTree->SetBranchAddress("X",&X);
     PGunTree->SetBranchAddress("Z",&Z);
     PGunTree->SetBranchAddress("Y",&Y);
-    
+
     // If the PGunTree is not filled, this can be a hint that the
     // MCInfoFilename might not be there. This is important for alorithms that
     // rely on Vertex Informations, like the _GS() alg.
@@ -7120,7 +7138,7 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
     else {
         GLOBAL_IsBrickTreePGunInfo=kTRUE;
     }
-    
+
     if (gEDBDEBUGLEVEL>2) PGunTree->Print();
     cout << "BuildParametrizationsMCInfo_PGun() PGunTree->GetEntries();    " <<  PGunTree->GetEntries() <<  endl;
 
@@ -7139,7 +7157,7 @@ void BuildParametrizationsMCInfo_PGun(TString MCInfoFilename) {
 
     //------------------
     // PGunTreeEntry_MCEvt_Correspondance[0]=TreeEntry(0)->MC()
-    Int_t PGunTreeEntry_MCEvt_Correspondance[69999]; 
+    Int_t PGunTreeEntry_MCEvt_Correspondance[69999];
     for (Int_t i=0; i<PGunTree->GetEntries(); ++i) {
         PGunTree->GetEntry(i);
         PGunTreeEntry_MCEvt_Correspondance[MCEvt]=i;
@@ -7245,8 +7263,8 @@ void Write_Alg_GS_Histograms() {
 
 //-------------------------------------------------------------------------------------------
 
-void DoBGTargetCleaning(){
-    
+void DoBGTargetCleaning() {
+
     // Clean the input data Objects if necessary:
     Float_t BGTargetDensity=0;
     // cout << "--- \t\t :  -CLEAN  InputData BG Cleaning: 0: No, 1:20BT/mm2  2: 40BT/mm2  3:10BT/mm2 4:60BT/mm2 \n";
@@ -7294,28 +7312,38 @@ void DoBGTargetCleaning(){
 } // of void DoBGTargetCleaning()
 
 
-void SetPresetParameters(Int_t cmd_PRESET){
- 
+void SetPresetParameters(Int_t cmd_PRESET) {
+
     Log(2, "ShowRec.cpp", "--- SetPresetParameters() ---");
-    
+
     cout << "ATTentION : Currently we set cmd_ALI=2 for all presets for testing purposes!!! " << endl;
-        cmd_ALI=2;
+    cmd_ALI=2;
 
     if (cmd_PRESET==0) {
-        cmd_MC=0;cmd_HPLZ=0;cmd_CLEAN=0; 
+        cmd_MC=0;
+        cmd_HPLZ=0;
+        cmd_CLEAN=0;
     }
     else if (cmd_PRESET==1) {
-        cmd_MC=1;cmd_HPLZ=1;cmd_CLEAN=0;
+        cmd_MC=1;
+        cmd_HPLZ=1;
+        cmd_CLEAN=0;
     }
     else if (cmd_PRESET==2) {
-        cmd_MC=0;cmd_HPLZ=0;cmd_LT=1;
+        cmd_MC=0;
+        cmd_HPLZ=0;
+        cmd_LT=1;
     }
     else if (cmd_PRESET==3) {
-        cmd_MC=0;cmd_HPLZ=0;cmd_vtx=1;
+        cmd_MC=0;
+        cmd_HPLZ=0;
+        cmd_vtx=1;
     }
     else {
         cout << "No Preset List for this parameter found. Using values for PRESET 0." << endl;
-        cmd_MC=0;cmd_HPLZ=0;cmd_CLEAN=0;
+        cmd_MC=0;
+        cmd_HPLZ=0;
+        cmd_CLEAN=0;
     }
     Log(2, "ShowRec.cpp", "--- SetPresetParameters()...done. ---");
     return;

@@ -78,7 +78,7 @@ void FillGlobalInBTArrayNEW()
                     or from a "real" vertex file ... to be checked !!
     */
 
-    
+
     /* Technical Realisation
      * First time:
      * Add all (EdbSegP*) selected to TObjArray
@@ -107,7 +107,7 @@ void FillGlobalInBTArrayNEW()
     // 4: (to be specified)
     //--------------------------------------------------------
     if (cmd_LT>0) {
-        
+
         if (gEDBDEBUGLEVEL>2) cout << "--- Doing filling InBT case  cmd_LT>0"<<endl;
         EdbSegP * s2=0;
         EdbTrackP  *t  = 0;
@@ -186,7 +186,7 @@ void FillGlobalInBTArrayNEW()
         cout << "--- Attention: given cmd_LT value does not macht any criterion. " <<  endl;
         cout << "--- Dont fill the arrayIntermediate with anything." <<  endl;
     }
-    
+
     cout << "--- Criterion 0) Source done." <<  endl;
     cout << "--- Criterion 1) Plate range done." << endl;
     cout << "--- arrayIntermediate->GetEntries() =  " <<  arrayIntermediate->GetEntries() << endl;
@@ -194,7 +194,7 @@ void FillGlobalInBTArrayNEW()
     //--------------------------------------------------------
     /*
     2) criterion MC-value
-                -> All 
+                -> All
                 -> specific MC-event number (cmd_MC = #nr)
     */
     //--------------------------------------------------------
@@ -239,7 +239,7 @@ void FillGlobalInBTArrayNEW()
     cout << "--- Criterion 3) PDG-value done." << endl;
     cout << "--- Criterion 3) cmd_MCFL = " << cmd_MCFL << endl;
     cout << "--- arrayIntermediate3->GetEntries() =  " <<  arrayIntermediate3->GetEntries() << endl;
-    
+
     //--------------------------------------------------------
     /*
       4) criterion HPLZ
@@ -275,25 +275,25 @@ void FillGlobalInBTArrayNEW()
         Int_t segMC=-1;
         Float_t segZ=-1;
         Int_t segCompMC=-1;
-        
-        // Find minimum and maximum Eventnumber and Z position 
+
+        // Find minimum and maximum Eventnumber and Z position
         // in the arrayIntermediateMC array:
         Int_t segMCmin=NarrayIntermediateMC;
         Int_t segMCmax=-1;
-        
+
         for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
-                seg=(EdbSegP*) arrayIntermediateMC->At(n);
-                segMC = seg->MCEvt();
-                segZ = seg->Z();
-                if (segMC>segMCmax) segMCmax = segMC;
-                if (segMC<segMCmin) segMCmin = segMC;
+            seg=(EdbSegP*) arrayIntermediateMC->At(n);
+            segMC = seg->MCEvt();
+            segZ = seg->Z();
+            if (segMC>segMCmax) segMCmax = segMC;
+            if (segMC<segMCmin) segMCmin = segMC;
         }
 
         // cmd_HPLZ == 1 Take highest P() segment per each MCEvt.
         // cmd_HPLZ == 2 Take first (lowest) Z() semgment per each MCEvt
-        // In case two (or more) BTs have same lowest Z() 
+        // In case two (or more) BTs have same lowest Z()
         // then take the highest P() BT.
-        
+
         if (cmd_HPLZ == 1 || cmd_HPLZ == 2) {
             if (cmd_HPLZ == 1) cout << "Take highest P() segment per each MCEvt." << endl;
             if (cmd_HPLZ == 2) cout << "Take lowest  Z() segment per each MCEvt." << endl;
@@ -304,7 +304,7 @@ void FillGlobalInBTArrayNEW()
             Int_t   segn[segMCmax+1];
             Float_t segZmin[segMCmax+1];
             Int_t   segm[segMCmax+1];
-            
+
             // Reset all array values
             for (Int_t nrMC=segMCmin; nrMC<=segMCmax; ++nrMC) {
                 segPmax[nrMC]=0;
@@ -312,33 +312,33 @@ void FillGlobalInBTArrayNEW()
                 segZmin[nrMC]=9999999999;
                 segm[nrMC]=-1;
             }
-            
+
             EdbSegP* seg2;
             for (Int_t n=0; n<NarrayIntermediateMC; ++n) {
-                    seg=(EdbSegP*) arrayIntermediateMC->At(n);
-                    segMC = seg->MCEvt();
-                    segP = seg->P();
-                    segZ = seg->Z();
-                    if (segP>segPmax[segMC]) {
-                        segPmax[segMC] = segP;
-                        segn[segMC] = n;
+                seg=(EdbSegP*) arrayIntermediateMC->At(n);
+                segMC = seg->MCEvt();
+                segP = seg->P();
+                segZ = seg->Z();
+                if (segP>segPmax[segMC]) {
+                    segPmax[segMC] = segP;
+                    segn[segMC] = n;
+                }
+                if (segZ<segZmin[segMC]) {
+                    segZmin[segMC] = segZ;
+                    segm[segMC] = n;
+                }
+                // Safe method agains rounding errors:
+                if (TMath::Abs(segZ-segZmin[segMC])<0.1) {
+                    // Compare P() with the existing lowest Z segment
+                    seg2=(EdbSegP*) arrayIntermediateMC->At(segm[segMC]);
+                    //cout << "segP= " << segP <<   " and   seg2->P()= " << seg2->P() << endl;
+                    if (  segP > seg2->P() ) {
+                        segZmin[segMC] = segZ;
+                        segm[segMC] = n;
                     }
-                    if (segZ<segZmin[segMC]) {
-                            segZmin[segMC] = segZ;
-                            segm[segMC] = n;
-                    }
-                    // Safe method agains rounding errors:
-                    if (TMath::Abs(segZ-segZmin[segMC])<0.1) {
-                        // Compare P() with the existing lowest Z segment
-                        seg2=(EdbSegP*) arrayIntermediateMC->At(segm[segMC]);
-                        //cout << "segP= " << segP <<   " and   seg2->P()= " << seg2->P() << endl;
-                        if (  segP > seg2->P() ) {
-                            segZmin[segMC] = segZ;
-                            segm[segMC] = n;
-                        }
-                    }
+                }
             }
-            
+
             Int_t SegHPLZNumberInArray=0;
             for (Int_t nrMC=segMCmin; nrMC<=segMCmax; ++nrMC) {
                 if (segn[nrMC]==-1) continue;
@@ -357,9 +357,9 @@ void FillGlobalInBTArrayNEW()
                 seg=(EdbSegP*) arrayIntermediateMC->At(SegHPLZNumberInArray);
                 arrayIntermediateFHZP->Add(seg);
             }
-            
+
             cout << " Added all FHZP segments. Number of entries = " <<  arrayIntermediateFHZP->GetEntries()  << endl;
-            
+
         } // of if (cmd_HPLZ == 1)
         // unsupported cmd_HPLZ value: copy array before.
         else {
@@ -395,7 +395,7 @@ void FillGlobalInBTArrayNEW()
     cout << "TODO HERE:   CRITERION 5   VTX IP CUT ... " << endl;
     cout << "TODO HERE:   CRITERION 5   VTX IP CUT ... " << endl;
     cout << "---- " << endl  << endl;
-    
+
     /*
      5) criterion vertex IP Cut cmd_vtx
                 -> cmd_vtx=0 All
