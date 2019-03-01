@@ -41,8 +41,8 @@ using namespace std;
 
 class EdbShowAlg_NN : public EdbShowAlg {
 
-    // Neural Network algorithm distinguishing 
-    // Signal from Backgroundbasetracks of a shower 
+    // Neural Network algorithm distinguishing
+    // Signal from Backgroundbasetracks of a shower
     // using topological variables
 
 
@@ -90,7 +90,7 @@ private:
     Int_t eANN_var_nseg_2after;
     Int_t eANN_var_nseg_3after;
     Int_t eANN_var_nseg_same;
-    Int_t eANN_var_type;
+    Int_t eANN_Inputtype;
 
 
 public:
@@ -144,8 +144,8 @@ public:
 
 class EdbShowAlg_N3 : public EdbShowAlg {
 
-    // New Neural Network (3N) algorithm distinguishing 
-    // Signal from Backgroundbasetracks of a shower 
+    // New Neural Network (3N) algorithm distinguishing
+    // Signal from Backgroundbasetracks of a shower
     // using topological variables
 
 private:
@@ -155,21 +155,34 @@ private:
     TMultiLayerPerceptron*    eTMlpANN;
 
     // Variables for the eANN Branches:
-    Bool_t      N3_DoTrain=kTRUE;
-    Double_t    N3_Inputvar[29]; // 29 maximal input neurons
-    Int_t       N3_Type;  // 0: BG, 1: SG
-    Int_t       N3_ANN_NInput; // number of Inputvariables in total
-    Double_t    N3_OutputValue=0;
-    // Values valid for ShowerReco Algorithm 11 = N3 ALG: NeWNeuralNetwork
+    Bool_t      eANN_DoTrain=kTRUE;
+    Double_t    eANN_Inputvar[24];    // 24 maximal input neurons
+    Int_t       eANN_Inputtype;        // 0: BG-Track, 1: SG-Track
+    Double_t    eANN_OutputValue=0;   // result from the network
+    // Values valid for ShowerReco Algorithm 11 = N3 ALG: NewNeuralNetwork ("N":3-times)
     // Brick data related inputs
-    Int_t        N3_ANN_PLATE_DELTANMAX; // 0,1,2,3
+    // The number of Input Variables is calculated only from this:
+    Int_t        eANN_PLATE_DELTANMAX; // 0,1,2,3,4,5.
+    // 0: no separate information BT(i,j) is used.
+    // 1: additional information BT(i,j) for DeltNPL==0  (same plate) is used.
+    // 2: additional information BT(i,j) for DeltNPL==-1 ( one plate upstream) is used.
+    // 3: additional information BT(i,j) for DeltNPL==+1 ( one plate downstream) is used.
+    // 4: additional information BT(i,j) for DeltNPL==-2 ( two plate upstream) is used.
+    // 5: additional information BT(i,j) for DeltNPL==+2 ( two plate downstream) is used.
+    // Order: same plate, one plate upstream,  one plate downstream,  two plate upstream,  two plate downstream
+
     // Algorithm method related inputs
-    Int_t        N3_ANN_NTRAINEPOCHS; // 1,2,3,4 = 50,100,150,200 
-    Int_t        N3_ANN_NHIDDENLAYER; // 1,2,3,4 = 2,3,5,7
-    Double_t     N3_ANN_OUTPUTTHRESHOLD; // 0..10 = 0.5, 0.55, 0.6 ...
+    Int_t        eANN_NTRAINEPOCHS; // 1,2,3,4 = 50,100,150,200
+    Int_t        eANN_NHIDDENLAYER; // 1,2,3,4 = 2,3,5,7
+    Double_t     eANN_OUTPUTTHRESHOLD; // 0..10 = 0.5, 0.55, 0.6 ...
+    Int_t        eANN_EQUALIZESGBG; // 0: no, 1: yes
+    // 1: not all BG BTs will be taken for NN training, some are randomly left out of the trainingssample so that N(SG) ca. N(BG) for one shower event (for training)
+
     // This is dependent by the other variables, thus it
     // is explicitely calculated for ease of view
-    Int_t        N3_ANN_INPUTNEURONS;
+    Int_t        eANN_INPUTNEURONS;
+
+
 
 
 public:
