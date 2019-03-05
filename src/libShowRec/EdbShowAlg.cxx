@@ -66,7 +66,6 @@ void EdbShowAlg::Set0()
 // (this solution is memory safe....)
     eUseAliSub=0;
 
-
     eActualAlgParametersetNr=0;
 
     eRecoShowerArrayN=0;
@@ -88,6 +87,15 @@ void EdbShowAlg::SetParameters(Float_t* par)
 
 //______________________________________________________________________________
 
+void EdbShowAlg::SetParameter(Int_t parNr, Float_t par)
+{
+// SetParameter from the given value.
+    if (parNr>9) {
+        cout << "EdbShowAlg::SetParameters() parNr>9 not supported. Dont set par value!"<<endl;
+    }
+    eParaValue[parNr]=par;
+    cout << "EdbShowAlg::SetParameter()...done"<<endl;
+}
 
 
 

@@ -161,6 +161,7 @@ public:
 
 
     void             SetParameters(Float_t* par);
+    void             SetParameter(Int_t parNr, Float_t par);
 //void                Transform_eAli(EdbSegP* InitiatorBT);
     void                Transform_eAli( EdbSegP* InitiatorBT, Float_t ExtractSize);
     Bool_t              IsInConeTube(EdbSegP* sTest, EdbSegP* sStart, Double_t CylinderRadius, Double_t ConeAngle);
@@ -315,6 +316,14 @@ public:
     ClassDef(EdbShowAlg_BW,1);         // Root Class Definition for my Objects
 };
 
+//______________________________________________________________________________
+// class EdbShowAlg_NN : public EdbShowAlg 
+// ->Declared    in File "EdbShowAlg_NN.h"
+// ->Implemented in File "EdbShowAlg_NN.cxx"
+//______________________________________________________________________________
+// class EdbShowAlg_N3 : public EdbShowAlg 
+// ->Declared    in File "EdbShowAlg_NN.h"
+// ->Implemented in File "EdbShowAlg_NN.cxx"
 //______________________________________________________________________________
 
 /*

@@ -742,16 +742,15 @@ Int_t EdbShowAlg_NN::GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, 
 
 
 
-
 //______________________________________________________________________________
 
-EdbShowAlg_N3::EdbShowAlg_N3()
+EdbShowAlg_N3::EdbShowAlg_N3(Bool_t ANN_DoTrain)
 {
-    // Default Constructor
-    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor");
+    // Constructor with Train/Run Switch
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor ANN_DoTrain=%d",ANN_DoTrain);
 
     // Reset all:
-    // Calls Set0 from inheriting function, so some values must be resetted NULL
+    // Calls Set0 from inheriting function, so some values must be reset to NULL
     // manually, unless a new Set0() function is implemented -- which is not at
     // the moment:
     Set0();
@@ -765,7 +764,37 @@ EdbShowAlg_N3::EdbShowAlg_N3()
     eAlgName="N3";
     eAlgValue=11;
 
-    //  Init with values according to NN Alg:
+    // Mostly it will be runnung, but can be set now here:
+    eANN_DoTrain=ANN_DoTrain;
+
+    //  Init with values according to N3 Alg:
+    Init();
+}
+
+
+//______________________________________________________________________________
+
+EdbShowAlg_N3::EdbShowAlg_N3()
+{
+    // Default Constructor
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor");
+
+    // Reset all:
+    // Calls Set0 from inheriting function, so some values must be reset to NULL
+    // manually, unless a new Set0() function is implemented -- which is not at
+    // the moment:
+    Set0();
+
+    eWeightFileString="";
+    eWeightFileLayoutString="";
+    eANNTree=NULL;
+    eTMlpANN=NULL;
+
+    // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
+    eAlgName="N3";
+    eAlgValue=11;
+
+    //  Init with values according to N3 Alg:
     Init();
 }
 
@@ -790,29 +819,28 @@ void EdbShowAlg_N3::Init()
     Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Init with values according to N3 Alg   TO BE CHECKED !!");
     // Init with values according to N3 Alg:
     // TO BE CHECKED !!
+    // Structure should be equal to the one in file:
+    // PARAMETERSET_DEFINITIONFILE_N3_ALG.root
     eParaValue[0]=5;
     eParaString[0]="ANN_PLATE_DELTANMAX";
     eParaValue[1]=100;
     eParaString[1]="ANN_NTRAINEPOCHS";
     eParaValue[2]=7;
     eParaString[2]="ANN_NHIDDENLAYER";
-    eParaValue[3]=5;
+    eParaValue[3]=0.8;
     eParaString[3]="ANN_OUTPUTTHRESHOLD";
-    eParaValue[4]=5;
+    eParaValue[4]=0;
     eParaString[4]="ANN_EQUALIZESGBG";
     eParaValue[5]=24;
     eParaString[5]="N3_ANN_INPUTNEURONS";
 
+    cout << "DEBUG::AGAIN, WHERE ARE THE ePARAVALUES SET???????"  << endl;
+
     eWeightFileString="weightsN3.txt";
     eWeightFileLayoutString="layoutN3";
 
+    // Create Tree where the Variables for the N3 Neural Net are stored:
     CreateANNTree();
-
-    // DEBUG START
-    cout << " eANNTree->Show(0)  " <<endl;
-    eANNTree->Show(0);
-    // DEBUG ENDE
-
     eTMlpANN = Create_NN_ALG_MLP(eANNTree, eParaValue[5]);
 
     // Standard Weights:
@@ -840,36 +868,36 @@ void EdbShowAlg_N3::CreateANNTree()
     if (!eANNTree) eANNTree = new TTree("EdbShowAlg_N3_eANNTree", "EdbShowAlg_N3_eANNTree");
 
     // Variables and things important for neural Network:
+    TTree *simu = new TTree("TreeSignalBackgroundBT", "TreeSignalBackgroundBT");
+    eANNTree->Branch("eANN_Inputvar", eANN_Inputvar, "eANN_Inputvar[24]/D");
+    eANNTree->Branch("eANN_Inputtype",   &eANN_Inputtype,   "eANN_Inputtype/I");
 
-    Log(2,"EdbShowAlg_N3::CreateANNTree","CreateANNTree()   // TODO TAKE OVER BRANCH CREATIONS HERE");
-
-    // Variables and things important for neural Network:
-    eANNTree->Branch("ANN_PLATE_DELTANMAX", &eANN_PLATE_DELTANMAX, "eANN_PLATE_DELTANMAX/I");
-    eANNTree->Branch("ANN_NTRAINEPOCHS", &eANN_NTRAINEPOCHS, "eANN_NTRAINEPOCHS/I");
-    eANNTree->Branch("ANN_NHIDDENLAYER", &eANN_NHIDDENLAYER, "eANN_NHIDDENLAYER/I");
-    eANNTree->Branch("ANN_EQUALIZESGBG", &eANN_EQUALIZESGBG, "eANN_EQUALIZESGBG/I");
-    eANNTree->Branch("ANN_OUTPUTTHRESHOLD", &eANN_OUTPUTTHRESHOLD, "eANN_OUTPUTTHRESHOLD/D");
-    eANNTree->Branch("ANN_INPUTNEURONS", &eANN_INPUTNEURONS, "eANN_INPUTNEURONS/I");
-    //---------
-    eANNTree->Branch("type",   &eANN_Inputtype,   "type/I");
-    cout << "Branches added..." << endl;
     eANNTree->Print();
 
     // Default, maximal settings. Same plate, Two plates up- downstream connections looking,
     // that for 4 inputvariables there
-    // plus 4 fixed input varibles for BT(i) to InBT connections: 4+5*4 = 24
+    // plus 4 fixed input variables for BT(i) to InBT connections: 4+5*4 = 24
+    /*
     eANN_PLATE_DELTANMAX=5;
     eANN_NTRAINEPOCHS=100;
     eANN_NHIDDENLAYER=5;
     eANN_EQUALIZESGBG=0;
     eANN_OUTPUTTHRESHOLD=0.85;
-    eANN_INPUTNEURONS=25;
+    eANN_INPUTNEURONS=24;
     eANN_Inputtype=1;
+    */
 
-    cout << "DEBUG: Fill Tree with standard variables --- TO BE CHANGED LATER"  <<  endl;
-    eANNTree->Fill();
-
+    cout << "DEBUG: Fill Tree with DUMMY variables --- TO BE CHANGED LATER"  <<  endl;
+    for (int i=0; i<10; ++i) {
+        for (int l=0; l<24; ++l) {
+            eANN_Inputvar[l]=gRandom->Uniform();
+        }
+        eANN_Inputtype=i%2;
+        eANNTree->Fill();
+    }
     eANNTree->Show(0);
+    eANNTree->Show(eANNTree->GetEntries()-1);
+    cout << "DEBUG: Fill Tree with DUMMY variables --- TO BE CHANGED LATER  DONE.."  <<  endl;
 
     //---------
     Log(2,"EdbShowAlg_N3::CreateANNTree","CreateANNTree()...done.");
@@ -891,19 +919,15 @@ TMultiLayerPerceptron* EdbShowAlg_N3::Create_NN_ALG_MLP(TTree* simu, Int_t input
     }
 
     // DEBUG START
-    cout << "TEST    eANN_NHIDDENLAYER=7" << endl;
-    cout << "TEST    eANN_INPUTNEURONS=24" << endl;
-    eANN_NHIDDENLAYER=7;
-    eANN_INPUTNEURONS=24;
+    // THIS IS TO BE WRITTEN BETTER, CAUSE THE HANDOVER OF THE PARAMETERS SHOULD
+    // BE BETTER .....
+    eANN_NHIDDENLAYER=eParaValue[2];
+    eANN_INPUTNEURONS=eParaValue[5];
 
     // TO DO HERE.... TAKE OVER THE CORRECT LAYOUT.
     // only knowlegde about number of input neurons  and hidden layers is needed.
     cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   eANN_NHIDDENLAYER =  " <<  eANN_NHIDDENLAYER  << endl;
     cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   eANN_INPUTNEURONS =  " <<  eANN_INPUTNEURONS  << endl;
-
-    // STILL ERROR COMES HERE:::
-    // TO BE RESOLVED OTHER TIME .....
-    cout << " Error in <TTreeFormula::Compile>:  Bad numerical expression : eANN_Inputvar[0]" << endl;
 
     // Create the layout here:
     TString layout="";
@@ -926,12 +950,16 @@ TMultiLayerPerceptron* EdbShowAlg_N3::Create_NN_ALG_MLP(TTree* simu, Int_t input
     newstring="eANN_Inputtype";
     layout += newstring;
 
-    cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   layout:    " << layout << endl;
+    // Set Layout String as internal variable now:
+    eLayout = layout;
+
+    // DEBUG MESSAGES:
+    cout << "simu = "  << simu << endl;
+    cout << "simu->Show(0): "  << endl;
+    simu->Show(0);
 
     // Create the network:
-    cout << "simu = "  << simu << endl;
     TMultiLayerPerceptron* TMlpANN = new TMultiLayerPerceptron(layout,simu);
-    cout << "Still Crashes, when simu is NULL pointer" << endl;
 
     if (gEDBDEBUGLEVEL>2) {
         cout << "EdbShowAlg_N3::Create_NN_ALG_MLP()   GetStructure:    " << endl;
@@ -948,11 +976,12 @@ void EdbShowAlg_N3::SetANNWeightString()
 {
     Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString().");
     int inputneurons=eParaValue[5];
-    if (inputneurons==5)  eWeightFileString="WEIGHTFiLEStRING.txt";
+    if (inputneurons==5)  eWeightFileString="WEIGHTFILESTRING_N3.txt";
     // TO DO HERE.... TAKE OVER THE CORRECT WEIGHTFILE STRING.
     cout << "EdbShowAlg_N3::SetANNWeightString()   TO DO HERE.... TAKE OVER THE CORRECT WEIGHTFILE STRING. " << endl;
 
-    if (gEDBDEBUGLEVEL>2) cout <<  "EdbShowAlg_N3::SetANNWeightString   "  << eWeightFileString << endl;
+//     if (gEDBDEBUGLEVEL>2)
+    cout <<  "EdbShowAlg_N3::SetANNWeightString   "  << eWeightFileString << endl;
     Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString()...done.");
     return;
 }
@@ -963,6 +992,10 @@ void EdbShowAlg_N3::SetANNWeightString()
 
 void EdbShowAlg_N3::LoadANNWeights()
 {
+    if (eWeightFileString=="") {
+        cout <<  "EdbShowAlg_N3::SetANNWeightString  IS EMPTY. Reset to default string!"  << endl;
+        eWeightFileString="WEIGHTFILESTRING_N3.txt";
+    }
     eTMlpANN->LoadWeights(eWeightFileString);
     return;
 }
@@ -979,6 +1012,26 @@ void EdbShowAlg_N3::LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString Weigh
 }
 
 
+//______________________________________________________________________________
+
+
+void EdbShowAlg_N3::Print()
+{
+    Log(2,"EdbShowAlg_N3::Print","Print()");
+
+    cout << "Number of Inputvariables: " << eParaValue[5] << endl;
+    cout << "Algorithm method related inputs:" << endl;
+    cout << "eANN_PLATE_DELTANMAX " << eParaValue[0] << endl;
+    cout << "eANN_NTRAINEPOCHS " << eParaValue[1] << endl;
+    cout << "eANN_NHIDDENLAYER " << eParaValue[2] << endl;
+    cout << "eANN_OUTPUTTHRESHOLD " << eParaValue[3] << endl;
+    cout << "eANN_EQUALIZESGBG " << eParaValue[4] << endl;
+
+    cout << "Structure of the Net:" << endl;
+    cout << eLayout.Data() << endl;
+
+    return;
+}
 
 
 
@@ -1013,5 +1066,6 @@ void EdbShowAlg_N3::Execute()
 void EdbShowAlg_N3::Finalize()
 {
     Log(2,"EdbShowAlg_N3::Finalize","Finalize()");
+    cout << "TO BE DONE HERE:  DELETE THE UNNECESSARY OBJECTS CREATED ON THE HEAP..." << endl;
     return;
 }

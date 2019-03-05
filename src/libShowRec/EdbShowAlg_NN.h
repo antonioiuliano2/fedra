@@ -96,34 +96,31 @@ private:
 public:
 
     EdbShowAlg_NN();
+    EdbShowAlg_NN(Bool_t ANN_DoTrain);
     virtual ~EdbShowAlg_NN();          // virtual constructor due to inherited class
 
     void    Init();
     void    CreateANNTree();
-
-
-    Int_t   GetNSegBeforeAndAfter(EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
-    Int_t   GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
-    Int_t   GetMinsBeforeAndAfter(Float_t& min_dT, Float_t& min_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
-
-
     TMultiLayerPerceptron*    Create_NN_ALG_MLP(TTree* inputtree, Int_t inputneurons);
-
-
     void    LoadANNWeights();
     void    LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString WeightFileString);
-
     void    SetANNWeightString();
-
 
     inline  void SetWeightFileString(TString WeightFileString) {
         eWeightFileString=WeightFileString;
         return;
     }
-
     inline  TString GetWeightFileString() {
         return eWeightFileString;
     }
+
+    // Helper Functions:
+    Int_t   GetNSegBeforeAndAfter(EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
+    Int_t   GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
+    Int_t   GetMinsBeforeAndAfter(Float_t& min_dT, Float_t& min_dR, EdbPVRec* local_gAli, Int_t patterloop_cnt, EdbSegP* seg, Int_t n_patterns, Int_t BeforeOrAfter);
+
+    // Print Generic Information about the Algorithm
+    void    Print();
 
 
     // Main functions for using this ShowerAlgorithm Object.
@@ -145,7 +142,7 @@ public:
 class EdbShowAlg_N3 : public EdbShowAlg {
 
     // New Neural Network (3N) algorithm distinguishing
-    // Signal from Backgroundbasetracks of a shower
+    // Signal from Background Basetracks of a shower
     // using topological variables
 
 private:
@@ -183,22 +180,19 @@ private:
     Int_t        eANN_INPUTNEURONS;
 
 
-
-
 public:
 
     EdbShowAlg_N3();
+    EdbShowAlg_N3(Bool_t ANN_DoTrain);
     virtual ~EdbShowAlg_N3();          // virtual constructor due to inherited class
 
     void    Init();
     void    CreateANNTree();
-
-
     TMultiLayerPerceptron*    Create_NN_ALG_MLP(TTree* inputtree, Int_t inputneurons);
+    TString eLayout;
 
     void    LoadANNWeights();
     void    LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString WeightFileString);
-
     void    SetANNWeightString();
 
 
@@ -206,10 +200,12 @@ public:
         eWeightFileString=WeightFileString;
         return;
     }
-
     inline  TString GetWeightFileString() {
         return eWeightFileString;
     }
+
+    // Print Generic Information about the Algorithm
+    void    Print();
 
     // Main functions for using this ShowerAlgorithm Object.
     // Structure is made similar to OpRelease, where
