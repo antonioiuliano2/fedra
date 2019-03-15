@@ -285,7 +285,7 @@ public:
     EdbShowRec(EdbPVRec* gAli);
     EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray);
     EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray, EdbShowAlg* StandardAlg);
-    EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray ,TObjArray* ShowAlgArray);
+    EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray,TObjArray* ShowAlgArray);
 //     EdbShowRec(TString treebranchFileName); // DEBUG // doesnt work, see explanation in .cxx file
     EdbShowRec(TString treebranchFileName, TString treebranchName);
     EdbShowRec(TString TxtFileName, Int_t TxtFileType);
@@ -294,12 +294,14 @@ public:
 
     // Reconstruct showers: invoke all methods availible for all reconstruction things.
     void              Reconstruct();
+    // Quick Test functions for fast debugging...
     void              ReconstructTEST();
     void              ReconstructTESTSHORT();
     void              ReconstructTESTSTANDARD();
     void              ReconstructTEST_CA();
     void              ReconstructTEST_OI();
     void              ReconstructTEST_NN();
+    void              ReconstructTEST_N3();
 
 
     // Reset Functions:
@@ -542,7 +544,11 @@ public:
     /// --- TEMPORARY PUBLIC FUNCTIONS.... LATER THESE SHOULD PUT INTO PRIVATE....
     /// --- TEMPORARY PUBLIC FUNCTIONS.... NOW ONLY FOR DEBUGGING PURPOSES....
     // Check that consistency of Initiator BT array:
-    void              Check_eInBTArray();
+    void Check_eInBTArray();
+    Bool_t Check_eInBTArray_ByRecoLinkTracks_eAli();
+    Bool_t Check_Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
+    Bool_t Check_Fill_eInBTArray_ByBaseTracksOf_eAli();
+    Bool_t Check_Fill_eInBTArray_ByBaseTracksOf_RootFile();
     ///--------------------------------------------------------------------------------
 
 

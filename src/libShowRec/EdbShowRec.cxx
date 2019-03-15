@@ -688,7 +688,7 @@ void EdbShowRec::ReconstructTEST()
 
 
 
-      Log(2,"EdbShowRec::Reconstruct()","Default reconstructrion function...done.");
+      Log(2,"EdbShowRec::Reconstruct()","Default reconstruction function...done.");
       return;
      * */
     return;
@@ -699,7 +699,7 @@ void EdbShowRec::ReconstructTEST()
 
 void EdbShowRec::ReconstructTEST_CA()
 {
-    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstructrion function CA Algorithm");
+    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstruction function CA Algorithm");
 
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
@@ -752,7 +752,7 @@ void EdbShowRec::ReconstructTEST_CA()
 
     }  // ShowerRecoAlg Loop.
 
-    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstructrion function CA Algorithm...done.");
+    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstruction function CA Algorithm...done.");
     return;
 }
 
@@ -764,8 +764,8 @@ void EdbShowRec::ReconstructTEST_CA()
 
 void EdbShowRec::ReconstructTEST_OI()
 {
-    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstructrion function OI Algorithm");
-    
+    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstruction function OI Algorithm");
+
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
 
@@ -816,7 +816,7 @@ void EdbShowRec::ReconstructTEST_OI()
     SetOutNames();
     RecoShowerArray_To_Treebranch();
 
-    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstructrion function OI Algorithm...done.");
+    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstruction function OI Algorithm...done.");
     return;
 }
 
@@ -830,8 +830,8 @@ void EdbShowRec::ReconstructTEST_OI()
 void EdbShowRec::ReconstructTEST_NN()
 {
 
-    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstructrion function NN Algorithm");
-    
+    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstruction function NN Algorithm");
+
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
     Fill_eInBTArray(eUseNr);
@@ -865,9 +865,60 @@ void EdbShowRec::ReconstructTEST_NN()
     eActualAlg->Execute();
     cout<<"--------------------------------------  EXECUTE    done. --------------------------"<<endl;
 
-    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstructrion function NN Algorithm...done.");
+    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstruction function NN Algorithm...done.");
     return;
 }
+
+
+
+
+//______________________________________________________________________________
+
+
+
+void EdbShowRec::ReconstructTEST_N3()
+{
+
+    Log(2,"EdbShowRec::ReconstructTEST_N3()","Default reconstruction function N3 Algorithm");
+
+    if (!eInBTArray)  Create_eInBTArray();
+    if (!eInBTTree)   Create_eInBTTree();
+    Fill_eInBTArray(eUseNr);
+
+    if (!eShowAlgArray)   {
+        Create_eShowAlgArray();
+        Fill_eShowAlgArray();
+    }
+    // --------------------- Main Print Function -----------------------
+    Print();
+    // --------------------- Main Print Function -----------------------
+
+    Bool_t TrainANN=kTRUE;
+
+    EdbShowAlg_N3*   StandardAlg = new EdbShowAlg_N3(TrainANN); // no empty constructor in this class...
+    eShowAlgArray->Add(StandardAlg);
+    SetShowAlgArrayN(eShowAlgArray->GetEntries());
+
+    eActualAlg=StandardAlg;
+    ++eActualAlgParameterset[eActualAlg->GetAlgValue()];
+
+    eActualAlg->SetEdbPVRec(eAli);
+    eActualAlg->SetEdbPVRecPIDNumbers(eFirstPlate_eAliPID,  eLastPlate_eAliPID,  eMiddlePlate_eAliPID,  eNumberPlate_eAliPID);
+    eActualAlg->SetInBTArray( eInBTArray );
+    eActualAlg->SetRecoShowerArray( eRecoShowerArray );
+
+    eActualAlg=StandardAlg;
+    eActualAlg->Print();
+
+    cout<<"--------------------------------------  EXECUTE -----------------------------------"<<endl;
+    eActualAlg->Execute();
+    cout<<"--------------------------------------  EXECUTE    done. --------------------------"<<endl;
+
+    Log(2,"EdbShowRec::ReconstructTEST_N3()","Default reconstruction function N3 Algorithm...done.");
+    return;
+}
+
+
 
 
 
@@ -937,7 +988,7 @@ void EdbShowRec::Reconstruct()
     EdbShowAlg_OI*  RecoAlg = (EdbShowAlg_OI*) eShowAlgArray->At(0);
     eActualAlg=RecoAlg;
 
-    
+
     // Hand over the important objects to the RecoAlg itsself.
     //  eAli  (the volume)
     RecoAlg->SetEdbPVRec(eAli);
@@ -948,11 +999,11 @@ void EdbShowRec::Reconstruct()
     //  RecoShowerArray, to be filled by the algorithm:
     RecoAlg->SetRecoShowerArray(eRecoShowerArray);
     //-------------------------------------------------------------------
-    
+
     // Print relevant information for the algorithm:
     RecoAlg->Print();
 
-    
+
     //-------------------------------------------------------------------
     // Main Reconstruction Part for the algorithm:
     //
@@ -962,7 +1013,7 @@ void EdbShowRec::Reconstruct()
     //
     //-------------------------------------------------------------------
 
-    
+
     // Get RecoShowerArray from Reco Alg back!
     // This has to be done, because EdbShowAlg and EdbShowRec class have
     // each a RecoShowerArray on their own. (It is by construction so...).
@@ -1046,16 +1097,18 @@ void EdbShowRec::Check_eInBTArray()
     Log(2,"EdbShowRec::Check_eInBTArray()","The order is in the way:");
     Log(2,"EdbShowRec::Check_eInBTArray()","    a)  if eAli has eTracks, take eTracks.");
     Log(2,"EdbShowRec::Check_eInBTArray()","    b)  if a  linked_tracks.root file is existing, take tracks from there-");
-    Log(2,"EdbShowRec::Check_eInBTArray()","    c)  take all BT from [firstplate..middleplate]");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    c)  take all BT from eAli from [firstplate..middleplate]");
     Log(2,"EdbShowRec::Check_eInBTArray()","    d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    e)  take N randomly selected BTs from eAli from [firstplate..middleplate]");
 
     // Check if and wheter to set the Array if InBTs.
     // The order is in the way (if the corresponding stuff is there:
     // (of course the settings in default.par will still be present):
     // a)  if eAli has eTracks, take eTracks.
     // b)  if a  linked_tracks.root file is existing, take tracks from there-
-    // c)  take all BT from [firstplate..middleplate]
+    // c)  take all BT from eAli from [firstplate..middleplate]
     // d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
+    // e)  e)  take N randomly selected BTs from eAli from [firstplate..middleplate]
     if (!eAli) {
         Log(2,"EdbShowRec::Check_eInBTArray","No eAli created yet. For now: return;");
         return;
@@ -1074,13 +1127,16 @@ void EdbShowRec::Check_eInBTArray()
     }
 
     // -------------------------------------------------
-
     // TO BE PRECISE, THE FOLLOWING CODE IS __NOT__ PART OF A CHECK FUNTION,
     // SINCE IT DOES ALSO FILLING AT ONCE.
     // SO FOR FURTHER PURPOSES, IT SHOULD BE TAKEN OUT.... (???)
     // AN BE PLACED IN A SEPERATE FUNCTION ....
-
     // -------------------------------------------------
+
+    Check_eInBTArray_ByRecoLinkTracks_eAli();
+    Check_Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
+    Check_Fill_eInBTArray_ByBaseTracksOf_eAli();
+    Check_Fill_eInBTArray_ByBaseTracksOf_RootFile();
 
     /*
 
@@ -1112,6 +1168,42 @@ void EdbShowRec::Check_eInBTArray()
 
     Log(2,"EdbShowRec::Check_eInBTArray()","Check the Initiator Basetrack array...done.");
     return;
+}
+
+//______________________________________________________________________________
+
+Bool_t EdbShowRec::Check_eInBTArray_ByRecoLinkTracks_eAli()
+{
+    // Check if eAli has already fitted tracks.
+    // Make tracks using standard track fitting/propagation routines.
+    Log(2,"EdbShowRec::Check_eInBTArray_ByRecoLinkTracks_eAli()","Do tracks in the eAli object exist...");
+    if (eAli->eTracks==NULL) {
+        Log(2,"EdbShowRec::Check_eInBTArray_ByRecoLinkTracks_eAli()","Do tracks in the eAli object exist...No.");
+        return kFALSE;
+    }
+    Log(2,"EdbShowRec::Check_eInBTArray_ByRecoLinkTracks_eAli()","Do tracks in the eAli object exist...Yes.");
+    Log(2,"EdbShowRec::Check_eInBTArray_ByRecoLinkTracks_eAli()","Do tracks in the eAli object exist...done.");
+    return kTRUE;
+}
+
+//______________________________________________________________________________
+//             TO BE IMPLEMENTED HERE...
+//     Check_Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks();
+//     Check_Fill_eInBTArray_ByBaseTracksOf_eAli();
+//     Check_Fill_eInBTArray_ByBaseTracksOf_RootFile();
+//______________________________________________________________________________
+
+Bool_t EdbShowRec::Check_Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks() {
+    cout << "TO BE IMPLEMENTED HERE..." << endl;
+    return kFALSE;
+}
+Bool_t EdbShowRec::Check_Fill_eInBTArray_ByBaseTracksOf_eAli() {
+    cout << "TO BE IMPLEMENTED HERE..." << endl;
+    return kFALSE;
+}
+Bool_t EdbShowRec::Check_Fill_eInBTArray_ByBaseTracksOf_RootFile() {
+    cout << "TO BE IMPLEMENTED HERE..." << endl;
+    return kFALSE;
 }
 
 
@@ -1162,7 +1254,8 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
     switch (FillType)
     {
     case -1 :
-        cout << "EdbShowRec::Fill_eInBTArray   FillType= " <<  FillType << " Nothing done by default....!" << endl;
+        // should never happen:
+        Log(2,"EdbShowRec::Fill_eInBTArray()","Nothing done by default!");
         break;
     case 0 :
         Fill_eInBTArray_ByRecoLinkTracks_eAli();
@@ -1181,7 +1274,9 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
         break;
     }
 
-    Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initiator Basetrack Array...done.");
+    cout <<
+
+         Log(2,"EdbShowRec::Fill_eInBTArray()","Fill the Initiator Basetrack Array...done.");
     return;
 }
 
@@ -1190,14 +1285,22 @@ void  EdbShowRec::Fill_eInBTArray(Int_t FillType)
 void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
 {
     // Check if  eAli  has already fitted tracks.
-    // ....
     // Make tracks using standard track fitting/propagation routines.
-    // ....
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli...");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Fill Initiator Basetrack Array from the stored Tracks.");
 
-    Int_t AliTracksN = eAli->eTracks->GetEntries();
+    // Object with the stored tracks...
+    TObjArray* trackArray =  eAli->eTracks;
 
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()  There are " << eAli->eTracks->GetEntries() << " tracks stored in the eAli object." << endl;
+    // this should not happen, the check for Filled Tracks should be done in the routine
+    // one level up. This is
+    if (trackArray==NULL) {
+        Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Attention! No Entries in the TrackArray!");
+        Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Dont Fill InBTracks! Return!");
+        return;
+    }
+
+    Int_t AliTracksN = trackArray->GetEntries();
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Initiator Basetrack Array: N=%d stored Tracks.",AliTracksN);
 
     /*
     // To have the "cut" features available, we still have to pass the source array via the eInBTTree
@@ -1205,13 +1308,11 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
     cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() Transferrring them into the eInBTTree now ..." << endl;
     cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() Transferrring them into the eInBTTree now NOT IMPLEMENTED YET...)" << endl;
     */
-
 //     OR DONT PASS THEM OVER AND FILL THE ARRAY DIRECTLY ???
 //     SEEMS MUCH MORE EASIER AT THE MOMENT !!!
 
     // Attention: eTracks is an array of Tracks, but the InBT array has to be filled with segments, i.e.
     // the first segment (EdbSegP) of a track (EdbTrackP). Therefore some conversion is necessary:
-    TObjArray* trackArray =  eAli->eTracks;
     EdbTrackP* track;
     TObjArray* segmentArray = new TObjArray();
     for (Int_t i=0; i<AliTracksN; ++i) {
@@ -1221,10 +1322,8 @@ void EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()
     }
     SetInBTArray( segmentArray );
 
-    // Check
-    cout << "EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli() Check: GetInBTArrayN() = " << GetInBTArrayN() << endl;
-
-    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli...done");
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Initiator Basetrack Array: GetInBTArrayN()=%d filled tracks.",GetInBTArrayN());
+    Log(2,"EdbShowRec::Fill_eInBTArray_ByRecoLinkTracks_eAli()","Fill Initiator Basetrack Array from the stored Tracks...done.");
     return;
 }
 
@@ -1268,11 +1367,11 @@ void EdbShowRec::Fill_eInBTArray_ByLinkTracks_eFilename_LinkedTracks()
     }
 
     int nseg,n0,npl;
-    tr->SetBranchAddress("t."  , &t  );
-    tr->SetBranchAddress("s"  , &seg  );
-    tr->SetBranchAddress("nseg"  , &nseg  );
-    tr->SetBranchAddress("n0"  , &n0  );
-    tr->SetBranchAddress("npl"  , &npl  );
+    tr->SetBranchAddress("t.", &t  );
+    tr->SetBranchAddress("s", &seg  );
+    tr->SetBranchAddress("nseg", &nseg  );
+    tr->SetBranchAddress("n0", &n0  );
+    tr->SetBranchAddress("npl", &npl  );
 
     for (Int_t i=0; i<nentr; ++i ) {
         tr->GetEntry(i);
@@ -2884,14 +2983,14 @@ void EdbShowRec::RecoShowerArray_To_Treebranch()
     Int_t max_diff_pid=0;
     Float_t extrapol_x,extrapol_y, extrapo_diffz;
 
-    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","showarray->GetEntries()  = %d" , showarrayN);
+    Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","showarray->GetEntries()  = %d", showarrayN);
 
 
     for (int i_shower=0; i_shower<showarrayN; i_shower++) {
         // START OVER LOOP of   ONE SHOWER:
         show=(EdbShowerP*)showarray->At(i_shower);
 
-        if (i_shower%100==0) Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Converting shower  %05d with %03d basetracks." , i_shower,show->N());
+        if (i_shower%100==0) Log(2,"EdbShowRec::RecoShowerArray_To_Treebranch","Converting shower  %05d with %03d basetracks.", i_shower,show->N());
         // cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   Address of shower: " << show << endl;
         //cout << "	EdbShowRec::RecoShowerArray_To_Treebranch   UpdateX() of shower: " << endl;
         //show->UpdateX();
@@ -5265,7 +5364,7 @@ void EdbShowRec::AddInBTArray( EdbPattern* pattern )
     // Loop over all segments of the pattern, and add its segments
     Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","Add pattern (ID=%d)", pattern->ID());
 
-     cout << " pattern->ID() = " <<  pattern->ID() << "     pattern->Z() = " <<  pattern->Z() << endl;
+    cout << " pattern->ID() = " <<  pattern->ID() << "     pattern->Z() = " <<  pattern->Z() << endl;
     // check if pattern is not NULL object
     if (NULL == pattern) {
         Log(2,"EdbShowRec::AddInBTArray( EdbPattern* pattern )","WARNING! Requested pattern is NULL object. Dont add. Return.");

@@ -773,7 +773,7 @@ EdbShowAlg_N3::EdbShowAlg_N3(Bool_t ANN_DoTrain)
 
     //  Init with values according to N3 Alg:
     Init();
-    
+
     Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Default Constructor ANN_DoTrain=%d...done.",ANN_DoTrain);
 }
 
@@ -1010,7 +1010,7 @@ void EdbShowAlg_N3::Print()
 
     cout << "Structure of the Net:" << endl;
     cout << eLayout.Data() << endl;
-    
+
     Log(2,"EdbShowAlg_N3::Print","Print()...done.");
     return;
 }
@@ -1021,24 +1021,29 @@ void EdbShowAlg_N3::Print()
 
 void EdbShowAlg_N3::Execute()
 {
-    Log(2,"EdbShowAlg_N3::Execute","Execute() DOING MAIN SHOWER RECONSTRUCTION HERE");
-    
+    Log(2,"EdbShowAlg_N3::Execute","DOING MAIN SHOWER RECONSTRUCTION HERE");
+
+    if (eInBTArrayN==0) {
+        Log(2,"EdbShowAlg_N3::Execute","Warning: No InitiatorBTs in the array. Return now");
+        return;
+    }
+
     // TO BE DONE HERE:
     // FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM
     cout << "EdbShowAlg_N3::Execute()...FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM." << endl;
-    
-    
-    // Create the root file that contains the trainingsfile tree data first, 
+
+
+    // Create the root file that contains the trainingsfile tree data first,
     // otherwise the trees are not connected with the specified file.
     if (eANN_DoTrain==kTRUE) {
         eANNTrainingsTreeFile = new TFile(Form("N3_ANN_TrainingsTreeFile.root",0),"RECREATE");
     }
-    
+
     // Variables and things important for neural Network:
     TTree *eANNTrainingsTree = new TTree("TreeSignalBackgroundBT", "TreeSignalBackgroundBT");
     eANNTrainingsTree->Branch("N3_Type",   &eANN_Inputtype,   "N3_Type/I");
     eANNTrainingsTree->Branch("N3_Inputvar", eANN_Inputvar, "N3_Inputvar[24]/D");
-    
+
 
 
     EdbSegP* InBT;
@@ -1058,6 +1063,7 @@ void EdbShowAlg_N3::Execute()
     Double_t params[30]; // Used for ANN Evaluation  // TO BE ADAPTED!!!
 
     //--- Loop over InBTs:
+    cout << "Loop over InBTs N=" << eInBTArrayN << endl;
 
     // Since eInBTArray is filled in ascending ordering by zpositon
     // We use the descending loop to begin with BT with lowest z first.
@@ -1082,7 +1088,7 @@ void EdbShowAlg_N3::Execute()
         // Get InitiatorBT from eInBTArray
         InBT=(EdbSegP*)eInBTArray->At(i);
         if (gEDBDEBUGLEVEL>2) InBT->PrintNice();
-        
+
         // Clone InBT, because it is modified a lot of times,
         // avoid rounding errors by propagating back and forth
         EdbSegP* InBTClone = (EdbSegP*)InBT->Clone();
@@ -1146,70 +1152,70 @@ void EdbShowAlg_N3::Execute()
                 // TO BE CHECKED WHERE THE FUNCTION GetdMinDist(InBT, seg);  IS!!
                 cout << "// TO BE CHECKED WHERE THE FUNCTION GetdMinDist(InBT, seg);  IS!!" << endl;
                 if (eANN_DoTrain==kTRUE && eANN_Inputvar[3] >  800) continue;
-                // 1) 
-                // 2) .... // 24)  
+                // 1)
+                // 2) .... // 24)
                 // TO BE FILLED WITH THE CODE FROM    SHOWREC   PROGRAMM
                 // end of calculate NN Inputvariables:  --------------------
 
                 // ---------------------------------------------------------
                 // Calculate eANN Output now:
                 eANN_OutputValue=0;
-                    // Adapt: array params should have as many entries as there are inputvariables.
-                    // This array is larger than possible used array for evaluation.
-                    // The array with the right size is created, when the eANN_INPUTNEURONS
-                    // variable is fixed (TMLP class demands #arraysize = #inputneurons)
-                    // This is a kind of dump workaround, but for now it should work.
-                    Double_t EvalValue=0;
-                    Double_t    N3_Evalvar4[4];
-                    Double_t    N3_Evalvar8[8];
-                    Double_t    N3_Evalvar12[12];
-                    Double_t    N3_Evalvar16[16];
-                    Double_t    N3_Evalvar20[20];
-                    Double_t    N3_Evalvar24[24];
+                // Adapt: array params should have as many entries as there are inputvariables.
+                // This array is larger than possible used array for evaluation.
+                // The array with the right size is created, when the eANN_INPUTNEURONS
+                // variable is fixed (TMLP class demands #arraysize = #inputneurons)
+                // This is a kind of dump workaround, but for now it should work.
+                Double_t EvalValue=0;
+                Double_t    N3_Evalvar4[4];
+                Double_t    N3_Evalvar8[8];
+                Double_t    N3_Evalvar12[12];
+                Double_t    N3_Evalvar16[16];
+                Double_t    N3_Evalvar20[20];
+                Double_t    N3_Evalvar24[24];
 
-                    if (eANN_INPUTNEURONS==4) {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar4[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar4);
-                    }
-                    else if (eANN_INPUTNEURONS==8) {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar8[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar8);
-                    }
-                    else if (eANN_INPUTNEURONS==12) {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar12[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar12);
-                    }
-                    else if (eANN_INPUTNEURONS== 16) {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar16[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar16);
-                    }
-                    else if (eANN_INPUTNEURONS==20) {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar20[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar20);
-                    }
-                    else {
-                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar24[k]= eANN_Inputvar[k];
-                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar24);
-                    }
-                    // ---------------------------------------------------------
-                
-                
+                if (eANN_INPUTNEURONS==4) {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar4[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar4);
+                }
+                else if (eANN_INPUTNEURONS==8) {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar8[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar8);
+                }
+                else if (eANN_INPUTNEURONS==12) {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar12[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar12);
+                }
+                else if (eANN_INPUTNEURONS== 16) {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar16[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar16);
+                }
+                else if (eANN_INPUTNEURONS==20) {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar20[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar20);
+                }
+                else {
+                    for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar24[k]= eANN_Inputvar[k];
+                    eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar24);
+                }
+                // ---------------------------------------------------------
+
+
                 // Now apply cut conditions: NN Neural Network Alg --------------------
                 Double_t value=0;
-                
+
                 // These conditions have to be calculated, still!!!
                 cout << "TO BE DONE" << endl;
-                
+
                 value=eTMlpANN->Evaluate(0, params);
                 if (gEDBDEBUGLEVEL>3) {
-                    cout << "eANN_OutputValue: " << eANN_OutputValue << " Inputvalues: "; 
+                    cout << "eANN_OutputValue: " << eANN_OutputValue << " Inputvalues: ";
                     for (int i=0; i<5; i++) cout << "  " << eANN_Inputvar[i];
                 }
                 if (eANN_OutputValue<eParaValue[1]) continue;
                 // end of    cut conditions: NN Neural Network Alg --------------------
 
-                
-                
+
+
                 // If we arrive here, Basetrack  Segment  has passed criteria
                 // and is then added to the RecoShower:
                 // Check if its not the InBT which is already added:
