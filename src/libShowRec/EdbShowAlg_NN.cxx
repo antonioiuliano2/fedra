@@ -22,7 +22,7 @@ ClassImp(EdbShowAlg_N3)
 EdbShowAlg_NN::EdbShowAlg_NN()
 {
     // Default Constructor
-    Log(2,"EdbShowAlg_NN::EdbShowAlg_NN","EdbShowAlg_NN:: Default Constructor");
+    Log(2,"EdbShowAlg_NN::EdbShowAlg_NN","Default Constructor");
 
     // Reset all:
     Set0();
@@ -40,7 +40,7 @@ EdbShowAlg_NN::EdbShowAlg_NN()
 EdbShowAlg_NN::~EdbShowAlg_NN()
 {
     // Default Destructor
-    Log(2,"EdbShowAlg_NN::~EdbShowAlg_NN","EdbShowAlg_NN:: Default Destructor");
+    Log(2,"EdbShowAlg_NN::~EdbShowAlg_NN","Default Destructor");
     if (eANNTree) {
         delete eANNTree;
         eANNTree=0;
@@ -138,7 +138,7 @@ void EdbShowAlg_NN::CreateANNTree()
 
 TMultiLayerPerceptron* EdbShowAlg_NN::Create_NN_ALG_MLP(TTree* simu, Int_t inputneurons)
 {
-    Log(2,"EdbShowAlg_NN::Create_NN_ALG_MLP","Create_NN_ALG_MLP().");
+    Log(2,"EdbShowAlg_NN::Create_NN_ALG_MLP","Creates the TTree for the data to be filled.");
 
     if (gEDBDEBUGLEVEL>2) cout << "EdbShowAlg_NN::Create_NN_ALG_MLP()   inputneurons= " << inputneurons << endl;
 
@@ -165,7 +165,7 @@ TMultiLayerPerceptron* EdbShowAlg_NN::Create_NN_ALG_MLP(TTree* simu, Int_t input
         cout << "EdbShowAlg_NN::Create_NN_ALG_MLP()   GetStructure:    " << endl;
         cout << TMlpANN->GetStructure() << endl;
     }
-    Log(2,"EdbShowAlg_NN::Create_NN_ALG_MLP","Create_NN_ALG_MLP()...done.");
+    Log(2,"EdbShowAlg_NN::Create_NN_ALG_MLP","Creates the TTree for the data to be filled...done.");
     return TMlpANN;
 }
 
@@ -174,7 +174,7 @@ TMultiLayerPerceptron* EdbShowAlg_NN::Create_NN_ALG_MLP(TTree* simu, Int_t input
 
 void EdbShowAlg_NN::SetANNWeightString()
 {
-    Log(2,"EdbShowAlg_NN::SetANNWeightString","SetANNWeightString().");
+    Log(2,"EdbShowAlg_NN::SetANNWeightString","SetANNWeightString()");
     int inputneurons=eParaValue[0];
     if (inputneurons==5)  eWeightFileString="ANN_WEIGHTS_PARASET_0_To_20.txt";
     if (inputneurons==10) eWeightFileString="ANN_WEIGHTS_PARASET_20_To_40.txt";
@@ -216,9 +216,7 @@ void EdbShowAlg_NN::LoadANNWeights(TMultiLayerPerceptron* TMlpANN, TString Weigh
 
 void EdbShowAlg_NN::Execute()
 {
-    Log(2,"EdbShowAlg_NN::Execute","Execute()");
-    cout << "EdbShowAlg_NN::Execute()" << endl;
-    Log(2,"EdbShowAlg_NN::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
+    Log(2,"EdbShowAlg_NN::Execute","Execute() DOING MAIN SHOWER RECONSTRUCTION HERE");
 
     EdbSegP* InBT;
     EdbSegP* Segment;
@@ -499,7 +497,7 @@ void EdbShowAlg_NN::Execute()
     SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
 
     cout << "EdbShowAlg_NN::eRecoShowerArray() Entries: " << eRecoShowerArray->GetEntries() << endl;
-    cout << "EdbShowAlg_NN::Execute()...done." << endl;
+    Log(2,"EdbShowAlg_NN::Execute","Execute() DOING MAIN SHOWER RECONSTRUCTION HERE...done.");
     return;
 }
 
@@ -516,7 +514,7 @@ void EdbShowAlg_NN::Execute()
 
 void EdbShowAlg_NN::Finalize()
 {
-    Log(2,"EdbShowAlg_NN::Finalize","Finalize()");
+    Log(2,"EdbShowAlg_NN::Finalize","Finalize(). Nothing done here yet.");
     return;
 }
 
@@ -640,7 +638,6 @@ Int_t EdbShowAlg_NN::GetMinsBeforeAndAfter(Float_t& min_dT, Float_t& min_dR, Edb
         min_dR=DeltaR_NoPropagation(seg,s_of_array);
     }
 
-
     Float_t tmp_min_dT=-1;
     Float_t tmp_min_dR=-1;
     Float_t tmp2_min_dT=-1;
@@ -742,12 +739,19 @@ Int_t EdbShowAlg_NN::GetMeansBeforeAndAfter(Float_t& mean_dT, Float_t& mean_dR, 
 
 
 
+
+
+
+
+
+
+
 //______________________________________________________________________________
 
 EdbShowAlg_N3::EdbShowAlg_N3(Bool_t ANN_DoTrain)
 {
     // Constructor with Train/Run Switch
-    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor ANN_DoTrain=%d",ANN_DoTrain);
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Default Constructor ANN_DoTrain=%d",ANN_DoTrain);
 
     // Reset all:
     // Calls Set0 from inheriting function, so some values must be reset to NULL
@@ -769,41 +773,18 @@ EdbShowAlg_N3::EdbShowAlg_N3(Bool_t ANN_DoTrain)
 
     //  Init with values according to N3 Alg:
     Init();
+    
+    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","Default Constructor ANN_DoTrain=%d...done.",ANN_DoTrain);
 }
 
 
-//______________________________________________________________________________
-
-EdbShowAlg_N3::EdbShowAlg_N3()
-{
-    // Default Constructor
-    Log(2,"EdbShowAlg_N3::EdbShowAlg_N3","EdbShowAlg_N3:: Default Constructor");
-
-    // Reset all:
-    // Calls Set0 from inheriting function, so some values must be reset to NULL
-    // manually, unless a new Set0() function is implemented -- which is not at
-    // the moment:
-    Set0();
-
-    eWeightFileString="";
-    eWeightFileLayoutString="";
-    eANNTree=NULL;
-    eTMlpANN=NULL;
-
-    // see default.par_SHOWREC for labeling (labeling identical with ShowRec program)
-    eAlgName="N3";
-    eAlgValue=11;
-
-    //  Init with values according to N3 Alg:
-    Init();
-}
 
 //______________________________________________________________________________
 
 EdbShowAlg_N3::~EdbShowAlg_N3()
 {
     // Default Destructor
-    Log(2,"EdbShowAlg_N3::~EdbShowAlg_N3","EdbShowAlg_N3:: Default Destructor");
+    Log(2,"EdbShowAlg_N3::~EdbShowAlg_N3","Default Destructor");
     if (eANNTree) {
         delete eANNTree;
         eANNTree=0;
@@ -974,7 +955,7 @@ TMultiLayerPerceptron* EdbShowAlg_N3::Create_NN_ALG_MLP(TTree* simu, Int_t input
 
 void EdbShowAlg_N3::SetANNWeightString()
 {
-    Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString().");
+    Log(2,"EdbShowAlg_N3::SetANNWeightString","SetANNWeightString()");
     int inputneurons=eParaValue[5];
     if (inputneurons==5)  eWeightFileString="WEIGHTFILESTRING_N3.txt";
     // TO DO HERE.... TAKE OVER THE CORRECT WEIGHTFILE STRING.
@@ -1029,10 +1010,10 @@ void EdbShowAlg_N3::Print()
 
     cout << "Structure of the Net:" << endl;
     cout << eLayout.Data() << endl;
-
+    
+    Log(2,"EdbShowAlg_N3::Print","Print()...done.");
     return;
 }
-
 
 
 
@@ -1040,20 +1021,258 @@ void EdbShowAlg_N3::Print()
 
 void EdbShowAlg_N3::Execute()
 {
-    Log(2,"EdbShowAlg_N3::Execute","Execute()");
-    cout << "EdbShowAlg_N3::Execute()" << endl;
-    Log(2,"EdbShowAlg_N3::Execute","Execute()   DOING MAIN SHOWER RECONSTRUCTION HERE");
-
+    Log(2,"EdbShowAlg_N3::Execute","Execute() DOING MAIN SHOWER RECONSTRUCTION HERE");
+    
     // TO BE DONE HERE:
     // FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM
     cout << "EdbShowAlg_N3::Execute()...FILL THE ROUTINE WITH THE CODE FROM ShowReco PROGRAM." << endl;
+    
+    
+    // Create the root file that contains the trainingsfile tree data first, 
+    // otherwise the trees are not connected with the specified file.
+    if (eANN_DoTrain==kTRUE) {
+        eANNTrainingsTreeFile = new TFile(Form("N3_ANN_TrainingsTreeFile.root",0),"RECREATE");
+    }
+    
+    // Variables and things important for neural Network:
+    TTree *eANNTrainingsTree = new TTree("TreeSignalBackgroundBT", "TreeSignalBackgroundBT");
+    eANNTrainingsTree->Branch("N3_Type",   &eANN_Inputtype,   "N3_Type/I");
+    eANNTrainingsTree->Branch("N3_Inputvar", eANN_Inputvar, "N3_Inputvar[24]/D");
+    
 
-    cout << "EdbShowAlg_N3::Execute()...done." << endl;
+
+    EdbSegP* InBT;
+    EdbSegP* Segment;
+    EdbSegP* seg;
+    EdbShowerP* RecoShower;
+
+    Bool_t    StillToLoop=kTRUE;
+    Int_t     ActualPID;
+    Int_t     newActualPID;
+    Int_t     STEP=-1;
+    Int_t     NLoopedPattern=0;
+    if (eFirstPlate_eAliPID-eLastPlate_eAliPID<0) STEP=1;
+    if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- STEP for patternloop direction =  " << STEP << endl;
+
+
+    Double_t params[30]; // Used for ANN Evaluation  // TO BE ADAPTED!!!
+
+    //--- Loop over InBTs:
+
+    // Since eInBTArray is filled in ascending ordering by zpositon
+    // We use the descending loop to begin with BT with lowest z first.
+    for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+
+        // CounterOutPut
+        if (gEDBDEBUGLEVEL==2) if ((i%1)==0) cout << eInBTArrayN <<" InBT in total, still to do:"<<Form("%4d",i)<< "\r\r\r\r"<<flush;
+
+        //-----------------------------------
+        // 0a) Reset characteristic variables:
+        //-----------------------------------
+
+        //-----------------------------------
+        // 1) Make eAli with cut parameters:
+        //-----------------------------------
+
+        // Create new EdbShowerP Object for storage;
+        // See EdbShowerP why I have to call the Constructor as "unique" ideficable value
+        //RecoShower = new EdbShowerP(i,eAlgValue);
+        RecoShower = new EdbShowerP(i,eAlgValue,-1);
+
+        // Get InitiatorBT from eInBTArray
+        InBT=(EdbSegP*)eInBTArray->At(i);
+        if (gEDBDEBUGLEVEL>2) InBT->PrintNice();
+        
+        // Clone InBT, because it is modified a lot of times,
+        // avoid rounding errors by propagating back and forth
+        EdbSegP* InBTClone = (EdbSegP*)InBT->Clone();
+
+        // Add InBT to RecoShower:
+        // This has to be done, since by definition the first BT in the RecoShower is the InBT.
+        // Otherwise, also the definition of shower axis and transversal profiles is wrong!
+        RecoShower -> AddSegment(InBT);
+        cout << "Segment  (InBT) " << InBT << " was added to RecoShower." <<  endl;
+
+        // Transform (make size smaller, extract only events having same MC) the  eAli  object:
+        // See in Execute_CA for description.
+        // Transform_eAli(InBT,1400);
+        Transform_eAli(InBT,2400);
+
+        //-----------------------------------
+        // 2) Loop over (whole) eAli, check BT for Cuts
+        //-----------------------------------
+        ActualPID= InBT->PID() ;
+        newActualPID= InBT->PID() ;
+
+        while (StillToLoop) {
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- --- Doing patterloop " << ActualPID << endl;
+
+            // just to adapt to this nomenclature of ShowRec program:
+            int patterloop_cnt=ActualPID;
+
+            for (Int_t btloop_cnt=0; btloop_cnt<eAli->GetPattern(ActualPID)->GetN(); ++btloop_cnt) {
+
+                Segment = (EdbSegP*)eAli->GetPattern(ActualPID)->GetSegment(btloop_cnt);
+
+                // just to adapt to this nomenclature of ShowRec program
+                seg=Segment;
+
+                if (gEDBDEBUGLEVEL>4) Segment->PrintNice();
+
+                // Reset characteristic variables:
+                for (Int_t loop=0; loop<24; ++loop) eANN_Inputvar[loop]=0;
+
+                // Now    calculate NN Inputvariables:  --------------------
+                // Calculate the first four inputvariables, which depend on InitiatorBT only:
+                // Important: dT, dMindist is symmetric, dR is NOT!
+                // Do propagation from InBT to seg! (i.e. to downstream segments)
+                // Loose PreCuts, in order not to get too much BG BT into trainings sample
+                eANN_Inputvar[0] = seg->Z()-InBT->Z();
+                // Update: It is better to use DistToAxis instead of dR, since dR measures
+                // only distance to InBT without taking care of the direction.
+                // (does not matter for relatively straight tracks, but for tracks in direction)
+                /// eANN_Inputvar[1] = GetdR(InBT, seg);
+                //eANN_Inputvar[1] = GetDistToAxis(InBTClone, seg);
+                cout << "// TO BE CHECKED WHERE THE FUNCTION GetDistToAxis(InBTClone, seg);  IS!!" << endl;
+                // TO BE CHECKED WHERE THE FUNCTION GetDistToAxis(InBTClone, seg);  IS!!
+                if (eANN_DoTrain==kTRUE && eANN_Inputvar[1] > 1200) continue;
+
+                //eANN_Inputvar[2] = GetdeltaThetaSingleAngles(InBT, seg);
+                // TO BE CHECKED WHERE THE FUNCTION GetdeltaThetaSingleAngles(InBT, seg);  IS!!
+                cout << "// TO BE CHECKED WHERE THE FUNCTION GetdeltaThetaSingleAngles(InBT, seg);  IS!!" << endl;
+                if (eANN_DoTrain==kTRUE && eANN_Inputvar[2] >  0.4) continue;
+
+                //eANN_Inputvar[3] = GetdMinDist(InBT, seg);
+                // TO BE CHECKED WHERE THE FUNCTION GetdMinDist(InBT, seg);  IS!!
+                cout << "// TO BE CHECKED WHERE THE FUNCTION GetdMinDist(InBT, seg);  IS!!" << endl;
+                if (eANN_DoTrain==kTRUE && eANN_Inputvar[3] >  800) continue;
+                // 1) 
+                // 2) .... // 24)  
+                // TO BE FILLED WITH THE CODE FROM    SHOWREC   PROGRAMM
+                // end of calculate NN Inputvariables:  --------------------
+
+                // ---------------------------------------------------------
+                // Calculate eANN Output now:
+                eANN_OutputValue=0;
+                    // Adapt: array params should have as many entries as there are inputvariables.
+                    // This array is larger than possible used array for evaluation.
+                    // The array with the right size is created, when the eANN_INPUTNEURONS
+                    // variable is fixed (TMLP class demands #arraysize = #inputneurons)
+                    // This is a kind of dump workaround, but for now it should work.
+                    Double_t EvalValue=0;
+                    Double_t    N3_Evalvar4[4];
+                    Double_t    N3_Evalvar8[8];
+                    Double_t    N3_Evalvar12[12];
+                    Double_t    N3_Evalvar16[16];
+                    Double_t    N3_Evalvar20[20];
+                    Double_t    N3_Evalvar24[24];
+
+                    if (eANN_INPUTNEURONS==4) {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar4[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar4);
+                    }
+                    else if (eANN_INPUTNEURONS==8) {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar8[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar8);
+                    }
+                    else if (eANN_INPUTNEURONS==12) {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar12[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar12);
+                    }
+                    else if (eANN_INPUTNEURONS== 16) {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar16[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar16);
+                    }
+                    else if (eANN_INPUTNEURONS==20) {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar20[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar20);
+                    }
+                    else {
+                        for (int k=0; k<eANN_INPUTNEURONS; ++k) N3_Evalvar24[k]= eANN_Inputvar[k];
+                        eANN_OutputValue=eTMlpANN->Evaluate(0,N3_Evalvar24);
+                    }
+                    // ---------------------------------------------------------
+                
+                
+                // Now apply cut conditions: NN Neural Network Alg --------------------
+                Double_t value=0;
+                
+                // These conditions have to be calculated, still!!!
+                cout << "TO BE DONE" << endl;
+                
+                value=eTMlpANN->Evaluate(0, params);
+                if (gEDBDEBUGLEVEL>3) {
+                    cout << "eANN_OutputValue: " << eANN_OutputValue << " Inputvalues: "; 
+                    for (int i=0; i<5; i++) cout << "  " << eANN_Inputvar[i];
+                }
+                if (eANN_OutputValue<eParaValue[1]) continue;
+                // end of    cut conditions: NN Neural Network Alg --------------------
+
+                
+                
+                // If we arrive here, Basetrack  Segment  has passed criteria
+                // and is then added to the RecoShower:
+                // Check if its not the InBT which is already added:
+                if (Segment->X()==InBT->X()&&Segment->Y()==InBT->Y()) {
+                    ;    // is InBT, do nothing;
+                }
+                else {
+                    RecoShower -> AddSegment(Segment);
+                }
+                cout << "Segment  " << Segment << " was added to &RecoShower  : " << &RecoShower  <<  endl;
+            } // of btloop_cnt
+
+            //------------
+            newActualPID=ActualPID+STEP;
+            ++NLoopedPattern;
+
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- --- newActualPID= " << newActualPID << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- --- NLoopedPattern= " << NLoopedPattern << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- --- eNumberPlate_eAliPID= " << eNumberPlate_eAliPID << endl;
+            if (gEDBDEBUGLEVEL>3) cout << "EdbShowAlg_N3::Execute--- --- StillToLoop= " << StillToLoop << endl;
+
+            // This if holds in the case of STEP== +1
+            if (STEP==1) {
+                if (newActualPID>eLastPlate_eAliPID) StillToLoop=kFALSE;
+                if (newActualPID>eLastPlate_eAliPID) cout << "EdbShowAlg_N3::Execute--- ---Stopp Loop since: newActualPID>eLastPlate_eAliPID"<<endl;
+            }
+            // This if holds in the case of STEP== -1
+            if (STEP==-1) {
+                if (newActualPID<eLastPlate_eAliPID) StillToLoop=kFALSE;
+                if (newActualPID<eLastPlate_eAliPID) cout << "EdbShowAlg_N3::Execute--- ---Stopp Loop since: newActualPID<eLastPlate_eAliPID"<<endl;
+            }
+            // This if holds  general, since eNumberPlate_eAliPID is not dependent of the structure of the gAli subject:
+            if (NLoopedPattern>eNumberPlate_eAliPID) StillToLoop=kFALSE;
+            if (NLoopedPattern>eNumberPlate_eAliPID) cout << "EdbShowAlg_N3::Execute--- ---Stopp Loop since: NLoopedPattern>eNumberPlate_eAliPID"<<endl;
+
+            ActualPID=newActualPID;
+        } // of // while (StillToLoop)
+
+        // Obligatory when Shower Reconstruction is finished!
+        RecoShower ->Update();
+        //RecoShower ->PrintBasics();
+
+
+        // Add Shower Object to Shower Reco Array.
+        // Not, if its empty:
+        // Not, if its containing only one BT:
+        if (RecoShower->N()>1) eRecoShowerArray->Add(RecoShower);
+
+        // Set back loop values:
+        StillToLoop=kTRUE;
+        NLoopedPattern=0;
+    } // of  //   for (Int_t i=eInBTArrayN-1; i>=0; --i) {
+
+
+    // Set new value for  eRecoShowerArrayN  (may now be < eInBTArrayN).
+    SetRecoShowerArrayN(eRecoShowerArray->GetEntries());
+
+    Log(2,"EdbShowAlg_N3::Execute","eRecoShowerArray():Entries = %d",eRecoShowerArray->GetEntries());
+    Log(2,"EdbShowAlg_N3::Execute","DOING MAIN SHOWER RECONSTRUCTION HERE...done.");
     return;
 }
 
 //______________________________________________________________________________
-
 
 
 

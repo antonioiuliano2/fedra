@@ -96,7 +96,7 @@ private:
 public:
 
     EdbShowAlg_NN();
-    EdbShowAlg_NN(Bool_t ANN_DoTrain);
+    //EdbShowAlg_NN(Bool_t ANN_DoTrain);
     virtual ~EdbShowAlg_NN();          // virtual constructor due to inherited class
 
     void    Init();
@@ -150,6 +150,7 @@ private:
     TString eWeightFileLayoutString;
     TTree*  eANNTree;
     TMultiLayerPerceptron*    eTMlpANN;
+    TFile*  eANNTrainingsTreeFile;
 
     // Variables for the eANN Branches:
     Bool_t      eANN_DoTrain=kTRUE;
@@ -182,7 +183,6 @@ private:
 
 public:
 
-    EdbShowAlg_N3();
     EdbShowAlg_N3(Bool_t ANN_DoTrain);
     virtual ~EdbShowAlg_N3();          // virtual constructor due to inherited class
 

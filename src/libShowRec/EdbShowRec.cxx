@@ -13,7 +13,7 @@ EdbShowRec::EdbShowRec()
     Log(2,"EdbShowRec::EdbShowRec()","Default Constructor");
     Set0();
     Init();
-    //if (gEDBDEBUGLEVEL>0) Print();
+    Print();
     Log(2,"EdbShowRec::EdbShowRec()","Default Constructor...done.");
 }
 
@@ -49,7 +49,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli)
     // for possible InBTs automatically<f.
     Check_eInBTArray();
 
-    //if (gEDBDEBUGLEVEL>0) Print();
+    Print();
     Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli)","Default Constructor...done.");
 }
 
@@ -99,7 +99,7 @@ EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)
     CheckPlateValues();
     /// STILL DEBUG STATUS....... IS THIS TRUE???-------------------------------
 
-//     if (gEDBDEBUGLEVEL>0) Print();
+    Print();
     Log(2,"EdbShowRec::EdbShowRec(EdbPVRec* gAli, TObjArray* InBTArray)","Default Constructor...done.");
 }
 
@@ -699,6 +699,7 @@ void EdbShowRec::ReconstructTEST()
 
 void EdbShowRec::ReconstructTEST_CA()
 {
+    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstructrion function CA Algorithm");
 
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
@@ -751,21 +752,7 @@ void EdbShowRec::ReconstructTEST_CA()
 
     }  // ShowerRecoAlg Loop.
 
-    return;
-
-    TH1F* h1= new TH1F("hh","hh",100,0,1);
-    for (Int_t i=0; i<eRecoShowerArrayN; ++i) {
-        EdbShowerP* sh=	(EdbShowerP* ) eRecoShowerArray->At(i);
-        h1->Fill(TMath::Abs(sh->GetSegment(0)->TX()-sh->GetSegmentGravity()->TX()));
-    }
-    h1->Draw();
-
-    /*
-      EdbShowAlgE* ENERGYMODULE = new EdbShowAlgE(eRecoShowerArray);
-      ENERGYMODULE->TEST();
-      ENERGYMODULE->Create_MLP();
-      ENERGYMODULE->Create_MLPTree();
-    */
+    Log(2,"EdbShowRec::ReconstructTEST_CA()","Default reconstructrion function CA Algorithm...done.");
     return;
 }
 
@@ -777,7 +764,8 @@ void EdbShowRec::ReconstructTEST_CA()
 
 void EdbShowRec::ReconstructTEST_OI()
 {
-
+    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstructrion function OI Algorithm");
+    
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
 
@@ -785,8 +773,6 @@ void EdbShowRec::ReconstructTEST_OI()
 
     // test
     Fill_eInBTArray_ByBaseTracksOf_RootFile();
-
-//   return;
 
     if (!eShowAlgArray)   {
         Create_eShowAlgArray();
@@ -830,6 +816,7 @@ void EdbShowRec::ReconstructTEST_OI()
     SetOutNames();
     RecoShowerArray_To_Treebranch();
 
+    Log(2,"EdbShowRec::ReconstructTEST_OI()","Default reconstructrion function OI Algorithm...done.");
     return;
 }
 
@@ -843,6 +830,8 @@ void EdbShowRec::ReconstructTEST_OI()
 void EdbShowRec::ReconstructTEST_NN()
 {
 
+    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstructrion function NN Algorithm");
+    
     if (!eInBTArray)  Create_eInBTArray();
     if (!eInBTTree)   Create_eInBTTree();
     Fill_eInBTArray(eUseNr);
@@ -876,6 +865,7 @@ void EdbShowRec::ReconstructTEST_NN()
     eActualAlg->Execute();
     cout<<"--------------------------------------  EXECUTE    done. --------------------------"<<endl;
 
+    Log(2,"EdbShowRec::ReconstructTEST_NN()","Default reconstructrion function NN Algorithm...done.");
     return;
 }
 
@@ -887,7 +877,6 @@ void EdbShowRec::ReconstructTEST_NN()
 
 void EdbShowRec::Reconstruct()
 {
-    Log(2,"EdbShowRec::Reconstruct()","Default reconstruction function");
     Log(2,"EdbShowRec::Reconstruct()","Default reconstruction using only one shower algorithm (default: OI) with default values.");
 
     // Check on different things to have:
@@ -900,8 +889,6 @@ void EdbShowRec::Reconstruct()
     isThere=0;
     if (eShowAlgArray)  isThere = 1;
     Log(2,"EdbShowRec::Reconstruct()","Check if  eShowAlgArray  is there: %d", isThere);
-
-// return;
 
     // CHECK IF WE DO HAVE TO DO IT AGAIN, WHEN IT WAS ALREADY CHECKED IN THE
     // CONSTRUCTOR OF  EdbShowRec ...
@@ -936,22 +923,21 @@ void EdbShowRec::Reconstruct()
     // ConeAdvanced Algorithm as standard algorithm.
     if (eShowAlgArrayN==0) Fill_eShowAlgArray();
 
-    cout << "eShowAlgArray = " << eShowAlgArray << endl;
-    cout << "eShowAlgArrayN = " << eShowAlgArrayN << endl;
+    Log(2,"EdbShowRec::Reconstruct()","eShowAlgArray  =%d",eShowAlgArray);
+    Log(2,"EdbShowRec::Reconstruct()","eShowAlgArrayN =%d",eShowAlgArrayN);
 
 
     // Get Reconstruction Algorithm Object from the TObjArray storage:
     Log(2,"EdbShowRec::Reconstruct()","Get ShowAlg from TObjArray storage");
 
     // CAN IT ALSO BE DONE WITH A CAST TO THE PARENT CLASS ???
-    // Seem so
+    // Seems so:
     // EdbShowAlg*  RecoAlg = (EdbShowAlg*) eShowAlgArray->At(0);
     // But I rather check it correctly, just to be safe....
     EdbShowAlg_OI*  RecoAlg = (EdbShowAlg_OI*) eShowAlgArray->At(0);
     eActualAlg=RecoAlg;
 
-
-
+    
     // Hand over the important objects to the RecoAlg itsself.
     //  eAli  (the volume)
     RecoAlg->SetEdbPVRec(eAli);
@@ -962,17 +948,21 @@ void EdbShowRec::Reconstruct()
     //  RecoShowerArray, to be filled by the algorithm:
     RecoAlg->SetRecoShowerArray(eRecoShowerArray);
     //-------------------------------------------------------------------
-
+    
+    // Print relevant information for the algorithm:
     RecoAlg->Print();
 
-
+    
     //-------------------------------------------------------------------
-    //	Main Reconstruction Part for the algorithm:
+    // Main Reconstruction Part for the algorithm:
+    //
     //
     RecoAlg->Execute();
     //
+    //
     //-------------------------------------------------------------------
 
+    
     // Get RecoShowerArray from Reco Alg back!
     // This has to be done, because EdbShowAlg and EdbShowRec class have
     // each a RecoShowerArray on their own. (It is by construction so...).
@@ -984,9 +974,6 @@ void EdbShowRec::Reconstruct()
     if (gEDBDEBUGLEVEL>2) PrintRecoShowerArray();
 
 
-// cout << "Return now!    EdbShowRec.cxx    l 988 " << endl;
-// return;    
-    
     // Parametrize Showers now, according to the set parametrizations:
     Log(2,"EdbShowRec::Reconstruct()", "Parametrize Showers now, according to the set parametrizations");
     SetDoParaType(1);
@@ -1057,10 +1044,10 @@ void EdbShowRec::Check_eInBTArray()
     Log(2,"EdbShowRec::Check_eInBTArray()","Check the Initiator Basetrack array");
     Log(2,"EdbShowRec::Check_eInBTArray()","Check if and wheter to set the Array if InBTs");
     Log(2,"EdbShowRec::Check_eInBTArray()","The order is in the way:");
-    Log(2,"EdbShowRec::Check_eInBTArray()","   a)  if eAli has eTracks, take eTracks.");
-    Log(2,"EdbShowRec::Check_eInBTArray()","   b)  if a  linked_tracks.root file is existing, take tracks from there-");
-    Log(2,"EdbShowRec::Check_eInBTArray()","   c)  take all BT from [firstplate..middleplate]");
-    Log(2,"EdbShowRec::Check_eInBTArray()","   d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    a)  if eAli has eTracks, take eTracks.");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    b)  if a  linked_tracks.root file is existing, take tracks from there-");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    c)  take all BT from [firstplate..middleplate]");
+    Log(2,"EdbShowRec::Check_eInBTArray()","    d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)");
 
     // Check if and wheter to set the Array if InBTs.
     // The order is in the way (if the corresponding stuff is there:
@@ -1070,20 +1057,20 @@ void EdbShowRec::Check_eInBTArray()
     // c)  take all BT from [firstplate..middleplate]
     // d)  from a (manually) written root file containing a TObjArray of EdbSegP segments (InBT)
     if (!eAli) {
-        Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eAli created yet. For now: return;");
+        Log(2,"EdbShowRec::Check_eInBTArray","No eAli created yet. For now: return;");
         return;
     }
 
     if (!eInBTArray) {
-        Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eInBTArray created yet. Create it.");
+        Log(2,"EdbShowRec::Check_eInBTArray","No eInBTArray created yet. Create it.");
         Create_eInBTArray();
-        Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eInBTArray created yet. Create it....done.");
+        Log(2,"EdbShowRec::Check_eInBTArray","No eInBTArray created yet. Create it....done.");
     }
 
     if (!eInBTTree) {
-        Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eInBTTree created yet. Create it.");
+        Log(2,"EdbShowRec::Check_eInBTArray","No eInBTTree created yet. Create it.");
         Create_eInBTTree();
-        Log(2,"EdbShowRec::Check_eInBTArray","EdbShowRec::Check_eInBTArray:   No eInBTTree created yet. Create it...done");
+        Log(2,"EdbShowRec::Check_eInBTArray","No eInBTTree created yet. Create it...done");
     }
 
     // -------------------------------------------------

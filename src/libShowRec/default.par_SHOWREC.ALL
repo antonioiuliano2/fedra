@@ -76,6 +76,7 @@ SHOW_SETALG 0 4
 SHOW_SETALG 0 5
 SHOW_SETALG 0 6
 SHOW_SETALG 0 7
+SHOW_SETALG 0 11
 
 SHOW_SETALG 1 CT (Algname,  char)
 SHOW_SETALG 1 CL
@@ -85,6 +86,7 @@ SHOW_SETALG 1 OI
 SHOW_SETALG 1 SA
 SHOW_SETALG 1 TC
 SHOW_SETALG 1 RC
+SHOW_SETALG 1 N3
 
 
 SHOW_ADDALG 0 0 (Algtype,  int)
@@ -95,6 +97,7 @@ SHOW_ADDALG 0 4
 SHOW_ADDALG 0 5
 SHOW_ADDALG 0 6
 SHOW_ADDALG 0 7
+SHOW_ADDALG 0 11
 
 SHOW_ADDALG 1 CT (Algname,  char)
 SHOW_ADDALG 1 CL
@@ -104,6 +107,7 @@ SHOW_ADDALG 1 OI
 SHOW_ADDALG 1 SA
 SHOW_ADDALG 1 TC
 SHOW_ADDALG 1 RC
+SHOW_ADDALG 1 N3
 
 SHOW_SETPARASET 2 (Algtype  int)  500  0.5  100  0.1   (ParamSet, depending on algnummer *float)
 
@@ -196,7 +200,7 @@ SHOW_ENERGY_WRITE_WEIGHTFILE     YY 0
 SHOW_ENERGY_READ_WEIGHTFILE_PLATES  XX 11 15 21 27 30 35 41 46 55 56 57 
 #(name of shower Parametrization,  char, plate numbers for weightfiles, int*, default: "ANN_Weight_Energy_FJ_11.txt" (16,21,26,31,36,41,46))
 
-#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  41 									(name of shower Parametrization		char, plate number		int)
+#SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  41 					(name of shower Parametrization		char, plate number		int)
 #SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  42                  (name of shower Parametrization   char, plate number   int)
 #SHOW_ENERGY_ADD_WEIGHTFILE_PLATE  XX  43                  (name of shower Parametrization   char, plate number   int)
 
