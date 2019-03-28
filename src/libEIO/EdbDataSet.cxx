@@ -2521,7 +2521,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   TTree *tracks= new TTree("tracks","tracks");
 
   EdbTrackP    *track = new EdbTrackP(8);   // why is this track initialised with 8 segments by default ???
-  EdbSegP      *tr = (EdbSegP*)track;
+  EdbSegP      *tr = new EdbSegP();
   TClonesArray *segments  = new TClonesArray("EdbSegP");
   TClonesArray *segmentsf = new TClonesArray("EdbSegP");
 
@@ -2535,9 +2535,8 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   tracks->Branch("xv",&xv,"xv/F");
   tracks->Branch("yv",&yv,"yv/F");
   tracks->Branch("w",&w,"w/F");
-//   tracks->Branch("t.","EdbSegP",&tr,32000,99); // track data is not filled when using this Branch method ...
-  // probably has something to do with the casting do a different class
-  tracks->Branch("t.","EdbSegP",&track,32000,99);
+  tracks->Branch("t.","EdbSegP",&tr,32000,99); // track data is now filled after using Copy method
+  //tracks->Branch("t.","EdbSegP",&track,32000,99);
   tracks->Branch("s", &segments);
   tracks->Branch("sf",&segmentsf);
 
@@ -2546,7 +2545,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
   for(int itr=0; itr<ntr; itr++) {
     
     track = (EdbTrackP*)(trarr.At(itr));
-
+    tr->Copy(*track); //Using Copy method from EdbSegP avoids the cast
     trid = track->ID();
     nseg = track->N();
     npl  = track->Npl();
