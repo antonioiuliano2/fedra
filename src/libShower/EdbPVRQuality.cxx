@@ -960,10 +960,10 @@ void EdbPVRQuality::CheckEdbPVRecThetaSpace(Int_t AliType)
 
     cout << spec2->GetNPeaks() << endl;
     cout << spec2->GetNPeaks() << endl;
-    Float_t*	xarr;
-    Float_t*	yarr;
-    xarr =  spec2-> GetPositionX();
-    yarr =  spec2-> GetPositionY();
+    Double_t*	xarr;
+    Double_t*	yarr;
+    xarr = (Double_t*) spec2-> GetPositionX();
+    yarr = (Double_t*) spec2-> GetPositionY();
     cout << xarr[0] << endl;
     cout << xarr[1] << endl;
     cout << yarr[0] << endl;
