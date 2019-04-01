@@ -9,6 +9,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 #include "TH2F.h"
+#include "TGraph2D.h"
 #include "TCut.h"
 #include "EdbRun.h"
 #include "EdbCell2.h"
@@ -40,6 +41,9 @@ class EdbRunAccess : public TObject {
 
   TCut         eHeaderCut;  // header cut to be applied in run initialization
   Int_t        eTracking;   // to test tracking alorithm: -1-ignored(def),0/1 - trackings to accept
+  
+  TGraph2D    *eGraphZ[4];    //! keep z1/z2/z3/z4 surfaces using eZ1/eZ2/eZ3/eZ4 for each view
+  TGraph2D    *eGraphDZ[3];    //! keep the base/layer1/layer2 thickness calculated using eZ1/eZ2/eZ3/eZ4 for each view
   
  private:
   TString  eRunFileName;
@@ -136,14 +140,12 @@ class EdbRunAccess : public TObject {
 
   bool  AcceptRawSegment(EdbView *view, int ud, EdbSegP &segP, int side, int entry);
 
-  int ViewSide(const EdbView *view) const;
-//    {    if(view->GetNframesTop()==0) return 2;         // 2- bottom
- //   else if(view->GetNframesBot()==0) return 1;         // 1- top
-  //  else return 0; }
+  int   ViewSide(const EdbView *view) const;
+  float ViewX(const EdbView *view) const {return view->GetXview();} // todo
+  float ViewY(const EdbView *view) const {return view->GetYview();} // todo
 
-  ///////
   float SegmentWeight(const EdbSegment &s);
-      
+
   bool  PassCuts(int ud, EdbSegment &seg);
   int  NCuts(int ud) {
     if(!eCuts[ud])  return 0;
@@ -181,8 +183,10 @@ class EdbRunAccess : public TObject {
   void SetCutRight(  int ud, float wmin );
   void SetCutTop(    int ud, float wmin );
   void SetCutBottom( int ud, float wmin );
+  
+  void FillDZMaps();
 
-  ClassDef(EdbRunAccess,1)  // helper class for access to the run data
+  ClassDef(EdbRunAccess,2)  // helper class for access to the run data
 };
 
 #endif /* ROOT_EdbRunAccess */

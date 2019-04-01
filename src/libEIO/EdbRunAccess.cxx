@@ -86,6 +86,8 @@ void EdbRunAccess::Set0()
   eViewCorr = 0;
   eAffStage2Abs=0;
   eInvertSides=0;
+  for(int i=0; i<4; i++) eGraphZ[i] = 0;
+  for(int i=0; i<3; i++) eGraphDZ[i] = 0;
 }
 
 ///_________________________________________________________________________
@@ -1272,3 +1274,60 @@ TH2F *EdbRunAccess::CheckUpDownOffsets()
   return h;
 }
 
+
+///_________________________________________________________________________
+void EdbRunAccess::FillDZMaps()
+{
+  // fill DZ maps
+
+  int eNsegMin=100;
+  
+  Log(2,"EdbRunAccess::FillDZmaps","Get data from %s with AFID=%d", eRunFileName.Data(),eAFID);
+  if(!eRun) { Log(1,"EdbRunAccess::FillDZMaps","ERROR: run is not opened\n"); return; }
+  EdbView        *view = eRun->GetView();
+  EdbViewHeader  *head = view->GetHeader();
+  int nentries = eRun->GetEntries();
+
+  Double_t *x1   = new Double_t[nentries];
+  Double_t *y1   = new Double_t[nentries];
+  Double_t *x2   = new Double_t[nentries];
+  Double_t *y2   = new Double_t[nentries];
+  Double_t *z1   = new Double_t[nentries];
+  Double_t *z2   = new Double_t[nentries];
+  Double_t *z3   = new Double_t[nentries];
+  Double_t *z4   = new Double_t[nentries];
+  Int_t cnt_good=0;
+
+  int cnt1=0, cnt2=0;
+  for(int ie=0; ie<nentries; ie++ ) {
+    view = eRun->GetEntry(ie,1,0,0,0,0);
+    if( head->GetNsegments() < eNsegMin ) continue;
+    int side = ViewSide(view);
+    if( side == 1 ) {
+      x1[cnt1] = ViewX(view);
+      y1[cnt1] = ViewY(view);
+      z1[cnt1] = view->GetZ1();
+      z2[cnt1] = view->GetZ2();
+      cnt1++;
+    }
+    else if( side == 2 ) {
+      x2[cnt2] = ViewX(view);
+      y2[cnt2] = ViewY(view);
+      z3[cnt2] = view->GetZ3();
+      z4[cnt2] = view->GetZ4();
+      cnt2++;
+    }
+  }
+
+  for(int i=0; i<4; i++) if( eGraphZ[i] )  delete  eGraphZ[i];
+  for(int i=0; i<3; i++) if( eGraphDZ[i] ) delete  eGraphDZ[i];
+
+  eGraphZ[0]  = new TGraph2D("graphZ1","graphZ1",cnt1,x1,y1,z1);
+  eGraphZ[1]  = new TGraph2D("graphZ2","graphZ2",cnt1,x1,y1,z2);
+  eGraphZ[2]  = new TGraph2D("graphZ3","graphZ3",cnt2,x2,y2,z3);
+  eGraphZ[3]  = new TGraph2D("graphZ4","graphZ4",cnt2,x2,y2,z4);
+
+  TFile f("dz.root","RECREATE");
+  for(int i=0; i<4; i++) if( eGraphZ[i] ) eGraphZ[i]->Write();
+  f.Close();
+}

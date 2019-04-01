@@ -92,6 +92,9 @@ public:
 
   Float_t  GetXview()       const { return eXview;  }
   Float_t  GetYview()       const { return eYview;  }
+  
+  Float_t  GetXviewAff()       const { return eAff.B1(); }
+  Float_t  GetYviewAff()       const { return eAff.B2(); }
 
   void     SetViewID( int id )  { eViewID = id; }
   void     SetAreaID( int id )  { eAreaID = id; }
