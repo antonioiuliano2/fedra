@@ -69,8 +69,9 @@ EdbTrackAssembler::~EdbTrackAssembler()
 }
   
   //--------------------------------------------------------------------------------------
-  void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, int nsegmin)
+void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate,  int nsegmin)
 {
+  // return aff which to be applied to p
   ExtrapolateTracksToZ( p.Z(), nsegmin);
   int ntr = eTrZ.GetEntries();
   EdbPattern ptr( 0, 0, p.Z(), ntr ); 
@@ -83,9 +84,18 @@ EdbTrackAssembler::~EdbTrackAssembler()
   al.eDPHI      = 0.00;
     //al.eDoCoarse=1;
   al.Align(ptr,p,0);
+  
   EdbAffine2D *aff = al.eCorrL[0].GetAffineXY();
+  aff->Invert();
   aff->Print();
-  for(int i=0; i<ntr; i++) ((EdbSegP*)(eTrZ.UncheckedAt(i)))->Transform(aff);
+  p.Transform(aff);
+  plate.GetAffineXY()->Transform(aff);
+  
+  EdbAffine2D *afftxty = al.eCorrL[0].GetAffineTXTY();
+  afftxty->Invert();
+  afftxty->Print();
+  p.TransformA(afftxty);
+  plate.GetAffineTXTY()->Transform(afftxty);
 }
   
   //--------------------------------------------------------------------------------------
@@ -511,13 +521,18 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         }
   
         if(i>0) etra.ExtrapolateTracksToZ(p.Z());
-        if( eDoRealign && i==1 ) etra.CheckPatternAlignment(p,1);
-        if( eDoRealign && i>1  ) etra.CheckPatternAlignment(p,2);
+        if(eDoRealign) 
+        {
+          if( i==1 ) etra.CheckPatternAlignment(p,*plate,1);
+          if( i>1  ) etra.CheckPatternAlignment(p,*plate,2);
+        }
         etra.FillTrZMap();
         etra.AddPattern(p);
       }
     }
-
+    
+    if(eDoRealign) eSproc->WriteScanSet(idset,*ss);
+    
     int ntr = etra.Tracks().GetEntries();
     
     for(int i=0; i<ntr; i++) {
@@ -682,8 +697,8 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
         }
   
         if(i>0) etra.ExtrapolateTracksToZ(p.Z());
-        if( eDoRealign && i==1 ) etra.CheckPatternAlignment(p,1);
-        if( eDoRealign && i>1  ) etra.CheckPatternAlignment(p,2);
+        //if( eDoRealign && i==1 ) etra.CheckPatternAlignment(p,1);
+        //if( eDoRealign && i>1  ) etra.CheckPatternAlignment(p,2);
         etra.FillTrZMap();
         etra.AddPattern(p);
       }

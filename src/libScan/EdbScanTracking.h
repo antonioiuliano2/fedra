@@ -69,7 +69,7 @@ class EdbTrackAssembler: public TObject {
   void        FitTracks();
   void        CombTracks( TObjArray &selected );
   
-  void CheckPatternAlignment(EdbPattern &p, int nsegmin);
+  void CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate, int nsegmin);
   
   TObjArray   &Tracks() {return eTracks;}
   
