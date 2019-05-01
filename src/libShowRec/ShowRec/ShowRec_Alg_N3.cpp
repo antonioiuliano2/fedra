@@ -3,9 +3,6 @@ void ReconstructShowers_N3()
 {
     Log(2, "ShowRec.cpp", "--- void ReconstructShowers_N3() ---");
 
-
-
-
     //-----------------------------------------------------------------
     // Main function for reconstruction of N3 Algorithm
     //-----------------------------------------------------------------
@@ -45,7 +42,7 @@ void ReconstructShowers_N3()
     // Variables and things important for neural Network:
     TTree *simu = new TTree("TreeSignalBackgroundBT", "TreeSignalBackgroundBT");
     simu->Branch("N3_Type",   &N3_Type,   "N3_Type/I");
-    simu->Branch("N3_Inputvar", N3_Inputvar, "N3_Inputvar[29]/D");
+    simu->Branch("N3_Inputvar", N3_Inputvar, "N3_Inputvar[24]/D");
     //------------------------------
     // Attention: the cloned tree has not the same values after filling.
     // Is it possible that the Clone() function somehow destroys the tree branches
@@ -184,13 +181,13 @@ void ReconstructShowers_N3()
                 // (does not matter for relatively straight tracks, but for tracks in direction)
                 // N3_Inputvar[1] = GetdR(InBT, seg);
                 N3_Inputvar[1] = GetDistToAxis(InBTClone, seg);
-                if (N3_DoTrain==kTRUE && N3_Inputvar[1] > 1200) continue;
+                if (N3_DoTrain==kTRUE && N3_Inputvar[1] > 1000) continue;
 
                 N3_Inputvar[2] = GetdeltaThetaSingleAngles(InBT, seg);
                 if (N3_DoTrain==kTRUE && N3_Inputvar[2] >  0.4) continue;
 
                 N3_Inputvar[3] = GetdMinDist(InBT, seg);
-                if (N3_DoTrain==kTRUE && N3_Inputvar[3] >  800) continue;
+                if (N3_DoTrain==kTRUE && N3_Inputvar[3] > 1000) continue;
 
 
 

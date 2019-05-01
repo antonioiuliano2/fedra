@@ -284,11 +284,6 @@ int main(int argc, char *argv[])
                 sscanf(key+10,"%d",&cmd_ALN3TRAIN);
             }
         }
-        else if (!strncmp(key,"-ALN3EQUALIZE",13)) {
-            if (strlen(key)>13) {
-                sscanf(key+13,"%d",&cmd_ALN3EQUALIZE);
-            }
-        }
         else if (!strncmp(key,"-PASTART",8)) {
             if (strlen(key)>8) {
                 sscanf(key+8,"%d",&cmd_PASTART);

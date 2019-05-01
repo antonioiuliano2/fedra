@@ -123,7 +123,7 @@ void FillGlobalInBTArrayNEW()
         tr->SetBranchAddress("npl", &npl  );
         //tr->Show(0);
 
-        // Just add the Bastracks from the tracks to the global InBTArray.
+        // Just add the basetracks from the tracks to the global InBTArray.
         for (int i=0; i<nentr; i++ ) {
             tr->GetEntry(i);
             if (gEDBDEBUGLEVEL>3) tr->Show(i);
