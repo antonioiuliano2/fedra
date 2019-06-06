@@ -28,10 +28,11 @@ using namespace TMath;
 EdbPlateAlignment::EdbPlateAlignment()
 {
   SetSigma( 10, 0.005 );
-  //SetSigma( 10, 0.01 );
   eOffsetMax = 500.;
   eDZ        = 120;
   eDPHI      = 0.009;
+  eDoublets[0]=eDoublets[1]=5;
+  eDoublets[2]=eDoublets[3]=0.003;
 
   eStatus   =false;
   eDoTestAl =false; eTestAlOK =true;
@@ -315,8 +316,7 @@ void EdbPlateAlignment::ProduceReport()
 void EdbPlateAlignment::DoubletsFilterOut(EdbPattern &p1, EdbPattern &p2)
 {
   EdbAlignmentV adup;
-  adup.eDVsame[0]=adup.eDVsame[1]=5;
-  adup.eDVsame[2]=adup.eDVsame[3]=0.003;
+  for(int i=0; i<4; i++) adup.eDVsame[i]=eDoublets[i];
   
   adup.FillGuessCell(p1,p1,1.,eOffsetMax);
   adup.FillCombinations();

@@ -106,7 +106,7 @@ int EdbAlignmentV::DoubletsFilterOut(int checkview, TH2F *hxy, TH2F *htxty )
   }
   Log(2,"DubletsFilterOut","miss: %d wrong: %d",miss,wrong);
   
-  Log(2,"DubletsFilterOut","%d segments discarded with DX,DY,DTX,DTY: (%5.1f %5.1f %5.3f %5.3f) checkview =%d", 
+  Log(2,"DubletsFilterOut","%d segments discarded with DX,DY,DTX,DTY: (%8.4f %8.4f %7.5f %7.5f) checkview =%d", 
       nout,eDVsame[0],eDVsame[1],eDVsame[2],eDVsame[3], checkview );
   return nout;
 }

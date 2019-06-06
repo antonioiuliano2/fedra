@@ -13,7 +13,8 @@ class EdbPlateAlignment : public EdbAlignmentV
 
   Float_t   eDZ;           // the range +- dz   will be scanned by coarce align
   Float_t   eDPHI;         // the range +- dphi will be scanned by coarce align
-
+  Float_t   eDoublets[4];  // dx,dy,dtx,dty for the dublets cutout
+  
   Bool_t   eDoTestAl, eTestAlOK;
   Bool_t   eDoCoarse, eCoarseOK;
   Bool_t   eDoFine,   eFineOK;
@@ -45,6 +46,8 @@ class EdbPlateAlignment : public EdbAlignmentV
   void ProduceReport();
   void SaveCouplesTree();
   void SetSigma(float spos, float sang) { eSigma[0]=spos; eSigma[1]=sang; }
+  void SetDoublets(float dx, float dy, float dtx, float dty) 
+  { eDoublets[0]=dx; eDoublets[1]=dy; eDoublets[2]=dtx; eDoublets[3]=dty; }
   
   void SlowAlignXY(EdbPattern &p1, EdbPattern &p2, EdbH2 &hxy, EdbH1 &hphi, const char *name="slowal" );
 
