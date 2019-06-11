@@ -19,6 +19,8 @@
 #include "EdbPlateAlignment.h"
 #include "EdbLayer.h"
 #include "EdbCouplesTree.h"
+#include "EdbTrackFitter.h"
+#include "EdbScanCond.h"
 
 ClassImp(EdbPlateAlignment)
 
@@ -39,6 +41,7 @@ EdbPlateAlignment::EdbPlateAlignment()
   eDoCoarse =true;  eCoarseOK =false;
   eDoFine   =true;  eFineOK   =false;
   eSaveCouples=false;
+  eRankCouples=false;
   
   eNcoins    = 0;
   eCoarseMin = 5;
@@ -96,7 +99,11 @@ void EdbPlateAlignment::Align(EdbPattern &p1, EdbPattern &p2, float dz)
   }
   
  END:
-
+ 
+  if(eRankCouples) {
+//    eCorr[0].SetV(2,0);  eCorr[1].SetV(2, 0); ??
+    RankCouples( eS[0], eS[1] );
+  }
   ProduceReport();
   if(eSaveCouples) SaveCouplesTree();
 }
@@ -108,10 +115,13 @@ void EdbPlateAlignment::SaveCouplesTree()
   ect.InitCouplesTree("couples",0,"NEW");
   int nseg = CheckEqualArr(eS[0],eS[1]);
   for(int i=0; i<nseg; i++) {
-    ect.Fill( (EdbSegP*)eS[0].UncheckedAt(i), (EdbSegP*)eS[1].UncheckedAt(i) );
+    if( eRankCouples ) {
+      EdbSegCouple *sc = (EdbSegCouple *)eSegCouples.At(i);
+      ect.Fill( sc->eS1, sc->eS2, sc->eS, sc );
+    }
+    else ect.Fill( (EdbSegP*)eS[0].UncheckedAt(i), (EdbSegP*)eS[1].UncheckedAt(i) );
   }
   ect.eTree->AutoSave();
-  //ect.WriteTree();
 }
 
 //---------------------------------------------------------------------
@@ -613,4 +623,66 @@ void EdbPlateAlignment::SlowAlignXY(EdbPattern &pat1, EdbPattern &pat2, EdbH2 &h
   f.Close();
 }
 
+//---------------------------------------------------------------------
+void EdbPlateAlignment::RankCouples( TObjArray &arr1,TObjArray &arr2 )
+{
+  int n = arr1.GetEntries();
+  Log(3,"RankCouples","%d" ,n);
 
+  EdbTrackFitter tf;
+  EdbScanCond cond;
+  cond.SetSigma0(eSigma[0],eSigma[0],eSigma[1],eSigma[1]);
+  eSegCouples.Delete();
+  EdbSegP seg, seg1, seg2;
+  for(int i=0; i<n; i++) {
+    EdbSegP *s1 = ((EdbSegP*)arr1.UncheckedAt(i));
+    EdbSegP *s2 = ((EdbSegP*)arr2.UncheckedAt(i));
+    
+    seg.Copy(*s1);   // to set correctly vid, aid, etc
+    seg1.Copy(*s1);
+    seg2.Copy(*s2);
+    
+    eCorr[0].ApplyCorrections(seg1);
+    eCorr[1].ApplyCorrections(seg2);
+   
+    tf.Chi2PSeg( seg1, seg2, seg, cond, cond);
+    
+    s1->SetFlag(0);
+    s2->SetFlag(0);
+    seg.SetFlag(0);
+    seg.SetSide(0);
+    seg.SetVolume(seg1.Volume()+seg2.Volume());
+    seg.SetDZ( Abs(seg1.eZ - seg2.eZ) );
+    
+    seg.SetDZem( seg1.Chi2() + seg2.Chi2() );    // HACK: use eDZem variable to keep microtracking Likelihood 
+    
+    EdbSegCouple *sc=new EdbSegCouple();
+    sc->eS1=s1;
+    sc->eS2=s2;
+    sc->eS = new EdbSegP(seg);
+    sc->SetCHI2P( seg.Chi2() );
+    eSegCouples.Add(sc);
+  }
+
+  EdbSegCouple::SetSortFlag(0);    // sort by CHI2P
+  eSegCouples.UnSort();
+  eSegCouples.Sort();
+
+  int ncp = eSegCouples.GetEntries();
+
+  for(int i=0; i<ncp; i++) {
+    EdbSegCouple *sc = (EdbSegCouple*)(eSegCouples.UncheckedAt(i));
+    sc->eS1->SetFlag( sc->eS1->Flag()+1 );
+    sc->eS2->SetFlag( sc->eS2->Flag()+1 );
+    sc->SetN1(sc->eS1->Flag());
+    sc->SetN2(sc->eS2->Flag());
+  }
+
+  for(int i=0; i<ncp; i++) {
+    EdbSegCouple *sc = (EdbSegCouple*)(eSegCouples.UncheckedAt(i));
+    sc->SetN1tot(sc->eS1->Flag());
+    sc->SetN2tot(sc->eS2->Flag());
+  }
+
+  Log(2,"RankCouples","%d couples ok", ncp );
+}

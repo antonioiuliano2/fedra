@@ -258,6 +258,31 @@ float EdbTrackFitter::Chi2ASeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanC
   return chi2a;
 }
 
+///______________________________________________________________________________
+float EdbTrackFitter::Chi2PSeg( EdbSegP &s1, EdbSegP &s2, EdbSegP &seg, EdbScanCond &cond1, EdbScanCond &cond2)
+{
+  // fast estimation of chi2 in the special case when only the position
+  // errors used - no any angular informtion:
+  // application: alignment
+
+  seg.Set( 0,
+           0.5*(s1.X() + s2.X()),
+           0.5*(s1.Y() + s2.Y()),
+           0.5*(s1.TX() + s2.TX()),
+           0.5*(s1.TY() + s2.TY()),
+           s1.W() + s2.W(),
+           0);
+  seg.SetZ( 0.5*(s2.Z()+s1.Z()) );
+
+  Double_t dx = s2.X()-s1.X();
+  Double_t dy = s2.Y()-s1.Y();
+  Float_t  sx = cond1.SigmaX(0);
+  Float_t  sy = cond1.SigmaY(0);
+  Double_t chi2 = Sqrt( dx*dx/sx/sx + dy*dy/sy/sy );
+  seg.SetChi2(chi2);
+  return chi2;
+}
+
 //______________________________________________________________________________
 double EdbTrackFitter::ProbSegMCS(EdbSegP *s1, EdbSegP *s2){
   if(s1->P()<=0)s1->SetP(ePdef);

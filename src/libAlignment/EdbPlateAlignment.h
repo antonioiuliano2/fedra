@@ -18,6 +18,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   Bool_t   eDoTestAl, eTestAlOK;
   Bool_t   eDoCoarse, eCoarseOK;
   Bool_t   eDoFine,   eFineOK;
+  Bool_t   eRankCouples;          // rank couples
   Bool_t   eSaveCouples;          // save couples tree with the report file
   Bool_t   eStatus;               // overall alignment result (true - OK)
   Int_t    eNcoins;               // final number of coinsidence used for affine calc
@@ -28,6 +29,8 @@ class EdbPlateAlignment : public EdbAlignmentV
   EdbPeak2  eH_zphi_coarse;   // the results of the coarse alignment
   EdbPeak2  eH_xy_coarse;
   EdbPeak2  eH_xy_final;      // the final alignment peak
+  
+  TObjArray   eSegCouples;       // segment couples objects to fill couples format tree
 
  public:
   EdbPlateAlignment();
@@ -50,6 +53,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   { eDoublets[0]=dx; eDoublets[1]=dy; eDoublets[2]=dtx; eDoublets[3]=dty; }
   
   void SlowAlignXY(EdbPattern &p1, EdbPattern &p2, EdbH2 &hxy, EdbH1 &hphi, const char *name="slowal" );
+  void RankCouples( TObjArray &arr1,TObjArray &arr2 );
 
   ClassDef(EdbPlateAlignment,1)  // plate-to-plate alignment
 };
