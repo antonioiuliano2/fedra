@@ -2643,6 +2643,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
     tr1->SetSegmentsTrack(tr1->ID());
     tr1->SetCounters();
     //tr1->FitTrackKFS(true);
+    tr1->SetTrack(trid); //providing trackid to eTrack so it will not be lost when trackID resets
     ali.AddTrack(tr1);
   }
 

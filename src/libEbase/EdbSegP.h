@@ -23,7 +23,7 @@ class EdbSegP : public TObject, public EdbTrack2D {
   Int_t      eVid[2];         // [0]-view entry in the input tree, [1]-segment entry in the view
   Int_t      eAid[2];         // [0]-AreaID, [1]-ViewID
   Int_t      eFlag;
-  Int_t      eTrack;          // id of the track (-1) if no track
+  Int_t      eTrack;          // id of the track (-1) if no track, for a track object it represents the index of trk.root file (tracks tree)
  public:
   Float_t    eX , eY, eZ;     // coordinates
   Float_t    eTX, eTY;        // direction tangents
