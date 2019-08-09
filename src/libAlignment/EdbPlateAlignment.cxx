@@ -42,6 +42,7 @@ EdbPlateAlignment::EdbPlateAlignment()
   eDoFine   =true;  eFineOK   =false;
   eSaveCouples=false;
   eRankCouples=false;
+  eDoCorrectBeforeSaving=false;
   
   eNcoins    = 0;
   eCoarseMin = 5;
@@ -115,6 +116,10 @@ void EdbPlateAlignment::SaveCouplesTree()
   ect.InitCouplesTree("couples",0,"NEW");
   int nseg = CheckEqualArr(eS[0],eS[1]);
   for(int i=0; i<nseg; i++) {
+    if(eDoCorrectBeforeSaving)
+    {
+      eCorrL[0].CorrectSeg(*(EdbSegP*)eS[0].UncheckedAt(i));
+    }
     if( eRankCouples ) {
       EdbSegCouple *sc = (EdbSegCouple *)eSegCouples.At(i);
       ect.Fill( sc->eS1, sc->eS2, sc->eS, sc );

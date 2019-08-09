@@ -31,6 +31,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   EdbPeak2  eH_xy_final;      // the final alignment peak
   
   TObjArray   eSegCouples;       // segment couples objects to fill couples format tree
+  Bool_t     eDoCorrectBeforeSaving; // apply corrections before saving the couples tree in al.root
 
  public:
   EdbPlateAlignment();
