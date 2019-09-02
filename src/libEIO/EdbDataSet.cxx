@@ -2546,6 +2546,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
     
     track = (EdbTrackP*)(trarr.At(itr));
     tr->Copy(*track); //Using Copy method from EdbSegP avoids the cast
+    tr->ForceCOV(track->COV());
     trid = track->ID();
     nseg = track->N();
     npl  = track->Npl();
@@ -2563,7 +2564,7 @@ int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char
       if(sf) new((*segmentsf)[is])  EdbSegP( *sf );
     }
 
-    track->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
+    tr->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
     tracks->Fill();
     // track->Clear(); // if this Clear() is written at this stage, the corresponding track in
     // the EdbPattern Volume (ali, eTracks) will also be cleared! This behavior is not
