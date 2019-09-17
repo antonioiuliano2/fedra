@@ -43,6 +43,7 @@ EdbPlateAlignment::EdbPlateAlignment()
   eSaveCouples=false;
   eRankCouples=false;
   eDoCorrectBeforeSaving=false;
+  eNoScale=0;
   
   eNcoins    = 0;
   eCoarseMin = 5;
@@ -115,11 +116,9 @@ void EdbPlateAlignment::SaveCouplesTree()
   EdbCouplesTree ect;
   ect.InitCouplesTree("couples",0,"NEW");
   int nseg = CheckEqualArr(eS[0],eS[1]);
+  for(int i=0; i<nseg; i++)
+    if(eDoCorrectBeforeSaving) eCorrL[0].CorrectSeg(*(EdbSegP*)eS[0].UncheckedAt(i));
   for(int i=0; i<nseg; i++) {
-    if(eDoCorrectBeforeSaving)
-    {
-      eCorrL[0].CorrectSeg(*(EdbSegP*)eS[0].UncheckedAt(i));
-    }
     if( eRankCouples ) {
       EdbSegCouple *sc = (EdbSegCouple *)eSegCouples.At(i);
       ect.Fill( sc->eS1, sc->eS2, sc->eS, sc );
@@ -366,7 +365,8 @@ void EdbPlateAlignment::FineAlAff(EdbPattern &p1, EdbPattern &p2, EdbLayer &la1)
   TObjArray sel1, sel2;
   int npk= Ncoins(eDVsame, &eHxy, 0, &sel1, &sel2);
   EdbAffine2D aff;
-  CalculateAffXY(sel1,sel2,aff);
+  if(eNoScale) CalculateAffXYTurn(sel1,sel2,aff);
+  else         CalculateAffXY(sel1,sel2,aff);
   la1.GetAffineXY()->Transform(&aff);
 
   Log(2,"FineAlAff","peak of %d  with patterns of: %d %d",  npk, p1.N(),p2.N() );

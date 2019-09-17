@@ -15,6 +15,7 @@ class EdbPlateAlignment : public EdbAlignmentV
   Float_t   eDPHI;         // the range +- dphi will be scanned by coarce align
   Float_t   eDoublets[4];  // dx,dy,dtx,dty for the dublets cutout
   
+  Bool_t   eNoScale;             //if 1 - disable scaling for calculation of affine transformations
   Bool_t   eDoTestAl, eTestAlOK;
   Bool_t   eDoCoarse, eCoarseOK;
   Bool_t   eDoFine,   eFineOK;
