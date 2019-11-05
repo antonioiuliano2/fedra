@@ -94,7 +94,7 @@ void EdbTrackG::EstimateMomentum()
 const char *EdbTrackG::GetTitle() const
 {
     static char title[80];
-    if (eTr) sprintf(title, "Track ID %d, Nseg %d, Prob %.4f, P %.3f", eTr->ID(), eTr->N(), eTr->Prob(), eTr->P());
+    if (eTr) sprintf(title, "Track ID %d, OrigTrackID %d, Nseg %d, Prob %.4f, P %.3f", eTr->ID(), eTr->Track(), eTr->N(), eTr->Prob(), eTr->P());
     else strcpy(title, "Track address not defined");
     return title;
 }
@@ -163,7 +163,7 @@ void EdbSegG::InspectSegment()
 const char *EdbSegG::GetTitle() const
 {
     static char title[80];
-    if (eSeg) sprintf(title, "Segment ID %d, PID %d, Track %d", eSeg->ID(), eSeg->PID(), eSeg->Track());
+    if (eSeg) sprintf(title, "Segment ID %d, PID %d, Track %d, MCTrack %d, MCEvent %d", eSeg->ID(), eSeg->PID(), eSeg->Track(), eSeg->MCTrack(), eSeg->MCEvt());
     else strcpy(title, "Segment address not defined");
     return title;
 }
@@ -741,7 +741,7 @@ void EdbDisplay::DrawSegmentExtrapolationLine(const EdbSegP &s, float zmin, floa
 }
 
 //________________________________________________________________________
-void EdbDisplay::TrackDraw(EdbTrackP *tr)
+void EdbDisplay::TrackDraw(EdbTrackP *tr, Color_t kColor)
 {
   // eDrawTracks: 1 - draw fitted track dotted line only
   //              2 - draw also white marker at zmin
@@ -799,7 +799,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       }
     }
     if (fStyle/2 == 1) line->SetLineColor(kBlack);
-    else               line->SetLineColor(kWhite);
+    else               line->SetLineColor(kColor);
     line->SetLineWidth(fLineWidth);
     line->SetBit(kCannotPick);
     if (tr->Flag() != -10)
@@ -830,7 +830,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
       }
     }
     if (fStyle/2 == 1) line->SetLineColor(kBlack);
-    else               line->SetLineColor(kWhite);
+    else               line->SetLineColor(kColor);
     line->SetLineWidth(fLineWidth);
     line->SetLineStyle(1);
     line->Draw();
@@ -846,7 +846,7 @@ void EdbDisplay::TrackDraw(EdbTrackP *tr)
     if(seg) {
       pms->SetPoint(0, seg->X(), seg->Y(), seg->Z() );
       if (fStyle/2 == 1) pms->SetMarkerColor(kBlack);
-      else               pms->SetMarkerColor(kWhite);
+      else               pms->SetMarkerColor(kColor);
       pms->SetMarkerSize(1.2);
       pms->Draw();
       //printf("White track edge, Id %d, Nseg %d.\n", tr->ID(), tr->N());

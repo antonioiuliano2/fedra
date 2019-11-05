@@ -98,7 +98,7 @@ class EdbDisplay: public EdbDisplayBase {
 
   EdbVertexRec *VerRec() const {return eVerRec;}
   //void PatternDraw(EdbPattern &pat);
-  void TrackDraw(EdbTrackP *tr);
+  void TrackDraw(EdbTrackP *tr, Color_t kColor=kWhite);
   EdbSegG *SegLine(const EdbSegP *seg);
 
   void DrawRef(float start[3], float end[3]);
