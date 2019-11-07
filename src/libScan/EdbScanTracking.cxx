@@ -130,6 +130,7 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
   TObjArray trsel;
   float v[2] = { s.X(), s.Y() };
   int nsel =  eTrZMap.SelectObjectsC( v, eDRmax+50 , trsel );
+  Log(3,"EdbTrackAssembler::AddSegment", "nsel = %d",nsel);
   if(!nsel) { 
     return 0;  }
     float prob, probmax = eProbMin;
@@ -138,6 +139,7 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
     for(int i=0; i<nsel; i++) {
       EdbSegP *ss = (EdbSegP*)(trsel.At(i));
       prob = ProbSeg( *ss, s );
+      Log(3,"EdbTrackAssembler::AddSegment", "prob(probmin) = %f (%f) ",prob, eProbMin);
       if(prob<eProbMin) continue;
       ncnd++;
       if(eHistProbAll) eHistProbAll->Fill(prob);
@@ -200,22 +202,40 @@ EdbTrackP *EdbTrackAssembler::AddSegment(EdbSegP &s)
   double dr2 = dx*dx +  dy*dy;
   if(dr2>eDRmax*eDRmax)        return 0;
   
-  float prob;
-  if(eDoUseMCS){
+  float prob=0;
+  if(eDoUseMCS==1){
     ///workaround to get previous(not propagated) segment
     EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
     EdbSegP* seg = t?(const_cast<EdbSegP*>(t->TrackEnd())):0;
     prob = seg?(eFitter.ProbSegMCS(seg, &s2)):0;
   }
-  else
+  else if(eDoUseMCS==2)
   {
-    EdbSegP s;
-    float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
-    prob = (float)TMath::Prob( chi*chi, 4);  
-  }
+    EdbTrackP* t = dynamic_cast<EdbTrackP*> (&s1);
+    EdbSegP* seg = t?(const_cast<EdbSegP*>(t->TrackEnd())):0;
+    if(seg) {
+      float chi = eFitter.Chi2Seg( seg, &s2 );
+      prob = (float)TMath::Prob( chi*chi, 4);
+    }
+    if(prob<0.001&&gEDBDEBUGLEVEL>2) {
+      Log(3,"EdbTrackAssembler::ProbSeg", "dx,dy,dz,dtx,dty: %f %f %f %f %f  prob= %f",dx,dy,dz,dtx,dty, prob);
+      seg->Print();
+      s2.Print();
+      eCond.Print();
+    }
+
+   }
+   else
+   {
+     EdbSegP s;
+     float chi = eFitter.Chi2SegM( s1, s2, s, eCond, eCond );
+     prob = (float)TMath::Prob( chi*chi, 4);
+   }
+   
+
   prob *= eCond.ProbSeg( s2.Theta(), s2.W() );            // the proability component depending on the grains number
   prob *= (float)TMath::Prob( s2.Chi2()*s2.Chi2(), 4 );   // the proability component depending on the segment strength
-    
+
   return prob;
 }
   
@@ -478,13 +498,13 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
       for(int i=0; i<60; i++) {
         misalign[i].ShiftX( dx[i%9] * misalign_offset );
         misalign[i].ShiftY( dy[i%9] * misalign_offset );
-        printf("%d |  %d  %d\n",i, dx[i%9], dy[i%9]);
+        if(gEDBDEBUGLEVEL>1) printf("%d |  %d  %d\n",i, dx[i%9], dy[i%9]);
       }
     }
   
   // read segments and use them for tracking
     for(int ipass=0; ipass<npass; ipass++) {
-      printf("\n\n*************** ipass=%d ************\n",ipass);
+      if(gEDBDEBUGLEVEL>1) printf("\n\n*************** ipass=%d ************\n",ipass);
       etra.eCollisionsRate=0;
       for(int i=0; i<npl; i++) {
         EdbID *id = ss->GetID(i);
@@ -503,7 +523,6 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         p.TransformShr( plate->Shr() );
         p.TransformA(   plate->GetAffineTXTY() );
         p.SetSegmentsPlate(id->ePlate);
-      //printf("pattern with z: %f\n", p.Z());
       
         if(do_local_corr) {
           int nseg = p.N();
@@ -669,7 +688,7 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
       for(int i=0; i<60; i++) {
         misalign[i].ShiftX( dx[i%9] * misalign_offset );
         misalign[i].ShiftY( dy[i%9] * misalign_offset );
-        printf("%d |  %d  %d\n",i, dx[i%9], dy[i%9]);
+        if(gEDBDEBUGLEVEL>1) printf("%d |  %d  %d\n",i, dx[i%9], dy[i%9]);
       }
     }
   
@@ -677,7 +696,7 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
   
     // read segments and use them for tracking
     for(int ipass=0; ipass<npass; ipass++) {
-      printf("\n\n*************** ipass=%d ************\n",ipass);
+      if(gEDBDEBUGLEVEL>1) printf("\n\n*************** ipass=%d ************\n",ipass);
       etra.eCollisionsRate=0;
       for(int i=0; i<npl; i++) {
         
@@ -689,7 +708,7 @@ void EdbScanTracking::TrackAli(EdbPVRec &ali, TEnv &env)
         p.SetPID(i);
         p.SetSegmentsPID();
 //        p.SetSegmentsPlate(id->ePlate);
-        printf("pattern with z: %f\n", p.Z());
+        if(gEDBDEBUGLEVEL>1) printf("pattern with z: %f\n", p.Z());
       
         if(do_misalign) {
           p.Transform(&misalign[i]);

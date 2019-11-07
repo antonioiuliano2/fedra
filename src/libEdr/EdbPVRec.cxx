@@ -3004,34 +3004,12 @@ void  EdbPVRec::PrintSummary()
 {
   // Print Summary Information of relevant data of this object.
   // Useful for debugging purposes.
-  
   cout <<"EdbPVRec::PrintSummary()   Print Summary Information of relevant data of this object." << endl;
   cout <<"EdbPVRec::PrintSummary()   Useful for debugging purposes:" << endl;
-  
-  for(int i=0; i<Npatterns(); i++) {
-    EdbPattern *p = GetPattern(i);
-    cout <<"-------------- Pattern Nr = " << i << " at Z-Position= " << p->Z()  << " with "<< p->N() << " entries. ---- Print First and Last Segment:";
-    if (p->N()<1) {
-      cout << " Sorry, but no segments in pattern. " << endl;
-    }
-    else {
-      cout << endl;
-      EdbSegP *s = p->GetSegment(0);
-      s->PrintNice();
-      if (p->N()==1) continue;
-      s=p->GetSegment(p->N()-1);
-      s->PrintNice();
-    }
-  }
-  
-  cout <<"EdbPVRec::PrintSummary()  Track and Vertex Information:" << endl;
-  if (eTracks) {
-    cout << "eTracks= " <<  eTracks << " with "<<  eTracks->GetEntriesFast() << " entries." << endl;
-  }
-  if (eVTX) {
-    cout << "eVTX= " <<  eVTX << " with "<<  eVTX->GetEntriesFast() << " entries." << endl;
-  }
-
+  printf("%d patterns\n",Npatterns());
+  printf("%d tracks\n",Ntracks());
+  printf("%d vertex\n",Nvtx());
+  PrintStat();
   return;
 }
 

@@ -264,7 +264,7 @@ void TIndexCell::PrintPopulation( int level ) const
 void TIndexCell::PrintStat() const
 { 
   printf( "Ncell:   %d\n", N() );
-  printf( "Nlevels: %d   %s \n", Nlevels(), List()->GetName() );
+  if(fList) printf( "Nlevels: %d   %s \n", Nlevels(), List()->GetName() );
 
   float phaseVol=1;
   int range=0;

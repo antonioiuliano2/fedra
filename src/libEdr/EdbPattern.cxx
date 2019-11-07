@@ -1666,19 +1666,20 @@ void EdbPatternsVolume::PrintStat( Option_t *opt) const
   float dx,dy;
   EdbPattern *pat=0;
   printf("pat# \t segments \t dX \t\tdY \t meanDist \n");
-  int i;
-  for(i=0; i<npat; i++ ) {
+  for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
+    if(pat) {
     dx = pat->Xmax() - pat->Xmin();
     dy = pat->Ymax()- pat->Ymin();
     printf(" %d\t %d\t %10.2f \t %10.2f \t %10.4f \n", 
 	   i, pat->GetN(),dx,dy, TMath::Sqrt(dx*dy/pat->GetN()) );
+    }
   }
 
   npat=Npatterns();
-  for(i=0; i<npat; i++ ) {
+  for(int i=0; i<npat; i++ ) {
     pat = GetPattern(i);
-    pat->Cell()->PrintStat();
+    if(pat) if(pat->Cell()) pat->Cell()->PrintStat();
   }
 }
  
