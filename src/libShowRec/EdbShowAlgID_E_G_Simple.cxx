@@ -233,7 +233,7 @@ void EdbShowAlgID_E_G_Simple::Execute()
         val=(ANN_MLP->Evaluate(0,params));
         cout << "DEBUG: i,   val  (=mlp1->Evaluate(0,params))  ======================= real energy    " << i << "   " << val << "    ==  " << inANN[0]  << endl;
 
-        if ( isnan(val) ) cout << "   val is NAN " << endl;
+        if ( ::isnan(val) ) cout << "   val is NAN " << endl;
 
 
         val=(val-EnergyCalibration_Offset)/EnergyCalibration_Slope;

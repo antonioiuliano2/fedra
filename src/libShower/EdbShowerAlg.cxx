@@ -2868,7 +2868,7 @@ void EdbShowerAlgESimple::DoRun(EdbTrackP* shower)
 
     if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   Before Correction: ANN_MLP->Evaluate(0,params)= " <<  ANN_MLP->Evaluate(0,params) << " (Inputvar=" << inANN[0]  << ")." << endl;
 
-    if ( isnan(val) ) {
+    if ( ::isnan(val) ) {
         if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgESimple::DoRun()   ERROR! ANN_MLP->Evaluate(0,params) is NAN! Setting value to -1. " << endl;
         val=-1;
     }
@@ -4738,7 +4738,7 @@ void EdbShowerAlgIDSimple::DoRun(EdbTrackP* shower)
     val=(ANN_MLP->Evaluate(0,params));
     // ---------------------------------
 
-    if ( isnan(val) ) {
+    if ( ::isnan(val) ) {
         if (gEDBDEBUGLEVEL >2) cout << "EdbShowerAlgIDSimple::DoRun()   ERROR! ANN_MLP->Evaluate(0,params) is NAN! Setting value to -1. " << endl;
         val=-1;
     }
