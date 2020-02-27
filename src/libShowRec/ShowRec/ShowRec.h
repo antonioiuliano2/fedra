@@ -32,7 +32,7 @@ Int_t cmd_FILETP=0; // addition variable to distinguis different treebranches...
 Int_t cmd_GBMC=0; // addition variable to tell the program which MCEvt is doing (if only one is done).
 Int_t cmd_EXTHETA=0; // if set to 1 then extract subpatterns with delta theta cut w.r.t. InBT.
 Int_t cmd_ALN3TRAIN=0; // train the neural net in ALTP13 (N3_Alg)  0: Train, 1:Run
-Int_t cmd_ALN3EQUALIZE=1; // Try to have same number of SG/BG tracks for training: 0: all BG Tracks are taken in the trainings tree, 1: about same BG as SG Tracks are filled in the trainingstree.
+Int_t cmd_ALN3DUMP=0; // write also the input tree for training in the file 0: no (default), 1:yes (can give large root files!)
 //----------------------------------------------------
 char *cmd_lnkdef_name = "lnk.def";
 Int_t cmd_gEDBDEBUGLEVEL=2;   //  2: normal; 3: long, 4 very long; 1: none
@@ -144,7 +144,7 @@ void ReconstructShowers_AG(); // ALTP=9 Advanced Gamm Algorithm
 void ReconstructShowers_GS(); // ALTP=10 Gamma Search Algorithm (equal to the one in libShowRec)
 void ReconstructShowers_OPENMP();  /// DEBUG OPENMP TEST!!!!!!! // DEPRECATED !!!!
 void ReconstructShowers_OPENMP_TEST(EdbSegP* InBT, TObjArray array);  /// DEBUG OPENMP TEST!!!!!!!// DEPRECATED !!!!
-void ReconstructShowers_N3(); // ALTP=100
+void ReconstructShowers_N3(); // ALTP=11
 // -------------------------------
 EdbPVRec* TransformEdbPVRec(EdbPVRec* gAli, EdbSegP* InitiatorBT);
 EdbPVRec* TransformEdbPVRec_SA(EdbPVRec* gAli, EdbSegP* InitiatorBT);
@@ -289,21 +289,16 @@ TFile* f_GSNN;
 //   GS ALG   ---------------------------------------------------------------------------------
 
 
-
 //---------------------------------------------------------------------------------
 //   BG cleaning implement function
 void DoBGTargetCleaning();
 // Function for closing files, destructing elements and cleaning up orphaned stuff:
 void Finalize();
-
-
+// Set Parameters from command line Inputs
 void SetPresetParameters(Int_t cmd_PRESET);
-
-
 //---------------------------------------------------------------------------------
 //   Help functions - mostly printing functions
 void PrintHelp();
 void PrintPresetList();
 void PrintValues_CommandLine();
 void PrintShowerObjectArray(TObjArray* segarray);
-

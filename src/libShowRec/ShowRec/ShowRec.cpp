@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
         cout << "--- \t\t\t :  10:  ReconstructShowers_GS  (same Implementation as in libShowRec----- BEST PARAMETERS STILL TO BE SEARCHED)\n";
         cout << "--- \t\t\t :  11:  ReconstructShowers_N3  REWRITING OF THE IMPLEMENTATION OF NN ALG - with some modifications.\n";
         cout << "--- \t\t\t\t :  -ALN3TRAIN1    Do Training of the Neural Net (default: 0, run)\n";
-        //cout << "--- \t\t\t\t :  -ALN3EQUALIZE1 Try to have same number of SG/BG tracks for training (default: 1, yes)\n";
-
+        cout << "--- \t\t\t\t :  -ALN3DUMP1     Write also TrainingsTrees in the Neural Net Root Info File  (default: 0)\n";
+        cout << "--- \t\t\t\t :  -ALN3EQUALIZE1 Try to have same number of SG/BG tracks for training (default: 1, yes)\n";
         cout << "--- \t\t\t :  -default 4\n";
 
 
@@ -282,6 +282,11 @@ int main(int argc, char *argv[])
         else if (!strncmp(key,"-ALN3TRAIN",10)) {
             if (strlen(key)>10) {
                 sscanf(key+10,"%d",&cmd_ALN3TRAIN);
+            }
+        }
+        else if (!strncmp(key,"-ALN3DUMP",9)) {
+            if (strlen(key)>9) {
+                sscanf(key+9,"%d",&cmd_ALN3DUMP);
             }
         }
         else if (!strncmp(key,"-PASTART",8)) {
@@ -623,15 +628,9 @@ void CreateOutPutStructures() {
 
     //-----------------------------------
     // Histograms and TTree ONLY RELEVANT FOR GS Algo
-    h_GSNN_var00=new TH1F("h_GSNN_var00","h_GSNN_var00",1000,0,1000);
-    h_GSNN_var01=new TH1F("h_GSNN_var01","h_GSNN_var01",1000,0,1000);
-    h_GSNN_var02=new TH1F("h_GSNN_var02","h_GSNN_var02",1000,0,1000);
-    h_GSNN_var03=new TH1F("h_GSNN_var03","h_GSNN_var03",100,0,70000);
-    h_GSNN_var04=new TH1F("h_GSNN_var04","h_GSNN_var04",1000,0,1);
-    h_GSNN_var05=new TH1F("h_GSNN_var05","h_GSNN_var05",10,0,10);
-    h_GSNN_var06=new TH1F("h_GSNN_var06","h_GSNN_var06",1100,-1000,100);
+    cout << "Create Objects ONLY RELEVANT FOR GS Algo" << endl;
     f_GSNN = new TFile("f_GSNN.root","RECREATE");
-    t_GSNN= new TTree("t_GSNN","t_GSNN");
+    t_GSNN = new TTree("t_GSNN","t_GSNN");
     t_GSNN->Branch("value_GSNN_varInput",&value_GSNN_varInput,"value_GSNN_varInput/F");
     t_GSNN->Branch("value_GSNN_var00",&value_GSNN_var00,"value_GSNN_var00/F");
     t_GSNN->Branch("value_GSNN_var01",&value_GSNN_var01,"value_GSNN_var01/F");
@@ -640,7 +639,14 @@ void CreateOutPutStructures() {
     t_GSNN->Branch("value_GSNN_var04",&value_GSNN_var04,"value_GSNN_var04/F");
     t_GSNN->Branch("value_GSNN_var05",&value_GSNN_var05,"value_GSNN_var05/F");
     t_GSNN->Branch("value_GSNN_var06",&value_GSNN_var06,"value_GSNN_var06/F");
-    cout << "t_GSNN  SetBranchAddress done." << endl;
+    h_GSNN_var00=new TH1F("h_GSNN_var00","h_GSNN_var00",1000,0,1000);
+    h_GSNN_var01=new TH1F("h_GSNN_var01","h_GSNN_var01",1000,0,1000);
+    h_GSNN_var02=new TH1F("h_GSNN_var02","h_GSNN_var02",1000,0,1000);
+    h_GSNN_var03=new TH1F("h_GSNN_var03","h_GSNN_var03",100,0,70000);
+    h_GSNN_var04=new TH1F("h_GSNN_var04","h_GSNN_var04",1000,0,1);
+    h_GSNN_var05=new TH1F("h_GSNN_var05","h_GSNN_var05",10,0,10);
+    h_GSNN_var06=new TH1F("h_GSNN_var06","h_GSNN_var06",1100,-1000,100);
+    cout << "Create Objects ONLY RELEVANT FOR GS Algo...done." << endl;
     //-----------------------------------
 
 
@@ -741,9 +747,19 @@ Int_t Open_ParasetDefinitionFile()
     TREE_ParaSetDefinitions = (TTree*)FILE_ParaSetDefinitions->Get("ParaSet_Variables");
 
     if (gEDBDEBUGLEVEL>2) if (TREE_ParaSetDefinitions!=0) TREE_ParaSetDefinitions->Print();
-
+    
+    // Possible BugFix: 
+    if (cmd_PASTART==-1 && cmd_PAEND==-1) {
+     cout << "Possible BugFix:  if (cmd_PASTART==-1 and cmd_PAEND==-1)" << endl;
+     cout << "then we assume no FILE_ParaSetDefinitions is needed, and therefore, " << endl;
+     cout << "even if it exists, we set it to NULL: TREE_ParaSetDefinitions = 0;" << endl;
+     
+     TREE_ParaSetDefinitions = 0;
+    }
+        
     if (TREE_ParaSetDefinitions==0) {
-        cout << "WARNING: In --- Open_ParasetDefinitionFile ---  Empty TREE_ParaSetDefinitions." << endl;
+        cout << "WARNING: In --- Open_ParasetDefinitionFile ---  Empty TREE_ParaSetDefinitions. (this may have several reasons.)" << endl;
+        cout << "Either corrupted FILE_ParaSetDefinitions or default cmd_PASTART/cmd_PAEND given." << endl;
         cout << "         Switching to default parametersets (algorithm specific)." << endl;
         cout << "         Set cmd_PASTART=-1   cmd_PAEND  =-1 " << endl;
         cmd_PASTART=-1;
@@ -778,7 +794,7 @@ void Read_ParasetDefinitionTree()
     Int_t        ANN_HIDDENLAYER;
     Int_t        ANN_INPUTNEURONS;
 
-    // ALTP 10:  GS from libShowRec
+    // ALTP 10   GS from libShowRec
     Double_t cut_gs_cut_dip=150;
     Double_t cut_gs_cut_dmin=40;
     Double_t cut_gs_cut_dr=60;
@@ -1006,6 +1022,17 @@ void Read_ParasetDefinitionTree()
     }
 
 
+    // Now, TREE_ParaSetDefinitions exists and is filled with one entry at least
+    // Then set branch addresses for the variables
+    
+    // Attention: Here is still a  __BUG__ possible.
+    // If the file containing from Open_ParasetDefinitionFile contains a parameter-
+    // set for the wrong algorithm, the program thinks it has a TREE_ParaSetDefinitions
+    // (which it actually has), but the variables dont match, and then the program
+    // crashes!
+    cout << "Attention: Here is still a  __BUG__ possible. If the file containing from Open_ParasetDefinitionFile contains a parameter-" << endl;
+    cout << "set for the wrong algorithm, the program thinks it has a TREE_ParaSetDefinitions (which it actually has), " << endl;
+    cout << "but the variables dont match, and then the program crashes!" << endl;
 
     if     (cmd_ALTP==0) {
         TREE_ParaSetDefinitions->SetBranchAddress("CUT_ZYLINDER_R_MAX",&tubedist);
@@ -1081,8 +1108,8 @@ void Read_ParasetDefinitionTree()
         TREE_ParaSetDefinitions -> SetBranchAddress("ANN_OUTPUTTHRESHOLD",&N3_ANN_OUTPUTTHRESHOLD);
     }
 
-    // Check: if PASTART is given (a number),  but PAEND is default, then set
-    // PAEND to PASTART
+    // Check: if PASTART is given (a number),  but PAEND is default,
+    // then set PAEND to PASTART
     if (cmd_PASTART>=0 && cmd_PAEND==-1) cmd_PAEND=cmd_PASTART;
 
     if (gEDBDEBUGLEVEL>2) cout << "--- Updated commandline values: cmd_PASTART=" << cmd_PASTART << " and  cmd_PAEND=" << cmd_PAEND << endl;
@@ -7241,7 +7268,7 @@ void Write_Alg_GS_Histograms() {
 
     Log(2, "ShowRec.cpp", "--- void Write_Alg_GS_Histograms() ---");
     f_GSNN->cd();
-//     f_GSNN->ls();
+    f_GSNN->ls();
     h_GSNN_var00->Write();
     h_GSNN_var01->Write();
     h_GSNN_var02->Write();

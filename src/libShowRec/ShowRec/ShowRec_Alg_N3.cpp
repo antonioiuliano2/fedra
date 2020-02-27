@@ -3,6 +3,10 @@ void ReconstructShowers_N3()
 {
     Log(2, "ShowRec.cpp", "--- void ReconstructShowers_N3() ---");
 
+//     cout << "ReconstructShowers_N3()    N3_ANN_PLATE_DELTANMAX  = " << N3_ANN_PLATE_DELTANMAX << endl;
+//     cout << "ReconstructShowers_N3()   return NOW!!!" << endl;
+//     return;
+    
     //-----------------------------------------------------------------
     // Main function for reconstruction of N3 Algorithm
     //-----------------------------------------------------------------
@@ -18,7 +22,7 @@ void ReconstructShowers_N3()
     //-----------------------------------
 
     // Read options for easy set up N3_Algorithm structures
-    N3_ReadOptionFile();
+    // N3_ReadOptionFile(); // not implemented yet. will maybe not be done anymore
 
     // Option for quick switching training/running mode of the ANN
     cout << " cmd_ALN3TRAIN = "   <<   cmd_ALN3TRAIN << endl;
@@ -181,13 +185,18 @@ void ReconstructShowers_N3()
                 // (does not matter for relatively straight tracks, but for tracks in direction)
                 // N3_Inputvar[1] = GetdR(InBT, seg);
                 N3_Inputvar[1] = GetDistToAxis(InBTClone, seg);
-                if (N3_DoTrain==kTRUE && N3_Inputvar[1] > 1000) continue;
+                // Why was this cut only for DoTrain put in? this is also valid
+                // for running, is it not ???
+                if (N3_Inputvar[1] > 1000) continue;
+                // if (N3_DoTrain==kTRUE && N3_Inputvar[1] > 1000) continue;
 
                 N3_Inputvar[2] = GetdeltaThetaSingleAngles(InBT, seg);
-                if (N3_DoTrain==kTRUE && N3_Inputvar[2] >  0.4) continue;
+                if (N3_Inputvar[2] >  0.4) continue;
+                // if (N3_DoTrain==kTRUE && N3_Inputvar[2] >  0.4) continue;
 
                 N3_Inputvar[3] = GetdMinDist(InBT, seg);
-                if (N3_DoTrain==kTRUE && N3_Inputvar[3] > 1000) continue;
+                if (N3_Inputvar[3] > 1000) continue;
+                // if (N3_DoTrain==kTRUE && N3_Inputvar[3] > 1000) continue;
 
 
 
@@ -212,18 +221,36 @@ void ReconstructShowers_N3()
                 Int_t   nDifferentSegs=-1;
                 Int_t   OffsetNVar=4;
                 // Order: same plate, one plate upstream,  one plate downstream,
-                // two plate upstream,  two plate downstream
+                // two plates upstream,  two plates downstream
                 // This order is important, dont mix it anymore!!
                 Int_t deltaNpl[5]= {0,-1,1,-2,2};
                 Int_t dNpl=0;
-
+                //max arraynumber: deltaNpl[N3_ANN_PLATE_DELTANMAX]
+                // therefore, loop only over those who are actually needed for the calculation!
                 for (Int_t loop_deltaNpl = 0; loop_deltaNpl<5; ++loop_deltaNpl) {
+                    N3_Inputvar[OffsetNVar+0] = 0;
+                    N3_Inputvar[OffsetNVar+1] = 0;
+                    N3_Inputvar[OffsetNVar+2] = 0;
+                    N3_Inputvar[OffsetNVar+3] = 0;
+                    OffsetNVar+=4;
+                }
+                
+                // Start with OffsetNVar=4 for array position seg-related.
+                OffsetNVar=4;
+                // Loop just over the different plates necessary:
+                for (Int_t loop_deltaNpl = 0; loop_deltaNpl<N3_ANN_PLATE_DELTANMAX; ++loop_deltaNpl) {
+//                 for (Int_t loop_deltaNpl = 0; loop_deltaNpl<5; ++loop_deltaNpl) {    
                     dNpl=deltaNpl[loop_deltaNpl];
                     mindT=0;
                     mindR=0;
                     mindMinDist=0;
                     nDifferentSegs=-1;
+                    // This function may be time comsuming ...
+                    // No approach to make it faster available yet ...
+                    
                     N3_FindBestCompliments( seg, TestPattern, local_gAli, dNpl, mindeltaZ,  mindT, mindR, mindMinDist, nDifferentSegs );
+                    
+                    
                     // mindeltaZ;// no effect, take it out...
                     N3_Inputvar[OffsetNVar+0] = mindR;
                     N3_Inputvar[OffsetNVar+1] = mindT;
@@ -562,9 +589,13 @@ void ReconstructShowers_N3()
         cout << "  Use TMLPAnalyzer to see what it looks for... done." << endl;
         cout << " ------------------------------------------------------------" << endl;
         cout << "  NOW WRITE FILES to THE ROOT FILES .... " << endl;
-        simu_SG->Write();
-        simu_BG->Write();
-        simu->Write();
+        if (cmd_ALN3DUMP ==1 ) {
+            // write trees also in the root file.
+            // Attention: can give large root files!
+            simu_SG->Write();
+            simu_BG->Write();
+            simu->Write();
+        }
         N3_TMLP_ANN->Write();
         mlpa_canvas->Write();
         ana->Write();
@@ -822,6 +853,14 @@ void N3_FindBestCompliments( EdbSegP* seg, EdbPattern* TestPattern, EdbPVRec* lo
         EdbSegP* otherSeg = OtherPattern->GetSegment(i);
         // dont match segment with itsself:
         if (otherSeg==seg) continue;
+        
+        // Quick Preselection: we aussume, that large away segments do not 
+        // contribute to any of the minimum selection segments.
+        if (TMath::Abs(seg->X() - otherSeg->X()) > 1000 || TMath::Abs(seg->Y() - otherSeg->Y()) > 1000 ) continue;
+//          cout << "seg = " << seg << " and otherSeg = " << otherSeg << endl;
+//          cout << "deltaX = seg->X() - otherSeg->X() " <<  seg->X() - otherSeg->X()  << endl;
+//          cout << "deltaY = seg->Y() - otherSeg->Y() " <<  seg->Y() - otherSeg->Y()  << endl;
+        
         // always propagate from seg to other seg (from i to j)
         testval_dR = GetdR(seg, otherSeg);
         testval_dT = GetdeltaThetaSingleAngles(seg, otherSeg);
