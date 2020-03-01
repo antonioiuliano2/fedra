@@ -1920,7 +1920,8 @@ void EdbShowerRec::NeuralNet() {
     float offset;  // Z position of last (first) plate in the data set (usually = 0.)
     offset = 0.;
 
-//ouput file
+
+    //output file
     fileout3 = new TFile("Shower2.root","RECREATE");
     //definition of treebranch
     treesaveb3 = new TTree("treebranch","tree of branchtrack");
@@ -2509,7 +2510,8 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
     if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()"<<endl;
     if (gEDBDEBUGLEVEL>2) cout << "------------------------------------------------------"<<endl;
-
+    //ouput file
+    fileout3 = new TFile("Shower.root","RECREATE");
     treesaveb3 = new TTree("treebranch","tree of branchtrack");
     treesaveb3->Branch("number_eventb",&number_eventb,"number_eventb/I");
     treesaveb3->Branch("sizeb",&sizeb,"sizeb/I");
@@ -2553,9 +2555,6 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     treesaveb3->Branch("EnergyUnCorrected",&EnergyUnCorrectedb,"EnergyUnCorrectedb/F");
     treesaveb3->Branch("EnergySigma",&EnergySigmaCorrectedb,"EnergySigmaCorrectedb/F");
     treesaveb3->Branch("EnergySigmaUnCorrected",&EnergySigmaUnCorrectedb,"EnergySigmaUnCorrectedb/F");
-
-//ouput file
-    fileout3 = new TFile("Shower.root","RECREATE");
 
     // -------------------------------------------------------------
     //  If no showerTree was created we have to load the ShowerTree
@@ -2640,6 +2639,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
     // Create ShowerProfileTree ...
 
     if (gEDBDEBUGLEVEL>2) cout << "void EdbShowerRec::Energy_ExtractShowerParametrisationProfile(): Create ShowerProfileTree ..."<<endl;
+    fileout3->cd();
     ShowerParametrisationTree = new TTree("ShowerProfileTree","ShowerProfileTree");
 
     ShowerParametrisationTree->Branch("sizeb_for_plates",&sizeb_for_plates,"sizeb_for_plates/I");
@@ -2926,7 +2926,7 @@ void EdbShowerRec::Energy_ExtractShowerParametrisationProfile()
         //--------------------------------------------------------------------
     }  //=C= END of Loop over reconstructed Showers (Entries):
     cout << "Loop over reconstructed Showers finished."<< endl;
-
+    
     // Scale histo_longprofile_av to number of entries:
     histo_longprofile_av->Scale(1.0/nentries_withisizeb);
 
@@ -4284,6 +4284,7 @@ void EdbShowerRec::TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TObj
 {
     Log(2, "EdbShowerRec", "--- void* TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree() ---Interim SOLUTIION !!!! ");
 
+    TFile* interim_fileout = new TFile("shower1.root","RECREATE");
     // EdbShowerRec::T-S-O-A-I-E-O-T-S-T
 
     // Interim SOLUTIION !!!!  shower tree definition
@@ -4578,12 +4579,10 @@ void EdbShowerRec::TransferShowerObjectArrayIntoEntryOfTreebranchShowerTree(TObj
 
 
 
-    ///------------  ONLY FOR EDBSHOWERREC.... NOT FOR MY OWN STUFF!!---------------------------
-    TFile* interim_fileout = new TFile("shower1.root","RECREATE");
+    ///------------  ONLY FOR EDBSHOWERREC.... NOT FOR MY OWN STUFF!!---------------------------  
+    interim_fileout->cd();
     interim_treesaveb->Write();
     interim_fileout->Close();
-    delete interim_fileout;
-    delete interim_treesaveb;
     ///------------  ONLY FOR EDBSHOWERREC.... NOT FOR MY OWN STUFF!!---------------------------
 
 
