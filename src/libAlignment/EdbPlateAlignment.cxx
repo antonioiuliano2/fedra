@@ -244,48 +244,45 @@ void EdbPlateAlignment::ProduceReport()
     TH2I *h2  = new TH2I("plateXY","plateXY",100,xmin-10, xmax+10, 100, ymin-10,ymax+10);
     h2->SetStats(0);
     h2->Draw();
-//     TPave *box0 = new TPave(ePC[0].Xmin(),ePC[0].Ymin(),ePC[0].Xmax(),ePC[0].Ymax());
-//     box0->SetFillColor(0);
-//     box0->SetLineColor(kRed);
-//     box0->Draw();
-//     TPave *box1 = new TPave(ePC[1].Xmin(),ePC[1].Ymin(),ePC[1].Xmax(),ePC[1].Ymax());
-//     box1->SetFillColor(0);
-//     box1->SetLineColor(kBlue);
-//     box1->Draw();
-    
-    for(int i=0; i<n; i++) {
-      EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-      EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
-      float x1  =  X(0,*s1),  y1 =  Y(0,*s1);
-      float x2  =  X(1,*s2),  y2 =  Y(1,*s2);
-      TMarker *m1 = new TMarker(x1,y1,22);
-      m1->SetMarkerColor(kRed);
-      m1->SetMarkerSize(0.6);
-      m1->Draw();
-      TMarker *m2 = new TMarker(x2,y2,23);
-      m2->SetMarkerColor(kBlue);
-      m2->SetMarkerSize(0.6);
-      m2->Draw();
+
+    if(n<1000) {
+      for(int i=0; i<n; i++) {
+        EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
+        EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
+        float x1  =  X(0,*s1),  y1 =  Y(0,*s1);
+        float x2  =  X(1,*s2),  y2 =  Y(1,*s2);
+        TMarker *m1 = new TMarker(x1,y1,22);
+        m1->SetMarkerColor(kRed);
+        m1->SetMarkerSize(0.6);
+        m1->Draw();
+        TMarker *m2 = new TMarker(x2,y2,23);
+        m2->SetMarkerColor(kBlue);
+        m2->SetMarkerSize(0.6);
+        m2->Draw();
+      }
     }
 
     c->cd(9);
     TH2I *h2t = new TH2I("plateTXTY","plateTXTY",100,-1, 1, 100, -1,1 );
     h2t->SetStats(0);
     h2t->Draw();
-    for(int i=0; i<n; i++) {
-      EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
-      EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
-      float tx1 =  TX(0, *s1), ty1 =  TY(0, *s1);
-      float tx2 =  TX(1, *s2), ty2 =  TY(1, *s2);
-      TMarker *m1 = new TMarker(tx1,ty1,22);
-      m1->SetMarkerColor(kRed);
-      m1->SetMarkerSize(0.6);
-      m1->Draw();
-      TMarker *m2 = new TMarker(tx2,ty2,23);
-      m2->SetMarkerColor(kBlue);
-      m2->SetMarkerSize(0.6);
-      m2->Draw();
+    if(n<1000) {
+      for(int i=0; i<n; i++) {
+        EdbSegP *s1 = (EdbSegP*)eS[0].UncheckedAt(i);
+        EdbSegP *s2 = (EdbSegP*)eS[1].UncheckedAt(i);
+        float tx1 =  TX(0, *s1), ty1 =  TY(0, *s1);
+        float tx2 =  TX(1, *s2), ty2 =  TY(1, *s2);
+        TMarker *m1 = new TMarker(tx1,ty1,22);
+        m1->SetMarkerColor(kRed);
+        m1->SetMarkerSize(0.6);
+        m1->Draw();
+        TMarker *m2 = new TMarker(tx2,ty2,23);
+        m2->SetMarkerColor(kBlue);
+        m2->SetMarkerSize(0.6);
+        m2->Draw();
+      }
     }
+    
 
     c->cd(7);
     int nbin=25;
