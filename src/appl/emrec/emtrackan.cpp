@@ -24,11 +24,13 @@ using namespace TMath;
 
 bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv);
 void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv);
+void DoGlobalCorrV2(EdbPVRec &ali, TEnv &cenv);
 void GlobalDiff(EdbPVRec &ali, const char *suff);
 void GlobalEff(EdbPVRec &ali, const char *suff);
 void CheckGap(EdbPVRec &ali, const char *suff);
 void CheckMom(EdbPVRec &ali, TEnv &cenv);
 bool ReadFunParameters(const char* key);
+void MakeCorrectionMap_test(EdbPVRec &ali, TEnv &cenv);
 
 //----------------------------------------------------------------------------------------
 void print_help_message()
@@ -38,7 +40,7 @@ void print_help_message()
   cout<< "\t  Analyse the tracks tree and produce the report file: ID.trk.an.root\n";
   cout<< "\t\t -corraff    -  save corrections to set.root file\n";
   cout<< "\t\t -global     -  global corrections using long tracks to unbend the full set\n";
-  cout<< "\t\t -momentum   -  tracks momentum estimation\n";
+  cout<< "\t\t -globV2     -  global corrections using long tracks to unbend the full set NEW!\n";
   cout<< "\t\t -momentum   -  tracks momentum estimation\n";
   cout<< "\t\t -divide=NxM -  divide set into into NxM zones and calculate local correction in each zone\n";
   cout<< "\t\t                the following tracking may use this correction if the parameter fedra.track.do_local_corr in track.rootrc is set to 1\n";
@@ -91,6 +93,8 @@ int main(int argc, char* argv[])
   const char *name=0;
   
   bool do_global=false;
+  bool do_globV2=false;
+  bool do_cmtest=false;
   
   for(int i=1; i<argc; i++ ) {
     char *key  = argv[i];
@@ -124,6 +128,14 @@ int main(int argc, char* argv[])
     {
       do_global=true;
     }
+    else if(!strncmp(key,"-globV2",7))
+    {
+      do_globV2=true;
+    }
+    else if(!strncmp(key,"-cmtest",7))
+    {
+      do_cmtest=true;
+    }
     else if(!strncmp(key,"-v=",3))
     {
       if(strlen(key)>3)	gEDBDEBUGLEVEL = atoi(key+3);
@@ -144,9 +156,11 @@ int main(int argc, char* argv[])
   
   if(do_momentum)     CheckMom(ali,cenv);
   else if(do_global)  DoGlobalCorr(ali,cenv);
+  else if(do_globV2)  DoGlobalCorrV2(ali,cenv);
+  else if(do_cmtest)  MakeCorrectionMap_test(ali,cenv);
   else                MakeCorrectionMap(ali,cenv);
 
-  EdbDataProc::MakeTracksTree( *(ali.eTracks), 0., 0., "al.trk.root" );
+  //EdbDataProc::MakeTracksTree( *(ali.eTracks), 0., 0., "al.trk.root" );
 
   return 0;
 }
@@ -309,6 +323,157 @@ bool MakeCorrectionMap(EdbPVRec &ali, TEnv &cenv)
 }
 
 //------------------------------------------------------------------------------
+void MakeCorrectionMap_test(EdbPVRec &ali, TEnv &cenv)
+{
+  int NCPMIN = cenv.GetValue("trackan.NCPmin" , 50);
+  int npat = ali.Npatterns();
+  int ntr  = ali.Ntracks();
+  int   NX = cenv.GetValue("trackan.NX" , 0);
+  int   NY = cenv.GetValue("trackan.NY" , 0);
+  Log(2,"MakeCorrectionMap_test","with %d tracks and %d patterns map: %d x %d",ntr, npat, NX,NY);
+  if(npat<2)     return;
+  if(ntr<NCPMIN) return;
+  if(!NX*NY)     return;
+  
+  EdbScanSet *ss = sproc.ReadScanSet(idset);
+  struct PatPlat{
+    EdbPattern *pat;
+    EdbPlateP  *pl;
+    EdbCorrectionMapper cm;
+  };
+  PatPlat sequence[npat];
+  for( int ipat=0; ipat<npat; ipat++ )  //TODO: select direction here
+  {
+    sequence[ipat].pat = ali.GetPattern(ipat); sequence[ipat].pat->SetPID(ipat);
+    sequence[ipat].pl  = ss->GetPlate( sequence[ipat].pat->ScanID().ePlate );
+  }
+
+  float xmin = ali.Xmin();
+  float xmax = ali.Xmax();
+  float ymin = ali.Ymin();
+  float ymax = ali.Ymax();
+  bool trFlag     = cenv.GetValue("trackan.global.trFlag"          , 0);
+
+  for(int i=0; i<npat-1; i++) {
+    EdbPattern *p1          = sequence[i].pat;
+    EdbPattern *p2          = sequence[i+1].pat;
+    EdbCorrectionMapper &cm = sequence[i].cm;
+    cm.eID1 = p1->ScanID();
+    cm.eID2 = p2->ScanID();
+    cm.eZ1  = p1->Z();
+    cm.eZ2  = p2->Z();
+    cm.eNcpMin = NCPMIN;
+    
+    cm.InitMap( NX,xmin, xmax, NY, ymin,ymax);
+    /*
+    cm[i].eHdty_ty.InitH2( 50,-2,2, 50,-0.1,0.1 );
+    cm[i].eHshr.InitH1( 100, 0.8, 1.2 );
+    cm[i].eHdxy.InitH2( 61,-60.5,60.5, 61,-60.5,60.5 );
+    cm[i].eHdtxy.InitH2( 41,-0.105,0.105, 41,-0.105,0.105 );
+    cm[i].eHdz.InitH1( 50,-100,100 );
+    cm[i].eHxy1.InitH2(100,xmin, xmax, 100, ymin,ymax);
+    cm[i].eHtxty1.InitH2(100,-2, 2, 100, -2,2);
+    cm[i].eHxy2.InitH2(100,xmin, xmax, 100, ymin,ymax);
+    cm[i].eHtxty2.InitH2(100,-2, 2, 100, -2,2);
+    */
+    for(int itr=0; itr<ntr; itr++) {
+      EdbTrackP *t = ali.GetTrack(itr);
+      if(trFlag!=0) if( trFlag!=t->Flag() )  continue;
+      EdbSegP *s1=0, *s2=0;
+      for(int j=0; j<t->N(); j++) {
+        EdbSegP *s  = t->GetSegment(j);
+        if(s->PID()==p1->PID()) s1=s;
+        if(s->PID()==p2->PID()) s2=s;
+      }
+      if(s1&&s2) { cm.AddSegCouple(s1,s2); }
+    }
+  }
+  sequence[npat-1].cm.InitMap( NX,xmin, xmax, NY, ymin,ymax);
+
+  for(int i=0; i<npat-1; i++) 
+  {
+    int nbin = sequence[i].cm.eMapAl.Ncell();
+    for(int j=0;j<nbin; j++) 
+    {
+      printf("%s -> %s dz: %f \n", 
+             sequence[i].cm.eID1.AsString(), 
+             sequence[i].cm.eID2.AsString(), 
+             sequence[i].cm.eZ2-sequence[i].cm.eZ1
+            );
+      EdbAlignmentV  &al  = sequence[i].cm.GetBin(j)->eAl;
+      EdbAlignmentV  &aln = sequence[i+1].cm.GetBin(j)->eAl;
+      if(al.Ncp()>=NCPMIN)
+      {
+        al.CalcAffFull();   // update coord of side0 and ang of side1
+        aln.eCorrL[0].GetAffineTXTY()->Transform( al.eCorrL[1].GetAffineTXTY() );
+      }
+    }
+  }
+
+  
+  for(int j=0;j<NX*NY; j++)
+  {
+    for( int i=0; i<npat; i++ ) {
+      EdbAlignmentV  &al = sequence[i].cm.GetBin(j)->eAl;
+      EdbLayer *l = sequence[i].cm.eMap.GetLayer(j);
+      
+      float dzcorr= al.eCorrL[0].Zcorr()- (sequence[i].cm.eZ2-sequence[i].cm.eZ1);
+      l->GetAffineTXTY()->Transform(  al.eCorrL[0].GetAffineTXTY() );
+      l->SetNcp(  al.Ncp() );
+
+      for( int ii=0; ii<=i; ii++ ) {
+        EdbLayer *ll = sequence[ii].cm.eMap.GetLayer(j);
+        ll->GetAffineXY()->Transform(  al.eCorrL[0].GetAffineXY() );
+        ll->SetZcorr( ll->Zcorr() + dzcorr  );
+      }
+    }
+  }
+
+  for( int i=0; i<npat; i++ ) {
+    printf( Form("\n************** %s -> %s\n", 
+            sequence[i].cm.eID1.AsString(), 
+            sequence[i].cm.eID2.AsString()) );
+    sequence[i].pl->ApplyCorrectionsLocal(sequence[i].cm.eMap);
+    //sequence[i].pl->Print();
+  }
+
+  if(do_corraff) if(ss) sproc.WriteScanSet(idset,*ss);
+
+  //ss->Print();
+  /*
+  TString name;
+  sproc.MakeFileName(name,idset,"trk.an.root",false);
+  Log(2,"MakeCorrectionMap","%s",name.Data());
+  TFile f(name,"RECREATE");
+  
+  if(ss) {
+    for(int i=0; i<npat-1; i++) {
+      ss->eReferencePlate=ref_pl;
+  
+      if(NX*NY) cm[i].UpdateLayerWithLocalCorr( cm[i].eLayer );
+        
+      cm[i].eLayer.Print();
+        
+      ss->UpdateBrickWithP2P( cm[i].eLayer, cm[i].eID1.ePlate, cm[i].eID2.ePlate );
+        
+      gROOT->SetBatch();
+      TCanvas *csum = cm[i].DrawSum(Form("%d",i));
+      csum->Write();
+      TCanvas *cdiff = cm[i].DrawMap(cm[i].eMap, Form("diff_%d",i));
+      cdiff->Write();
+      TCanvas *cabs = cm[i].DrawMap( ss->GetPlate(cm[i].eID1.ePlate)->Map(), Form("%d",i));
+      cabs->Write();
+    }
+  }
+  f.Close();
+
+  printf("********************write set\n");
+  
+  if(do_corraff) if(ss) sproc.WriteScanSet(idset,*ss);
+  */
+}
+
+//------------------------------------------------------------------------------
 void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
 {
   int ntr  = ali.Ntracks();
@@ -320,8 +485,8 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
   bool doXYcorr   = cenv.GetValue("trackan.global.doXYcorr"        , 1);
   bool doTXTYcorr = cenv.GetValue("trackan.global.doTXTYcorr"      , 1);
   bool doZcorr    = cenv.GetValue("trackan.global.doZcorr"         , 1);
-  bool trFlag     = cenv.GetValue("trackan.global.trFlag"           , 0);
-  bool noScale    = cenv.GetValue("trackan.global.noScale"           , 0);
+  bool trFlag     = cenv.GetValue("trackan.global.trFlag"          , 0);
+  bool noScale    = cenv.GetValue("trackan.global.noScale"         , 0);
 
 
   GlobalDiff(ali,"before_fit");
@@ -409,6 +574,123 @@ void DoGlobalCorr(EdbPVRec &ali, TEnv &cenv)
 }
 
 
+//------------------------------------------------------------------------------
+void DoGlobalCorrV2(EdbPVRec &ali, TEnv &cenv)
+{
+  int ntr  = ali.Ntracks();
+  int npat = ali.Npatterns();
+  Log(2,"DoGlobalCorrV2","with %d tracks and %d patterns",ntr, npat);
+  if(npat<2) return;
+  
+  cenv.Print();
+  bool doXYcorr   = cenv.GetValue("trackan.global.doXYcorr"        , 1);
+  bool doTXTYcorr = cenv.GetValue("trackan.global.doTXTYcorr"      , 1);
+  bool doZcorr    = cenv.GetValue("trackan.global.doZcorr"         , 1);
+  bool trFlag     = cenv.GetValue("trackan.global.trFlag"          , 0);
+  bool noScale    = cenv.GetValue("trackan.global.noScale"         , 0);
+
+  EdbScanSet *ss = sproc.ReadScanSet(idset);
+  
+  int niterset=1;
+  for( int iii=0; iii<2*niterset; iii++ )
+  {
+    printf("\n ******** iii = %d *********\n",iii);
+    bool go_forward = 1;
+    //bool go_forward = iii%2;
+    for( int ipat=1; ipat<npat; ipat++ )
+    {
+      int id1,id2;
+      if(go_forward) { id1 = ipat-1;    id2 = ipat; }
+      else           { id1 = npat-ipat; id2 = npat-ipat-1; }
+      
+      EdbPattern *p1 = ali.GetPattern(id1);  p1->SetPID(id1);
+      EdbPattern *p2 = ali.GetPattern(id2);  p2->SetPID(id2);
+      printf("plate: %d->%d pid: %d->%d  z: %.1f ->%.1f = %.1f \n", p1->ScanID().ePlate, p2->ScanID().ePlate,p1->PID(), p2->PID(), p1->Z(), p2->Z(), p2->Z()-p1->Z() );
+      TObjArray p1corr;
+      TObjArray p2corr;
+      int ncp=0;
+      for(int itr=0; itr<ntr; itr++) {
+        EdbTrackP *t = ali.GetTrack(itr);
+        if(trFlag!=0) if( trFlag!=t->Flag() )  continue;
+        EdbSegP *s1=0, *s2=0;
+        for(int j=0; j<t->N(); j++) {
+          EdbSegP *s  = t->GetSegment(j);
+          if(s->PID()==p1->PID()) s1=s;
+          if(s->PID()==p2->PID()) s2=s;
+        }
+        if(s1&&s2) { p1corr.Add(s1); p2corr.Add(s2); ncp++; }
+      }
+    
+      EdbAlignmentV al;
+      for(int i=0; i<ncp; i++)
+      {
+        al.eS[0].Add(p1corr.At(i));
+        al.eS[1].Add(p2corr.At(i));
+      }
+    
+      EdbAffine2D aff1to2XYcum;
+      EdbAffine2D aff2to1TXTYcum;
+      float dz01corr=0;
+      float dz01set=p2->Z()-p1->Z();
+      
+      for(int iter=0; iter<3; iter++) {
+        printf("***** iter %d\n",iter);
+        
+        float dz01 = dz01set;
+        if(doZcorr) 
+        {
+          dz01 = al.FineCorrZ( al.eS[0], al.eS[1] );
+          printf("dz(0->1) = %f\n",dz01);
+        }
+    
+        p1->ProjectTo( dz01 );
+        EdbAffine2D aff1to2XY;
+        al.CalculateAffXY( al.eS[0], al.eS[1], aff1to2XY);
+        p1->Transform(&aff1to2XY);
+        aff1to2XYcum.Transform(&aff1to2XY);
+        aff1to2XY.Print();
+       
+        EdbAffine2D aff2to1TXTY;
+        al.CalculateAffTXTY( al.eS[1], al.eS[0], aff2to1TXTY);
+        p2->TransformA(&aff2to1TXTY);
+        aff2to1TXTY.Print();
+        aff2to1TXTYcum.Transform(&aff2to1TXTY);
+    
+        p1->ProjectTo( -dz01 );
+
+        float dz10 = al.FineCorrZ( al.eS[1], al.eS[0] );
+        printf("dz(1->0) = %f\n",dz10);
+        
+        dz01corr = dz01-dz01set;
+        printf("dzcorr = %.1f\n",dz01corr);
+      }
+    
+      EdbPlateP *plate2 = ss->GetPlate( p2->ScanID().ePlate );
+      plate2->GetAffineTXTY()->Transform(&aff2to1TXTYcum);
+
+      if(go_forward) {
+        for(int ipatu=0; ipatu<ipat; ipatu++)
+        {
+          EdbPlateP *plate = ss->GetPlate( ali.GetPattern(ipatu)->ScanID().ePlate );
+          plate->GetAffineXY()->Transform(&aff1to2XYcum);
+          ali.GetPattern(ipatu)->SetZ( ali.GetPattern(ipatu)->Z() - dz01corr);
+          plate->SetZlayer( plate->Z() - dz01corr, plate->Zmin(), plate->Zmax() );
+        }
+      }
+      else 
+      {
+        for(int ipatu=npat-1; ipatu>=ipat; ipatu--)
+        {
+          EdbPlateP *plate = ss->GetPlate( ali.GetPattern(ipatu)->ScanID().ePlate );
+          plate->GetAffineXY()->Transform(&aff1to2XYcum);
+        }
+      }
+    
+    }
+  }
+  if(do_corraff) if(ss) sproc.WriteScanSet(idset,*ss);
+}
+
 //---------------------------------------------------------------------------
 void GlobalDiff(EdbPVRec &ali, const char *suff="")
 {
@@ -464,6 +746,8 @@ void GlobalDiff(EdbPVRec &ali, const char *suff="")
 //---------------------------------------------------------------------------
 void GlobalEff(EdbPVRec &ali, const char *suff="")
 {
+  gROOT->SetStyle("Pub");
+  
   int   ntr  = ali.Ntracks();
   int   npat = ali.Npatterns();
   int nseg0 = npat>7 ? 7 : npat;
@@ -475,20 +759,20 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
     if(p>pmax) pmax=p;
   }
 
-  TH1F hAll("all","StartEnd",    (pmax-pmin+3), pmin-1, pmax+2 );
+  TH1F hAll("all","StartEnd vs plateID",    (pmax-pmin+3), pmin-1, pmax+2 );
   TH1F hStart("start","start",    (pmax-pmin+3), pmin-1, pmax+2 );
   TH1F hEnd("end","end",    (pmax-pmin+3), pmin-1, pmax+2 );
   
-  TH1F hNSeg("nseg","nseg",    (pmax-pmin+3), pmin-1, pmax+2 );
+  TH1F hNSeg("nseg","nseg vs plateID",    (pmax-pmin+3), pmin-1, pmax+2 );
   
-  TH1F hHoles("holes","holes", (pmax-pmin+3), pmin-1, pmax+2 );
+  TH1F hHoles("holes","holes vs plateID", (pmax-pmin+3), pmin-1, pmax+2 );
   
   TH1F hFillAbs("FillAbs","FillAbs", (pmax-pmin+3), pmin-1, pmax+2 );
   TH1F hFillReal("FillReal","plates fill factor", (pmax-pmin+3), pmin-1, pmax+2 );
   
-  TH2F hEff("eff","eff", 50, 0, 2,  55, 0, 1.1 );
-  TH2F hChi( "Chi","Chi"  ,    (pmax-pmin+3), pmin-1, pmax+2, 100, 0,3 );
-  TH2F hW( "W","W"  ,    (pmax-pmin+3), pmin-1, pmax+2, 40, 0,40 );
+  TH2F hEff("eff","eff vs theta", 50, 0, 2,  55, 0, 1.1 );
+  TH2F hChi( "Chi","Chi vs plateID",   (pmax-pmin+3), pmin-1, pmax+2, 100, 0,3 );
+  TH2F hW(     "W",  "W vs plateID",   (pmax-pmin+3), pmin-1, pmax+2, 40, 0,40 );
   
   for(int i=0; i<ntr; i++) {
     EdbTrackP *t = ali.GetTrack(i);
@@ -529,16 +813,22 @@ void GlobalEff(EdbPVRec &ali, const char *suff="")
   c->Divide(3,3);
   c->cd(1);   hNSeg.Draw();
   c->cd(4);   hHoles.Draw();
-  c->cd(7);   { hAll.Draw(); hStart.SetLineColor(kRed); hStart.Draw("same"); hEnd.SetLineColor(kBlue); hEnd.Draw("same"); }
-  
+  c->cd(7);   { hAll.SetLineColor(kBlack); hAll.Draw(); hStart.SetLineColor(kRed); hStart.Draw("same"); hEnd.SetLineColor(kBlue); hEnd.Draw("same"); }
   c->cd(2);   ratio->Draw();
   c->cd(5);   hChi.ProfileX()->Draw();
   c->cd(8);   hW.ProfileX()->Draw();
-  
   c->cd(3);   hEff.ProfileX()->Draw();
   c->cd(6);   hEff.ProjectionY()->Draw();
-  
   c->Write();
+  
+  TCanvas *cc = new TCanvas(Form("GTr_%s",suff), Form("global_tr_%s",suff), 900,900);
+  cc->Divide(1,3);
+  cc->cd(1)->SetGrid();   hNSeg.Draw();
+  cc->cd(2)->SetGrid();   { hAll.SetLineColor(kBlack); hAll.Draw(); hStart.SetLineColor(kRed); hStart.Draw("same"); hEnd.SetLineColor(kBlue); hEnd.Draw("same"); }
+  cc->cd(3)->SetGrid();   ratio->Draw();
+  cc->Write();
+  
+  
   f.Close();
 }
 

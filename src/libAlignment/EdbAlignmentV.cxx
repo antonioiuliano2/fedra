@@ -610,6 +610,34 @@ Int_t EdbAlignmentV::CalcApplyFractMeanDiff()
 }
 
 //---------------------------------------------------------------------
+Int_t EdbAlignmentV::CalcAffFull()
+{
+  eUseAffCorr=true;
+  eCorrL[0].SetZcorr( FineCorrZ( eS[0], eS[1] ) );
+  EdbAffine2D aff1to2XY;
+  CalculateAffXY( eS[0], eS[1], aff1to2XY);
+  eCorrL[0].GetAffineXY()->Transform(&aff1to2XY);
+  EdbAffine2D aff2to1TXTY;
+  CalculateAffTXTY( eS[1], eS[0], aff2to1TXTY);
+  eCorrL[1].GetAffineTXTY()->Transform(&aff2to1TXTY);
+}
+
+/*
+//---------------------------------------------------------------------
+Int_t EdbAlignmentV::CalcApplyMeanDiffCoord()
+{
+  // by default apply it to side 0
+  int side=0;
+  int n = CheckEqualArr(eS[0],eS[1]);
+
+//  if(n<nlim) return 0;           //TODO
+  eCorr[side].SetV( 2, CalcMeanDZ()  );                      // at first calc and apply DZ
+  eCorr[side].AddV( 0, CalcMeanDiff(0) );                    // then apply coord
+  eCorr[side].AddV( 1, CalcMeanDiff(1) );
+  return n;
+}
+*/
+//---------------------------------------------------------------------
 Int_t EdbAlignmentV::CalcApplyMeanDiff()
 {
   // by default apply it to side 0

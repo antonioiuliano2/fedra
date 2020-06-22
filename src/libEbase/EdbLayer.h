@@ -26,6 +26,7 @@ class EdbCorrectionMap : public EdbCell2
   void      CorrectSeg( EdbSegP &s );
   void      ApplyCorrections(EdbCorrectionMap &map);
   void      PrintDZ();
+  int       Ncp();
   
   //EdbSegP    *CorrLoc(int j);
   EdbSegCorr CorrLoc(int j);

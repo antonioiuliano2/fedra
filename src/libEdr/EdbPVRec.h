@@ -296,6 +296,7 @@ class EdbPVRec : public EdbPatternsVolume {
   //float        Zmin();
   //float        Zmax();
   
+  void InsertTrack( const EdbTrackP &t );
   void 		PrintSummary();
 
   ClassDef(EdbPVRec,1)  // Patterns Volume reconstructor

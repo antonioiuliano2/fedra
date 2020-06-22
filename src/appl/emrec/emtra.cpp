@@ -55,6 +55,8 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.track.RadX0"     , 5810.);
 
   cenv.SetValue("fedra.track.erase"          , false );
+  cenv.SetValue("fedra.track.do_realign"     , 0 );
+  cenv.SetValue("fedra.track.do_misalign"    , false );
   cenv.SetValue("fedra.track.do_misalign"    , false );
   cenv.SetValue("fedra.track.misalign_offset", 500.);
   cenv.SetValue("fedra.track.do_local_corr"  ,    1 );

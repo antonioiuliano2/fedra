@@ -49,6 +49,8 @@ public:
   int    GetCPData( TObjArray &cparr );
   int    GetCPDataAcceptedMask( EdbPattern *pat );
   const char* GetFileName() const { if(eTree->GetCurrentFile()) return eTree->GetCurrentFile()->GetName(); else return 0;}
+  void   RankCouples(TObjArray &cparr);
+
   void   Print();
 
   ClassDef(EdbCouplesTree,1)  // service class for couples tree access

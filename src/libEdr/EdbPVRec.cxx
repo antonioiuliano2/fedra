@@ -2999,6 +2999,37 @@ void  EdbPVRec::SetScanIDTrackSeg(EdbID id)
 }
 
 
+//---------------------------------------------------------------------------
+void EdbPVRec::InsertTrack( const EdbTrackP &t )
+{
+  EdbTrackP *tr = new EdbTrackP( (EdbSegP*)(&t), t.M() );
+  tr->SetTrack(t.Track());
+  
+  int nseg = t.N();
+  for(int i=0; i<nseg; i++)
+  {
+    EdbSegP *s  = t.GetSegment(i);
+    EdbSegP *sf = t.GetSegmentF(i);
+    if(s) 
+    {
+      EdbPattern *pat = GetPattern( s->PID() );
+      if(!pat) { 
+        Log(1,"EdbPVRec::InsertTrack","no pattern with pid %d: creating new one!",s->PID()); 
+        pat = new EdbPattern( 0., 0., s->Z() );
+        pat->SetID(s->PID());
+        pat->SetScanID(s->ScanID());
+        AddPatternAt(pat,s->PID());
+      }
+      tr->AddSegment( pat->AddSegment(*s ) );
+      tr->AddSegmentF( new EdbSegP(*sf) );
+    }
+  }
+  tr->SetSegmentsTrack(tr->ID());
+  tr->SetCounters();
+    //tr1->FitTrackKFS(true);
+  AddTrack(tr);
+}
+
 ///______________________________________________________________________________
 void  EdbPVRec::PrintSummary()
 {

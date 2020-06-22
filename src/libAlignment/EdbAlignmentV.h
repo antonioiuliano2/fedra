@@ -82,8 +82,8 @@ class EdbAlignmentV : public TObject
   Float_t         CalcMeanDZ(float tmin=0.1, float tmax=2.);
   Int_t           CalcApplyMeanDiff();
   Int_t           CalcApplyFractMeanDiff();
-        //int             FillH1Diff(int ivar, EdbH1 &h1);
-  
+  Int_t           CalcAffFull();
+
   Int_t           FindDiff(TObjArray &arr1, TObjArray &arr2, float dvlim[4], float dvfound[4] );
   Int_t           FindCorrDiff(float dvsame[4], int side=0, int nlim=10);
   float           FineCorrZ() { return FineCorrZ(eS[0], eS[1]); }

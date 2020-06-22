@@ -229,6 +229,39 @@ int EdbCouplesTree::GetCPData( TObjArray &cparr )
 }
 
 ///______________________________________________________________________________
+void EdbCouplesTree::RankCouples(TObjArray &cparr)
+{
+  // rank couples if in cparr the same segment's pointer appare in several combinations
+  EdbSegCouple::SetSortFlag(0);    // sort by CHI2P
+  cparr.UnSort();
+  cparr.Sort();
+
+  int ncp = cparr.GetEntries();
+
+  for(int i=0; i<ncp; i++) {
+    EdbSegCouple *sc = (EdbSegCouple*)(cparr.UncheckedAt(i));
+    sc->eS1->SetFlag(0);
+    sc->eS2->SetFlag(0);
+  }
+
+  for(int i=0; i<ncp; i++) {
+    EdbSegCouple *sc = (EdbSegCouple*)(cparr.UncheckedAt(i));
+    sc->eS1->SetFlag( sc->eS1->Flag()+1 );
+    sc->eS2->SetFlag( sc->eS2->Flag()+1 );
+    sc->SetN1(sc->eS1->Flag());
+    sc->SetN2(sc->eS2->Flag());
+  }
+
+  for(int i=0; i<ncp; i++) {
+    EdbSegCouple *sc = (EdbSegCouple*)(cparr.UncheckedAt(i));
+    sc->SetN1tot(sc->eS1->Flag());
+    sc->SetN2tot(sc->eS2->Flag());
+  }
+
+  Log(2,"EdbCouplesTree::RankCouples","%d couples ok", ncp );
+}
+
+///______________________________________________________________________________
 TEventList *EdbCouplesTree::InitCutList()
 {
   if(!eTree)  return  0;

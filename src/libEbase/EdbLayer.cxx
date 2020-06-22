@@ -89,6 +89,7 @@ void EdbLayer::ApplyCorrections(float shr, float zcorr, const EdbAffine2D &affxy
 {
   eShr *= shr;
   eZcorr += zcorr;
+  Log(3,"EdbLayer::ApplyCorrections","eShr: %f eZcorr: %f ", eShr, eZcorr );
   Log(3,"EdbLayer::ApplyCorrections","aff before: %s", eAffXY.AsString());
   Log(3,"EdbLayer::ApplyCorrections","corr      : %s", affxy.AsString());
   eAffXY.Transform(affxy);
@@ -148,8 +149,7 @@ bool EdbLayer::IsInside(float x, float y)
 void EdbLayer::Print()
 {
   printf("Layer:\t%d\n",eID);
-  //printf("X0Y0:\t%f %f\n", eX,eY );
-  //printf("DXDY:\t%f %f\n", eDX,eDY );
+  printf("Ncp:\t%d\n", eNcp );
   printf("ZLAYER\t%f %f %f\n",eZ,eZmin,eZmax);
   printf("SHR\t%f\n",eShr);
   printf("Zcorr\t%f\n",eZcorr);
@@ -205,6 +205,18 @@ void EdbCorrectionMap::ApplyCorrections(EdbCorrectionMap &map)
     loc->ApplyCorrections( *locD );
   }
 }
+
+//-----------------------------------------------------------------------------------------------------
+int EdbCorrectionMap::Ncp()
+{
+  int ncp=0;
+  for(int i=0; i<Ncell(); i++) {
+    EdbLayer *loc  = GetLayer(i);
+    if(loc) ncp+=loc->Ncp();
+  }
+  return ncp;
+}
+
 /*
 ///______________________________________________________________________________
 EdbSegP *EdbCorrectionMap::CorrLoc(int j)

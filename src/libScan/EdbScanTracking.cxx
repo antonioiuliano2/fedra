@@ -71,14 +71,15 @@ EdbTrackAssembler::~EdbTrackAssembler()
   //--------------------------------------------------------------------------------------
 void EdbTrackAssembler::CheckPatternAlignment(EdbPattern &p, EdbPlateP &plate,  int nsegmin)
 {
-  // return aff which to be applied to p
+  Log(0,"EdbTrackAssembler::CheckPatternAlignment","");
+  
   ExtrapolateTracksToZ( p.Z(), nsegmin);
   int ntr = eTrZ.GetEntries();
   EdbPattern ptr( 0, 0, p.Z(), ntr ); 
   for(int i=0; i<ntr; i++) ptr.AddSegment( *((EdbSegP*)(eTrZ.UncheckedAt(i))) );
     
   EdbPlateAlignment al;
-  al.SetSigma( 10, 0.005 );
+  al.SetSigma( 25, 0.015 );
   al.eOffsetMax = 500.;
   al.eDZ        = 0;
   al.eDPHI      = 0.00;
