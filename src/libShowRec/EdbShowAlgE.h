@@ -10,7 +10,7 @@
 #include "TMultiLayerPerceptron.h"
 #include "TMLPAnalyzer.h"
 #include "TCanvas.h"
-
+#include "TObjString.h"
 
 #include "EdbVertex.h"
 #include "EdbPVRec.h"
