@@ -75,7 +75,7 @@ fi
 if [[ (${usedshell##*/} == "bash") ||  ${usedshell##*/} == "sh" || ${usedshell##*/} == "ksh" ]] ; then
  echo 'export FEDRA_ROOT='"$installdir" > $installdir/setup_new.sh
  echo 'export LD_LIBRARY_PATH=$FEDRA_ROOT/lib:${LD_LIBRARY_PATH}' >> $installdir/setup_new.sh
- echo 'export PATH=${PATH}:$FEDRA_ROOT/bin' >> $installdir/setup_new.sh
+ echo 'export PATH=$FEDRA_ROOT/bin:${PATH}' >> $installdir/setup_new.sh
  echo 'export PYTHONPATH=${PYTHONPATH}:$FEDRA_ROOT/python' >> $installdir/setup_new.sh
 fi
 export FEDRA_ROOT="$installdir"
