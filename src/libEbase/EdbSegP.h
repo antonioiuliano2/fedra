@@ -99,6 +99,11 @@ class EdbSegP : public TObject, public EdbTrack2D {
     else eCOV = new TMatrixD(cov);
   }
 
+  bool CheckCOV() const{ //Check Covariance Matrix, is there?
+    if (eCOV) return true;
+    else return false;
+  }
+
   void    ForceCOV( TMatrixD &cov) { //to correctly copy COV matrices in MakeTracksTree
     if(!(&cov)) return;
     if(eCOV) *eCOV = cov;

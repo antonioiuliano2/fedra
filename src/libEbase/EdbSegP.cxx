@@ -106,7 +106,7 @@ void EdbSegP::Copy(const EdbSegP &s)
   SetPID(s.PID());
   Set(s.ID(),s.X(),s.Y(),s.TX(),s.TY(),s.W(),s.Flag());
   SetZ(s.Z());
-  SetCOV(s.COV());
+  if(s.CheckCOV()) SetCOV(s.COV());
   SetSZ(s.SZ());
   SetVid(s.Vid(0),s.Vid(1));
   SetAid(s.Aid(0),s.Aid(1),s.Side());
