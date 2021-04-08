@@ -569,8 +569,8 @@ void EdbLinking::ProduceReport()
 
     h2 = (TH2F*)eOutputFile->Get("hdxy_shr");  if(h2) {c->cd(5);  h2->SetStats(0); h2->Draw("colz"); h2=0;}
     h2 = (TH2F*)eOutputFile->Get("htxy_shr");  if(h2) {c->cd(6);  h2->SetStats(0); h2->Draw("colz"); h2=0;}
-    h1 = (TH1F*)eOutputFile->Get("shr1");      if(h1) {c->cd(7);  h1->Draw(); h1=0;}
-    h1 = (TH1F*)eOutputFile->Get("shr2");      if(h1) {c->cd(8);  h1->Draw(); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("shr1");      if(h1) {c->cd(7);  h1->Draw("hist"); h1=0;}
+    h1 = (TH1F*)eOutputFile->Get("shr2");      if(h1) {c->cd(8);  h1->Draw("hist"); h1=0;}
 
     h1 = (TH1F*)eOutputFile->Get("hdtx1");     if(h1) {c->cd(9);  h1->Draw(); h1=0;}
     h1 = (TH1F*)eOutputFile->Get("hdty1");     if(h1) {c->cd(10); h1->Draw(); h1=0;}
