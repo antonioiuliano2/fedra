@@ -260,7 +260,15 @@ int EdbEDATrackSet::GetTrackColor(EdbSegP *s){
 		if (col==10) col = kGreen+3;
 		return col;
 	}
-	
+	if(eColorMode==kCOLOR_BY_MCID)     {
+		int col = s->MCTrack()%10+1;
+		if (col==5) col = kOrange;
+		if (col==10) col = kGreen+3;
+		if (col==1) col = kOrange+3;
+		if (col<0) col = kWhite; //background
+		return col;
+	}
+
 	return (s->Plate()%13)*4+52;
 }
 

@@ -81,6 +81,7 @@ namespace EdbEDAUtil{
 		kCOLOR_BY_PLATE,
 		kCOLOR_BY_PH,
 		kCOLOR_BY_ID,
+		kCOLOR_BY_MCID,
 		kCOLOR_BY_PARTICLE, // to be done
 		kBLACKWHITE
 	};
