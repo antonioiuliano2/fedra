@@ -16,6 +16,7 @@
 #include "EdbMath.h"
 #include "EdbTraceBack.h"
 #include "EdbLog.h"
+#include "EdbVertex.h"
 #include <TSystem.h>
 #include <iostream>
 
@@ -2513,6 +2514,346 @@ int EdbDataProc::MakeTracksTree(EdbPVRec *ali, const char *file)
   return MakeTracksTree(*trarr,xv,yv, file);
 }
 
+int EdbDataProc::MakeVertexTree(TObjArray &vtxarr, const char *file)
+{
+  Log(2,"EdbDataProc::MakeVertexTree","write vertices into %s ... ",file);
+  TFile fil(file,"RECREATE");
+  TTree *vtx= new TTree("vtx","Reconstructed vertices in emulion");
+  
+  EdbSegP      *tr = new EdbSegP();
+  EdbTrackP *track = NULL;
+
+  TClonesArray *tracks = new TClonesArray("EdbSegP"); //tracks are saved as EdbSegP, like in MakeTracksTree
+  TClonesArray *segments  = new TClonesArray("EdbSegP");
+  TClonesArray *segmentsf = new TClonesArray("EdbSegP");
+
+  //list of variables
+
+  Float_t vx, vy, vz; //true reconstructed vertex position
+  Float_t meanvx, meanvy, meanvz; //track connection point
+  Int_t vID = 0;
+  Float_t maxaperture;
+  Float_t probability;
+  Int_t n;
+  Int_t flag; //we need also the flag to check vertex type
+  const Int_t maxdim = 1000; //maximum number of tracks associated to a vertex that can be saved in the tree
+  //big arrays for containers of track variables
+  Int_t TrackID[maxdim];
+  Int_t nholes[maxdim];
+  Int_t maxgap[maxdim];
+  Int_t nseg[maxdim];
+  Int_t npl[maxdim];
+  Float_t TX[maxdim];
+  Float_t TY[maxdim];
+  Float_t impactparameter[maxdim];
+  Int_t incoming[maxdim]; //coming from the vertex
+  //MC information
+  Int_t MCEventID[maxdim];
+  Int_t MCTrackID[maxdim];
+  Int_t MCTrackPdgCode[maxdim];
+  Int_t MCMotherID[maxdim];
+
+  //list of branches
+  vtx->Branch("vID",&vID,"vID/I");
+  vtx->Branch("flag",&flag,"flag/I");
+  vtx->Branch("vx",&vx,"vx/F");
+  vtx->Branch("vy",&vy,"vy/F");
+  vtx->Branch("vz",&vz,"vz/F");
+  vtx->Branch("meanvx",&meanvx,"meanvx/F");
+  vtx->Branch("meanvy",&meanvy,"meanvy/F");
+  vtx->Branch("meanvz",&meanvz,"meanvz/F");
+  vtx->Branch("maxaperture",&maxaperture,"maxaperture/F");
+  //vtx->Branch("maxrmsthetaspace",&maxrmsthetaspace,"maxrmsthetaspace/F");
+  vtx->Branch("probability",&probability,"probability/F");
+  vtx->Branch("n",&n,"n/I");
+  vtx->Branch("t.",&tracks); // track data is now filled after using Copy method
+  //tracks->Branch("t.","EdbSegP",&track,32000,99);
+  vtx->Branch("s", &segments);
+  vtx->Branch("sf",&segmentsf);
+  //track variables (they are array with the number of tracks as size)
+  vtx->Branch("TrackID",&TrackID,"TrackID[n]/I");
+  vtx->Branch("nseg",&nseg,"nseg[n]/I");
+  vtx->Branch("npl",&npl,"npl[n]/I");
+  vtx->Branch("nholes",&nholes,"nholes[n]/I"); //even more variables in this tree
+  vtx->Branch("maxgap",&maxgap,"maxgap[n]/I"); 
+  vtx->Branch("incoming",&incoming,"incoming[n]/I");
+  vtx->Branch("impactparameter",&impactparameter,"impactparameter[n]/F");
+  //inserting MCtrue information
+  vtx->Branch("MCEventID", &MCEventID, "MCEventID[n]/I");
+  vtx->Branch("MCTrackID",&MCTrackID,"MCTrackID[n]/I");
+  vtx->Branch("MCTrackPdgCode",&MCTrackPdgCode,"MCTrackPdgCode[n]/I");
+  vtx->Branch("MCMotherID",&MCMotherID,"MCMotherID[n]/I");
+
+  int nvtx = vtxarr.GetEntriesFast();
+  //START TREE FILLING
+  for(int ivtx=0; ivtx<nvtx; ivtx++) {
+    int itotalseg = 0;
+    tracks->Clear("C");
+    segments->Clear("C");
+    segmentsf->Clear("C");
+
+    EdbVertex* vertex = (EdbVertex*) (vtxarr.At(ivtx));
+    if(vertex->Flag()<0) continue; //saving only 'true' vertices in the tree file and in the object
+    vx=vertex->VX();
+    vy=vertex->VY();
+    vz=vertex->VZ();
+    meanvx=vertex->X();
+    meanvy=vertex->Y();
+    meanvz=vertex->Z();
+    n=vertex->N();
+    maxaperture = vertex->MaxAperture();
+    probability = vertex->V()->prob();  
+    flag = vertex->Flag();
+    //adding vertex to list to be saved
+    //loop on tracks //now it can be done offline (again)
+    for (int itrk = 0; itrk < n; itrk++){
+     //getting track and track variables to fill branches
+     track = vertex->GetTrack(itrk);
+     tr->Copy(*track);     
+//     tr->ForceCOV(track->COV());
+     if(tr) new((*tracks)[itrk])  EdbSegP( *tr ); //adding track to trackclonesarray
+     ((EdbSegP*) tracks->At(itrk))->ForceCOV(track->COV()); //default copy does NOT save COV corrrectly
+     TrackID[itrk] = track->Track(); //the eTrack attribute of EdbSegP now allows association to original root tree
+     nseg[itrk] = track->N();
+     npl[itrk]  = track->Npl();
+     Int_t zpos = vertex->GetVTa(itrk)->Zpos();
+     incoming[itrk] = zpos;
+     nholes[itrk] = track->N0();
+     maxgap[itrk] = track->CheckMaxGap();
+     impactparameter[itrk] = vertex->GetVTa(itrk)->Imp();
+     //Storing MCTrue information (of course for real data these values have no sense)
+     MCEventID[itrk] = track->MCEvt();
+     MCTrackID[itrk] = track->MCTrack();
+     if(MCEventID[itrk]>-1){ //vertices from MC simulation, used Vid[0] and Aid[0] to store these information
+      MCTrackPdgCode[itrk] = track->Vid(0);
+      MCMotherID[itrk] = track->Aid(0); //used to store MotherID information
+     }
+     else { //vertices from data, set default values 
+      MCTrackPdgCode[itrk] = -999;
+      MCMotherID[itrk] = -999;
+     }
+    //w    = track->Wgrains();
+     EdbSegP *s=0,*sf=0;
+    //loop on segments
+     for(int is=0; is<nseg[itrk]; is++) {
+      s = track->GetSegment(is);     
+      if(s) new((*segments)[itotalseg])  EdbSegP( *s );
+      ((EdbSegP*) segments->At(itotalseg))->ForceCOV(s->COV()); //default copy does NOT save COV corrrectly
+      sf = track->GetSegmentF(is);
+      if(sf) new((*segmentsf)[itotalseg])  EdbSegP( *sf );
+      ((EdbSegP*) segmentsf->At(itotalseg))->ForceCOV(sf->COV()); //default copy does NOT save COV corrrectly
+      itotalseg++;
+      }
+
+   // track->SetVid( 0, tracks->GetEntries() );  // put track counter in t.eVid[1]
+     }
+    vtx->Fill();
+    vID++; //now the number of elements in the tree and vertices is the same. vID starts from 0
+    }
+  vtx->Write();
+  fil.Close();
+  Log(2,"EdbDataProc::MakeVertexTree","%d vertices are written",nvtx);
+  return nvtx; 
+}
+int EdbDataProc::ReadVertexTree( EdbVertexRec &vertexrec, const char     *fname, const char *rcut, map<int,EdbTrackP*> trackID_map)
+{
+  TFile f(fname);
+  if(f.IsZombie()) { Log(1,"EdbDataProc::ReadVertexTree","Error open file %s", fname);  return 0; }
+  
+  TTree *vtx = (TTree*)f.Get("vtx");
+
+  //vertex variables
+  Float_t vx, vy, vz;
+  Int_t vID = 0;
+  Int_t n = 0;
+  Int_t flag = 0;
+  //track variables
+
+  const Int_t maxdim = 1000; //maximum number of tracks associated to a vertex that can be saved in the tree
+  //big arrays for containers of track variables
+  Int_t TrackID[maxdim];
+  Int_t nholes[maxdim];
+  Int_t maxgap[maxdim];
+  Int_t nseg[maxdim];
+  Float_t TX[maxdim];
+  Float_t TY[maxdim];
+  Float_t impactparameter[maxdim];
+  Int_t incoming[maxdim]; //coming from the vertex
+  //MC information
+  Int_t MCEventID[maxdim];
+  Int_t MCTrackID[maxdim];
+  Int_t MCMotherID[maxdim];
+/*
+  Int_t   trid=0;
+  Int_t   nseg=0;
+  Int_t   npl=0;
+  Int_t   n0=0;
+  Float_t xv=0.;
+  Float_t yv=0.;*/
+
+  int nentr = (int)(vtx->GetEntries());
+  TCut cut = rcut;
+  vtx->Draw(">>lst", cut );
+  TEventList *lst = (TEventList*)gDirectory->GetList()->FindObject("lst");
+  int nlst =lst->GetN();
+  if(cut) Log(2,"EdbDataProc::ReadVtxTree","select %d of %d vertices by cut %s",nlst, nentr, cut.GetTitle() );
+
+  TClonesArray *tracks = new TClonesArray("EdbSegP");
+  TClonesArray *seg  = new TClonesArray("EdbSegP", 60);
+  TClonesArray *segf = new TClonesArray("EdbSegP", 60);
+  
+  EdbSegP *trk=0;
+  EdbSegP *s1=0; 
+  EdbSegP *s1f=0;
+  //vertex variables
+  vtx->SetBranchAddress("vID",&vID);
+  vtx->SetBranchAddress("flag",&flag);
+  vtx->SetBranchAddress("vx",&vx);
+  vtx->SetBranchAddress("vy",&vy);
+  vtx->SetBranchAddress("vz",&vz);
+  vtx->SetBranchAddress("n",&n);
+  //arrays
+  vtx->SetBranchAddress("nseg",&nseg);
+  vtx->SetBranchAddress("TrackID",&TrackID);
+  vtx->SetBranchAddress("incoming",&incoming);
+  //TClones arrays
+  vtx->SetBranchAddress("sf", &segf);
+  vtx->SetBranchAddress("s",  &seg);
+  vtx->SetBranchAddress("t.", &tracks);
+
+  EdbPattern *pat=0;
+  int entr=0;
+  //now each tree entry is a vertex
+
+  TObjArray * vertextracks = new TObjArray(maxdim);
+  float expz = 0.;
+
+  EdbPVRec *ali = vertexrec.ePVR; //I get EdbPVR from EdbVertexRec from now on
+  for (int j=0; j<nlst; j++){
+    //RESET COUNTERS!
+    int itotalseg = 0; //counter for all the segments
+    vertextracks->Clear("C");
+
+    entr = lst->GetEntry(j);
+    vtx->GetEntry(entr);
+    EdbVertex *v1 = new EdbVertex();
+    //loop on all tracks associated to the vertex
+    for (int itrk = 0; itrk < n; itrk++){
+     EdbTrackP *tr1;
+     if(!trackID_map[TrackID[itrk]]){
+      tr1= new EdbTrackP();
+      trk = (EdbSegP*) tracks->At(itrk); //getting track itrk
+      ((EdbSegP*)tr1)->Copy(*trk);
+      tr1->ForceCOV(trk->COV());
+      tr1->SetM(0.139);                 //TODO
+
+      for(int i=0; i<nseg[itrk]; i++) {
+       s1 = (EdbSegP*)(seg->At(itotalseg));
+       s1f = (EdbSegP*)(segf->At(itotalseg));
+       pat = ali->GetPattern( s1->PID() );
+       if(!pat) { 
+	      Log(1,"EdbDataProc::ReadVertexTree","WARNING: no pattern with pid %d: creating new one!",s1->PID()); 
+	      pat = new EdbPattern( 0., 0., s1->Z() );
+	      pat->SetID(s1->PID());
+	      pat->SetScanID(s1->ScanID());
+	      ali->AddPatternAt(pat,s1->PID());
+      }
+
+        //This way it should be more clear which segment instance is added to the track
+        EdbSegP *segtobeadded = pat->AddSegment(*s1);
+        EdbSegP *segftobeadded = new EdbSegP(*s1f);
+        segtobeadded->ForceCOV(s1->COV());
+        segftobeadded->ForceCOV(s1f->COV());
+
+        tr1->AddSegment(segtobeadded);
+        tr1->AddSegmentF(segftobeadded);
+        itotalseg++; //increasing counter of number of segments
+      }
+      tr1->SetSegmentsTrack(tr1->ID());
+      tr1->SetCounters();
+     //tr1->FitTrackKFS(true);
+      tr1->SetTrack(TrackID[itrk]); //providing trackid to eTrack so it will not be lost when trackID resets
+      ali->AddTrack(tr1);
+      trackID_map[TrackID[itrk]] = tr1;
+     }
+     else{ //track already added to ali, add it only to vertex
+      tr1 = trackID_map[TrackID[itrk]];
+      itotalseg+= nseg[itrk];
+     }
+     vertextracks->Add(tr1);     
+     //v1 = vertexrec->AddTrackToVertex(v1, tr1, incoming[itrk]);
+    }
+    //setting vertex parameters and saving vertex
+    //v1 = vertexrec.Make1Vertex(*vertextracks,vz) (copied here instead, by putting zpos directly as for in vertexing);
+    v1->SetXYZ( 0,0, vz );
+    int ntr = vertextracks->GetEntries();
+    for(int i=0; i<ntr; i++) {
+      EdbTrackP *t = (EdbTrackP*)vertextracks->At(i);
+      EdbVTA *vta = new EdbVTA(t,v1);
+      vta->SetFlag(2);
+      v1->AddVTA(vta);
+      vta->SetZpos(incoming[i]);
+      t->AddVTA(vta);
+    }
+    if( vertexrec.MakeV(*v1) )  vertexrec.AddVertex(v1);
+    //else { SafeDelete(v); return 0; }                                // vertex is not valid
+    //return v;
+    v1->SetID(vID);
+    v1->SetFlag(flag);
+    /* make vertex manually, old version
+    int ntr = vertextracks->GetEntries();
+    v1->SetXYZ(vx,vy,vz);  
+    for(int i=0; i<ntr; i++) {
+     EdbTrackP *t = (EdbTrackP*)vertextracks->At(i);
+     EdbVTA *vta = new EdbVTA(t,v1);
+     vta->SetFlag(2);
+     v1->AddVTA(vta);
+     (t->Z() >= v1->Z())? vta->SetZpos(1) : vta->SetZpos(0);
+     t->AddVTA(vta);
+    } */
+    
+    ali->AddVertex(v1);
+  }
+
+  Log(2,"EdbDataProc::ReadVtxTree","%d vertices are read",nlst);
+  return nlst;
+}
+
+
+ int EdbDataProc::ReadVertexTree( EdbVertexRec &vertexrec, const char     *fname, const char *rcut,TObjArray *builttracks){
+
+  map<int,EdbTrackP*>emptymap;
+  if (builttracks){
+   int ntracks = builttracks->GetEntries();
+  
+   for (int itrk = 0; itrk < ntracks; itrk++){
+        EdbTrackP * track = (EdbTrackP*) builttracks->At(itrk);
+        emptymap[track->Track()] = track; //adding this trackID to map
+    }
+  }
+
+  int nlst = ReadVertexTree( vertexrec, fname, rcut,emptymap);
+  return nlst;
+ }
+
+ EdbVertex*  EdbDataProc::GetVertexFromTree( EdbVertexRec &vertexrec, const char     *fname, const int vertexID )
+{
+  //reading vertex tree, getting only the vertex I need
+  map<int,EdbTrackP*>emptymap;
+  ReadVertexTree(vertexrec, fname, Form("vID==%i",vertexID),emptymap); //vertex is added to EdbPVRec
+
+  EdbVertex *myvertex;
+  EdbPVRec *ali = vertexrec.ePVR;
+  //looking for myvertex (when called more than once, ali keeps adding vertices)
+  for (int ivtx = 0; ivtx<ali->eVTX->GetEntries();ivtx++){
+    EdbVertex *v1 = (EdbVertex*) ali->eVTX->At(ivtx);
+    if (v1->ID()==vertexID) myvertex = v1;
+  }
+  
+  return myvertex;
+
+ }
+
 //______________________________________________________________________________
 int EdbDataProc::MakeTracksTree(TObjArray &trarr, float xv, float yv, const char *file)
 {
@@ -2606,6 +2947,7 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
   TClonesArray *segf = new TClonesArray("EdbSegP", 60);
   EdbSegP *trk=0;
   EdbSegP *s1=0;
+  EdbSegP *s1f=0;
 
   tracks->SetBranchAddress("trid", &trid);
   tracks->SetBranchAddress("nseg", &nseg);
@@ -2625,10 +2967,12 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 
     EdbTrackP *tr1 = new EdbTrackP();
     ((EdbSegP*)tr1)->Copy(*trk);
+    tr1->ForceCOV(trk->COV());
     tr1->SetM(0.139);                 //TODO
 
     for(int i=0; i<nseg; i++) {
       s1 = (EdbSegP*)(seg->At(i));
+      s1f = (EdbSegP*)(segf->At(i));
       pat = ali.GetPattern( s1->PID() );
       if(!pat) { 
 	Log(1,"EdbDataProc::ReadTracksTree","WARNING: no pattern with pid %d: creating new one!",s1->PID()); 
@@ -2637,9 +2981,14 @@ int EdbDataProc::ReadTracksTree( EdbPVRec &ali,
 	pat->SetScanID(s1->ScanID());
 	ali.AddPatternAt(pat,s1->PID());
       }
+      //This way it should be more clear which segment instance is added to the track
+      EdbSegP *segtobeadded = pat->AddSegment(*s1);
+      EdbSegP *segftobeadded = new EdbSegP(*s1f);
+      segtobeadded->ForceCOV(s1->COV());
+      segftobeadded->ForceCOV(s1f->COV());
 
-      tr1->AddSegment( pat->AddSegment(*s1 ) );
-      tr1->AddSegmentF( new EdbSegP(*((EdbSegP*)(segf->At(i)))) );
+      tr1->AddSegment( segtobeadded );
+      tr1->AddSegmentF( segftobeadded );
     }
     tr1->SetSegmentsTrack(tr1->ID());
     tr1->SetCounters();
