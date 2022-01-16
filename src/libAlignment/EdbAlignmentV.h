@@ -97,6 +97,7 @@ class EdbAlignmentV : public TObject
   Int_t           CalculateAffXYTurn(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffXY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   Int_t           CalculateAffTXTY(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
+  Int_t           CalculateAffTXTYTurn(TObjArray &arr1, TObjArray &arr2, EdbAffine2D &aff);
   
   // functions alpplied to the individual patterns
   void            CorrToCoG(int side, EdbPattern &p);

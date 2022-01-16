@@ -365,7 +365,11 @@ void EdbPlateAlignment::FineAlAff(EdbPattern &p1, EdbPattern &p2, EdbLayer &la1)
   if(eNoScale) CalculateAffXYTurn(sel1,sel2,aff);
   else         CalculateAffXY(sel1,sel2,aff);
   la1.GetAffineXY()->Transform(&aff);
-
+  
+  EdbAffine2D afftxty;
+  CalculateAffTXTYTurn(sel1,sel2,afftxty);
+  la1.GetAffineTXTY()->Transform(&afftxty);
+  
   Log(2,"FineAlAff","peak of %d  with patterns of: %d %d",  npk, p1.N(),p2.N() );
   if(gEDBDEBUGLEVEL>2)  la1.GetAffineXY()->Print();
 

@@ -544,7 +544,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         if(eDoRealign) 
         {
           if( i==1 ) etra.CheckPatternAlignment(p,*plate,1);
-          if( i>1  ) etra.CheckPatternAlignment(p,*plate,2);
+          if( i>1  ) etra.CheckPatternAlignment(p,*plate,1);
         }
         etra.FillTrZMap();
         etra.AddPattern(p);
