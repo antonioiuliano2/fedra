@@ -88,7 +88,7 @@ void Log0(int level, const char *location, const char *fmt, va_list ap)
 {
 // Print message to the logfile and to stdout.
 
-  R__LOCKGUARD2(gErrorMutex);
+  R__LOCKGUARD2(gGlobalMutex);
 
   static Int_t buf_size = 2048;
   static char *buf = 0;
