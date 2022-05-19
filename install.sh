@@ -7,7 +7,7 @@ if [[ -z "${FEDRA_INSTALL_DIR}" ]]; then
 else
  installdir="${FEDRA_INSTALL_DIR}"
  scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
- cp ${scriptdir}/* ${installdir}
+ cp -r ${scriptdir}/* ${installdir}
 fi
 if [[ ${installdir##*/} == "src" ]] ; then
  installdir=`cd ..; pwd`
