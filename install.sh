@@ -1,8 +1,6 @@
 #!/bin/bash
 # Installation script for the fedra-package   #
 # 14.11.03                                    #
-
-
 if [[ -z "${FEDRA_INSTALL_DIR}" ]]; then
  installdir=`pwd`
 else
