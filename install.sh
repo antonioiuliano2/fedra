@@ -2,7 +2,13 @@
 # Installation script for the fedra-package   #
 # 14.11.03                                    #
 
-installdir=`pwd`
+if [[ -z "${FEDRA_INSTALL_DIR}" ]]; then
+ installdir=`pwd`
+else
+ installdir="${FEDRA_INSTALL_DIR}"
+ scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ cp -r ${scriptdir}/* ${installdir}
+fi
 if [[ ${installdir##*/} == "src" ]] ; then
  installdir=`cd ..; pwd`
 fi
