@@ -213,7 +213,7 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
         TArrayF chi2arr(10000);  //TODO!
         TObjArray found;
         FindCompliments( spred, eSide1, found, ePreliminaryChi2MaxMT, chi2arr );
-        for(int j=0; j<found.GetEntries(); j++) {
+        for(int j=0; j<found.GetEntriesFast(); j++) {
           EdbSegP *s = (EdbSegP *)(found.At(j));
           s->SetChi2(chi2arr[j]);
           if     (side==1) fnds1.AddSegment(*s);
@@ -231,7 +231,7 @@ int EdbPlateTracking::FindCandidates( EdbSegP &spred, EdbPattern &fndbt, EdbPatt
         TArrayF chi2arr(10000);  //TODO!
         TObjArray found;
         FindCompliments( spred, eSide2, found, ePreliminaryChi2MaxMT, chi2arr );
-        for(int j=0; j<found.GetEntries(); j++) {
+        for(int j=0; j<found.GetEntriesFast(); j++) {
           EdbSegP *s = (EdbSegP *)(found.At(j));
           s->SetChi2(chi2arr[j]);
           if     (side==1) fnds1.AddSegment(*s);

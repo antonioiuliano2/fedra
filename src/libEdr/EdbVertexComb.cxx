@@ -75,7 +75,7 @@ void EdbTopology::PrintTracks()
   printf("---------------------------- Single Tracks --------------------------------------------------------\n");
   printf("  idtr         X            Y            Z      TX       TY         P    idpl\n");
   printf("--------------------------------------------------------------------------------------------------\n");
-  int ntr = eTracks.GetEntries();
+  int ntr = eTracks.GetEntriesFast();
   for(int i=0; i<ntr; i++) {
     EdbTrackP *t = GetTrack(i);
     printf("%5d %12.2f %12.2f %12.2f %8.4f %8.4f %8.2f %4d\n"
@@ -112,7 +112,7 @@ char *EdbTopology::VertexStr(EdbVertex &v)
 //________________________________________________________________________
 void EdbTopology::Print()
 {
-  int nvtx = eVertices.GetEntries();
+  int nvtx = eVertices.GetEntriesFast();
   printf("\nEdbTopology: prob = %10.8f    dz= %10.2f\n",Probability(), DZ());
   printf("  id     Prob         X          Y        Z      MaxImp   MaxApert    Vol[(0.1mm)³]    Tracks\n");
   for(int i=0; i< nvtx; i++) 
@@ -173,7 +173,7 @@ void EdbVertexComb::PrintTeoricalCombinations(Int_t n)
 //-----------------------------------------------------------------------------
 void EdbVertexComb::SetTracksErrors(TObjArray &tracks, EdbScanCond &cond)
 {
-  int n = tracks.GetEntries();
+  int n = tracks.GetEntriesFast();
   for(int i=0; i<n; i++) {
      EdbTrackP *t = (EdbTrackP*)tracks.At(i);
      int nseg = t->N();
@@ -194,15 +194,15 @@ int EdbVertexComb::FindTopologies()
   SelectTopologies(eTopologies);
   SortTopologies(eTopologies);
   ClearDoublets(eTopologies);
-  int n = eTopologies.GetEntries();
-  Log(2,"EdbVertexComb::FindTopologies"," %d input tracks, upto %d vtx to search  -> %d topologies found", eTracks.GetEntries(), eRecursionMax, n);
+  int n = eTopologies.GetEntriesFast();
+  Log(2,"EdbVertexComb::FindTopologies"," %d input tracks, upto %d vtx to search  -> %d topologies found", eTracks.GetEntriesFast(), eRecursionMax, n);
   return n;
 }
 
 //______________________________________________________________________________
 void EdbVertexComb::PrintTopologies()
 {
-  int n = eTopologies.GetEntries();
+  int n = eTopologies.GetEntriesFast();
   PrintTracks();
   for(int i=0; i<n; i++) GetTopology(i)->Print();
 }
@@ -211,7 +211,7 @@ void EdbVertexComb::PrintTopologies()
 void EdbVertexComb::FormVertices()
 {
   if( eRecursion >= eRecursionMax )      return;
-  int ntr = eTracks.GetEntries();
+  int ntr = eTracks.GetEntriesFast();
   if(ntr<eNProngMinV) return;
   if(ntr<2)           return;
   //if(nprongMin<2)   return 0;
@@ -250,7 +250,7 @@ void EdbVertexComb::PrintTracks()
   printf("\n---------------------------- Input Tracks --------------------------------------------------------\n");
   printf("  idtr         X            Y            Z      TX       TY         P    idpl\n");
   printf("--------------------------------------------------------------------------------------------------\n");
-  int ntr = eTracks.GetEntries();
+  int ntr = eTracks.GetEntriesFast();
   for(int i=0; i<ntr; i++) {
     EdbTrackP *t = (EdbTrackP*)(eTracks.At(i));
     printf("%5d %12.2f %12.2f %12.2f %8.4f %8.4f %8.2f %4d\n"
@@ -265,7 +265,7 @@ void EdbVertexComb::ClearDoublets(TObjArray &topoarr)
   int nremove=1;
   do {
     nremove=0;
-    int nt = topoarr.GetEntries(); if(!nt) return;
+    int nt = topoarr.GetEntriesFast(); if(!nt) return;
     for(int i=nt-1; i>0; i--) {
       EdbTopology *t  = (EdbTopology*)topoarr.At(i);
       EdbTopology *tn = (EdbTopology*)topoarr.At(i-1);
@@ -278,7 +278,7 @@ void EdbVertexComb::ClearDoublets(TObjArray &topoarr)
 //-----------------------------------------------------------------------------
 void EdbVertexComb::SortTopologies(TObjArray &topoarr)
 {
-  int nt = topoarr.GetEntries();
+  int nt = topoarr.GetEntriesFast();
   TArrayF rating(nt);  TArrayI ind(nt);
   for(int i=0; i<nt; i++)     rating[i] =((EdbTopology*)topoarr.At(i))->Probability();
   Sort( nt, rating.GetArray(), ind.GetArray(), 1 );
@@ -292,7 +292,7 @@ void EdbVertexComb::SortTopologies(TObjArray &topoarr)
 //-----------------------------------------------------------------------------
 void EdbVertexComb::SelectTopologies(TObjArray &topoarr)
 {
-  int nvtx = eVertices.GetEntries();
+  int nvtx = eVertices.GetEntriesFast();
   Log(3,"EdbVertexComb::SelectTopologies","nvtx = %d",nvtx);
   if(!nvtx) return;
   for(int i=0; i<nvtx; i++)
@@ -305,7 +305,7 @@ void EdbVertexComb::SelectTopologies(TObjArray &topoarr)
     EdbVertexComb *combo = GetVertexComb(i);
     if(combo) {
       combo->SelectTopologies(newarr);
-      nnew=newarr.GetEntries();
+      nnew=newarr.GetEntriesFast();
     }
     if(!nnew) { 
       EdbTopology *topa = new EdbTopology();
@@ -331,7 +331,7 @@ bool EdbVertexComb::IsAcceptable( EdbVertex &v )
 //-----------------------------------------------------------------------------
 EdbVertex *EdbVertexComb::CheckVTX(TObjArray &tracks)
 {
-  if(tracks.GetEntries() < 2 ) return 0;
+  if(tracks.GetEntriesFast() < 2 ) return 0;
   EdbVertexRec evr(eVPar);
   EdbPVRec *pvr = new EdbPVRec();
   pvr->SetScanCond( new EdbScanCond(eCond) );

@@ -53,7 +53,7 @@ void EdbScanSet::Copy(EdbScanSet &sc)
   eB.Copy(sc.eB);
   eID = sc.eID;
 
-  int npc = sc.ePC.GetEntries();
+  int npc = sc.ePC.GetEntriesFast();
   for(int i=0; i<npc; i++) {
     EdbPlateP *p = new EdbPlateP();
     p->Copy( *((EdbPlateP *)sc.ePC.At(i)) );
@@ -137,7 +137,7 @@ Int_t EdbScanSet::AssembleBrickFromPC()
 
   Float_t dz0=214,dz1=45,dz2=45;  //TODO!
   EdbAffine2D aff;
-  Int_t npc = ePC.GetEntries();      if(npc<1) return 0;
+  Int_t npc = ePC.GetEntriesFast();      if(npc<1) return 0;
   EdbPlateP *pc=0;                    //the couple of plates
   Float_t z;
   printf("\nAssembleBrickFromPC\n");
@@ -223,7 +223,7 @@ Int_t EdbScanSet::TransformBrick(EdbAffine2D aff)
 //----------------------------------------------------------------
 void EdbScanSet::TransformBrick(EdbScanSet &ss)
 {
-  int n = eIDS.GetEntries();
+  int n = eIDS.GetSize();
   for(int i=0; i<n; i++) {
     EdbID *id   = GetID(i);                  if(!id) continue;
     EdbPlateP *p  = GetPlate(id->ePlate);    if(!p)  continue;
@@ -315,7 +315,7 @@ void EdbScanSet::Print()
 {
   EdbPlateP *p=0;
   printf("EdbScanSet: %s\n", eID.AsString() );
-//   int npc = ePC.GetEntries();
+//   int npc = ePC.GetEntriesFast();
 //   printf("%d couples\n",npc);
 //   for(Int_t i=0; i<npc; i++) {
 //     p = (EdbPlateP *)(ePC.At(i));
@@ -331,8 +331,8 @@ void EdbScanSet::Print()
     printf("%3d  %12.2f       %9.6f %9.6f %9.6f %9.6f %15.6f %15.6f\n",
 	   p->ID(), p->Z(), a->A11(),a->A12(),a->A21(),a->A22(),a->B1(),a->B2());
   }
-  printf("for this brick %d identifiers are defined:\n", eIDS.GetEntries());
-  for(Int_t i=0; i<eIDS.GetEntries(); i++)  
+  printf("for this brick %d identifiers are defined:\n", eIDS.GetSize());
+  for(Int_t i=0; i<eIDS.GetSize(); i++)  
   {
     EdbID *id = (EdbID*)eIDS.At(i);
     TString str = id->AsString();
@@ -365,14 +365,14 @@ Int_t EdbScanSet::WriteIDS(const char *file)
   FILE *f = 0;
   if(file) f = fopen(file, "w");
   EdbID *id;
-  for( Int_t i=0; i<eIDS.GetEntries(); i++ ) {
+  for( Int_t i=0; i<eIDS.GetSize(); i++ ) {
     id = (EdbID *)eIDS.At(i);
     if(file) fprintf(f,"%d.%d.%d.%d\n", id->eBrick, id->ePlate, id->eMajor, id->eMinor );
     else      printf("%d.%d.%d.%d\n", id->eBrick, id->ePlate, id->eMajor, id->eMinor );
   }
 
   if(file) fclose(f);
-  return eIDS.GetEntries();
+  return eIDS.GetSize();
 }
 
 //----------------------------------------------------------------
@@ -422,9 +422,9 @@ void EdbScanSet::WriteGeom(const char *file)
   if(file) f = fopen(file, "w");
   if(!f) {Log(1,"EdbScanSet::WriteGeom","Can not open file %s", file); return; }
   EdbID *id1=0, *id2=0;
-  int n = eIDS.GetEntries();
+  int n = eIDS.GetSize();
   fprintf(f,"%d\n", n);
-  for( Int_t i=0; i<eIDS.GetEntries(); i++ ) {
+  for( Int_t i=0; i<eIDS.GetSize(); i++ ) {
     id1 = (EdbID *)eIDS.At(i);
     if(i==0) fprintf(f,"%d.%d.%d.%d\n", id1->eBrick, id1->ePlate, id1->eMajor, id1->eMinor );
     if( n>1 && i<n-1) id2 = (EdbID *)eIDS.At(i+1);    else continue;
@@ -442,7 +442,7 @@ EdbID *EdbScanSet::FindNextPlateID(Int_t plate, Bool_t positive_direction)
   Log(2,"FindNextPlateID","plate = %d  direction = %d", plate, positive_direction);
   EdbID *id = 0;
   Int_t plmin=kMaxInt, plmax=kMinInt;
-  for (Int_t i = 0; i < eIDS.GetEntries(); i++) {
+  for (Int_t i = 0; i < eIDS.GetSize(); i++) {
     id = (EdbID *)eIDS.At(i);
     if (id->ePlate>plmax) plmax=id->ePlate;
     if (id->ePlate<plmin) plmin=id->ePlate;
@@ -464,7 +464,7 @@ EdbID *EdbScanSet::FindNextPlateID(Int_t plate, Bool_t positive_direction)
 EdbID *EdbScanSet::FindPlateID(Int_t plate)
 {
   EdbID *id;
-  for (Int_t i = 0; i < eIDS.GetEntries(); i++) {
+  for (Int_t i = 0; i < eIDS.GetSize(); i++) {
     id = (EdbID *)eIDS.At(i);
     if (id->ePlate == plate) return id;
   }

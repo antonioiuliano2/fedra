@@ -976,7 +976,7 @@ void EdbEDAShowerTab::FindPairingsNewAlgo() {
     /*
     	// Get possible Initiator BT Array.
     	TObjArray* InBTArray=gEDA->GetSelected();
-    	Int_t eInBTArrayN=InBTArray->GetEntries();
+    	Int_t eInBTArrayN=InBTArray->GetEntriesFast();
     	cout << eInBTArrayN << endl;
 
     	if (eInBTArrayN==0) {
@@ -1056,7 +1056,7 @@ void EdbEDAShowerTab::FindPairings() {
     TArrayI* Segment2IDArray = new TArrayI(99999999);
 
     TObjArray* InBTArray=gEDA->GetSelected();
-    Int_t eInBTArrayN=InBTArray->GetEntries();
+    Int_t eInBTArrayN=InBTArray->GetEntriesFast();
     cout << eInBTArrayN << endl;
 
     if (eInBTArrayN==0) {
@@ -1269,7 +1269,7 @@ void EdbEDAShowerTab::CheckCosmicReco() {
 
     // Loop to find longest track npl:
     cout << "// Loop to find longest track npl:" << endl;
-    for (int i=0; i<tracksArray->GetEntries(); i++) {
+    for (int i=0; i<tracksArray->GetEntriesFast(); i++) {
         track=(EdbTrackP*) tracksArray->At(i);
         //track->Print();
         if (track->N()>maxTrackSegments) maxTrackSegments=track->N();
@@ -1287,13 +1287,13 @@ void EdbEDAShowerTab::CheckCosmicReco() {
     // Get number of patterns for edbpvrec objects
     TObjArray* TestRecoCosmicInBTArray = new TObjArray();
 
-    for (int i=0; i<tracksArray->GetEntries(); i++) {
+    for (int i=0; i<tracksArray->GetEntriesFast(); i++) {
         track=(EdbTrackP*) tracksArray->At(i);
         if (track->N()<maxNpat-6) continue;
         TestRecoCosmicInBTArray->Add(track);
     }
 
-    cout << "// Get number of TestRecoCosmicInBTArray" << TestRecoCosmicInBTArray->GetEntries() << endl;
+    cout << "// Get number of TestRecoCosmicInBTArray" << TestRecoCosmicInBTArray->GetEntriesFast() << endl;
 
     eInBTArray=TestRecoCosmicInBTArray;
 
@@ -1316,8 +1316,8 @@ void EdbEDAShowerTab::CheckCosmicReco() {
     }
 
 
-    cout << "// Get number of TestRecoCosmicInBTArray" << TestRecoCosmicInBTArray->GetEntries() << endl;
-    cout << "// Get number of RecoShowerArray" << RecoShowerArray->GetEntries() << endl;
+    cout << "// Get number of TestRecoCosmicInBTArray" << TestRecoCosmicInBTArray->GetEntriesFast() << endl;
+    cout << "// Get number of RecoShowerArray" << RecoShowerArray->GetEntriesFast() << endl;
 
     EdbTrackP* showertrack=0;
     cout << "// Starting Tracks with Reconstructed Showers...:" << endl;
@@ -1325,10 +1325,10 @@ void EdbEDAShowerTab::CheckCosmicReco() {
     int nseg_track_minus_shower=0;
     TH1F* h_nseg_track_minus_shower=new TH1F("track_shower_difference","track_shower_difference",100,-50,50);
 
-    for (int i=0; i<TestRecoCosmicInBTArray->GetEntries(); i++) {
+    for (int i=0; i<TestRecoCosmicInBTArray->GetEntriesFast(); i++) {
         track=(EdbTrackP*) TestRecoCosmicInBTArray->At(i);
 // 	 track->PrintNice();
-        for (int j=i; j<RecoShowerArray->GetEntries(); j++) {
+        for (int j=i; j<RecoShowerArray->GetEntriesFast(); j++) {
             showertrack=(EdbTrackP*) RecoShowerArray->At(j);
 // 			showertrack->PrintNice();
             if (TMath::Abs(track->Z()-showertrack->Z())>10) continue;
@@ -1367,7 +1367,7 @@ void EdbEDAShowerTab::PlotShower() {
 
     TH1F* h_nseg= new TH1F("h_nseg","h_nseg",100,0,100);
     TH1F* h_npl= new TH1F("h_npl","h_npl",58,0,58);
-    for (int i=0; i<RecoShowerArray->GetEntries(); i++) {
+    for (int i=0; i<RecoShowerArray->GetEntriesFast(); i++) {
         EdbTrackP* sh = (EdbTrackP*)RecoShowerArray->At(i);
         h_nseg->Fill(sh->N());
         h_npl->Fill(sh->Npl());

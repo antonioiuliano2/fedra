@@ -202,7 +202,7 @@ Int_t tracks2edb(const char* datasetname,
    Long_t nselected;
 
    // CREATE THE LIST OF LINKED SEGMENTS
-   TIndexCell* listselected = new TIndexCell();;
+   TIndexCell* listselected = new TIndexCell();
    TIndexCell* listlinked   = new TIndexCell();
    Long_t segID;
    for(int j=0;j<nlinked;j++)  {
@@ -212,7 +212,7 @@ Int_t tracks2edb(const char* datasetname,
       //listlinked->Add(segID);
       listlinked->FindAdd(segID);    //if FindAdd is used nlinked must be re-evaluated (*)
    }
-   if(listlinked) nlinked = listlinked->GetEntries(); // (*) nlinked is re-eveluated to remove the duplicated segment
+   if(listlinked) nlinked = listlinked->GetEntriesFast(); // (*) nlinked is re-eveluated to remove the duplicated segment
    if(listlinked) listlinked->Sort(); //cout<<"view: "<<i<<" ";for(int l=0;l<nlinked;l++)cout <<" "<<listlinked->At(l)->Value();cout<<endl;
    
    // CREATE THE LIST OF SELECTED SEGMENTS
@@ -229,7 +229,7 @@ Int_t tracks2edb(const char* datasetname,
             listselected->Add(segID);
          }
       }
-      nselected = listselected->GetEntries();
+      nselected = listselected->GetEntriesFast();
    } else {
       listselected = listlinked;
       nselected = nlinked ;

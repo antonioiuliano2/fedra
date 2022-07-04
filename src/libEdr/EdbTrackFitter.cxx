@@ -489,7 +489,7 @@ int EdbTrackFitter::SplitTrackByKink( EdbTrackP *t, TObjArray &tracks, float max
       tracks.Add(t1);
       nsplit++;
     }
-  return nsplit;;
+  return nsplit;
 }
 
 //______________________________________________________________________________

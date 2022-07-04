@@ -366,7 +366,7 @@ void ApplyTestMap(TEnv *cenv)
   abase.eZ1to    = cenv->GetValue("comptonmap.apply.Z1to",    400);
   abase.eZ2from  = cenv->GetValue("comptonmap.apply.Z2from", -400);
   abase.eZ2to    = cenv->GetValue("comptonmap.apply.Z2to",    400);
-  abase.eBinX    = abase.eBinY    = cenv->GetValue("comptonmap.apply.BinXY",    7);;
+  abase.eBinX    = abase.eBinY    = cenv->GetValue("comptonmap.apply.BinXY",    7);
   abase.eDTXmax  = abase.eDTYmax  = cenv->GetValue("comptonmap.apply.DTMax", 0.01 );
 
   abase.FillArrays(p1b, p2t);
@@ -412,7 +412,7 @@ void ApplyMap(TEnv *cenv)
   abase.eZ1to    = cenv->GetValue("comptonmap.apply.Z1to",    400);
   abase.eZ2from  = cenv->GetValue("comptonmap.apply.Z2from", -400);
   abase.eZ2to    = cenv->GetValue("comptonmap.apply.Z2to",    400);
-  abase.eBinX    = abase.eBinY    = cenv->GetValue("comptonmap.apply.BinXY",    7);;
+  abase.eBinX    = abase.eBinY    = cenv->GetValue("comptonmap.apply.BinXY",    7);
   abase.eDTXmax  = abase.eDTYmax  = cenv->GetValue("comptonmap.apply.DTMax", 0.01 );
 
   abase.FillArrays(p1bas, p2bas);

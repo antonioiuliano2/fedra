@@ -115,8 +115,8 @@ class EdbEDAAreaSet : public TObject{
 	
 	void Print(){
 		printf("EdbEDAAreaSet eLineColor = %d, eLineWidth = %d, eTextSize = %d, eTextColor = %d nAreas = %d\n",
-				eLineColor, eLineWidth, eTextSize, eTextColor, eAreas->GetEntries());
-		for(int i=0;i<eAreas->GetEntries();i++) ((EdbEDAArea*)eAreas->At(i))->Print();
+				eLineColor, eLineWidth, eTextSize, eTextColor, eAreas->GetEntriesFast());
+		for(int i=0;i<eAreas->GetEntriesFast();i++) ((EdbEDAArea*)eAreas->At(i))->Print();
 	}
 	
 	TObjArray *GetAreas () {return eAreas;}
@@ -130,7 +130,7 @@ class EdbEDAAreaSet : public TObject{
 		if(redraw) gEve->Redraw3D();
 	}
 	
-	int N() { return eAreas->GetEntries();}
+	int N() { return eAreas->GetEntriesFast();}
 	EdbEDAArea * GetArea(int i) { if(0<=i&&i<N()) return (EdbEDAArea *) eAreas->At(i); else return NULL;}
 	EdbEDAArea * GetAreaIPL(int ipl) { for(int i=0; i<N(); i++) if(GetArea(i)->Plate()==ipl) return GetArea(i); return NULL;}
 	
@@ -186,11 +186,11 @@ class EdbEDAVertexSet:public TObject{
 		eVerticesBase->Add(v);
 		eVertices->Add(v); 
 	}
-	void AddVertices(TObjArray *vertices){ if(NULL==vertices) return; for(int i=0;i<vertices->GetEntries();i++) AddVertex((EdbVertex *)vertices->At(i));}
+	void AddVertices(TObjArray *vertices){ if(NULL==vertices) return; for(int i=0;i<vertices->GetEntriesFast();i++) AddVertex((EdbVertex *)vertices->At(i));}
 
 	void SetVertex(EdbVertex *v) { if(eVertices->FindObject(v)==NULL) eVertices->Add(v);}
 	void SetVertices(TObjArray *vertices){ 
-		for(int i=0;i<vertices->GetEntries();i++) SetVertex((EdbVertex *)vertices->At(i));}
+		for(int i=0;i<vertices->GetEntriesFast();i++) SetVertex((EdbVertex *)vertices->At(i));}
 	void SetVerticesBase(TObjArray *vertices){ *eVerticesBase = *vertices;}
 	void SetVerticesAll(void)          { *eVertices = *eVerticesBase;}
 	void SetVerticesNtrk(int ntrkcut=3){
@@ -206,17 +206,17 @@ class EdbEDAVertexSet:public TObject{
 	
 	
 	void RemoveVertex(EdbVertex *v){ eVertices->Remove(v); eVertices->Sort();}
-	void RemoveVertices(TObjArray *vertices) { for(int i=0;i<vertices->GetEntries();i++) RemoveVertex((EdbVertex *) vertices->At(i));}
+	void RemoveVertices(TObjArray *vertices) { for(int i=0;i<vertices->GetEntriesFast();i++) RemoveVertex((EdbVertex *) vertices->At(i));}
 
 
 	
 	void ClearVertices() { eVertices->Clear();}
 	void Clear() { eVertices->Clear(); eVerticesBase->Clear();}
-	int N() { return eVertices->GetEntries();}
+	int N() { return eVertices->GetEntriesFast();}
 	EdbVertex * GetVertex(int i) { return (EdbVertex *) eVertices->At(i);}
 	TObjArray * GetVertices() { return eVertices;}
 	
-	int NBase() { return eVerticesBase->GetEntries();}
+	int NBase() { return eVerticesBase->GetEntriesFast();}
 	EdbVertex * GetVertexBase(int i) { return (EdbVertex *) eVerticesBase->At(i);}
 	TObjArray * GetVerticesBase() { return eVerticesBase;}
 	

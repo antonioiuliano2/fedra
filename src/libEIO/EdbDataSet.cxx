@@ -2796,7 +2796,7 @@ int EdbDataProc::ReadVertexTree( EdbVertexRec &vertexrec, const char     *fname,
     //setting vertex parameters and saving vertex
     //v1 = vertexrec.Make1Vertex(*vertextracks,vz) (copied here instead, by putting zpos directly as for in vertexing);
     v1->SetXYZ( 0,0, vz );
-    int ntr = vertextracks->GetEntries();
+    int ntr = vertextracks->GetEntriesFast();
     for(int i=0; i<ntr; i++) {
       EdbTrackP *t = (EdbTrackP*)vertextracks->At(i);
       EdbVTA *vta = new EdbVTA(t,v1);
@@ -2834,7 +2834,7 @@ int EdbDataProc::ReadVertexTree( EdbVertexRec &vertexrec, const char     *fname,
 
   map<int,EdbTrackP*>emptymap;
   if (builttracks){
-   int ntracks = builttracks->GetEntries();
+   int ntracks = builttracks->GetEntriesFast();
   
    for (int itrk = 0; itrk < ntracks; itrk++){
         EdbTrackP * track = (EdbTrackP*) builttracks->At(itrk);
@@ -2855,7 +2855,7 @@ int EdbDataProc::ReadVertexTree( EdbVertexRec &vertexrec, const char     *fname,
   EdbVertex *myvertex;
   EdbPVRec *ali = vertexrec.ePVR;
   //looking for myvertex (when called more than once, ali keeps adding vertices)
-  for (int ivtx = 0; ivtx<ali->eVTX->GetEntries();ivtx++){
+  for (int ivtx = 0; ivtx<ali->eVTX->GetEntriesFast();ivtx++){
     EdbVertex *v1 = (EdbVertex*) ali->eVTX->At(ivtx);
     if (v1->ID()==vertexID) myvertex = v1;
   }
@@ -3017,7 +3017,7 @@ TIndex2 *EdbDataProc::MakeTracksSegmentsList( EdbPVRec &ali)
   TIndex2 *itracks = 0;
   int nsegtot=0;
   EdbTrackP *tr=0;
-  int ntr = ali.eTracks->GetEntries();
+  int ntr = ali.eTracks->GetEntriesFast();
 
   if(!ntr) return 0;
   Double_t *w    = new Double_t[500000];

@@ -29,7 +29,7 @@ TIndexCell::TIndexCell(const TIndexCell &c)
   // Copy constructor - do real copy of all objects
   fValue = c.Value();
   if(c.List()) {
-    int ncc = c.GetEntries();
+    int ncc = c.GetEntriesFast();
     fList = new TObjArray(ncc);
     for(int i=0; i<ncc; i++)  {
       fList->Add(new TIndexCell( *(c.At(i))));
@@ -49,7 +49,7 @@ TIndexCell::~TIndexCell()
 void TIndexCell::Delete()
 { 
   if(fList) {
-    int ncc = GetEntries();
+    int ncc = GetEntriesFast();
     for(int i=0; i<ncc; i++ )  {
       At(i)->Delete();
     }
@@ -64,7 +64,7 @@ void TIndexCell::Shift( Int_t level, Long_t vshift[] )
 { 
   // Shift al values of level i on the vshift[i]
 
-  int ncc = GetEntries();
+  int ncc = GetEntriesFast();
   if(level==1)  
     for(int i=0;i<ncc;i++) At(i)->Shift(vshift[0]);
   else if( level>1 ) {
@@ -92,7 +92,7 @@ Int_t TIndexCell::ComparePatterns( Int_t level, Long_t vdiff[],
   if(!cin)      return npat;
   if(!fList)    return npat;
   if(level<1)   return npat;
-  Int_t entries = GetEntries();
+  Int_t entries = GetEntriesFast();
   if(entries<1) return npat;
 
   Int_t npat0;
@@ -158,7 +158,7 @@ Int_t TIndexCell::ComparePatterns( Int_t level, TIndexCell *cin, Int_t strip )
 //    if(!fList)  return npat;
 //    TIndexCell *at=0;
 //    TIndexCell *c1 =0;
-//    int entries = GetEntries();
+//    int entries = GetEntriesFast();
 
 //    for(int i=0;i<entries;i++) {
 //      at = At(i);
@@ -178,7 +178,7 @@ void TIndexCell::DropButFirst(int level)
   // drop all elements except of first one in all cells on the level
 
   if(!fList) return;
-  int ncc=GetEntries();
+  int ncc=GetEntriesFast();
   if(level==0) {
     if(ncc<2) return;
     for(int i=ncc-1; i>0; i--)  Drop(i);
@@ -193,7 +193,7 @@ void TIndexCell::DropButLast(int level)
   // drop all elements except of last one in all cells on the level
 
   if(!fList) return;
-  int ncc=GetEntries();
+  int ncc=GetEntriesFast();
   if(level==0) {
     if(ncc<2) return;
     for( int i=ncc-2; i>=0; i-- )  Drop(i);
@@ -208,7 +208,7 @@ int TIndexCell::DropCouples(int level)
   // drop all overoccupated cells on the level
   int count=0;
   if(!fList) return count;
-  int ncc=GetEntries();
+  int ncc=GetEntriesFast();
   if(level==0) {
     for(int i=ncc-1; i>-1; i--)  
       if(ncc>1) { Drop(i); count++;}
@@ -244,7 +244,7 @@ void TIndexCell::Drop()
 void TIndexCell::PrintPopulation( int level ) const
 {
   printf("Population on the level %d\n",level);
-  if(GetEntries()>0) {
+  if(GetEntriesFast()>0) {
     TIndexCellIter itr(this,level);
     const TIndexCell *c=0;
     TIndexCell *cn=0;
@@ -295,7 +295,7 @@ void TIndexCell::Print(Option_t *opt ) const
   printf("%ld\n", fValue);
 
   if(!fList) return;
-  int ncc=GetEntries();
+  int ncc=GetEntriesFast();
   for(int i=0; i<ncc; i++) {
     printf(" %s = ",fList->GetName());
     ((TIndexCell*)fList->At(i))->Print("");
@@ -309,7 +309,7 @@ void TIndexCell::Purge(int level)
   if( !fList )   return;
   if( level< 1 ) return;
 
-  int entries = GetEntries();
+  int entries = GetEntriesFast();
   if( entries<1 ) Drop();
   for(int i=entries-1; i>-1; i--)  {
     //if( At(i)->Nlevels() < level-1 ) { At(i)->Drop();  fList->RemoveAt(i); }
@@ -317,7 +317,7 @@ void TIndexCell::Purge(int level)
     if( At(i)->Nlevels()+1 < level-1 ) { At(i)->Drop();  fList->RemoveAt(i); }
     else At(i)->Purge(level-1);
   }
-  if(GetEntries()<1)   Drop();
+  if(GetEntriesFast()<1)   Drop();
   if(fList) {
     fList->Compress();
     Sort();
@@ -331,7 +331,7 @@ Int_t TIndexCell::Nlevels() const
   int n=0,k=0;
   if(!fList) return 0;
   else {
-    int ncc = GetEntries();
+    int ncc = GetEntriesFast();
     for(int i=0; i<ncc; i++)  {
       k = At(i)->Nlevels();
       if(k>n) n=k;
@@ -345,7 +345,7 @@ Int_t TIndexCell::N() const
 {
   // return total number of basic cells (last level where fList=0)
   int n=0;
-  int ncc = GetEntries();
+  int ncc = GetEntriesFast();
   if(!fList) n++;
   else for(int i=0; i<ncc; i++)  n += At(i)->N();
   return n;
@@ -357,7 +357,7 @@ Int_t TIndexCell::N( int level ) const
   // return total number of cells (nodes) on given level
   int n=0;
   if(!fList)         return 0;
-  int ncc = GetEntries();
+  int ncc = GetEntriesFast();
   if(level==1)       return ncc;
   else if(level>1) {
     for(int i=0; i<ncc; i++)  n += At(i)->N(level-1);
@@ -384,7 +384,7 @@ Long_t TIndexCell::MinV( Int_t level, Int_t vind[] ) const
   Long_t   n=kMaxInt, k=kMaxInt;
   if(fList) {
     if(level>0) {
-      int ncc = GetEntries();
+      int ncc = GetEntriesFast();
       for(int i=0; i<ncc; i++) {
 	k=At(i)->MinV(level-1,vind+1);
 	if(n > k) {
@@ -416,7 +416,7 @@ Long_t TIndexCell::MaxV( Int_t level, Int_t vind[]  ) const
   Long_t   n=-kMaxInt, k=-kMaxInt;
   if(fList) {
     if(level>0) {
-      int ncc = GetEntries();
+      int ncc = GetEntriesFast();
       for(int i=0; i<ncc; i++) {
 	k=At(i)->MaxV(level-1,vind+1);
 	if(n < k) {
@@ -448,11 +448,11 @@ Int_t TIndexCell::MinN( Int_t level, Int_t vind[] ) const
   //TODO: check this routine
 
   if(level==0)  
-    if(fList) return GetEntries();
+    if(fList) return GetEntriesFast();
   Int_t n=kMaxInt, k=kMaxInt;
   if(fList) {
     if(level>0) {
-      int nentr=GetEntries();
+      int nentr=GetEntriesFast();
       for(int i=0; i<nentr; i++)  {
 	k=At(i)->MinN(level-1,vind+1);
 	if(n > k) {
@@ -484,11 +484,11 @@ Int_t TIndexCell::MaxN( Int_t level, Int_t vind[] ) const
   //TODO: check this routine
 
   if(level==0)
-    if(fList) return GetEntries();
+    if(fList) return GetEntriesFast();
   Int_t n=-999999999, k=-999999999;
   if(fList) {
     if(level>0) {
-      int nentr=GetEntries();
+      int nentr=GetEntriesFast();
       for(int i=0; i<nentr; i++)  {
 	k=At(i)->MaxN(level-1,vind+1);
 	if(n < k) {
@@ -540,7 +540,7 @@ void TIndexCell::Sort(Int_t upto)
 {
   if(fList) {
     fList->Sort();
-    int ncc = GetEntries();
+    int ncc = GetEntriesFast();
     for(int i=0; i<ncc; i++) At(i)->Sort();
   }
 }
@@ -566,7 +566,7 @@ void TIndexCell::SetName(const char *varlist)
 
   if(!newvar) return;
 
-  int ncc = GetEntries();
+  int ncc = GetEntriesFast();
   for(i=0; i<ncc; i++) 
     ((TIndexCell*)fList->At(i))->SetName(newvar);
 }
@@ -671,7 +671,7 @@ TIndexCell const *TIndexCellIter::Next()
 
   if( fLevel != fLevel0 )   return 0;
 
-  int nent = fCell->At(fLevel,fVind)->GetEntries();
+  int nent = fCell->At(fLevel,fVind)->GetEntriesFast();
   //printf("Next: nent= %d  fPass= %d\n",nent,fPass);
 
   if( fVind[fLevel] < nent-1 ) {
@@ -690,7 +690,7 @@ int TIndexCellIter::LevelDown()
   if(fLevel<1) return 0;
   fVind[fLevel] = 0;
   fLevel--;
-  int nent = fCell->At(fLevel,fVind)->GetEntries();
+  int nent = fCell->At(fLevel,fVind)->GetEntriesFast();
   //printf("LevelDown: level = %d, nent= %d  fVind= %d\n",fLevel, nent,fVind[fLevel]);
   if( fVind[fLevel] < nent-1 ) {
     fVind[fLevel]++;
@@ -801,7 +801,7 @@ TIndexCell const *TIndexCellIterV::NextAll()
 
   if( fLevel != fLevel0 )   return 0;
 
-  int nent = fCell->At(fLevel-1,fVind)->GetEntries();
+  int nent = fCell->At(fLevel-1,fVind)->GetEntriesFast();
   //printf("Next: nent= %d  fPass= %d\n",nent,fPass);
 
   if( fVind[fLevel-1] < nent-1 ) {
@@ -820,7 +820,7 @@ int TIndexCellIterV::LevelDown()
   if(fLevel<2) return 0;
   fLevel--;
   fVind[fLevel] = 0;
-  int nent = fCell->At(fLevel-1,fVind)->GetEntries();
+  int nent = fCell->At(fLevel-1,fVind)->GetEntriesFast();
   //printf("LevelDown: level = %d, nent= %d  fVind= %d\n",fLevel, nent,fVind[fLevel-1]);
   if( fVind[fLevel-1] < nent-1 ) {
     fVind[fLevel-1]++;

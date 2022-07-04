@@ -287,7 +287,7 @@ EdbVertex * EdbEDAUtil::CalcVertex(TObjArray *segments){
 	double xx,yy,zz,Det,Ax,Ay,Az,Bx,By,Bz,Cx,Cy,Cz,Dx,Dy,Dz;
 	Ax=0.;Ay=0.;Az=0.;Bx=0.;By=0.;Bz=0.;Cx=0.;Cy=0.;Cz=0.;Dx=0.;Dy=0.;Dz=0.;
 
-	if(segments->GetEntries()==1){
+	if(segments->GetEntriesFast()==1){
 		// in case of Single-stop. make a vertex 650 micron upstream ob base.
 		EdbSegP *s = new EdbSegP(*((EdbSegP *) segments->At(0)));
 		s->PropagateTo(s->Z()-650);
@@ -297,7 +297,7 @@ EdbVertex * EdbEDAUtil::CalcVertex(TObjArray *segments){
 		delete s;
 	}
 	else {
-		for(int i=0;i<segments->GetEntries();i++){
+		for(int i=0;i<segments->GetEntriesFast();i++){
 			EdbSegP *s = (EdbSegP *) segments->At(i);
 			double ax = s->TX();
 			double ay = s->TY();
@@ -561,10 +561,10 @@ EdbTrackP * EdbEDAUtil::CleanTrack(EdbTrackP *t0){
 	delete rms;
 
 	// if fake-segment exist, copy the track and remove the segment. return the pointer.
-	if(fakeseg->GetEntries()){
+	if(fakeseg->GetEntriesFast()){
 		EdbTrackP *t = new EdbTrackP;
 		t->Copy(*t1);
-		for(int i=0;i<fakeseg->GetEntries();i++){
+		for(int i=0;i<fakeseg->GetEntriesFast();i++){
 			t->RemoveSegment( (EdbSegP *) fakeseg->At(i));
 		}
 		delete t1;
@@ -1264,7 +1264,7 @@ void EdbEDAUtil::WriteTracksMxx(TObjArray *tracks, char *filename){
 	std::vector<long > vec;
 	std::vector<long >::iterator it;
 	
-	for(int i=0;i<tracks->GetEntries();i++){
+	for(int i=0;i<tracks->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) tracks->At(i);
 		for(int j=0;j<t->N();j++){
 			EdbSegP *s = t->GetSegment(j);
@@ -1286,7 +1286,7 @@ void EdbEDAUtil::WriteTracksMxx(TObjArray *tracks, char *filename){
 	fprintf(fp,"\n");
 	
 	// Tracks + Segments
-	for(int i=0;i<tracks->GetEntries();i++){
+	for(int i=0;i<tracks->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) tracks->At(i);
 		
 		EdbSegP *s1 = t->GetSegmentFirst();
@@ -1315,7 +1315,7 @@ void EdbEDAUtil::MakePVRFromTracksArray(TObjArray *tracks_or_segments, EdbPVRec&
 	
 	EdbScanCond cond;
 	
-	for(int i=0; i<tracks_or_segments->GetEntries(); i++){
+	for(int i=0; i<tracks_or_segments->GetEntriesFast(); i++){
 		TObject *o = tracks_or_segments->At(i);
 		
 		if(IsSegment(o)){

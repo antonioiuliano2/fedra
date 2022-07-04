@@ -234,17 +234,17 @@ int EdbGA::MakeGrainsTree(TClonesArray *clust, TIndexCell &chains, const char* o
 
   int nix,niy,niz,nie;
 
-  nix = chains.GetEntries();
+  nix = chains.GetEntriesFast();
   for(int ix=0; ix<nix; ix++)  {
     cx = chains.At(ix);
-    niy = cx->GetEntries();
+    niy = cx->GetEntriesFast();
     for(int iy=0; iy<niy; iy++)   {
       cy = cx->At(iy);
       zlvl = -9999999.;
-      niz = cy->GetEntries();
+      niz = cy->GetEntriesFast();
       for(int iz=0; iz<niz; iz++) {
         cz = cy->At(iz);
-        nie = cz->GetEntries();
+        nie = cz->GetEntriesFast();
         for(int ie=0; ie<nie; ie++) {
           entry = cz->At(ie)->Value();
           cl = (EdbCluster *)clust->UncheckedAt(entry);

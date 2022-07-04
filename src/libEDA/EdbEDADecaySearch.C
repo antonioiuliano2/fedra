@@ -91,7 +91,7 @@ void EdbEDADecayVertex::SetDaughter( EdbEDATrackP *daughter){
 }
 
 void EdbEDADecayVertex::SetDaughters( TObjArray *daughters){
-	for(int i=0; i<daughters->GetEntries(); i++){
+	for(int i=0; i<daughters->GetEntriesFast(); i++){
 		SetDaughter( (EdbEDATrackP *) daughters->At(i));
 	}
 }
@@ -140,7 +140,7 @@ void EdbEDADecaySearch::SmallKinkSearch(){
 	for(int i=0;i<Ntracks();i++){
 		EdbEDATrackP *t = GetTrack(i);
 		TObjArray *kinks=CheckInTrackKink(t);
-		if(kinks->GetEntries()!=0) {
+		if(kinks->GetEntriesFast()!=0) {
 			if(gEDA==NULL) continue;
 			EdbEDAPlotTab *p = gEDA->GetPlotTab();
 			if(p!=NULL) p->CheckKink(t);
@@ -255,7 +255,7 @@ TObjArray *EdbEDADecaySearch::CheckInTrackKink(EdbTrackP *trk){
 		}
 	}
 	
-	printf("%d kink candidates are found.\n", kinks->GetEntries());
+	printf("%d kink candidates are found.\n", kinks->GetEntriesFast());
 	
 	return kinks;
 }
@@ -281,7 +281,7 @@ void EdbEDADecaySearch::MTSearch2seg(TObjArray *tracks){
 		printf("ScanSet error. stop.\n");
 		return;
 	}
-	for(int i=0;i<tracks->GetEntries();i++){
+	for(int i=0;i<tracks->GetEntriesFast();i++){
 		EdbTrackP *t = ((EdbEDATrackP *) tracks->At(i))->GetOriginal();
 		if(t->N()==2) eSet->MicroTrackSearch(t);
 	}
@@ -296,8 +296,8 @@ void EdbEDADecaySearch::MTSearchAll(TObjArray *tracks){
 		printf("ScanSet error. stop.\n");
 		return;
 	}
-	for(int i=0;i<tracks->GetEntries();i++){
-		gEve->SetStatusLine(Form("MicroTrackSearch %d/%d", i+1, tracks->GetEntries()));
+	for(int i=0;i<tracks->GetEntriesFast();i++){
+		gEve->SetStatusLine(Form("MicroTrackSearch %d/%d", i+1, tracks->GetEntriesFast()));
 		EdbTrackP *t = ((EdbEDATrackP *) tracks->At(i))->GetOriginal();
 		eSet->MicroTrackSearch(t);
 	}
@@ -334,19 +334,19 @@ TObjArray * EdbEDADecaySearch::DoSearch(){
 	
 	TObjArray *base = ePVR->eTracks;
 	
-	for(int i=0;i<base->GetEntries();i++) hall[((EdbTrackP *) base->At(i))->N()>=10?10:((EdbTrackP *) base->At(i))->N()]++;
-	nAll=base->GetEntries();
+	for(int i=0;i<base->GetEntriesFast();i++) hall[((EdbTrackP *) base->At(i))->N()>=10?10:((EdbTrackP *) base->At(i))->N()]++;
+	nAll=base->GetEntriesFast();
 	
 	// Daughter search 1st
 	if(eTSDau) TSDaughterTracks(base);
 	
-	for(int i=0;i<eTracks->GetEntries();i++) {
+	for(int i=0;i<eTracks->GetEntriesFast();i++) {
 		EdbTrackP *t = ((EdbEDATrackP *) eTracks->At(i))->GetOriginal();
 		int nseg= t->N();
 		if( nseg>10) nseg=10;
 		hdau1[nseg]++;
 	}
-	nTSDau1 = eTracks->GetEntries();
+	nTSDau1 = eTracks->GetEntriesFast();
 	printf("%d\n", nTSDau1);
 	
 	// Microtrack search
@@ -354,16 +354,16 @@ TObjArray * EdbEDADecaySearch::DoSearch(){
 	if(eMTAll) {
 		MTSearchAll(eTracks);
 	}
-	for(int i=0;i<eTracks->GetEntries();i++) hmt[((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()>=10?10:((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()]++;
+	for(int i=0;i<eTracks->GetEntriesFast();i++) hmt[((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()>=10?10:((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()]++;
 	
 	// Daughter cut 2nd.
 	if(eTSDau2){
 		TObjArray tmp = *eTracks;
 		TSDaughterTracks2();
 	}
-	for(int i=0;i<eTracks->GetEntries();i++) hdau2[((EdbEDATrackP *) eTracks->At(i))->N()>=10?10:((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()]++;
+	for(int i=0;i<eTracks->GetEntriesFast();i++) hdau2[((EdbEDATrackP *) eTracks->At(i))->N()>=10?10:((EdbEDATrackP *) eTracks->At(i))->GetOriginal()->N()]++;
 
-	nTSDau2 = eTracks->GetEntries();
+	nTSDau2 = eTracks->GetEntriesFast();
 	
 	// small kin search
 	if(eSmallKink) SmallKinkSearch();
@@ -457,7 +457,7 @@ TObjArray * EdbEDADecaySearch::TSDaughterTracks(TObjArray *base){
 	
 	int inew=0;
 	
-	for(int i=0;i<base->GetEntries();i++){
+	for(int i=0;i<base->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) base->At(i);
 		if(t==NULL) continue;
 		EdbSegP *s = t->GetSegmentFirst();
@@ -498,7 +498,7 @@ TObjArray * EdbEDADecaySearch::TSDaughterTracks(TObjArray *base){
 			eTracks->Add(t2);
 		}
 	}
-	printf("%5d tracks are selected (new %2d tracks)\n", filtered->GetEntries(), inew);
+	printf("%5d tracks are selected (new %2d tracks)\n", filtered->GetEntriesFast(), inew);
 	return filtered;
 }
 
@@ -509,7 +509,7 @@ void EdbEDADecaySearch::TSDaughterTracks2(){
 	printf(" Daughter track search2. ");
 	printf("nseg>=%d, ip=func of dz\n", eTSDauNseg2);
 	
-	int ntrk=eTracks->GetEntries();
+	int ntrk=eTracks->GetEntriesFast();
 	for(int i=0;i<ntrk;i++){
 		EdbEDATrackP *tt = (EdbEDATrackP *) eTracks->At(i);
 		EdbTrackP *t = tt->GetOriginal();
@@ -528,7 +528,7 @@ void EdbEDADecaySearch::TSDaughterTracks2(){
 		eTracks->Remove(tt);
 	}
 	eTracks->Sort();
-	printf("%5d tracks are remained. original %d tracks\n", eTracks->GetEntries(), ntrk);
+	printf("%5d tracks are remained. original %d tracks\n", eTracks->GetEntriesFast(), ntrk);
 }
 
 
@@ -543,7 +543,7 @@ TObjArray * EdbEDADecaySearch::TSParentTracks(TObjArray *base){
 	
 	TObjArray *filtered = new TObjArray;
 	int inew=0;
-	for(int i=0;i<base->GetEntries();i++){
+	for(int i=0;i<base->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) base->At(i);
 		if(t==NULL) continue;
 		EdbSegP *s = t->GetSegmentFirst();
@@ -580,7 +580,7 @@ TObjArray * EdbEDADecaySearch::TSParentTracks(TObjArray *base){
 		}
 	}
 	
-	printf("%5d tracks are selected (new %2d tracks)\n", filtered->GetEntries(), inew);
+	printf("%5d tracks are selected (new %2d tracks)\n", filtered->GetEntriesFast(), inew);
 	return filtered;
 }
 
@@ -612,7 +612,7 @@ TObjArray * EdbEDADecaySearch::TSBaseTracks(int pid){
 		found++;
 		// already found as tracks to be drawn?
 		int flag=0;
-		for(int j=0;j<eTracks->GetEntries();j++){
+		for(int j=0;j<eTracks->GetEntriesFast();j++){
 			EdbTrackP *t = (EdbTrackP *)eTracks->At(j);
 			for(int k=0;k<t->N();k++){
 				EdbSegP *ss = t->GetSegment(k);
@@ -641,7 +641,7 @@ TObjArray * EdbEDADecaySearch::TSBaseTracks(int pid){
 			t->GetSegmentLast()->PID(),
 			t->TX(),t->TY());
 	}
-	printf("%5d segments from pid %2d. (%d found, %d already selected as track)\n", filtered->GetEntries(), pid, found, found_as_track);
+	printf("%5d segments from pid %2d. (%d found, %d already selected as track)\n", filtered->GetEntriesFast(), pid, found, found_as_track);
 	return filtered;
 }
 
@@ -709,7 +709,7 @@ EdbVertex * EdbEDADecaySearch::FindPrimaryVertex(){
 	
 	// select most high probability vertex
 	EdbVertex *v_highest_prob= (EdbVertex *) vertices->At(0);
-	for(int i=1; i<vertices->GetEntries(); i++){
+	for(int i=1; i<vertices->GetEntriesFast(); i++){
 		EdbVertex *v= (EdbVertex *) vertices->At(i);
 		if(v->V()->prob()>v_highest_prob->V()->prob()) v_highest_prob = v;
 	}
@@ -719,7 +719,7 @@ EdbVertex * EdbEDADecaySearch::FindPrimaryVertex(){
 	for(int i=0; i<ePVR->Nvtx();i++){
 		EdbVertex *v = ePVR->GetVertex(i);
 		int flag = 0;
-		for(int j=0; j<vertices->GetEntries(); j++) { if(v==vertices->At(j)) flag=1;}
+		for(int j=0; j<vertices->GetEntriesFast(); j++) { if(v==vertices->At(j)) flag=1;}
 		printf("vertex %2d, %2d tracks z=%8.1f prob=%7.5f %s %s, %s\n", i, v->N(), v->Z(), v->V()->prob(), 
 		        v==v_most_upstream?"most":"    ", 
 		        flag?"upstream": "         ", 
@@ -815,13 +815,13 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 		
 		tracks.Add(t);
 	}
-	printf("Tracks selection for short decay : %d -> %d\n", Ntracks(), tracks.GetEntries());
+	printf("Tracks selection for short decay : %d -> %d\n", Ntracks(), tracks.GetEntriesFast());
 	
-	if(tracks.GetEntries()==0) return;
+	if(tracks.GetEntriesFast()==0) return;
 	
 	// Calculate vertex with all tracks.  First time.
 	TObjArray segs;
-	for(int i=0; i<tracks.GetEntries(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
+	for(int i=0; i<tracks.GetEntriesFast(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
 	EdbVertex *v = CalcVertex(&segs);
 	float ipcut = GetIPCut(v, (EdbSegP *)segs.At(0));
 	printf("Vertex with all tracks: %.1f %.1f %.1f\n", v->X(), v->Y(), v->Z());
@@ -830,7 +830,7 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 	int flag=0;
 	// check if short decay candidate exists or not.
 	
-	if(tracks.GetEntries()==2){ // 2 track case.
+	if(tracks.GetEntriesFast()==2){ // 2 track case.
 		EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(0);
 		EdbSegP *s1 = t1->GetSegmentFirst();
 		EdbEDATrackP *t2 = (EdbEDATrackP *) tracks.At(1);
@@ -841,7 +841,7 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 	}
 	else { // more tracks case
 		float ipmean=0.0;
-		for(int i=0; i<tracks.GetEntries(); i++){
+		for(int i=0; i<tracks.GetEntriesFast(); i++){
 			EdbEDATrackP *t = (EdbEDATrackP *) tracks.At(i);
 			EdbSegP *s = t->GetSegmentFirst();
 			float ip = CalcIP( s, v);
@@ -850,8 +850,8 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			ipmean +=ip;
 			if(ip>ipcut) flag++;
 		}
-		ipmean /= tracks.GetEntries();
-		printf("IP mean %.1lf microns with %d tracks\n", ipmean, tracks.GetEntries());
+		ipmean /= tracks.GetEntriesFast();
+		printf("IP mean %.1lf microns with %d tracks\n", ipmean, tracks.GetEntriesFast());
 	}
 	if(flag==0) {
 		printf("No short decay. stop.\n");
@@ -861,11 +861,11 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 	
 	printf("Vertex refinement by removing one or more tracks.\n");
 	
-	while(flag&&tracks.GetEntries()!=2){
+	while(flag&&tracks.GetEntriesFast()!=2){
 		// loop to make vertex removing one track.
 		int imax=-1;
 		float ipmax = 0;
-		for(int i=0; i<tracks.GetEntries(); i++){
+		for(int i=0; i<tracks.GetEntriesFast(); i++){
 			EdbEDATrackP *t = (EdbEDATrackP *) tracks.At(i);
 			EdbSegP *s = t->GetSegmentFirst();
 			
@@ -890,7 +890,7 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			tracks.Remove(tsd);
 			tracks.Sort();
 			segs.Clear();
-			for(int i=0; i<tracks.GetEntries(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
+			for(int i=0; i<tracks.GetEntriesFast(); i++) segs.Add( ((EdbEDATrackP *)tracks.At(i))->GetSegmentFirst());
 			EdbVertex *v2 = CalcVertex(&segs);
 			
 			// Set as Primary vertex.
@@ -916,7 +916,7 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			
 			// Check if no other tracks has ip>ipcut
 			flag=0;
-			if(tracks.GetEntries()==2){
+			if(tracks.GetEntriesFast()==2){
 				EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(0);
 				EdbSegP *s1 = t1->GetSegmentFirst();
 				EdbEDATrackP *t2 = (EdbEDATrackP *) tracks.At(1);
@@ -927,21 +927,21 @@ void EdbEDADecaySearch::ShortDecaySearch(){
 			}
 			else {
 				float ipmean=0.0;
-				for(int i=0; i<segs.GetEntries(); i++){
+				for(int i=0; i<segs.GetEntriesFast(); i++){
 					EdbSegP *s = (EdbSegP *) segs.At(i);
 					float ip = CalcIP(s, v2);
 					if(ip>ipcut) flag++;
 					ipmean += ip;
 				}
-				ipmean /= segs.GetEntries();
-				printf("IP mean %.1lf microns with %d tracks, removing track %d\n",  ipmean, tracks.GetEntries(), tsd->ID());
+				ipmean /= segs.GetEntriesFast();
+				printf("IP mean %.1lf microns with %d tracks, removing track %d\n",  ipmean, tracks.GetEntriesFast(), tsd->ID());
 			}
 		} else flag=0;
 		
 	}
 	
 	
-	if( flag && tracks.GetEntries()==2){
+	if( flag && tracks.GetEntriesFast()==2){
 		// Short decay with only 1 partner track. (without vertex)
 		for(int i=0; i<2; i++){
 			EdbEDATrackP *t1 = (EdbEDATrackP *) tracks.At(i);

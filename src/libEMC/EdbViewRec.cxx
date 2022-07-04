@@ -1075,7 +1075,7 @@ int EdbViewRec::MergeSegments()
   EdbSegment *s;
   EdbSegment *s1,*s2;
   for(int i=0; i<nseg-1; i++) {
-    s1 = (EdbSegment*)(eSA->UncheckedAt(i));;
+    s1 = (EdbSegment*)(eSA->UncheckedAt(i));
     for(int j=i+1; j<nseg; j++) {
       s2 = (EdbSegment*)(eSA->UncheckedAt(j));
       if( s1->GetPuls() < 1 )                     continue;

@@ -269,7 +269,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	void AddTracksBase(TObjArray *tracksbase) {
 		// Add tracks to eTracksBase. tracksbase should be an array of EdbTrackP
 		if(tracksbase==NULL) return;
-		for(int i=0;i<tracksbase->GetEntries();i++) eTracksBase->Add(tracksbase->At(i));
+		for(int i=0;i<tracksbase->GetEntriesFast();i++) eTracksBase->Add(tracksbase->At(i));
 	}
 	
 	TObjArray * GetTracksBase() { return eTracksBase;}
@@ -282,7 +282,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	void AddTracks(TObjArray *arr) {
 		// Add tracks to both eTracksBase and eTracks, if it is not yet registerd.
 		// arr is a TObjArray of EdbTrackP.
-		if(NULL==arr) return; for(int i=0;i<arr->GetEntries();i++) AddTrack( (EdbTrackP *) arr->At(i));
+		if(NULL==arr) return; for(int i=0;i<arr->GetEntriesFast();i++) AddTrack( (EdbTrackP *) arr->At(i));
 	}
 	
 	void SetTrack(EdbTrackP *t) {
@@ -304,7 +304,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 		// Set tracks to be draw.
 		// the tracks are requiered to be already resistered in eTracksBase.
 		// if you want to simply draw the tracks, use AddTracks().
-		if(NULL==tracks) return; for(int i=0; i<tracks->GetEntries(); i++) SetTrack((EdbTrackP *)tracks->At(i));
+		if(NULL==tracks) return; for(int i=0; i<tracks->GetEntriesFast(); i++) SetTrack((EdbTrackP *)tracks->At(i));
 	}
 	
 	TObjArray * GetTracks() { return eTracks;}
@@ -322,7 +322,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	
 	void RemoveTrackBase(EdbTrackP *t){ if(eTracksBase->FindObject(t)) {eTracksBase->Remove(t); eTracksBase->Sort();} RemoveTrack(t);}
 	void RemoveTrack(EdbTrackP *t){ if(eTracks->FindObject(t)) {eTracks->Remove(t); eTracks->Sort();}}
-	void RemoveTracks(TObjArray *tracks) { for(int i=0; i<tracks->GetEntries(); i++)  RemoveTrack((EdbTrackP *) tracks->At(i));}
+	void RemoveTracks(TObjArray *tracks) { for(int i=0; i<tracks->GetEntriesFast(); i++)  RemoveTrack((EdbTrackP *) tracks->At(i));}
 	
 	void ClearTracks(void) {
 		// Clear Tracks to be draw.
@@ -362,7 +362,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	void MicroTrackSearch(EdbTrackP *t);
 	int PrepareScanSetForMT();
 	
-	EdbTrackP * SearchTrack(int itrk) { for(int i=0;i<eTracksBase->GetEntries(); i++) {if(itrk==((EdbTrackP *) eTracksBase->At(i))->ID()) return (EdbTrackP *) eTracksBase->At(i);} return NULL;}
+	EdbTrackP * SearchTrack(int itrk) { for(int i=0;i<eTracksBase->GetEntriesFast(); i++) {if(itrk==((EdbTrackP *) eTracksBase->At(i))->ID()) return (EdbTrackP *) eTracksBase->At(i);} return NULL;}
 	
 	EdbTrackP * SearchSegment(int ipl, int iseg);
 	
@@ -394,13 +394,13 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	EdbTrackP * FindTrackLast(EdbSegP *s, double dx = 20, double dt = 0.03){
 		
 		EdbSegP ss;
-		for(int i=0;i<eTracksBase->GetEntries();i++){
+		for(int i=0;i<eTracksBase->GetEntriesFast();i++){
 			EdbTrackP *tt = (EdbTrackP *) eTracksBase->At(i);
 			for(int j=0;j<tt->N();j++){
 				ss.Copy(*tt->GetSegment(j));
 				ss.PropagateTo(s->Z());
 				if(fabs(s->TX()-ss.TX())<dt){
-				if(fabs(s->TX()-ss.TX())<dt){
+				if(fabs(s->TY()-ss.TY())<dt){
 					if( fabs(s->X()-ss.X())<dx ){
 					if( fabs(s->Y()-ss.Y())<dx ){
 						return tt;
@@ -413,9 +413,9 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 
 	void AddSegments(TObjArray *segments){
 		if(segments==NULL) return;
-		if(segments->GetEntries()==0) return;
+		if(segments->GetEntriesFast()==0) return;
 		
-		for(int i=0;i<segments->GetEntries();i++){
+		for(int i=0;i<segments->GetEntriesFast();i++){
 			EdbSegP *s = (EdbSegP *)segments->At(i);
 			EdbTrackP *t = new EdbTrackP(s);
 			t->SetCounters();
@@ -428,7 +428,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	EdbTrackP *GetTrack(EdbSegP *s){
 		if(IsTrack(s)) return (EdbTrackP*) s;
 		if(IsSegment(s)){
-			for(int i=0;i<eTracksBase->GetEntries();i++){
+			for(int i=0;i<eTracksBase->GetEntriesFast();i++){
 				EdbTrackP *t = (EdbTrackP *) eTracksBase->At(i);
 				for(int j=0;j<t->N();j++) if(s==t->GetSegment(j)) return t;
 			}
@@ -436,8 +436,8 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 		return NULL;
 	}
 	
-	int N() { return eTracks->GetEntries();}
-	int NBase() { return eTracksBase->GetEntries();}
+	int N() { return eTracks->GetEntriesFast();}
+	int NBase() { return eTracksBase->GetEntriesFast();}
 	EdbTrackP * GetTrack(int i){ return (EdbTrackP *) eTracks->At(i);}
 	EdbTrackP * GetTrackBase(int i){ return (EdbTrackP *) eTracksBase->At(i);}
 	bool IsMember(EdbTrackP *t) {return (eTracksBase->FindObject(t) != NULL) ? kTRUE : kFALSE;}
@@ -475,7 +475,7 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 	void AddComment(EdbTrackP *t, char *cmt){ eComments->Add(new EdbEDATrackComment(t,cmt));}
 	void ClearComments() {eComments->Clear();}
 	const char * GetComment(EdbTrackP *t) { 
-		for(int i=0;i<eComments->GetEntries();i++){
+		for(int i=0;i<eComments->GetEntriesFast();i++){
 			EdbEDATrackComment *cmt = (EdbEDATrackComment *) eComments->At(i);
 			if(cmt->GetTrack()==t) {
 				return cmt->GetComment();
@@ -514,9 +514,9 @@ class EdbEDATrackSet: public TNamed, public EdbEDATrackSelection{
 		
 	void SetTracksVertices(TObjArray *vertices, bool clear_previous = kTRUE){
 		// Set eTracks as the tracks which belongs to the vertices.
-		printf("Set Tracks for %d Vertices\n", vertices->GetEntries());
+		printf("Set Tracks for %d Vertices\n", vertices->GetEntriesFast());
 		if(clear_previous) ClearTracks();
-		for(int i=0;i<vertices->GetEntries();i++){
+		for(int i=0;i<vertices->GetEntriesFast();i++){
 			EdbVertex *v = (EdbVertex *) vertices->At(i);
 			if(v==NULL) continue;
 			SetTracksVertex(v, kFALSE);

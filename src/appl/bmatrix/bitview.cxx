@@ -818,7 +818,7 @@ CYCLE:
 				n++;
 			}
 		}
-		float Ax,Bx,erAx,erBx,sx,Ay,By,erAy,erBy,sy;;
+		float Ax,Bx,erAx,erBx,sx,Ay,By,erAy,erBy,sy;
 		int flagx = MY_LFIT(Z,X,n,1,Ax,Bx,erAx,erBx,sx);
 		int flagy = MY_LFIT(Z,Y,n,1,Ay,By,erAy,erBy,sy);
 		if (flagx&&flagy) {

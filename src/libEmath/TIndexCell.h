@@ -79,7 +79,7 @@ class TIndexCell : public TObject {
   Long_t    Value() const { return fValue; }
   Int_t     GetValues(Int_t level, Int_t vind[], Long_t val[] ) const;
 
-  Int_t      GetEntries() const 
+  Int_t      GetEntriesFast() const 
     { if(fList) return fList->GetEntriesFast();
       else return 0; }
 

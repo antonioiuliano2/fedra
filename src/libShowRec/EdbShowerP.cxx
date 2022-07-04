@@ -2130,8 +2130,8 @@ void EdbShowerP::BuildParametrisation_YY()
     for (int i=0; i<57; i++) ePara_YY.ProfileLongitudinalBincontent[i] = (int)eProfileLongitudinal->GetBinContent(i+1);
     // Remember, bin(0) is Overflow bin.
 
-    // 	cout << eProfileLongitudinal->GetBinCenter(1) << endl;;
-    // 	cout << eProfileLongitudinal->GetBinWidth(1) << endl;;
+    // 	cout << eProfileLongitudinal->GetBinCenter(1) << endl;
+    // 	cout << eProfileLongitudinal->GetBinWidth(1) << endl;
 
     eParametrisationIsDone[5]=kTRUE;
     Log(3,"EdbShowerP::BuildParametrisation_YY()","EdbShowerP::BuildParametrisation_YY()  ...done.");

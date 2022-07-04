@@ -72,12 +72,12 @@ class EdbEDATrackP : public EdbTrackP {
 	EdbSegP * SegmentFirst(){ return eSegmentFirst ? eSegmentFirst : EdbTrackP::GetSegmentFirst();}
 
 	void AddFriend(EdbTrackP *t) { if(eFriends->FindObject(t)==NULL) eFriends->Add(t);}
-	int NFriends() { return eFriends->GetEntries();}
+	int NFriends() { return eFriends->GetEntriesFast();}
 	EdbTrackP *GetFriend(int i){ return (EdbTrackP *) eFriends->At(i);}
 	TObjArray *GetFriends() { return eFriends;}
 	
 	void AddDaughter(EdbTrackP *t) { if(eDaughters->FindObject(t)==NULL) eDaughters->Add(t);}
-	int NDaughters() { return eDaughters->GetEntries();}
+	int NDaughters() { return eDaughters->GetEntriesFast();}
 	EdbTrackP *GetDaughter(int i){ return (EdbTrackP *) eDaughters->At(i);}
 	TObjArray *GetDaughters() { return eDaughters;}
 	
@@ -145,7 +145,7 @@ class EdbEDADecayVertex : public EdbVertex {
 	EdbTrackP *GetParent() { return eParent?eParent->GetOriginal():NULL;}
 	EdbTrackP *GetDaughter(int i=0) { return eDaughters ? ((EdbEDATrackP *) eDaughters->At(i))->GetOriginal() : NULL;}
 	EdbTrackP *GetPartner() { return ePartner?ePartner->GetOriginal():NULL;}
-	int NDaughters(){ return eDaughters? eDaughters->GetEntries() : 0;}
+	int NDaughters(){ return eDaughters? eDaughters->GetEntriesFast() : 0;}
 	EdbVertex *GetPrimaryVertex(){ return ePrimaryVertex;}
 	
 	void SetType(int type) { eType=type;}
@@ -375,9 +375,9 @@ class EdbEDADecaySearch{
 		return NULL;
 	}
 	
-	int Ntracks(){ return eTracks->GetEntries();}
+	int Ntracks(){ return eTracks->GetEntriesFast();}
 	EdbEDATrackP *GetTrack(int i) { return (EdbEDATrackP *) eTracks->At(i);}
-	int NDecayVertices(){ return eDecayVertices->GetEntries();}
+	int NDecayVertices(){ return eDecayVertices->GetEntriesFast();}
 	EdbEDADecayVertex *GetDecayVertex(int i) { return (EdbEDADecayVertex *)eDecayVertices->At(i);}
 	
 	void SetPVR(EdbPVRec *pvr) { ePVR = pvr;}
@@ -396,7 +396,7 @@ class EdbEDADecaySearch{
 	
 	TObjArray *CheckInTrackKinks(TObjArray *tracks = NULL) { 
 		if(NULL==tracks) tracks=eTracks; 
-		for(int i=0;i<tracks->GetEntries();i++) {
+		for(int i=0;i<tracks->GetEntriesFast();i++) {
 			CheckInTrackKink((EdbTrackP *) tracks->At(i)); 
 		}
 		return eKinks;

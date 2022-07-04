@@ -54,7 +54,6 @@ void EdbEDAPlotTab::CheckEff(EdbPVRec *pvr, TObjArray *tracks){
 	TH1D *haeff   = new TH1D("haeff","Efficiency for each angle"       ,eEffNbins, 0,eEffTmax);
 
 	
-	
 	EdbEDAAreaSet AreaSet;
 	for(int pid=pidmin; pid<=pidmax; pid++){ // pid <= target pid
 		EdbPattern *pat = pvr->GetPattern(pid);
@@ -62,7 +61,7 @@ void EdbEDAPlotTab::CheckEff(EdbPVRec *pvr, TObjArray *tracks){
 	}
 	
 	
-	int ntrk = tracks->GetEntries();
+	int ntrk = tracks->GetEntriesFast();
 	for(i=0;i<ntrk;i++){
 		EdbTrackP *t = (EdbTrackP *) tracks->At(i);
 		if(t==NULL) continue;
@@ -354,8 +353,6 @@ void EdbEDAPlotTab::CheckPHDAngle(EdbPVRec *pvr){
 	hdtrmsnseg2->Draw("same");
 	leg->Draw();
 
-
-
 	c1->cd(3);
 
 	double a = gEDA->GetMainTab()->GetPHDTRMS();
@@ -626,9 +623,9 @@ void EdbEDAPlotTab::CheckOverview(EdbPVRec *pvr){
 
 void EdbEDAPlotTab::CheckTracks(){
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
-	if(selected_tracks->GetEntries()==0) return;
+	if(selected_tracks->GetEntriesFast()==0) return;
 
-	for(int i=0;i<selected_tracks->GetEntries();i++){
+	for(int i=0;i<selected_tracks->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) selected_tracks->At(i);
 		if(t==NULL) continue;
 		CheckSingleTrack(t);
@@ -867,9 +864,9 @@ void EdbEDAPlotTab::CheckSingleTrack(EdbTrackP *t){
 
 void EdbEDAPlotTab::CheckKinkTracks(){
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
-	if(selected_tracks->GetEntries()==0) return;
+	if(selected_tracks->GetEntriesFast()==0) return;
 
-	for(int i=0;i<selected_tracks->GetEntries();i++){
+	for(int i=0;i<selected_tracks->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) selected_tracks->At(i);
 		if(t==NULL) continue;
 		CheckKink(t);
@@ -976,7 +973,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 		}
 	}
 	
-	printf("%d kink candidates are found.\n", kinks->GetEntries());
+	printf("%d kink candidates are found.\n", kinks->GetEntriesFast());
 	
 	
 	tree->SetMarkerStyle(20);
@@ -1004,7 +1001,7 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	textrms->SetTextSize(0.035);
 	
 
-	TCanvas *c1 = CreateCanvas(Form("K%d%s", trk->ID(), kinks->GetEntries()? "!":""));
+	TCanvas *c1 = CreateCanvas(Form("K%d%s", trk->ID(), kinks->GetEntriesFast()? "!":""));
 	c1->Divide(2,2);
 
 	c1->cd(1);
@@ -1043,8 +1040,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	textrms->DrawText(xmin+0.8*(xmax-xmin), rmst*1e3, Form("%.1lfmrad",rmst*1e3));
 	textrms->DrawText(xmin+0.8*(xmax-xmin), Rthreshold*rmst*1e3, Form("%.1lfmrad",Rthreshold*rmst*1e3));
 	
-	if(kinks->GetEntries()){
-		for(int i=0;i<kinks->GetEntries();i++){
+	if(kinks->GetEntriesFast()){
+		for(int i=0;i<kinks->GetEntriesFast();i++){
 			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, fabs(kink->DTT())*1e3, Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTT()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
@@ -1084,8 +1081,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	textrms->DrawText(xmin+0.8*(xmax-xmin), rmsl*1e3, Form("%.1lfmrad",rmsl*1e3));
 	textrms->DrawText(xmin+0.8*(xmax-xmin), Rthreshold*rmsl*1e3, Form("%.1lfmrad",Rthreshold*rmsl*1e3));
 	
-	if(kinks->GetEntries()){
-		for(int i=0;i<kinks->GetEntries();i++){
+	if(kinks->GetEntriesFast()){
+		for(int i=0;i<kinks->GetEntriesFast();i++){
 			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, fabs(kink->DTL())*1e3, Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTL()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 			
@@ -1104,8 +1101,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	h->SetStats(0);
 	h->Draw();
 	tree->Draw("dxt:ipl2","","same");
-	if(kinks->GetEntries()){
-		for(int i=0;i<kinks->GetEntries();i++){
+	if(kinks->GetEntriesFast()){
+		for(int i=0;i<kinks->GetEntriesFast();i++){
 			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, kink->DXT(), Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTT()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
@@ -1124,8 +1121,8 @@ TObjArray * EdbEDAPlotTab::CheckKink(EdbTrackP *trk){
 	h->Draw();
 	tree->Draw("dxl:ipl2","","same");
 	
-	if(kinks->GetEntries()){
-		for(int i=0;i<kinks->GetEntries();i++){
+	if(kinks->GetEntriesFast()){
+		for(int i=0;i<kinks->GetEntriesFast();i++){
 			EdbEDASmallKink *kink = (EdbEDASmallKink *) kinks->At(i);
 			text->DrawText(kink->IPL2()+0.5, kink->DXL(), Form("%.1lfmrad pl%d-%d pt%.3lf", fabs(kink->DTL()*1e3), kink->IPL1(), kink->IPL2(), kink->PT()));
 		}
@@ -1146,7 +1143,7 @@ void EdbEDAPlotTab::SetMomAlg(){
 
 void EdbEDAPlotTab::MomPlot(){
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
-	if(selected_tracks->GetEntries()==0) return;
+	if(selected_tracks->GetEntriesFast()==0) return;
 	
 	double angular_resolution = eMomAngleRes->GetNumber();
 // 	eTF.eDT0  = angular_resolution; // commented out for reason of incompability
@@ -1158,7 +1155,7 @@ void EdbEDAPlotTab::MomPlot(){
         // EdbMomentumEstimator.cxx
         for (Int_t i=0; i<3; ++i) eTF.SetParPMS_Mag(i,0,angular_resolution);
 	
-	for(int i=0;i<selected_tracks->GetEntries();i++){
+	for(int i=0;i<selected_tracks->GetEntriesFast();i++){
 		EdbTrackP *t0 = (EdbTrackP *) selected_tracks->At(i);
 		if(t0==NULL) continue;
 		EdbTrackP *t=CleanTrack(t0);

@@ -14,8 +14,8 @@ class EdbTopology: public TObject {
     EdbTopology() {}
     virtual ~EdbTopology(){}
     
-    Int_t       Nvtx() const {return eVertices.GetEntries();}
-    Int_t       Ntr() const {return eTracks.GetEntries();}
+    Int_t       Nvtx() const {return eVertices.GetEntriesFast();}
+    Int_t       Ntr() const {return eTracks.GetEntriesFast();}
     Float_t     Probability();
     Float_t     DZ();
     EdbVertex  *AddVertex( EdbVertex *v ) { eVertices.Add(v); return v; }
@@ -74,8 +74,8 @@ class EdbVertexComb: public TObject {
     
     EdbTopology *GetTopology(int i) const {return ((EdbTopology*)(eTopologies.At(i)));}
     
-    int         Ntr() const {return eTracks.GetEntries();}
-    int         Nvtx() const {return eVertices.GetEntries();}
+    int         Ntr() const {return eTracks.GetEntriesFast();}
+    int         Nvtx() const {return eVertices.GetEntriesFast();}
     EdbVertex  *GetVertex( int i ) const { return (EdbVertex *)eVertices.At(i); }
     EdbVertexComb  *GetVertexComb( int i ) const { return (EdbVertexComb *)eOther.At(i); }
     

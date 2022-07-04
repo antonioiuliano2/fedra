@@ -468,7 +468,7 @@ void test_EdbVertexComb(TObjArray &tracks, TEnv &env)
   vcomb.eVPar.eUseSegPar  = false;     // use fitted track parameters
   vcomb.eVPar.eUseKalman  = true;      // use or not Kalman for the vertex fit. Default is true
   vcomb.eVPar.eUseLimits  = false;     // if true - look for the vertex only inside limits defined by eVmin:eVmax, default is false
-  vcomb.eZ0               = env.GetValue("emvtx.comb.Z0", -10000 );;                  // the first approximation for the vertex z
+  vcomb.eZ0               = env.GetValue("emvtx.comb.Z0", -10000 );                  // the first approximation for the vertex z
   vcomb.eRecursionMax     = env.GetValue("emvtx.comb.NVmax", 3 );
   vcomb.eProbMinV         = env.GetValue("emvtx.comb.ProbMinV", 0.001 );
   vcomb.FindTopologies();

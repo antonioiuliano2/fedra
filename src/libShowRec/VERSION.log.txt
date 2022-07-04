@@ -240,7 +240,7 @@
 # 16082009    
 * Start a new, quick class for Energy estimation (possible also for ID estimation). Usefull for quick qchecks and tests.
 * This is not to replace the original class with lots of options, but maybe for quicker everyday use.
-* Fixed bug in RecoShowerArray_To_Treebranch eShowerTree->Branch("plateb",shower_plateb,"plateb[sizeb]/I");; 
+* Fixed bug in RecoShowerArray_To_Treebranch eShowerTree->Branch("plateb",shower_plateb,"plateb[sizeb]/I"); 
 * Forgot second [sizeb] in Branch. this lead to fact that shower_plateb wasnt saved as array, but as single number.
 * (In ShowRec.cpp this was already correct). Now also YC para has again the correct "alpha" and "nmax" values again.
 

@@ -193,7 +193,7 @@ void EdbEDAVertexTab::DoVertexing(EdbEDATrackSet *set){
 	SetPVRec(eSet->GetPVRec());
 	
 	// Vertexing
-	printf("%d tracks for vertexing\n",  eEdbTracks->GetEntries() );
+	printf("%d tracks for vertexing\n",  eEdbTracks->GetEntriesFast() );
 	int nvtx = FindVertex();
 	printf("%d 2-track vertexes was found\n",nvtx);
 	int nadd;
@@ -441,13 +441,13 @@ void EdbEDAPredTab::WritePred(){
 		pred_run, pred_ipl_from, pred_ipl_to, pred_dx, pred_dy,
 		pred_use_angle? "using track angle" : "not using track angle");
 	
-	if(selected->GetEntries()==0){
+	if(selected->GetEntriesFast()==0){
 		printf("Please select segments\n");
 		gEve->SetStatusLine(" Error. Please select segments. stop.");
 		return;
 	}
 	
-	for(i=0;i<selected->GetEntries();i++){
+	for(i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s = (EdbSegP*) selected->At(i);
 		s->PrintNice();
 	}
@@ -479,7 +479,7 @@ void EdbEDAPredTab::MakeManChkPred(){
 	aff->Print();
 	double z=gEDA->GetZ(IplPropagateTo);
 	
-	for(i=0;i<selected->GetEntries();i++){
+	for(i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s0 = (EdbSegP *)selected->At(i);
 		EdbTrackP *t = gEDA->GetTrack(s0);
 		EdbSegP *s = new EdbSegP(*s0);
@@ -536,7 +536,7 @@ void EdbEDAPredTab::MakePredScanPred(){
 
 	TFile f(filename,"recreate");
 	EdbPattern pat;
-	for(i=0;i<selected->GetEntries();i++){
+	for(i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s0 = (EdbSegP *) selected->At(i);
 		EdbTrackP *t = gEDA->GetTrack(s0);
 		EdbSegP *s = new EdbSegP(*s0);
@@ -928,7 +928,7 @@ void EdbEDAOperationTab::ConnectTracks(EdbTrackP *t0, EdbTrackP *t1){
 void EdbEDAOperationTab::ConnectTracksButton(void){
 	
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
-	if(selected_tracks->GetEntries()<=1){
+	if(selected_tracks->GetEntriesFast()<=1){
 		printf("Select 2 tracks (segments) to be connected.\n");
 		return;
 	}
@@ -1152,7 +1152,7 @@ EdbEDATrackSetList::EdbEDATrackSetList(TObjArray *tracksets, int *iselected, cha
 	// list box
 	fListBox = new TGListBox(fVerticalFrame);
 	
-	for(int i=0;i<fTrackSets->GetEntries();i++){
+	for(int i=0;i<fTrackSets->GetEntriesFast();i++){
 		fListBox->AddEntry( ((TNamed *)fTrackSets->At(i))->GetName(), i);
 	}
 	fListBox->Resize(104,100);

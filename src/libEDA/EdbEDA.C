@@ -381,10 +381,10 @@ void EdbEDAIO::WriteFeedbackFile(char *filename){
 	
 	TObjArray *vertices = (gEDA->GetVertexSet())->GetVertices();
 	
-	printf("%d vertices\n", vertices->GetEntries());
+	printf("%d vertices\n", vertices->GetEntriesFast());
 	EdbVertex *v_1ry=NULL;
 	double z=1e9;
-	for(int i=0;i<vertices->GetEntries();i++){
+	for(int i=0;i<vertices->GetEntriesFast();i++){
 		EdbVertex *v = (EdbVertex *) vertices->At(i);
 		if(v->Z()<z) {
 			z = v->Z();
@@ -397,7 +397,7 @@ void EdbEDAIO::WriteFeedbackFile(char *filename){
 	
 	if(eOutputFileMode==kBern) fprintf(fp, "// VID     X        Y        Z 1ry charm tau Ndw Nup OutOfBrick\n");
 	
-	for(int i=0; i<vertices->GetEntries(); i++){
+	for(int i=0; i<vertices->GetEntriesFast(); i++){
 		EdbVertex *v = (EdbVertex *) vertices->At(i);
 		v->SetID(i+1);
 		int ISPRIMARY = v==v_1ry ? 1 : 0;
@@ -439,7 +439,7 @@ void EdbEDAIO::WriteFeedbackFile(char *filename){
 			EdbSegP *sl = t->GetSegmentLast();
 			EdbVertex * v1 = NULL;
 			EdbVertex * v2 = NULL;
-			for(int k=0;k<vertices->GetEntries();k++){
+			for(int k=0;k<vertices->GetEntriesFast();k++){
 				EdbVertex *v = (EdbVertex *) vertices->At(k);
 				for(int l=0;l<v->N();l++){
 					EdbTrackP *tv = v->GetTrack(l);
@@ -1132,7 +1132,6 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 	TObjArray *vtxarr = new TObjArray;
 	TObjArray *trkarr = new TObjArray;
 	TObjArray *segarr = new TObjArray;	
-
 	
 	EdbPVRec *PVR = new EdbPVRec;
 	
@@ -1175,7 +1174,7 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 			EdbTrackP *t = new EdbTrackP;
 			t->SetID(id);
 			t->SetFlag(flag);
-			for(i=0;i<vtxarr->GetEntries();i++){
+			for(i=0;i<vtxarr->GetEntriesFast();i++){
 				EdbVertex *v = (EdbVertex *) vtxarr->At(i);
 				if(v->ID()==ivtx1||v->ID()==ivtx2){
 					EdbVTA *vta = new EdbVTA(t, v);
@@ -1199,7 +1198,7 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 			s->SetTrack(itrk);
 			s->SetChi2(chi2);
 			
-			for(i=0;i<trkarr->GetEntries();i++){
+			for(i=0;i<trkarr->GetEntriesFast();i++){
 				EdbTrackP *t = (EdbTrackP *) trkarr->At(i);
 				if(t->ID()==itrk&&t->Flag()==tflag) {
 					t->AddSegment(s);
@@ -1224,9 +1223,9 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 	}
 	fin.close();
 
-	printf("Vertices %4d\n", vtxarr->GetEntries());
-	printf("Tracks   %4d\n", trkarr->GetEntries());
-	printf("Segments %4d\n", segarr->GetEntries());
+	printf("Vertices %4d\n", vtxarr->GetEntriesFast());
+	printf("Tracks   %4d\n", trkarr->GetEntriesFast());
+	printf("Segments %4d\n", segarr->GetEntriesFast());
 	
 	
 	// Clear all track set
@@ -1234,7 +1233,7 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 		gEDA->GetTrackSet(i)->Clear();
 	}
 	
-	for(i=0;i<trkarr->GetEntries();i++){
+	for(i=0;i<trkarr->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *) trkarr->At(i);
 		t->SetCounters();
 		EdbSegP *s = t->GetSegmentFirst();
@@ -1250,7 +1249,7 @@ EdbPVRec * EdbEDAIO::ReadFilteredText(char *filename){
 	EdbEDAVertexSet *vset = gEDA->GetVertexSet();
 	gEDA->ClearSelectedVertex();
 	vset->Clear();
-	for(i=0;i<vtxarr->GetEntries();i++){
+	for(i=0;i<vtxarr->GetEntriesFast();i++){
 		EdbVertex *v = (EdbVertex *) vtxarr->At(i);
 		
 		for(j=0;j<v->N();j++){
@@ -1403,7 +1402,7 @@ void EdbEDAIO::WriteFilteredText(char *filename){
 
 	EdbVertex *v_1ry=NULL;
 	double z=1e9;
-	for(i=0;i<vertices->GetEntries();i++){
+	for(i=0;i<vertices->GetEntriesFast();i++){
 		EdbVertex *v = (EdbVertex *) vertices->At(i);
 		if(v->Z()<z) {
 			z = v->Z();
@@ -1412,7 +1411,7 @@ void EdbEDAIO::WriteFilteredText(char *filename){
 	}
 
 	fprintf(fp,"// vtx  id        X        Y        Z 1ry charm tau\n");
-	for( i=0; i<vertices->GetEntries(); i++){
+	for( i=0; i<vertices->GetEntriesFast(); i++){
 		EdbVertex *v = (EdbVertex *) vertices->At(i);
 		v->SetID(i);
 		int ISPRIMARY = v==v_1ry ? 1 : 0;
@@ -1422,7 +1421,7 @@ void EdbEDAIO::WriteFilteredText(char *filename){
 					v->ID(), v->X(), v->Y(), v->Z(),ISPRIMARY,ISCHARM,ISTAU);
 	}
 	
-	printf("vertices %d\n", vertices->GetEntries());
+	printf("vertices %d\n", vertices->GetEntriesFast());
 	
 //	ID_Track ID_UpVtx ID_DownVtx X Y Z SX SY IP_UpVtx IP_DownVtx P Pmin Pmax Manual Mu/e Scanback Darknes
 
@@ -1439,7 +1438,7 @@ void EdbEDAIO::WriteFilteredText(char *filename){
 			EdbSegP *sl = t->GetSegmentLast();
 			EdbVertex * vtx1st = NULL;
 			EdbVertex * vtx2nd = NULL;
-			for(k=0;k<vertices->GetEntries();k++){
+			for(k=0;k<vertices->GetEntriesFast();k++){
 				EdbVertex *v = (EdbVertex *) vertices->At(k);
 				for(l=0;l<v->N();l++){
 					EdbTrackP *tv = v->GetTrack(l);
@@ -1597,7 +1596,7 @@ void EdbEDASelection::SetSelection ( TObjArray * selected){
 	// loop for all elements in the current event.
 	TEveEventManager *eEvent = gEve->GetCurrentEvent();
 	if(eEvent==NULL) return;
-	int nselected = eSelected->GetEntries();
+	int nselected = eSelected->GetEntriesFast();
 
 	for(TEveElement::List_i it = eEvent->BeginChildren(); it!=eEvent->EndChildren(); it++){
 		TEveElement *e = *it;

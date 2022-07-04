@@ -790,12 +790,12 @@ void EdbEDAMainTab::MakeGUIMain(){
 void EdbEDAMainTab::CalcMinimumDistance(void){
 	printf("/// Calc Dmin //////////////////////////////////////////////////////////////////////////\n");
 	TObjArray * selected = gEDA->GetSelected();
-	if(selected->GetEntries()<2) {
+	if(selected->GetEntriesFast()<2) {
 		printf("Select more than 2 segment!!\n");
 		return;
 	}
 	int i,j;
-	int n = selected->GetEntries();;
+	int n = selected->GetEntriesFast();
 
 	for(i=0;i<n-1;i++){
 		for(j=i+1;j<n;j++){
@@ -836,7 +836,7 @@ void EdbEDAMainTab::CalcVertex(int clear_previous_local){
 	printf("/// Calc Vertex /////////////////////////////////////////////////\n");
 	TObjArray *selected = gEDA->GetSelected();
 	
-	if(selected->GetEntries()<1){
+	if(selected->GetEntriesFast()<1){
 		ErrorMessage("CalcVertex() error : please select more than 1 segment or track\n");
 		return;
 	}
@@ -850,7 +850,7 @@ void EdbEDAMainTab::CalcVertex(int clear_previous_local){
 	EdbVertex *v0 = EdbEDAUtil::CalcVertex(selected); // by Tomoo func. pre-vertexing. to know vertex z.
 	
 	EdbVertex *v;
-	if(selected->GetEntries()==1){
+	if(selected->GetEntriesFast()==1){
 		EdbSegP *s  = (EdbSegP *)selected->At(0);
 		EdbTrackP *t = gEDA->GetSelectedTrack(s);
 		
@@ -864,7 +864,7 @@ void EdbEDAMainTab::CalcVertex(int clear_previous_local){
 		// Calc vertex by FEDRA version.
 		v = new EdbVertex;
 		// register the tracks to vertex.
-		for(int i=0;i<selected->GetEntries();i++){
+		for(int i=0;i<selected->GetEntriesFast();i++){
 			EdbSegP *s  = (EdbSegP *)selected->At(i);
 			EdbTrackP *t = gEDA->GetSelectedTrack(s);
 			
@@ -897,7 +897,7 @@ void EdbEDAMainTab::CalcVertex(int clear_previous_local){
 	if(vid<gEDA->GetVertexSet()->N()) vid=gEDA->GetVertexSet()->N();
 	v->SetID(vid++);
 	// register the vertex to selected_vertex.
-	for(int i=0;i<selected->GetEntries();i++){
+	for(int i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s  = (EdbSegP *)selected->At(i);
 		EdbTrackP *t = gEDA->GetSelectedTrack(s);
 		
@@ -944,7 +944,7 @@ void EdbEDAMainTab::CalcVertex(int clear_previous_local){
 void EdbEDAMainTab::CalcPSelected(){
 	printf("/// Calc Momentum, temporary version//////////////////////\n");
 	TObjArray *selected = gEDA->GetSelected();
-	for(int i=0; i<selected->GetEntries(); i++ ){
+	for(int i=0; i<selected->GetEntriesFast(); i++ ){
 		EdbTrackP *t=gEDA->GetTrack((EdbSegP *)selected->At(i));
 		if(t==NULL) continue;
 		double p, pmin, pmax;
@@ -989,11 +989,11 @@ void EdbEDAMainTab::CalcIP(){
 	printf("/// Calc IP w.r.t. Vertex %d %8.1lf %8.1lf %8.1lf (red vertex) ///\n",v->ID(), v->X(),v->Y(),v->Z());
 	
 	TObjArray *selected = gEDA->GetSelected();
-	if(selected->GetEntries()==0){
+	if(selected->GetEntriesFast()==0){
 		printf("select segments\n");
 		return;
 	}
-	for(int i=0;i<selected->GetEntries();i++){
+	for(int i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s = (EdbSegP *) selected->At(i);
 		double r = EdbEDAUtil::CalcIP(s,v->X(),v->Y(),v->Z());
 		

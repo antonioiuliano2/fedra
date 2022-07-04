@@ -416,8 +416,8 @@ class EdbEDASelection{
 	TEveElement * GetSelectedElement () { TEveElement::List_i it= gEve->GetSelection()->EndChildren(); return *(--it);}
 	TObjArray * GetSelectedTracks(void)  { return eSelectedTracks; }
 	
-	int NSelectedTracks() { return eSelectedTracks->GetEntries();}
-	int NSelected()       { return eSelected->      GetEntries();}
+	int NSelectedTracks() { return eSelectedTracks->GetEntriesFast();}
+	int NSelected()       { return eSelected->      GetEntriesFast();}
 	EdbTrackP * GetSelectedTrack(int i = -1){
 		if(NSelectedTracks()==0) return NULL;
 		if(i==-1) i=NSelectedTracks()-1; 
@@ -582,7 +582,7 @@ class EdbEDA :
 	void AddDrawObject(EdbEDAObject *o) { eDrawObjects->Add(o);}
 	void RemoveDrawObject(TObject *o){ eDrawObjects->Remove(o); eDrawObjects->Sort();}
 	void ClearDrawObjects(){ eDrawObjects->Clear();}
-	int  NDrawObjects(){ return eDrawObjects->GetEntries();}
+	int  NDrawObjects(){ return eDrawObjects->GetEntriesFast();}
 	EdbEDAObject *GetDrawObject(int i){ return (EdbEDAObject*) eDrawObjects->At(i);}
 
 	TObjArray * GetCurrentTracks(void){
@@ -613,7 +613,7 @@ class EdbEDA :
 		return NULL;
 	}
 	
-	int NTrackSets() { return eTrackSets->GetEntries();}
+	int NTrackSets() { return eTrackSets->GetEntriesFast();}
 	EdbEDATrackSet * GetTrackSet(int i){ return (EdbEDATrackSet *) eTrackSets->At(i);}
 	EdbEDATrackSet * GetTrackSet(char *name){ return (EdbEDATrackSet *) eTrackSets->FindObject(name);}
 	EdbEDATrackSet * GetTrackSet(EdbTrackP *t){ 

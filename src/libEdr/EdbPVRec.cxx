@@ -321,7 +321,7 @@ float EdbPatCouple::Chi2KF(EdbSegCouple *scp)
   scp->eS->PropagateToCOV( 0.5*(s1->Z()+s2->Z()) );
 
   if(s1->EMULDigitArray()) 
-    for(int i=0; i<s1->EMULDigitArray()->GetEntries(); i++) scp->eS->addEMULDigit(s1->EMULDigitArray()->At(i));
+    for(int i=0; i<s1->EMULDigitArray()->GetEntriesFast(); i++) scp->eS->addEMULDigit(s1->EMULDigitArray()->At(i));
 
   return chi2;
 }
@@ -349,9 +349,9 @@ float EdbPatCouple::Chi2A(EdbSegCouple *scp, int iprob)
   s->SetMC(s1->MCEvt(),s1->MCTrack());
 
   if(s1->EMULDigitArray()) 
-    for(int i=0; i<s1->EMULDigitArray()->GetEntries(); i++) s->addEMULDigit(s1->EMULDigitArray()->At(i));
+    for(int i=0; i<s1->EMULDigitArray()->GetEntriesFast(); i++) s->addEMULDigit(s1->EMULDigitArray()->At(i));
   if(s2->EMULDigitArray()) 
-    for(int i=0; i<s2->EMULDigitArray()->GetEntries(); i++) s->addEMULDigit(s2->EMULDigitArray()->At(i));
+    for(int i=0; i<s2->EMULDigitArray()->GetEntriesFast(); i++) s->addEMULDigit(s2->EMULDigitArray()->At(i));
 
   return chi2;
 }
@@ -619,18 +619,18 @@ int EdbPatCouple::LinkSlow( float chi2max )
 int EdbPatCouple::CheckSegmentsDuplication(EdbPattern *pat)
 {
   TIndexCell   *cell=pat->Cell();
-  int n1 = cell->GetEntries();
+  int n1 = cell->GetEntriesFast();
   TIndexCell   *c1,*c2,*c3,*c4;
   EdbSegP *s1=0,*s2=0;
   for( int i1=0; i1<n1; i1++) {
     c1 = cell->At(i1);
-    int n2 = c1->GetEntries();
+    int n2 = c1->GetEntriesFast();
     for( int i2=0; i2<n2; i2++) {
       c2 = c1->At(i2);
-      int n3 = c2->GetEntries();
+      int n3 = c2->GetEntriesFast();
       for( int i3=0; i3<n3; i3++) {
 	c3 = c2->At(i3);
-	int n4 = c3->GetEntries();
+	int n4 = c3->GetEntriesFast();
 	for( int i4=0; i4<n4; i4++) {
 	  c4 = c3->At(i4);
 	  int N=c4->N();
@@ -737,7 +737,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 
   int ncel1, nc10, nc11, nc12, nc13, nc23; 
 
-  ncel1 = cel1->GetEntries();
+  ncel1 = cel1->GetEntriesFast();
   for( vind[0]=0; vind[0]<ncel1; vind[0]++) {                              //x1
     c1[0] = cel1->At(vind[0]);
     val0[0] = c1[0]->Value();
@@ -745,7 +745,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
       c2[0] = cel2->Find(val[0]);
       if(!c2[0])                      continue;
 
-      nc10 = c1[0]->GetEntries();
+      nc10 = c1[0]->GetEntriesFast();
       for( vind[1]=0; vind[1]<nc10; vind[1]++) {                         //y1
 	c1[1] = c1[0]->At(vind[1]);
 	val0[1] = c1[1]->Value();
@@ -753,7 +753,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 	  c2[1] = c2[0]->Find(val[1]);
 	  if(!c2[1])                 continue;
 
-	  nc11 = c1[1]->GetEntries();
+	  nc11 = c1[1]->GetEntriesFast();
 	  for( vind[2]=0; vind[2]<nc11; vind[2]++) {                     //ax1
 	    c1[2] = c1[1]->At(vind[2]);
 	    val0[2] = c1[2]->Value();
@@ -761,7 +761,7 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 	      c2[2] = c2[1]->Find(val[2]);
 	      if(!c2[2])                      continue;
 	      
-	      nc12 = c1[2]->GetEntries();
+	      nc12 = c1[2]->GetEntriesFast();
 	      for( vind[3]=0; vind[3]<nc12; vind[3]++) {                 //ay1
 		c1[3] = c1[2]->At(vind[3]);
 		val0[3] = c1[3]->Value();
@@ -771,9 +771,9 @@ int EdbPatCouple::DiffPatCell( TIndexCell *cel1, TIndexCell *cel2,
 
 		  npat++;
 
-		  nc13 = c1[3]->GetEntries();
+		  nc13 = c1[3]->GetEntriesFast();
 		  for(int ie1=0; ie1<nc13; ie1++) {
-		    nc23 = c2[3]->GetEntries();
+		    nc23 = c2[3]->GetEntriesFast();
 		    for(int ie2=0; ie2<nc23; ie2++) {
 
 		      ncouples++;
@@ -1381,7 +1381,7 @@ void EdbPVRec::FillTracksCellFast()
   TArrayI segtab(nsegmax);
   segtab.Reset();
   int nseg=0;
-  int ntr = eTracks->GetEntries();
+  int ntr = eTracks->GetEntriesFast();
   for( int i=0; i<ntr; i++ ) {
     nseg=((EdbTrackP*)(eTracks->At(i)))->N();
     if(nseg>nsegmax-1) nseg=nsegmax;
@@ -1775,7 +1775,7 @@ int EdbPVRec::MergeTracks1(int maxgap)
   float tx,ty,dz,dx,dy;
   float stx=0.015, sty=0.015, sx=6., sy=6.;
 
-  for(int ie=0; ie<ends.GetEntries(); ie++)   {
+  for(int ie=0; ie<ends.GetEntriesFast(); ie++)   {
     ce = ends.At(ie);
     iend = ce->Value();
 
@@ -1783,14 +1783,14 @@ int EdbPVRec::MergeTracks1(int maxgap)
       cs = starts.Find(iend+igap);
       if(!cs) continue;
 
-      for(int iee=0; iee<ce->GetEntries(); iee++) {
+      for(int iee=0; iee<ce->GetEntriesFast(); iee++) {
         itre = ce->At(iee)->Value();
         tre  = (EdbTrackP*)((*eTracks)[itre]);
         if(!tre)             continue;
         if(tre->Flag()==-10) continue;
         s1 = tre->GetSegmentF(tre->N()-1);
 
-        for(int iss=0; iss<cs->GetEntries(); iss++) {
+        for(int iss=0; iss<cs->GetEntriesFast(); iss++) {
           itrs = cs->At(iss)->Value();
           trs  = (EdbTrackP*)((*eTracks)[itrs]);
           if(!trs)             continue;
@@ -1895,7 +1895,7 @@ void EdbPVRec::FitTracks(float p, float mass, TObjArray *gener, int design)
   float pms = 0.;
   int nsegmatch = 0;
 
-  int ntr = eTracks->GetEntries();
+  int ntr = eTracks->GetEntriesFast();
 
   if (p > 0. && mass > 0.)
 	printf("fit %d tracks assuming p = %f, mass = %f and X0 = %f ...\n",
@@ -1990,7 +1990,7 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
   // return the number of created tracks
 
   int ntr0 = 0;
-  if( eTracks ) ntr0 = eTracks->GetEntries();
+  if( eTracks ) ntr0 = eTracks->GetEntriesFast();
   else   eTracks  = new TObjArray();
 
   Log(2,"\nEdbPVRec::MakeTracks","ntr0=%d...",ntr0);
@@ -2001,11 +2001,11 @@ int EdbPVRec::MakeTracks(int nsegments, int flag)
   EdbTrackP  *track = 0;
   TIndexCell *ct=0;
 
-  int ntc=eTracksCell->GetEntries();
+  int ntc=eTracksCell->GetEntriesFast();
   for(int it=0; it<ntc; it++) {
 
     ct = eTracksCell->At(it);
-    nseg = ct->GetEntries();
+    nseg = ct->GetEntriesFast();
     if( nseg < nsegments )             continue;
     track = new EdbTrackP(nseg);
 
@@ -2305,7 +2305,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
   
   int ntc, nct; 
 
-  ntc = eTracksCell->GetEntries();
+  ntc = eTracksCell->GetEntriesFast();
   for(int it=0; it<ntc; it++) {
 
     ct = eTracksCell->At(it);
@@ -2313,7 +2313,7 @@ int EdbPVRec::SelectLongTracks(int nsegments)
     track = new EdbTrackP();
     track->SetID( ct->Value() );
 
-    nct = ct->GetEntries();
+    nct = ct->GetEntriesFast();
     int is;
     for(is=0; is<nct-1; is++) {
       vid1 = ct->At(is)->Value();
@@ -2343,7 +2343,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   // eliminate crossing&overlapping tracks with multiple segments usage
   // discard tracks with probability < probMin
 
-  int ntr = eTracks->GetEntries();
+  int ntr = eTracks->GetEntriesFast();
   Log(3,"EdbPVRec::CombTracks","Comb %d tracks, longer then %d; ngaps <= %d ..."
 	 ,ntr,nplmin, ngapMax );
 
@@ -2372,13 +2372,13 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
   // *** set track ID for segments attached to
 
   TIndexCell *cp=0, *c=0;
-  int nn=cn.GetEntries();
+  int nn=cn.GetEntriesFast();
   for(int i=nn-1; i>=0; i--) {
     cp = cn.At(i);                              // tracks with fixed npl
-    int np = cp->GetEntries();
+    int np = cp->GetEntriesFast();
     for(int ip=np-1; ip>=0; ip--) {
       c = cp->At(ip);                           // tracks with fixed Npl & Prob
-      int nt = c->GetEntries();
+      int nt = c->GetEntriesFast();
       for(int it=0; it<nt; it++) {
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );
 	tr->SetSegmentsTrack();
@@ -2390,17 +2390,17 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
 
   cp=0; 
   c=0;
-  nn=cn.GetEntries();
+  nn=cn.GetEntriesFast();
   Log(3,"EdbPVRec::CombTracks","1 nn = %d",nn);
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
 
-    int np = cp->GetEntries();
+    int np = cp->GetEntriesFast();
     Log(3,"EdbPVRec::CombTracks","1 np = %d",np);
     for(int ip=0; ip<np; ip++) {
       c = cp->At(ip);                           // tracks with fixed Npl & Prob
 
-      int nt = c->GetEntries();
+      int nt = c->GetEntriesFast();
       Log(3,"EdbPVRec::CombTracks","1 nt = %d",nt);
       for(int it=0; it<nt; it++) {
 	
@@ -2455,7 +2455,7 @@ int EdbPVRec::CombTracks( int nplmin, int ngapMax, float probMin )
 
   nsegtot = 0;
 
-  ntr = eTracks->GetEntries();
+  ntr = eTracks->GetEntriesFast();
   for(int i=0; i<ntr; i++) {
     tr = GetTrack(i);
     tr->SetID(i);
@@ -2519,18 +2519,18 @@ int EdbPVRec::PropagateTracks(int nplmax, int nplmin, float probMin,
   int nsegTot=0;
 
   TIndexCell *cp=0, *c=0;
-  int nn=cn.GetEntries();
+  int nn=cn.GetEntriesFast();
 
   for(int i=0; i<nn; i++) {
     cp = cn.At(i);                              // tracks with fixed npl
     if( -(cp->Value()) > nplmax )    continue;
     if( -(cp->Value()) < nplmin )    continue;
 
-    int np = cp->GetEntries();
+    int np = cp->GetEntriesFast();
     for(int ip=0; ip<np; ip++) {
       c = cp->At(ip);                           // tracks with fixed Npl & Prob
 
-      int nt = c->GetEntries();
+      int nt = c->GetEntriesFast();
       for(int it=0; it<nt; it++) {
 	
 	tr = (EdbTrackP*)(eTracks->At( c->At(it)->Value() ) );

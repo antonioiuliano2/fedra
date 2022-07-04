@@ -39,7 +39,7 @@ void EdbEDAAreaSet::SetAreas(EdbScanSet *ss){
 }
 
 void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
-	printf("Set scanning areas from TS tracks %d\n", tracks->GetEntries());
+	printf("Set scanning areas from TS tracks %d\n", tracks->GetEntriesFast());
 	
 	TObjArray *areas = new TObjArray;
 	EdbScanSet *ss = gEDA->GetScanSet();
@@ -54,13 +54,13 @@ void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
 			a->SetZ(pl->Z());
 			areas->Add(a);
 		}
-		for(int i=0;i<tracks->GetEntries();i++){
+		for(int i=0;i<tracks->GetEntriesFast();i++){
 			EdbTrackP *t = (EdbTrackP *)tracks->At(i);
 			if(t==NULL) continue;
 			for(int j=0;j<t->N();j++){
 				EdbSegP *s = t->GetSegment(j);
 				EdbEDAArea *a=NULL;
-				for(int k=0;k<areas->GetEntries();k++){
+				for(int k=0;k<areas->GetEntriesFast();k++){
 					a = (EdbEDAArea *) areas->At(k);
 					if(a->Plate()==s->Plate()) break;
 				}
@@ -72,7 +72,7 @@ void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
 			}
 		}
 		
-		for(int i=0;i<areas->GetEntries();i++){ AddArea( (EdbEDAArea *)areas->At(i));}
+		for(int i=0;i<areas->GetEntriesFast();i++){ AddArea( (EdbEDAArea *)areas->At(i));}
 		return;
 	}
 	
@@ -85,7 +85,7 @@ void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
 		areas->Add(a);
 	}
 	
-	for(int i=0;i<tracks->GetEntries();i++){
+	for(int i=0;i<tracks->GetEntriesFast();i++){
 		EdbTrackP *t = (EdbTrackP *)tracks->At(i);
 		if(t==NULL) continue;
 		for(int j=0;j<t->N();j++){
@@ -98,7 +98,7 @@ void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
 		}
 	}
 	
-	for(int i=0;i<areas->GetEntries();i++){ AddArea( (EdbEDAArea *)areas->At(i));}
+	for(int i=0;i<areas->GetEntriesFast();i++){ AddArea( (EdbEDAArea *)areas->At(i));}
 //	areas->Delete();
 }
 
@@ -107,12 +107,12 @@ void EdbEDAAreaSet::SetAreas(TObjArray *tracks){
 void EdbEDAAreaSet::Draw(int redraw){
 	if(eCompound) UnDraw();
 	if(eDraw==kFALSE||eDrawG==kFALSE) return;
-	if(eAreas->GetEntries()==0) return;
+	if(eAreas->GetEntriesFast()==0) return;
 	eCompound = new TEveCompound;
 	eCompound->SetElementName("Scanning Areas");
 	gEve->AddElement(eCompound);
 
-	for(int i=0;i<eAreas->GetEntries();i++){
+	for(int i=0;i<eAreas->GetEntriesFast();i++){
 		EdbEDAArea *area = (EdbEDAArea *) eAreas->At(i);
 		if(area->GetDraw()==kFALSE) continue;
 		TEveLine *l = new TEveLine;
@@ -195,7 +195,7 @@ void EdbEDAVertexSet::DrawSingleVertex(EdbVertex *v){
 void EdbEDAVertexSet::Draw(int redraw){
 	UnDraw();
 	
-	int nvertices = eVertices->GetEntries();
+	int nvertices = eVertices->GetEntriesFast();
 	printf("VertexSet   Draw %4d %s\n", nvertices, nvertices<=1 ? "vertex" : "vertices");
 	for(int i=0;i<nvertices;i++){
 		EdbVertex *v = (EdbVertex *) eVertices->At(i);
@@ -227,12 +227,12 @@ void EdbEDAExtentionSet::Draw(int redraw, int fix){
 	if(eCompound) UnDraw();
 	
 	TObjArray *selected = gEDA->GetSelected();
-	if(selected->GetEntries()==0) return;
+	if(selected->GetEntriesFast()==0) return;
 	eCompound = new TEveCompound;
 	eCompound->SetName("ExtentionSet");
 	gEve->AddElement(eCompound);
 
-	for(int i=0;i<selected->GetEntries();i++){
+	for(int i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP   *s = (EdbSegP *)   selected->At(i);
 		EdbTrackP *t = gEDA->GetTrack(s);
 		TEveLine *l = new TEveLine;
@@ -266,7 +266,7 @@ void EdbEDAExtentionSet::DrawResolution(int redraw){
 	TObjArray *selected = gEDA->GetSelected();
 	TObjArray *selected_tracks = gEDA->GetSelectedTracks();
 	
-	for(int i=0;i<selected->GetEntries();i++){
+	for(int i=0;i<selected->GetEntriesFast();i++){
 		EdbSegP *s = (EdbSegP *) selected->At(i);
 		EdbTrackP *t = (EdbTrackP*) selected_tracks->At(i); // temporary
 		

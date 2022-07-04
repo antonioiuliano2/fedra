@@ -21,7 +21,7 @@ int EdbEDATrackSelection::Neighborhood (EdbSegP *s, double *dmin){
 	int flag=0;
 	double dminz;
 	if(dmin) *dmin=1e5;
-	for(int i=0;i<eSelected->GetEntries();i++){
+	for(int i=0;i<eSelected->GetEntriesFast();i++){
 		EdbSegP *ss = (EdbSegP *)eSelected->At(i);
 		if(ss==s) return 1;  
 		
@@ -150,7 +150,7 @@ void EdbEDATrackSelection::DoSelection(TObjArray *tracksbase, TObjArray *tracks)
 	if( eSideOut ){
 		printf( "Penetration and Side-Out rejection : require %d scanning area upstream\n", eSideOutPlate);
 	}
-	int nentr = tracksbase->GetEntries();
+	int nentr = tracksbase->GetEntriesFast();
 	for(int i=0;i<nentr;i++){
 		if(i%1000==0) printf("%d / %d. %d tracks\r", i, tracksbase->GetEntriesFast(), tracks->GetEntriesFast());
 		EdbTrackP *t = (EdbTrackP *) tracksbase->At(i);
@@ -196,7 +196,7 @@ void EdbEDATrackSelection::DoSelection(TObjArray *tracksbase, TObjArray *tracks)
 		
 		if(tracks->FindObject(t)==NULL) tracks->AddLast(t);
 	}
-	printf("%d tracks out of %d tracks\n", tracks->GetEntries(), tracksbase->GetEntries());
+	printf("%d tracks out of %d tracks\n", tracks->GetEntriesFast(), tracksbase->GetEntriesFast());
 }
 
 double EdbEDATrackSet::GetTrackLength(EdbSegP *s, int updown){  
@@ -528,7 +528,7 @@ void EdbEDATrackSet::Draw(int redraw){
 		DrawSingleTrack(t);
 	}
 	
-	for(int i=0;i<eComments->GetEntries();i++){
+	for(int i=0;i<eComments->GetEntriesFast();i++){
 		EdbEDATrackComment *cmt = (EdbEDATrackComment *) eComments->At(i);
 		DrawSingleComment(cmt);
 	}
@@ -829,7 +829,7 @@ void EdbEDATrackSet::ReadPredictionScan(EdbID id, bool force_update_setroot){
 		ss->MakeNominalSet(id,60);
 		gEDA->ScanProc()->MakeScannedIDList(id, *ss, 60, 0,"found.root"); 
 		ss->eB.SetID(id.eBrick);
-		if(ss->eIDS.GetEntries()==0){
+		if(ss->eIDS.GetSize()==0){
 			printf("ID %d.%d.%d.%d is not scanned\n", id.eBrick, id.ePlate, id.eMajor, id.eMinor);
 			return;
 		}
@@ -1196,7 +1196,7 @@ char * EdbEDATrackSet::WriteListFile(char *filename, bool append, bool open_edit
 
 
 EdbTrackP * EdbEDATrackSet::SearchSegment(int ipl, int iseg) { 
-	for(int i=0;i<eTracksBase->GetEntries(); i++) {
+	for(int i=0;i<eTracksBase->GetEntriesFast(); i++) {
 		EdbTrackP *t = (EdbTrackP *) eTracksBase->At(i);
 		for(int j=0;j<t->N();j++){
 			EdbSegP *s = t->GetSegment(j);
@@ -1326,7 +1326,7 @@ int EdbEDATrackSet::PrepareScanSetForMT(){
 		sc->MakeNominalSet(id);
 		sproc->MakeScannedIDList(id, *sc, 65, -5,"cp.root"); 
 		sc->eB.SetID(id.eBrick);
-		int nid = sc->eIDS.GetEntries();
+		int nid = sc->eIDS.GetSize();
 		if(nid==0) {
 			ErrorMessage(Form("Error : Not cp files! stop. ScanID=%d.%d.%d.%d", id.eBrick, id.ePlate, id.eMajor, id.eMinor));
 			return -1;
@@ -1388,7 +1388,7 @@ int EdbEDATrackSet::MicroTrackSearch(EdbTrackP *t, EdbSegP *app, int ipl){
 	
 	// Check if the plate is scanned or not.
 	int flag_scanned=0;
-	for(int i=0;i<sc->eIDS.GetEntries();i++){
+	for(int i=0;i<sc->eIDS.GetSize();i++){
 		EdbID *id = sc->GetID(i);
 		if(ipl==id->ePlate) flag_scanned++;
 	}

@@ -4287,7 +4287,7 @@ void ReconstructShowers_TC()
                 cout << "     Test GLOBAL_ShowerSegArray segment (if array) " << j << " with: " << endl;
                 alreadyTakenSegment->PrintNice();
                 cout << "     to connect: deltaRWith Propagation (tryAttachedSegment,alreadyTakenSegment) : ";
-                cout << dRTEST;;
+                cout << dRTEST;
                 cout << "     GetMinimumDist(tryAttachedSegment,alreadyTakenSegment) : " << dMinDist << " " << dMinDist_DT << endl;
                 }
                 */

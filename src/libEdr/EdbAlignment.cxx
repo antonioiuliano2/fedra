@@ -16,7 +16,7 @@ ClassImp(EdbAlignment)
 //---------------------------------------------------------------------------------------------
 float EdbAlignment::DVAR(const TObjArray &segarr1, const TObjArray &segarr2, int ivar )
 {
-  int n = Min( segarr1.GetEntries(), segarr2.GetEntries() );
+  int n = Min( segarr1.GetEntriesFast(), segarr2.GetEntriesFast() );
   Double_t dx = 0;
   for(int i=0; i<n; i++) {
     switch(ivar)
@@ -35,7 +35,7 @@ float EdbAlignment::DVAR(const TObjArray &segarr1, const TObjArray &segarr2, int
 int  EdbAlignment::CalculateM( const TObjArray &segarr1, const TObjArray &segarr2, EdbAffine2D &aff, int flag )
 {
   // interface to the matrix procedure
-  int n = Min( segarr1.GetEntries(), segarr2.GetEntries() );
+  int n = Min( segarr1.GetEntriesFast(), segarr2.GetEntriesFast() );
   if(n<1) return 0;
   TArrayF X1(n), Y1(n), X2(n), Y2(n);
   for(int i=0; i<n; i++) {
@@ -51,7 +51,7 @@ int  EdbAlignment::CalculateM( const TObjArray &segarr1, const TObjArray &segarr
 int  EdbAlignment::Calculate( const TObjArray &segarr1, const TObjArray &segarr2, EdbAffine2D &aff )
 {
   // aff applied to pattern 1 gives pattern 2
-  int n = Min( segarr1.GetEntries(), segarr2.GetEntries() );
+  int n = Min( segarr1.GetEntriesFast(), segarr2.GetEntriesFast() );
   if(n<1) return 0;
   TArrayF X1(n), Y1(n), X2(n), Y2(n);
   for(int i=0; i<n; i++) {
