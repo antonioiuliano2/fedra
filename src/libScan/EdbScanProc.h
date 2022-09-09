@@ -208,9 +208,9 @@ public:
   void    UpdateSetWithPlatePar( EdbID id );
   void    UpdateSetWithPlatePar( EdbScanSet &ss );
 
-  void    MakeLinkSetSummary( EdbID id );
+  void    MakeLinkSetSummary( EdbID id, const char *fileformat="pdf");
   
-  void    MakeAlignSetSummary( EdbID id );
+  void    MakeAlignSetSummary( EdbID id, const char *fileformat="pdf" );
   void    MakeAlignSetSummary( EdbID id1, EdbID id2, const char *fout, const char *opt="UPDATE" );
 
   int     FindRawTrack( EdbTrackP &pred, EdbTrackP &found, EdbID idset, int plate,  TEnv &cenv);

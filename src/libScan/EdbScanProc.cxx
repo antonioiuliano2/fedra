@@ -2824,13 +2824,13 @@ void EdbScanProc::MakeAlignSetSummary(EdbID idset1, EdbID idset2, const char *fi
 }
 
 //______________________________________________________________________________
-void EdbScanProc::MakeAlignSetSummary(EdbID idset)
+void EdbScanProc::MakeAlignSetSummary(EdbID idset, const char *fileformat)
 {
   // assuming that exist the scan sets for idset  
   // read id.n_id.n+1.aff.par and make a summary tree
 
   TString name;
-  MakeFileName(name,idset,"align.pdf",false);
+  MakeFileName(name,idset,Form("align.%s",fileformat),false);
   Log(2,"MakeAlignSetSummary","%s",name.Data());
   gStyle->SetOptDate(1);
   gStyle->SetPalette(1);
@@ -2860,9 +2860,9 @@ void EdbScanProc::MakeAlignSetSummary(EdbID idset)
     if(c) {
       c->SetName(Form("%s_%s",id1->AsString(), id2->AsString()));
     //c->Draw();
-      if(i==0&&n>2)         c->Print(Form("%s(",name.Data()),"pdf");
-      else if(i==n-2&&n>2)  c->Print(Form("%s)",name.Data()),"pdf");
-      else             c->Print(name,"pdf");
+      if(i==0&&n>2)         c->Print(Form("%s(",name.Data()),fileformat);
+      else if(i==n-2&&n>2)  c->Print(Form("%s)",name.Data()),fileformat);
+      else             c->Print(name,fileformat);
     }
     f->Close();
   }
@@ -2906,13 +2906,13 @@ void EdbScanProc::UpdateAlignSummaryTree(EdbID id1s, EdbID id2s, TTree &tree)
 }
 
 ///______________________________________________________________________________
-void EdbScanProc::MakeLinkSetSummary(EdbID idset)
+void EdbScanProc::MakeLinkSetSummary(EdbID idset, const char *fileformat)
 {
   // assuming that exist the scan sets for idset  
   // read id.n_id.n+1.aff.par and make a summary tree
  
   TString name;
-  MakeFileName(name,idset,"link.pdf",false);
+  MakeFileName(name,idset,Form("link.%s",fileformat),false);
  
   EdbScanSet *ss = ReadScanSet(idset);    if(!ss) return;
   int n = ss->eIDS.GetSize();          if(n<1)  return;
@@ -2927,9 +2927,9 @@ void EdbScanProc::MakeLinkSetSummary(EdbID idset)
     TCanvas *c = (TCanvas*)f->Get("report");
     if(c) {
       c->SetName(Form("%s",id->AsString()));
-      if(i==0&&n>1)         c->Print(Form("%s(",name.Data()),"pdf");
-      else if(i==n-1&&n>1)  c->Print(Form("%s)",name.Data()),"pdf");
-      else                  c->Print(name,"pdf");
+      if(i==0&&n>1)         c->Print(Form("%s(",name.Data()),fileformat);
+      else if(i==n-1&&n>1)  c->Print(Form("%s)",name.Data()),fileformat);
+      else                  c->Print(name,fileformat);
    }
     SafeDelete(f);
   }

@@ -67,6 +67,8 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.LLfunction"     , "0.256336-0.16489*x+2.11098*x*x" );
   cenv.SetValue("fedra.link.CPRankingAlg"   , 0 );
 
+  cenv.SetValue("emlink.reportfileformat"   , "pdf" );
+
   cenv.SetValue("emlink.outdir"          , "..");
   cenv.SetValue("emlink.env"             , "link.rootrc");
   cenv.SetValue("emlink.EdbDebugLevel"   , 1);
@@ -143,6 +145,8 @@ int main(int argc, char* argv[])
 
   cenv.SetValue("emlink.env"            , env);
   cenv.ReadFile( cenv.GetValue("emlink.env"   , "link.rootrc") ,kEnvLocal);
+
+  const char* reportfileformat = cenv.GetValue("emlink.reportfileformat","pdf");
   cenv.SetValue("emlink.outdir"         , outdir);
   cenv.WriteFile("link.save.rootrc");
 
@@ -176,7 +180,7 @@ int main(int argc, char* argv[])
     if(ss) {
       if(do_new) {
         sproc.LinkSetNewTest(*ss, cenv);
-        sproc.MakeLinkSetSummary(id);
+        sproc.MakeLinkSetSummary(id, reportfileformat);
       }
       else  if(npre+nfull>0)  sproc.LinkSet(*ss, npre, nfull, correct_ang);
     }
@@ -186,7 +190,7 @@ int main(int argc, char* argv[])
 	 //int argc2=1;
 	 //char *argv2[]={"-l"};
 	 //TRint app("APP",&argc2, argv2);
-	 sproc.MakeLinkSetSummary(id);
+	 sproc.MakeLinkSetSummary(id, reportfileformat);
 	 //app.Run();
        }
   }

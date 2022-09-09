@@ -46,6 +46,7 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.align.SaveCouples" ,  1    );
 
   cenv.SetValue("emalign.outdir"          , ".."  );
+  cenv.SetValue("emalign.reportfileformat", "pdf");
   cenv.SetValue("emalign.env"             , "align.rootrc");
   cenv.SetValue("emalign.EdbDebugLevel"   ,  1    );
 }
@@ -59,6 +60,7 @@ int main(int argc, char* argv[])
   gEDBDEBUGLEVEL     = cenv.GetValue("emalign.EdbDebugLevel" , 1);
   const char *env    = cenv.GetValue("emalign.env"            , "align.rootrc");
   const char *outdir = cenv.GetValue("emalign.outdir"         , "..");
+  const char *reportfileformat = cenv.GetValue("emalign.reportfileformat", "pdf");
   
   bool      do_ida      = false;
   bool      do_idb      = false;
@@ -179,11 +181,11 @@ int main(int argc, char* argv[])
     else if(do_new) 
       {
 	sproc.AlignSetNewNopar(*ss, cenv);
-	sproc.MakeAlignSetSummary(id);
+	sproc.MakeAlignSetSummary(id, reportfileformat);
       }    
      else if(do_check) 
        {
-	 sproc.MakeAlignSetSummary(id);
+	 sproc.MakeAlignSetSummary(id, reportfileformat);
        } 
    else sproc.AlignSet(*ss, npre, nfull);
 
