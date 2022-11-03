@@ -116,6 +116,8 @@ public:
   //void     ReadSetGeom(EdbScanSet &sc);
 
   int     AlignNewNopar(EdbID id1, EdbID id2, TEnv &cenv, EdbAffine2D *aff=0, float dz=0);
+  int     AlignNewLayernopar(EdbID id1, EdbID id2, TEnv &cenv, EdbPlateP &plate2, EdbAffine2D *aff=0, float dz=0);
+  
   bool    UpdateAFFPar( EdbID id1, EdbID id2, EdbLayer &l, EdbAffine2D *aff0=0);
   bool    UpdatePlatePar( EdbID id, EdbLayer &l);
   int     AlignSetNewNopar(EdbScanSet &sc, TEnv &cenv);
@@ -208,9 +210,9 @@ public:
   void    UpdateSetWithPlatePar( EdbID id );
   void    UpdateSetWithPlatePar( EdbScanSet &ss );
 
-  void    MakeLinkSetSummary( EdbID id, const char *fileformat="pdf");
+  void    MakeLinkSetSummary( EdbID id );
   
-  void    MakeAlignSetSummary( EdbID id, const char *fileformat="pdf" );
+  void    MakeAlignSetSummary( EdbID id );
   void    MakeAlignSetSummary( EdbID id1, EdbID id2, const char *fout, const char *opt="UPDATE" );
 
   int     FindRawTrack( EdbTrackP &pred, EdbTrackP &found, EdbID idset, int plate,  TEnv &cenv);

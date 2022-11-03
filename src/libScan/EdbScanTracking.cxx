@@ -481,6 +481,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
     int         npass           = env.GetValue("fedra.track.npass"          ,      1   );
     float       misalign_offset = env.GetValue("fedra.track.misalign_offset",    500.  );
     bool        do_local_corr   = env.GetValue("fedra.track.do_local_corr"  ,      1   );
+    int        NcpMin_local_corr= env.GetValue("fedra.track.NcpMin_local_corr"  ,  0   );
     bool        eDoRealign      = env.GetValue("fedra.track.do_realign"     ,      0   );
     bool        do_comb         = env.GetValue("fedra.track.do_comb"        ,      0   );
     eNsegMin                    = env.GetValue("fedra.track.NsegMin"        ,      2   );
@@ -524,12 +525,46 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         p.TransformShr( plate->Shr() );
         p.TransformA(   plate->GetAffineTXTY() );
         p.SetSegmentsPlate(id->ePlate);
-      
-        if(do_local_corr) {
+        Log(1,"EdbScanTracking::TrackSetBT",
+    "Starting local correction for plate %i",i); 
+        if(do_local_corr && plate->Z()<0.) {
+          //combine maps from the various plates
+          EdbCorrectionMap corrmap = EdbCorrectionMap();
+          corrmap.Init(2,0,120000,2,0,100000); 
+          corrmap.ApplyCorrections(plate->Map());
+          
+           //invert map we want everything to plate 25, and this maps goes from plate whichplate+1 to plate whichplate
+          for(int i=0; i<corrmap.Ncell(); i++) {
+            EdbLayer *loc  = corrmap.GetLayer(i);
+            loc->Invert();
+          }
+
+          //combining the map with all the map from the other plates up to the most downstream one
+          for (int iplate = 1; iplate< npl - (i+1); iplate++){
+  
+           EdbCorrectionMap *othermap = new EdbCorrectionMap();
+
+           othermap->Init(2,0,120000,2,0,100000); 
+  
+           othermap->ApplyCorrections(ss->GetPlate(iplate+i)->Map());
+  
+           for(int i=0; i<othermap->Ncell(); i++) {
+            EdbLayer *loc  = othermap->GetLayer(i);
+            loc->Invert();
+           }
+
+           corrmap.ApplyCorrections(*othermap); //apply inverse corrections of layer
+          }
           int nseg = p.N();
           for(int j=0; j<nseg; j++) {
             EdbSegP *s = p.GetSegment(j);
+            //int ncp_maplayer = -1;
+            //if (plate->Map().GetLayer(s->X(),s->Y()))
+            // ncp_maplayer = plate->Map().GetLayer(s->X(),s->Y())->Ncp();
+            //if (ncp_maplayer > NcpMin_local_corr)
             plate->CorrectSegLocal(*s);
+            //else 
+            //  Log(3, "EdbScanTracking::TrackSetBT","Only %i couples in layer, not applying correction.", ncp_maplayer);          
           }
         }
       
@@ -544,7 +579,7 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env)
         if(eDoRealign) 
         {
           if( i==1 ) etra.CheckPatternAlignment(p,*plate,1);
-          if( i>1  ) etra.CheckPatternAlignment(p,*plate,1);
+          if( i>1  ) etra.CheckPatternAlignment(p,*plate,2);
         }
         etra.FillTrZMap();
         etra.AddPattern(p);
