@@ -272,7 +272,7 @@ void EdbLinking::FullLinking(TObjArray &p1, TObjArray &p2)
     FillCombinations(dvcomb, eDRfull,eDRfull, 1);
     eCorr[0].SetV(2,0);  eCorr[1].SetV(2, 0);
     RankCouples( eS[0], eS[1] );
-    SaveCouplesTree();
+    if(eDoSaveCouples) SaveCouplesTree();
 }
 
 //---------------------------------------------------------------------
@@ -287,7 +287,7 @@ void EdbLinking::FullLinking(EdbPattern &p1, EdbPattern &p2)
     FillCombinations(dvcomb, eDRfull,eDRfull, 1);
     eCorr[0].SetV(2,0);  eCorr[1].SetV(2, 0);
     RankCouples( eS[0], eS[1] );
-    SaveCouplesTree();
+    if(eDoSaveCouples) SaveCouplesTree();
 }
 
 //---------------------------------------------------------------------
