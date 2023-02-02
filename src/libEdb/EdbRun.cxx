@@ -249,7 +249,7 @@ void EdbRun::Create( const char *fname )
   eFile->SetCompressionLevel(2);
 
   eTree = new TTree("Views","Scanning Viewes data");
-  eTree->SetAutoSave(100000000);                     // autosave each 100Mb
+  eTree->SetAutoSave(-100000000);                     // autosave each 100Mb
   eTree->SetMaxTreeSize(32000000000LL);              //set 32 Gb file size limit
   Log(3,"EdbRun::Create","set maxtreesize as: %lld",eTree->GetMaxTreeSize());
  
