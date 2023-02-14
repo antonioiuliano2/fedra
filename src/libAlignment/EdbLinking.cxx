@@ -295,6 +295,9 @@ void EdbLinking::SaveCouplesTree(const char *file)
 {
   EdbCouplesTree ect;
   ect.InitCouplesTree("couples",file,"NEW");
+
+  Long64_t maxsize = 1e+13; //in bytes, 10 TB
+  ect.eTree->SetMaxTreeSize(maxsize);
   
   ect.eTree->SetAlias("dz1"  ,"107.");
   ect.eTree->SetAlias("dz2"  ,"-107.");
@@ -602,12 +605,14 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   adup.eDVsame[0]=adup.eDVsame[1]= eRemoveDoublets.dr;
   adup.eDVsame[2]=adup.eDVsame[3]= eRemoveDoublets.dt;
   
-  adup.FillGuessCell(p1,p1,1.);
+  adup.FillGuessCell(p1,p1,6.);
+  //adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
   if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
 
-  adup.FillGuessCell(p2,p2,1.);
+  adup.FillGuessCell(p2,p2,6.);
+  //adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments
   if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets2");
