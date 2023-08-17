@@ -61,6 +61,31 @@ void EdbLinking::GetPar(TEnv &env)
   eCond.DefineLLFunction(  env.GetValue("fedra.link.LLfunction"         , "0.256336-0.16489*x+2.11098*x*x") );
 
   GetDoubletsPar(env);
+
+  //parameters for map correction, when applied
+  //view size
+  float xview = env.GetValue("fedra.link.eCorrMapAngles.xview"         , 770.);
+  float yview = env.GetValue("fedra.link.eCorrMapAngles.yview"         , 565.);
+  //number of bins
+  int xb = env.GetValue("fedra.link.eCorrMapAngles.xb"         , 300); 
+  int yb = env.GetValue("fedra.link.eCorrMapAngles.yb" , 350); 
+  //starting point
+  float xmin = env.GetValue("fedra.link.eCorrMapAngles.xmin"         , 0.); 
+  float ymin = env.GetValue("fedra.link.eCorrMapAngles.ymin"         , 0.);
+  float xmax = env.GetValue("fedra.link.eCorrMapAngles.xmax"         , 192000.); 
+  float ymax = env.GetValue("fedra.link.eCorrMapAngles.ymax"         , 192000.);
+  //are we computing angular corrections as a map? Check with this condition
+  bool eDoCorrectMapAngles =  env.GetValue("fedra.link.eCorrMapAngles.eDoCorrectMapAngles", 0); 
+
+  eCorrMapLines1 = new EdbCorrectionMap();
+  eCorrMapLines1->Init( xb, xmin, xmax, yb, ymin, ymax );
+
+  eCorrMapLines2 = new EdbCorrectionMap();
+  eCorrMapLines2->Init( xb, xmin, xmax, yb, ymin, ymax );
+
+  if(eDoCorrectMapAngles){
+    eCorrMapLines1->Print();
+  }  
 }
 
 //---------------------------------------------------------------------
@@ -237,23 +262,84 @@ void EdbLinking::CorrectAngles(TObjArray &p1, TObjArray &p2)
 
     int nc=0;
     double dtx1=0, dty1=0,dtx2=0, dty2=0;
+    const int nxmap = eCorrMapLines1->NX();
+    const int nymap = eCorrMapLines1->NY();
+
+    int ncmap[nxmap][nymap];
+    double dtx1map[nxmap][nymap],  dty1map[nxmap][nymap],  dtx2map[nxmap][nymap],  dty2map[nxmap][nymap];
+
+    //all 0 to start with
+    for (int ixmap = 0; ixmap < nxmap; ixmap++){
+      for (int iymap = 0; iymap < nymap; iymap++){
+       ncmap[ixmap][iymap] = 0;
+       dtx1map[ixmap][iymap] = 0.;
+       dtx2map[ixmap][iymap] = 0.;
+       dty1map[ixmap][iymap] = 0.;
+       dty2map[ixmap][iymap] = 0.;
+     }
+    }
+    
+
+
     int ncp = eSegCouples.GetEntries();
     for(int i=0; i<ncp; i++) {
       EdbSegCouple *sc = (EdbSegCouple*)(eSegCouples.At(i));
+      //find the position in the map
+      int ix = eCorrMapLines1->IX(sc->eS->X());
+      int iy = eCorrMapLines1->IY(sc->eS->Y());
+
       if(sc->CHI2P()>eChi2Acorr) continue;
       dtx1+= TX( 0, *(sc->eS1) ) - sc->eS->TX();
       dty1+= TY( 0, *(sc->eS1) ) - sc->eS->TY();
       dtx2+= TX( 1, *(sc->eS2) ) - sc->eS->TX();
       dty2+= TY( 1, *(sc->eS2) ) - sc->eS->TY();
       nc++;
+      if(eDoCorrectMapAngles){
+       //local increase of corrections
+       dtx1map[ix][iy] += TX( 0, *(sc->eS1) ) - sc->eS->TX();
+       dty1map[ix][iy] += TY( 0, *(sc->eS1) ) - sc->eS->TY();
+       dtx2map[ix][iy] += TX( 1, *(sc->eS2) ) - sc->eS->TX();
+       dty2map[ix][iy] += TY( 1, *(sc->eS2) ) - sc->eS->TY();
+       ncmap[ix][iy]++;
+      }
     }
     if(nc<eNcorrMin) {Log(1,"EdbLinking::CorrectAngles","Warning: number of the selected segments too small: %d < %d do not correct angles",
          nc,eNcorrMin); return;}
     
     float cc=1.8;
     dtx1 /= nc;  dty1 /= nc;  dtx2 /= nc;  dty2 /= nc;
+
     eCorr[0].AddV(3,-cc*dtx1);     eCorr[0].AddV(4,-cc*dty1);
     eCorr[1].AddV(3,-cc*dtx2);     eCorr[1].AddV(4,-cc*dty2);
+    //computing average residuals
+    if (eDoCorrectMapAngles){
+     for (int ixmap = 0; ixmap < nxmap; ixmap++){
+      for (int iymap = 0; iymap < nymap; iymap++){
+        if(ncmap[ixmap][iymap]<eNcorrMin) continue;        
+      	dtx1map[ixmap][iymap] /= ncmap[ixmap][iymap];
+        dty1map[ixmap][iymap] /= ncmap[ixmap][iymap];
+        dtx2map[ixmap][iymap] /= ncmap[ixmap][iymap];
+        dty2map[ixmap][iymap] /= ncmap[ixmap][iymap];
+        //relative to global ones
+        dtx1map[ixmap][iymap] = dtx1map[ixmap][iymap] - dtx1;
+        dty1map[ixmap][iymap] = dty1map[ixmap][iymap] - dty1;
+        dtx2map[ixmap][iymap] = dtx2map[ixmap][iymap] - dtx2;
+        dty2map[ixmap][iymap] = dty2map[ixmap][iymap] - dty2;
+
+        eCorrMapLines1->GetLayer(eCorrMapLines1->Jcell(ixmap,iymap))-> GetAffineTXTY()->ShiftX(-cc*dtx1map[ixmap][iymap]);
+        eCorrMapLines1->GetLayer(eCorrMapLines1->Jcell(ixmap,iymap))-> GetAffineTXTY()->ShiftY(-cc*dty1map[ixmap][iymap]);
+
+        eCorrMapLines2->GetLayer(eCorrMapLines1->Jcell(ixmap,iymap))-> GetAffineTXTY()->ShiftX(-cc*dtx2map[ixmap][iymap]);
+        eCorrMapLines2->GetLayer(eCorrMapLines1->Jcell(ixmap,iymap))-> GetAffineTXTY()->ShiftY(-cc*dty2map[ixmap][iymap]);
+      
+        eCorrMapLines1->GetLayer(eCorrMapLines1->Jcell(ixmap,iymap))->SetNcp(ncmap[ixmap][iymap]);
+        eCorrMapLines2->GetLayer(eCorrMapLines2->Jcell(ixmap,iymap))->SetNcp(ncmap[ixmap][iymap]);
+
+        Log(3,"EdbLinking::CorrectAngles Locally","position (%d, %d) using %d segments dtx1,dty1:( %6.3f %6.3f )  dtx2,dty2:( %6.3f %6.3f )",
+    ixmap, iymap, ncmap[ixmap][iymap], dtx1map[ixmap][iymap]*cc, dty1map[ixmap][iymap]*cc, dtx2map[ixmap][iymap]*cc, dty2map[ixmap][iymap]*cc );
+      }
+     }
+    }
     
     Log(2,"EdbLinking::CorrectAngles","using %d segments dx1,dy1:( %6.3f %6.3f )  dx2,dy2:( %6.3f %6.3f )",
     nc, dtx1*cc, dty1*cc, dtx2*cc, dty2*cc );
@@ -532,6 +618,10 @@ void EdbLinking::ProduceReport()
     if(eDoCorrectAngles) {
      ctit->AddText( Form("angular offsets: side1  %6.3f %6.3f   side2 %6.3f %6.3f",
                          eCorr[0].V(3),eCorr[0].V(4), eCorr[1].V(3), eCorr[1].V(4) ));
+     if (eDoCorrectMapAngles){
+      eCorrMapLines1->Write("eCorrMapAnglesBot");
+      eCorrMapLines2->Write("eCorrMapAnglesTop");
+     }
     }
     ctit->Draw();
 
@@ -606,7 +696,7 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   adup.FillCombinations();
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
   if(eDoDumpDoubletsTree) DumpDoubletsTree(adup,"doublets1");
-
+  
   adup.FillGuessCell(p2,p2,1.);
   adup.FillCombinations();
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy2, htxty2);   // assign flag -10 to the duplicated segments

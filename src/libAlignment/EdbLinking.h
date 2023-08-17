@@ -13,6 +13,7 @@ class EdbLinking : public EdbAlignmentV
   
    bool   eDoSaveCouples;
    bool   eDoCorrectAngles;
+   bool   eDoCorrectMapAngles;
    bool   eDoCorrectShrinkage;
    bool   eDoFullLinking;
    bool   eDoDumpDoubletsTree;
@@ -36,6 +37,9 @@ class EdbLinking : public EdbAlignmentV
   EdbLayer eL1,eL2;              // layers with the geometry and corrections
   
   EdbH2 eHdxyShr[2];             // service histograms used for the shrinkage correction
+
+  EdbCorrectionMap* eCorrMapLines1; //correction map for scanning lines
+  EdbCorrectionMap* eCorrMapLines2; //correction map for scanning lines
   
   struct RemoveDoublets {
     int   remove;
