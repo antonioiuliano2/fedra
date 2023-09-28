@@ -75,8 +75,8 @@ void EdbLinking::GetPar(TEnv &env)
   float xmax = env.GetValue("fedra.link.eCorrMapAngles.xmax"         , 192000.); 
   float ymax = env.GetValue("fedra.link.eCorrMapAngles.ymax"         , 192000.);
   //are we computing angular corrections as a map? Check with this condition
-  bool eDoCorrectMapAngles =  env.GetValue("fedra.link.eCorrMapAngles.eDoCorrectMapAngles", 0); 
-
+  eDoCorrectMapAngles =  env.GetValue("fedra.link.eCorrMapAngles.eDoCorrectMapAngles", 0); 
+  std::cout<<"are we correcting map angles? "<<eDoCorrectMapAngles<<std::endl;
   eCorrMapLines1 = new EdbCorrectionMap();
   eCorrMapLines1->Init( xb, xmin, xmax, yb, ymin, ymax );
 
@@ -308,7 +308,7 @@ void EdbLinking::CorrectAngles(TObjArray &p1, TObjArray &p2)
     
     float cc=1.8;
     dtx1 /= nc;  dty1 /= nc;  dtx2 /= nc;  dty2 /= nc;
-
+   
     eCorr[0].AddV(3,-cc*dtx1);     eCorr[0].AddV(4,-cc*dty1);
     eCorr[1].AddV(3,-cc*dtx2);     eCorr[1].AddV(4,-cc*dty2);
     //computing average residuals
@@ -537,6 +537,9 @@ void EdbLinking::RankCouples( TObjArray &arr1,TObjArray &arr2 )
     
     eCorr[0].ApplyCorrections(seg1);
     eCorr[1].ApplyCorrections(seg2);
+    //we need to apply the correction map also here! Since the global correction is applied at each step
+    eCorrMapLines1->CorrectSeg(seg1);
+    eCorrMapLines2->CorrectSeg(seg2);
    
     //tf.Chi2SegM( *s1, *s2, seg, cond1, cond2);
     //seg.SetChi2( tf.Chi2ACP( *s1, *s2, cond1) );   //TODO test!!
@@ -618,6 +621,7 @@ void EdbLinking::ProduceReport()
     if(eDoCorrectAngles) {
      ctit->AddText( Form("angular offsets: side1  %6.3f %6.3f   side2 %6.3f %6.3f",
                          eCorr[0].V(3),eCorr[0].V(4), eCorr[1].V(3), eCorr[1].V(4) ));
+     std::cout<<"are we correcting map angles? "<<eDoCorrectMapAngles<<std::endl;
      if (eDoCorrectMapAngles){
       eCorrMapLines1->Write("eCorrMapAnglesBot");
       eCorrMapLines2->Write("eCorrMapAnglesTop");
@@ -691,7 +695,7 @@ void EdbLinking::DoubletsFilterOut(TObjArray &p1, TObjArray &p2, bool fillhist)
   EdbAlignmentV adup;
   adup.eDVsame[0]=adup.eDVsame[1]= eRemoveDoublets.dr;
   adup.eDVsame[2]=adup.eDVsame[3]= eRemoveDoublets.dt;
-  
+
   adup.FillGuessCell(p1,p1,1.);
   adup.FillCombinations();
   adup.DoubletsFilterOut(eRemoveDoublets.checkview, hxy1, htxty1);   // assign flag -10 to the duplicated segments
