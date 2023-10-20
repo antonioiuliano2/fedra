@@ -35,7 +35,9 @@ void set_default(TEnv &cenv)
 {
   // default parameters for the new linking
   cenv.SetValue("fedra.link.AFID"                ,  1   );   // 1 is usually fine for scanned data; for the db-read data use 0!
-  cenv.SetValue("fedra.link.PixelCorr"           , "0 1. 1.");
+  cenv.SetValue("fedra.link.DoImageCorr"           , 0  );
+  cenv.SetValue("fedra.link.ImageCorrSide1"           , "1. 1. 0.");
+  cenv.SetValue("fedra.link.ImageCorrSide2"           , "1. 1. 0.");
   cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
   cenv.SetValue("fedra.link.BinOK"               , 6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );

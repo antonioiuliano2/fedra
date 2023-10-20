@@ -35,9 +35,9 @@ class EdbRunAccess : public TObject {
   Bool_t   eUseDensityAsW;      // in case of LASSO tracking possible to use eSigmaY as eW  
   // re-taken in by FWM 13072016 (otherwithe compilatiion error in libScan EdbRunAccess)
   
-  Int_t       eDoPixelCorr;        // apply or not pix/mic correction  when read data (default is 0)
-  Float_t     ePixelCorrX;         // pixel/micron correction factor to be applied for data
-  Float_t     ePixelCorrY;
+  Int_t       eDoImageCorr;      // apply or not pix/mic correction  when read data (default is 0)
+  EdbAffine2D eImageCorr[3];     // include pix/micron corr, shift, rotation of microscope image
+                                 // side 0(dummy), 1, 2
 
   TCut         eHeaderCut;  // header cut to be applied in run initialization
   Int_t        eTracking;   // to test tracking alorithm: -1-ignored(def),0/1 - trackings to accept
@@ -86,7 +86,7 @@ class EdbRunAccess : public TObject {
   void ReadVAfile();
   
   void Set0();
-  void SetPixelCorrection(const char *str);
+  void SetImageCorrection(int side, const char *str);
   void ClearCuts();
   bool InitRun(const char *runfile=0, bool do_update=false);
   bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");

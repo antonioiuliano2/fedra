@@ -78,8 +78,7 @@ void EdbRunAccess::Set0()
   eDoViewAnalysis=true;
   eHViewXY[1].InitH2(500,-250,250, 500, -250, 250);
   eHViewXY[2].InitH2(500,-250,250, 500, -250, 250);
-  eDoPixelCorr=0;
-  ePixelCorrX = ePixelCorrY= 1.;
+  eDoImageCorr=0;
   eHeaderCut="1";
   eTracking=-1;
   eWeightAlg=0;
@@ -923,11 +922,21 @@ int EdbRunAccess::FillVP()
 }
 
 ///______________________________________________________________________________
-void EdbRunAccess::SetPixelCorrection(const char *str)
+void EdbRunAccess::SetImageCorrection(int side, const char *str)
 {
-  if( 3 != sscanf(str,"%d %f %f", &eDoPixelCorr, &ePixelCorrX, &ePixelCorrY) )
-  { eDoPixelCorr=0; ePixelCorrX=1.; ePixelCorrY=1.; }
-  if(eDoPixelCorr)  Log(2,"EdbRunAccess::SetPixelCorrection","%s",str);
+  // fedra.link.ImageCorrSideX:                 scaleX scaleY rot
+  float scaleX, scaleY, rot;
+  if( 3 == sscanf(str,"%f %f %f", &scaleX, &scaleY, &rot) )
+  { 
+    if(!(side>0&&side<3)) Log(1,"EdbRunAccess::SetImageCorrection:", "side %d out of range!", side);
+    else
+    {
+      eImageCorr[side].ZoomX(scaleX);
+      eImageCorr[side].ZoomY(scaleY);
+      eImageCorr[side].Rotate(rot);
+    }
+  }
+  Log(2,"EdbRunAccess::SetImageCorrection","%s",str);
 }
 
 ///______________________________________________________________________________
@@ -986,10 +995,11 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   x    = seg->GetX0();
   y    = seg->GetY0();
 
-  if(eDoPixelCorr)   {
-    x *= ePixelCorrX;
-    y *= ePixelCorrY;
-    //printf("%f %f \n",ePixelCorrX,ePixelCorrY);
+  if(eDoImageCorr)   {
+    float xt = eImageCorr[side].Xtrans(x,y);
+    float yt = eImageCorr[side].Ytrans(x,y);
+    x = xt;
+    y = yt;  
   }
   
   x  += layer->Zcorr()*tx;

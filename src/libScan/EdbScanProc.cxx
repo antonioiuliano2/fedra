@@ -3146,7 +3146,11 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
   InitRunAccessNew(r,id,plate);
   r.eWeightAlg  =  cenv.GetValue("fedra.link.read.WeightAlg"      , 0  );
   r.AddSegmentCut(1,cenv.GetValue("fedra.link.read.ICUT"      , "-1") );
-  r.SetPixelCorrection( cenv.GetValue("fedra.link.PixelCorr"      , "0 1. 1.") );
+  r.eDoImageCorr = cenv.GetValue("fedra.link.DoImageCorr", 0  );
+  if(r.eDoImageCorr) {
+    r.SetImageCorrection( 1, cenv.GetValue("fedra.link.ImageCorrSide1"      , "1. 1. 0.") );
+    r.SetImageCorrection( 2, cenv.GetValue("fedra.link.ImageCorrSide2"      , "1. 1. 0.") );
+  }
   r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);
 
   EdbPattern p1, p2;
