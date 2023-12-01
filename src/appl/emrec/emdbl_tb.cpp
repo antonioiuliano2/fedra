@@ -144,7 +144,7 @@ void DoTraceBackCP( EdbID id, const char *treename, TEnv &cenv )
     EdbSegP *sv2 = pp2v.GetSegment(i);
     sv1->SetTX(sv2->X());
     sv1->SetTY(sv2->Y());
-   cptree_out.Fill( s1, s2, sv1);
+    cptree_out.Fill( s1, s2, sv1);
   }
   cptree_out.WriteTree();
   cptree_out.Close();

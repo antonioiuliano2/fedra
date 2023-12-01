@@ -3151,6 +3151,13 @@ void EdbScanProc::LinkRunTest( EdbID id, EdbPlateP &plate, TEnv &cenv)
     r.SetImageCorrection( 1, cenv.GetValue("fedra.link.ImageCorrSide1"      , "1. 1. 0.") );
     r.SetImageCorrection( 2, cenv.GetValue("fedra.link.ImageCorrSide2"      , "1. 1. 0.") );
   }
+  
+  r.eDoImageMatrixCorr = cenv.GetValue("fedra.link.DoImageMatrixCorr", 0  );
+  if(r.eDoImageMatrixCorr) {
+    r.ReadImageMatrixCorrection( 1, cenv.GetValue("fedra.link.ImageMatrixCorrSide1"      , "") );
+    r.ReadImageMatrixCorrection( 2, cenv.GetValue("fedra.link.ImageMatrixCorrSide2"      , "") );
+  }
+   
   r.eTracking =  cenv.GetValue("fedra.link.Tracking"      , -1);
 
   EdbPattern p1, p2;

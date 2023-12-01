@@ -922,6 +922,60 @@ int EdbRunAccess::FillVP()
 }
 
 ///______________________________________________________________________________
+void EdbRunAccess::ReadImageMatrixCorrection(int side, const char *file)
+{
+  ReadImageMatrixCorrection(eCorrMap[side], file);
+}
+
+///______________________________________________________________________________
+void EdbRunAccess::ReadImageMatrixCorrection(EdbCell2 &map, const char *file)
+{
+  Log(1,"EdbRunAccess::ReadImageMatrixCorrection","from %s ",file);
+  FILE *f = fopen(file,"r");
+  if(!f) { Log(1,"EdbRunAccess::ReadImageMatrixCorrection","file %s not found!",file); return; }
+  char str[256]; 
+  fgets(str, 256, f);
+  int nxpix, nypix;
+  float xpix, ypix;
+  if( 4 != sscanf(str,"%d %d  %f %f", &nxpix, &nypix, &xpix, &ypix)) return;
+  
+  float  mi[2] = { -nxpix*Abs(xpix)/2., -nypix*Abs(ypix)/2. };
+  float  ma[2] = {  nxpix*Abs(xpix)/2.,  nypix*Abs(ypix)/2. };
+  int    n[2] = { nxpix, nypix };
+  map.InitCell(2, n, mi, ma);
+  int nc=map.Ncell();
+  for( int i=0; i<nc; i++ ) {
+    TArrayD *a = new TArrayD(2);
+    map.AddObject(i, (TObject*)a );
+    map.SetBin(i,0);
+  }
+  
+  int i0,j0;
+  float x0,y0,dx0,dy0;
+  for(int i=0; i<nxpix; i++) {
+    for(int j=0; j<nypix; j++) {
+      if(fgets(str, 256, f)==NULL) Log(1,"EdbRunAccess::ReadImageMatrixCorrection","ERROR: input file too short!");
+      if( sscanf(str, "%d %d %f %f %f %f", &i0, &j0, &x0, &y0, &dx0, &dy0) == 6 )  
+      {
+	TArrayD *dxy = (TArrayD *)map.GetObject(x0,y0,0);
+	(*dxy)[0]+=dx0;
+	(*dxy)[1]+=dy0;
+	map.Fill(x0, y0);
+      }
+    }
+  }
+  fclose(f);
+
+  nc=map.Ncell();
+  for( int i=0; i<nc; i++ ) {
+    TArrayD *dxy = (TArrayD*)( map.GetObject(i, 0 ) );    if(!dxy) continue;
+    int w = map.Bin(i);                                   if(!w) continue;
+    (*dxy)[0] /= w;
+    (*dxy)[1] /= w;
+  }  
+}
+
+///______________________________________________________________________________
 void EdbRunAccess::SetImageCorrection(int side, const char *str)
 {
   // fedra.link.ImageCorrSideX:                 scaleX scaleY rot
@@ -945,6 +999,18 @@ float EdbRunAccess::SegmentWeight(const EdbSegment &s)
   if     (eWeightAlg==1) return Sqrt(s.GetPuls()*s.GetSigmaY()/2.);
   else if(eWeightAlg==2) return s.GetSigmaX();
   return s.GetPuls();
+}
+
+///______________________________________________________________________________
+void EdbRunAccess::ApplyImageMatrixCorr(int side, float &x, float &y)
+{
+  TArrayD *dxy=0;
+  if(side>0&&side<3)
+    if( dxy = (TArrayD*)eCorrMap[side].GetObject(x,y,0) )
+    {
+      x -= (*dxy)[0];
+      y -= (*dxy)[1];
+    }
 }
 
 ///______________________________________________________________________________
@@ -995,13 +1061,16 @@ bool EdbRunAccess::AcceptRawSegment(EdbView *view, int id, EdbSegP &segP, int si
   x    = seg->GetX0();
   y    = seg->GetY0();
 
-  if(eDoImageCorr)   {
+  if(eDoImageCorr) 
+  {
     float xt = eImageCorr[side].Xtrans(x,y);
     float yt = eImageCorr[side].Ytrans(x,y);
     x = xt;
     y = yt;  
   }
-  
+
+  if(eDoImageMatrixCorr)  ApplyImageMatrixCorr(side,x,y);
+
   x  += layer->Zcorr()*tx;
   y  += layer->Zcorr()*ty;
   z    = layer->Z() + layer->Zcorr();

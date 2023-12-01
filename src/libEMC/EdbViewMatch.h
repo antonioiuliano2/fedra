@@ -41,6 +41,7 @@ private:
   TClonesArray  eGr;       // array of EdbSegment objects (cluster "clouds" in this case)
   EdbCell2   eGMap;        // map of grains (EdbSegments)
   EdbCell2   eCorrMap;     // map of corrections
+  EdbCell2   eCorrMap0;    // input map of corrections
   
   float eXpix,  eYpix;
   int   eNXpix, eNYpix;
@@ -51,8 +52,8 @@ private:
 public:
   TFile *eOutputFile;
   bool   eDumpGr;                     // if(1) dump grains tree
-  float  eAreaMin, eAreaMax;          // clusters Area limints
-  float  eVolumeMin, eVolumeMax;      // clusters Volume limints
+  float  eAreaMin, eAreaMax;          // clusters Area limits
+  float  eVolumeMin, eVolumeMax;      // clusters Volume limits
 
 public:
   EdbViewMatch();
@@ -61,19 +62,20 @@ public:
   void InitGMap();
   void InitCorrMap();
   
-  void AddCluster( float x,float y,float z, float xv,float yv, int view, int frame );
+  void AddCluster( EdbClMatch *c );
   
   void CalculateGrRef();
   void CalculateCorr();
   void DrawCorrMap();
-  void GenerateCorrectionMatrix(const char *addfile);
+  void GenerateCorrectionMatrix(bool do_add);
   void SetPar(TEnv &env);
   void SetPixelSize(float xpix, float ypix) { eXpix=xpix; eYpix=ypix; }
   void CutGrRef();
+  void ReadMatrix2Map(const char *file, EdbCell2 &map);
   
   TNtuple *DumpGr(const char *name);
 
-  void MakeDistortionMap(const char *fname, TEnv &env, const char *addfile=0);
+  void MakeDistortionMap(const char *fname, TEnv &env, const char *usefile=0, const char *addfile=0);
 
   void Print();
   

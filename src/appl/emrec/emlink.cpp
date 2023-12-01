@@ -38,6 +38,11 @@ void set_default(TEnv &cenv)
   cenv.SetValue("fedra.link.DoImageCorr"           , 0  );
   cenv.SetValue("fedra.link.ImageCorrSide1"           , "1. 1. 0.");
   cenv.SetValue("fedra.link.ImageCorrSide2"           , "1. 1. 0.");
+  
+  cenv.SetValue("fedra.link.DoImageMatrixCorr"              , 0  );
+  cenv.SetValue("fedra.link.ImageMatrixCorrSide1"           , "");
+  cenv.SetValue("fedra.link.ImageMatrixCorrSide2"           , "");
+  
   cenv.SetValue("fedra.link.CheckUpDownOffset"   ,  1   );   // check dXdY offsets between up and correspondent down views
   cenv.SetValue("fedra.link.BinOK"               , 6.   );
   cenv.SetValue("fedra.link.NcorrMin"            , 100  );

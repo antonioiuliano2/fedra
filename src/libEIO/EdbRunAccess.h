@@ -38,6 +38,9 @@ class EdbRunAccess : public TObject {
   Int_t       eDoImageCorr;      // apply or not pix/mic correction  when read data (default is 0)
   EdbAffine2D eImageCorr[3];     // include pix/micron corr, shift, rotation of microscope image
                                  // side 0(dummy), 1, 2
+                                 
+  Int_t       eDoImageMatrixCorr;      // apply image correction matrix
+  EdbCell2    eCorrMap[3];             // map of corrections for sides 0(dummy), 1,2
 
   TCut         eHeaderCut;  // header cut to be applied in run initialization
   Int_t        eTracking;   // to test tracking alorithm: -1-ignored(def),0/1 - trackings to accept
@@ -87,6 +90,8 @@ class EdbRunAccess : public TObject {
   
   void Set0();
   void SetImageCorrection(int side, const char *str);
+  void ReadImageMatrixCorrection(int side, const char *file);
+  void ReadImageMatrixCorrection(EdbCell2 &map, const char *file);
   void ClearCuts();
   bool InitRun(const char *runfile=0, bool do_update=false);
   bool InitRunFromRWC(char *rwcname, bool bAddRWD=true, const char* options="");
@@ -94,6 +99,8 @@ class EdbRunAccess : public TObject {
   void Print();
   void PrintStat();
   void GuessNviewsPerArea();
+  
+  void ApplyImageMatrixCorr(int side, float &x, float &y);
 
   Int_t GetNareas()        { return eNareas;        }
   Int_t GetNviewsPerArea() { return eNviewsPerArea; }

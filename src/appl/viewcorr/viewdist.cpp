@@ -12,7 +12,7 @@ using namespace std;
 
 void print_help_message()
 {
-  cout<< "\nUsage: \n\t  viewdist -f=FILE [-v=DEBUG -add=primary_correction.txt] \n";
+  cout<< "\nUsage: \n\t  viewdist -f=FILE [-v=DEBUG -use=primary_correction.txt] \n";
   cout<< "\t\t  DEBUG    - verbosity level: 0-print nothing, 1-errors only, 2-normal, 3-print all messages\n";
   cout<< "\nExample: \n";
   cout<< "\t  viewdist -f=one_layer.root -v=2\n";
@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
   const char *env    = cenv.GetValue("viewdist.env"            , "viewdist.rootrc");
   
   const char *addfile=0;
+  const char *usefile=0;
   const char *fname=0;
   for(int i=1; i<argc; i++ ) {
     char *key  = argv[i];
@@ -63,6 +64,10 @@ int main(int argc, char* argv[])
       {
 	if(strlen(key)>5)	addfile = key+5;
       }
+    else if(!strncmp(key,"-use=",5))
+      {
+	if(strlen(key)>5)	usefile = key+5;
+      }
   }
 
   if(!fname)   { print_help_message(); return 0; }
@@ -71,7 +76,7 @@ int main(int argc, char* argv[])
   cenv.ReadFile( cenv.GetValue("viewdist.env"   , "viewdist.rootrc") ,kEnvLocal);
   
   EdbViewMatch vm;
-  vm.MakeDistortionMap( fname, cenv, addfile );
+  vm.MakeDistortionMap( fname, cenv, usefile, addfile );
   
   cenv.WriteFile("viewdist.save.rootrc");
   return 1;
