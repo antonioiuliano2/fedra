@@ -538,7 +538,11 @@ void EdbScanTracking::TrackSetBT(EdbID idset, TEnv &env, Int_t ix, Int_t iy)
         EdbPlateP *plate = ss->GetPlate(id->ePlate);
       
         EdbPattern p;
-        eSproc->ReadPatCPnopar(p,*id, cut, do_erase);
+        int nread = eSproc->ReadPatCPnopar(p,*id, cut, do_erase);
+        if (nread == 0){
+	printf("skipping plate, %i, nread is zero", id->ePlate);
+	continue;
+	}
         p.SetZ(plate->Z());
         p.SetSegmentsZ();
         p.SetID(i);

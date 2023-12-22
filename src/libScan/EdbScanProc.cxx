@@ -699,6 +699,7 @@ int EdbScanProc::ReadPatCPnopar(EdbPattern &pat, const char *cpfile, TCut cut, E
   else {             // add microtracks as "digits" to the basetrack
     EdbPattern p1, p2;
     nread = ect.GetCPData( &pat,&p1,&p2,0 );
+    if (nread == 0) return 0;
     for(int i=0; i<pat.N(); i++) {
       EdbSegP *s = pat.GetSegment(i);
       s->addEMULDigit( new EdbSegP(*(p1.GetSegment(i))) );
@@ -1482,10 +1483,10 @@ EdbScanSet *EdbScanProc::ReadScanSet(EdbID id)
 {
   TString name;
   MakeFileName(name,id,"set.root",false);
-  TFile f(name.Data());
+  TFile* f = TFile::Open(name.Data());
   Log(2,"ReadScanSet","from %s",name.Data());
-  if(!f.IsOpen()) return 0;
-  TObject *ss = f.Get("set");
+  if(!f->IsOpen()) return 0;
+  TObject *ss = f->Get("set");
   if(ss) return (EdbScanSet *)ss;
   else   return 0;
 }

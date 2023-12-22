@@ -216,6 +216,7 @@ int EdbCouplesTree::GetCPData( TObjArray &cparr )
 {
  //read segments into array of EdbSegCouple objects
   TEventList *lst = InitCutList();
+  if (!lst) return 0;
   int nlst =lst->GetN();
   int nseg = 0, nerase=0;
   int entr=0;
@@ -311,6 +312,7 @@ int EdbCouplesTree::PutCPData( TObjArray &cparr)
 int EdbCouplesTree::GetCPData( EdbPattern *pat, EdbPattern *p1, EdbPattern *p2, TIndex2 *trseg )
 {
   TEventList *lst = InitCutList();
+  if (!lst) return 0;
   int nlst =lst->GetN();
 
   int nseg = 0, nerase=0;
