@@ -9,6 +9,10 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
+#ifndef ROOT_TMath
+#include "TMath.h"
+#endif
+
 #include "TObject.h"
 
 class TH1F;

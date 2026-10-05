@@ -1,1 +1,1 @@
-/data/valeri/swdev/fedra/src/libScan/Makefile.linux
+/home/antonio/fedra_root6_40_tests/src/libScan/Makefile.linux

@@ -13,6 +13,10 @@
 #include "TString.h"
 #include "TObjArray.h"
 
+#ifndef ROOT_TMath
+#include "TMath.h"
+#endif
+
 
 
 //__________________________________________________________________________

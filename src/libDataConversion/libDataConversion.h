@@ -1,4 +1,3 @@
-#ifndef __CINT__
 #include "dataIO/dataIO.h"  
 
 #include <math.h>
@@ -16,4 +15,3 @@ int AddRWD(EdbRun* run, char* rwdname, int fragID=0, const char* options="");
 //int AddTLG(EdbRun* run, char* mapname);
 int AddGrainsTXT(EdbRun* run, char* txtname);
 int AddMAP(EdbRun* run, char* mapname);
-#endif

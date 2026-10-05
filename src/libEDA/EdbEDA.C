@@ -1757,7 +1757,7 @@ EdbDataProc * EdbEDA::PVRec2DataProc(EdbPVRec *pvr){
 
 
 #include<TGLUtil.h>
-#include<TGLIncludes.h>
+#include <GL/glew.h>
 
 EdbEDAOverlay::EdbEDAOverlay():eDraw(1), eXa(80), eYa(30), eLength(120), eXb(50), eYb(20){}
 void EdbEDAOverlay::SetXY(int pixel_x, int pixel_y){ if(gEDA->GetScaleZ()==1.0) eXb=pixel_x, eYb=pixel_y; else eXa=pixel_x, eYa=pixel_y;}

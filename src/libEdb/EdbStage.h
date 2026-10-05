@@ -17,6 +17,10 @@
 #include "EdbAffine.h"
 #endif
 
+#ifndef ROOT_TMath
+#include "TMath.h"
+#endif
+
 //______________________________________________________________________________
 class EdbCCD : public TNamed {
 

@@ -121,7 +121,7 @@ void EdbSigma::Draw()
   EdbSigma *pts = new EdbSigma();
   
   cmt->cd(1);
-  TF1 *dal = new TF1("dal",pts,&EdbSigma::FDAL,fmin,fmax,3,"EdbSigma","FDAL");
+  TF1 *dal = new TF1("dal",pts,&EdbSigma::FDAL,fmin,fmax,3);
   dal->SetParameter(0, eSxy);
   dal->SetParameter(1, eSz);
   dal->SetParameter(2, eDZem);
@@ -129,20 +129,20 @@ void EdbSigma::Draw()
   dal->Draw();
 
   cmt->cd(2);
-  TF1 *dat = new TF1("dat",pts,&EdbSigma::FDAT,fmin,fmax,2,"EdbSigma","FDAT");
+  TF1 *dat = new TF1("dat",pts,&EdbSigma::FDAT,fmin,fmax,2);
   dat->SetParameter(0, eSxy);
   dat->SetParameter(1, eDZem);
   dat->SetTitle("angle transverse microtrack resolution");
   dat->Draw();
 
   cmt->cd(4);
-  TF1 *dplmt = new TF1("dplmt",pts,&EdbSigma::FDPLmt,fmin,fmax,0,"EdbSigma","FDPLmt");
+  TF1 *dplmt = new TF1("dplmt",pts,&EdbSigma::FDPLmt,fmin,fmax,0);
   dplmt->SetTitle("position longitudinal microtrack resolution");
   dplmt->Draw();
 
 
   cmt->cd(3);
-  TF1 *dalbt = new TF1("dalbt",pts,&EdbSigma::FDALbt,fmin,fmax,0,"EdbSigma","FDALbt");
+  TF1 *dalbt = new TF1("dalbt",pts,&EdbSigma::FDALbt,fmin,fmax,0);
   dalbt->SetTitle("angle longitudinal basetrack resolution");
   dalbt->Draw();
 

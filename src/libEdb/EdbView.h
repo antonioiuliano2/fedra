@@ -19,6 +19,10 @@
 #include "EdbCluster.h"
 #include "EdbSegment.h"
 
+#ifndef ROOT_TMath
+#include "TMath.h"
+#endif
+
 class EdbTrack;
 class EdbFrame;
 

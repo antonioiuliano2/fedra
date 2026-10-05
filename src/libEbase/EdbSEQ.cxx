@@ -112,7 +112,7 @@ void EdbSEQ::Draw()
   TCanvas *cn = new TCanvas("cn","Critical density",800,600);
   cn->Divide(2,2);
 
-  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,0.,1.,0,"EdbSEQ","FDNmt");
+  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,0.,1.,0);
   fnmt->SetTitle("dNmt/dTheta in 1 view density function");
   fnmt->SetNpx(eNP);
 
@@ -121,7 +121,7 @@ void EdbSEQ::Draw()
   cn->cd(2);
   fnmt->DrawIntegral();
 
-  TF1 *fnbt = new TF1("fnbt",this,&EdbSEQ::FDNbt,0.,1.,0,"EdbSEQ","FDNbt");
+  TF1 *fnbt = new TF1("fnbt",this,&EdbSEQ::FDNbt,0.,1.,0);
   fnbt->SetTitle("dNbt/dTheta in 1 view density function");
   fnbt->SetNpx(eNP);
 
@@ -135,7 +135,7 @@ void EdbSEQ::Draw()
 void EdbSEQ::CalculateDensityMT( EdbH1 &eHEq)
 {
   Log(3,"EdbSEQ::CalculateDensityMT","eHEq.N(): %d", eHEq.N());
-  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,eHEq.Xmin(),eHEq.Xmax(),0,"EdbSEQ","FDNmt");
+  TF1 *fnmt = new TF1("fnmt",this,&EdbSEQ::FDNmt,eHEq.Xmin(),eHEq.Xmax(),0);
   fnmt->SetTitle("dNmt/dTheta in 1 view density function");
   fnmt->SetNpx(eNP);
   double *x=new double[eNP];
